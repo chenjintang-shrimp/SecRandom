@@ -73,12 +73,13 @@ jobs:
       - name: 运行 Linux 构建
         if: ${{ matrix.os == 'ubuntu-20.04' }}
         run: |
+          # 确保pip已安装并升级到最新版
+          python -m ensurepip --upgrade
+          python -m pip install --upgrade pip
           # 创建虚拟环境
           uv venv
           # 激活虚拟环境
           source .venv/bin/activate
-          # 升级pip
-          python -m pip install --upgrade pip
           # 安装依赖
           uv pip install -r requirements.txt
           # 安装 pyinstaller
@@ -99,12 +100,13 @@ jobs:
       - name: 运行 macOS 构建
         if: ${{ startsWith(matrix.os, 'macos') }}
         run: |
+          # 确保pip已安装并升级到最新版
+          python -m ensurepip --upgrade
+          python -m pip install --upgrade pip
           # 创建虚拟环境
           uv venv
           # 激活虚拟环境
           source .venv/bin/activate
-          # 升级pip
-          python -m pip install --upgrade pip
           # 安装依赖
           uv pip install -r requirements.txt
           # 安装 pyinstaller
@@ -140,7 +142,9 @@ jobs:
       - name: 删除未签名的 ZIP 文件
         if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' }}
         run: |
-          del "zip/SecRandom-Windows-${{ matrix.arch }} (Unsigned).zip"
+          if (Test-Path "zip/SecRandom-Windows-${{ matrix.arch }} (Unsigned).zip") {
+            del "zip/SecRandom-Windows-${{ matrix.arch }} (Unsigned).zip"
+          }
           ./zip -r -q zip/SecRandom-Windows-${{ matrix.arch }}.zip dist/SecRandom/*
 
       - name: 上传已签名的应用程序
