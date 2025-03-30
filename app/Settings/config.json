@@ -1,0 +1,27 @@
+{
+    "Window": {
+        "DpiScale": "Auto"
+    },
+    "Animation": {
+        "GlobalAnimationMode": "手动停止动画",
+        "GroupAnimationMode": "跟随全局设置",
+        "MultiAnimationMode": "跟随全局设置",
+        "SingleAnimationMode": "跟随全局设置"
+    },
+    "DrawMode": {
+        "GlobalDrawMode": "重复抽取",
+        "GroupDrawMode": "跟随全局设置",
+        "MultiDrawMode": "跟随全局设置",
+        "SingleDrawMode": "跟随全局设置"
+    },
+    "VoicePlay": {
+        "GlobalVoicePlay": "是",
+        "GroupVoicePlay": "跟随全局设置",
+        "MultiVoicePlay": "跟随全局设置",
+        "SingleVoicePlay": "跟随全局设置"
+    },
+    "QFluentWidgets": {
+        "ThemeColor": "#ff009faa",
+        "ThemeMode": "Light"
+    }
+}
