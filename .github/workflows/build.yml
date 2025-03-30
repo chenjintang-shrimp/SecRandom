@@ -184,9 +184,7 @@ jobs:
             -w \
             -n SecRandom \
             --contents-directory . \
-            --add-data ./app/resource/icon:app/resource/icon \
-            --add-data ./app/resource/README:app/resource/README \
-            --add-data ./app/resource/font:app/resource/font \
+            --add-data ./app/resource:app/resource \
             --add-data ./app/Settings:app/Settings \
             --add-data ./app/update:app/update \
             --add-data LICENSE:.
