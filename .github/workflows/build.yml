@@ -49,8 +49,6 @@ jobs:
       - name: 运行 Windows 构建
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
-          # 下载 zip.exe 工具
-          curl -o zip.exe -L http://www.stahlworks.com/dev/zip.exe
           # 创建虚拟环境
           uv venv
           # 激活虚拟环境
@@ -65,14 +63,12 @@ jobs:
             -i ./resources/SecRandom.ico `
             -n SecRandom `
             --contents-directory . `
-            --add-data ./app/resource/icon:app/resource/icon `
-            --add-data ./app/resource/README:app/resource/README `
-            --add-data ./app/resource/font:app/resource/font `
+            --add-data ./app/resource:app/resource `
             --add-data ./app/Settings:app/Settings `
             --add-data ./app/update:app/update `
             --add-data LICENSE:.
-          # 使用 zip.exe 工具将打包好的文件压缩成 ZIP 文件
-          ./zip -r -q "zip/SecRandom-Windows-${{ matrix.arch }} (Unsigned).zip" dist/SecRandom/*
+          # 使用系统自带的 Compress-Archive 压缩文件
+          Compress-Archive -Path dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ matrix.arch }}.zip" -Force
 
       - name: 运行 Linux 构建
         if: ${{ matrix.os == 'ubuntu-20.04' }}
@@ -81,6 +77,8 @@ jobs:
           uv venv
           # 激活虚拟环境
           source .venv/bin/activate
+          # 升级pip
+          python -m pip install --upgrade pip
           # 安装依赖
           uv pip install -r requirements.txt
           # 安装 pyinstaller
@@ -91,9 +89,7 @@ jobs:
             -i ./resources/SecRandom.ico \
             -n SecRandom \
             --contents-directory . \
-            --add-data ./app/resource/icon:app/resource/icon \
-            --add-data ./app/resource/README:app/resource/README \
-            --add-data ./app/resource/font:app/resource/font \
+            --add-data ./app/resource:app/resource \
             --add-data ./app/Settings:app/Settings \
             --add-data ./app/update:app/update \
             --add-data LICENSE:.
@@ -107,6 +103,8 @@ jobs:
           uv venv
           # 激活虚拟环境
           source .venv/bin/activate
+          # 升级pip
+          python -m pip install --upgrade pip
           # 安装依赖
           uv pip install -r requirements.txt
           # 安装 pyinstaller
@@ -117,9 +115,7 @@ jobs:
             -i ./resources/SecRandom.icns \
             -n "SecRandom" \
             --contents-directory . \
-            --add-data ./app/resource/icon:app/resource/icon \
-            --add-data ./app/resource/README:app/resource/README \
-            --add-data ./app/resource/font:app/resource/font \
+            --add-data ./app/resource:app/resource \
             --add-data ./app/Settings:app/Settings \
             --add-data ./app/update:app/update \
             --add-data LICENSE:.
