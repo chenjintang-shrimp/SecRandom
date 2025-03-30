@@ -55,7 +55,26 @@ jobs:
           mv artifacts/macos-13-x64/* release/
           mv artifacts/macos-14-arm64/* release/
 
-      - name: Determine release type
+      - name: 计算 SHA256 值
+        run: |
+          cd release
+          for file in *; do
+            sha256sum "$file" >> SHA256SUMS.txt
+          done
+          cat SHA256SUMS.txt
+          
+      - name: 生成 SHA256 的表格信息
+        run: |
+          echo "\n### SHA256 校验值" >> ../CHANGELOG.md
+          echo "| 文件名 | SHA256 值 |" >> ../CHANGELOG.md
+          echo "| --- | --- |" >> ../CHANGELOG.md
+          while read -r line; do
+            hash=$(echo "$line" | awk '{print $1}')
+            file=$(echo "$line" | awk '{print $2}')
+            echo "| $file | $hash |" >> ../CHANGELOG.md
+          done < SHA256SUMS.txt
+            
+      - name: 确定发布类型
         id: release-type
         run: |
           if [[ "${{ github.ref }}" == *"beta"* || "${{ github.ref }}" == *"alpha"* ]]; then
@@ -64,7 +83,7 @@ jobs:
             echo "is_beta=false" >> $GITHUB_ENV
           fi
 
-      - name: Release
+      - name: 发布
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.Releases_BOT }}
