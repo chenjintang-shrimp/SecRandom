@@ -65,7 +65,6 @@ jobs:
             --contents-directory . `
             --add-data ./app/resource:app/resource `
             --add-data ./app/Settings:app/Settings `
-            --add-data ./app/update:app/update `
             --add-data LICENSE:.
           # 使用系统自带的 Compress-Archive 压缩文件
           Compress-Archive -Path dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ matrix.arch }}.zip" -Force
@@ -84,6 +83,9 @@ jobs:
           uv pip install -r requirements.txt
           # 安装 pyinstaller
           uv pip install pyinstaller
+          # 创建必要的目录结构
+          mkdir -p ./app/Settings
+          
           # 使用 pyinstaller 打包应用程序
           pyinstaller main.py \
             -w \
@@ -92,7 +94,6 @@ jobs:
             --contents-directory . \
             --add-data ./app/resource:app/resource \
             --add-data ./app/Settings:app/Settings \
-            --add-data ./app/update:app/update \
             --add-data LICENSE:.
           # 使用系统自带的 zip 工具将打包好的文件压缩成 ZIP 文件
           zip -r -q zip/SecRandom-Ubuntu22.04.zip dist/SecRandom/*
@@ -119,7 +120,6 @@ jobs:
             --contents-directory . \
             --add-data ./app/resource:app/resource \
             --add-data ./app/Settings:app/Settings \
-            --add-data ./app/update:app/update \
             --add-data LICENSE:.
           # 使用系统自带的 zip 工具将打包好的文件压缩成 ZIP 文件
           zip -r -q "zip/SecRandom-macOS-${{ matrix.arch }} (bundle).zip" dist/SecRandom.app/*
@@ -186,7 +186,6 @@ jobs:
             --contents-directory . \
             --add-data ./app/resource:app/resource \
             --add-data ./app/Settings:app/Settings \
-            --add-data ./app/update:app/update \
             --add-data LICENSE:.
           zip -r -q zip/SecRandom-Debian10.zip dist/SecRandom/*
 
