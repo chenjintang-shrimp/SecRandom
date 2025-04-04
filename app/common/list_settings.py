@@ -9,7 +9,8 @@ from PyQt5.QtWidgets import (QHBoxLayout, QVBoxLayout, QWidget, QLabel, QPushBut
 import os
 from loguru import logger
 
-from ..common.config import load_custom_font
+from app.common.config import load_custom_font
+from app.view import group
 
 # 配置日志记录
 log_dir = "logs"
@@ -68,13 +69,14 @@ class ClassInputDialog(QDialog):
         if self.textEdit.toPlainText() and not self.saved:
             w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 14))
-            w.yesButton.setText("保存")
+            w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
-            w.yesButton = PrimaryPushButton('保存')
+            w.yesButton = PrimaryPushButton('确定')
             w.cancelButton = PushButton('取消')
             
-            if w.exec(): 
-                self.accept()
+            if w.exec():
+                event.ignore()
+                return
             else:
                 event.ignore()
                 return
@@ -128,13 +130,14 @@ class StudentInputDialog(QDialog):
         if self.textEdit.toPlainText() and not self.saved:
             w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 14))
-            w.yesButton.setText("保存")
+            w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
-            w.yesButton = PrimaryPushButton('保存')
+            w.yesButton = PrimaryPushButton('确定')
             w.cancelButton = PushButton('取消')
             
             if w.exec():
-                self.accept()
+                event.ignore()
+                return
             else:
                 event.ignore()
                 return
@@ -159,9 +162,10 @@ class GroupInputDialog(QDialog):
         # 统一设置对话框字体
         self.setFont(QFont(load_custom_font(), 14))
         
+        class_name = self.parent().class_comboBox.currentText()
         # 尝试读取已保存的小组文件
         try:
-            with open("app/resource/class/group.ini", 'r', encoding='utf-8') as f:
+            with open(f"app/resource/group/{class_name}_group.ini", 'r', encoding='utf-8') as f:
                 self.textEdit.setPlainText(f.read())
         except FileNotFoundError:
             pass
@@ -186,13 +190,14 @@ class GroupInputDialog(QDialog):
         if self.textEdit.toPlainText() and not self.saved:
             w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 14))
-            w.yesButton.setText("保存")
+            w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
-            w.yesButton = PrimaryPushButton('保存')
+            w.yesButton = PrimaryPushButton('确定')
             w.cancelButton = PushButton('取消')
             
             if w.exec():
-                self.accept()
+                event.ignore()
+                return
             else:
                 event.ignore()
                 return
@@ -219,8 +224,9 @@ class GroupStudentInputDialog(QDialog):
         # 尝试读取已保存的小组成员文件
         try:
             selected_group = self.parent().group_ComboBox.currentText()
+            group_name = self.parent().class_comboBox.currentText()
             if selected_group:
-                with open(f"app/resource/group/{selected_group}.ini", 'r', encoding='utf-8') as f:
+                with open(f"app/resource/group/{group_name}_{selected_group}.ini", 'r', encoding='utf-8') as f:
                     self.textEdit.setPlainText(f.read())
         except (FileNotFoundError, AttributeError):
             pass
@@ -245,13 +251,14 @@ class GroupStudentInputDialog(QDialog):
         if self.textEdit.toPlainText() and not self.saved:
             w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 14))
-            w.yesButton.setText("保存")
+            w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
-            w.yesButton = PrimaryPushButton('保存')
+            w.yesButton = PrimaryPushButton('确定')
             w.cancelButton = PushButton('取消')
             
             if w.exec():
-                self.accept()
+                event.ignore()
+                return
             else:
                 event.ignore()
                 return
@@ -262,6 +269,7 @@ class GroupStudentInputDialog(QDialog):
 
 
 class list_SettinsCard(GroupHeaderCardWidget):
+    refresh_class_list = pyqtSignal()
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTitle("名单设置")
@@ -309,14 +317,15 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(FIF.ADD_TO, "设置班级", "点击按钮设置班级名称", self.class_Button)
         self.addGroup(FIF.EDUCATION, "选择班级", "选择一个需要设置学生姓名的班级", self.class_comboBox)
         self.addGroup(FIF.PEOPLE, "设置班级名单", "点击按钮设置学生姓名", self.student_Button)
-        self.addGroup(FIF.PEOPLE, "设置小组", "点击按钮设置小组名单", self.group_Button)
-        self.addGroup(FIF.EDUCATION, "选择小组", "选择一个需要修改成员的小组", self.group_ComboBox)
-        self.addGroup(FIF.EDUCATION, "设置小组成员", "点击按钮设置该小组成员的姓名", self.group_student_Button)
+        self.addGroup(FIF.ADD_TO, "设置小组", "点击按钮设置小组名单", self.group_Button)
+        self.addGroup(FIF.TILES, "选择小组", "选择一个需要修改成员的小组", self.group_ComboBox)
+        self.addGroup(FIF.PEOPLE, "设置小组成员", "点击按钮设置该小组成员的姓名", self.group_student_Button)
         
         # 程序启动时自动加载小组名称
+        class_name = self.class_comboBox.currentText()
         try:
-            if os.path.exists("app/resource/class/group.ini"):
-                with open("app/resource/class/group.ini", 'r', encoding='utf-8') as f:
+            if os.path.exists(f"app/resource/group/{class_name}_group.ini"):
+                with open(f"app/resource/group/{class_name}_group.ini", 'r', encoding='utf-8') as f:
                     groups = [line.strip() for line in f.read().split('\n') if line.strip()]
                     self.group_ComboBox.clear()
                     self.group_ComboBox.addItems(groups)
@@ -342,11 +351,11 @@ class list_SettinsCard(GroupHeaderCardWidget):
                     # 更新下拉框
                     self.class_comboBox.clear()
                     self.class_comboBox.addItems(classes)
-                    logger.info("班级名单保存成功！")
+                    logger.info("班级名单保存成功！\n某些显示可能需要刷新或重启软件才能生效")
                     Flyout.create(
                         icon=InfoBarIcon.SUCCESS,
                         title='保存成功',
-                        content="班级名单已成功保存！",
+                        content="班级名单已成功保存！\n某些显示可能需要刷新或重启软件才能生效",
                         target=self.class_Button,
                         parent=self,
                         isClosable=True,
@@ -381,11 +390,11 @@ class list_SettinsCard(GroupHeaderCardWidget):
                     with open(student_file, 'w', encoding='utf-8') as f:
                         f.write('\n'.join(students))
                     
-                    logger.info(f"学生名单保存成功！班级: {selected_class}")
+                    logger.info(f"学生名单保存成功！班级: {selected_class}\n某些显示可能需要刷新或重启软件才能生效")
                     Flyout.create(
                         icon=InfoBarIcon.SUCCESS,
                         title='保存成功',
-                        content=f"{selected_class} ->学生名单已成功保存！",
+                        content=f"{selected_class} ->学生名单已成功保存！\n某些显示可能需要刷新或重启软件才能生效",
                         target=self.student_Button,
                         parent=self,
                         isClosable=True,
@@ -407,26 +416,27 @@ class list_SettinsCard(GroupHeaderCardWidget):
         dialog = GroupInputDialog(self)
         if dialog.exec():
             group_text = dialog.getText()
+            class_name = self.class_comboBox.currentText()
             if group_text:
                 try:
                     groups = [line.strip() for line in group_text.split('\n') if line.strip()]
                     
                     # 确保group目录存在
-                    os.makedirs("app/resource/class", exist_ok=True)
+                    os.makedirs("app/resource/group", exist_ok=True)
                         
                     # 保存到小组名称.ini
-                    group_file = f"app/resource/class/group.ini"
+                    group_file = f"app/resource/group/{class_name}_group.ini"
                     with open(group_file, 'w', encoding='utf-8') as f:
                         f.write('\n'.join(groups))
                     
                     # 更新下拉框
                     self.group_ComboBox.clear()
                     self.group_ComboBox.addItems(groups)
-                    logger.info(f"小组名单保存成功！")
+                    logger.info(f"小组名单保存成功！\n某些显示可能需要刷新或重启软件才能生效")
                     Flyout.create(
                         icon=InfoBarIcon.SUCCESS,
                         title='保存成功',
-                        content=f"小组名单已成功保存！",
+                        content=f"小组名单已成功保存！\n某些显示可能需要刷新或重启软件才能生效",
                         target=self.group_Button,
                         parent=self,
                         isClosable=True,
@@ -446,6 +456,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
 
     def show_group_student_dialog(self):
         selected_group = self.group_ComboBox.currentText()
+        class_name = self.class_comboBox.currentText()
         if selected_group:
             dialog = GroupStudentInputDialog(self)
             dialog.setWindowTitle(f"设置{selected_group}的小组成员")
@@ -458,15 +469,15 @@ class list_SettinsCard(GroupHeaderCardWidget):
                         # 确保group目录存在
                         os.makedirs("app/resource/group", exist_ok=True)
                         # 保存到小组名称.ini
-                        group_file = f"app/resource/group/{selected_group}.ini"
+                        group_file = f"app/resource/group/{class_name}_{selected_group}.ini"
                         with open(group_file, 'w', encoding='utf-8') as f:
                             f.write('\n'.join(group_students))
 
-                        logger.info(f"{selected_group} ->小组成员名单保存成功！")
+                        logger.info(f"{selected_group} ->小组成员名单保存成功！\n某些显示可能需要刷新或重启软件才能生效")
                         Flyout.create(
                             icon=InfoBarIcon.SUCCESS,
                             title='保存成功',
-                            content=f"{selected_group} ->小组成员名单已成功保存！",
+                            content=f"{selected_group} ->小组成员名单已成功保存！\n某些显示可能需要刷新或重启软件才能生效",
                             target=self.group_student_Button,
                             parent=self,
                             isClosable=True,

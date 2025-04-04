@@ -1,11 +1,11 @@
-from qfluentwidgets import * # type: ignore
-from qfluentwidgets import FluentIcon as FIF  # type: ignore
+from qfluentwidgets import *
+from qfluentwidgets import FluentIcon as FIF 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget, QScroller, QDialog, QHBoxLayout
+from PyQt5.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget, QScroller
 # from loguru import logger
 
-from ..common.config import cfg, AUTHOR, VERSION, YEAR # type: ignore
+from ..common.config import cfg, AUTHOR, VERSION, YEAR
 from ..common.config import load_custom_font
 # 设置卡片
 from ..common.list_settings import list_SettinsCard
@@ -16,7 +16,7 @@ from ..common.group_player_settings import group_player_SettinsCard
 
 
 class setting(QFrame):
-    def __init__(self, parent: QFrame = None): # type: ignore
+    def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
 
         # 创建一个 QScrollArea
@@ -81,18 +81,18 @@ class setting(QFrame):
             }
         """)
         # 启用触屏滚动
-        QScroller.grabGesture(scroll_area_personal.viewport(), QScroller.LeftMouseButtonGesture) # type: ignore
+        QScroller.grabGesture(scroll_area_personal.viewport(), QScroller.LeftMouseButtonGesture)
 
         # 创建一个内部的 QFrame 用于放置内容
         inner_frame_personal = QWidget(scroll_area_personal)
         inner_layout_personal = QVBoxLayout(inner_frame_personal)
-        inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop) # type: ignore
+        inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
 
         # 创建标签并设置自定义字体
         settingLabel = SubtitleLabel("设置")
-        settingLabel.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop) # type: ignore
+        settingLabel.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         settingLabel.setWordWrap(True)
-        settingLabel.setFont(QFont(load_custom_font(), 22))  # 设置自定义字体 # type: ignore
+        settingLabel.setFont(QFont(load_custom_font(), 22))  # 设置自定义字体
 
         # 名单设置卡片组
         self.list_setting_card = list_SettinsCard()
@@ -157,7 +157,7 @@ class setting(QFrame):
         self.__connectSignalToSlot()
 
     def __showRestartTooltip(self):
-        InfoBar.success( # type: ignore
+        InfoBar.success(
             self.tr('更新成功'),
             self.tr('设置在重启后生效'),
             duration=1500,

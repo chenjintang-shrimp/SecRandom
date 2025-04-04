@@ -1,35 +1,35 @@
 import os
-from qfluentwidgets import *  # type: ignore
-from PyQt5.QtGui import QFontDatabase  # type: ignore
+from qfluentwidgets import * 
+from PyQt5.QtGui import QFontDatabase 
 
 # 读取配置文件
-def read_json(json_path): # type: ignore
+def read_json(json_path):
     # 确认是否存在设置目录
-    if './app/Settings' != None and not os.path.exists('./app/Settings'): # type: ignore
+    if './app/Settings' != None and not os.path.exists('./app/Settings'):
         os.makedirs('./app/Settings')
-    if os.path.exists(json_path): # type: ignore
+    if os.path.exists(json_path):
         try:
-            with open(json_path, 'r', encoding='utf-8') as file: # type: ignore
+            with open(json_path, 'r', encoding='utf-8') as file:
                 return json.load(file)
         except json.JSONDecodeError:
             # 如果文件内容不是有效的 JSON 格式，返回空字典
-            return {} # type: ignore
-    return {} # type: ignore
+            return {}
+    return {}
 
-def modify_setting(): # type: ignore
+def modify_setting():
     json_path = './app/Settings/Settings.json'
-    read_json_dict = read_json(json_path) # type: ignore
+    read_json_dict = read_json(json_path)
     # 读取配置文件的version值
-    version = read_json_dict.get('version', 0)  # type: ignore
-    return version  # type: ignore
+    version = read_json_dict.get('version', 0) 
+    return version 
 
 # 修改或新增指定软件配置中的某个值
-def modify_setting_config(json_path, software_name, key, new_value):  # type: ignore
+def modify_setting_config(json_path, software_name, key, new_value): 
     # 确认是否存在设置目录
     if not os.path.exists('./app/Settings'):
         os.makedirs('./app/Settings')
     try:
-        with open(json_path, 'r', encoding='utf-8') as file:  # type: ignore
+        with open(json_path, 'r', encoding='utf-8') as file: 
             json_file = json.load(file)
     except (FileNotFoundError, json.JSONDecodeError):
         json_file = {}
@@ -45,7 +45,7 @@ def modify_setting_config(json_path, software_name, key, new_value):  # type: ig
     json_file[software_name][key] = new_value
     
     # 将更新后的数据写回文件
-    with open(json_path, 'w', encoding='utf-8') as file: # type: ignore
+    with open(json_path, 'w', encoding='utf-8') as file:
         json.dump(json_file, file, ensure_ascii=False, indent=4)
 
 def load_custom_font():
@@ -134,11 +134,11 @@ class Config(QConfig):
         OptionsValidator(["跟随全局设置", "是", "否"]),
         restart=True)
 
-modify_setting_text = modify_setting() # type: ignore
+modify_setting_text = modify_setting()
 
 YEAR = 2025
 AUTHOR = "lzy98276"
-VERSION = modify_setting_text # type: ignore
+VERSION = modify_setting_text
 HELP_URL = "https://qfluentwidgets.com"
 REPO_URL = "https://github.com/zhiyiYo/PyQt-Fluent-Widgets"
 EXAMPLE_URL = "https://github.com/zhiyiYo/PyQt-Fluent-Widgets/tree/master/examples"
@@ -149,4 +149,4 @@ EN_SUPPORT_URL = "https://qfluentwidgets.com/price/"
 
 cfg = Config()
 cfg.themeMode.value = Theme.AUTO
-qconfig.load('./app/Settings/config.json', cfg)  # type: ignore
+qconfig.load('./app/Settings/config.json', cfg) 
