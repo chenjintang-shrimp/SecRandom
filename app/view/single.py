@@ -501,15 +501,19 @@ class single(QWidget):
         """根据选择的班级更新总人数显示"""
         class_name = self.class_combo.currentText()
 
-        # 根据抽取作用范围模式确定记录文件名
-        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-            settings = json.load(f)
-            extraction_scope = settings['global']['extraction_scope']
-        if extraction_scope == 1:  # 隔离模式
-            draw_record_file = f"app/resource/Temp/until_the_reboot_scope_{class_name}_multi.json"
-        else:  # 共享模式
+        try:
+            # 根据抽取作用范围模式确定记录文件名
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                extraction_scope = settings['global']['extraction_scope']
+            if extraction_scope == 1:  # 隔离模式
+                draw_record_file = f"app/resource/Temp/until_the_reboot_scope_{class_name}_multi.json"
+            else:  # 共享模式
+                draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}.json"
+        except Exception as e:
+            logger.error(f"加载设置时出错: {e}, 使用默认设置")
             draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}.json"
-
+            
         # 删除临时文件
         if os.path.exists(draw_record_file):
             os.remove(draw_record_file)

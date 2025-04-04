@@ -87,6 +87,9 @@ class Window(MSFluentWindow):
         QTimer.singleShot(1000, loop.quit)
         loop.exec()
 
+        self.settingInterface = setting(self)
+        self.settingInterface.setObjectName("settingInterface")  # 设置对象名称
+
         self.singleInterface = single(self)
         self.singleInterface.setObjectName("singleInterface")  # 设置对象名称
 
@@ -95,9 +98,6 @@ class Window(MSFluentWindow):
 
         self.groupInterface = groupplayer(self)
         self.groupInterface.setObjectName("groupInterface")  # 设置对象名称
-        
-        self.settingInterface = setting(self)
-        self.settingInterface.setObjectName("settingInterface")  # 设置对象名称
 
         self.initNavigation()
         self.initWindow()
