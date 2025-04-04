@@ -53,6 +53,7 @@ write_json('./app/Settings/Settings.json', 'software_name', 'SecRandom')
 write_json('./app/Settings/Settings.json', 'version', '1.0.0.0-beta')
 
 # 导入子页面
+from app.view.quicksetup import quicksetup
 from app.view.setting import setting
 from app.view.single import single
 from app.view.multiplayer import multiplayer
@@ -87,6 +88,9 @@ class Window(MSFluentWindow):
         QTimer.singleShot(1000, loop.quit)
         loop.exec()
 
+        self.quicksetupInterface = quicksetup(self)
+        self.quicksetupInterface.setObjectName("quicksetupInterface")  # 设置对象名称
+
         self.settingInterface = setting(self)
         self.settingInterface.setObjectName("settingInterface")  # 设置对象名称
 
@@ -108,6 +112,7 @@ class Window(MSFluentWindow):
         self.addSubInterface(self.multiInterface, fIcon.PEOPLE, '抽多人', position=NavigationItemPosition.TOP)
         self.addSubInterface(self.groupInterface, fIcon.TILES, '抽小组', position=NavigationItemPosition.TOP) 
 
+        self.addSubInterface(self.quicksetupInterface, fIcon.QUICK_NOTE, '名单设置', position=NavigationItemPosition.BOTTOM)  
         self.addSubInterface(self.settingInterface, fIcon.SETTING, '设置', position=NavigationItemPosition.BOTTOM)
 
     def initWindow(self):

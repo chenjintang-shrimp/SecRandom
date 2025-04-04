@@ -1,7 +1,7 @@
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QWidget, QLabel, QPushButton, QComboBox, QLineEdit, QFileDialog, QMessageBox
+from PyQt5.QtGui import QFont
+from app.common.config import load_custom_font
 import json
 import os
 from loguru import logger
@@ -25,7 +25,7 @@ class group_player_SettinsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("抽小组设置")
         self.setBorderRadius(8)
-        self.settings_file = os.path.join(os.path.dirname(__file__), "..", "Settings", "Settings.json")
+        self.settings_file = "app/Settings/Settings.json"
         self.default_settings = {
             "animation_mode": 0,
             "voice_enabled": 0,
@@ -42,21 +42,25 @@ class group_player_SettinsCard(GroupHeaderCardWidget):
         self.group_player_Voice_comboBox.setFixedWidth(320) # 设置下拉框宽度为320像素
         self.group_player_Voice_comboBox.addItems(["跟随全局设置", "开启", "关闭"])
         self.group_player_Voice_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.group_player_Voice_comboBox.setFont(QFont(load_custom_font(), 14))
 
         # 动画模式下拉框
         self.group_player_Animation_comboBox.setFixedWidth(320) # 设置下拉框宽度为320像素
         self.group_player_Animation_comboBox.addItems(["跟随全局设置", "手动停止动画", "自动播放完整动画", "直接显示结果"])
         self.group_player_Animation_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.group_player_Animation_comboBox.setFont(QFont(load_custom_font(), 14))
 
         # 班级总人数下拉框
         self.group_player_student_quantity_comboBox.setFixedWidth(320) # 设置下拉框宽度为320像素
         self.group_player_student_quantity_comboBox.addItems(["跟随全局设置", "显示", "隐藏"])
         self.group_player_student_quantity_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.group_player_student_quantity_comboBox.setFont(QFont(load_custom_font(), 14))
 
         # 便捷修改班级功能显示下拉框
         self.group_player_class_quantity_comboBox.setFixedWidth(320) # 设置下拉框宽度为320像素
         self.group_player_class_quantity_comboBox.addItems(["跟随全局设置", "显示", "隐藏"])
         self.group_player_class_quantity_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.group_player_class_quantity_comboBox.setFont(QFont(load_custom_font(), 14))
 
         # 添加组件到分组中
         self.addGroup(FIF.FEEDBACK, "语音播放", "设置结果公布时是否播放语音", self.group_player_Voice_comboBox)

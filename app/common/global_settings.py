@@ -4,6 +4,9 @@ import json
 import os
 from loguru import logger
 
+from PyQt5.QtGui import QFont
+from app.common.config import load_custom_font
+
 # 配置日志记录
 log_dir = "logs"
 if not os.path.exists(log_dir):
@@ -23,7 +26,7 @@ class global_SettinsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("全局设置")
         self.setBorderRadius(8)
-        self.settings_file = os.path.join(os.path.dirname(__file__), "..", "Settings", "Settings.json")
+        self.settings_file = "app/Settings/Settings.json"
         self.default_settings = {
             "extraction_scope": 0,
             "draw_mode": 0,
@@ -48,41 +51,49 @@ class global_SettinsCard(GroupHeaderCardWidget):
         self.global_extraction_scope_comboBox.setFixedWidth(320)
         self.global_extraction_scope_comboBox.addItems(["共享单人和多人的已被抽到的学生名单", "隔离单人和多人的已被抽到的学生名单"])
         self.global_extraction_scope_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.global_extraction_scope_comboBox.setFont(QFont(load_custom_font(), 12))
         
         # 抽取模式下拉框
         self.global_Draw_comboBox.setFixedWidth(320) # 设置下拉框宽度为320像素
         self.global_Draw_comboBox.addItems(["重复抽取", "不重复抽取(直到软件重启)", "不重复抽取(直到抽完全部人)"])
         self.global_Draw_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.global_Draw_comboBox.setFont(QFont(load_custom_font(), 14))
 
         # 语音播放按钮
         self.global_Voice_switch.setOnText("开启")
         self.global_Voice_switch.setOffText("关闭")
         self.global_Voice_switch.checkedChanged.connect(self.on_global_Voice_switch_changed)
+        self.global_Voice_switch.setFont(QFont(load_custom_font(), 14))
 
         # 动画模式下拉框
         self.global_Animation_comboBox.setFixedWidth(320) # 设置下拉框宽度为320像素
         self.global_Animation_comboBox.addItems(["手动停止动画", "自动播放完整动画", "直接显示结果"])
         self.global_Animation_comboBox.currentIndexChanged.connect(lambda: self.save_settings())
+        self.global_Animation_comboBox.setFont(QFont(load_custom_font(), 14))
 
         # 学号格式下拉框
         self.global_student_id_comboBox.setFixedWidth(320) # 设置下拉框宽度为320像素
         self.global_student_id_comboBox.addItems(["⌈01⌋", "⌈ 1 ⌋"])
         self.global_student_id_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.global_student_id_comboBox.setFont(QFont(load_custom_font(), 14))
 
         # 姓名格式下拉框
         self.global_student_name_comboBox.setFixedWidth(320) # 设置下拉框宽度为320像素
         self.global_student_name_comboBox.addItems(["⌈张  三⌋", "⌈ 张三 ⌋"])
         self.global_student_name_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.global_student_name_comboBox.setFont(QFont(load_custom_font(), 14))
 
         # 班级总人数下拉框
         self.global_student_quantity_switch.setOnText("显示")
         self.global_student_quantity_switch.setOffText("隐藏")
         self.global_student_quantity_switch.checkedChanged.connect(self.on_global_Voice_switch_changed)
+        self.global_student_quantity_switch.setFont(QFont(load_custom_font(), 14))
 
         # 便捷修改班级功能显示下拉框
         self.global_class_quantity_switch.setOnText("显示")
         self.global_class_quantity_switch.setOffText("隐藏")
         self.global_class_quantity_switch.checkedChanged.connect(self.on_global_Voice_switch_changed)
+        self.global_class_quantity_switch.setFont(QFont(load_custom_font(), 14))
 
         # 添加组件到分组中
         self.addGroup(FIF.SYNC, "抽取模式", "设置抽取模式", self.global_Draw_comboBox)

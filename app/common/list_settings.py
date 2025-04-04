@@ -1,16 +1,14 @@
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (QHBoxLayout, QVBoxLayout, QWidget, QLabel, QPushButton, 
-                            QComboBox, QLineEdit, QFileDialog, QMessageBox, QDialog, 
-                            QDialogButtonBox)
+from PyQt5.QtWidgets import QHBoxLayout, QVBoxLayout, QDialog
 
 import os
 from loguru import logger
 
+from PyQt5.QtGui import QFont
 from app.common.config import load_custom_font
-from app.view import group
+
+
 
 # 配置日志记录
 log_dir = "logs"
@@ -30,8 +28,43 @@ class ClassInputDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("输入班级名称")
         self.setFixedSize(400, 300)
-        self.setStyleSheet("background-color: white;")
         self.saved = False
+        
+        self.text_label = BodyLabel('请输入班级名称，每行一个\n本班级的班级名称向前放\n注:用大写数字排序会乱')
+        self.text_label.setFont(QFont(load_custom_font(), 14))
+
+        # 读取主题设置
+        try:
+            with open('app/Settings/config.json', 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                theme_mode = config['QFluentWidgets']['ThemeMode']
+        except Exception as e:
+            logger.error(f"读取主题设置失败: {str(e)}")
+            theme_mode = "Auto"
+        
+        # 根据主题模式设置样式
+        if theme_mode == "Light":
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        elif theme_mode == "Dark":
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
+        else:  # Auto
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    background-color: white;
+                }
+            """)
+            self.text_label.setFont(QFont(load_custom_font(), 14))
+            self.text_label.setStyleSheet("color: black;")
         
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入班级名称，每行一个")
@@ -55,6 +88,7 @@ class ClassInputDialog(QDialog):
         self.cancelButton.setFont(QFont(load_custom_font(), 14))
         
         layout = QVBoxLayout()
+        layout.addWidget(self.text_label)
         layout.addWidget(self.textEdit)
         
         buttonLayout = QHBoxLayout()
@@ -75,7 +109,7 @@ class ClassInputDialog(QDialog):
             w.cancelButton = PushButton('取消')
             
             if w.exec():
-                event.ignore()
+                self.reject
                 return
             else:
                 event.ignore()
@@ -91,8 +125,43 @@ class StudentInputDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("输入学生姓名")
         self.setFixedSize(400, 600)
-        self.setStyleSheet("background-color: white;")
         self.saved = False
+
+        self.text_label = BodyLabel('请输入学生姓名，每行一个\n在输入已经不在当前班级的学生时\n请在姓名前后加上【】')
+        self.text_label.setFont(QFont(load_custom_font(), 14))
+
+        # 读取主题设置
+        try:
+            with open('app/Settings/config.json', 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                theme_mode = config['QFluentWidgets']['ThemeMode']
+        except Exception as e:
+            logger.error(f"读取主题设置失败: {str(e)}")
+            theme_mode = "Auto"
+        
+        # 根据主题模式设置样式
+        if theme_mode == "Light":
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        elif theme_mode == "Dark":
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
+        else:  # Auto
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    background-color: white;
+                }
+            """)
+            self.text_label.setFont(QFont(load_custom_font(), 14))
+            self.text_label.setStyleSheet("color: black;")
         
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入学生姓名，每行一个")
@@ -116,6 +185,7 @@ class StudentInputDialog(QDialog):
         self.cancelButton.clicked.connect(self.reject)
         
         layout = QVBoxLayout()
+        layout.addWidget(self.text_label)
         layout.addWidget(self.textEdit)
         
         buttonLayout = QHBoxLayout()
@@ -136,8 +206,7 @@ class StudentInputDialog(QDialog):
             w.cancelButton = PushButton('取消')
             
             if w.exec():
-                event.ignore()
-                return
+                self.reject
             else:
                 event.ignore()
                 return
@@ -152,8 +221,43 @@ class GroupInputDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("输入小组名单")
         self.setFixedSize(400, 400)
-        self.setStyleSheet("background-color: white;")
         self.saved = False
+
+        self.text_label = BodyLabel('请输入小组名称，每行一个\尽量用小写数字来排序\n例:第1小组_[组名]\n注:用大写数字排序会乱')
+        self.text_label.setFont(QFont(load_custom_font(), 14))
+
+        # 读取主题设置
+        try:
+            with open('app/Settings/config.json', 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                theme_mode = config['QFluentWidgets']['ThemeMode']
+        except Exception as e:
+            logger.error(f"读取主题设置失败: {str(e)}")
+            theme_mode = "Auto"
+        
+        # 根据主题模式设置样式
+        if theme_mode == "Light":
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        elif theme_mode == "Dark":
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
+        else:  # Auto
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    background-color: white;
+                }
+            """)
+            self.text_label.setFont(QFont(load_custom_font(), 14))
+            self.text_label.setStyleSheet("color: black;")
         
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入小组名称，每行一个")
@@ -176,6 +280,7 @@ class GroupInputDialog(QDialog):
         self.cancelButton.clicked.connect(self.reject)
         
         layout = QVBoxLayout()
+        layout.addWidget(self.text_label)
         layout.addWidget(self.textEdit)
         
         buttonLayout = QHBoxLayout()
@@ -196,7 +301,7 @@ class GroupInputDialog(QDialog):
             w.cancelButton = PushButton('取消')
             
             if w.exec():
-                event.ignore()
+                self.reject
                 return
             else:
                 event.ignore()
@@ -211,8 +316,43 @@ class GroupStudentInputDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("输入小组成员姓名")
         self.setFixedSize(400, 400)
-        self.setStyleSheet("background-color: white;")
         self.saved = False
+
+        self.text_label = BodyLabel('请输入小组成员姓名，每行一个\n在输入已经不在当前班级的学生时\n请在姓名前后加上【】')
+        self.text_label.setFont(QFont(load_custom_font(), 14))
+
+        # 读取主题设置
+        try:
+            with open('app/Settings/config.json', 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                theme_mode = config['QFluentWidgets']['ThemeMode']
+        except Exception as e:
+            logger.error(f"读取主题设置失败: {str(e)}")
+            theme_mode = "Auto"
+        
+        # 根据主题模式设置样式
+        if theme_mode == "Light":
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        elif theme_mode == "Dark":
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
+        else:  # Auto
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    background-color: white;
+                }
+            """)
+            self.text_label.setFont(QFont(load_custom_font(), 14))
+            self.text_label.setStyleSheet("color: black;")
         
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入小组成员姓名，每行一个")
@@ -237,6 +377,7 @@ class GroupStudentInputDialog(QDialog):
         self.cancelButton.clicked.connect(self.reject)
         
         layout = QVBoxLayout()
+        layout.addWidget(self.text_label)
         layout.addWidget(self.textEdit)
         
         buttonLayout = QHBoxLayout()
@@ -257,7 +398,7 @@ class GroupStudentInputDialog(QDialog):
             w.cancelButton = PushButton('取消')
             
             if w.exec():
-                event.ignore()
+                self.reject
                 return
             else:
                 event.ignore()
@@ -288,6 +429,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.class_comboBox.setPlaceholderText("选择一个需要设置名单的班级")
         self.class_comboBox.addItems([])
         self.class_comboBox.setFont(QFont(load_custom_font(), 14))
+        self.class_comboBox.currentIndexChanged.connect(self._show_group_dialog)
 
         self.group_Button = PrimaryPushButton("设置小组")
         self.group_Button.clicked.connect(self.show_group_dialog)
@@ -320,17 +462,6 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(FIF.ADD_TO, "设置小组", "点击按钮设置小组名单", self.group_Button)
         self.addGroup(FIF.TILES, "选择小组", "选择一个需要修改成员的小组", self.group_ComboBox)
         self.addGroup(FIF.PEOPLE, "设置小组成员", "点击按钮设置该小组成员的姓名", self.group_student_Button)
-        
-        # 程序启动时自动加载小组名称
-        class_name = self.class_comboBox.currentText()
-        try:
-            if os.path.exists(f"app/resource/group/{class_name}_group.ini"):
-                with open(f"app/resource/group/{class_name}_group.ini", 'r', encoding='utf-8') as f:
-                    groups = [line.strip() for line in f.read().split('\n') if line.strip()]
-                    self.group_ComboBox.clear()
-                    self.group_ComboBox.addItems(groups)
-        except Exception as e:
-            logger.error(f"加载小组名称失败: {str(e)}")
             
     def show_class_dialog(self):
         dialog = ClassInputDialog(self)
@@ -411,6 +542,17 @@ class list_SettinsCard(GroupHeaderCardWidget):
                         isClosable=True,
                         aniType=FlyoutAnimationType.PULL_UP
                     )
+
+    def _show_group_dialog(self):
+        class_name = self.class_comboBox.currentText()
+        try:
+            if os.path.exists(f"app/resource/group/{class_name}_group.ini"):
+                with open(f"app/resource/group/{class_name}_group.ini", 'r', encoding='utf-8') as f:
+                    groups = [line.strip() for line in f.read().split('\n') if line.strip()]
+                    self.group_ComboBox.clear()
+                    self.group_ComboBox.addItems(groups)
+        except Exception as e:
+            logger.error(f"加载小组名称失败: {str(e)}")
                     
     def show_group_dialog(self):
         dialog = GroupInputDialog(self)

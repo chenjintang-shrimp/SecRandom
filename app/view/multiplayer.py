@@ -89,7 +89,7 @@ class multiplayer(QWidget):
             student_file = f"app/resource/students/{class_name}.ini"
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip()]
+                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and '【' not in line.strip() and '】' not in line.strip()]
                     if students:
                         # 从self.current_count获取抽取人数
                         draw_count = self.current_count
@@ -165,6 +165,21 @@ class multiplayer(QWidget):
                         return
         
         else:
+            # 清除旧布局和标签
+            if hasattr(self, 'container'):
+                self.container.deleteLater()
+                del self.container
+            if hasattr(self, 'student_labels'):
+                for label in self.student_labels:
+                    label.deleteLater()
+
+            # 删除布局中的所有内容
+            while self.result_layout.count(): 
+                item = self.result_layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()
+                    
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
             error_label.setFont(QFont(load_custom_font(), 85))
@@ -261,7 +276,7 @@ class multiplayer(QWidget):
             student_file = f"app/resource/students/{class_name}.ini"
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip()]     
+                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and '【' not in line.strip() and '】' not in line.strip()]     
                     available_students = [s for s in students if s[1].replace(' ', '')]
                     
                     if available_students:
@@ -392,7 +407,7 @@ class multiplayer(QWidget):
             
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip()]     
+                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and '【' not in line.strip() and '】' not in line.strip()]     
                     available_students = [s for s in students if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]]
                     
                     if available_students:
@@ -538,7 +553,7 @@ class multiplayer(QWidget):
             
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip()]
+                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and '【' not in line.strip() and '】' not in line.strip()]
                     
                     # 确保draw_record_file存在
                     if not os.path.exists(draw_record_file):
@@ -695,7 +710,7 @@ class multiplayer(QWidget):
             student_file = f"app/resource/students/{class_name}.ini"
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    count = len([line.strip() for line in f if line.strip()])
+                    count = len([line.strip() for line in f if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')])
                     self.total_label.setText(f'总人数: {count}')
                     self.max_count = count
                     self._update_count_display()

@@ -89,7 +89,7 @@ class single(QWidget):
             student_file = f"app/resource/students/{class_name}.ini"
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip()]
+                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')]
                     if students:
                         line_num, selected = random.choice(students)
                         
@@ -221,7 +221,7 @@ class single(QWidget):
             student_file = f"app/resource/students/{class_name}.ini"
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip()]
+                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')]
                     if students:
                         import random
                         line_num, selected = random.choice(students)
@@ -308,7 +308,7 @@ class single(QWidget):
             
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip()]     
+                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')]     
                     available_students = [s for s in students if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]]
                     
                     if available_students:
@@ -369,14 +369,13 @@ class single(QWidget):
                         if os.path.exists(draw_record_file):
                             os.remove(draw_record_file)
 
-                        Flyout.create(
-                            icon=InfoBarIcon.SUCCESS,
+                        InfoBar.success(
                             title='抽选完成',
                             content="所有学生都已被抽选完毕，临时记录已清除\n显示的结果为新一轮抽选的结果,您可继续抽取",
-                            target=self.start_button,
+                            orient=Qt.Horizontal,
                             parent=self,
                             isClosable=True,
-                            aniType=FlyoutAnimationType.PULL_UP
+                            duration=3000
                         )
 
                         self.until_the_reboot_draw()
@@ -414,7 +413,7 @@ class single(QWidget):
             
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip()]
+                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')]
                     
                     # 确保draw_record_file存在
                     if not os.path.exists(draw_record_file):
@@ -480,14 +479,13 @@ class single(QWidget):
                         if os.path.exists(draw_record_file):
                             os.remove(draw_record_file)
 
-                        Flyout.create(
-                            icon=InfoBarIcon.SUCCESS,
+                        InfoBar.success(
                             title='抽选完成',
-                            content="所有学生都已被抽选完毕，记录已清除\n显示的结果为新一轮抽选的结果, 您可继续抽取",
-                            target=self.start_button,
+                            content="所有学生都已被抽选完毕，临时记录已清除\n显示的结果为新一轮抽选的结果,您可继续抽取",
+                            orient=Qt.Horizontal,
                             parent=self,
                             isClosable=True,
-                            aniType=FlyoutAnimationType.PULL_UP
+                            duration=3000
                         )
                         
                         # 重新开始新一轮抽选
@@ -518,21 +516,20 @@ class single(QWidget):
         if os.path.exists(draw_record_file):
             os.remove(draw_record_file)
 
-        Flyout.create(
-            icon=InfoBarIcon.SUCCESS,
-            title='班级被更换',
-            content="班级已经更换，临时记录已被清除",
-            target=self.start_button,
+        InfoBar.success(
+            title='班级列表',
+            content="班级列表更新，临时记录已被清除",
+            orient=Qt.Horizontal,
             parent=self,
             isClosable=True,
-            aniType=FlyoutAnimationType.PULL_UP
+            duration=3000
         )
 
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
             student_file = f"app/resource/students/{class_name}.ini"
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    count = len([line.strip() for line in f if line.strip()])
+                    count = len([line.strip() for line in f if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')])
                     self.total_label.setText(f'总人数: {count}')
             else:
                 self.total_label.setText('总人数: 0')

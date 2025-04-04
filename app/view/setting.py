@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget, QScroller
 from ..common.config import cfg, AUTHOR, VERSION, YEAR
 from ..common.config import load_custom_font
 # 设置卡片
-from ..common.list_settings import list_SettinsCard
 from ..common.global_settings import global_SettinsCard
 from ..common.single_player_settings import single_player_SettinsCard
 from ..common.multi_player_settings import multi_player_SettinsCard
@@ -94,11 +93,7 @@ class setting(QFrame):
         settingLabel.setWordWrap(True)
         settingLabel.setFont(QFont(load_custom_font(), 22))  # 设置自定义字体
 
-        # 名单设置卡片组
-        self.list_setting_card = list_SettinsCard()
-        inner_layout_personal.addWidget(self.list_setting_card)
-
-        # 名单设置卡片组
+        # 全局设置卡片组
         global_setting_card = global_SettinsCard()
         inner_layout_personal.addWidget(global_setting_card)
 
