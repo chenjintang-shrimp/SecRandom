@@ -114,6 +114,8 @@ jobs:
           uv pip install -r requirements.txt
           # 安装 pyinstaller
           uv pip install pyinstaller
+          # 创建必要的目录结构
+          mkdir -p./app/Settings
           # 使用 pyinstaller 打包应用程序
           pyinstaller main.py \
             -w \
@@ -182,6 +184,7 @@ jobs:
           source .venv/bin/activate
           uv pip install -r requirements.txt
           uv pip install pyinstaller
+          mkdir -p./app/Settings
           pyinstaller main.py \
             -w \
             -n SecRandom \
