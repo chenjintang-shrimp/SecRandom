@@ -115,7 +115,7 @@ jobs:
           # 安装 pyinstaller
           uv pip install pyinstaller
           # 创建必要的目录结构
-          mkdir -p./app/Settings
+          mkdir -p ./app/Settings
           # 使用 pyinstaller 打包应用程序
           pyinstaller main.py \
             -w \
@@ -179,12 +179,12 @@ jobs:
       - name: 运行 Linux (Debian 10) 构建
         shell: bash
         run: |
-          mkdir zip
+          mkdir -p zip
           uv venv
           source .venv/bin/activate
           uv pip install -r requirements.txt
           uv pip install pyinstaller
-          mkdir -p./app/Settings
+          mkdir -p ./app/Settings
           pyinstaller main.py \
             -w \
             -n SecRandom \
