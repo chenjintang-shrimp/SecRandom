@@ -47,11 +47,6 @@ def write_json(json_path, field_name, default_value):
     with open(json_path, 'w', encoding='utf-8') as file: 
         json.dump(json_file, file, ensure_ascii=False, indent=4)
 
-# 写入默认数据
-write_json('./app/Settings/Settings.json', 'software_author', 'lzy98276')
-write_json('./app/Settings/Settings.json', 'software_name', 'SecRandom')
-write_json('./app/Settings/Settings.json', 'version', '1.0.0.0-beta')
-
 # 导入子页面
 from app.view.quicksetup import quicksetup
 from app.view.setting import setting
