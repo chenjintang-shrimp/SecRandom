@@ -17,7 +17,7 @@
   - ✅ **【个性化 设置】支持设置界面缩放大小**
 
 ### 🎉 软件仓库日志
- - **SecRandom v1.0.0.0 发布 - 2025-04-05**
+ - **SecRandom v1.0.0.4 发布 - 2025-04-05**
 
 Full Changelog: [main@{1day}...mian](main%40%7B1day%7D...main)
 
@@ -31,21 +31,21 @@ Full Changelog: [main@{1day}...mian](main%40%7B1day%7D...main)
 **Github 镜像-1 下载链接**
 | 平台/打包方式 | 支持架构 | 完整版 |
 | --- | --- | --- |
-| Windows | x86 | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-Windows-x86.zip) |
-| Windows | x64 | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-Windows-x64.zip) |
-| macOS | x64 | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-macOS-x64.zip) |
-| macOS | x64.bundle | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-macOS-x64.bundle.zip) |
-| macOS | arm64 | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-macOS-arm64.zip) |
-| macOS | arm64.bundle | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-macOS-arm64.bundle.zip) |
-| Debian 10 |  | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-Debian10.zip) |
+| Windows | x86 | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-Windows-x86.zip) |
+| Windows | x64 | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-Windows-x64.zip) |
+| macOS | x64 | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-macOS-x64.zip) |
+| macOS | x64.bundle | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-macOS-x64.bundle.zip) |
+| macOS | arm64 | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-macOS-arm64.zip) |
+| macOS | arm64.bundle | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-macOS-arm64.bundle.zip) |
+| Debian 10 |  | [下载](https://ghfast.top/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-Debian10.zip) |
 
 **Github 镜像-2 下载链接**
 | 平台/打包方式 | 支持架构 | 完整版 |
 | --- | --- | --- |
-| Windows | x86 | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-Windows-x86.zip) |
-| Windows | x64 | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-Windows-x64.zip) |
-| macOS | x64 | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-macOS-x64.zip) |
-| macOS | x64.bundle | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-macOS-x64.bundle.zip) |
-| macOS | arm64 | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-macOS-arm64.zip) |
-| macOS | arm64.bundle | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-macOS-arm64.bundle.zip) |
-| Debian 10 |  | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.0/SecRandom-Debian10.zip) |
+| Windows | x86 | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-Windows-x86.zip) |
+| Windows | x64 | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-Windows-x64.zip) |
+| macOS | x64 | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-macOS-x64.zip) |
+| macOS | x64.bundle | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-macOS-x64.bundle.zip) |
+| macOS | arm64 | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-macOS-arm64.zip) |
+| macOS | arm64.bundle | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-macOS-arm64.bundle.zip) |
+| Debian 10 |  | [下载](https://gh-proxy.com/https://github.com/SecRandom/SecRandom/releases/download/v1.0.0.4/SecRandom-Debian10.zip) |
