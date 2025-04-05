@@ -323,7 +323,7 @@ class multiplayer(QWidget):
                         vbox_layout = QVBoxLayout()
                         # 创建新标签列表
                         self.student_labels = []
-                        for num, name in selected_students:
+                        for num, selected in selected_students:
                             # 整合学号格式和姓名处理逻辑
                             student_id_format = multi_player_student_id if multi_player_student_id != 0 else global_student_id
                             student_name_format = multi_player_student_name if multi_player_student_name != 0 else global_student_name
@@ -337,8 +337,62 @@ class multiplayer(QWidget):
                                 student_id_str = f"{num:02}"
                             
                             # 处理两字姓名
-                            if student_name_format == 0 and len(name) == 2:
-                                name = f"{name[0]}    {name[1]}"
+                            if student_name_format == 0 and len(selected) == 2:
+                                name = f"{selected[0]}    {selected[1]}"
+                            else:
+                                name = selected
+
+                            # 读取设置中的history_enabled
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    history_enabled = settings['history']['history_enabled']
+                            except Exception as e:
+                                history_enabled = False
+                                logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
+
+                            if history_enabled:
+                                # 记录抽选历史
+                                history_file = f"app/resource/history/{class_name}.json"
+                                os.makedirs(os.path.dirname(history_file), exist_ok=True)
+                                
+                                history_data = {}
+                                if os.path.exists(history_file):
+                                    with open(history_file, 'r', encoding='utf-8') as f:
+                                        try:
+                                            history_data = json.load(f)
+                                        except json.JSONDecodeError:
+                                            history_data = {}
+                                
+                                if "multi" not in history_data:
+                                    history_data["multi"] = {}
+
+                                import datetime
+
+                                if selected not in history_data["multi"]:
+                                    history_data["multi"][selected] = {
+                                        "total_number_of_times": 1,
+                                        "time": [
+                                            {
+                                                "draw_method": {
+                                                    self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                                }
+                                            }
+                                        ]
+                                    }
+                                else:
+                                    history_data["multi"][selected]["total_number_of_times"] += 1
+                                    history_data["multi"][selected]["time"].append({
+                                        "draw_method": {
+                                            self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                        }
+                                    })
+                                
+                                with open(history_file, 'w', encoding='utf-8') as f:
+                                    json.dump(history_data, f, ensure_ascii=False, indent=4)
+
+                            else:
+                                logger.info("历史记录功能已被禁用。")
                             
                             label = BodyLabel(f"{student_id_str} {name}")
                             label.setAlignment(Qt.AlignCenter)
@@ -454,7 +508,7 @@ class multiplayer(QWidget):
                         vbox_layout = QVBoxLayout()
                         # 创建新标签列表
                         self.student_labels = []
-                        for num, name in selected_students:
+                        for num, selected in selected_students:
                             # 整合学号格式和姓名处理逻辑
                             student_id_format = multi_player_student_id if multi_player_student_id != 0 else global_student_id
                             student_name_format = multi_player_student_name if multi_player_student_name != 0 else global_student_name
@@ -468,8 +522,62 @@ class multiplayer(QWidget):
                                 student_id_str = f"{num:02}"
                             
                             # 处理两字姓名
-                            if student_name_format == 0 and len(name) == 2:
-                                name = f"{name[0]}    {name[1]}"
+                            if student_name_format == 0 and len(selected) == 2:
+                                name = f"{selected[0]}    {selected[1]}"
+                            else:
+                                name = selected
+
+                            # 读取设置中的history_enabled
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    history_enabled = settings['history']['history_enabled']
+                            except Exception as e:
+                                history_enabled = False
+                                logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
+
+                            if history_enabled:
+                                # 记录抽选历史
+                                history_file = f"app/resource/history/{class_name}.json"
+                                os.makedirs(os.path.dirname(history_file), exist_ok=True)
+                                
+                                history_data = {}
+                                if os.path.exists(history_file):
+                                    with open(history_file, 'r', encoding='utf-8') as f:
+                                        try:
+                                            history_data = json.load(f)
+                                        except json.JSONDecodeError:
+                                            history_data = {}
+                                
+                                if "multi" not in history_data:
+                                    history_data["multi"] = {}
+
+                                import datetime
+
+                                if selected not in history_data["multi"]:
+                                    history_data["multi"][selected] = {
+                                        "total_number_of_times": 1,
+                                        "time": [
+                                            {
+                                                "draw_method": {
+                                                    self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                                }
+                                            }
+                                        ]
+                                    }
+                                else:
+                                    history_data["multi"][selected]["total_number_of_times"] += 1
+                                    history_data["multi"][selected]["time"].append({
+                                        "draw_method": {
+                                            self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                        }
+                                    })
+                                
+                                with open(history_file, 'w', encoding='utf-8') as f:
+                                    json.dump(history_data, f, ensure_ascii=False, indent=4)
+
+                            else:
+                                logger.info("历史记录功能已被禁用。")
                             
                             label = BodyLabel(f"{student_id_str} {name}")
                             label.setAlignment(Qt.AlignCenter)
@@ -610,7 +718,7 @@ class multiplayer(QWidget):
                         vbox_layout = QVBoxLayout()
                         # 创建新标签列表
                         self.student_labels = []
-                        for num, name in selected_students:
+                        for num, selected in selected_students:
                             # 整合学号格式和姓名处理逻辑
                             student_id_format = multi_player_student_id if multi_player_student_id != 0 else global_student_id
                             student_name_format = multi_player_student_name if multi_player_student_name != 0 else global_student_name
@@ -624,8 +732,62 @@ class multiplayer(QWidget):
                                 student_id_str = f"{num:02}"
                             
                             # 处理两字姓名
-                            if student_name_format == 0 and len(name) == 2:
-                                name = f"{name[0]}    {name[1]}"
+                            if student_name_format == 0 and len(selected) == 2:
+                                name = f"{selected[0]}    {selected[1]}"
+                            else:
+                                name = selected
+
+                            # 读取设置中的history_enabled
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    history_enabled = settings['history']['history_enabled']
+                            except Exception as e:
+                                history_enabled = False
+                                logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
+
+                            if history_enabled:
+                                # 记录抽选历史
+                                history_file = f"app/resource/history/{class_name}.json"
+                                os.makedirs(os.path.dirname(history_file), exist_ok=True)
+                                
+                                history_data = {}
+                                if os.path.exists(history_file):
+                                    with open(history_file, 'r', encoding='utf-8') as f:
+                                        try:
+                                            history_data = json.load(f)
+                                        except json.JSONDecodeError:
+                                            history_data = {}
+                                
+                                if "multi" not in history_data:
+                                    history_data["multi"] = {}
+
+                                import datetime
+
+                                if selected not in history_data["multi"]:
+                                    history_data["multi"][selected] = {
+                                        "total_number_of_times": 1,
+                                        "time": [
+                                            {
+                                                "draw_method": {
+                                                    self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                                }
+                                            }
+                                        ]
+                                    }
+                                else:
+                                    history_data["multi"][selected]["total_number_of_times"] += 1
+                                    history_data["multi"][selected]["time"].append({
+                                        "draw_method": {
+                                            self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                        }
+                                    })
+                                
+                                with open(history_file, 'w', encoding='utf-8') as f:
+                                    json.dump(history_data, f, ensure_ascii=False, indent=4)
+
+                            else:
+                                logger.info("历史记录功能已被禁用。")
                             
                             label = BodyLabel(f"{student_id_str} {name}")
                             label.setAlignment(Qt.AlignCenter)

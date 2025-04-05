@@ -9,12 +9,12 @@
 [![Release](https://img.shields.io/github/v/release/SecRandom/SecRandom?style=flat&color=%233fb950&label=正式版)](https://github.com/SecRandom/SecRandom/releases/latest)
 [![Beta](https://img.shields.io/github/v/release/SecRandom/SecRandom?include_prereleases&style=social-square&label=测试版)](https://github.com/SecRandom/SecRandom/releases/)
 [![Github Last Commit](https://img.shields.io/github/last-commit/SecRandom/SecRandom)](https://github.com/SecRandom/SecRandom/commits/master)
-[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%EF%BD%9C833875216-blue?style=flat&logo=TencentQQ)](https://qm.qq.com/q/ASRSNUJuve)
+[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%EF%BD%9C1038111867-blue?style=flat&logo=TencentQQ)](https://qm.qq.com/q/yJkTpkiW5i)
 [![bilibili](https://img.shields.io/badge/-UP%E4%B8%BB%EF%BD%9C黎泽懿-%23FB7299?style=flat&logo=bilibili)](https://space.bilibili.com/520571577)
 
 该软件能以多种方式进行随机抽取 学号/姓名/小组...
 
-| [Github 下载](https://github.com/SecRandom/SecRandom/releases) | [123云盘 下载](https://www.123684.com/s/9529jv-zggxh) |
+| [Github 下载](https://github.com/SecRandom/SecRandom/releases) | [123云盘 下载](https://www.123684.com/s/9529jv-U4Fxh) |
 
 </div>
 
@@ -79,22 +79,27 @@
 <!-- SCREENSHOTS -->
 ## 软件截图
 
-<!-- ### **浅色-下载界面**
-![SecRandom/下载界面](ScreenSots/SecRandom-Light.png)
-### **深色-下载界面**
-![SecRandom/下载界面](ScreenSots/SecRandom-Dark.png)
-### **浅色-设置界面**
-![SecRandom/下载界面](ScreenSots/SecRandom-Light-Setting.png)
-### **深色-设置界面**
-![SecRandom/下载界面](ScreenSots/SecRandom-Dark-Setting.png) -->
-
-### **暂未开发完成第一版**
+### **浅色-抽单人**
+![SecRandom/抽单人](ScreenSots/抽单人_浅色.png)
+### **浅色-抽多人**
+![SecRandom/抽多人](ScreenSots/抽多人_浅色.png)
+### **浅色-抽小组-小组名称**
+![SecRandom/抽小组/小组名称](ScreenSots/抽小组_浅色_小组名称.png)
+### **浅色-抽小组-小组成员**
+![SecRandom/抽小组/小组成员](ScreenSots/抽小组_浅色_小组成员.png)
+### **浅色-历史记录**
+![SecRandom/历史记录](ScreenSots/历史记录_浅色.png)
+### **浅色-名单设置**
+![SecRandom/名单设置](ScreenSots/名单设置_浅色.png)
+### **浅色-设置**
+![SecRandom/设置](ScreenSots/设置_浅色.png)
 
 <!-- CONTACT -->
 ## 联系
 
-* [E-mail](mailto:XiaoYouChR@qq.com) - lzy.12@foxmail.com
-* [QQ 群](https://qm.qq.com/q/iWcfaPHn7W) - 833875216
+* [E-mail](mailto:lzy.12@foxmail.com) - lzy.12@foxmail.com
+* [QQ 群](https://qm.qq.com/q/yJkTpkiW5i) - 1038111867
+* [Billibili](https://space.bilibili.com/520571577) - 黎泽懿
 
 <!-- ACKNOWLEDGMENTS -->
 ## 引用

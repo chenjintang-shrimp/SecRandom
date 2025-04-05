@@ -225,6 +225,59 @@ class single(QWidget):
                     if students:
                         import random
                         line_num, selected = random.choice(students)
+
+                        # 读取设置中的history_enabled
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                history_enabled = settings['history']['history_enabled']
+                        except Exception as e:
+                            history_enabled = False
+                            logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
+
+                        if history_enabled:
+                            # 记录抽选历史
+                            history_file = f"app/resource/history/{class_name}.json"
+                            os.makedirs(os.path.dirname(history_file), exist_ok=True)
+                            
+                            history_data = {}
+                            if os.path.exists(history_file):
+                                with open(history_file, 'r', encoding='utf-8') as f:
+                                    try:
+                                        history_data = json.load(f)
+                                    except json.JSONDecodeError:
+                                        logger.error(f"历史记录文件 {history_file} 格式错误，已重置为空。")
+                                        history_data = {}
+
+                            if "single" not in history_data:
+                                history_data["single"] = {}
+
+                            import datetime
+
+                            if selected not in history_data["single"]:
+                                history_data["single"][selected] = {
+                                    "total_number_of_times": 1,
+                                    "time": [
+                                        {
+                                            "draw_method": {
+                                                self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                            }
+                                        }
+                                    ]
+                                }
+                            else:
+                                history_data["single"][selected]["total_number_of_times"] += 1
+                                history_data["single"][selected]["time"].append({
+                                    "draw_method": {
+                                        self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                    }
+                                })
+                            
+                            with open(history_file, 'w', encoding='utf-8') as f:
+                                json.dump(history_data, f, ensure_ascii=False, indent=4)
+
+                        else:
+                            logger.info("历史记录功能已被禁用。")
                         
                         # 根据设置格式化学号显示
                         try:
@@ -314,6 +367,58 @@ class single(QWidget):
                     if available_students:
                         import random
                         line_num, selected = random.choice(available_students)
+
+                        # 读取设置中的history_enabled
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                history_enabled = settings['history']['history_enabled']
+                        except Exception as e:
+                            history_enabled = False
+                            logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
+
+                        if history_enabled:
+                            # 记录抽选历史
+                            history_file = f"app/resource/history/{class_name}.json"
+                            os.makedirs(os.path.dirname(history_file), exist_ok=True)
+                            
+                            history_data = {}
+                            if os.path.exists(history_file):
+                                with open(history_file, 'r', encoding='utf-8') as f:
+                                    try:
+                                        history_data = json.load(f)
+                                    except json.JSONDecodeError:
+                                        history_data = {}
+                            
+                            if "single" not in history_data:
+                                history_data["single"] = {}
+
+                            import datetime
+
+                            if selected not in history_data["single"]:
+                                history_data["single"][selected] = {
+                                    "total_number_of_times": 1,
+                                    "time": [
+                                        {
+                                            "draw_method": {
+                                                self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                            }
+                                        }
+                                    ]
+                                }
+                            else:
+                                history_data["single"][selected]["total_number_of_times"] += 1
+                                history_data["single"][selected]["time"].append({
+                                    "draw_method": {
+                                        self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                    }
+                                })
+                            
+                            with open(history_file, 'w', encoding='utf-8') as f:
+                                json.dump(history_data, f, ensure_ascii=False, indent=4)
+
+                        else:
+                            logger.info("历史记录功能已被禁用。")
 
                         # 根据设置格式化学号显示
                         try:
@@ -424,6 +529,58 @@ class single(QWidget):
                     if available_students:
                         import random
                         line_num, selected = random.choice(available_students)
+                        
+                        # 读取设置中的history_enabled
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                history_enabled = settings['history']['history_enabled']
+                        except Exception as e:
+                            history_enabled = False
+                            logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
+
+                        if history_enabled:
+                            # 记录抽选历史
+                            history_file = f"app/resource/history/{class_name}.json"
+                            os.makedirs(os.path.dirname(history_file), exist_ok=True)
+                            
+                            history_data = {}
+                            if os.path.exists(history_file):
+                                with open(history_file, 'r', encoding='utf-8') as f:
+                                    try:
+                                        history_data = json.load(f)
+                                    except json.JSONDecodeError:
+                                        history_data = {}
+                            
+                            if "single" not in history_data:
+                                history_data["single"] = {}
+
+                            import datetime
+
+                            if selected not in history_data["single"]:
+                                history_data["single"][selected] = {
+                                    "total_number_of_times": 1,
+                                    "time": [
+                                        {
+                                            "draw_method": {
+                                                self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                            }
+                                        }
+                                    ]
+                                }
+                            else:
+                                history_data["single"][selected]["total_number_of_times"] += 1
+                                history_data["single"][selected]["time"].append({
+                                    "draw_method": {
+                                        self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                    }
+                                })
+                            
+                            with open(history_file, 'w', encoding='utf-8') as f:
+                                json.dump(history_data, f, ensure_ascii=False, indent=4)
+
+                        else:
+                            logger.info("历史记录功能已被禁用。")
 
                         # 根据设置格式化学号显示
                         try:

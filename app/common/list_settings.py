@@ -410,7 +410,6 @@ class GroupStudentInputDialog(QDialog):
 
 
 class list_SettinsCard(GroupHeaderCardWidget):
-    refresh_class_list = pyqtSignal()
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTitle("名单设置")
