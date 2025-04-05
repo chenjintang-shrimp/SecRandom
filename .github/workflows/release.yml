@@ -63,8 +63,18 @@ jobs:
           done
           cat SHA256SUMS.txt
           
+      - name: 验证 SHA256SUMS.txt 文件
+        run: |
+          cd release
+          if [ ! -f "SHA256SUMS.txt" ]; then
+            echo "Error: SHA256SUMS.txt not found in release directory"
+            exit 1
+          fi
+          cd ..
+
       - name: 生成 SHA256 的表格信息
         run: |
+          cd release
           echo "\n### SHA256 校验值" >> ../CHANGELOG.md
           echo "| 文件名 | SHA256 值 |" >> ../CHANGELOG.md
           echo "| --- | --- |" >> ../CHANGELOG.md
@@ -73,6 +83,7 @@ jobs:
             file=$(echo "$line" | awk '{print $2}')
             echo "| $file | $hash |" >> ../CHANGELOG.md
           done < SHA256SUMS.txt
+          cd ..
             
       - name: 确定发布类型
         id: release-type
