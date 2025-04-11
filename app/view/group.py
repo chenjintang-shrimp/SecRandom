@@ -1020,6 +1020,10 @@ class groupplayer(QWidget):
         # 根据设置控制UI元素显示状态
         if group_player_student_quantity == 0:
             show_student_quantity = global_student_quantity
+            if show_student_quantity == 'true':
+                show_student_quantity = True
+            else:
+                show_student_quantity = False
         elif group_player_student_quantity == 1:
             show_student_quantity = True
         else:
@@ -1027,12 +1031,16 @@ class groupplayer(QWidget):
             
         if group_player_class_quantity == 0:
             show_class_quantity = global_class_quantity
+            if show_class_quantity == 'true':
+                show_class_quantity = True
+            else:
+                show_class_quantity = False
         elif group_player_class_quantity == 1:
             show_class_quantity = True
         else:
             show_class_quantity = False
         
-        if group_player_student_quantity == 1 or group_player_class_quantity == 1 or global_student_quantity == True or global_class_quantity == True:
+        if group_player_student_quantity == 1 or group_player_class_quantity == 1 or global_student_quantity == 'true' or global_class_quantity == 'true':
             show_refresh_button = True
         else:
             show_refresh_button = False

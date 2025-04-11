@@ -25,27 +25,6 @@ logger.add(
     retention="30 days",
     format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
 )
-# 读取配置文件
-def read_json(json_path):
-    if os.path.exists(json_path):
-        try:
-            with open(json_path, 'r', encoding='utf-8') as file:
-                return json.load(file)
-        except json.JSONDecodeError:
-            # 如果文件内容不是有效的 JSON 格式，返回空字典
-            return {}
-    return {}
-#读取以及写入配置文件
-def write_json(json_path, field_name, default_value): 
-    try:
-        with open(json_path, 'r', encoding='utf-8') as file: 
-            json_file = json.load(file)
-    except (FileNotFoundError, json.JSONDecodeError):
-        json_file = {}
-    json_file[field_name] = default_value
-    json_file.update(json_file) 
-    with open(json_path, 'w', encoding='utf-8') as file: 
-        json.dump(json_file, file, ensure_ascii=False, indent=4)
 
 # 导入子页面
 from app.view.quicksetup import quicksetup
@@ -56,14 +35,12 @@ from app.view.multiplayer import multiplayer
 from app.view.group import groupplayer
 
 class Window(MSFluentWindow):
-    some_signal = pyqtSignal()
     def __init__(self):
         super().__init__()
         self.resize(1200, 800)
         self.setMinimumSize(1000, 800)
         self.setWindowTitle('SecRandom')
         self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
-        # 启动时清理临时抽取记录文件
         self.start_cleanup()
 
         # 获取主屏幕
@@ -73,11 +50,8 @@ class Window(MSFluentWindow):
         w, h = desktop.width(), desktop.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
-        self.splashScreen = SplashScreen(self.windowIcon(), self)
-        self.splashScreen.setIconSize(QSize(256, 256))
-        self.show()
+        # self.show()
         self.createSubInterface()
-        self.splashScreen.finish()
 
     def createSubInterface(self):
         loop = QEventLoop(self)
@@ -85,25 +59,24 @@ class Window(MSFluentWindow):
         loop.exec()
 
         self.quicksetupInterface = quicksetup(self)
-        self.quicksetupInterface.setObjectName("quicksetupInterface")  # 设置对象名称
+        self.quicksetupInterface.setObjectName("quicksetupInterface")
 
         self.settingInterface = setting(self)
-        self.settingInterface.setObjectName("settingInterface")  # 设置对象名称
+        self.settingInterface.setObjectName("settingInterface")
 
         self.historyInterface = history(self)
-        self.historyInterface.setObjectName("historyInterface")  # 设置对象名称
+        self.historyInterface.setObjectName("historyInterface")
 
         self.singleInterface = single(self)
-        self.singleInterface.setObjectName("singleInterface")  # 设置对象名称
+        self.singleInterface.setObjectName("singleInterface")
 
         self.multiInterface = multiplayer(self)
-        self.multiInterface.setObjectName("multiInterface")  # 设置对象名称
+        self.multiInterface.setObjectName("multiInterface")
 
         self.groupInterface = groupplayer(self)
-        self.groupInterface.setObjectName("groupInterface")  # 设置对象名称
+        self.groupInterface.setObjectName("groupInterface")
 
         self.initNavigation()
-        self.initWindow()
 
     def initNavigation(self):
         # 使用 MSFluentWindow 的 addSubInterface 方法
@@ -114,18 +87,6 @@ class Window(MSFluentWindow):
         self.addSubInterface(self.historyInterface, fIcon.HISTORY, '历史记录', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.quicksetupInterface, fIcon.QUICK_NOTE, '名单设置', position=NavigationItemPosition.BOTTOM)  
         self.addSubInterface(self.settingInterface, fIcon.SETTING, '设置', position=NavigationItemPosition.BOTTOM)
-
-    def initWindow(self):
-        self.resize(1200, 800)
-        self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
-        self.setWindowTitle('SecRandom')
-
-        # 获取主屏幕
-        screen = QApplication.primaryScreen()
-        # 获取屏幕的可用几何信息
-        desktop = screen.availableGeometry()
-        w, h = desktop.width(), desktop.height()
-        self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
     def closeEvent(self, event):
         """窗口关闭时清理临时抽取记录文件"""

@@ -735,6 +735,10 @@ class single(QWidget):
         # 根据设置控制UI元素显示状态
         if single_player_student_quantity == 0:
             show_student_quantity = global_student_quantity
+            if show_student_quantity == 'true':
+                show_student_quantity = True
+            else:
+                show_student_quantity = False
         elif single_player_student_quantity == 1:
             show_student_quantity = True
         else:
@@ -742,12 +746,16 @@ class single(QWidget):
             
         if single_player_class_quantity == 0:
             show_class_quantity = global_class_quantity
+            if show_class_quantity == 'true':
+                show_class_quantity = True
+            else:
+                show_class_quantity = False
         elif single_player_class_quantity == 1:
             show_class_quantity = True
         else:
             show_class_quantity = False
         
-        if single_player_student_quantity == 1 or single_player_class_quantity == 1 or global_student_quantity == True or global_class_quantity == True:
+        if single_player_student_quantity == 1 or single_player_class_quantity == 1 or global_student_quantity == 'true' or global_class_quantity == 'true':
             show_refresh_button = True
         else:
             show_refresh_button = False
@@ -800,7 +808,6 @@ class single(QWidget):
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
         self.refresh_button.clicked.connect(self.refresh_class_list)
         self.refresh_button.setVisible(show_refresh_button)
-        bottom_layout.addWidget(self.refresh_button, 0, Qt.AlignLeft)
 
         # 班级下拉框
         self.class_combo = ComboBox()
@@ -817,34 +824,34 @@ class single(QWidget):
                     if classes:
                         self.class_combo.addItems(classes)
                     else:
-                        logger.error(f"你暂未添加班级")
+                        logger.info(f"你暂未添加班级")
                         self.class_combo.addItem("你暂未添加班级")
             else:
-                logger.error(f"你暂未添加班级")
+                logger.info(f"你暂未添加班级")
                 self.class_combo.addItem("你暂未添加班级")
         except Exception as e:
             logger.error(f"加载班级列表失败: {str(e)}")
             self.class_combo.addItem("加载班级列表失败")
         
-        bottom_layout.addWidget(self.class_combo, 1, Qt.AlignLeft)
-
         # 总人数显示
         self.total_label = BodyLabel('总人数: 0')
         self.total_label.setFont(QFont(load_custom_font(), 14))
         self.total_label.setFixedWidth(200)
         self.total_label.setVisible(show_student_quantity)
-        bottom_layout.addWidget(self.total_label, 2, Qt.AlignLeft)
 
+        bottom_layout.addWidget(self.refresh_button)
+        bottom_layout.addWidget(self.class_combo)
+        bottom_layout.addWidget(self.total_label)
         bottom_layout.addStretch(6)  # 添加弹性空间
-        
         
         # 班级选择变化时更新总人数
         self.class_combo.currentTextChanged.connect(self.update_total_count)
         
         # 初始化总人数显示
         self.update_total_count()
-        
-        # main_layout.addStretch(1)  # 添加弹性空间
+
         main_layout.addLayout(bottom_layout)
+
         
+        # 设置主布局
         self.setLayout(main_layout)
