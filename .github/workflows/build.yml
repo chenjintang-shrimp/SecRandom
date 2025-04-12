@@ -51,8 +51,16 @@ jobs:
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:. `
             --version-file=version_info.txt
+          # 创建zip_dist/SecRandom目录
+          mkdir zip_dist/SecRandom
+          # 复制dist目录下的所有文件到zip_dist/SecRandom目录下
+          Copy-Item -Recurse -Force dist/* zip_dist/SecRandom
+          # 复制资源文件夹到zip_dist/SecRandom目录下
+          Copy-Item -Recurse -Force resources zip_dist/SecRandom
+          # 复制 LICENSE 文件到zip_dist/SecRandom目录下
+          Copy-Item LICENSE zip_dist/SecRandom
           # 使用系统自带的 Compress-Archive 压缩文件
-          Compress-Archive -Path dist/* -DestinationPath "zip/SecRandom-Windows-${{ matrix.arch }}.zip" -Force
+          Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ matrix.arch }}.zip" -Force
 
 
       - name: 上传已签名的应用程序
