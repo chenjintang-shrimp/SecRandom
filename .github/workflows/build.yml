@@ -52,23 +52,13 @@ jobs:
             --add-data LICENSE:. `
             --version-file=version_info.txt
           
-          # 验证PyInstaller输出路径
-          $distPath = "dist\SecRandom"
-          if (-not (Test-Path $distPath)) {
-            # 检查是否生成了单文件模式
-            $exePath = "dist\SecRandom.exe"
-            if (Test-Path $exePath) {
-              # 创建SecRandom目录并移动exe文件
-              New-Item -ItemType Directory -Path $distPath -Force
-              Move-Item -Path $exePath -Destination "$distPath\SecRandom.exe"
-            } else {
-              Write-Host "Error: 打包失败，未找到PyInstaller输出路径。"
-              exit 1
-            }
-          }
-          
           # 使用系统自带的 Compress-Archive 压缩文件
-          Compress-Archive -Path "$distPath\*","app\resource\*" -DestinationPath "zip\SecRandom-Windows-${{ matrix.arch }}.zip" -Force
+          if (Test-Path "dist/SecRandom") {
+            Compress-Archive -Path "$pwd\dist\SecRandom\*" -DestinationPath "zip\SecRandom-Windows-${{ matrix.arch }}.zip" -Force
+          } else {
+            Write-Error "构建失败: dist/SecRandom 目录不存在"
+            exit 1
+          }
 
       - name: 上传未签名的应用程序
         if: ${{ ( matrix.os != 'windows-latest' && github.event_name != 'pull_request' ) || github.event_name == 'pull_request' }}
