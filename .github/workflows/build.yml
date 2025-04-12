@@ -51,7 +51,12 @@ jobs:
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:.
           # 使用系统自带的 Compress-Archive 压缩文件
-          Compress-Archive -Path dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ matrix.arch }}.zip" -Force
+          if (Test-Path "dist\SecRandom") {
+            Compress-Archive -Path "dist\SecRandom\*" -DestinationPath "zip\SecRandom-Windows-${{ matrix.arch }}.zip" -Force
+          } else {
+            Write-Host "Error: dist\SecRandom directory not found"
+            exit 1
+          }
 
       - name: 上传未签名的应用程序
         if: ${{ ( matrix.os != 'windows-latest' && github.event_name != 'pull_request' ) || github.event_name == 'pull_request' }}
