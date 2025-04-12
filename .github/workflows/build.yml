@@ -51,36 +51,9 @@ jobs:
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:. `
             --version-file=version_info.txt
-          
           # 使用系统自带的 Compress-Archive 压缩文件
-          if (Test-Path "dist/SecRandom") {
-            Compress-Archive -Path "$pwd\dist\SecRandom\*" -DestinationPath "zip\SecRandom-Windows-${{ matrix.arch }}.zip" -Force
-          } else {
-            Write-Error "构建失败: dist/SecRandom 目录不存在"
-            exit 1
-          }
+          Compress-Archive -Path dist/* -DestinationPath "zip/SecRandom-Windows-${{ matrix.arch }}.zip" -Force
 
-      - name: 上传未签名的应用程序
-        if: ${{ ( matrix.os != 'windows-latest' && github.event_name != 'pull_request' ) || github.event_name == 'pull_request' }}
-        uses: actions/upload-artifact@v4.4.2
-        with:
-          name: ${{ matrix.os }}-${{ matrix.arch }}
-          path: ./zip
-  
-      - name: 上传未签名的单个文件
-        if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v4.4.2
-        with:
-          name: windows-${{ matrix.arch }} (Unsigned single)
-          path: ./dist/SecRandom/SecRandom.exe
-
-      - name: 删除未签名的 ZIP 文件
-        if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' }}
-        run: |
-          if (Test-Path "zip/SecRandom-Windows-${{ matrix.arch }} (Unsigned).zip") {
-            del "zip/SecRandom-Windows-${{ matrix.arch }} (Unsigned).zip"
-          }
-          Compress-Archive -Path dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ matrix.arch }}.zip" -Force
 
       - name: 上传已签名的应用程序
         if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' }}
