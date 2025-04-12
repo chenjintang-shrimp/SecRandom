@@ -53,12 +53,12 @@ jobs:
           # 使用系统自带的 Compress-Archive 压缩文件
           Compress-Archive -Path dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ matrix.arch }}.zip" -Force
 
-          - name: 上传未签名的应用程序
-          if: ${{ ( matrix.os != 'windows-latest' && github.event_name != 'pull_request' ) || github.event_name == 'pull_request' }}
-          uses: actions/upload-artifact@v4.4.2
-          with:
-            name: ${{ matrix.os }}-${{ matrix.arch }}
-            path: ./zip
+      - name: 上传未签名的应用程序
+        if: ${{ ( matrix.os != 'windows-latest' && github.event_name != 'pull_request' ) || github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v4.4.2
+        with:
+          name: ${{ matrix.os }}-${{ matrix.arch }}
+          path: ./zip
   
       - name: 上传未签名的单个文件
         if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' }}
