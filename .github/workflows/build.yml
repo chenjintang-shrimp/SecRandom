@@ -49,7 +49,8 @@ jobs:
             -n SecRandom `
             --contents-directory . `
             --add-data ./app/resource:app/resource `
-            --add-data LICENSE:.
+            --add-data LICENSE:. `
+            --version-file=version_info.txt
           
           # 验证PyInstaller输出路径
           $distPath = "dist\SecRandom"
@@ -61,13 +62,13 @@ jobs:
               New-Item -ItemType Directory -Path $distPath -Force
               Move-Item -Path $exePath -Destination "$distPath\SecRandom.exe"
             } else {
-              Write-Host "Error: PyInstaller failed to generate output files"
+              Write-Host "Error: 打包失败，未找到PyInstaller输出路径。"
               exit 1
             }
           }
           
           # 使用系统自带的 Compress-Archive 压缩文件
-          Compress-Archive -Path "$distPath\*" -DestinationPath "zip\SecRandom-Windows-${{ matrix.arch }}.zip" -Force
+          Compress-Archive -Path "$distPath\*","app\resource\*" -DestinationPath "zip\SecRandom-Windows-${{ matrix.arch }}.zip" -Force
 
       - name: 上传未签名的应用程序
         if: ${{ ( matrix.os != 'windows-latest' && github.event_name != 'pull_request' ) || github.event_name == 'pull_request' }}
