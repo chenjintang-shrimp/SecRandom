@@ -50,13 +50,24 @@ jobs:
             --contents-directory . `
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:.
-          # 使用系统自带的 Compress-Archive 压缩文件
-          if (Test-Path "dist\SecRandom") {
-            Compress-Archive -Path "dist\SecRandom\*" -DestinationPath "zip\SecRandom-Windows-${{ matrix.arch }}.zip" -Force
-          } else {
-            Write-Host "Error: dist\SecRandom directory not found"
-            exit 1
+          
+          # 验证PyInstaller输出路径
+          $distPath = "dist\SecRandom"
+          if (-not (Test-Path $distPath)) {
+            # 检查是否生成了单文件模式
+            $exePath = "dist\SecRandom.exe"
+            if (Test-Path $exePath) {
+              # 创建SecRandom目录并移动exe文件
+              New-Item -ItemType Directory -Path $distPath -Force
+              Move-Item -Path $exePath -Destination "$distPath\SecRandom.exe"
+            } else {
+              Write-Host "Error: PyInstaller failed to generate output files"
+              exit 1
+            }
           }
+          
+          # 使用系统自带的 Compress-Archive 压缩文件
+          Compress-Archive -Path "$distPath\*" -DestinationPath "zip\SecRandom-Windows-${{ matrix.arch }}.zip" -Force
 
       - name: 上传未签名的应用程序
         if: ${{ ( matrix.os != 'windows-latest' && github.event_name != 'pull_request' ) || github.event_name == 'pull_request' }}
