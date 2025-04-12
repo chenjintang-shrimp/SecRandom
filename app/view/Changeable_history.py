@@ -1,5 +1,4 @@
 from qfluentwidgets import *
-from qfluentwidgets import FluentIcon as FIF 
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -10,7 +9,7 @@ from loguru import logger
 from ..common.config import cfg, AUTHOR, VERSION, YEAR
 from ..common.config import load_custom_font
 
-from ..common.history_settings import history_SettinsCard
+from ..common.Changeable_history_settings import history_SettinsCard
 
 # 配置日志记录
 log_dir = "logs"
@@ -25,7 +24,7 @@ logger.add(
     format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
 )
 
-class history(QFrame):
+class changeable_history(QFrame):
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
 
@@ -103,6 +102,8 @@ class history(QFrame):
         self.inner_layout_personal.addWidget(self.history_setting_card)
         # 检测选择的班级是否改变，如果改变则刷新表格
         self.history_setting_card.class_comboBox.currentIndexChanged.connect(self._refresh_table)
+        # 检测是否点击清除历史记录按钮，如果点击则刷新表格
+        self.history_setting_card.clear_history_Button.clicked.connect(self._refresh_table)
         # 检测选择的同学是否改变，如果改变则刷新表格
         self.history_setting_card.student_comboBox.currentIndexChanged.connect(self._refresh_table)
 

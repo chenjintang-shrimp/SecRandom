@@ -24,36 +24,33 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get previous tag
+      - name: 获取上一个标签
         uses: younited/get-previous-tag-action@v1.0.0
         id: getprevtag
 
-      - name: Set up git-cliff
+      - name: 设置 git-cliff
         uses: kenji-miyake/setup-git-cliff@v1
 
-      - name: Generate a changelog
+      - name: 生成 changelog
         id: generate-changelog
         run: |
           git cliff
 
-      - name: Prepare release
+      - name: 准备发布
         run: |
           mkdir release
           mkdir artifacts
 
-      - name: Download artifacts
+      - name: 下载 artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Prepare artifacts
+      - name: 准备 artifacts 
         run: |
           mv artifacts/windows-latest-x64/* release/
           mv artifacts/windows-latest-x86/* release/
-          mv artifacts/debian10-x64/* release/
-          mv artifacts/macos-13-x64/* release/
-          mv artifacts/macos-14-arm64/* release/
 
       - name: 计算 SHA256 值
         run: |
@@ -67,7 +64,7 @@ jobs:
         run: |
           cd release
           if [ ! -f "SHA256SUMS.txt" ]; then
-            echo "Error: SHA256SUMS.txt not found in release directory"
+            echo "错误：在release目录中未找到SHA256SUMS.txt文件"
             exit 1
           fi
           cd ..
@@ -83,6 +80,7 @@ jobs:
             file=$(echo "$line" | awk '{print $2}')
             echo "| $file | $hash |" >> ../CHANGELOG.md
           done < SHA256SUMS.txt
+          rm SHA256SUMS.txt
           cd ..
             
       - name: 确定发布类型

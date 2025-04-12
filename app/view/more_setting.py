@@ -1,20 +1,19 @@
+from venv import logger
+import os
+import sys
+
 from qfluentwidgets import *
-from qfluentwidgets import FluentIcon as FIF 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget, QScroller
-# from loguru import logger
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
 from ..common.config import cfg, AUTHOR, VERSION, YEAR
 from ..common.config import load_custom_font
-# 设置卡片
-from ..common.global_settings import global_SettinsCard
-from ..common.single_player_settings import single_player_SettinsCard
-from ..common.multi_player_settings import multi_player_SettinsCard
-from ..common.group_player_settings import group_player_SettinsCard
+
+from ..common.foundation_settings import foundation_settingsCard
+from ..common.senior_settings import senior_settingsCard
 
 
-class setting(QFrame):
+class more_setting(QFrame):
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
 
@@ -87,27 +86,13 @@ class setting(QFrame):
         inner_layout_personal = QVBoxLayout(inner_frame_personal)
         inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
 
-        # 创建标签并设置自定义字体
-        settingLabel = SubtitleLabel("设置")
-        settingLabel.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        settingLabel.setWordWrap(True)
-        settingLabel.setFont(QFont(load_custom_font(), 22))  # 设置自定义字体
+        # 基础设置卡片组
+        foundation_settings_Card = foundation_settingsCard()
+        inner_layout_personal.addWidget(foundation_settings_Card)
 
-        # 全局设置卡片组
-        global_setting_card = global_SettinsCard()
-        inner_layout_personal.addWidget(global_setting_card)
-
-        # 抽单人设置卡片组
-        single_player_setting_card = single_player_SettinsCard()
-        inner_layout_personal.addWidget(single_player_setting_card)
-
-        # 抽多人设置卡片组
-        multi_player_setting_card = multi_player_SettinsCard()
-        inner_layout_personal.addWidget(multi_player_setting_card)
-
-        # 抽小组设置卡片组
-        group_player_setting_card = group_player_SettinsCard()
-        inner_layout_personal.addWidget(group_player_setting_card)
+        # # 高级设置卡片组
+        # senior_settings_Card = senior_settingsCard()
+        # inner_layout_personal.addWidget(senior_settings_Card)
 
         # 创建个性化卡片组
         self.themeAndZoomCard = SettingCardGroup("个性化", self)
@@ -123,7 +108,7 @@ class setting(QFrame):
         # 界面缩放设置卡片
         self.zoomCard = OptionsSettingCard(
             cfg.dpiScale,
-            FIF.ZOOM,
+            FluentIcon.ZOOM,
             self.tr("界面缩放"),
             self.tr("更改界面和字体的大小"),
             texts=["100%", "125%", "150%", "175%", "200%", self.tr("使用系统设置"),]
@@ -141,24 +126,9 @@ class setting(QFrame):
 
         # 设置主布局
         main_layout = QVBoxLayout(self)
-        main_layout.addWidget(settingLabel)
         main_layout.addWidget(scroll_area_personal)
-        # main_layout.addWidget(aboutLabel)
-        # main_layout.addWidget(scroll_area_about)
 
-        self.__initWidget()
-
-    def __initWidget(self):
         self.__connectSignalToSlot()
 
-    def __showRestartTooltip(self):
-        InfoBar.success(
-            self.tr('更新成功'),
-            self.tr('设置在重启后生效'),
-            duration=1500,
-            parent=self
-        )
-
     def __connectSignalToSlot(self):
-        cfg.appRestartSig.connect(self.__showRestartTooltip)
         cfg.themeChanged.connect(setTheme)

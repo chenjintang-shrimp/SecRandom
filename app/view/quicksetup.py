@@ -1,16 +1,29 @@
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF 
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+
 import os
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QFrame, QScrollArea, QVBoxLayout, QWidget, QScroller, QTableWidgetItem, QHeaderView
 from loguru import logger
 
 from ..common.config import cfg, AUTHOR, VERSION, YEAR
 from ..common.config import load_custom_font
-# 设置卡片
+
 from ..common.list_settings import list_SettinsCard
 
+# 配置日志记录
+log_dir = "logs"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+logger.add(
+    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
+    rotation="1 MB",
+    encoding="utf-8",
+    retention="30 days",
+    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
+)
 
 class quicksetup(QFrame):
     def __init__(self, parent: QFrame = None):
@@ -85,25 +98,11 @@ class quicksetup(QFrame):
         self.inner_layout_personal = QVBoxLayout(self.inner_frame_personal)
         self.inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
 
-        # 创建标签并设置自定义字体
-        self.settingLabel = SubtitleLabel("名单设置")
-        self.settingLabel.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        self.settingLabel.setWordWrap(True)
-        self.settingLabel.setFont(QFont(load_custom_font(), 22))  # 设置自定义字体
-
-        visitLabel = SubtitleLabel("快速一览")
-        visitLabel.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-        visitLabel.setWordWrap(True)
-        visitLabel.setFont(QFont(load_custom_font(), 18))  # 设置自定义字体
-
         # 名单设置卡片组
         self.list_setting_card = list_SettinsCard()
         self.inner_layout_personal.addWidget(self.list_setting_card)
         # 检测self.list_setting_card是否更新了班级名称
         self.list_setting_card.class_comboBox.currentIndexChanged.connect(self._refresh_table)
-
-        # 快速一览
-        self.inner_layout_personal.addWidget(visitLabel)
 
         # 创建表格
         self.table = TableWidget(self.inner_frame_personal) # 创建表格
@@ -161,11 +160,9 @@ class quicksetup(QFrame):
         # 设置主布局
         if not self.layout():
             main_layout = QVBoxLayout(self)
-            main_layout.addWidget(self.settingLabel)
             main_layout.addWidget(self.scroll_area_personal)
         else:
             # 如果已有布局，只需更新内容
-            self.layout().addWidget(self.settingLabel)
             self.layout().addWidget(self.scroll_area_personal)
 
         self.__initWidget()

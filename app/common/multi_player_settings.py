@@ -1,10 +1,11 @@
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
-from PyQt5.QtGui import QFont
-from app.common.config import load_custom_font
-import json
+from PyQt5.QtGui import *
+
 import os
 from loguru import logger
+
+from app.common.config import load_custom_font
 
 # 配置日志记录
 log_dir = "logs"

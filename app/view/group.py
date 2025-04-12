@@ -1,8 +1,7 @@
 from qfluentwidgets import *
-from qfluentwidgets import FluentIcon as fIcon
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QApplication, QScroller, QScrollArea
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 
 import os
 import json
@@ -10,7 +9,20 @@ import random
 import pyttsx3
 from loguru import logger
 
-from ..common.config import load_custom_font
+from app.common.config import load_custom_font
+
+# 配置日志记录
+log_dir = "logs"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+logger.add(
+    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
+    rotation="1 MB",
+    encoding="utf-8",
+    retention="30 days",
+    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
+)
 
 class groupplayer(QWidget):
     def __init__(self, parent=None):
@@ -1007,20 +1019,20 @@ class groupplayer(QWidget):
                 group_player_student_quantity = settings['group_player']['student_quantity']
                 group_player_class_quantity = settings['group_player']['class_quantity']
                 if group_player_student_quantity == 0:
-                    global_student_quantity = settings['global']['student_quantity']
+                    global_student_quantity = f"{settings['global']['student_quantity']}"
                 if group_player_class_quantity == 0:
-                    global_class_quantity = settings['global']['class_quantity']
+                    global_class_quantity = f"{settings['global']['class_quantity']}"
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
-            global_student_quantity = 'true'
-            global_class_quantity = 'true'
+            global_student_quantity = True
+            global_class_quantity = True
             group_player_student_quantity = 1
             group_player_class_quantity = 1
             
         # 根据设置控制UI元素显示状态
         if group_player_student_quantity == 0:
             show_student_quantity = global_student_quantity
-            if show_student_quantity == 'true':
+            if show_student_quantity == 'True':
                 show_student_quantity = True
             else:
                 show_student_quantity = False
@@ -1031,7 +1043,7 @@ class groupplayer(QWidget):
             
         if group_player_class_quantity == 0:
             show_class_quantity = global_class_quantity
-            if show_class_quantity == 'true':
+            if show_class_quantity == 'True':
                 show_class_quantity = True
             else:
                 show_class_quantity = False
@@ -1040,7 +1052,7 @@ class groupplayer(QWidget):
         else:
             show_class_quantity = False
         
-        if group_player_student_quantity == 1 or group_player_class_quantity == 1 or global_student_quantity == 'true' or global_class_quantity == 'true':
+        if group_player_student_quantity == 1 or group_player_class_quantity == 1 or global_student_quantity == 'True' or global_class_quantity == 'True':
             show_refresh_button = True
         else:
             show_refresh_button = False
