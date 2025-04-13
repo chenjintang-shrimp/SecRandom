@@ -99,10 +99,25 @@ class groupplayer(QWidget):
         class_name = self.class_combo.currentText()
         group_name = self.group_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"]:
-            if group_name == '抽取小组组号':
-                student_file = f"app/resource/group/{class_name}_group.ini"
-            else:
-                student_file = f"app/resource/group/{class_name}_{group_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        if group_name == '抽取小组组号':
+                            student_file = f"app/resource/group/{class_name}_group.ini"
+                        else:
+                            student_file = f"app/resource/group/{class_name}_{group_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')]
@@ -167,13 +182,51 @@ class groupplayer(QWidget):
                             # 处理两字姓名
                             if student_name_format == 0 and len(name) == 2:
                                 name = f"{name[0]}    {name[1]}"
-                            
-                            if group_name == '抽取小组组号':
-                                label = BodyLabel(f"{name}")
-                            else:
-                                label = BodyLabel(f"{student_id_str} {name}")
+
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    list_strings_set = settings.get('list_strings', {})
+                                    list_strings_settings = list_strings_set.get('use_lists', False)
+                                    if list_strings_settings == False:
+                                        if group_name == '抽取小组组号':
+                                            label = BodyLabel(f"{name}")
+                                        else:
+                                            label = BodyLabel(f"{student_id_str} {name}")
+                                    else:
+                                        if group_name == '抽取小组组号':
+                                            label = BodyLabel(f"{name}")
+                                        else:
+                                            label = BodyLabel(f"{student_id_str}")
+                            except FileNotFoundError as e:
+                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                                if group_name == '抽取小组组号':
+                                    label = BodyLabel(f"{name}")
+                                else:
+                                    label = BodyLabel(f"{student_id_str}")
+                            except KeyError:
+                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                if group_name == '抽取小组组号':
+                                    label = BodyLabel(f"{name}")
+                                else:
+                                    label = BodyLabel(f"{student_id_str}")
+
                             label.setAlignment(Qt.AlignCenter)
-                            label.setFont(QFont(load_custom_font(), 85))
+                            # 读取设置中的font_size值
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    font_size = settings['group_player']['font_size']
+                                    if font_size < 30:
+                                        font_size = 85
+                            except Exception as e:
+                                font_size = 85
+                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                            # 根据设置调整字体大小
+                            if font_size < 30:
+                                label.setFont(QFont(load_custom_font(), 85))
+                            else:
+                                label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
                         # 创建容器并添加到布局
@@ -201,7 +254,21 @@ class groupplayer(QWidget):
 
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
-            error_label.setFont(QFont(load_custom_font(), 85))
+            # 读取设置中的font_size值
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    font_size = settings['group_player']['font_size']
+                    if font_size < 30:
+                        font_size = 85
+            except Exception as e:
+                font_size = 85
+                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+            # 根据设置调整字体大小
+            if font_size < 30:
+                error_label.setFont(QFont(load_custom_font(), 85))
+            else:
+                error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_layout.addWidget(error_label)
     
     def _stop_animation(self):
@@ -293,10 +360,25 @@ class groupplayer(QWidget):
         class_name = self.class_combo.currentText()
         group_name = self.group_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"]:
-            if group_name == '抽取小组组号':
-                student_file = f"app/resource/group/{class_name}_group.ini"
-            else:
-                student_file = f"app/resource/group/{class_name}_{group_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        if group_name == '抽取小组组号':
+                            student_file = f"app/resource/group/{class_name}_group.ini"
+                        else:
+                            student_file = f"app/resource/group/{class_name}_{group_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')]     
@@ -365,10 +447,33 @@ class groupplayer(QWidget):
                             else:
                                 name = selected
                             
-                            if group_name == '抽取小组组号':
-                                label = BodyLabel(f"{name}")
-                            else:
-                                label = BodyLabel(f"{student_id_str} {name}")
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    list_strings_set = settings.get('list_strings', {})
+                                    list_strings_settings = list_strings_set.get('use_lists', False)
+                                    if list_strings_settings == False:
+                                        if group_name == '抽取小组组号':
+                                            label = BodyLabel(f"{name}")
+                                        else:
+                                            label = BodyLabel(f"{student_id_str} {name}")
+                                    else:
+                                        if group_name == '抽取小组组号':
+                                            label = BodyLabel(f"{name}")
+                                        else:
+                                            label = BodyLabel(f"{student_id_str}")
+                            except FileNotFoundError as e:
+                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                                if group_name == '抽取小组组号':
+                                    label = BodyLabel(f"{name}")
+                                else:
+                                    label = BodyLabel(f"{student_id_str}")
+                            except KeyError:
+                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                if group_name == '抽取小组组号':
+                                    label = BodyLabel(f"{name}")
+                                else:
+                                    label = BodyLabel(f"{student_id_str}")
 
                             # 读取设置中的history_enabled
                             try:
@@ -432,7 +537,21 @@ class groupplayer(QWidget):
                                 logger.info(f"{selected} 是小组名称，无需记录抽选历史。")
 
                             label.setAlignment(Qt.AlignCenter)
-                            label.setFont(QFont(load_custom_font(), 85))
+                            # 读取设置中的font_size值
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    font_size = settings['group_player']['font_size']
+                                    if font_size < 30:
+                                        font_size = 85
+                            except Exception as e:
+                                font_size = 85
+                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                            # 根据设置调整字体大小
+                            if font_size < 30:
+                                label.setFont(QFont(load_custom_font(), 85))
+                            else:
+                                label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
                             
@@ -461,7 +580,21 @@ class groupplayer(QWidget):
 
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
-            error_label.setFont(QFont(load_custom_font(), 85))
+            # 读取设置中的font_size值
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    font_size = settings['group_player']['font_size']
+                    if font_size < 30:
+                        font_size = 85
+            except Exception as e:
+                font_size = 85
+                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+            # 根据设置调整字体大小
+            if font_size < 30:
+                error_label.setFont(QFont(load_custom_font(), 85))
+            else:
+                error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_layout.addWidget(error_label)
     
         
@@ -470,11 +603,25 @@ class groupplayer(QWidget):
         class_name = self.class_combo.currentText()
         group_name = self.group_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"]:
-            if group_name == '抽取小组组号':
-                student_file = f"app/resource/group/{class_name}_group.ini"
-            else:
-                student_file = f"app/resource/group/{class_name}_{group_name}.ini"
-    
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        if group_name == '抽取小组组号':
+                            student_file = f"app/resource/group/{class_name}_group.ini"
+                        else:
+                            student_file = f"app/resource/group/{class_name}_{group_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}_group.json"
             
             # 创建Temp目录如果不存在
@@ -561,10 +708,33 @@ class groupplayer(QWidget):
                             else:
                                 name = selected
 
-                            if group_name == '抽取小组组号':
-                                label = BodyLabel(f"{selected}")
-                            else:
-                                label = BodyLabel(f"{student_id_str} {name}")
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    list_strings_set = settings.get('list_strings', {})
+                                    list_strings_settings = list_strings_set.get('use_lists', False)
+                                    if list_strings_settings == False:
+                                        if group_name == '抽取小组组号':
+                                            label = BodyLabel(f"{name}")
+                                        else:
+                                            label = BodyLabel(f"{student_id_str} {name}")
+                                    else:
+                                        if group_name == '抽取小组组号':
+                                            label = BodyLabel(f"{name}")
+                                        else:
+                                            label = BodyLabel(f"{student_id_str}")
+                            except FileNotFoundError as e:
+                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                                if group_name == '抽取小组组号':
+                                    label = BodyLabel(f"{name}")
+                                else:
+                                    label = BodyLabel(f"{student_id_str}")
+                            except KeyError:
+                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                if group_name == '抽取小组组号':
+                                    label = BodyLabel(f"{name}")
+                                else:
+                                    label = BodyLabel(f"{student_id_str}")
 
                             # 读取设置中的history_enabled
                             try:
@@ -628,7 +798,21 @@ class groupplayer(QWidget):
                                 logger.info(f"{selected} 是小组名称，无需记录抽选历史。")
 
                             label.setAlignment(Qt.AlignCenter)
-                            label.setFont(QFont(load_custom_font(), 85))
+                            # 读取设置中的font_size值
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    font_size = settings['group_player']['font_size']
+                                    if font_size < 30:
+                                        font_size = 85
+                            except Exception as e:
+                                font_size = 85
+                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                            # 根据设置调整字体大小
+                            if font_size < 30:
+                                label.setFont(QFont(load_custom_font(), 85))
+                            else:
+                                label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
 
@@ -677,7 +861,21 @@ class groupplayer(QWidget):
 
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
-            error_label.setFont(QFont(load_custom_font(), 85))
+            # 读取设置中的font_size值
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    font_size = settings['group_player']['font_size']
+                    if font_size < 30:
+                        font_size = 85
+            except Exception as e:
+                font_size = 85
+                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+            # 根据设置调整字体大小
+            if font_size < 30:
+                error_label.setFont(QFont(load_custom_font(), 85))
+            else:
+                error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_layout.addWidget(error_label)
         
     def until_all_draw_mode(self):
@@ -685,10 +883,24 @@ class groupplayer(QWidget):
         class_name = self.class_combo.currentText()
         group_name = self.group_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            if group_name == '抽取小组组号':
-                student_file = f"app/resource/group/{class_name}_group.ini"
-            else:
-                student_file = f"app/resource/group/{class_name}_{group_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        if group_name == '抽取小组组号':
+                            student_file = f"app/resource/group/{class_name}_group.ini"
+                        else:
+                            student_file = f"app/resource/group/{class_name}_{group_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
 
             draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_group.json"
             
@@ -777,11 +989,33 @@ class groupplayer(QWidget):
                             else:
                                 name = selected
 
-                            group_name = self.group_combo.currentText()
-                            if group_name == '抽取小组组号':
-                                label = BodyLabel(f"{name}")
-                            else:
-                                label = BodyLabel(f"{student_id_str} {name}")
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    list_strings_set = settings.get('list_strings', {})
+                                    list_strings_settings = list_strings_set.get('use_lists', False)
+                                    if list_strings_settings == False:
+                                        if group_name == '抽取小组组号':
+                                            label = BodyLabel(f"{name}")
+                                        else:
+                                            label = BodyLabel(f"{student_id_str} {name}")
+                                    else:
+                                        if group_name == '抽取小组组号':
+                                            label = BodyLabel(f"{name}")
+                                        else:
+                                            label = BodyLabel(f"{student_id_str}")
+                            except FileNotFoundError as e:
+                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                                if group_name == '抽取小组组号':
+                                    label = BodyLabel(f"{name}")
+                                else:
+                                    label = BodyLabel(f"{student_id_str}")
+                            except KeyError:
+                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                if group_name == '抽取小组组号':
+                                    label = BodyLabel(f"{name}")
+                                else:
+                                    label = BodyLabel(f"{student_id_str}")
 
                             # 读取设置中的history_enabled
                             try:
@@ -845,7 +1079,21 @@ class groupplayer(QWidget):
                                 logger.info(f"{selected} 是小组名称，无需记录抽选历史。")
 
                             label.setAlignment(Qt.AlignCenter)
-                            label.setFont(QFont(load_custom_font(), 85))
+                            # 读取设置中的font_size值
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    font_size = settings['group_player']['font_size']
+                                    if font_size < 30:
+                                        font_size = 85
+                            except Exception as e:
+                                font_size = 85
+                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                            # 根据设置调整字体大小
+                            if font_size < 30:
+                                label.setFont(QFont(load_custom_font(), 85))
+                            else:
+                                label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
 
@@ -895,7 +1143,21 @@ class groupplayer(QWidget):
 
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
-            error_label.setFont(QFont(load_custom_font(), 85))
+            # 读取设置中的font_size值
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    font_size = settings['group_player']['font_size']
+                    if font_size < 30:
+                        font_size = 85
+            except Exception as e:
+                font_size = 85
+                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+            # 根据设置调整字体大小
+            if font_size < 30:
+                error_label.setFont(QFont(load_custom_font(), 85))
+            else:
+                error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_layout.addWidget(error_label)
         
     def update_total_count(self):
@@ -913,10 +1175,25 @@ class groupplayer(QWidget):
         self._update_count_display()
 
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"]:
-            if group_name == '抽取小组组号':
-                student_file = f"app/resource/group/{class_name}_group.ini"
-            else:
-                student_file = f"app/resource/group/{class_name}_{group_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        if group_name == '抽取小组组号':
+                            student_file = f"app/resource/group/{class_name}_group.ini"
+                        else:
+                            student_file = f"app/resource/group/{class_name}_{group_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     count = len([line.strip() for line in f if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')])

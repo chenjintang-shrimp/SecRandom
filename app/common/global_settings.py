@@ -1,6 +1,8 @@
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 
 import json
 import os
@@ -191,7 +193,6 @@ class global_SettinsCard(GroupHeaderCardWidget):
                     self.global_extraction_scope_comboBox.setCurrentIndex(extraction_scope)
                     logger.info(f"加载设置完成: draw_mode={draw_mode}, animation_mode={animation_mode}, voice_enabled={voice_enabled}, student_id={student_id}, student_name={student_name}, student_quantity={student_quantity}, class_quantity={class_quantity}")
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.global_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
                 self.global_extraction_scope_comboBox.setCurrentIndex(self.default_settings["extraction_scope"])
                 self.global_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])

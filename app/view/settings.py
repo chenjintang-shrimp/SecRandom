@@ -31,8 +31,24 @@ from app.view.quicksetup import quicksetup
 class settings_Window(MSFluentWindow):
     def __init__(self, parent=None):
         super().__init__()
-        self.resize(1200, 810)
-        self.setMinimumSize(1000, 810)
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                settings_window_size = foundation_settings.get('settings_window_size', 0)
+                if settings_window_size == 0:
+                    self.resize(800, 600)
+                elif settings_window_size == 1:
+                    self.resize(1200, 800)
+                else:
+                    self.resize(800, 600)
+        except FileNotFoundError as e:
+            logger.error(f"加载设置时出错: {e}, 使用默认大小:800x600")
+            self.resize(800, 600)
+        except KeyError:
+            logger.error(f"设置文件中缺少'foundation'键, 使用默认大小:800x600")
+            self.resize(800, 600)
+        self.setMinimumSize(600, 400)
         self.setWindowTitle('SecRandom - 设置')
         self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
 
@@ -50,7 +66,7 @@ class settings_Window(MSFluentWindow):
                     self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
                 elif settings_window_mode == 1:
                     self.move(w // 2 - self.width() // 2, h * 3 // 5 - self.height() // 2)
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             logger.error(f"加载设置时出错: {e}, 使用默认窗口居中显示设置界面")
             self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 

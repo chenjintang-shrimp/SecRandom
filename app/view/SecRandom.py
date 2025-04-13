@@ -41,8 +41,24 @@ from app.view.levitation import LevitationWindow
 class Window(MSFluentWindow):
     def __init__(self):
         super().__init__()
-        self.resize(1200, 810)
-        self.setMinimumSize(1000, 810)
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                main_window_size = foundation_settings.get('main_window_size', 0)
+                if main_window_size == 0:
+                    self.resize(800, 600)
+                elif main_window_size == 1:
+                    self.resize(1200, 800)
+                else:
+                    self.resize(800, 600)
+        except FileNotFoundError as e:
+            logger.error(f"加载设置时出错: {e}, 使用默认大小:800x600")
+            self.resize(800, 600)
+        except KeyError:
+            logger.error(f"设置文件中缺少'foundation'键, 使用默认大小:800x600")
+            self.resize(800, 600)
+        self.setMinimumSize(600, 400)
         self.setWindowTitle('SecRandom')
         self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
         self.start_cleanup()

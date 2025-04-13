@@ -251,6 +251,9 @@ class changeable_history(QFrame):
                         max_digits_group = 0
                         max_digits_total = 0
                         max_digits_id = len(str(len(students)))
+                        # 初始化被点次数为0
+                        single_count = 0
+                        multi_count = 0
                         group_count = 0
                         # 更新历史数据并统计被点次数
                         if 'single' in history_data and student_name in history_data['single']:

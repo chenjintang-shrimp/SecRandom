@@ -118,7 +118,6 @@ class ClassInputDialog(QDialog):
     def getText(self):
         return self.textEdit.toPlainText()
 
-
 class StudentInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -213,7 +212,6 @@ class StudentInputDialog(QDialog):
     
     def getText(self):
         return self.textEdit.toPlainText()
-
 
 class GroupInputDialog(QDialog):
     def __init__(self, parent=None):
@@ -413,6 +411,32 @@ class list_SettinsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("名单设置")
         self.setBorderRadius(8)
+        self.settings_file = "app/Settings/Settings.json"
+        self.default_settings = {
+            "player_people": 30,
+            "use_lists": False
+        }
+
+        # 人数输入框
+        self.player_people_edit = LineEdit()
+        self.player_people_edit.setPlaceholderText("请输入人数 (最小值为1)")
+        self.player_people_edit.setClearButtonEnabled(True)
+        # 设置宽度和高度
+        self.player_people_edit.setFixedWidth(320)
+        self.player_people_edit.setFixedHeight(32)
+        # 设置字体
+        self.player_people_edit.setFont(QFont(load_custom_font(), 14))
+
+        # 添加应用按钮
+        apply_action = QAction(FluentIcon.SAVE.qicon(), "", triggered=self.apply_player_people)
+        self.player_people_edit.addAction(apply_action, QLineEdit.TrailingPosition)
+
+        # 是否使用名单按钮
+        self.use_lists_switch = SwitchButton()
+        self.use_lists_switch.setOnText("开启")
+        self.use_lists_switch.setOffText("关闭")
+        self.use_lists_switch.checkedChanged.connect(self.save_settings)
+        self.use_lists_switch.setFont(QFont(load_custom_font(), 14))
 
         self.class_Button = PrimaryPushButton("设置班级")
         self.class_Button.clicked.connect(self.show_class_dialog)
@@ -454,12 +478,63 @@ class list_SettinsCard(GroupHeaderCardWidget):
             logger.error(f"加载班级名称失败: {str(e)}")
 
         # 添加组件到分组中
+        # self.addGroup(FIF.LABEL, "仅学号名单", "是否使用只有学号的名单类型", self.use_lists_switch)
+        # self.addGroup(FIF.PEOPLE, "仅学号名单的人数", "设置只有学号的名单类型时的人数(注:当前有bug,还需添加至少一个班级)", self.player_people_edit)
         self.addGroup(FIF.ADD_TO, "设置班级", "点击按钮设置班级名称", self.class_Button)
         self.addGroup(FIF.EDUCATION, "选择班级", "选择一个需要设置学生姓名的班级", self.class_comboBox)
         self.addGroup(FIF.PEOPLE, "设置班级名单", "点击按钮设置学生姓名", self.student_Button)
         self.addGroup(FIF.ADD_TO, "设置小组", "点击按钮设置小组名单", self.group_Button)
         self.addGroup(FIF.TILES, "选择小组", "选择一个需要修改成员的小组", self.group_ComboBox)
         self.addGroup(FIF.PEOPLE, "设置小组成员", "点击按钮设置该小组成员的姓名", self.group_student_Button)
+
+        self.load_settings()
+        self.save_settings()
+
+    def apply_player_people(self):
+        try:
+            player_people = int(self.player_people_edit.text())
+            if 1 <= player_people <= 999999999:
+                self.player_people_edit.setText(str(player_people))
+                self.save_settings()
+                os.makedirs("app/resource/students", exist_ok=True)
+
+                def write_people_ini():
+                    with open("app/resource/students/people.ini", 'w', encoding='utf-8') as f:
+                        f.writelines(f"{i}\n" for i in range(1, player_people + 1))
+                    logger.info(f"设置人数: {player_people}")
+
+                # 直接调用 write_people_ini 函数，不需要检查 use_lists 设置
+                write_people_ini()
+
+                InfoBar.success(
+                    title='设置成功',
+                    content=f"设置人数为: {player_people}",
+                    orient=Qt.Horizontal,
+                    parent=self,
+                    isClosable=True,
+                    duration=3000
+                )
+            else:
+                logger.warning(f"人数超出范围: {player_people}")
+                InfoBar.warning(
+                    title='人数超出范围',
+                    content=f"人数超出范围，请输入1-999999999之间的整数: {player_people}",
+                    orient=Qt.Horizontal,
+                    parent=self,
+                    isClosable=True,
+                    duration=3000
+                )
+        except ValueError:
+            logger.warning(f"无效的人数输入: {self.player_people_edit.text()}")
+            InfoBar.warning(
+                title='无效的人数输入',
+                content=f"无效的人数输入(需要是整数)：{self.player_people_edit.text()}",
+                orient=Qt.Horizontal,
+                parent=self,
+                isClosable=True,
+                duration=3000
+            )
+
             
     def show_class_dialog(self):
         dialog = ClassInputDialog(self)
@@ -683,3 +758,77 @@ class list_SettinsCard(GroupHeaderCardWidget):
                 logger.info("学生名单保存成功！")
             except Exception as e:
                 logger.error(f"保存失败: {str(e)}")
+
+    def load_settings(self):
+        try:
+            if os.path.exists(self.settings_file):
+                logger.info(f"加载设置文件: {self.settings_file}")
+                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_settings = settings.get("list_strings", {})
+
+                    player_people = list_strings_settings.get("player_people", self.default_settings["player_people"])
+                    self.player_people_edit.setText(str(player_people))
+
+                    use_lists = list_strings_settings.get("use_lists", self.default_settings["use_lists"])
+                    self.use_lists_switch.setChecked(use_lists)
+
+                    logger.info(f"加载完成: player_people={player_people}, use_lists={use_lists}")
+            else:
+                logger.warning(f"设置文件不存在: {self.settings_file}")
+                self.player_people_edit.setText(str(self.default_settings["player_people"]))
+                self.use_lists_switch.setChecked(self.default_settings["use_lists"])
+                self.save_settings()
+        except Exception as e:
+            logger.error(f"加载设置时出错: {e}")
+            self.player_people_edit.setText(str(self.default_settings["player_people"]))
+            self.use_lists_switch.setChecked(self.default_settings["use_lists"])
+            self.save_settings()
+
+    def save_settings(self):
+        # 先读取现有设置
+        existing_settings = {}
+        if os.path.exists(self.settings_file):
+            with open(self.settings_file, 'r', encoding='utf-8') as f:
+                try:
+                    existing_settings = json.load(f)
+                except json.JSONDecodeError:
+                    existing_settings = {}
+
+        # 更新single_player部分的所有设置
+        if "list_strings" not in existing_settings:
+            existing_settings["list_strings"] = {}
+
+        list_strings_settings = existing_settings["list_strings"]
+
+        # 同时保存索引值
+        list_strings_settings["use_lists"] = self.use_lists_switch.isChecked()
+
+        try:
+            player_people = int(self.player_people_edit.text())
+            if 30 <= player_people <= 200:
+                list_strings_settings["font_size"] = player_people
+            else:
+                logger.warning(f"人数超出范围: {player_people}")
+                InfoBar.warning(
+                    title='人数超出范围',
+                    content=f"人数超出范围，请输入1-999999999之间的整数: {player_people}",
+                    orient=Qt.Horizontal,
+                    parent=self,
+                    isClosable=True,
+                    duration=3000
+                )
+        except ValueError:
+            logger.warning(f"无效的人数输入: {self.player_people_edit.text()}")
+            InfoBar.warning(
+                title='无效的人数输入',
+                content=f"无效的人数输入(需要是整数)：{self.player_people_edit.text()}",
+                orient=Qt.Horizontal,
+                parent=self,
+                isClosable=True,
+                duration=3000
+            )
+
+        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
+        with open(self.settings_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_settings, f, indent=4)

@@ -101,7 +101,7 @@ class quicksetup(QFrame):
         # 名单设置卡片组
         self.list_setting_card = list_SettinsCard()
         self.inner_layout_personal.addWidget(self.list_setting_card)
-        # 检测self.list_setting_card是否更新了班级名称
+        # 检测self.list_setting_card是否更新了
         self.list_setting_card.class_comboBox.currentIndexChanged.connect(self._refresh_table)
 
         # 创建表格

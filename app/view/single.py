@@ -98,7 +98,22 @@ class single(QWidget):
         """显示随机学生（用于动画效果）"""
         class_name = self.class_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            student_file = f"app/resource/students/{class_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        student_file = f"app/resource/students/{class_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')]
@@ -116,17 +131,6 @@ class single(QWidget):
                         except Exception as e:
                             single_player_student_id = 1
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
-                                        
-                        # 根据学号格式执行不同逻辑
-                        if single_player_student_id == 0 and global_student_id == 0:  # 补零
-                            self.main_text.setText(f"{line_num:02}")
-                        elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
-                            self.main_text.setText(f"{line_num:^5}")
-
-                        elif single_player_student_id == 1:  # 补零
-                            self.main_text.setText(f"{line_num:02}")
-                        elif single_player_student_id == 2:  # 居中显示
-                            self.main_text.setText(f"{line_num:^5}")
 
                         try:
                             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
@@ -146,9 +150,92 @@ class single(QWidget):
                         elif single_player_student_name == 1:
                             if len(selected) == 2:
                                 selected = f"{selected[0]}    {selected[1]}"
-                        
-                        self.sub_text.setText(selected)
-                        
+
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                list_strings_set = settings.get('list_strings', {})
+                                list_strings_settings = list_strings_set.get('use_lists', False)
+                                if list_strings_settings == False:
+                                    # 根据学号格式执行不同逻辑
+                                    if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+
+                                    elif single_player_student_id == 1:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 2:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+                                    self.sub_text.setText(selected)
+                                else:
+                                    # 根据学号格式执行不同逻辑
+                                    if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+
+                                    elif single_player_student_id == 1:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 2:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+                        except FileNotFoundError as e:
+                            logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                            # 根据学号格式执行不同逻辑
+                            if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                            elif single_player_student_id == 1:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 2:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+                        except KeyError:
+                            logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                            # 根据学号格式执行不同逻辑
+                            if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                            elif single_player_student_id == 1:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 2:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                        # 读取设置中的font_size值
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                font_size = settings['single_player']['font_size']
+                                if font_size < 30:
+                                    font_size = 100
+                        except Exception as e:
+                            font_size = 100
+                            logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                        # 根据设置调整字体大小
+                        if font_size < 30:
+                            self.main_text.setFont(QFont(load_custom_font(), 100))
+                        else:
+                            self.main_text.setFont(QFont(load_custom_font(), font_size))
+
+                        # 读取设置中的font_size值
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                font_size = settings['single_player']['font_size']
+                                if font_size < 30:
+                                    font_size = 100
+                        except Exception as e:
+                            font_size = 100
+                            logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                        # 根据设置调整字体大小
+                        if font_size < 30:
+                            self.sub_text.setFont(QFont(load_custom_font(), 100))
+                        else:
+                            self.sub_text.setFont(QFont(load_custom_font(), font_size))
+
                         return
         
         self.main_text.setText("--")
@@ -230,7 +317,22 @@ class single(QWidget):
         """重复随机抽选学生"""
         class_name = self.class_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            student_file = f"app/resource/students/{class_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        student_file = f"app/resource/students/{class_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')]
@@ -302,17 +404,6 @@ class single(QWidget):
                         except Exception as e:
                             single_player_student_id = 1
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
-                                        
-                        # 根据学号格式执行不同逻辑
-                        if single_player_student_id == 0 and global_student_id == 0:  # 补零
-                            self.main_text.setText(f"{line_num:02}")
-                        elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
-                            self.main_text.setText(f"{line_num:^5}")
-
-                        elif single_player_student_id == 1:  # 补零
-                            self.main_text.setText(f"{line_num:02}")
-                        elif single_player_student_id == 2:  # 居中显示
-                            self.main_text.setText(f"{line_num:^5}")
 
                         try:
                             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
@@ -333,8 +424,91 @@ class single(QWidget):
                             if len(selected) == 2:
                                 selected = f"{selected[0]}    {selected[1]}"
                         
-                        self.sub_text.setText(selected)
-                        
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                list_strings_set = settings.get('list_strings', {})
+                                list_strings_settings = list_strings_set.get('use_lists', False)
+                                if list_strings_settings == False:
+                                    # 根据学号格式执行不同逻辑
+                                    if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+
+                                    elif single_player_student_id == 1:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 2:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+                                    self.sub_text.setText(selected)
+                                else:
+                                    # 根据学号格式执行不同逻辑
+                                    if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+
+                                    elif single_player_student_id == 1:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 2:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+                        except FileNotFoundError as e:
+                            logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                            # 根据学号格式执行不同逻辑
+                            if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                            elif single_player_student_id == 1:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 2:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+                        except KeyError:
+                            logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                            # 根据学号格式执行不同逻辑
+                            if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                            elif single_player_student_id == 1:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 2:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                        # 读取设置中的font_size值
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                font_size = settings['single_player']['font_size']
+                                if font_size < 30:
+                                    font_size = 100
+                        except Exception as e:
+                            font_size = 100
+                            logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                        # 根据设置调整字体大小
+                        if font_size < 30:
+                            self.main_text.setFont(QFont(load_custom_font(), 100))
+                        else:
+                            self.main_text.setFont(QFont(load_custom_font(), font_size))
+
+                        # 读取设置中的font_size值
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                font_size = settings['single_player']['font_size']
+                                if font_size < 30:
+                                    font_size = 100
+                        except Exception as e:
+                            font_size = 100
+                            logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                        # 根据设置调整字体大小
+                        if font_size < 30:
+                            self.sub_text.setFont(QFont(load_custom_font(), 100))
+                        else:
+                            self.sub_text.setFont(QFont(load_custom_font(), font_size))
+
                         return
         
         self.main_text.setText("--")
@@ -344,7 +518,22 @@ class single(QWidget):
         """不重复抽取(直到软件重启)"""
         class_name = self.class_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            student_file = f"app/resource/students/{class_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        student_file = f"app/resource/students/{class_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             # 根据抽取作用范围模式确定记录文件名
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
@@ -443,17 +632,6 @@ class single(QWidget):
                         except Exception as e:
                             single_player_student_id = 1
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
-                                        
-                        # 根据学号格式执行不同逻辑
-                        if single_player_student_id == 0 and global_student_id == 0:  # 补零
-                            self.main_text.setText(f"{line_num:02}")
-                        elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
-                            self.main_text.setText(f"{line_num:^5}")
-
-                        elif single_player_student_id == 1:  # 补零
-                            self.main_text.setText(f"{line_num:02}")
-                        elif single_player_student_id == 2:  # 居中显示
-                            self.main_text.setText(f"{line_num:^5}")
 
                         try:
                             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
@@ -474,8 +652,91 @@ class single(QWidget):
                             if len(selected) == 2:
                                 selected = f"{selected[0]}    {selected[1]}"
                         
-                        self.sub_text.setText(selected)
-                        
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                list_strings_set = settings.get('list_strings', {})
+                                list_strings_settings = list_strings_set.get('use_lists', False)
+                                if list_strings_settings == False:
+                                    # 根据学号格式执行不同逻辑
+                                    if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+
+                                    elif single_player_student_id == 1:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 2:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+                                    self.sub_text.setText(selected)
+                                else:
+                                    # 根据学号格式执行不同逻辑
+                                    if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+
+                                    elif single_player_student_id == 1:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 2:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+                        except FileNotFoundError as e:
+                            logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                            # 根据学号格式执行不同逻辑
+                            if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                            elif single_player_student_id == 1:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 2:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+                        except KeyError:
+                            logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                            # 根据学号格式执行不同逻辑
+                            if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                            elif single_player_student_id == 1:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 2:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                        # 读取设置中的font_size值
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                font_size = settings['single_player']['font_size']
+                                if font_size < 30:
+                                    font_size = 100
+                        except Exception as e:
+                            font_size = 100
+                            logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                        # 根据设置调整字体大小
+                        if font_size < 30:
+                            self.main_text.setFont(QFont(load_custom_font(), 100))
+                        else:
+                            self.main_text.setFont(QFont(load_custom_font(), font_size))
+
+                        # 读取设置中的font_size值
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                font_size = settings['single_player']['font_size']
+                                if font_size < 30:
+                                    font_size = 100
+                        except Exception as e:
+                            font_size = 100
+                            logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                        # 根据设置调整字体大小
+                        if font_size < 30:
+                            self.sub_text.setFont(QFont(load_custom_font(), 100))
+                        else:
+                            self.sub_text.setFont(QFont(load_custom_font(), font_size))
+
                         # 更新抽取记录
                         drawn_students.append(selected.replace(' ', ''))
                         with open(draw_record_file, 'w', encoding='utf-8') as f:
@@ -505,7 +766,22 @@ class single(QWidget):
         """不重复抽取(直到抽完全部人)"""
         class_name = self.class_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            student_file = f"app/resource/students/{class_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        student_file = f"app/resource/students/{class_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             # 根据抽取作用范围模式确定记录文件名
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
@@ -605,17 +881,6 @@ class single(QWidget):
                         except Exception as e:
                             single_player_student_id = 1
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
-                                        
-                        # 根据学号格式执行不同逻辑
-                        if single_player_student_id == 0 and global_student_id == 0:  # 补零
-                            self.main_text.setText(f"{line_num:02}")
-                        elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
-                            self.main_text.setText(f"{line_num:^5}")
-
-                        elif single_player_student_id == 1:  # 补零
-                            self.main_text.setText(f"{line_num:02}")
-                        elif single_player_student_id == 2:  # 居中显示
-                            self.main_text.setText(f"{line_num:^5}")
                             
                         try:
                             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
@@ -636,7 +901,90 @@ class single(QWidget):
                             if len(selected) == 2:
                                 selected = f"{selected[0]}    {selected[1]}"
                         
-                        self.sub_text.setText(selected)
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                list_strings_set = settings.get('list_strings', {})
+                                list_strings_settings = list_strings_set.get('use_lists', False)
+                                if list_strings_settings == False:
+                                    # 根据学号格式执行不同逻辑
+                                    if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+
+                                    elif single_player_student_id == 1:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 2:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+                                    self.sub_text.setText(selected)
+                                else:
+                                    # 根据学号格式执行不同逻辑
+                                    if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+
+                                    elif single_player_student_id == 1:  # 补零
+                                        self.main_text.setText(f"{line_num:02}")
+                                    elif single_player_student_id == 2:  # 居中显示
+                                        self.main_text.setText(f"{line_num:^5}")
+                        except FileNotFoundError as e:
+                            logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                            # 根据学号格式执行不同逻辑
+                            if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                            elif single_player_student_id == 1:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 2:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+                        except KeyError:
+                            logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                            # 根据学号格式执行不同逻辑
+                            if single_player_student_id == 0 and global_student_id == 0:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 0 and global_student_id == 1:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                            elif single_player_student_id == 1:  # 补零
+                                self.main_text.setText(f"{line_num:02}")
+                            elif single_player_student_id == 2:  # 居中显示
+                                self.main_text.setText(f"{line_num:^5}")
+
+                        # 读取设置中的font_size值
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                font_size = settings['single_player']['font_size']
+                                if font_size < 30:
+                                    font_size = 100
+                        except Exception as e:
+                            font_size = 100
+                            logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                        # 根据设置调整字体大小
+                        if font_size < 30:
+                            self.main_text.setFont(QFont(load_custom_font(), 100))
+                        else:
+                            self.main_text.setFont(QFont(load_custom_font(), font_size))
+
+                        # 读取设置中的font_size值
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                font_size = settings['single_player']['font_size']
+                                if font_size < 30:
+                                    font_size = 100
+                        except Exception as e:
+                            font_size = 100
+                            logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                        # 根据设置调整字体大小
+                        if font_size < 30:
+                            self.sub_text.setFont(QFont(load_custom_font(), 100))
+                        else:
+                            self.sub_text.setFont(QFont(load_custom_font(), font_size))
                         
                         # 更新抽取记录
                         drawn_students.append(selected.replace(' ', ''))
@@ -695,7 +1043,22 @@ class single(QWidget):
         )
 
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            student_file = f"app/resource/students/{class_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        student_file = f"app/resource/students/{class_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     count = len([line.strip() for line in f if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')])
@@ -796,11 +1159,39 @@ class single(QWidget):
 
         self.main_text = BodyLabel('--')
         self.main_text.setAlignment(Qt.AlignCenter | Qt.AlignCenter)
-        self.main_text.setFont(QFont(load_custom_font(), 100))
+        # 读取设置中的font_size值
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                font_size = settings['single_player']['font_size']
+                if font_size < 30:
+                    font_size = 100
+        except Exception as e:
+            font_size = 100
+            logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+        # 根据设置调整字体大小
+        if font_size < 30:
+            self.main_text.setFont(QFont(load_custom_font(), 100))
+        else:
+            self.main_text.setFont(QFont(load_custom_font(), font_size))
         
         self.sub_text = BodyLabel('别紧张')
         self.sub_text.setAlignment(Qt.AlignCenter | Qt.AlignCenter)
-        self.sub_text.setFont(QFont(load_custom_font(), 100))
+        # 读取设置中的font_size值
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                font_size = settings['single_player']['font_size']
+                if font_size < 30:
+                    font_size = 100
+        except Exception as e:
+            font_size = 100
+            logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+        # 根据设置调整字体大小
+        if font_size < 30:
+            self.sub_text.setFont(QFont(load_custom_font(), 100))
+        else:
+            self.sub_text.setFont(QFont(load_custom_font(), font_size))
         
         text_layout.addWidget(self.main_text)
         text_layout.addWidget(self.sub_text)

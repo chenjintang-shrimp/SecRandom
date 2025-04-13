@@ -98,7 +98,22 @@ class multiplayer(QWidget):
         """显示随机学生（用于动画效果）"""
         class_name = self.class_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            student_file = f"app/resource/students/{class_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        student_file = f"app/resource/students/{class_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and '【' not in line.strip() and '】' not in line.strip()]
@@ -163,10 +178,39 @@ class multiplayer(QWidget):
                             # 处理两字姓名
                             if student_name_format == 0 and len(name) == 2:
                                 name = f"{name[0]}    {name[1]}"
-                            
-                            label = BodyLabel(f"{student_id_str} {name}")
+
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    list_strings_set = settings.get('list_strings', {})
+                                    list_strings_settings = list_strings_set.get('use_lists', False)
+                                    if list_strings_settings == False:
+                                        label = BodyLabel(f"{student_id_str} {name}")
+                                    else:
+                                        label = BodyLabel(f"{student_id_str}")
+                            except FileNotFoundError as e:
+                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                                label = BodyLabel(f"{student_id_str}")
+                            except KeyError:
+                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                label = BodyLabel(f"{student_id_str}")
+
                             label.setAlignment(Qt.AlignCenter)
-                            label.setFont(QFont(load_custom_font(), 85))
+                            # 读取设置中的font_size值
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    font_size = settings['multi_player']['font_size']
+                                    if font_size < 30:
+                                        font_size = 85
+                            except Exception as e:
+                                font_size = 85
+                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                            # 根据设置调整字体大小
+                            if font_size < 30:
+                                label.setFont(QFont(load_custom_font(), 85))
+                            else:
+                                label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
                         # 创建容器并添加到布局
@@ -194,7 +238,21 @@ class multiplayer(QWidget):
                     
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
-            error_label.setFont(QFont(load_custom_font(), 85))
+            # 读取设置中的font_size值
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    font_size = settings['multi_player']['font_size']
+                    if font_size < 30:
+                        font_size = 85
+            except Exception as e:
+                font_size = 85
+                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+            # 根据设置调整字体大小
+            if font_size < 30:
+                error_label.setFont(QFont(load_custom_font(), 85))
+            else:
+                error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_layout.addWidget(error_label)
     
     def _stop_animation(self):
@@ -285,7 +343,22 @@ class multiplayer(QWidget):
         """重复随机抽选学生"""
         class_name = self.class_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            student_file = f"app/resource/students/{class_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        student_file = f"app/resource/students/{class_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and '【' not in line.strip() and '】' not in line.strip()]     
@@ -405,10 +478,39 @@ class multiplayer(QWidget):
 
                             else:
                                 logger.info("历史记录功能已被禁用。")
-                            
-                            label = BodyLabel(f"{student_id_str} {name}")
+
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    list_strings_set = settings.get('list_strings', {})
+                                    list_strings_settings = list_strings_set.get('use_lists', False)
+                                    if list_strings_settings == False:
+                                        label = BodyLabel(f"{student_id_str} {name}")
+                                    else:
+                                        label = BodyLabel(f"{student_id_str}")
+                            except FileNotFoundError as e:
+                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                                label = BodyLabel(f"{student_id_str}")
+                            except KeyError:
+                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                label = BodyLabel(f"{student_id_str}")
+
                             label.setAlignment(Qt.AlignCenter)
-                            label.setFont(QFont(load_custom_font(), 85))
+                            # 读取设置中的font_size值
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    font_size = settings['multi_player']['font_size']
+                                    if font_size < 30:
+                                        font_size = 85
+                            except Exception as e:
+                                font_size = 85
+                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                            # 根据设置调整字体大小
+                            if font_size < 30:
+                                label.setFont(QFont(load_custom_font(), 85))
+                            else:
+                                label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
                         # 创建容器并添加到布局
@@ -436,7 +538,21 @@ class multiplayer(QWidget):
 
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
-            error_label.setFont(QFont(load_custom_font(), 85))
+            # 读取设置中的font_size值
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    font_size = settings['multi_player']['font_size']
+                    if font_size < 30:
+                        font_size = 85
+            except Exception as e:
+                font_size = 85
+                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+            # 根据设置调整字体大小
+            if font_size < 30:
+                error_label.setFont(QFont(load_custom_font(), 85))
+            else:
+                error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_layout.addWidget(error_label)
     
         
@@ -444,7 +560,22 @@ class multiplayer(QWidget):
         """不重复抽取(直到软件重启)"""
         class_name = self.class_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            student_file = f"app/resource/students/{class_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        student_file = f"app/resource/students/{class_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             # 根据抽取作用范围模式确定记录文件名
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
@@ -590,10 +721,39 @@ class multiplayer(QWidget):
 
                             else:
                                 logger.info("历史记录功能已被禁用。")
-                            
-                            label = BodyLabel(f"{student_id_str} {name}")
+
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    list_strings_set = settings.get('list_strings', {})
+                                    list_strings_settings = list_strings_set.get('use_lists', False)
+                                    if list_strings_settings == False:
+                                        label = BodyLabel(f"{student_id_str} {name}")
+                                    else:
+                                        label = BodyLabel(f"{student_id_str}")
+                            except FileNotFoundError as e:
+                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                                label = BodyLabel(f"{student_id_str}")
+                            except KeyError:
+                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                label = BodyLabel(f"{student_id_str}")
+
                             label.setAlignment(Qt.AlignCenter)
-                            label.setFont(QFont(load_custom_font(), 85))
+                            # 读取设置中的font_size值
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    font_size = settings['multi_player']['font_size']
+                                    if font_size < 30:
+                                        font_size = 85
+                            except Exception as e:
+                                font_size = 85
+                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                            # 根据设置调整字体大小
+                            if font_size < 30:
+                                label.setFont(QFont(load_custom_font(), 85))
+                            else:
+                                label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
                         # 创建容器并添加到布局
@@ -641,14 +801,43 @@ class multiplayer(QWidget):
 
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
-            error_label.setFont(QFont(load_custom_font(), 85))
+            # 读取设置中的font_size值
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    font_size = settings['multi_player']['font_size']
+                    if font_size < 30:
+                        font_size = 85
+            except Exception as e:
+                font_size = 85
+                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+            # 根据设置调整字体大小
+            if font_size < 30:
+                error_label.setFont(QFont(load_custom_font(), 85))
+            else:
+                error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_layout.addWidget(error_label)
         
     def until_all_draw_mode(self):
         """不重复抽取(直到抽完全部人)"""
         class_name = self.class_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            student_file = f"app/resource/students/{class_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        student_file = f"app/resource/students/{class_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             # 根据抽取作用范围模式确定记录文件名
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
@@ -800,10 +989,39 @@ class multiplayer(QWidget):
 
                             else:
                                 logger.info("历史记录功能已被禁用。")
-                            
-                            label = BodyLabel(f"{student_id_str} {name}")
+
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    list_strings_set = settings.get('list_strings', {})
+                                    list_strings_settings = list_strings_set.get('use_lists', False)
+                                    if list_strings_settings == False:
+                                        label = BodyLabel(f"{student_id_str} {name}")
+                                    else:
+                                        label = BodyLabel(f"{student_id_str}")
+                            except FileNotFoundError as e:
+                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                                label = BodyLabel(f"{student_id_str}")
+                            except KeyError:
+                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                label = BodyLabel(f"{student_id_str}")
+
                             label.setAlignment(Qt.AlignCenter)
-                            label.setFont(QFont(load_custom_font(), 85))
+                            # 读取设置中的font_size值
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    font_size = settings['multi_player']['font_size']
+                                    if font_size < 30:
+                                        font_size = 85
+                            except Exception as e:
+                                font_size = 85
+                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                            # 根据设置调整字体大小
+                            if font_size < 30:
+                                label.setFont(QFont(load_custom_font(), 85))
+                            else:
+                                label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
 
@@ -853,7 +1071,21 @@ class multiplayer(QWidget):
 
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
-            error_label.setFont(QFont(load_custom_font(), 85))
+            # 读取设置中的font_size值
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    font_size = settings['multi_player']['font_size']
+                    if font_size < 30:
+                        font_size = 85
+            except Exception as e:
+                font_size = 85
+                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+            # 根据设置调整字体大小
+            if font_size < 30:
+                error_label.setFont(QFont(load_custom_font(), 85))
+            else:
+                error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_layout.addWidget(error_label)
         
     def update_total_count(self):
@@ -881,7 +1113,22 @@ class multiplayer(QWidget):
         self._update_count_display()
 
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            student_file = f"app/resource/students/{class_name}.ini"
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if list_strings_settings == False:
+                        student_file = f"app/resource/students/{class_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people.ini"
+
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     count = len([line.strip() for line in f if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')])
