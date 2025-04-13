@@ -54,7 +54,7 @@ class Window(MSFluentWindow):
                 pumping_floating_enabled = foundation_settings.get('pumping_floating_enabled', True)
                 if pumping_floating_enabled == True:
                     self.levitation_window.show()
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             logger.error(f"加载设置时出错: {e}, 使用默认显示浮窗功能")
             self.levitation_window.show()
         except KeyError:
