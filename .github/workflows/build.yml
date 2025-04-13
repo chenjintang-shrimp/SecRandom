@@ -55,8 +55,10 @@ jobs:
           mkdir zip_dist/SecRandom
           # 复制dist目录下的所有文件到zip_dist/SecRandom目录下
           Copy-Item -Recurse -Force dist/* zip_dist/SecRandom
-          # 复制资源文件夹到zip_dist/SecRandom目录下
-          Copy-Item -Recurse -Force resources zip_dist/SecRandom
+          # 创建app目录
+          mkdir zip_dist/SecRandom/app
+          # 复制app/resource文件夹到zip_dist/SecRandom目录下
+          Copy-Item -Recurse -Force app/resource zip_dist/SecRandom/app
           # 复制 LICENSE 文件到zip_dist/SecRandom目录下
           Copy-Item LICENSE zip_dist/SecRandom
           # 使用系统自带的 Compress-Archive 压缩文件
