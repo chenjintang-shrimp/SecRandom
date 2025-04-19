@@ -11,19 +11,6 @@ from loguru import logger
 
 from ..common.config import load_custom_font
 
-# 配置日志记录
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
-logger.add(
-    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
-    rotation="1 MB",
-    encoding="utf-8",
-    retention="30 days",
-    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
-)
-
 class multiplayer(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -103,16 +90,16 @@ class multiplayer(QWidget):
                     settings = json.load(f)
                     list_strings_set = settings.get('list_strings', {})
                     list_strings_settings = list_strings_set.get('use_lists', False)
-                    if list_strings_settings == False:
+                    if not list_strings_settings:
                         student_file = f"app/resource/students/{class_name}.ini"
                     else:
-                        student_file = f"app/resource/students/people.ini"
+                        student_file = f"app/resource/students/people_{class_name}.ini"
             except FileNotFoundError as e:
                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                student_file = f"app/resource/students/people_{class_name}.ini"
             except KeyError:
-                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people_{class_name}.ini"
 
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
@@ -184,7 +171,7 @@ class multiplayer(QWidget):
                                     settings = json.load(f)
                                     list_strings_set = settings.get('list_strings', {})
                                     list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if list_strings_settings == False:
+                                    if not list_strings_settings:
                                         label = BodyLabel(f"{student_id_str} {name}")
                                     else:
                                         label = BodyLabel(f"{student_id_str}")
@@ -192,7 +179,7 @@ class multiplayer(QWidget):
                                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
                                 label = BodyLabel(f"{student_id_str}")
                             except KeyError:
-                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
                                 label = BodyLabel(f"{student_id_str}")
 
                             label.setAlignment(Qt.AlignCenter)
@@ -288,8 +275,25 @@ class multiplayer(QWidget):
                             else:
                                 name = parts[-1]
                             name = name.replace(' ', '')
-                            self.voice_engine.say(f"{name}")
-                            self.voice_engine.iterate()
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    list_strings_set = settings.get('list_strings', {})
+                                    list_strings_settings = list_strings_set.get('use_lists', False)
+                                    if not list_strings_settings:
+                                        self.voice_engine.say(f"{name}")
+                                        self.voice_engine.iterate()
+                                    else:
+                                        self.voice_engine.say(f"{name}号")
+                                        self.voice_engine.iterate()
+                            except FileNotFoundError as e:
+                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号朗读")
+                                self.voice_engine.say(f"{name}号")
+                                self.voice_engine.iterate()
+                            except KeyError:
+                                logger.error(f"设置文件中缺少foundation'键, 使用默认仅学号朗读")
+                                self.voice_engine.say(f"{name}号")
+                                self.voice_engine.iterate()
         except Exception as e:
             logger.error(f"语音播报出错: {e}")
     
@@ -334,8 +338,25 @@ class multiplayer(QWidget):
                             else:
                                 name = parts[-1]
                             name = name.replace(' ', '')
-                            self.voice_engine.say(f"{name}")
-                            self.voice_engine.iterate()
+                            try:
+                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    settings = json.load(f)
+                                    list_strings_set = settings.get('list_strings', {})
+                                    list_strings_settings = list_strings_set.get('use_lists', False)
+                                    if not list_strings_settings:
+                                        self.voice_engine.say(f"{name}")
+                                        self.voice_engine.iterate()
+                                    else:
+                                        self.voice_engine.say(f"{name}号")
+                                        self.voice_engine.iterate()
+                            except FileNotFoundError as e:
+                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号朗读")
+                                self.voice_engine.say(f"{name}号")
+                                self.voice_engine.iterate()
+                            except KeyError:
+                                logger.error(f"设置文件中缺少foundation'键, 使用默认仅学号朗读")
+                                self.voice_engine.say(f"{name}号")
+                                self.voice_engine.iterate()
         except Exception as e:
             logger.error(f"语音播报出错: {e}")
             
@@ -348,16 +369,16 @@ class multiplayer(QWidget):
                     settings = json.load(f)
                     list_strings_set = settings.get('list_strings', {})
                     list_strings_settings = list_strings_set.get('use_lists', False)
-                    if list_strings_settings == False:
+                    if not list_strings_settings:
                         student_file = f"app/resource/students/{class_name}.ini"
                     else:
-                        student_file = f"app/resource/students/people.ini"
+                        student_file = f"app/resource/students/people_{class_name}.ini"
             except FileNotFoundError as e:
                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                student_file = f"app/resource/students/people_{class_name}.ini"
             except KeyError:
-                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people_{class_name}.ini"
 
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
@@ -438,7 +459,22 @@ class multiplayer(QWidget):
 
                             if history_enabled:
                                 # 记录抽选历史
-                                history_file = f"app/resource/history/{class_name}.json"
+                                try:
+                                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                        settings = json.load(f)
+                                        list_strings_set = settings.get('list_strings', {})
+                                        list_strings_settings = list_strings_set.get('use_lists', False)
+                                        if not list_strings_settings:
+                                            history_file = f"app/resource/history/{class_name}.json"
+                                        else:
+                                            history_file = f"app/resource/history/people_{class_name}.json"
+                                except FileNotFoundError as e:
+                                    logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号记录历史")
+                                    history_file = f"app/resource/history/people_{class_name}.json"
+                                except KeyError:
+                                    logger.error(f"设置文件中缺少foundation键, 使用默认仅学号记录历史")
+                                    history_file = f"app/resource/history/people_{class_name}.json"
+
                                 os.makedirs(os.path.dirname(history_file), exist_ok=True)
                                 
                                 history_data = {}
@@ -484,7 +520,7 @@ class multiplayer(QWidget):
                                     settings = json.load(f)
                                     list_strings_set = settings.get('list_strings', {})
                                     list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if list_strings_settings == False:
+                                    if not list_strings_settings:
                                         label = BodyLabel(f"{student_id_str} {name}")
                                     else:
                                         label = BodyLabel(f"{student_id_str}")
@@ -492,7 +528,7 @@ class multiplayer(QWidget):
                                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
                                 label = BodyLabel(f"{student_id_str}")
                             except KeyError:
-                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
                                 label = BodyLabel(f"{student_id_str}")
 
                             label.setAlignment(Qt.AlignCenter)
@@ -565,16 +601,16 @@ class multiplayer(QWidget):
                     settings = json.load(f)
                     list_strings_set = settings.get('list_strings', {})
                     list_strings_settings = list_strings_set.get('use_lists', False)
-                    if list_strings_settings == False:
+                    if not list_strings_settings:
                         student_file = f"app/resource/students/{class_name}.ini"
                     else:
-                        student_file = f"app/resource/students/people.ini"
+                        student_file = f"app/resource/students/people_{class_name}.ini"
             except FileNotFoundError as e:
                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                student_file = f"app/resource/students/people_{class_name}.ini"
             except KeyError:
-                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people_{class_name}.ini"
 
             # 根据抽取作用范围模式确定记录文件名
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
@@ -681,7 +717,22 @@ class multiplayer(QWidget):
 
                             if history_enabled:
                                 # 记录抽选历史
-                                history_file = f"app/resource/history/{class_name}.json"
+                                try:
+                                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                        settings = json.load(f)
+                                        list_strings_set = settings.get('list_strings', {})
+                                        list_strings_settings = list_strings_set.get('use_lists', False)
+                                        if not list_strings_settings:
+                                            history_file = f"app/resource/history/{class_name}.json"
+                                        else:
+                                            history_file = f"app/resource/history/people_{class_name}.json"
+                                except FileNotFoundError as e:
+                                    logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号记录历史")
+                                    history_file = f"app/resource/history/people_{class_name}.json"
+                                except KeyError:
+                                    logger.error(f"设置文件中缺少foundation键, 使用默认仅学号记录历史")
+                                    history_file = f"app/resource/history/people_{class_name}.json"
+
                                 os.makedirs(os.path.dirname(history_file), exist_ok=True)
                                 
                                 history_data = {}
@@ -727,7 +778,7 @@ class multiplayer(QWidget):
                                     settings = json.load(f)
                                     list_strings_set = settings.get('list_strings', {})
                                     list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if list_strings_settings == False:
+                                    if not list_strings_settings:
                                         label = BodyLabel(f"{student_id_str} {name}")
                                     else:
                                         label = BodyLabel(f"{student_id_str}")
@@ -735,7 +786,7 @@ class multiplayer(QWidget):
                                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
                                 label = BodyLabel(f"{student_id_str}")
                             except KeyError:
-                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
                                 label = BodyLabel(f"{student_id_str}")
 
                             label.setAlignment(Qt.AlignCenter)
@@ -827,16 +878,16 @@ class multiplayer(QWidget):
                     settings = json.load(f)
                     list_strings_set = settings.get('list_strings', {})
                     list_strings_settings = list_strings_set.get('use_lists', False)
-                    if list_strings_settings == False:
+                    if not list_strings_settings:
                         student_file = f"app/resource/students/{class_name}.ini"
                     else:
-                        student_file = f"app/resource/students/people.ini"
+                        student_file = f"app/resource/students/people_{class_name}.ini"
             except FileNotFoundError as e:
                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                student_file = f"app/resource/students/people_{class_name}.ini"
             except KeyError:
-                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people_{class_name}.ini"
 
             # 根据抽取作用范围模式确定记录文件名
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
@@ -949,7 +1000,22 @@ class multiplayer(QWidget):
 
                             if history_enabled:
                                 # 记录抽选历史
-                                history_file = f"app/resource/history/{class_name}.json"
+                                try:
+                                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                        settings = json.load(f)
+                                        list_strings_set = settings.get('list_strings', {})
+                                        list_strings_settings = list_strings_set.get('use_lists', False)
+                                        if not list_strings_settings:
+                                            history_file = f"app/resource/history/{class_name}.json"
+                                        else:
+                                            history_file = f"app/resource/history/people_{class_name}.json"
+                                except FileNotFoundError as e:
+                                    logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号记录历史")
+                                    history_file = f"app/resource/history/people_{class_name}.json"
+                                except KeyError:
+                                    logger.error(f"设置文件中缺少foundation键, 使用默认仅学号记录历史")
+                                    history_file = f"app/resource/history/people_{class_name}.json"
+
                                 os.makedirs(os.path.dirname(history_file), exist_ok=True)
                                 
                                 history_data = {}
@@ -995,7 +1061,7 @@ class multiplayer(QWidget):
                                     settings = json.load(f)
                                     list_strings_set = settings.get('list_strings', {})
                                     list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if list_strings_settings == False:
+                                    if not list_strings_settings:
                                         label = BodyLabel(f"{student_id_str} {name}")
                                     else:
                                         label = BodyLabel(f"{student_id_str}")
@@ -1003,7 +1069,7 @@ class multiplayer(QWidget):
                                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
                                 label = BodyLabel(f"{student_id_str}")
                             except KeyError:
-                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
                                 label = BodyLabel(f"{student_id_str}")
 
                             label.setAlignment(Qt.AlignCenter)
@@ -1118,16 +1184,16 @@ class multiplayer(QWidget):
                     settings = json.load(f)
                     list_strings_set = settings.get('list_strings', {})
                     list_strings_settings = list_strings_set.get('use_lists', False)
-                    if list_strings_settings == False:
+                    if not list_strings_settings:
                         student_file = f"app/resource/students/{class_name}.ini"
                     else:
-                        student_file = f"app/resource/students/people.ini"
+                        student_file = f"app/resource/students/people_{class_name}.ini"
             except FileNotFoundError as e:
                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                student_file = f"app/resource/students/people_{class_name}.ini"
             except KeyError:
-                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people_{class_name}.ini"
 
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:

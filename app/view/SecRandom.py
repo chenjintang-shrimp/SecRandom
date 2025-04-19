@@ -1,6 +1,5 @@
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as fIcon
-from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -11,24 +10,11 @@ import sys
 from loguru import logger
 
 # 确认是否存在目录
-if ('./app/Settings') != None and not os.path.exists('./app/Settings'):
+if './app/Settings' != None and not os.path.exists('./app/Settings'):
     os.makedirs('./app/Settings')
 
-if ('./app/resource/group') != None and not os.path.exists('./app/resource/group'):
+if './app/resource/group' != None and not os.path.exists('./app/resource/group'):
     os.makedirs('./app/resource/group')
-
-# 配置日志记录
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
-logger.add(
-    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
-    rotation="1 MB",
-    encoding="utf-8",
-    retention="30 days",
-    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
-)
 
 # 导入子页面
 from app.view.settings import settings_Window
@@ -56,7 +42,7 @@ class Window(MSFluentWindow):
             logger.error(f"加载设置时出错: {e}, 使用默认大小:800x600")
             self.resize(800, 600)
         except KeyError:
-            logger.error(f"设置文件中缺少'foundation'键, 使用默认大小:800x600")
+            logger.error(f"设置文件中缺少foundation键, 使用默认大小:800x600")
             self.resize(800, 600)
         self.setMinimumSize(600, 400)
         self.setWindowTitle('SecRandom')
@@ -68,13 +54,13 @@ class Window(MSFluentWindow):
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
                 pumping_floating_enabled = foundation_settings.get('pumping_floating_enabled', True)
-                if pumping_floating_enabled == True:
+                if pumping_floating_enabled:
                     self.levitation_window.show()
         except FileNotFoundError as e:
             logger.error(f"加载设置时出错: {e}, 使用默认显示浮窗功能")
             self.levitation_window.show()
         except KeyError:
-            logger.error(f"设置文件中缺少'foundation'键, 使用默认显示浮窗功能")
+            logger.error(f"设置文件中缺少foundation键, 使用默认显示浮窗功能")
             self.levitation_window.show()
       
         # 初始化系统托盘
@@ -85,7 +71,7 @@ class Window(MSFluentWindow):
         # 创建托盘菜单
         self.tray_menu = RoundMenu(parent=self)
         self.tray_menu.addAction(Action(fIcon.POWER_BUTTON, '暂时显示/隐藏主界面', triggered=self.toggle_window))
-        self.tray_menu.addAction(Action(QIcon("app\\resource\\icon\\SecRandom_floating.png"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
+        self.tray_menu.addAction(Action(QIcon("app\\resource\\icon\\SecRandom_floating_100%.png"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
         self.tray_menu.addAction(Action(fIcon.SETTING, '打开设置界面', triggered=self.show_setting_interface))
         # self.tray_menu.addAction(Action(fIcon.SYNC, '重启', triggered=self.restart_app))
         self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=self.close_window_secrandom))
@@ -162,6 +148,7 @@ class Window(MSFluentWindow):
         """关闭应用程序"""
         self.start_cleanup()
         self.tray_icon.hide()
+        logger.remove()
         QApplication.quit()
         logger.info("应用程序已退出")
 
@@ -235,10 +222,19 @@ class Window(MSFluentWindow):
             
     def restart_app(self):
         """重启应用程序"""
-        self.close_window_secrandom()
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        self.start_cleanup()
+        self.tray_icon.hide()
+        logger.info("应用程序正在尝试重启...")
+        logger.remove()
+        QApplication.quit()
+        try:
+            os.execl(sys.executable, sys.executable, *sys.argv)
+        except Exception as e:
+            logger.error(f"重启失败: {e}")
+            return
 
     def show_setting_interface(self):
+        """显示设置界面"""
         if not hasattr(self, 'settingInterface') or not self.settingInterface:
             self.settingInterface = settings_Window(self)
         if not self.settingInterface.isVisible():

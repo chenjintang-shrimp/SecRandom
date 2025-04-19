@@ -9,19 +9,6 @@ from loguru import logger
 
 from app.common.config import load_custom_font
 
-# 配置日志记录
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
-logger.add(
-    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
-    rotation="1 MB",
-    encoding="utf-8",
-    retention="30 days",
-    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
-)
-
 class history_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -96,8 +83,24 @@ class history_SettinsCard(GroupHeaderCardWidget):
     def load_students(self):
         class_name = self.class_comboBox.currentText()
         try:
-            if os.path.exists(f"app/resource/students/{class_name}.ini"):
-                with open(f"app/resource/students/{class_name}.ini", 'r', encoding='utf-8') as f:
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    list_strings_set = settings.get('list_strings', {})
+                    list_strings_settings = list_strings_set.get('use_lists', False)
+                    if not list_strings_settings:
+                        student_file = f"app/resource/students/{class_name}.ini"
+                    else:
+                        student_file = f"app/resource/students/people_{class_name}.ini"
+            except FileNotFoundError as e:
+                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
+                student_file = f"app/resource/students/people_{class_name}.ini"
+            except KeyError:
+                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
+                student_file = f"app/resource/students/people_{class_name}.ini"
+
+            if os.path.exists(student_file):
+                with open(student_file, 'r', encoding='utf-8') as f:
                     students = [line.strip() for line in f.read().split('\n') if line.strip()]
                     self.student_comboBox.clear()
                     students = ['全班同学'] + students
@@ -146,7 +149,6 @@ class history_SettinsCard(GroupHeaderCardWidget):
     def load_settings(self):
         try:
             if os.path.exists(self.settings_file):
-                logger.info(f"加载设置文件: {self.settings_file}")  # 打印日志信息
                 with open(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     history_settings = settings.get("history", {})
@@ -154,7 +156,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
                     history_enabled = history_settings.get("history_enabled", self.default_settings["history_enabled"])
                     
                     self.history_switch.setChecked(history_enabled)
-                    logger.info(f"加载设置完成: dhistory_enabled={history_enabled}")
+                    logger.info(f"加载历史记录设置完成")
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.history_switch.setChecked(self.default_settings["history_enabled"])

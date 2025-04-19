@@ -8,20 +8,6 @@ from loguru import logger
 
 from app.common.config import load_custom_font
 
-# 配置日志记录
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
-logger.add(
-    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
-    rotation="1 MB",
-    encoding="utf-8",
-    retention="30 days",
-    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
-)
-
-
 class senior_settingsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -74,7 +60,7 @@ class senior_settingsCard(GroupHeaderCardWidget):
 
         # 添加组件到分组中
         self.addGroup(FIF.PLAY, "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
-        self.addGroup(QIcon("app\\resource\\icon\\SecRandom_floating.png"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
+        self.addGroup(QIcon("app\\resource\\icon\\SecRandom_floating_100%.png"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
         self.addGroup(FIF.ZOOM, "主窗口位置", "设置主窗口的显示位置", self.main_window_comboBox)
         self.addGroup(FIF.ZOOM, "便捷抽人窗口位置", "设置主窗口的显示位置", self.convenient_window_comboBox)
         self.addGroup(FIF.ZOOM, "设置窗口位置", "设置主窗口的显示位置", self.settings_window_comboBox)
@@ -88,52 +74,36 @@ class senior_settingsCard(GroupHeaderCardWidget):
     def load_settings(self):
         try:
             if os.path.exists(self.settings_file):
-                logger.info(f"加载设置文件: {self.settings_file}")  # 打印日志信息
                 with open(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     foundation_settings = settings.get("foundation", {})
                     
-                    # 优先使用保存的文字选项
+                    # 直接使用索引值
                     self_starting_enabled = foundation_settings.get("self_starting_enabled", self.default_settings["self_starting_enabled"])
 
                     pumping_floating_enabled = foundation_settings.get("pumping_floating_enabled", self.default_settings["pumping_floating_enabled"])
                         
-                    main_window_mode_text = foundation_settings.get("main_window_mode_text", self.main_window_comboBox.itemText(self.default_settings["main_window_mode"]))
-                    main_window_mode = self.main_window_comboBox.findText(main_window_mode_text)
-                    if main_window_mode == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的主窗口位置文本: {main_window_mode_text}")
-                        main_window_mode = foundation_settings.get("main_window_mode", self.default_settings["main_window_mode"])
-                        if main_window_mode < 0 or main_window_mode >= self.main_window_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            main_window_mode = self.default_settings["main_window_mode"]
+                    main_window_mode = foundation_settings.get("main_window_mode", self.default_settings["main_window_mode"])
+                    if main_window_mode < 0 or main_window_mode >= self.main_window_comboBox.count():
+                        # 如果索引值无效，则使用默认值
+                        main_window_mode = self.default_settings["main_window_mode"]
                         
-                    convenient_window_mode_text = foundation_settings.get("convenient_window_mode_text", self.convenient_window_comboBox.itemText(self.default_settings["convenient_window_mode"]))
-                    convenient_window_mode = self.convenient_window_comboBox.findText(convenient_window_mode_text)
-                    if convenient_window_mode == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的便捷抽人窗口位置文本: {convenient_window_mode_text}")
-                        convenient_window_mode = foundation_settings.get("convenient_window_mode", self.default_settings["convenient_window_mode"])
-                        if convenient_window_mode < 0 or convenient_window_mode >= self.convenient_window_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            convenient_window_mode = self.default_settings["convenient_window_mode"]
+                    convenient_window_mode = foundation_settings.get("convenient_window_mode", self.default_settings["convenient_window_mode"])
+                    if convenient_window_mode < 0 or convenient_window_mode >= self.convenient_window_comboBox.count():
+                        # 如果索引值无效，则使用默认值
+                        convenient_window_mode = self.default_settings["convenient_window_mode"]
 
-                    settings_window_mode_text = foundation_settings.get("settings_window_mode_text", self.settings_window_comboBox.itemText(self.default_settings["settings_window_mode"]))
-                    settings_window_mode = self.settings_window_comboBox.findText(settings_window_mode_text)
-                    if settings_window_mode == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的设置窗口位置文本: {settings_window_mode_text}")
-                        settings_window_mode = foundation_settings.get("settings_window_mode", self.default_settings["settings_window_mode"])
-                        if settings_window_mode < 0 or settings_window_mode >= self.settings_window_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            settings_window_mode = self.default_settings["settings_window_mode"]
+                    settings_window_mode = foundation_settings.get("settings_window_mode", self.default_settings["settings_window_mode"])
+                    if settings_window_mode < 0 or settings_window_mode >= self.settings_window_comboBox.count():
+                        # 如果索引值无效，则使用默认值
+                        settings_window_mode = self.default_settings["settings_window_mode"]
 
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
                     self.main_window_comboBox.setCurrentIndex(main_window_mode)
                     self.convenient_window_comboBox.setCurrentIndex(convenient_window_mode)
                     self.settings_window_comboBox.setCurrentIndex(settings_window_mode)
-                    logger.info(f"加载设置完成: self_starting_enabled={self_starting_enabled}, pumping_floating_enabled={pumping_floating_enabled}, main_window_mode={main_window_mode}, convenient_window_mode={convenient_window_mode}, settings_window_mode={settings_window_mode}")
+                    logger.info(f"加载高级设置完成")
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
@@ -166,11 +136,7 @@ class senior_settingsCard(GroupHeaderCardWidget):
             existing_settings["foundation"] = {}
             
         foundation_settings = existing_settings["foundation"]
-        # 保存文字选项
-        foundation_settings["main_window_mode_text"] = self.main_window_comboBox.currentText()
-        foundation_settings["convenient_window_mode_text"] = self.convenient_window_comboBox.currentText()
-        foundation_settings["settings_window_mode_text"] = self.settings_window_comboBox.currentText()
-        # 同时保存索引值
+        # 只保存索引值
         foundation_settings["self_starting_enabled"] = self.self_starting_switch.isChecked()
         foundation_settings["pumping_floating_enabled"] = self.pumping_floating_switch.isChecked()
         foundation_settings["main_window_mode"] = self.main_window_comboBox.currentIndex()

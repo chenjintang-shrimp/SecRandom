@@ -11,19 +11,6 @@ from loguru import logger
 
 from app.common.config import load_custom_font
 
-# 配置日志记录
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
-logger.add(
-    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
-    rotation="1 MB",
-    encoding="utf-8",
-    retention="30 days",
-    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
-)
-
 class groupplayer(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -104,19 +91,28 @@ class groupplayer(QWidget):
                     settings = json.load(f)
                     list_strings_set = settings.get('list_strings', {})
                     list_strings_settings = list_strings_set.get('use_lists', False)
-                    if list_strings_settings == False:
+                    if not list_strings_settings:
                         if group_name == '抽取小组组号':
                             student_file = f"app/resource/group/{class_name}_group.ini"
                         else:
                             student_file = f"app/resource/group/{class_name}_{group_name}.ini"
                     else:
-                        student_file = f"app/resource/students/people.ini"
+                        if group_name == '抽取小组组号':
+                            student_file = f"app/resource/group/{class_name}_group.ini"
+                        else:
+                            class_name = '加载小组列表失败'
             except FileNotFoundError as e:
                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                if group_name == '抽取小组组号':
+                    student_file = f"app/resource/group/{class_name}_group.ini"
+                else:
+                    class_name = '加载小组列表失败'
             except KeyError:
-                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
+                if group_name == '抽取小组组号':
+                    student_file = f"app/resource/group/{class_name}_group.ini"
+                else:
+                    class_name = '加载小组列表失败'
 
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
@@ -188,7 +184,7 @@ class groupplayer(QWidget):
                                     settings = json.load(f)
                                     list_strings_set = settings.get('list_strings', {})
                                     list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if list_strings_settings == False:
+                                    if not list_strings_settings:
                                         if group_name == '抽取小组组号':
                                             label = BodyLabel(f"{name}")
                                         else:
@@ -205,7 +201,7 @@ class groupplayer(QWidget):
                                 else:
                                     label = BodyLabel(f"{student_id_str}")
                             except KeyError:
-                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
                                 if group_name == '抽取小组组号':
                                     label = BodyLabel(f"{name}")
                                 else:
@@ -365,19 +361,28 @@ class groupplayer(QWidget):
                     settings = json.load(f)
                     list_strings_set = settings.get('list_strings', {})
                     list_strings_settings = list_strings_set.get('use_lists', False)
-                    if list_strings_settings == False:
+                    if not list_strings_settings:
                         if group_name == '抽取小组组号':
                             student_file = f"app/resource/group/{class_name}_group.ini"
                         else:
                             student_file = f"app/resource/group/{class_name}_{group_name}.ini"
                     else:
-                        student_file = f"app/resource/students/people.ini"
+                        if group_name == '抽取小组组号':
+                            student_file = f"app/resource/group/{class_name}_group.ini"
+                        else:
+                            class_name = '加载小组列表失败'
             except FileNotFoundError as e:
                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                if group_name == '抽取小组组号':
+                    student_file = f"app/resource/group/{class_name}_group.ini"
+                else:
+                    class_name = '加载小组列表失败'
             except KeyError:
-                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
+                if group_name == '抽取小组组号':
+                    student_file = f"app/resource/group/{class_name}_group.ini"
+                else:
+                    class_name = '加载小组列表失败'
 
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
@@ -452,7 +457,7 @@ class groupplayer(QWidget):
                                     settings = json.load(f)
                                     list_strings_set = settings.get('list_strings', {})
                                     list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if list_strings_settings == False:
+                                    if not list_strings_settings:
                                         if group_name == '抽取小组组号':
                                             label = BodyLabel(f"{name}")
                                         else:
@@ -469,7 +474,7 @@ class groupplayer(QWidget):
                                 else:
                                     label = BodyLabel(f"{student_id_str}")
                             except KeyError:
-                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
                                 if group_name == '抽取小组组号':
                                     label = BodyLabel(f"{name}")
                                 else:
@@ -493,7 +498,22 @@ class groupplayer(QWidget):
                             if selected not in group_students:
                                 if history_enabled:
                                     # 记录抽选历史
-                                    history_file = f"app/resource/history/{class_name}.json"
+                                    try:
+                                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                            settings = json.load(f)
+                                            list_strings_set = settings.get('list_strings', {})
+                                            list_strings_settings = list_strings_set.get('use_lists', False)
+                                            if not list_strings_settings:
+                                                history_file = f"app/resource/history/{class_name}.json"
+                                            else:
+                                                history_file = f"app/resource/history/people_{class_name}.json"
+                                    except FileNotFoundError as e:
+                                        logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号记录历史")
+                                        history_file = f"app/resource/history/people_{class_name}.json"
+                                    except KeyError:
+                                        logger.error(f"设置文件中缺少foundation键, 使用默认仅学号记录历史")
+                                        history_file = f"app/resource/history/people_{class_name}.json"
+
                                     os.makedirs(os.path.dirname(history_file), exist_ok=True)
                                     
                                     history_data = {}
@@ -608,19 +628,28 @@ class groupplayer(QWidget):
                     settings = json.load(f)
                     list_strings_set = settings.get('list_strings', {})
                     list_strings_settings = list_strings_set.get('use_lists', False)
-                    if list_strings_settings == False:
+                    if not list_strings_settings:
                         if group_name == '抽取小组组号':
                             student_file = f"app/resource/group/{class_name}_group.ini"
                         else:
                             student_file = f"app/resource/group/{class_name}_{group_name}.ini"
                     else:
-                        student_file = f"app/resource/students/people.ini"
+                        if group_name == '抽取小组组号':
+                            student_file = f"app/resource/group/{class_name}_group.ini"
+                        else:
+                            class_name = '加载小组列表失败'
             except FileNotFoundError as e:
                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                if group_name == '抽取小组组号':
+                    student_file = f"app/resource/group/{class_name}_group.ini"
+                else:
+                    class_name = '加载小组列表失败'
             except KeyError:
-                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
+                if group_name == '抽取小组组号':
+                    student_file = f"app/resource/group/{class_name}_group.ini"
+                else:
+                    class_name = '加载小组列表失败'
 
             draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}_group.json"
             
@@ -713,7 +742,7 @@ class groupplayer(QWidget):
                                     settings = json.load(f)
                                     list_strings_set = settings.get('list_strings', {})
                                     list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if list_strings_settings == False:
+                                    if not list_strings_settings:
                                         if group_name == '抽取小组组号':
                                             label = BodyLabel(f"{name}")
                                         else:
@@ -730,7 +759,7 @@ class groupplayer(QWidget):
                                 else:
                                     label = BodyLabel(f"{student_id_str}")
                             except KeyError:
-                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
                                 if group_name == '抽取小组组号':
                                     label = BodyLabel(f"{name}")
                                 else:
@@ -754,7 +783,22 @@ class groupplayer(QWidget):
                             if selected not in group_students:
                                 if history_enabled:
                                     # 记录抽选历史
-                                    history_file = f"app/resource/history/{class_name}.json"
+                                    try:
+                                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                            settings = json.load(f)
+                                            list_strings_set = settings.get('list_strings', {})
+                                            list_strings_settings = list_strings_set.get('use_lists', False)
+                                            if not list_strings_settings:
+                                                history_file = f"app/resource/history/{class_name}.json"
+                                            else:
+                                                history_file = f"app/resource/history/people_{class_name}.json"
+                                    except FileNotFoundError as e:
+                                        logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号记录历史")
+                                        history_file = f"app/resource/history/people_{class_name}.json"
+                                    except KeyError:
+                                        logger.error(f"设置文件中缺少foundation键, 使用默认仅学号记录历史")
+                                        history_file = f"app/resource/history/people_{class_name}.json"
+
                                     os.makedirs(os.path.dirname(history_file), exist_ok=True)
                                     
                                     history_data = {}
@@ -888,19 +932,28 @@ class groupplayer(QWidget):
                     settings = json.load(f)
                     list_strings_set = settings.get('list_strings', {})
                     list_strings_settings = list_strings_set.get('use_lists', False)
-                    if list_strings_settings == False:
+                    if not list_strings_settings:
                         if group_name == '抽取小组组号':
                             student_file = f"app/resource/group/{class_name}_group.ini"
                         else:
                             student_file = f"app/resource/group/{class_name}_{group_name}.ini"
                     else:
-                        student_file = f"app/resource/students/people.ini"
+                        if group_name == '抽取小组组号':
+                            student_file = f"app/resource/group/{class_name}_group.ini"
+                        else:
+                            class_name = '加载小组列表失败'
             except FileNotFoundError as e:
                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                if group_name == '抽取小组组号':
+                    student_file = f"app/resource/group/{class_name}_group.ini"
+                else:
+                    class_name = '加载小组列表失败'
             except KeyError:
-                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
+                if group_name == '抽取小组组号':
+                    student_file = f"app/resource/group/{class_name}_group.ini"
+                else:
+                    class_name = '加载小组列表失败'
 
             draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_group.json"
             
@@ -994,7 +1047,7 @@ class groupplayer(QWidget):
                                     settings = json.load(f)
                                     list_strings_set = settings.get('list_strings', {})
                                     list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if list_strings_settings == False:
+                                    if not list_strings_settings:
                                         if group_name == '抽取小组组号':
                                             label = BodyLabel(f"{name}")
                                         else:
@@ -1011,7 +1064,7 @@ class groupplayer(QWidget):
                                 else:
                                     label = BodyLabel(f"{student_id_str}")
                             except KeyError:
-                                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
+                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
                                 if group_name == '抽取小组组号':
                                     label = BodyLabel(f"{name}")
                                 else:
@@ -1035,7 +1088,22 @@ class groupplayer(QWidget):
                             if selected not in group_students:
                                 if history_enabled:
                                     # 记录抽选历史
-                                    history_file = f"app/resource/history/{class_name}.json"
+                                    try:
+                                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                            settings = json.load(f)
+                                            list_strings_set = settings.get('list_strings', {})
+                                            list_strings_settings = list_strings_set.get('use_lists', False)
+                                            if not list_strings_settings:
+                                                history_file = f"app/resource/history/{class_name}.json"
+                                            else:
+                                                history_file = f"app/resource/history/people_{class_name}.json"
+                                    except FileNotFoundError as e:
+                                        logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号记录历史")
+                                        history_file = f"app/resource/history/people_{class_name}.json"
+                                    except KeyError:
+                                        logger.error(f"设置文件中缺少foundation键, 使用默认仅学号记录历史")
+                                        history_file = f"app/resource/history/people_{class_name}.json"
+
                                     os.makedirs(os.path.dirname(history_file), exist_ok=True)
                                     
                                     history_data = {}
@@ -1180,26 +1248,38 @@ class groupplayer(QWidget):
                     settings = json.load(f)
                     list_strings_set = settings.get('list_strings', {})
                     list_strings_settings = list_strings_set.get('use_lists', False)
-                    if list_strings_settings == False:
+                    if not list_strings_settings:
                         if group_name == '抽取小组组号':
                             student_file = f"app/resource/group/{class_name}_group.ini"
                         else:
                             student_file = f"app/resource/group/{class_name}_{group_name}.ini"
                     else:
-                        student_file = f"app/resource/students/people.ini"
+                        if group_name == '抽取小组组号':
+                            student_file = f"app/resource/group/{class_name}_group.ini"
+                        else:
+                            class_name = '加载小组列表失败'
             except FileNotFoundError as e:
                 logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people.ini"
+                if group_name == '抽取小组组号':
+                    student_file = f"app/resource/group/{class_name}_group.ini"
+                else:
+                    class_name = '加载小组列表失败'
             except KeyError:
-                logger.error(f"设置文件中缺少'foundation'键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people.ini"
-
-            if os.path.exists(student_file):
-                with open(student_file, 'r', encoding='utf-8') as f:
-                    count = len([line.strip() for line in f if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')])
-                    self.total_label.setText(f'总人数: {count}')
-                    self.max_count = count
-                    self._update_count_display()
+                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
+                if group_name == '抽取小组组号':
+                    student_file = f"app/resource/group/{class_name}_group.ini"
+                else:
+                    class_name = '加载小组列表失败'
+            if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"]:
+                if os.path.exists(student_file):
+                    with open(student_file, 'r', encoding='utf-8') as f:
+                        count = len([line.strip() for line in f if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')])
+                        self.total_label.setText(f'总人数: {count}')
+                        self.max_count = count
+                        self._update_count_display()
+                else:
+                    self.total_label.setText('总人数: 0')
+                    self.max_count = 0
             else:
                 self.total_label.setText('总人数: 0')
                 self.max_count = 0

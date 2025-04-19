@@ -12,19 +12,6 @@ from ..common.config import load_custom_font
 
 from ..common.list_settings import list_SettinsCard
 
-# 配置日志记录
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
-logger.add(
-    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
-    rotation="1 MB",
-    encoding="utf-8",
-    retention="30 days",
-    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
-)
-
 class quicksetup(QFrame):
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)

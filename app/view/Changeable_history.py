@@ -11,19 +11,6 @@ from ..common.config import load_custom_font
 
 from ..common.Changeable_history_settings import history_SettinsCard
 
-# 配置日志记录
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
-logger.add(
-    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
-    rotation="1 MB",
-    encoding="utf-8",
-    retention="30 days",
-    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
-)
-
 class changeable_history(QFrame):
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
@@ -211,7 +198,22 @@ class changeable_history(QFrame):
         if _student_name == '全班同学':
             if class_name:
                 # 读取配置文件
-                student_file = f'app/resource/students/{class_name}.ini'
+                try:
+                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                        settings = json.load(f)
+                        list_strings_set = settings.get('list_strings', {})
+                        list_strings_settings = list_strings_set.get('use_lists', False)
+                        if not list_strings_settings:
+                            student_file = f'app/resource/students/{class_name}.ini'
+                        else:
+                            student_file = f"app/resource/students/people_{class_name}.ini"
+                except FileNotFoundError as e:
+                    logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号记录历史")
+                    student_file = f"app/resource/students/people_{class_name}.ini"
+                except KeyError:
+                    logger.error(f"设置文件中缺少foundation键, 使用默认仅学号记录历史")
+                    student_file = f"app/resource/students/people_{class_name}.ini"
+
                 try:
                     with open(student_file, 'r', encoding='utf-8') as f:
                         students = [line.strip() for line in f if line.strip()]
@@ -234,44 +236,111 @@ class changeable_history(QFrame):
                     # 初始化历史数据字典
                     history_data = {}
                     # 读取历史记录文件
-                    history_file = f'app/resource/history/{class_name}.json'
+                    try:
+                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                            settings = json.load(f)
+                            list_strings_set = settings.get('list_strings', {})
+                            list_strings_settings = list_strings_set.get('use_lists', False)
+                            if not list_strings_settings:
+                                history_file = f'app/resource/history/{class_name}.json'
+                            else:
+                                history_file = f"app/resource/history/people_{class_name}.json"
+                    except FileNotFoundError as e:
+                        logger.error(f"加载设置时出错: {e}")
+                        history_file = f"app/resource/history/people_{class_name}.json"
+                    except KeyError:
+                        logger.error(f"设置文件中缺少foundation键")
+                        history_file = f"app/resource/history/people_{class_name}.json"
+
                     if os.path.exists(history_file):
                         try:
                             with open(history_file, 'r', encoding='utf-8') as f:
                                 history_data = json.load(f)
                         except json.JSONDecodeError:
                             history_data = {}
+
                     # 生成学号(从1开始)并返回学生数据，包含被点次数信息
                     student_data = []
+                    # 先遍历一次计算各列最大位数
+                    max_digits = {
+                        'id': len(str(len(students))),
+                        'single': 0,
+                        'multi': 0,
+                        'group': 0,
+                        'total': 0
+                    }
+
+                    for student in students:
+                        student_name = student if not (student.startswith('【') and student.endswith('】')) else student[1:-1]
+                        if 'single' in history_data and student_name in history_data['single']:
+                            count = int(history_data['single'][student_name]['total_number_of_times'])
+                            max_digits['single'] = max(max_digits['single'], len(str(count)))
+                        if 'multi' in history_data and student_name in history_data['multi']:
+                            count = int(history_data['multi'][student_name]['total_number_of_times'])
+                            max_digits['multi'] = max(max_digits['multi'], len(str(count)))
+                        if 'group' in history_data and student_name in history_data['group']:
+                            count = int(history_data['group'][student_name]['total_number_of_times'])
+                            max_digits['group'] = max(max_digits['group'], len(str(count)))
+
+                    # 计算总计列的最大位数
+                    max_digits['total'] = max(max_digits['single'], max_digits['multi'], max_digits['group'])
+
+                    # 生成最终数据
                     for i, student in enumerate(students):
                         student_name = student if not (student.startswith('【') and student.endswith('】')) else student[1:-1]
-                        # 分别初始化抽单人、抽多人、抽小组、总数和学号的最大数字位数
-                        max_digits_single = 0
-                        max_digits_multi = 0
-                        max_digits_group = 0
-                        max_digits_total = 0
-                        max_digits_id = len(str(len(students)))
-                        # 初始化被点次数为0
-                        single_count = 0
-                        multi_count = 0
-                        group_count = 0
-                        # 更新历史数据并统计被点次数
-                        if 'single' in history_data and student_name in history_data['single']:
-                            single_count = history_data['single'][student_name]['total_number_of_times']
-                            max_digits_single = max(max_digits_single, len(str(single_count)))
-                        if 'multi' in history_data and student_name in history_data['multi']:
-                            multi_count = history_data['multi'][student_name]['total_number_of_times']
-                            max_digits_multi = max(max_digits_multi, len(str(multi_count)))
-                        if 'group' in history_data and student_name in history_data['group']:
-                            group_count = history_data['group'][student_name]['total_number_of_times']
-                            max_digits_group = max(max_digits_group, len(str(group_count)))
-                        # 确保相加的都是整数类型
-                        single_count = int(single_count) if isinstance(single_count, (int, str)) else 0
-                        multi_count = int(multi_count) if isinstance(multi_count, (int, str)) else 0
-                        group_count = int(group_count) if isinstance(group_count, (int, str)) else 0
+                        single_count = int(history_data['single'].get(student_name, {}).get('total_number_of_times', 0)) if 'single' in history_data else 0
+                        multi_count = int(history_data['multi'].get(student_name, {}).get('total_number_of_times', 0)) if 'multi' in history_data else 0
+                        group_count = int(history_data['group'].get(student_name, {}).get('total_number_of_times', 0)) if 'group' in history_data else 0
                         total_count = single_count + multi_count + group_count
-                        max_digits_total = max(max_digits_total, len(str(total_count)))
-                        student_data.append([str(i+1).zfill(max_digits_id), student_name, students_group[i], str(single_count).zfill(max_digits_single), str(multi_count).zfill(max_digits_multi), str(group_count).zfill(max_digits_group), str(total_count).zfill(max_digits_total)])
+
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                list_strings_set = settings.get('list_strings', {})
+                                list_strings_settings = list_strings_set.get('use_lists', False)
+                                if not list_strings_settings:
+                                    student_data.append([
+                                        str(i + 1).zfill(max_digits['id']),
+                                        student_name,
+                                        students_group[i],
+                                        str(single_count).zfill(max_digits['single']),
+                                        str(multi_count).zfill(max_digits['multi']),
+                                        str(group_count).zfill(max_digits['group']),
+                                        str(total_count).zfill(max_digits['total'])
+                                    ])
+                                else:
+                                    student_data.append([
+                                        str(i + 1).zfill(max_digits['id']),
+                                        '',
+                                        students_group[i],
+                                        str(single_count).zfill(max_digits['single']),
+                                        str(multi_count).zfill(max_digits['multi']),
+                                        str(group_count).zfill(max_digits['group']),
+                                        str(total_count).zfill(max_digits['total'])
+                                    ])
+                        except FileNotFoundError as e:
+                            logger.error(f"加载设置时出错: {e}")
+                            student_data.append([
+                                str(i + 1).zfill(max_digits['id']),
+                                '',
+                                students_group[i],
+                                str(single_count).zfill(max_digits['single']),
+                                str(multi_count).zfill(max_digits['multi']),
+                                str(group_count).zfill(max_digits['group']),
+                                str(total_count).zfill(max_digits['total'])
+                            ])
+                        except KeyError:
+                            logger.error(f"设置文件中缺少foundation键")
+                            student_data.append([
+                                str(i + 1).zfill(max_digits['id']),
+                                '',
+                                students_group[i],
+                                str(single_count).zfill(max_digits['single']),
+                                str(multi_count).zfill(max_digits['multi']),
+                                str(group_count).zfill(max_digits['group']),
+                                str(total_count).zfill(max_digits['total'])
+                            ])
+
                     return student_data
                     
                 except Exception as e:
@@ -295,7 +364,22 @@ class changeable_history(QFrame):
                     # 初始化历史数据字典
                     history_data = {}
                     # 读取历史记录文件
-                    history_file = f'app/resource/history/{class_name}.json'
+                    try:
+                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                            settings = json.load(f)
+                            list_strings_set = settings.get('list_strings', {})
+                            list_strings_settings = list_strings_set.get('use_lists', False)
+                            if not list_strings_settings:
+                                history_file = f'app/resource/history/{class_name}.json'
+                            else:
+                                history_file = f"app/resource/history/people_{class_name}.json"
+                    except FileNotFoundError as e:
+                        logger.error(f"加载设置时出错: {e}")
+                        history_file = f"app/resource/history/people_{class_name}.json"
+                    except KeyError:
+                        logger.error(f"设置文件中缺少foundation键")
+                        history_file = f"app/resource/history/people_{class_name}.json"
+
                     if os.path.exists(history_file):
                         try:
                             with open(history_file, 'r', encoding='utf-8') as f:

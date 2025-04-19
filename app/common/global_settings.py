@@ -10,19 +10,6 @@ from loguru import logger
 
 from app.common.config import load_custom_font
 
-# 配置日志记录
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
-logger.add(
-    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
-    rotation="1 MB",
-    encoding="utf-8",
-    retention="30 days",
-    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
-)
-
 
 class global_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -117,71 +104,41 @@ class global_SettinsCard(GroupHeaderCardWidget):
     def load_settings(self):
         try:
             if os.path.exists(self.settings_file):
-                logger.info(f"加载设置文件: {self.settings_file}")  # 打印日志信息
                 with open(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     global_settings = settings.get("global", {})
                     
-                    # 优先使用保存的文字选项
-                    draw_mode_text = global_settings.get("draw_mode_text", self.global_Draw_comboBox.itemText(self.default_settings["draw_mode"]))
-                    draw_mode = self.global_Draw_comboBox.findText(draw_mode_text)
-                    if draw_mode == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的抽取模式文本: {draw_mode_text}")
-                        draw_mode = global_settings.get("draw_mode", self.default_settings["draw_mode"])
-                        if draw_mode < 0 or draw_mode >= self.global_Draw_comboBox.count():
-                            # 如果索引值无效，则使用默认值  
-                            logger.warning(f"无效的抽取模式索引: {draw_mode}")
-                            draw_mode = self.default_settings["draw_mode"]
+                    # 直接使用索引值
+                    draw_mode = global_settings.get("draw_mode", self.default_settings["draw_mode"])
+                    if draw_mode < 0 or draw_mode >= self.global_Draw_comboBox.count():
+                        logger.warning(f"无效的抽取模式索引: {draw_mode}")
+                        draw_mode = self.default_settings["draw_mode"]
                         
-                    animation_mode_text = global_settings.get("animation_mode_text", self.global_Animation_comboBox.itemText(self.default_settings["animation_mode"]))
-                    animation_mode = self.global_Animation_comboBox.findText(animation_mode_text)
-                    if animation_mode == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的动画模式文本: {animation_mode_text}")
-                        animation_mode = global_settings.get("animation_mode", self.default_settings["animation_mode"])
-                        if animation_mode < 0 or animation_mode >= self.global_Animation_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            animation_mode = self.default_settings["animation_mode"]
+                    animation_mode = global_settings.get("animation_mode", self.default_settings["animation_mode"])
+                    if animation_mode < 0 or animation_mode >= self.global_Animation_comboBox.count():
+                        logger.warning(f"无效的动画模式索引: {animation_mode}")
+                        animation_mode = self.default_settings["animation_mode"]
                         
                     voice_enabled = global_settings.get("voice_enabled", self.default_settings["voice_enabled"])
 
-                    student_id_text = global_settings.get("student_id_text", self.global_student_id_comboBox.itemText(self.default_settings["student_id"]))
-                    student_id = self.global_student_id_comboBox.findText(student_id_text)
-                    if student_id == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的学号格式文本: {student_id_text}")
-                        student_id = global_settings.get("student_id", self.default_settings["student_id"])
-                        if student_id < 0 or student_id >= self.global_student_id_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            logger.warning(f"无效的学号格式索引: {student_id}")
-                            student_id = self.default_settings["student_id"]
+                    student_id = global_settings.get("student_id", self.default_settings["student_id"])
+                    if student_id < 0 or student_id >= self.global_student_id_comboBox.count():
+                        logger.warning(f"无效的学号格式索引: {student_id}")
+                        student_id = self.default_settings["student_id"]
                     
-                    student_name_text = global_settings.get("student_name_text", self.global_student_name_comboBox.itemText(self.default_settings["student_name"]))
-                    student_name = self.global_student_name_comboBox.findText(student_name_text)
-                    if student_name == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的姓名格式文本: {student_name_text}")
-                        student_name = global_settings.get("student_name", self.default_settings["student_name"])
-                        if student_name < 0 or student_name >= self.global_student_name_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            logger.warning(f"无效的姓名格式索引: {student_name}")
-                            student_name = self.default_settings["student_name"]
+                    student_name = global_settings.get("student_name", self.default_settings["student_name"])
+                    if student_name < 0 or student_name >= self.global_student_name_comboBox.count():
+                        logger.warning(f"无效的姓名格式索引: {student_name}")
+                        student_name = self.default_settings["student_name"]
 
                     student_quantity = global_settings.get("student_quantity", self.default_settings["student_quantity"])
 
                     class_quantity = global_settings.get("class_quantity", self.default_settings["class_quantity"])
 
-                    extraction_scope_text = global_settings.get("extraction_scope_text", self.global_extraction_scope_comboBox.itemText(self.default_settings["extraction_scope"]))
-                    extraction_scope = self.global_extraction_scope_comboBox.findText(extraction_scope_text)
-                    if extraction_scope == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的抽取作用范围文本: {extraction_scope_text}")
-                        extraction_scope = global_settings.get("extraction_scope", self.default_settings["extraction_scope"])
-                        if extraction_scope < 0 or extraction_scope >= self.global_extraction_scope_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            logger.warning(f"无效的抽取作用范围索引: {extraction_scope}")
-                            extraction_scope = self.default_settings["extraction_scope"]
+                    extraction_scope = global_settings.get("extraction_scope", self.default_settings["extraction_scope"])
+                    if extraction_scope < 0 or extraction_scope >= self.global_extraction_scope_comboBox.count():
+                        logger.warning(f"无效的抽取作用范围索引: {extraction_scope}")
+                        extraction_scope = self.default_settings["extraction_scope"]
                     
                     self.global_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.global_Animation_comboBox.setCurrentIndex(animation_mode)
@@ -191,7 +148,7 @@ class global_SettinsCard(GroupHeaderCardWidget):
                     self.global_student_quantity_switch.setChecked(student_quantity)
                     self.global_class_quantity_switch.setChecked(class_quantity)
                     self.global_extraction_scope_comboBox.setCurrentIndex(extraction_scope)
-                    logger.info(f"加载设置完成: draw_mode={draw_mode}, animation_mode={animation_mode}, voice_enabled={voice_enabled}, student_id={student_id}, student_name={student_name}, student_quantity={student_quantity}, class_quantity={class_quantity}")
+                    logger.info(f"加载全局设置完成")
             else:
                 self.global_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
                 self.global_extraction_scope_comboBox.setCurrentIndex(self.default_settings["extraction_scope"])
@@ -223,28 +180,13 @@ class global_SettinsCard(GroupHeaderCardWidget):
                     existing_settings = json.load(f)
                 except json.JSONDecodeError:
                     existing_settings = {}
-
-        # 先读取现有设置
-        current_existing_settings = {}
-        if os.path.exists(self.settings_file):
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    current_existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    current_existing_settings = {}
         
         # 更新global部分的所有设置
         if "global" not in existing_settings:
             existing_settings["global"] = {}
             
         global_settings = existing_settings["global"]
-        # 保存文字选项
-        global_settings["draw_mode_text"] = self.global_Draw_comboBox.currentText()
-        global_settings["animation_mode_text"] = self.global_Animation_comboBox.currentText()
-        global_settings["student_id_text"] = self.global_student_id_comboBox.currentText()
-        global_settings["student_name_text"] = self.global_student_name_comboBox.currentText()
-        global_settings["extraction_scope_text"] = self.global_extraction_scope_comboBox.currentText()
-        # 同时保存索引值
+        # 只保存索引值
         global_settings["draw_mode"] = self.global_Draw_comboBox.currentIndex()
         global_settings["animation_mode"] = self.global_Animation_comboBox.currentIndex()
         global_settings["voice_enabled"] = self.global_Voice_switch.isChecked()
@@ -257,109 +199,3 @@ class global_SettinsCard(GroupHeaderCardWidget):
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)
-
-        # 获取修改后的设置
-        modified_settings = {
-            "draw_mode": self.global_Draw_comboBox.currentIndex(),
-            "extraction_scope": self.global_extraction_scope_comboBox.currentIndex(),
-            "animation_mode": self.global_Animation_comboBox.currentIndex(),  
-            "voice_enabled": self.global_Voice_switch.isChecked(),
-            "student_id": self.global_student_id_comboBox.currentIndex(),
-            "student_name": self.global_student_name_comboBox.currentIndex(),
-            "student_quantity": self.global_student_quantity_switch.isChecked(),
-            "class_quantity": self.global_class_quantity_switch.isChecked()
-        }
-
-        # 检查draw_mode设置是否改变
-        if current_existing_settings.get("global", {}).get("draw_mode") != modified_settings["draw_mode"]:
-            import glob
-            temp_dir = "app/resource/Temp"
-            if os.path.exists(temp_dir):
-                # 清理旧的scope文件
-                for file in glob.glob(f"{temp_dir}/*_scope_*.json"):
-                    try:
-                        os.remove(file)
-                        logger.info(f"已清理临时抽取记录文件: {file}")
-                    except Exception as e:
-                        logger.error(f"清理临时抽取记录文件失败: {e}")
-                        
-                # 清理旧的draw文件
-                for file in glob.glob(f"{temp_dir}/*_draw_*.json"):
-                    try:
-                        os.remove(file)
-                        logger.info(f"已清理临时抽取记录文件: {file}")
-                        Flyout.create(
-                            icon=InfoBarIcon.SUCCESS,
-                            title='清理成功',
-                            content="由于您修改了 抽取模式\n临时抽取记录文件已清理成功",
-                            target=self.global_Draw_comboBox,
-                            parent=self,
-                            isClosable=True,
-                            aniType=FlyoutAnimationType.PULL_UP
-                        )
-                    except Exception as e:
-                        logger.error(f"清理临时抽取记录文件失败: {e}")
-                        Flyout.create(
-                            icon=InfoBarIcon.ERROR,
-                            title='清理失败',
-                            content=f"由于您修改了 抽取模式\n临时抽取记录文件清理失败\n错误信息: {e}",
-                            target=self.global_Draw_comboBox,
-                            parent=self,
-                            isClosable=True,
-                            aniType=FlyoutAnimationType.PULL_UP
-                        )
-        
-        # 检查extraction_scope设置是否改变
-        if current_existing_settings.get("global", {}).get("extraction_scope")!= modified_settings["extraction_scope"]:
-            import glob
-            temp_dir = "app/resource/Temp"
-            if os.path.exists(temp_dir):
-                # 清理旧的scope文件
-                for file in glob.glob(f"{temp_dir}/*_scope_*.json"):
-                    try:
-                        os.remove(file)
-                        logger.info(f"已清理临时抽取记录文件: {file}")
-                    except Exception as e:
-                        logger.error(f"清理临时抽取记录文件失败: {e}")
-
-                # 清理旧的draw文件
-                for file in glob.glob(f"{temp_dir}/*_draw_*.json"):
-                    try:
-                        os.remove(file)
-                        logger.info(f"已清理临时抽取记录文件: {file}")
-                    except Exception as e:
-                        logger.error(f"清理临时抽取记录文件失败: {e}")
-                
-                # 如果是隔离模式，创建单人和多人记录文件
-                if modified_settings["extraction_scope"] == 1:  # 隔离模式
-                    if hasattr(self, 'class_combo'):
-                        class_name = self.class_combo.currentText()
-                        if class_name and class_name not in ["你暂未添加班级,请到设置进行添加", "加载班级列表失败"]:
-                            single_file = f"{temp_dir}/until_the_reboot_scope_{class_name}_single.json"
-                            multi_file = f"{temp_dir}/until_the_reboot_scope_{class_name}_multi.json"
-                            for file in [single_file, multi_file]:
-                                try:
-                                    with open(file, 'w', encoding='utf-8') as f:
-                                        json.dump([], f, ensure_ascii=False, indent=4)
-                                except Exception as e:
-                                    logger.error(f"创建隔离模式记录文件失败: {file}, 错误: {e}")
-                
-                Flyout.create(
-                    icon=InfoBarIcon.SUCCESS,
-                    title='清理成功',
-                    content="由于您修改了 抽取作用范围\n临时抽取记录文件已清理成功", 
-                    target=self.global_extraction_scope_comboBox,
-                    parent=self,
-                    isClosable=True,
-                    aniType=FlyoutAnimationType.PULL_UP
-                )
-            else:
-                Flyout.create(
-                    icon=InfoBarIcon.ERROR,
-                    title='清理失败',
-                    content="由于您修改了 抽取作用范围\n临时目录不存在，无法清理记录文件",
-                    target=self.global_extraction_scope_comboBox,
-                    parent=self,
-                    isClosable=True,
-                    aniType=FlyoutAnimationType.PULL_UP
-                )

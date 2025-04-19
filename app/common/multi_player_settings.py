@@ -9,20 +9,6 @@ from loguru import logger
 
 from app.common.config import load_custom_font
 
-# 配置日志记录
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
-logger.add(
-    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
-    rotation="1 MB",
-    encoding="utf-8",
-    retention="30 days",
-    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
-)
-
-
 class multi_player_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -176,7 +162,6 @@ class multi_player_SettinsCard(GroupHeaderCardWidget):
     def load_settings(self):
         try:
             if os.path.exists(self.settings_file):
-                logger.info(f"加载设置文件: {self.settings_file}")  # 打印日志信息
                 with open(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     multi_player_settings = settings.get("multi_player", {})
@@ -184,79 +169,44 @@ class multi_player_SettinsCard(GroupHeaderCardWidget):
                     font_size = multi_player_settings.get("font_size", self.default_settings["font_size"])
                     self.multi_player_font_size_edit.setText(str(font_size))
                         
-                    animation_mode_text = multi_player_settings.get("animation_mode_text", self.multi_player_Animation_comboBox.itemText(self.default_settings["animation_mode"]))
-                    animation_mode = self.multi_player_Animation_comboBox.findText(animation_mode_text)
-                    if animation_mode == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的动画模式文本: {animation_mode_text}")
-                        animation_mode = multi_player_settings.get("animation_mode", self.default_settings["animation_mode"])
-                        if animation_mode < 0 or animation_mode >= self.multi_player_Animation_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            logger.warning(f"无效的动画模式索引: {animation_mode}")
-                            animation_mode = self.default_settings["animation_mode"]
+                    # 直接使用索引值
+                    animation_mode = multi_player_settings.get("animation_mode", self.default_settings["animation_mode"])
+                    if animation_mode < 0 or animation_mode >= self.multi_player_Animation_comboBox.count():
+                        logger.warning(f"无效的动画模式索引: {animation_mode}")
+                        animation_mode = self.default_settings["animation_mode"]
                         
-                    voice_enabled_text = multi_player_settings.get("voice_enabled_text", self.multi_player_Animation_comboBox.itemText(self.default_settings["voice_enabled"]))
-                    voice_enabled = self.multi_player_Animation_comboBox.findText(voice_enabled_text)
-                    if voice_enabled == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的语音播放设置文本: {voice_enabled_text}")
-                        voice_enabled = multi_player_settings.get("voice_enabled", self.default_settings["voice_enabled"])
-                        if voice_enabled < 0 or voice_enabled >= self.multi_player_Animation_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            logger.warning(f"无效的语音播放设置索引: {voice_enabled}")
-                            voice_enabled = self.default_settings["voice_enabled"]
+                    voice_enabled = multi_player_settings.get("voice_enabled", self.default_settings["voice_enabled"])
+                    if voice_enabled < 0 or voice_enabled >= self.multi_player_Voice_comboBox.count():
+                        logger.warning(f"无效的语音播放设置索引: {voice_enabled}")
+                        voice_enabled = self.default_settings["voice_enabled"]
 
-                    student_id_text = multi_player_settings.get("student_id_text", self.multi_player_student_id_comboBox.itemText(self.default_settings["student_id"]))
-                    student_id = self.multi_player_student_id_comboBox.findText(student_id_text)
-                    if student_id == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的学号格式文本: {student_id_text}")
-                        student_id = multi_player_settings.get("student_id", self.default_settings["student_id"])
-                        if student_id < 0 or student_id >= self.multi_player_student_id_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            logger.warning(f"无效的学号格式索引: {student_id}")
-                            student_id = self.default_settings["student_id"]
+                    student_id = multi_player_settings.get("student_id", self.default_settings["student_id"])
+                    if student_id < 0 or student_id >= self.multi_player_student_id_comboBox.count():
+                        logger.warning(f"无效的学号格式索引: {student_id}")
+                        student_id = self.default_settings["student_id"]
                     
-                    student_name_text = multi_player_settings.get("student_name_text", self.multi_player_student_name_comboBox.itemText(self.default_settings["student_name"]))
-                    student_name = self.multi_player_student_name_comboBox.findText(student_name_text)
-                    if student_name == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的姓名格式文本: {student_name_text}")
-                        student_name = multi_player_settings.get("student_name", self.default_settings["student_name"])
-                        if student_name < 0 or student_name >= self.multi_player_student_name_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            logger.warning(f"无效的姓名格式索引: {student_name}")
-                            student_name = self.default_settings["student_name"]
+                    student_name = multi_player_settings.get("student_name", self.default_settings["student_name"])
+                    if student_name < 0 or student_name >= self.multi_player_student_name_comboBox.count():
+                        logger.warning(f"无效的姓名格式索引: {student_name}")
+                        student_name = self.default_settings["student_name"]
 
-                    student_quantity_text = multi_player_settings.get("student_quantity_text", self.multi_player_student_quantity_comboBox.itemText(self.default_settings["student_quantity"]))
-                    student_quantity = self.multi_player_student_quantity_comboBox.findText(student_quantity_text)
-                    if student_quantity == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的班级总人数文本: {student_quantity_text}")
-                        student_quantity = multi_player_settings.get("student_quantity", self.default_settings["student_quantity"])
-                        if student_quantity < 0 or student_quantity >= self.multi_player_student_quantity_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            logger.warning(f"无效的班级总人数索引: {student_quantity}")
-                            student_quantity = self.default_settings["student_quantity"]
+                    student_quantity = multi_player_settings.get("student_quantity", self.default_settings["student_quantity"])
+                    if student_quantity < 0 or student_quantity >= self.multi_player_student_quantity_comboBox.count():
+                        logger.warning(f"无效的班级总人数索引: {student_quantity}")
+                        student_quantity = self.default_settings["student_quantity"]
 
-                    class_quantity_text = multi_player_settings.get("class_quantity_text", self.multi_player_class_quantity_comboBox.itemText(self.default_settings["class_quantity"]))
-                    class_quantity = self.multi_player_class_quantity_comboBox.findText(class_quantity_text)
-                    if class_quantity == -1:
-                        # 如果文字选项无效，则使用索引值
-                        logger.warning(f"无效的便捷修改班级文本: {class_quantity_text}")
-                        class_quantity = multi_player_settings.get("class_quantity", self.default_settings["class_quantity"])
-                        if class_quantity < 0 or class_quantity >= self.multi_player_class_quantity_comboBox.count():
-                            # 如果索引值无效，则使用默认值
-                            logger.warning(f"无效的便捷修改班级索引: {class_quantity}")
-                            class_quantity = self.default_settings["class_quantity"]
+                    class_quantity = multi_player_settings.get("class_quantity", self.default_settings["class_quantity"])
+                    if class_quantity < 0 or class_quantity >= self.multi_player_class_quantity_comboBox.count():
+                        logger.warning(f"无效的便捷修改班级索引: {class_quantity}")
+                        class_quantity = self.default_settings["class_quantity"]
 
                     self.multi_player_Animation_comboBox.setCurrentIndex(animation_mode)
                     self.multi_player_Voice_comboBox.setCurrentIndex(voice_enabled)
                     self.multi_player_student_id_comboBox.setCurrentIndex(student_id)
                     self.multi_player_student_name_comboBox.setCurrentIndex(student_name)
                     self.multi_player_student_quantity_comboBox.setCurrentIndex(student_quantity)
-                    self.multi_player_class_quantity_comboBox.setCurrentIndex(class_quantity)  
-                    logger.info(f"加载完成: animation_mode={animation_mode}, voice_enabled={voice_enabled}, student_id={student_id}, student_name={student_name}, student_quantity={student_quantity}, class_quantity={class_quantity}")
+                    self.multi_player_class_quantity_comboBox.setCurrentIndex(class_quantity)
+                    logger.info(f"加载多人设置完成")
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.multi_player_font_size_edit.setText(str(self.default_settings["font_size"]))
@@ -294,14 +244,7 @@ class multi_player_SettinsCard(GroupHeaderCardWidget):
 
         multi_player_settings = existing_settings["multi_player"]
         
-        # 保存文字选项
-        multi_player_settings["animation_mode_text"] = self.multi_player_Animation_comboBox.currentText()
-        multi_player_settings["voice_enabled_text"] = self.multi_player_Voice_comboBox.currentText()
-        multi_player_settings["student_id_text"] = self.multi_player_student_id_comboBox.currentText()
-        multi_player_settings["student_name_text"] = self.multi_player_student_name_comboBox.currentText()
-        multi_player_settings["student_quantity_text"] = self.multi_player_student_quantity_comboBox.currentText()
-        multi_player_settings["class_quantity_text"] = self.multi_player_class_quantity_comboBox.currentText()
-        # 同时保存索引值
+        # 只保存索引值
         multi_player_settings["animation_mode"] = self.multi_player_Animation_comboBox.currentIndex()
         multi_player_settings["voice_enabled"] = self.multi_player_Voice_comboBox.currentIndex()
         multi_player_settings["student_id"] = self.multi_player_student_id_comboBox.currentIndex()

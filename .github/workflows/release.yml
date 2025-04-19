@@ -72,7 +72,7 @@ jobs:
       - name: 生成 SHA256 的表格信息
         run: |
           cd release
-          echo "SHA256 校验值-**请核对下载的文件的SHA256值是否正确**" >> ../CHANGELOG.md
+          echo "**请核对下载的文件的SHA256值是否正确**" >> ../CHANGELOG.md
           echo "| 文件名 | SHA256 值 |" >> ../CHANGELOG.md
           echo "| --- | --- |" >> ../CHANGELOG.md
           while read -r line; do

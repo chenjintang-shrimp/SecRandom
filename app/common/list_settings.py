@@ -9,19 +9,6 @@ from loguru import logger
 
 from app.common.config import load_custom_font
 
-# 配置日志记录
-log_dir = "logs"
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
-
-logger.add(
-    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
-    rotation="1 MB",
-    encoding="utf-8",
-    retention="30 days",
-    format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}"
-)
-
 class ClassInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -478,10 +465,10 @@ class list_SettinsCard(GroupHeaderCardWidget):
             logger.error(f"加载班级名称失败: {str(e)}")
 
         # 添加组件到分组中
-        # self.addGroup(FIF.LABEL, "仅学号名单", "是否使用只有学号的名单类型", self.use_lists_switch)
-        # self.addGroup(FIF.PEOPLE, "仅学号名单的人数", "设置只有学号的名单类型时的人数(注:当前有bug,还需添加至少一个班级)", self.player_people_edit)
+        self.addGroup(FIF.LABEL, "仅学号名单", "是否使用只有学号的名单类型", self.use_lists_switch)
         self.addGroup(FIF.ADD_TO, "设置班级", "点击按钮设置班级名称", self.class_Button)
         self.addGroup(FIF.EDUCATION, "选择班级", "选择一个需要设置学生姓名的班级", self.class_comboBox)
+        self.addGroup(FIF.PEOPLE, "设置班级仅学号的人数", "设置只用学号的名单类型时的人数", self.player_people_edit)
         self.addGroup(FIF.PEOPLE, "设置班级名单", "点击按钮设置学生姓名", self.student_Button)
         self.addGroup(FIF.ADD_TO, "设置小组", "点击按钮设置小组名单", self.group_Button)
         self.addGroup(FIF.TILES, "选择小组", "选择一个需要修改成员的小组", self.group_ComboBox)
@@ -491,15 +478,16 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.save_settings()
 
     def apply_player_people(self):
+        class_name = self.class_comboBox.currentText()
         try:
             player_people = int(self.player_people_edit.text())
-            if 1 <= player_people <= 999999999:
+            if 1 <= player_people <= 200:
                 self.player_people_edit.setText(str(player_people))
                 self.save_settings()
                 os.makedirs("app/resource/students", exist_ok=True)
 
                 def write_people_ini():
-                    with open("app/resource/students/people.ini", 'w', encoding='utf-8') as f:
+                    with open(f"app/resource/students/people_{class_name}.ini", 'w', encoding='utf-8') as f:
                         f.writelines(f"{i}\n" for i in range(1, player_people + 1))
                     logger.info(f"设置人数: {player_people}")
 
@@ -518,7 +506,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
                 logger.warning(f"人数超出范围: {player_people}")
                 InfoBar.warning(
                     title='人数超出范围',
-                    content=f"人数超出范围，请输入1-999999999之间的整数: {player_people}",
+                    content=f"人数超出范围，请输入1-200之间的整数: {player_people}",
                     orient=Qt.Horizontal,
                     parent=self,
                     isClosable=True,
@@ -762,18 +750,17 @@ class list_SettinsCard(GroupHeaderCardWidget):
     def load_settings(self):
         try:
             if os.path.exists(self.settings_file):
-                logger.info(f"加载设置文件: {self.settings_file}")
                 with open(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     list_strings_settings = settings.get("list_strings", {})
 
                     player_people = list_strings_settings.get("player_people", self.default_settings["player_people"])
-                    self.player_people_edit.setText(str(player_people))
 
                     use_lists = list_strings_settings.get("use_lists", self.default_settings["use_lists"])
-                    self.use_lists_switch.setChecked(use_lists)
 
-                    logger.info(f"加载完成: player_people={player_people}, use_lists={use_lists}")
+                    self.use_lists_switch.setChecked(use_lists)
+                    self.player_people_edit.setText(str(player_people))
+                    logger.info(f"加载名单设置设置完成")
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.player_people_edit.setText(str(self.default_settings["player_people"]))
@@ -805,14 +792,14 @@ class list_SettinsCard(GroupHeaderCardWidget):
         list_strings_settings["use_lists"] = self.use_lists_switch.isChecked()
 
         try:
-            player_people = int(self.player_people_edit.text())
-            if 30 <= player_people <= 200:
-                list_strings_settings["font_size"] = player_people
+            player_people = int(list_strings_settings.get("player_people", self.default_settings["player_people"]))
+            if 1 <= player_people <= 200:
+                list_strings_settings["player_people"] = player_people
             else:
                 logger.warning(f"人数超出范围: {player_people}")
                 InfoBar.warning(
                     title='人数超出范围',
-                    content=f"人数超出范围，请输入1-999999999之间的整数: {player_people}",
+                    content=f"人数超出范围，请输入1-200之间的整数: {player_people}",
                     orient=Qt.Horizontal,
                     parent=self,
                     isClosable=True,

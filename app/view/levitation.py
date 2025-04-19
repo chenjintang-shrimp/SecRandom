@@ -1,10 +1,11 @@
 from qfluentwidgets import *
-from qfluentwidgets import FluentIcon as fIcon
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 import json
+from loguru import logger
+from pathlib import Path
 
 from ..common.config import load_custom_font
 
@@ -22,15 +23,35 @@ class LevitationWindow(QWidget):
         button_layout = QHBoxLayout(self.container_button)
         button_layout.setContentsMargins(0, 0, 0, 0)
         button_layout.setSpacing(0)
-        
+
+        # 默认图标路径
+        MENU_DEFAULT_ICON_PATH = Path("app/resource/icon/SecRandom_menu_30%.png")
+
         # 左侧 MENU 图标
-        self.menu_button = ToolButton(fIcon.MENU, self.container_button)
+        self.menu_button = ToolButton(self.container_button)
+        try:
+            settings_path = Path('app/Settings/Settings.json')
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                self_starting_enabled = foundation_settings.get('pumping_floating_transparency_mode', 6)
+
+                # 根据 self_starting_enabled 设置图标
+                self_starting_enabled = max(0, min(self_starting_enabled, 9))  # 确保值在 0 到 9 之间
+                icon_path = Path(f"app/resource/icon/SecRandom_menu_{(10 - self_starting_enabled) * 10}%.png")
+                if not icon_path.exists():
+                    icon_path = MENU_DEFAULT_ICON_PATH
+                self.menu_button.setIcon(QIcon(str(icon_path)))
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            self.menu_button.setIcon(QIcon(str(MENU_DEFAULT_ICON_PATH)))
+            logger.exception(f"加载浮窗'点击抽人'图标透明度失败: {e}")
+
         # 设置图标大小
-        self.menu_button.setIconSize(QSize(20, 20))
+        self.menu_button.setIconSize(QSize(27, 27))
         # 设置透明度
         self.menu_button.setStyleSheet('opacity: 0;')
         # 添加长按拖动功能
-        self.menu_button.pressed.connect(self.start_drag) 
+        self.menu_button.pressed.connect(self.start_drag)
         self.menu_button.released.connect(self.stop_drag)
         # 设置按钮的尺寸
         self.menu_button.setFixedSize(40, 50)
@@ -38,11 +59,30 @@ class LevitationWindow(QWidget):
         # 添加字体
         self.menu_button.setFont(QFont(load_custom_font(), 12))
 
-        # 右侧 PEOPLE 图标
+
+        # 默认图标路径
+        FLOATING_DEFAULT_ICON_PATH = Path("app/resource/icon/SecRandom_floating_30%.png")
+
+        # 左侧 PEOPLE 图标
         self.people_button = ToolButton(self.container_button)
-        self.people_button.setIcon(QIcon("app\\resource\\icon\\SecRandom_floating.png"))
+        try:
+            settings_path = Path('app/Settings/Settings.json')
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                self_starting_enabled = foundation_settings.get('pumping_floating_transparency_mode', 6)
+
+                # 根据 self_starting_enabled 设置图标
+                self_starting_enabled = max(0, min(self_starting_enabled, 9))  # 确保值在 0 到 9 之间
+                icon_path = Path(f"app/resource/icon/SecRandom_floating_{(10 - self_starting_enabled) * 10}%.png")
+                if not icon_path.exists():
+                    icon_path = FLOATING_DEFAULT_ICON_PATH
+                self.people_button.setIcon(QIcon(str(icon_path)))
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            self.people_button.setIcon(QIcon(str(FLOATING_DEFAULT_ICON_PATH)))
+            logger.exception(f"加载浮窗'长按拖动'图标透明度失败: {e}")
         # 设置图标大小
-        self.people_button.setIconSize(QSize(40, 40))
+        self.people_button.setIconSize(QSize(50, 50))
         # 设置透明度
         self.people_button.setStyleSheet('opacity: 0;')
         # 设置按钮的尺寸
@@ -59,7 +99,7 @@ class LevitationWindow(QWidget):
         self.setLayout(layout)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.X11BypassWindowManagerHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setStyleSheet('border-radius: 5px; background-color: rgba(65, 66, 66, 0.5);')
+        self.setStyleSheet('border-radius: 5px; background-color: rgba(65, 66, 66, 0.3);')
         self.setProperty("radius", 5)
 
         self.people_button.clicked.connect(self.on_people_clicked)
