@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import *
 import json
 import os
 import sys
-import subprocess
 from loguru import logger
 
 if './app/Settings' != None and not os.path.exists('./app/Settings'):

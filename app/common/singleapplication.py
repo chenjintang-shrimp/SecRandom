@@ -1,5 +1,6 @@
-from PyQt5.Qt import *
 from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtNetwork import *
  
 class SingleApplication(QApplication):
     def __init__(self, argv):
@@ -19,7 +20,6 @@ class SingleApplication(QApplication):
             self.is_running = False
             self.local_server = QLocalServer()
             self.local_server.newConnection.connect(self.new_local_connection)
-            # 监听，如果监听失败，可能是之前程序崩溃时残留进程服务导致的，移除残留进程
             if not self.local_server.listen(self.server_name):
                 if self.local_server.serverError() == QAbstractSocket.AddressInUseError:
                     QLocalServer.removeServer(self.server_name)
