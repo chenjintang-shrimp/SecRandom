@@ -215,20 +215,8 @@ class Window(MSFluentWindow):
         self.hide()
         logger.info("重启程序")
         logger.remove()
-        app = QApplication.instance()
-        if app:
-            app.quit()
-            app.processEvents()
-
-        # 获取当前进程ID并终止
-        current_pid = os.getpid()
-        exe_path = sys.executable
-        
-        # 启动新进程
-        subprocess.Popen([exe_path] + sys.argv[1:])
-        
-        # 终止当前进程
-        subprocess.Popen(f"taskkill /F /PID {current_pid}", shell=True)
+        self.tray_icon.hide()
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):
         """显示设置界面"""
