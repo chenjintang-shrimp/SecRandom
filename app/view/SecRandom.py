@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import *
 import json
 import os
 import sys
+import subprocess
 from loguru import logger
 
 if './app/Settings' != None and not os.path.exists('./app/Settings'):
@@ -214,7 +215,9 @@ class Window(MSFluentWindow):
         self.hide()
         logger.info("应用程序已重启")
         logger.remove()
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        # 使用subprocess模块实现重启
+        subprocess.Popen([sys.executable] + sys.argv)
+        sys.exit()
 
     def show_setting_interface(self):
         """显示设置界面"""

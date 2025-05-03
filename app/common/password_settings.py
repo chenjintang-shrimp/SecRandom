@@ -668,10 +668,10 @@ class password_SettingsCard(GroupHeaderCardWidget):
 
             # 创建二维码对象
             qr = qrcode.QRCode(
-                version=7,
+                version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=4,
-                border=2,
+                box_size=10,
+                border=4,
             )
             qr.add_data(uri)
             qr.make(fit=True)

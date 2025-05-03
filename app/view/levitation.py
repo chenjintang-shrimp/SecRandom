@@ -44,7 +44,7 @@ class LevitationWindow(QWidget):
                 self.menu_button.setIcon(QIcon(str(icon_path)))
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.menu_button.setIcon(QIcon(str(MENU_DEFAULT_ICON_PATH)))
-            logger.exception(f"加载浮窗'点击抽人'图标透明度失败: {e}")
+            logger.error(f"加载浮窗'点击抽人'图标透明度失败: {e}")
 
         # 设置图标大小
         self.menu_button.setIconSize(QSize(27, 27))
@@ -80,7 +80,7 @@ class LevitationWindow(QWidget):
                 self.people_button.setIcon(QIcon(str(icon_path)))
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.people_button.setIcon(QIcon(str(FLOATING_DEFAULT_ICON_PATH)))
-            logger.exception(f"加载浮窗'长按拖动'图标透明度失败: {e}")
+            logger.error(f"加载浮窗'长按拖动'图标透明度失败: {e}")
         # 设置图标大小
         self.people_button.setIconSize(QSize(50, 50))
         # 设置透明度
@@ -112,7 +112,7 @@ class LevitationWindow(QWidget):
                 self.setStyleSheet(f'border-radius: 5px; background-color: rgba(65, 66, 66, {icon_});')
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.setStyleSheet('border-radius: 5px; background-color: rgba(65, 66, 66, 0.3);')
-            logger.exception(f"加载浮窗背景透明度失败: {e}")
+            logger.error(f"加载浮窗背景透明度失败: {e}")
 
         self.setProperty("radius", 5)
 
