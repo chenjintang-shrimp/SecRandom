@@ -27,7 +27,10 @@ class SingleApplication(QApplication):
  
     def new_local_connection(self):
         if self.main_window is not None:
-            self.main_window.raise_()
-            self.main_window.activateWindow()
-            self.main_window.setWindowState((self.main_window.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
-            self.main_window.show()
+            if self.main_window.isMinimized():
+                self.main_window.showNormal()
+            else:
+                self.main_window.raise_()
+                self.main_window.activateWindow()
+                self.main_window.setWindowState((self.main_window.windowState() & ~Qt.WindowMinimized) | Qt.WindowActive)
+                self.main_window.show()

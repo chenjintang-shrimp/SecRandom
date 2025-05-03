@@ -99,31 +99,41 @@ class LevitationWindow(QWidget):
         self.setLayout(layout)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.X11BypassWindowManagerHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setStyleSheet('border-radius: 5px; background-color: rgba(65, 66, 66, 0.3);')
+        try:
+            settings_path = Path('app/Settings/Settings.json')
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                self_starting_enabled = foundation_settings.get('pumping_floating_transparency_mode', 6)
+
+                # 根据 self_starting_enabled 设置图标
+                self_starting_enabled = max(0, min(self_starting_enabled, 9))  # 确保值在 0 到 9 之间
+                icon_ = (10 - self_starting_enabled) * 0.1
+                self.setStyleSheet(f'border-radius: 5px; background-color: rgba(65, 66, 66, {icon_});')
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            self.setStyleSheet('border-radius: 5px; background-color: rgba(65, 66, 66, 0.3);')
+            logger.exception(f"加载浮窗背景透明度失败: {e}")
+
         self.setProperty("radius", 5)
 
         self.people_button.clicked.connect(self.on_people_clicked)
 
     def on_people_clicked(self):
-        if hasattr(self, 'pumping_floating_Interface') and self.pumping_floating_Interface.isVisible():
-            self.pumping_floating_Interface.activateWindow()
-            self.pumping_floating_Interface.raise_()
-            return
-            
         from app.view.pumping_floating import pumping_floating_window
         if not hasattr(self, 'pumping_floating_Interface') or not self.pumping_floating_Interface:
             self.pumping_floating_Interface = pumping_floating_window()
         self.pumping_floating_Interface.show()
+        self.pumping_floating_Interface.showNormal()
         self.pumping_floating_Interface.activateWindow()
         self.pumping_floating_Interface.raise_()
 
     def start_drag(self, event=None):
-        if event and event.button() == Qt.RightButton or not event:
+        if event and event.button() or not event:
             self.drag_position = self.menu_button.mapToGlobal(self.menu_button.pos()) - self.pos()
 
     def mousePressEvent(self, event):
         # 禁用点击功能，只允许长按拖动
-        if event.button() == Qt.RightButton and event.pos() in self.menu_button.geometry():
+        if event.button() and event.pos() in self.menu_button.geometry():
             self.start_drag(event)
         else:
             event.ignore()
@@ -138,23 +148,23 @@ class LevitationWindow(QWidget):
         self.move_timer = QTimer(self)
         self.move_timer.setSingleShot(True)
         self.move_timer.timeout.connect(self.save_position)
-        
+
     def mouseMoveEvent(self, event):
         if event.buttons() in [Qt.LeftButton, Qt.RightButton]:
             # 计算窗口位置
             new_pos = QPoint(event.globalPos().x() + 5, event.globalPos().y() + 5)
-            
+
             # 获取屏幕尺寸
             screen = QApplication.desktop().screenGeometry()
-            
+
             # 限制窗口不超出屏幕
             new_pos.setX(max(0, min(new_pos.x(), screen.width() - self.width())))
             new_pos.setY(max(0, min(new_pos.y(), screen.height() - self.height())))
-            
+
             self.move(new_pos)
             self.move_timer.stop()
             self.move_timer.start(300)
-            
+
     def save_position(self):
         pos = self.pos()
         try:

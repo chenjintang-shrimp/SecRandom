@@ -14,6 +14,7 @@ from app.view.extract_multi_setting import multi_setting
 from app.view.extract_group_setting import group_setting
 from app.view.Changeable_history import changeable_history
 from app.view.quicksetup import quicksetup
+from app.view.password_setting import password_set
 
 class settings_Window(MSFluentWindow):
     def __init__(self, parent=None):
@@ -85,6 +86,9 @@ class settings_Window(MSFluentWindow):
         self.quicksetupInterface = quicksetup(self)
         self.quicksetupInterface.setObjectName("quicksetupInterface")
 
+        self.password_setInterface = password_set(self)
+        self.password_setInterface.setObjectName("password_setInterface")
+
         self.initNavigation()
 
     def initNavigation(self):
@@ -94,6 +98,7 @@ class settings_Window(MSFluentWindow):
         self.addSubInterface(self.multi_settingInterface, fIcon.PEOPLE, '抽多人设置', position=NavigationItemPosition.TOP)
         self.addSubInterface(self.group_settingInterface, fIcon.TILES, '抽小组设置', position=NavigationItemPosition.TOP)
 
+        self.addSubInterface(self.password_setInterface, fIcon.VPN, '安全设置', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.historyInterface, fIcon.HISTORY, '历史记录', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.quicksetupInterface, fIcon.QUICK_NOTE, '名单设置', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.more_settingInterface, fIcon.SETTING, '更多设置', position=NavigationItemPosition.BOTTOM)

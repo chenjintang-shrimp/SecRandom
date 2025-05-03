@@ -4,17 +4,17 @@
 
 # SecRandom
 
-[![Downloads](https://img.shields.io/github/downloads/SecRandom/SecRandom/total?style=social&label=Downloads&logo=github)](https://github.com/SecRandom/SecRandom/releases/latest)
-[![GitHub Issues](https://img.shields.io/github/issues-search/SecRandom/SecRandom?query=is%3Aopen&style=social-square&logo=github&label=Issues&color=%233fb950)](https://github.com/SecRandom/SecRandom/issues)
-[![Release](https://img.shields.io/github/v/release/SecRandom/SecRandom?style=flat&color=%233fb950&label=正式版)](https://github.com/SecRandom/SecRandom/releases/latest)
-[![Beta](https://img.shields.io/github/v/release/SecRandom/SecRandom?include_prereleases&style=social-square&label=测试版)](https://github.com/SecRandom/SecRandom/releases/)
-[![Github Last Commit](https://img.shields.io/github/last-commit/SecRandom/SecRandom)](https://github.com/SecRandom/SecRandom/commits/master)
+[![Downloads](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=social&label=Downloads&logo=github)](https://github.com/SECTL/SecRandom/releases/latest)
+[![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=social-square&logo=github&label=Issues&color=%233fb950)](https://github.com/SECTL/SecRandom/issues)
+[![Release](https://img.shields.io/github/v/release/SECTL/SecRandom?style=flat&color=%233fb950&label=正式版)](https://github.com/SECTL/SecRandom/releases/latest)
+[![Beta](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=social-square&label=测试版)](https://github.com/SECTL/SecRandom/releases/)
+[![Github Last Commit](https://img.shields.io/github/last-commit/SECTL/SecRandom)](https://github.com/SECTL/SecRandom/commits/master)
 [![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%EF%BD%9C1038111867-blue?style=flat&logo=TencentQQ)](https://qm.qq.com/q/yJkTpkiW5i)
 [![bilibili](https://img.shields.io/badge/-UP%E4%B8%BB%EF%BD%9C黎泽懿-%23FB7299?style=flat&logo=bilibili)](https://space.bilibili.com/520571577)
 
 该软件能以多种方式进行随机抽取 学号/姓名/小组...
 
-| [Github(镜像) 下载](https://github.com/SecRandom/SecRandom/releases) | [123云盘 下载-暂未上传](https://www.123684.com/s/9529jv-U4Fxh) |
+| [Github(镜像) 下载](https://github.com/SECTL/SecRandom/releases) | [123云盘 下载-暂未上传](https://www.123684.com/s/9529jv-U4Fxh) |
 
 </div>
 
@@ -32,8 +32,8 @@
 - ✅ **抽取界面与设置界面的隔离**
 - ✅ **方便快捷的悬浮窗设计**
 - ✅ **有着开机自启动的便捷**
-- ✅ **有设置界面的密码功能（请期待后续更新）**
-- ✅ **现两种不同本质的权重方式（请期待后续更新）**
+- ✅ **有设置界面的密码功能**
+-  **现两种不同本质的权重方式（请期待后续更新）**
 - ✅ **现代化的设计界面**
 
 # ⭐️ 快速开始
@@ -87,18 +87,18 @@
   <source
     media="(prefers-color-scheme: dark)"
     srcset="
-      https://api.star-history.com/svg?repos=SecRandom/SecRandom&type=Date&theme=dark
+      https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark
     "
   />
   <source
     media="(prefers-color-scheme: light)"
     srcset="
-      https://api.star-history.com/svg?repos=SecRandom/SecRandom&type=Date&theme=dark
+      https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark
     "
   />
   <img
     alt="Star History Chart"
-    src="https://api.star-history.com/svg?repos=SecRandom/SecRandom&type=Date&theme=dark"
+    src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark"
   />
 </picture>
 

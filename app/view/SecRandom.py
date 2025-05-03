@@ -9,14 +9,12 @@ import os
 import sys
 from loguru import logger
 
-# 确认是否存在目录
 if './app/Settings' != None and not os.path.exists('./app/Settings'):
     os.makedirs('./app/Settings')
 
 if './app/resource/group' != None and not os.path.exists('./app/resource/group'):
     os.makedirs('./app/resource/group')
 
-# 导入子页面
 from app.view.settings import settings_Window
 from app.view.single import single
 from app.view.multiplayer import multiplayer
@@ -62,26 +60,22 @@ class Window(MSFluentWindow):
         except KeyError:
             logger.error(f"设置文件中缺少foundation键, 使用默认显示浮窗功能")
             self.levitation_window.show()
-      
-        # 初始化系统托盘
+
+        # 系统托盘
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(QIcon('./app/resource/icon/SecRandom.png'))
         self.tray_icon.setToolTip('SecRandom')
-        
-        # 创建托盘菜单
         self.tray_menu = RoundMenu(parent=self)
         self.tray_menu.addAction(Action(fIcon.POWER_BUTTON, '暂时显示/隐藏主界面', triggered=self.toggle_window))
         self.tray_menu.addAction(Action(QIcon("app\\resource\\icon\\SecRandom_floating_100%.png"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
         self.tray_menu.addAction(Action(fIcon.SETTING, '打开设置界面', triggered=self.show_setting_interface))
-        # self.tray_menu.addAction(Action(fIcon.SYNC, '重启', triggered=self.restart_app))
+        self.tray_menu.addAction(Action(fIcon.SYNC, '重启', triggered=self.restart_app))
         self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=self.close_window_secrandom))
-        
+
         self.tray_icon.show()
         self.tray_icon.activated.connect(self.contextMenuEvent)
 
-        # 获取主屏幕
         screen = QApplication.primaryScreen()
-        # 获取屏幕的可用几何信息
         desktop = screen.availableGeometry()
         w, h = desktop.width(), desktop.height()
         try:
@@ -106,6 +100,7 @@ class Window(MSFluentWindow):
                 self.show()
         except Exception as e:
             logger.error(f"无法加载设置文件: {e}")
+
         self.createSubInterface()
         self.splashScreen.finish()
 
@@ -132,7 +127,6 @@ class Window(MSFluentWindow):
         self.initNavigation()
 
     def initNavigation(self):
-        # 使用 MSFluentWindow 的 addSubInterface 方法
         self.addSubInterface(self.singleInterface, fIcon.ROBOT, '抽单人', position=NavigationItemPosition.TOP)
         self.addSubInterface(self.multiInterface, fIcon.PEOPLE, '抽多人', position=NavigationItemPosition.TOP)
         self.addSubInterface(self.groupInterface, fIcon.TILES, '抽小组', position=NavigationItemPosition.TOP)
@@ -147,14 +141,12 @@ class Window(MSFluentWindow):
     def close_window_secrandom(self):
         """关闭应用程序"""
         self.start_cleanup()
-        self.tray_icon.hide()
+        logger.info("应用程序已退出")
         logger.remove()
         QApplication.quit()
-        logger.info("应用程序已退出")
 
     def start_cleanup(self):
         """软件启动时清理临时抽取记录文件"""
-        # 获取抽选模式设置
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
@@ -166,10 +158,8 @@ class Window(MSFluentWindow):
 
         import glob
         temp_dir = "app/resource/Temp"
-        # 根据抽选模式执行不同逻辑
-        # 跟随全局设置
+
         if global_draw_mode == 1:  # 不重复抽取(直到软件重启)
-            # 清理临时抽取记录文件
             if os.path.exists(temp_dir):
                 for file in glob.glob(f"{temp_dir}/until_the_reboot_draw_*.json"):
                     try:
@@ -177,7 +167,6 @@ class Window(MSFluentWindow):
                         logger.info(f"已清理临时抽取记录文件: {file}")
                     except Exception as e:
                         logger.error(f"清理临时抽取记录文件失败: {e}")
-            # 清理临时抽取范围记录文件            
             if os.path.exists(temp_dir):
                 for file in glob.glob(f"{temp_dir}/until_the_reboot_scope_*.json"):
                     try:
@@ -186,62 +175,74 @@ class Window(MSFluentWindow):
                     except Exception as e:
                         logger.error(f"清理临时抽取记录文件失败: {e}")
 
-    # 确保菜单显示位置正确
     def contextMenuEvent(self):
         pos = self.calculate_menu_position(self.tray_menu)
         self.tray_menu.exec_(pos)
 
     def toggle_window(self):
-        """切换窗口显示/隐藏状态"""
+        """切换窗口显示/隐藏状态"""  
         if self.isVisible():
             self.hide()
+            if self.isMinimized():
+                self.showNormal()
         else:
-            self.show()
-            self.activateWindow()
-            self.raise_()
-            
+            if self.isMinimized():
+                self.showNormal()
+            else:
+                self.show()
+                self.activateWindow()
+                self.raise_()
+
     def calculate_menu_position(self, menu):
-        """计算菜单显示位置，确保显示在鼠标右上方且不超出屏幕边界"""
+        """计算菜单显示位置"""
         screen = QApplication.primaryScreen().availableGeometry()
         menu_size = menu.sizeHint()
-        
-        # 获取鼠标当前位置
+
         cursor_pos = QCursor.pos()
-        
-        # 计算菜单显示位置
+
         x = cursor_pos.x() + 20
         y = cursor_pos.y() - menu_size.height()
-        
-        # 检查是否超出屏幕边界
+
         if x + menu_size.width() > screen.right():
             x = screen.right() - menu_size.width()
         if y < screen.top():
             y = screen.top()
-        
+
         return QPoint(x, y)
-            
+
     def restart_app(self):
-        """重启应用程序"""
-        self.start_cleanup()
-        self.tray_icon.hide()
-        logger.info("应用程序正在尝试重启...")
-        logger.remove()
-        QApplication.quit()
-        try:
-            os.execl(sys.executable, sys.executable, *sys.argv)
-        except Exception as e:
-            logger.error(f"重启失败: {e}")
-            return
+        self.hide()
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):
         """显示设置界面"""
+        try:
+            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                if settings.get('hashed_set', {}).get('start_password_enabled', False):
+                    from app.common.password_dialog import PasswordDialog
+                    dialog = PasswordDialog(self)
+                    if dialog.exec_() != QDialog.Accepted:
+                        return
+        except Exception as e:
+            logger.error(f"密码验证失败: {e}")
+
+        try:
+            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+            settings['hashed_set']['verification_start'] = True
+            with open('app/SecRandom/enc_set.json', 'w', encoding='utf-8') as f:
+                json.dump(settings, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            logger.error(f"写入verification_start失败: {e}")
+
         if not hasattr(self, 'settingInterface') or not self.settingInterface:
             self.settingInterface = settings_Window(self)
         if not self.settingInterface.isVisible():
             self.settingInterface.show()
             self.settingInterface.activateWindow()
             self.settingInterface.raise_()
-            
+
     def toggle_levitation_window(self):
         """切换浮窗显示/隐藏状态"""
         if not hasattr(self, 'levitation_window') or not self.levitation_window:

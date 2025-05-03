@@ -16,8 +16,10 @@ log_dir = "logs"
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
 
+logger.configure(patcher=lambda record: record)
+
 logger.add(
-    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD_HH-mm-ss}.log"),
+    os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
     rotation="1 MB",
     encoding="utf-8",
     retention="30 days",
@@ -32,7 +34,7 @@ logger.add(
 # 软件启动时写入软件启动信息
 logger.info("软件启动")
 logger.info(f"软件作者: lzy98276")
-logger.info(f"软件Github地址: https://github.com/SecRandom/SecRandom")
+logger.info(f"软件Github地址: https://github.com/SECTL/SecRandom")
 
 if cfg.get(cfg.dpiScale) == "Auto":
     QApplication.setHighDpiScaleFactorRoundingPolicy(
@@ -41,6 +43,15 @@ if cfg.get(cfg.dpiScale) == "Auto":
 else:
     os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
     os.environ["QT_SCALE_FACTOR"] = str(cfg.get(cfg.dpiScale))
+
+try:
+    with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+        settings = json.load(f)
+    settings['hashed_set']['verification_start'] = False
+    with open('app/SecRandom/enc_set.json', 'w', encoding='utf-8') as f:
+        json.dump(settings, f, ensure_ascii=False, indent=4)
+except Exception as e:
+    logger.error(f"写入verification_start失败: {e}")
 
 app = SingleApplication(sys.argv)
 if not app.is_running:
