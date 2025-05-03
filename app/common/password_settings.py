@@ -32,6 +32,25 @@ def create_hidden_folder(path):
 
 create_hidden_folder("app/SecRandom")
 
+def generate_qr_code(secret, username):
+    """生成二维码"""
+    try:
+        totp = pyotp.TOTP(secret)
+        uri = totp.provisioning_uri(
+            name=username,
+            issuer_name="SecRandom"
+        )
+        qr = pyqrcode.create(uri, error='L', version=5, mode='binary')
+        buffer = BytesIO()
+        qr.png(buffer, scale=10, module_color=[0, 0, 0, 255], background=[255, 255, 255, 255])
+        pixmap = QPixmap()
+        pixmap.loadFromData(buffer.getvalue())
+        pixmap = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        return pixmap
+    except Exception as e:
+        logger.error(f"生成二维码失败: {e}")
+        return None
+
 class UsernameInputDialog(MessageBoxBase):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -652,27 +671,17 @@ class password_SettingsCard(GroupHeaderCardWidget):
             else:
                 self.secret = existing_settings["hashed_set"]["2fa_secret"]
 
-            totp = pyotp.TOTP(self.secret)
-            uri = totp.provisioning_uri(
-                name=username,
-                issuer_name="SecRandom"
-            )
-
-            qr = pyqrcode.create(uri, error='L', version=5, mode='binary')
-            buffer = BytesIO()
-            qr.png(buffer, scale=10, module_color=[0, 0, 0, 255], background=[255, 255, 255, 255])
-            
-            pixmap = QPixmap()
-            pixmap.loadFromData(buffer.getvalue())
-            pixmap = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-            # 创建自定义2FA对话框
-            dialog = TwoFactorAuthDialog(self, pixmap, self.secret)
-            dialog.yesButton.setText("确认")
-            dialog.cancelButton.setText("取消")
-            if not dialog.exec():
+            pixmap = generate_qr_code(self.secret, username)
+            if pixmap:
+                # 创建自定义2FA对话框
+                dialog = TwoFactorAuthDialog(self, pixmap, self.secret)
+                dialog.yesButton.setText("确认")
+                dialog.cancelButton.setText("取消")
+                if not dialog.exec():
+                    self.two_factor_switch.setChecked(False)
+            else:
+                self.show_info_bar('error', '错误', "2FA设置失败", 3000, self)
                 self.two_factor_switch.setChecked(False)
-
         except Exception as e:
             self.show_info_bar('error', '错误', f"2FA设置失败: {str(e)}", 3000, self)
             return

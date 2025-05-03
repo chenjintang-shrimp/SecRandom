@@ -220,7 +220,15 @@ class Window(MSFluentWindow):
             app.quit()
             app.processEvents()
 
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        # 获取当前进程ID并终止
+        current_pid = os.getpid()
+        exe_path = sys.executable
+        
+        # 启动新进程
+        subprocess.Popen([exe_path] + sys.argv[1:])
+        
+        # 终止当前进程
+        subprocess.Popen(f"taskkill /F /PID {current_pid}", shell=True)
 
     def show_setting_interface(self):
         """显示设置界面"""
