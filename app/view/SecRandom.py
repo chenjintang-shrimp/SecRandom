@@ -211,10 +211,16 @@ class Window(MSFluentWindow):
         return QPoint(x, y)
 
     def restart_app(self):
+        share = QSharedMemory('SecRandom')
         self.hide()
         logger.info("重启程序")
-        logger.remove()
         self.tray_icon.hide()
+        app = QApplication.instance()
+        if app:
+            app.quit()
+            app.processEvents()
+        if share.isAttached():
+            share.detach()
         os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):

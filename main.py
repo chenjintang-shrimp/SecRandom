@@ -54,16 +54,20 @@ except Exception as e:
 # 使用QSharedMemory防止多开
 shared_memory = QSharedMemory("SecRandom")
 if not shared_memory.create(1):
-    logger.warning("程序已在运行中")
-    # 弹出窗口进行提示
-    w = Dialog("SecRandom", "SecRandom已经禁止多开窗口\n(下个版本将更新可选多开设置)", window)
+    logger.debug('不允许多开实例')
+    app = QApplication.instance() or QApplication(sys.argv)
+    w = Dialog(
+        'SecRandom 正在运行',
+        'SecRandom 正在运行！请勿打开多个实例，否则将会出现两个实例同时运行的情况。'
+        '\n(若您需要打开多个实例，请在下个版本中可以启用“允许程序多开”的设置选项)'
+    )
     w.yesButton.setText("知道了👌")
     w.cancelButton.hide()
     w.buttonLayout.insertStretch(1)
+    w.setFixedWidth(550)
     w.exec()
     sys.exit(0)
 
-app = QApplication(sys.argv)
 w = Window()
 try:
     with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
