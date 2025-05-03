@@ -10,7 +10,6 @@ from loguru import logger
 import hashlib
 import pyotp
 from io import BytesIO
-import qrcode
 import re
 import secrets
 import ctypes
@@ -665,6 +664,8 @@ class password_SettingsCard(GroupHeaderCardWidget):
                 name=username,
                 issuer_name="SecRandom"
             )
+
+            import qrcode
 
             # 创建二维码对象
             qr = qrcode.QRCode(

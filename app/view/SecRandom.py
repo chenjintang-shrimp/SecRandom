@@ -213,11 +213,14 @@ class Window(MSFluentWindow):
 
     def restart_app(self):
         self.hide()
-        logger.info("应用程序已重启")
+        logger.info("重启程序")
         logger.remove()
-        # 使用subprocess模块实现重启
-        subprocess.Popen([sys.executable] + sys.argv)
-        sys.exit()
+        app = QApplication.instance()
+        if app:
+            app.quit()
+            app.processEvents()
+
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):
         """显示设置界面"""
