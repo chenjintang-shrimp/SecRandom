@@ -5,13 +5,13 @@
   - 【浮窗】fix: 浮窗透明度未将背景透明度进行设置的问题
 
 ### 🎉 软件仓库日志-仅显示最近5条
+ - SecRandom v1.0.2.3-beta 发布 - 2025-05-03 - 处于 1.1-dev测试版本
  - SecRandom v1.0.2.2-beta 发布 - 2025-05-03 - 处于 1.1-dev测试版本**
  - SecRandom v1.0.2.1-beta 发布 - 2025-04-20 - 处于 1.1-dev测试版本
  - SecRandom v1.0.2.0-beta 发布 - 2025-04-13 - 处于 1.1-dev测试版本
  - SecRandom v1.0.1.0 发布 - 2025-04-13
- - SecRandom v1.0.0.4 发布 - 2025-04-05
 
-Full Changelog: [v1.0.2.1-beta...v1.0.2.2-beta](https://github.com/SECTL/SecRandom/compare/v1.0.2.1-beta...v1.0.2.2-beta)
+Full Changelog: [v1.0.2.2-beta...v1.0.2.3-beta](https://github.com/SECTL/SecRandom/compare/v1.0.2.1-beta...v1.0.2.3-beta)
 
 **国内 下载链接**
 | 平台/打包方式 | 支持架构 | 完整版 |
@@ -21,9 +21,9 @@ Full Changelog: [v1.0.2.1-beta...v1.0.2.2-beta](https://github.com/SECTL/SecRand
 **Github 镜像 下载链接**
 | 镜像源 | 平台/打包方式 | 支持架构 | 完整版 |
 | --- | --- | --- | --- |
-| ghfast.top | Windows | x86 | [下载](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.2-beta/SecRandom-Windows-x86.zip) |
-| ghfast.top | Windows | x64 | [下载](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.2-beta/SecRandom-Windows-x64.zip) |
-| gh-proxy.com | Windows | x86 | [下载](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.2-beta/SecRandom-Windows-x86.zip) |
-| gh-proxy.com | Windows | x64 | [下载](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.2-beta/SecRandom-Windows-x64.zip) |
+| ghfast.top | Windows | x86 | [下载](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.3-beta/SecRandom-Windows-x86.zip) |
+| ghfast.top | Windows | x64 | [下载](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.3-beta/SecRandom-Windows-x64.zip) |
+| gh-proxy.com | Windows | x86 | [下载](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.3-beta/SecRandom-Windows-x86.zip) |
+| gh-proxy.com | Windows | x64 | [下载](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.3-beta/SecRandom-Windows-x64.zip) |
 
 SHA256 校验值-
