@@ -51,7 +51,7 @@ jobs:
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:. `
             --version-file=version_info.txt `
-            --add-binary "$(python -c 'import PyQt5.QtWidgets; print(PyQt5.QtWidgets.__file__)')":PyQt5/Qt5/bin
+            --add-binary="$(python -c 'import PyQt5.QtWidgets; print(PyQt5.QtWidgets.__file__)'):PyQt5/Qt5/bin"
           # 创建zip_dist/SecRandom目录
           mkdir zip_dist/SecRandom
           # 复制dist目录下的所有文件到zip_dist/SecRandom目录下
