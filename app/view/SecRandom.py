@@ -212,6 +212,8 @@ class Window(MSFluentWindow):
 
     def restart_app(self):
         self.hide()
+        logger.info("应用程序已重启")
+        logger.remove()
         os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):
