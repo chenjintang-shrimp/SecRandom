@@ -10,6 +10,7 @@ from loguru import logger
 import hashlib
 import pyotp
 from io import BytesIO
+import pyqrcode
 import re
 import secrets
 import ctypes
@@ -621,14 +622,11 @@ class password_SettingsCard(GroupHeaderCardWidget):
                 if not username:
                     return
 
-            # 对用户名进行MD5加盐加密
             salt = 'SecRandomSalt'
             hashed_username = hashlib.md5((username + salt).encode()).hexdigest()
 
-            # 从enc_set.json读取或生成2FA密钥
             os.makedirs(self.secret_dir, exist_ok=True)
 
-            # 读取现有设置
             existing_settings = {}
             try:
                 with open(self.settings_file, 'r', encoding='utf-8') as f:
@@ -636,55 +634,36 @@ class password_SettingsCard(GroupHeaderCardWidget):
             except json.JSONDecodeError:
                 existing_settings = {}
 
-            # 将加密后的用户名存储到enc_set.json中
             if "hashed_set" not in existing_settings:
                 existing_settings["hashed_set"] = {}
             existing_settings["hashed_set"]["encrypted_username"] = hashed_username
 
-            # 保存设置
             with open(self.settings_file, 'w', encoding='utf-8') as f:
                 json.dump(existing_settings, f, indent=4)
 
-            # 获取或生成密钥
             if "hashed_set" not in existing_settings or "2fa_secret" not in existing_settings["hashed_set"]:
                 self.secret = pyotp.random_base32()
                 if "hashed_set" not in existing_settings:
                     existing_settings["hashed_set"] = {}
                 existing_settings["hashed_set"]["2fa_secret"] = self.secret
 
-                # 保存设置
                 with open(self.settings_file, 'w', encoding='utf-8') as f:
                     json.dump(existing_settings, f, indent=4)
             else:
                 self.secret = existing_settings["hashed_set"]["2fa_secret"]
 
-            # 生成二维码URI
             totp = pyotp.TOTP(self.secret)
             uri = totp.provisioning_uri(
                 name=username,
                 issuer_name="SecRandom"
             )
 
-            import qrcode
-
-            # 创建二维码对象
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=10,
-                border=4,
-            )
-            qr.add_data(uri)
-            qr.make(fit=True)
-
-            # 生成二维码图片
-            img = qr.make_image(fill_color="black", back_color="white")
-
-            # 转换为QPixmap
-            byte_array = BytesIO()
-            img.save(byte_array, 'PNG')
+            qr = pyqrcode.create(uri, error='L', version=5, mode='binary')
+            buffer = BytesIO()
+            qr.png(buffer, scale=10, module_color=[0, 0, 0, 255], background=[255, 255, 255, 255])
+            
             pixmap = QPixmap()
-            pixmap.loadFromData(byte_array.getvalue())
+            pixmap.loadFromData(buffer.getvalue())
             pixmap = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
             # 创建自定义2FA对话框
