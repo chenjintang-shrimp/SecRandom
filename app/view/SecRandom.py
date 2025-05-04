@@ -10,6 +10,12 @@ import os
 import sys
 from loguru import logger
 
+try:
+    import pyexpat
+except ImportError:
+    logger.error("pyexpat模块未安装, 请安装后重试")
+    pass
+
 if './app/Settings' != None and not os.path.exists('./app/Settings'):
     os.makedirs('./app/Settings')
 
@@ -219,13 +225,18 @@ class Window(MSFluentWindow):
         logger.info("重启程序")
         logger.remove()
 
-        temp_dir = os.path.join(os.environ.get('TEMP', ''), 'temp')
-        if os.path.exists(temp_dir):
-            try:
-                import shutil
-                shutil.rmtree(temp_dir, ignore_errors=True)
-            except Exception as e:
-                logger.error(f"清理临时目录失败: {e}")
+        try:
+            import tempfile
+            temp_dir = tempfile.gettempdir()
+            for root, dirs, files in os.walk(temp_dir):
+                for name in files:
+                    if name.startswith('_MEI'):
+                        try:
+                            os.remove(os.path.join(root, name))
+                        except:
+                            pass
+        except Exception as e:
+            logger.error(f"清理临时文件失败: {e}")
 
         app = QApplication(sys.argv)
         if app:

@@ -44,6 +44,9 @@ jobs:
           # 创建必要目录（分开创建）
           mkdir dist
           mkdir zip_dist
+          # 创建自定义临时目录
+          $tempDir = "D:\a\SecRandom\temp"
+          New-Item -ItemType Directory -Path $tempDir -Force
           # 使用 pyinstaller 打包应用程序
           pyinstaller main.py `
             -w `
@@ -55,9 +58,9 @@ jobs:
             --add-data "LICENSE;." `
             --version-file=version_info.txt `
             --hidden-import PyQt5.QtXml `
-            --collect-binaries PyQt5.QtXml `
-            --paths "$env:PYTHONPATH" `
-            --runtime-tmpdir "temp"
+            --hidden-import pyexpat `
+            --runtime-tmpdir $tempDir `
+            --workpath $tempDir
           # 创建zip_dist/SecRandom目录结构
           mkdir zip_dist/SecRandom
           # 复制构建结果
