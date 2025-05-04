@@ -41,8 +41,9 @@ jobs:
           uv pip install -r requirements.txt
           # 安装 pyinstaller
           uv pip install pyinstaller
-          # 创建必要目录
-          mkdir dist zip_dist
+          # 创建必要目录（分开创建）
+          mkdir dist
+          mkdir zip_dist
           # 使用 pyinstaller 打包应用程序
           pyinstaller main.py `
             -w `
@@ -61,11 +62,8 @@ jobs:
           mkdir zip_dist/SecRandom
           # 复制构建结果
           Copy-Item -Recurse -Force dist/* zip_dist/SecRandom
-          # 创建app目录
           mkdir zip_dist/SecRandom/app
-          # 复制app/resource文件夹到zip_dist/SecRandom目录下
           Copy-Item -Recurse -Force app/resource zip_dist/SecRandom/app
-          # 复制LICENSE文件 
           Copy-Item LICENSE zip_dist/SecRandom
           # 压缩打包
           Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ matrix.arch }}.zip" -Force
