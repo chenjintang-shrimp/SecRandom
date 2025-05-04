@@ -368,6 +368,7 @@ class Window(MSFluentWindow):
             os.makedirs(temp_dir)
 
         cmd_content = f"""@echo off
+TIMEOUT /T 3
 set __COMPAT_LAYER=RunAsInvoker
 start "" /B "{sys.executable}" {" ".join(sys.argv)}
 del "%~f0"
@@ -382,7 +383,6 @@ del "%~f0"
                 f.write(cmd_content)
             # 打开cmd文件
             self.start_cleanup()
-            logger.info("应用程序已退出")
             logger.remove()
             if hasattr(self, 'server'):
                 self.server.close()
