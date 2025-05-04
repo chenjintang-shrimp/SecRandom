@@ -368,6 +368,7 @@ class Window(MSFluentWindow):
             os.makedirs(temp_dir)
 
         cmd_content = f"""@echo off
+TIMEOUT /T 3
 set __COMPAT_LAYER=RunAsInvoker
 start "" /B "{sys.executable}" {" ".join(sys.argv)}
 del "%~f0"
@@ -380,12 +381,11 @@ del "%~f0"
             logger.remove()
             with open(cmd_path, "w") as f:
                 f.write(cmd_content)
-            # 打开cmd文件
             self.start_cleanup()
             logger.remove()
             if hasattr(self, 'server'):
                 self.server.close()
-            subprocess.Popen([cmd_path])
+            subprocess.Popen(cmd_path, creationflags=subprocess.CREATE_NEW_CONSOLE)
             QApplication.quit()
 
         except Exception as e:
