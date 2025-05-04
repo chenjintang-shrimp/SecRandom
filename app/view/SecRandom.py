@@ -4,9 +4,12 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
+import _overlapped
+
 import json
 import os
 import sys
+import subprocess
 from loguru import logger
 
 if './app/Settings' != None and not os.path.exists('./app/Settings'):
@@ -213,7 +216,6 @@ class Window(MSFluentWindow):
     def restart_app(self):
         """通过静默cmd脚本重启程序"""
         self.hide()
-        logger.info("正在通过静默cmd脚本重启程序...")
         self.tray_icon.hide()
 
         # 确保临时目录存在
@@ -222,19 +224,20 @@ class Window(MSFluentWindow):
             os.makedirs(temp_dir)
 
         # 创建静默cmd脚本内容
-        cmd_content = f"""
-        @echo off
-        set __COMPAT_LAYER=RunAsInvoker
-        start "" /B "{sys.executable}" {" ".join(sys.argv)}
-        del "%~f0"
-        """
+        cmd_content = f"""@echo off
+set __COMPAT_LAYER=RunAsInvoker
+start "" /B "{sys.executable}" {" ".join(sys.argv)}
+del "%~f0"
+"""
         cmd_path = os.path.join(temp_dir, "SecRandom_restart.cmd")
 
         try:
+            logger.debug("正在通过静默cmd脚本重启程序...")
+            logger.remove()
+
             with open(cmd_path, "w") as f:
                 f.write(cmd_content)
 
-            # 使用start命令静默运行
             subprocess.Popen(
                 ["cmd.exe", "/C", cmd_path],
                 creationflags=subprocess.CREATE_NO_WINDOW
@@ -242,8 +245,8 @@ class Window(MSFluentWindow):
             QApplication.quit()
 
         except Exception as e:
-            logger.error(f"创建重启脚本失败: {e}")
-            # 回退到原方式
+            logger.error(f"创建重启脚本失败: {e},使用 os.execl(sys.executable, sys.executable, *sys.argv) 重启程序")
+            logger.remove()
             os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):
