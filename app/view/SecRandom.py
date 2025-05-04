@@ -3,14 +3,18 @@ from qfluentwidgets import FluentIcon as fIcon
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtNetwork import *
 
 import _overlapped
 
 import json
 import os
 import sys
+import webbrowser
 import subprocess
 from loguru import logger
+
+from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
 
 if './app/Settings' != None and not os.path.exists('./app/Settings'):
     os.makedirs('./app/Settings')
@@ -28,6 +32,50 @@ from app.view.levitation import LevitationWindow
 class Window(MSFluentWindow):
     def __init__(self):
         super().__init__()
+        self.server = QLocalServer(self)
+        self.server.newConnection.connect(self.handle_new_connection)
+        self.server.listen("SecRandomIPC")
+
+        self.focus_timer = QTimer(self)
+        self.focus_timer.timeout.connect(self.check_focus_timeout)
+        self.last_focus_time = QDateTime.currentDateTime()
+
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                self.focus_mode = foundation_settings.get('main_window_focus_mode', 0)
+        except Exception as e:
+            logger.error(f"加载焦点模式设置时出错: {e}")
+            self.focus_mode = 0
+
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                self.focus_time = foundation_settings.get('main_window_focus_time', 0)
+        except Exception as e:
+            logger.error(f"加载检测焦点时间设置时出错: {e}")
+            self.focus_time = 1
+
+        self.focus_timeout_map = [
+            0, 0, 3000, 5000, 10000, 15000, 30000, 60000, 120000, 180000, 300000, 600000, 1800000,
+            2700000, 3600000, 7200000, 10800000, 21600000, 43200000
+        ]
+
+        self.focus_timeout_time = [
+            0, 1000, 2000, 3000, 5000, 10000, 15000, 30000, 60000, 300000, 600000, 900000, 1800000,
+            3600000, 7200000, 10800000, 21600000, 43200000
+        ]
+
+        if self.focus_time >= len(self.focus_timeout_time):
+            self.focus_time = 1
+
+        if self.focus_time == 0:
+            self.focus_timer.start(0)
+        else:
+            self.focus_timer.start(self.focus_timeout_time[self.focus_time])
+
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
@@ -69,9 +117,13 @@ class Window(MSFluentWindow):
         self.tray_icon.setIcon(QIcon('./app/resource/icon/SecRandom.png'))
         self.tray_icon.setToolTip('SecRandom')
         self.tray_menu = RoundMenu(parent=self)
+        # 添加关于SecRandom,点击后直接打开到到Github
+        self.tray_menu.addAction(Action(fIcon.INFO, '关于SecRandom', triggered=self.open_github))
+        self.tray_menu.addSeparator()
         self.tray_menu.addAction(Action(fIcon.POWER_BUTTON, '暂时显示/隐藏主界面', triggered=self.toggle_window))
         self.tray_menu.addAction(Action(QIcon("app\\resource\\icon\\SecRandom_floating_100%.png"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
         self.tray_menu.addAction(Action(fIcon.SETTING, '打开设置界面', triggered=self.show_setting_interface))
+        self.tray_menu.addSeparator()
         self.tray_menu.addAction(Action(fIcon.SYNC, '重启', triggered=self.restart_app))
         self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=self.close_window_secrandom))
 
@@ -143,10 +195,81 @@ class Window(MSFluentWindow):
 
     def close_window_secrandom(self):
         """关闭应用程序"""
+        try:
+            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                    if settings.get('hashed_set', {}).get('exit_verification_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消退出程序操作")
+                            return
+        except Exception as e:
+            logger.error(f"密码验证失败: {e}")
+            return
+
         self.start_cleanup()
         logger.info("应用程序已退出")
         logger.remove()
+        if hasattr(self, 'server'):
+            self.server.close()
         QApplication.quit()
+
+    def update_focus_mode(self, mode):
+        """更新焦点模式"""
+        self.focus_mode = mode
+        self.last_focus_time = QDateTime.currentDateTime()
+
+        if mode < len(self.focus_timeout_map):
+            self.focus_timeout = self.focus_timeout_map[mode]
+
+    def update_focus_time(self, time):
+        """更新检测焦点时间"""
+        self.focus_time = time
+        self.last_focus_time = QDateTime.currentDateTime()
+        if time < len(self.focus_timeout_time):
+            self.focus_timeout = self.focus_timeout_time[time]
+            self.focus_timer.start(self.focus_timeout)
+        else:
+            self.focus_timer.start(0)
+
+    def check_focus_timeout(self):
+        """检查窗口是否失去焦点超过设定时间"""
+        if self.focus_mode == 0:  # 不关闭
+            return
+
+        if not self.isActiveWindow() and not self.isMinimized():
+            elapsed = self.last_focus_time.msecsTo(QDateTime.currentDateTime())
+            timeout = self.focus_timeout_map[self.focus_mode]
+
+            if self.focus_mode == 1:  # 直接关闭
+                self.hide()
+            elif elapsed >= timeout:
+                self.hide()
+        else:
+            self.last_focus_time = QDateTime.currentDateTime()
+
+    def showEvent(self, event):
+        """窗口显示时重置焦点时间"""
+        super().showEvent(event)
+        self.last_focus_time = QDateTime.currentDateTime()
+
+    def focusInEvent(self, event):
+        """窗口获得焦点时重置焦点时间"""
+        super().focusInEvent(event)
+        self.last_focus_time = QDateTime.currentDateTime()
+
+    def open_github(self):
+        dialog = Dialog(
+            '打开Github-SecRandom',
+            '是否打开Github-SecRandom🤗',
+        )
+        dialog.yesButton.setText("打开")
+        dialog.cancelButton.setText("取消")
+        dialog.yesButton.clicked.connect(lambda: webbrowser.open(GITHUB_WEB))
+        dialog.setFixedWidth(500)
+        dialog.exec()
 
     def start_cleanup(self):
         """软件启动时清理临时抽取记录文件"""
@@ -196,8 +319,14 @@ class Window(MSFluentWindow):
                 self.activateWindow()
                 self.raise_()
 
+    def show_window(self):
+        self.showNormal()
+        if not self.isVisible():
+            self.show()
+            self.activateWindow()
+            self.raise_()
+
     def calculate_menu_position(self, menu):
-        """计算菜单显示位置"""
         screen = QApplication.primaryScreen().availableGeometry()
         menu_size = menu.sizeHint()
 
@@ -214,22 +343,37 @@ class Window(MSFluentWindow):
         return QPoint(x, y)
 
     def restart_app(self):
-        """通过静默cmd脚本重启程序"""
+        try:
+            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                    if settings.get('hashed_set', {}).get('restart_verification_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消重启操作")
+                            return
+        except Exception as e:
+            logger.error(f"密码验证失败: {e}")
+            return
+
         self.hide()
         self.tray_icon.hide()
 
-        # 确保临时目录存在
+        if hasattr(self, 'server'):
+            self.server.close()
+
         temp_dir = "app/resource/TEMP_"
         if not os.path.exists(temp_dir):
             os.makedirs(temp_dir)
 
-        # 创建静默cmd脚本内容
         cmd_content = f"""@echo off
 set __COMPAT_LAYER=RunAsInvoker
 start "" /B "{sys.executable}" {" ".join(sys.argv)}
 del "%~f0"
 """
-        cmd_path = os.path.join(temp_dir, "SecRandom_restart.cmd")
+        cmd_path = "app/resource/TEMP_/SecRandom_restart.cmd"
+        current_path = os.path.abspath(sys.argv[0])
 
         try:
             logger.debug("正在通过静默cmd脚本重启程序...")
@@ -238,10 +382,8 @@ del "%~f0"
             with open(cmd_path, "w") as f:
                 f.write(cmd_content)
 
-            subprocess.Popen(
-                ["cmd.exe", "/C", cmd_path],
-                creationflags=subprocess.CREATE_NO_WINDOW
-            )
+            # 打开cmd文件
+            subprocess.Popen(["cmd", "/c", cmd_path], shell=True, cwd=current_path)
             QApplication.quit()
 
         except Exception as e:
@@ -258,6 +400,7 @@ del "%~f0"
                     from app.common.password_dialog import PasswordDialog
                     dialog = PasswordDialog(self)
                     if dialog.exec_() != QDialog.Accepted:
+                        logger.warning("用户取消打开设置界面操作")
                         return
         except Exception as e:
             logger.error(f"密码验证失败: {e}")
@@ -280,6 +423,20 @@ del "%~f0"
 
     def toggle_levitation_window(self):
         """切换浮窗显示/隐藏状态"""
+        try:
+            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                    if settings.get('hashed_set', {}).get('show_hide_verification_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消暂时切换浮窗显示/隐藏状态操作")
+                            return
+        except Exception as e:
+            logger.error(f"密码验证失败: {e}")
+            return
+
         if not hasattr(self, 'levitation_window') or not self.levitation_window:
             self.levitation_window.show()
         elif self.levitation_window.isVisible():
@@ -288,3 +445,18 @@ del "%~f0"
             self.levitation_window.show()
             self.levitation_window.activateWindow()
             self.levitation_window.raise_()
+
+    def handle_new_connection(self):
+        """处理新连接请求"""
+        socket = self.server.nextPendingConnection()
+        if socket:
+            socket.readyRead.connect(lambda: self.show_window_from_ipc(socket))
+
+    def show_window_from_ipc(self, socket):
+        """从IPC接收显示窗口请求"""
+        socket.readAll()
+        self.show()
+        self.activateWindow()
+        self.raise_()
+        socket.disconnectFromServer()
+        self.levitation_window.raise_()

@@ -321,39 +321,63 @@ class password_SettingsCard(GroupHeaderCardWidget):
         self.default_settings = {
             "start_password_enabled": False,
             "encrypt_setting_enabled": False,
-            "two_factor_auth": False
+            "two_factor_auth": False,
+            "exit_verification_enabled": False,
+            "restart_verification_enabled": False,
+            "show_hide_verification_enabled": False
         }
 
-        self.start_password_switch = SwitchButton()
-        self.encrypt_setting_switch = SwitchButton()
-        self.two_factor_switch = SwitchButton()
-        self.export_key_button = PushButton('导出密钥')
-        self.set_password_button = PushButton('设置密码')
-
-        self.export_key_button.setFont(QFont(load_custom_font(), 14))
-        self.export_key_button.clicked.connect(self.export_key_file)
-
         # 密码功能开关
+        self.start_password_switch = SwitchButton()
         self.start_password_switch.setOnText("开启")
         self.start_password_switch.setOffText("关闭")
         self.start_password_switch.checkedChanged.connect(self.start_password_switch_checked)
         self.start_password_switch.setFont(QFont(load_custom_font(), 14))
 
         # 设置是否启用加密相关设置/名单文件开关
+        self.encrypt_setting_switch = SwitchButton()
         self.encrypt_setting_switch.setOnText("开启")
         self.encrypt_setting_switch.setOffText("关闭")
         self.encrypt_setting_switch.checkedChanged.connect(self.save_settings)
         self.encrypt_setting_switch.setFont(QFont(load_custom_font(), 14))
 
         # 设置2FA开关
+        self.two_factor_switch = SwitchButton()
         self.two_factor_switch.setOnText("启用")
         self.two_factor_switch.setOffText("关闭")
         self.two_factor_switch.checkedChanged.connect(self.on_2fa_changed)
         self.two_factor_switch.setFont(QFont(load_custom_font(), 14))
 
+        # 导出密钥按钮
+        self.export_key_button = PushButton('导出密钥')
+        self.export_key_button.setFont(QFont(load_custom_font(), 14))
+        self.export_key_button.clicked.connect(self.export_key_file)
+
         # 设置密码按钮
+        self.set_password_button = PushButton('设置密码')
         self.set_password_button.setFont(QFont(load_custom_font(), 14))
         self.set_password_button.clicked.connect(self.show_password_dialog)
+
+        # 退出软件是否需要验证密码开关
+        self.exit_verification_switch = SwitchButton()
+        self.exit_verification_switch.setOnText("开启")
+        self.exit_verification_switch.setOffText("关闭")
+        self.exit_verification_switch.checkedChanged.connect(lambda: self.verify_password_for_action('退出软件需要密码', 'exit'))
+        self.exit_verification_switch.setFont(QFont(load_custom_font(), 14))
+
+        # 重启软件是否需要验证密码开关
+        self.restart_verification_switch = SwitchButton()
+        self.restart_verification_switch.setOnText("开启")
+        self.restart_verification_switch.setOffText("关闭")
+        self.restart_verification_switch.checkedChanged.connect(lambda: self.verify_password_for_action('重启软件需要密码', 'restart'))
+        self.restart_verification_switch.setFont(QFont(load_custom_font(), 14))
+
+        # 暂时显示/隐藏悬浮窗是否需要验证密码开关
+        self.show_hide_verification_switch = SwitchButton()
+        self.show_hide_verification_switch.setOnText("开启")
+        self.show_hide_verification_switch.setOffText("关闭")
+        self.show_hide_verification_switch.checkedChanged.connect(lambda: self.verify_password_for_action('显示/隐藏悬浮窗需要密码', 'show_hide'))
+        self.show_hide_verification_switch.setFont(QFont(load_custom_font(), 14))
 
         # 添加组件到分组中
         self.addGroup(FIF.VPN, "密码功能", "启用后将启用该设置卡的所有功能", self.start_password_switch)
@@ -361,6 +385,10 @@ class password_SettingsCard(GroupHeaderCardWidget):
         self.addGroup(FIF.DOWNLOAD, '密钥导出', '导出密钥文件', self.export_key_button)
         self.addGroup(FIF.CERTIFICATE, "双重认证", "启用2FA验证", self.two_factor_switch)
         # self.addGroup(FIF.VPN, "数据加密", "加密设置和名单文件", self.encrypt_setting_switch)
+        self.addGroup(FIF.CERTIFICATE, "退出软件验证", "退出软件时需要验证密码", self.exit_verification_switch)
+        self.addGroup(FIF.CERTIFICATE, "重启软件验证", "重启软件时需要验证密码", self.restart_verification_switch)
+        self.addGroup(FIF.CERTIFICATE, "暂时显示/隐藏悬浮窗验证", "暂时显示/隐藏悬浮窗时需要验证密码", self.show_hide_verification_switch)
+
 
         self.load_settings()
         self.save_settings()
@@ -404,10 +432,95 @@ class password_SettingsCard(GroupHeaderCardWidget):
                 parent=parent or self
             )
 
+    def verify_password_for_action(self, action_type, type):
+        """验证密码和2FA"""
+        if not os.path.exists(self.settings_file):
+            return False
+
+        try:
+            with open(self.settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                hashed_set = settings.get("hashed_set", {})
+                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    hashed_set = settings.get("hashed_set", {})
+                    if hashed_set.get("verification_start") == True:
+                        if not hashed_set.get("hashed_password") or not hashed_set.get("password_salt"):
+                            self.show_info_bar('error', '错误', '请先设置密码', 3000, self)
+                            if type == 'exit':
+                                self.exit_verification_switch.setChecked(False)
+                            elif type == 'restart':
+                                self.restart_verification_switch.setChecked(False)
+                            elif type == 'show_hide':
+                                self.show_hide_verification_switch.setChecked(False)
+                            return False
+
+                        dialog = PasswordDialog(self)
+                        dialog.yesButton.setText("确认")
+                        dialog.cancelButton.setText("取消")
+                        if dialog.exec_() != QDialog.Accepted:
+                            if type == 'exit':
+                                if hashed_set.get("exit_verification_enabled") == True:
+                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                    self.exit_verification_switch.setChecked(True)
+                                else:
+                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                    self.exit_verification_switch.setChecked(False)
+                            elif type =='restart':
+                                if hashed_set.get("restart_verification_enabled") == True:
+                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                    self.restart_verification_switch.setChecked(True)
+                                else:
+                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                    self.restart_verification_switch.setChecked(False)
+                            elif type =='show_hide':
+                                if hashed_set.get("show_hide_verification_enabled") == True:
+                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                    self.show_hide_verification_switch.setChecked(True)
+                                else:
+                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                    self.show_hide_verification_switch.setChecked(False)
+                            return False
+
+                        if hashed_set.get("two_factor_auth", False):
+                            dialog = SimpleTwoFactorAuthDialog(self)
+                            dialog.yesButton.setText("确认")
+                            dialog.cancelButton.setText("取消")
+                            if dialog.exec_() != QDialog.Accepted:
+                                if type == 'exit':
+                                    if hashed_set.get("exit_verification_enabled") == True:
+                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                        self.exit_verification_switch.setChecked(True)
+                                    else:
+                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                        self.exit_verification_switch.setChecked(False)
+                                elif type == 'restart':
+                                    if hashed_set.get("restart_verification_enabled") == True:
+                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                        self.restart_verification_switch.setChecked(True)
+                                    else:
+                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                        self.restart_verification_switch.setChecked(False)
+                                elif type == 'show_hide':
+                                    if hashed_set.get("show_hide_verification_enabled") == True:
+                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                        self.show_hide_verification_switch.setChecked(True)
+                                    else:
+                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                                        self.show_hide_verification_switch.setChecked(False)
+                                return False
+
+                        self.show_info_bar('success', '功能设置成功', f'{action_type}功能设置成功', 3000, self)
+                        self.save_settings()
+                        return True
+
+        except Exception as e:
+            logger.error(f"验证失败: {e}")
+            return False
+
     def show_password_dialog(self):
         if not os.path.exists(self.settings_file):
             self.show_info_bar('error', '错误', '设置文件不存在', 3000, self)
-
             return
 
         try:
@@ -756,17 +869,32 @@ class password_SettingsCard(GroupHeaderCardWidget):
                     self.two_factor_switch.setChecked(
                         hashed_set_settings.get("two_factor_auth", self.default_settings["two_factor_auth"])
                     )
+                    self.exit_verification_switch.setChecked(
+                        hashed_set_settings.get("exit_verification_enabled", self.default_settings["exit_verification_enabled"])
+                    )
+                    self.restart_verification_switch.setChecked(
+                        hashed_set_settings.get("restart_verification_enabled", self.default_settings["restart_verification_enabled"])
+                    )
+                    self.show_hide_verification_switch.setChecked(
+                        hashed_set_settings.get("show_hide_verification_enabled", self.default_settings["show_hide_verification_enabled"])
+                    )
                     logger.info("安全设置加载完成")
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.start_password_switch.setChecked(self.default_settings["start_password_enabled"])
                 self.encrypt_setting_switch.setChecked(self.default_settings["encrypt_setting_enabled"])
                 self.two_factor_switch.setChecked(self.default_settings["two_factor_auth"])
+                self.exit_verification_switch.setChecked(self.default_settings["exit_verification_enabled"])
+                self.restart_verification_switch.setChecked(self.default_settings["restart_verification_enabled"])
+                self.show_hide_verification_switch.setChecked(self.default_settings["show_hide_verification_enabled"])
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.start_password_switch.setChecked(self.default_settings["start_password_enabled"])
             self.encrypt_setting_switch.setChecked(self.default_settings["encrypt_setting_enabled"])
             self.two_factor_switch.setChecked(self.default_settings["two_factor_auth"])
+            self.exit_verification_switch.setChecked(self.default_settings["exit_verification_enabled"])
+            self.restart_verification_switch.setChecked(self.default_settings["restart_verification_enabled"])
+            self.show_hide_verification_switch.setChecked(self.default_settings["show_hide_verification_enabled"])
 
     def save_settings(self):
         # 先读取现有设置
@@ -793,7 +921,10 @@ class password_SettingsCard(GroupHeaderCardWidget):
         _existing_settings["hashed_set"].update({
             "start_password_enabled": self.start_password_switch.isChecked(),
             "encrypt_setting_enabled": self.encrypt_setting_switch.isChecked(),
-            "two_factor_auth": self.two_factor_switch.isChecked()
+            "two_factor_auth": self.two_factor_switch.isChecked(),
+            "exit_verification_enabled": self.exit_verification_switch.isChecked(),
+            "restart_verification_enabled": self.restart_verification_switch.isChecked(),
+            "show_hide_verification_enabled": self.show_hide_verification_switch.isChecked()
         })
 
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)

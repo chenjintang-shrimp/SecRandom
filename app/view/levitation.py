@@ -2,6 +2,7 @@ from qfluentwidgets import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+from PyQt5.QtNetwork import *
 
 import json
 from loguru import logger
@@ -14,6 +15,8 @@ class LevitationWindow(QWidget):
         super().__init__()
         self.initUI()
         self.load_position()
+
+        self.levitation_window = LevitationWindow(self)
 
     def initUI(self):
         layout = QHBoxLayout()
@@ -119,13 +122,17 @@ class LevitationWindow(QWidget):
         self.people_button.clicked.connect(self.on_people_clicked)
 
     def on_people_clicked(self):
-        from app.view.pumping_floating import pumping_floating_window
-        if not hasattr(self, 'pumping_floating_Interface') or not self.pumping_floating_Interface:
-            self.pumping_floating_Interface = pumping_floating_window()
-        self.pumping_floating_Interface.show()
-        self.pumping_floating_Interface.showNormal()
-        self.pumping_floating_Interface.activateWindow()
-        self.pumping_floating_Interface.raise_()
+        main_window = None
+        for widget in QApplication.topLevelWidgets():
+            if hasattr(widget, 'toggle_window'):  # 通过特征识别主窗口
+                main_window = widget
+                break
+
+        if main_window:
+            main_window.show_window()
+        else:
+            logger.error("未找到主窗口实例")
+            self.show_connection_error_dialog()
 
     def start_drag(self, event=None):
         if event and event.button() or not event:

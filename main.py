@@ -3,13 +3,13 @@ import sys
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtNetwork import *
 from qfluentwidgets import *
 
 from app.common.config import cfg
 from app.view.SecRandom import Window 
 from loguru import logger
 
-# 配置日志记录
 log_dir = "logs"
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
@@ -55,21 +55,41 @@ app = QApplication(sys.argv)
 
 shared_memory = QSharedMemory("SecRandom")
 if not shared_memory.create(1):
-    logger.debug('不允许多开实例')
-    def sec_():
-        sec = Window()
-        sec.show()
-    w = Dialog(
-        'SecRandom 正在运行',
-        'SecRandom 正在运行！请勿打开多个实例，否则将会出现两个实例同时运行的情况。'
-        '\n(若您需要打开多个实例，请在下个版本中可以启用“允许程序多开”的设置选项)'
-    )
-    w.yesButton.setText("打开主窗口👀")
-    w.cancelButton.setText("知道了(不打开主窗口)👌")
-    w.yesButton.clicked.connect(lambda: sec_())
-    w.setFixedWidth(550)
-    w.exec()
-    sys.exit()
+    logger.debug('检测到已有实例运行')
+    socket = QLocalSocket()
+    socket.connectToServer("SecRandomIPC")
+
+    if socket.waitForConnected(1000):
+        socket.write(b"show")
+        socket.flush()
+        socket.waitForBytesWritten(1000)
+        socket.disconnectFromServer()
+        sys.exit()
+    else:
+        def sec_():
+            # 再次尝试IPC
+            socket = QLocalSocket()
+            socket.connectToServer("SecRandomIPC")
+            if socket.waitForConnected(1000):
+                socket.write(b"show")
+                socket.flush()
+                socket.waitForBytesWritten(1000)
+                socket.disconnectFromServer()
+            else:
+                logger.error("无法连接到已有实例")
+            return
+
+        w = Dialog(
+            'SecRandom 正在运行',
+            'SecRandom 已经在运行！您可以选择打开已有实例的窗口。'
+            '\n(若您需要打开多个实例，请在下个版本中可以启用"允许程序多开"的设置选项)'
+        )
+        w.yesButton.setText("打开主窗口👀")
+        w.cancelButton.setText("知道了(不打开主窗口)👌")
+        w.yesButton.clicked.connect(lambda: sec_())
+        w.setFixedWidth(550)
+        w.exec()
+        sys.exit()
 
 sec = Window()
 try:

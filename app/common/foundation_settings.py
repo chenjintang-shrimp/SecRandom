@@ -1,6 +1,7 @@
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
 import json
 import os
@@ -18,21 +19,21 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "self_starting_enabled": False,
             "pumping_floating_enabled": False,
             "pumping_floating_transparency_mode": 6,
+            "main_window_focus_mode": 0,
+            "main_window_focus_time": 1,
             "main_window_mode": 0,
-            "convenient_window_mode": 0,
             "settings_window_mode": 0,
             "main_window_size": 0,
-            "convenient_window_size": 0,
             "settings_window_size": 0
         }
 
         self.self_starting_switch = SwitchButton()
         self.pumping_floating_switch = SwitchButton()
         self.pumping_floating_transparency_comboBox = ComboBox()
+        self.main_window_focus_comboBox = ComboBox()
+        self.main_window_focus_time_comboBox = ComboBox()
         self.main_window_comboBox = ComboBox()
         self.main_window_size_comboBox = ComboBox()
-        self.convenient_window_comboBox = ComboBox()
-        self.convenient_window_size_comboBox = ComboBox()
         self.settings_window_comboBox = ComboBox()
         self.settings_window_size_comboBox = ComboBox()
 
@@ -55,6 +56,24 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.pumping_floating_transparency_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_floating_transparency_comboBox.setFont(QFont(load_custom_font(), 12))
 
+        # 设置主窗口不是焦点时关闭延迟
+        self.main_window_focus_comboBox.setFixedWidth(200)
+        self.main_window_focus_comboBox.addItems(
+            ["不关闭", "直接关闭", "3秒后关闭", "5秒后关闭", "10秒后关闭", "15秒后关闭", "30秒后关闭", "1分钟后关闭",
+             "2分钟后关闭", "3分钟后关闭", "5分钟后关闭", "10分钟后关闭", "30分钟后关闭", "45分钟后关闭", "1小时后关闭",
+             "2小时后关闭", "3小时后关闭", "6小时后关闭", "12小时后关闭"])
+        self.main_window_focus_comboBox.currentIndexChanged.connect(self.on_focus_mode_changed)
+        self.main_window_focus_comboBox.setFont(QFont(load_custom_font(), 12))
+
+        # 设置检测主窗口焦点时间
+        self.main_window_focus_time_comboBox.setFixedWidth(200)
+        self.main_window_focus_time_comboBox.addItems(
+            ["不检测", "1秒", "2秒", "3秒", "5秒", "10秒", "15秒", "30秒",
+             "1分钟", "5分钟", "10分钟", "15分钟", "30分钟",
+             "1小时", "2小时", "3小时", "6小时"])
+        self.main_window_focus_time_comboBox.currentIndexChanged.connect(self.on_focus_time_changed)
+        self.main_window_focus_time_comboBox.setFont(QFont(load_custom_font(), 12))
+
         # 主窗口窗口显示位置下拉框
         self.main_window_comboBox.setFixedWidth(200)
         self.main_window_comboBox.addItems(["居中", "居中向下3/5"])
@@ -66,18 +85,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.main_window_size_comboBox.addItems(["800x600", "1200x800"])
         self.main_window_size_comboBox.currentIndexChanged.connect(self.save_settings)
         self.main_window_size_comboBox.setFont(QFont(load_custom_font(), 12))
-
-        # 便捷抽人窗口显示位置下拉框
-        self.convenient_window_comboBox.setFixedWidth(200)
-        self.convenient_window_comboBox.addItems(["居中", "居中向下3/5"])
-        self.convenient_window_comboBox.currentIndexChanged.connect(self.save_settings)
-        self.convenient_window_comboBox.setFont(QFont(load_custom_font(), 12))
-
-        # 便捷抽人窗口显示大小下拉框
-        self.convenient_window_size_comboBox.setFixedWidth(200)
-        self.convenient_window_size_comboBox.addItems(["800x600", "1200x800"])
-        self.convenient_window_size_comboBox.currentIndexChanged.connect(self.save_settings)
-        self.convenient_window_size_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 设置窗口显示位置下拉框
         self.settings_window_comboBox.setFixedWidth(200)
@@ -95,10 +102,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(FIF.PLAY, "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
         self.addGroup(QIcon("app\\resource\\icon\\SecRandom_floating_100%.png"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
         self.addGroup(FIF.ZOOM, "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
+        self.addGroup(FIF.ZOOM, "主窗口焦点", "设置主窗口不是焦点时关闭延迟", self.main_window_focus_comboBox)
+        self.addGroup(FIF.ZOOM, "检测主窗口焦点时间", "设置检测主窗口焦点时间", self.main_window_focus_time_comboBox)
         self.addGroup(FIF.ZOOM, "主窗口位置", "设置主窗口的显示位置", self.main_window_comboBox)
         self.addGroup(FIF.ZOOM, "主窗口大小", "设置主窗口的显示大小", self.main_window_size_comboBox)
-        self.addGroup(FIF.ZOOM, "便捷抽人窗口位置", "设置便捷抽人窗口的显示位置", self.convenient_window_comboBox)
-        self.addGroup(FIF.ZOOM, "便捷抽人窗口大小", "设置便捷抽人窗口的显示大小", self.convenient_window_size_comboBox)
         self.addGroup(FIF.ZOOM, "设置窗口位置", "设置设置窗口的显示位置", self.settings_window_comboBox)
         self.addGroup(FIF.ZOOM, "设置窗口大小", "设置设置窗口的显示大小", self.settings_window_size_comboBox)
 
@@ -107,6 +114,28 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
     def on_pumping_floating_switch_changed(self, checked):
         self.save_settings()
+
+    def on_focus_mode_changed(self):
+        self.save_settings()  # 先保存设置
+        index = self.main_window_focus_comboBox.currentIndex()
+        main_window = None
+        for widget in QApplication.topLevelWidgets():
+            if hasattr(widget, 'update_focus_mode'):  # 通过特征识别主窗口
+                main_window = widget
+                break
+        if main_window:
+            main_window.update_focus_mode(index)
+
+    def on_focus_time_changed(self):
+        self.save_settings()  # 先保存设置
+        index = self.main_window_focus_time_comboBox.currentIndex()
+        main_window = None
+        for widget in QApplication.topLevelWidgets():
+            if hasattr(widget, 'update_focus_time'):  # 通过特征识别主窗口
+                main_window = widget
+                break
+        if main_window:
+            main_window.update_focus_time(index)
 
     def setting_startup(self):
         import sys
@@ -187,16 +216,21 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     if main_window_mode < 0 or main_window_mode >= self.main_window_comboBox.count():
                         # 如果索引值无效，则使用默认值
                         main_window_mode = self.default_settings["main_window_mode"]
-                        
-                    convenient_window_mode = foundation_settings.get("convenient_window_mode", self.default_settings["convenient_window_mode"])
-                    if convenient_window_mode < 0 or convenient_window_mode >= self.convenient_window_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        convenient_window_mode = self.default_settings["convenient_window_mode"]
 
                     pumping_floating_transparency_mode = foundation_settings.get("pumping_floating_transparency_mode", self.default_settings["pumping_floating_transparency_mode"])
                     if pumping_floating_transparency_mode < 0 or pumping_floating_transparency_mode >= self.pumping_floating_transparency_comboBox.count():
                         # 如果索引值无效，则使用默认值
                         pumping_floating_transparency_mode = self.default_settings["pumping_floating_transparency_mode"]
+
+                    main_window_focus_mode = foundation_settings.get("main_window_focus_mode", self.default_settings["main_window_focus_mode"])
+                    if main_window_focus_mode < 0 or main_window_focus_mode >= self.main_window_focus_comboBox.count():
+                        # 如果索引值无效，则使用默认值
+                        main_window_focus_mode = self.default_settings["main_window_focus_mode"]
+
+                    main_window_focus_time = foundation_settings.get("main_window_focus_time", self.default_settings["main_window_focus_time"])
+                    if main_window_focus_time < 0 or main_window_focus_time >= self.main_window_focus_time_comboBox.count():
+                        # 如果索引值无效，则使用默认值
+                        main_window_focus_time = self.default_settings["main_window_focus_time"]
 
                     settings_window_mode = foundation_settings.get("settings_window_mode", self.default_settings["settings_window_mode"])
                     if settings_window_mode < 0 or settings_window_mode >= self.settings_window_comboBox.count():
@@ -208,11 +242,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         # 如果索引值无效，则使用默认值
                         main_window_size = self.default_settings["main_window_size"]
 
-                    convenient_window_size = foundation_settings.get("convenient_window_size", self.default_settings["convenient_window_size"])
-                    if convenient_window_size < 0 or convenient_window_size >= self.settings_window_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        convenient_window_size = self.default_settings["convenient_window_size"]
-
                     settings_window_size = foundation_settings.get("settings_window_size", self.default_settings["settings_window_size"])
                     if settings_window_size < 0 or settings_window_size >= self.settings_window_comboBox.count():
                         # 如果索引值无效，则使用默认值
@@ -221,11 +250,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
                     self.pumping_floating_transparency_comboBox.setCurrentIndex(pumping_floating_transparency_mode)
+                    self.main_window_focus_comboBox.setCurrentIndex(main_window_focus_mode)
+                    self.main_window_focus_time_comboBox.setCurrentIndex(main_window_focus_time)
                     self.main_window_comboBox.setCurrentIndex(main_window_mode)
-                    self.convenient_window_comboBox.setCurrentIndex(convenient_window_mode)
                     self.settings_window_comboBox.setCurrentIndex(settings_window_mode)
                     self.main_window_size_comboBox.setCurrentIndex(main_window_size)
-                    self.convenient_window_size_comboBox.setCurrentIndex(convenient_window_size)
                     self.settings_window_size_comboBox.setCurrentIndex(settings_window_size)
                     logger.info(f"加载基础设置完成")
             else:
@@ -233,11 +262,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
                 self.pumping_floating_switch.setChecked(self.default_settings["pumping_floating_enabled"])
                 self.pumping_floating_transparency_comboBox.setCurrentIndex(self.default_settings["pumping_floating_transparency_mode"])
+                self.main_window_focus_comboBox.setCurrentIndex(self.default_settings["main_window_focus_mode"])
+                self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
                 self.main_window_comboBox.setCurrentIndex(self.default_settings["main_window_mode"])
-                self.convenient_window_comboBox.setCurrentIndex(self.default_settings["convenient_window_mode"])
                 self.settings_window_comboBox.setCurrentIndex(self.default_settings["settings_window_mode"])
                 self.main_window_size_comboBox.setCurrentIndex(self.default_settings["main_window_size"])
-                self.convenient_window_size_comboBox.setCurrentIndex(self.default_settings["convenient_window_size"])
                 self.settings_window_size_comboBox.setCurrentIndex(self.default_settings["settings_window_size"])
                 self.save_settings()
         except Exception as e:
@@ -245,11 +274,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
             self.pumping_floating_switch.setChecked(self.default_settings["pumping_floating_enabled"])
             self.pumping_floating_transparency_comboBox.setCurrentIndex(self.default_settings["pumping_floating_transparency_mode"])
+            self.main_window_focus_comboBox.setCurrentIndex(self.default_settings["main_window_focus_mode"])
+            self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
             self.main_window_comboBox.setCurrentIndex(self.default_settings["main_window_mode"])
-            self.convenient_window_comboBox.setCurrentIndex(self.default_settings["convenient_window_mode"])
             self.settings_window_comboBox.setCurrentIndex(self.default_settings["settings_window_mode"])
             self.main_window_size_comboBox.setCurrentIndex(self.default_settings["main_window_size"])
-            self.convenient_window_size_comboBox.setCurrentIndex(self.default_settings["convenient_window_size"])
             self.settings_window_size_comboBox.setCurrentIndex(self.default_settings["settings_window_size"])
             self.save_settings()
     
@@ -272,11 +301,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings["self_starting_enabled"] = self.self_starting_switch.isChecked()
         foundation_settings["pumping_floating_enabled"] = self.pumping_floating_switch.isChecked()
         foundation_settings["pumping_floating_transparency_mode"] = self.pumping_floating_transparency_comboBox.currentIndex()
+        foundation_settings["main_window_focus_mode"] = self.main_window_focus_comboBox.currentIndex()
+        foundation_settings["main_window_focus_time"] = self.main_window_focus_time_comboBox.currentIndex()
         foundation_settings["main_window_mode"] = self.main_window_comboBox.currentIndex()
-        foundation_settings["convenient_window_mode"] = self.convenient_window_comboBox.currentIndex()
         foundation_settings["settings_window_mode"] = self.settings_window_comboBox.currentIndex()
         foundation_settings["main_window_size"] = self.main_window_size_comboBox.currentIndex()
-        foundation_settings["convenient_window_size"] = self.convenient_window_size_comboBox.currentIndex()
         foundation_settings["settings_window_size"] = self.settings_window_size_comboBox.currentIndex()
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
