@@ -380,7 +380,7 @@ class Window(MSFluentWindow):
             del "%~f0"
             """
             cmd_content = f"""@echo off
-            TIMEOUT /T 1
+            TIMEOUT /T 3
             set __COMPAT_LAYER=RunAsInvoker
             start "" /B "{sys.executable}" {" ".join(sys.argv)}
             del "%~f0"
