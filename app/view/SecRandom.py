@@ -5,8 +5,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtNetwork import *
 
-import _overlapped
-
 import json
 import os
 import sys
