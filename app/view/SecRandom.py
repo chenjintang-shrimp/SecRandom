@@ -359,43 +359,40 @@ class Window(MSFluentWindow):
 
         self.hide()
         self.tray_icon.hide()
-
-        root_dir = os.path.abspath()
-        cmd_path = os.path.join(root_dir, "SecRandom_restart.cmd")
-        cmd_path_re = os.path.join(root_dir, "SecRandom_re.cmd")
-
-        cmd_content_re = f"""@echo off
-set __COMPAT_LAYER=RunAsInvoker
-start "" /B "{cmd_path}" #
-del "%~f0"
-"""
-
-        cmd_content = f"""@echo off
-TIMEOUT /T 1
-set __COMPAT_LAYER=RunAsInvoker
-start "" /B "{sys.executable}" {" ".join(sys.argv)}
-del "%~f0"
-"""
+        self.levitation_window.hide()
+        self.start_cleanup()
+        if hasattr(self, 'server'):
+            self.server.close()
 
         try:
             logger.debug("正在通过cmd脚本重启程序...")
             logger.remove()
+
+            root_dir = os.path.abspath()
+            logger.debug(root_dir)
+            cmd_path = os.path.join(root_dir, "SecRandom_restart.cmd")
+            cmd_path_re = os.path.join(root_dir, "SecRandom_re.cmd")
+            cmd_content_re = f"""@echo off
+            set __COMPAT_LAYER=RunAsInvoker
+            start "" /B "{cmd_path}" #
+            del "%~f0"
+            """
+            cmd_content = f"""@echo off
+            TIMEOUT /T 1
+            set __COMPAT_LAYER=RunAsInvoker
+            start "" /B "{sys.executable}" {" ".join(sys.argv)}
+            del "%~f0"
+            """
             with open(cmd_path, "w") as f:
                 f.write(cmd_content)
             with open(cmd_path_re, "w") as f:
                 f.write(cmd_content_re)
-            self.start_cleanup()
-            logger.remove()
-            if hasattr(self, 'server'):
-                self.server.close()
             subprocess.Popen(cmd_path_re, creationflags=subprocess.CREATE_NEW_CONSOLE)
             QApplication.quit()
 
         except Exception as e:
             logger.error(f"创建重启脚本失败: {e},使用 os.execl(sys.executable, sys.executable, *sys.argv) 重启程序")
             logger.remove()
-            if hasattr(self, 'server'):
-                self.server.close()
             os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):
