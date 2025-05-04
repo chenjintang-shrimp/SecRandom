@@ -369,8 +369,6 @@ class Window(MSFluentWindow):
 
         try:
             logger.debug("正在通过cmd脚本重启程序...")
-            logger.remove()
-
             root_dir = os.path.abspath()
             cmd_path = os.path.join(root_dir, "SecRandom_restart.cmd")
             cmd_path_re = os.path.join(root_dir, "SecRandom_re.cmd")
@@ -394,7 +392,6 @@ class Window(MSFluentWindow):
 
         except Exception as e:
             logger.error(f"创建重启脚本失败: {e},使用 os.execl(sys.executable, sys.executable, *sys.argv) 重启程序")
-            logger.remove()
             os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):
