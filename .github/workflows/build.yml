@@ -51,7 +51,9 @@ jobs:
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:. `
             --version-file=version_info.txt `
-            --hidden-import PyQt5.QtXml
+            --hidden-import PyQt5.QtXml `
+            --paths $env:PYTHONPATH `
+            --add-binary "$env:PYTHONPATH\Lib\site-packages\PyQt5\Qt5\plugins\xml\*.dll;PyQt5\Qt5\plugins\xml"
           # 创建zip_dist/SecRandom目录
           mkdir zip_dist/SecRandom
           # 复制dist目录下的所有文件到zip_dist/SecRandom目录下

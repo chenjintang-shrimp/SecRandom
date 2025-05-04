@@ -215,6 +215,7 @@ class Window(MSFluentWindow):
         share = QSharedMemory('SecRandom')
         self.hide()
         logger.info("重启程序")
+        logger.remove()
         self.tray_icon.hide()
         app = QApplication(sys.argv)
         if app:
