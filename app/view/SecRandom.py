@@ -16,6 +16,11 @@ except ImportError:
     logger.error("pyexpat模块未安装, 请安装后重试")
     pass
 
+try:
+    import _overlapped
+except ImportError:
+    pass
+
 if './app/Settings' != None and not os.path.exists('./app/Settings'):
     os.makedirs('./app/Settings')
 

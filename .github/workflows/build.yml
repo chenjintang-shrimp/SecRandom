@@ -59,8 +59,10 @@ jobs:
             --version-file=version_info.txt `
             --hidden-import PyQt5.QtXml `
             --hidden-import pyexpat `
-            --runtime-tmpdir $tempDir `
-            --workpath $tempDir
+            --hidden-import _overlapped `
+            --collect-binaries PyQt5.QtXml `
+            --paths "$env:PYTHONPATH" `
+            --runtime-tmpdir "temp"
           # 创建zip_dist/SecRandom目录结构
           mkdir zip_dist/SecRandom
           # 复制构建结果
