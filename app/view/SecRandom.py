@@ -122,7 +122,7 @@ class Window(MSFluentWindow):
         self.tray_menu.addAction(Action(QIcon("app\\resource\\icon\\SecRandom_floating_100%.png"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
         self.tray_menu.addAction(Action(fIcon.SETTING, '打开设置界面', triggered=self.show_setting_interface))
         self.tray_menu.addSeparator()
-        self.tray_menu.addAction(Action(fIcon.SYNC, '重启', triggered=self.restart_app))
+        # self.tray_menu.addAction(Action(fIcon.SYNC, '重启', triggered=self.restart_app))
         self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=self.close_window_secrandom))
 
         self.tray_icon.show()

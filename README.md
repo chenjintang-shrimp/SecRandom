@@ -16,7 +16,7 @@
 
 | [Github(镜像) 下载](https://github.com/SECTL/SecRandom/releases) | [123云盘 下载-暂未上传](https://www.123684.com/s/9529jv-U4Fxh) |
 
-[切换语言](javascript:void(0)) | [English](README_ALL/readme_en.md) | [白露](README_ALL/readme_bailu.md)
+[切换语言](javascript:void(0)) | [English](README_ALL/readme_en.md) | [白露版(仅供娱乐)](README_ALL/readme_bailu.md)
 
 </div>
 
