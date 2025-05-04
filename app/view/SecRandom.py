@@ -250,6 +250,10 @@ class Window(MSFluentWindow):
         else:
             self.last_focus_time = QDateTime.currentDateTime()
 
+    def stop_focus_timer(self):
+        """停止焦点检测计时器"""
+        self.focus_timer.stop()
+
     def showEvent(self, event):
         """窗口显示时重置焦点时间"""
         super().showEvent(event)
@@ -361,6 +365,7 @@ class Window(MSFluentWindow):
         self.tray_icon.hide()
         self.levitation_window.hide()
         self.start_cleanup()
+        self.stop_focus_timer()
         if hasattr(self, 'server'):
             self.server.close()
 
@@ -369,12 +374,11 @@ class Window(MSFluentWindow):
             logger.remove()
 
             root_dir = os.path.abspath()
-            logger.debug(root_dir)
             cmd_path = os.path.join(root_dir, "SecRandom_restart.cmd")
             cmd_path_re = os.path.join(root_dir, "SecRandom_re.cmd")
             cmd_content_re = f"""@echo off
             set __COMPAT_LAYER=RunAsInvoker
-            start "" /B "{cmd_path}" #
+            start "" /B "{cmd_path}"
             del "%~f0"
             """
             cmd_content = f"""@echo off
