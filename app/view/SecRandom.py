@@ -215,7 +215,7 @@ class Window(MSFluentWindow):
         self.hide()
         logger.info("重启程序")
         self.tray_icon.hide()
-        app = QApplication.instance()
+        app = QApplication(sys.argv)
         if app:
             app.quit()
             app.processEvents()

@@ -51,38 +51,42 @@ try:
 except Exception as e:
     logger.error(f"写入verification_start失败: {e}")
 
-# 使用QSharedMemory防止多开
+app = QApplication(sys.argv)
+
 shared_memory = QSharedMemory("SecRandom")
 if not shared_memory.create(1):
     logger.debug('不允许多开实例')
-    app = QApplication.instance() or QApplication(sys.argv)
+    def sec_():
+        sec = Window()
+        sec.show()
     w = Dialog(
         'SecRandom 正在运行',
         'SecRandom 正在运行！请勿打开多个实例，否则将会出现两个实例同时运行的情况。'
         '\n(若您需要打开多个实例，请在下个版本中可以启用“允许程序多开”的设置选项)'
     )
-    w.yesButton.setText("知道了👌")
-    w.cancelButton.hide()
-    w.buttonLayout.insertStretch(1)
+    w.yesButton.setText("打开主窗口👀")
+    w.cancelButton.setText("知道了(不打开主窗口)👌")
+    w.yesButton.clicked.connect(lambda: sec_())
     w.setFixedWidth(550)
     w.exec()
-    sys.exit(0)
+    sys.exit()
 
-w = Window()
+sec = Window()
 try:
     with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
         settings = json.load(f)
         foundation_settings = settings.get('foundation', {})
         self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
         if not self_starting_enabled:
-            w.show()
+            sec.show()
 except FileNotFoundError:
     logger.error("加载设置时出错: 文件不存在, 使用默认显示主窗口")
-    w.show()
+    sec.show()
 except KeyError:
     logger.error("设置文件中缺少foundation键, 使用默认显示主窗口")
-    w.show()
+    sec.show()
 except Exception as e:
     logger.error(f"加载设置时出错: {e}, 使用默认显示主窗口")
-    w.show()
+    sec.show()
+
 sys.exit(app.exec_())
