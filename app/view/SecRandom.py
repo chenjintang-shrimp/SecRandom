@@ -214,15 +214,26 @@ class Window(MSFluentWindow):
     def restart_app(self):
         share = QSharedMemory('SecRandom')
         self.hide()
+        self.tray_icon.hide()
+
         logger.info("重启程序")
         logger.remove()
-        self.tray_icon.hide()
+
+        temp_dir = os.path.join(os.environ.get('TEMP', ''), 'temp')
+        if os.path.exists(temp_dir):
+            try:
+                import shutil
+                shutil.rmtree(temp_dir, ignore_errors=True)
+            except Exception as e:
+                logger.error(f"清理临时目录失败: {e}")
+
         app = QApplication(sys.argv)
         if app:
             app.quit()
             app.processEvents()
         if share.isAttached():
             share.detach()
+
         os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):

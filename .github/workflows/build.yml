@@ -55,7 +55,9 @@ jobs:
             --add-data LICENSE:. `
             --version-file=version_info.txt `
             --hidden-import PyQt5.QtXml `
-            --collect-all PyQt5
+            --collect-binaries PyQt5.QtXml `
+            --paths $env:PYTHONPATH `
+            --runtime-tmpdir "temp"
           # 创建zip_dist/SecRandom目录
           mkdir zip_dist/SecRandom
           # 复制dist目录下的所有文件到zip_dist/SecRandom目录下
