@@ -360,39 +360,46 @@ class Window(MSFluentWindow):
             return
 
         self.hide()
-        self.tray_icon.hide()
         self.levitation_window.hide()
-        self.start_cleanup()
         self.stop_focus_timer()
         if hasattr(self, 'server'):
             self.server.close()
 
         try:
             logger.debug("正在通过cmd脚本重启程序...")
-            root_dir = os.path.abspath()
-            cmd_path = os.path.join(root_dir, "SecRandom_restart.cmd")
-            cmd_path_re = os.path.join(root_dir, "SecRandom_re.cmd")
-            cmd_content_re = f"""@echo off
-            set __COMPAT_LAYER=RunAsInvoker
-            start "" /B "{cmd_path}"
-            del "%~f0"
-            """
+            fixed_path = os.path.abspath(sys.argv[0])
+            root_dir = os.path.dirname(sys.executable)
+            cmd_path = os.path.join(root_dir, "SecRandom_restart.bat")
+
+            # 确保路径用双引号包裹，处理特殊字符
             cmd_content = f"""@echo off
-            TIMEOUT /T 3
-            set __COMPAT_LAYER=RunAsInvoker
-            start "" /B "{sys.executable}" {" ".join(sys.argv)}
-            del "%~f0"
-            """
-            with open(cmd_path, "w") as f:
+TIMEOUT /T 2 /NOBREAK
+cd /d "{root_dir}"
+start "" /B "{fixed_path}"
+( del "%~f0" ) 2>nul
+exit
+"""
+            # 写入批处理文件时指定编码
+            with open(cmd_path, "w", encoding='cp437') as f:  # Windows批处理常用编码
                 f.write(cmd_content)
-            with open(cmd_path_re, "w") as f:
-                f.write(cmd_content_re)
-            subprocess.Popen(cmd_path_re, creationflags=subprocess.CREATE_NEW_CONSOLE)
+
+            logger.debug(f'当前程序位置: {fixed_path}')
+            logger.debug(f'bat内容:\n{cmd_content}')
+
+            # 使用subprocess启动批处理
+            if os.name == 'nt':
+                creation_flags = subprocess.CREATE_NO_WINDOW  # 避免弹出cmd窗口
+            else:
+                creation_flags = 0
+
+            logger.remove()
+            subprocess.Popen(['cmd.exe', '/C', cmd_path], shell=False, creationflags=creation_flags)
             QApplication.quit()
 
         except Exception as e:
-            logger.error(f"创建重启脚本失败: {e},使用 os.execl(sys.executable, sys.executable, *sys.argv) 重启程序")
-            os.execl(sys.executable, sys.executable, *sys.argv)
+            logger.error(f"创建重启脚本失败: {e}, 退出程序")
+            logger.remove()
+            QApplication.quit()
 
     def show_setting_interface(self):
         """显示设置界面"""

@@ -29,11 +29,6 @@ logger.add(
     catch=True  # 捕获未处理的异常
 )
 
-# 软件启动时写入软件启动信息
-logger.info("软件启动")
-logger.info(f"软件作者: lzy98276")
-logger.info(f"软件Github地址: https://github.com/SECTL/SecRandom")
-
 if cfg.get(cfg.dpiScale) == "Auto":
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
@@ -55,7 +50,7 @@ app = QApplication(sys.argv)
 
 shared_memory = QSharedMemory("SecRandom")
 if not shared_memory.create(1):
-    logger.debug('检测到已有实例运行')
+    logger.debug('检测到已有 SecRandom 实例运行')
     socket = QLocalSocket()
     socket.connectToServer("SecRandomIPC")
 
@@ -90,6 +85,10 @@ if not shared_memory.create(1):
         w.setFixedWidth(550)
         w.exec()
         sys.exit()
+
+logger.info("软件启动")
+logger.info(f"软件作者: lzy98276")
+logger.info(f"软件Github地址: https://github.com/SECTL/SecRandom")
 
 sec = Window()
 try:
