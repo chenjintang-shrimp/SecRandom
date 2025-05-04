@@ -41,9 +41,8 @@ jobs:
           uv pip install -r requirements.txt
           # 安装 pyinstaller
           uv pip install pyinstaller
-          # 创建输出目录
-          mkdir dist
-          mkdir zip_dist
+          # 创建必要目录
+          mkdir dist zip_dist
           # 使用 pyinstaller 打包应用程序
           pyinstaller main.py `
             -w `
@@ -51,24 +50,24 @@ jobs:
             -i ./resources/SecRandom.ico `
             -n SecRandom `
             --contents-directory . `
-            --add-data ./app/resource:app/resource `
-            --add-data LICENSE:. `
+            --add-data "app/resource;app/resource" `
+            --add-data "LICENSE;." `
             --version-file=version_info.txt `
             --hidden-import PyQt5.QtXml `
             --collect-binaries PyQt5.QtXml `
-            --paths $env:PYTHONPATH `
+            --paths "$env:PYTHONPATH" `
             --runtime-tmpdir "temp"
-          # 创建zip_dist/SecRandom目录
+          # 创建zip_dist/SecRandom目录结构
           mkdir zip_dist/SecRandom
-          # 复制dist目录下的所有文件到zip_dist/SecRandom目录下
+          # 复制构建结果
           Copy-Item -Recurse -Force dist/* zip_dist/SecRandom
           # 创建app目录
           mkdir zip_dist/SecRandom/app
           # 复制app/resource文件夹到zip_dist/SecRandom目录下
           Copy-Item -Recurse -Force app/resource zip_dist/SecRandom/app
-          # 复制 LICENSE 文件到zip_dist/SecRandom目录下
+          # 复制LICENSE文件 
           Copy-Item LICENSE zip_dist/SecRandom
-          # 使用系统自带的 Compress-Archive 压缩文件
+          # 压缩打包
           Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ matrix.arch }}.zip" -Force
 
 
