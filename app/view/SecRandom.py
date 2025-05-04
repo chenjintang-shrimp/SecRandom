@@ -10,17 +10,6 @@ import os
 import sys
 from loguru import logger
 
-try:
-    import pyexpat
-except ImportError:
-    logger.error("pyexpat模块未安装, 请安装后重试")
-    pass
-
-try:
-    import _overlapped
-except ImportError:
-    pass
-
 if './app/Settings' != None and not os.path.exists('./app/Settings'):
     os.makedirs('./app/Settings')
 
@@ -223,34 +212,40 @@ class Window(MSFluentWindow):
         return QPoint(x, y)
 
     def restart_app(self):
-        share = QSharedMemory('SecRandom')
+        """通过静默cmd脚本重启程序"""
         self.hide()
+        logger.info("正在通过静默cmd脚本重启程序...")
         self.tray_icon.hide()
 
-        logger.info("重启程序")
-        logger.remove()
+        # 确保临时目录存在
+        temp_dir = "app/resource/TEMP_"
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+
+        # 创建静默cmd脚本内容
+        cmd_content = f"""
+        @echo off
+        set __COMPAT_LAYER=RunAsInvoker
+        start "" /B "{sys.executable}" {" ".join(sys.argv)}
+        del "%~f0"
+        """
+        cmd_path = os.path.join(temp_dir, "SecRandom_restart.cmd")
 
         try:
-            import tempfile
-            temp_dir = tempfile.gettempdir()
-            for root, dirs, files in os.walk(temp_dir):
-                for name in files:
-                    if name.startswith('_MEI'):
-                        try:
-                            os.remove(os.path.join(root, name))
-                        except:
-                            pass
+            with open(cmd_path, "w") as f:
+                f.write(cmd_content)
+
+            # 使用start命令静默运行
+            subprocess.Popen(
+                ["cmd.exe", "/C", cmd_path],
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            QApplication.quit()
+
         except Exception as e:
-            logger.error(f"清理临时文件失败: {e}")
-
-        app = QApplication(sys.argv)
-        if app:
-            app.quit()
-            app.processEvents()
-        if share.isAttached():
-            share.detach()
-
-        os.execl(sys.executable, sys.executable, *sys.argv)
+            logger.error(f"创建重启脚本失败: {e}")
+            # 回退到原方式
+            os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):
         """显示设置界面"""
