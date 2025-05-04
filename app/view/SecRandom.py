@@ -373,17 +373,20 @@ start "" /B "{sys.executable}" {" ".join(sys.argv)}
 del "%~f0"
 """
         cmd_path = "app/resource/TEMP_/SecRandom_restart.cmd"
-        current_path = os.path.abspath(sys.argv[0])
+        # current_path = os.path.abspath(sys.argv[0])
 
         try:
-            logger.debug("正在通过静默cmd脚本重启程序...")
+            logger.debug("正在通过cmd脚本重启程序...")
             logger.remove()
-
             with open(cmd_path, "w") as f:
                 f.write(cmd_content)
-
             # 打开cmd文件
-            subprocess.Popen(["cmd", "/c", cmd_path], shell=True, cwd=current_path)
+            self.start_cleanup()
+            logger.info("应用程序已退出")
+            logger.remove()
+            if hasattr(self, 'server'):
+                self.server.close()
+            os.system(cmd_path)
             QApplication.quit()
 
         except Exception as e:
