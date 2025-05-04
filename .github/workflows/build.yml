@@ -41,6 +41,9 @@ jobs:
           uv pip install -r requirements.txt
           # 安装 pyinstaller
           uv pip install pyinstaller
+          # 创建输出目录
+          mkdir dist
+          mkdir zip_dist
           # 使用 pyinstaller 打包应用程序
           pyinstaller main.py `
             -w `
@@ -52,8 +55,7 @@ jobs:
             --add-data LICENSE:. `
             --version-file=version_info.txt `
             --hidden-import PyQt5.QtXml `
-            --paths $env:PYTHONPATH `
-            --add-binary "$env:PYTHONPATH\Lib\site-packages\PyQt5\Qt5\plugins\xml\*.dll;PyQt5\Qt5\plugins\xml"
+            --collect-all PyQt5
           # 创建zip_dist/SecRandom目录
           mkdir zip_dist/SecRandom
           # 复制dist目录下的所有文件到zip_dist/SecRandom目录下
