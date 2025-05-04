@@ -3,7 +3,6 @@ from qfluentwidgets import FluentIcon as fIcon
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtXml import *
 
 import json
 import os
