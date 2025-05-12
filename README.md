@@ -9,7 +9,7 @@
 [![Release](https://img.shields.io/github/v/release/SECTL/SecRandom?style=flat&color=%233fb950&label=正式版)](https://github.com/SECTL/SecRandom/releases/latest)
 [![Beta](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=social-square&label=测试版)](https://github.com/SECTL/SecRandom/releases/)
 [![Github Last Commit](https://img.shields.io/github/last-commit/SECTL/SecRandom)](https://github.com/SECTL/SecRandom/commits/master)
-[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%EF%BD%9C1038111867-blue?style=flat&logo=TencentQQ)](https://qm.qq.com/q/yJkTpkiW5i)
+[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%EF%BD%9C833875216-blue?style=flat&logo=TencentQQ)](https://qm.qq.com/q/iWcfaPHn7W)
 [![bilibili](https://img.shields.io/badge/-UP%E4%B8%BB%EF%BD%9C黎泽懿-%23FB7299?style=flat&logo=bilibili)](https://space.bilibili.com/520571577)
 
 该软件能以多种方式进行随机抽取 学号/姓名/小组...
@@ -64,7 +64,7 @@
 
 ## 📮 联系方式
 * 📧 [邮箱](mailto:lzy.12@foxmail.com)
-* 👥 [QQ群 1038111867](https://qm.qq.com/q/yJkTpkiW5i)
+* 👥 [QQ群 833875216](https://qm.qq.com/q/iWcfaPHn7W)
 * 🎥 [B站主页](https://space.bilibili.com/520571577)
 
 ## ✨ Star历程
