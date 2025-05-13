@@ -1172,8 +1172,8 @@ class multiplayer(QWidget):
             draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}.json"
 
         # 删除临时文件
-        if os.path.exists(draw_record_file):
-            os.remove(draw_record_file)
+        # if os.path.exists(draw_record_file):
+        #     os.remove(draw_record_file)
         
         self.current_count = 1
         self._update_count_display()

@@ -1111,8 +1111,8 @@ class single(QWidget):
             draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}.json"
             
         # 删除临时文件
-        if os.path.exists(draw_record_file):
-            os.remove(draw_record_file)
+        # if os.path.exists(draw_record_file):
+        #     os.remove(draw_record_file)
 
         InfoBar.success(
             title='班级列表',
