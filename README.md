@@ -12,9 +12,9 @@
 [![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%EF%BD%9C833875216-blue?style=flat&logo=TencentQQ)](https://qm.qq.com/q/iWcfaPHn7W)
 [![bilibili](https://img.shields.io/badge/-UP%E4%B8%BB%EF%BD%9C黎泽懿-%23FB7299?style=flat&logo=bilibili)](https://space.bilibili.com/520571577)
 
-该软件能以多种方式进行随机抽取 学号/姓名/小组...
+该软件能以多种方式进行完全公平的随机抽取 抽单人/抽多人/抽小组/抽大组/抽性别/抽姓氏/抽奖...
 
-| [Github(镜像) 下载](https://github.com/SECTL/SecRandom/releases) | [123云盘 下载-暂未上传](https://www.123684.com/s/9529jv-U4Fxh) |
+| [Github(镜像) 下载](https://github.com/SECTL/SecRandom/releases) | [123云盘 下载](https://www.123684.com/s/9529jv-U4Fxh) |
 
 [切换语言](javascript:void(0)) | [English](README_ALL/readme_en.md) | [白露版(仅供娱乐)](README_ALL/readme_bailu.md)
 
@@ -26,7 +26,7 @@
 
 ## 🎉 功能
 
-- ✅ **抽单人/抽多人/抽小组 等抽取方式**
+- ✅ **抽单人/抽多人/抽小组/抽大组/抽性别/抽姓氏/抽奖 等抽取方式**
 - ✅ **结果语音提示功能**
 - ✅ **可开关的历史记录**
 - ✅ **带时间戳的详细抽取记录**
@@ -34,8 +34,9 @@
 - ✅ **独立抽取与设置界面**
 - ✅ **便捷悬浮窗设计**
 - ✅ **开机自启动支持**
-- ✅ **双重权重模式（开发中）**
 - ✅ **现代化UI设计**
+
+- ❌ **开发计划中去除 权重 功能**
 
 ## ⭐️ 快速开始
 

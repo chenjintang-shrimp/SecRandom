@@ -1,24 +1,26 @@
 ### 🚀 新增功能与优化
-  - **【主界面】TODO：可设置主窗口未处于焦点时是否隐藏主窗口(可设置隐藏和检测时间)**
-  - **【托盘】TODO：可在设置中设置给哪些按钮添加密码保护**
-  - **【浮窗】TODO：更改为点击打开主窗口**
-  - 【托盘】TODO：关于按钮,可直接打开项目仓库
-  - 【多开提示】TODO：可提示当前软件是否正在运行中,点击即可打开主界面
-  - 【托盘重启】fix：经过无数次的修复，托盘中的重启功能还是不能用!有没有大佬帮个忙吧?!
-  - 【多开】fix：更换多开方式,使用内置库实现,明显减小软件体积,且可提升软件运行速度
-  - 【安全设置】fix：无法显示二维码问题
+ - 【抽性别】新增性别功能 ❌
+ - 【抽姓氏】新增抽姓氏功能 ❌
+ - 【抽大组】新增抽大组功能 ❌
+ - 【抽奖】新增抽奖功能，可对每个奖项进行修改概率 ❌
+ - 【名单导入】将传统名单导入方式修改为从 Excel 方式导入名单 ❌
+ - 【文件加密】支持将所有生成的文件进行加密-采用非对称加密方式（只是让临时起意的人修改难度增加，不能完全杜绝） ❌
+ - 【图标】更换图标为 [fluentui-system-icons](https://github.com/microsoft/fluentui-system-icons)
 
-### ❌ 移除功能
-  - 【浮窗便捷抽取窗口】移除了浮窗便捷抽取窗口,改用主窗口
+### 🐛 修复
+
+
+### ❌ 移除
+ - 【主题】移除了软件变更主题颜色的功能
 
 ### 🎉 软件仓库日志-仅显示最近5条
- - **SecRandom 将在 1.2-dev 测试版本迁移至 RinUI --励志的目标? - 2025-05-05**
- - **SecRandom v1.0.2.3-beta 发布 - 2025-05-05 - 处于 1.1-dev测试版本**
+ - SecRandom v1.0.3.0-beta 发布 - 2025-05-25 - 处于 1.1-dev测试版本
+ - SecRandom 不迁移至 RinUI 了吧，图标库将就用 - 2025-05-25
+ - SecRandom 将在 1.2-dev 测试版本迁移至 RinUI --励志的目标? - 2025-05-05
+ - SecRandom v1.0.2.3-beta 发布 - 2025-05-05 - 处于 1.1-dev测试版本
  - SecRandom v1.0.2.2-beta 发布 - 2025-05-03 - 处于 1.1-dev测试版本
- - SecRandom v1.0.2.1-beta 发布 - 2025-04-20 - 处于 1.1-dev测试版本
- - SecRandom v1.0.2.0-beta 发布 - 2025-04-13 - 处于 1.1-dev测试版本
 
-Full Changelog: [v1.0.2.2-beta...v1.0.2.3-beta](https://github.com/SECTL/SecRandom/compare/v1.0.2.1-beta...v1.0.2.3-beta)
+Full Changelog: [v1.0.2.3-beta...v1.0.3.0-beta](https://github.com/SECTL/SecRandom/compare/v1.0.2.3-beta...v1.0.3.0-beta)
 
 **国内 下载链接**
 | 平台/打包方式 | 支持架构 | 完整版 |
@@ -28,9 +30,9 @@ Full Changelog: [v1.0.2.2-beta...v1.0.2.3-beta](https://github.com/SECTL/SecRand
 **Github 镜像 下载链接**
 | 镜像源 | 平台/打包方式 | 支持架构 | 完整版 |
 | --- | --- | --- | --- |
-| ghfast.top | Windows | x86 | [下载](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.3-beta/SecRandom-Windows-x86.zip) |
-| ghfast.top | Windows | x64 | [下载](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.3-beta/SecRandom-Windows-x64.zip) |
-| gh-proxy.com | Windows | x86 | [下载](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.3-beta/SecRandom-Windows-x86.zip) |
-| gh-proxy.com | Windows | x64 | [下载](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/v1.0.2.3-beta/SecRandom-Windows-x64.zip) |
+| ghfast.top | Windows | x86 | [下载](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/v1.0.3.0-beta/SecRandom-Windows-x86.zip) |
+| ghfast.top | Windows | x64 | [下载](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/v1.0.3.0-beta/SecRandom-Windows-x64.zip) |
+| gh-proxy.com | Windows | x86 | [下载](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/v1.0.3.0-beta/SecRandom-Windows-x86.zip) |
+| gh-proxy.com | Windows | x64 | [下载](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/v1.0.3.0-beta/SecRandom-Windows-x64.zip) |
 
 SHA256 校验值-

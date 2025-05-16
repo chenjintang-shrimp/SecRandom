@@ -7,14 +7,14 @@ import os
 from loguru import logger
 
 # 导入子页面
-from app.view.more_setting import more_setting
-from app.view.global_setting import global_setting
-from app.view.extract_single_setting import single_setting
-from app.view.extract_multi_setting import multi_setting
-from app.view.extract_group_setting import group_setting
-from app.view.Changeable_history import changeable_history
-from app.view.quicksetup import quicksetup
-from app.view.password_setting import password_set
+from app.view.settings_page.more_setting import more_setting
+from app.view.settings_page.global_setting import global_setting
+from app.view.settings_page.extract_single_setting import single_setting
+from app.view.settings_page.extract_multi_setting import multi_setting
+from app.view.settings_page.extract_group_setting import group_setting
+from app.view.settings_page.Changeable_history import changeable_history
+from app.view.settings_page.quicksetup import quicksetup
+from app.view.settings_page.password_setting import password_set
 
 class settings_Window(MSFluentWindow):
     def __init__(self, parent=None):
@@ -93,15 +93,15 @@ class settings_Window(MSFluentWindow):
 
     def initNavigation(self):
         # 使用 MSFluentWindow 的 addSubInterface 方法
-        self.addSubInterface(self.global_settingInterface, fIcon.APPLICATION, '全局设置', position=NavigationItemPosition.TOP)
-        self.addSubInterface(self.single_settingInterface, fIcon.ROBOT, '抽单人设置', position=NavigationItemPosition.TOP)
-        self.addSubInterface(self.multi_settingInterface, fIcon.PEOPLE, '抽多人设置', position=NavigationItemPosition.TOP)
-        self.addSubInterface(self.group_settingInterface, fIcon.TILES, '抽小组设置', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.global_settingInterface, QIcon("app/resource/assets/ic_fluent_apps_20_filled.svg"), '全局设置', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.single_settingInterface, QIcon("app/resource/assets/ic_fluent_person_20_filled.svg"), '抽单人设置', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.multi_settingInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽多人设置', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.group_settingInterface, QIcon("app/resource/assets/ic_fluent_group_20_filled.svg"), '抽小组设置', position=NavigationItemPosition.TOP)
 
-        self.addSubInterface(self.password_setInterface, fIcon.VPN, '安全设置', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.historyInterface, fIcon.HISTORY, '历史记录', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.quicksetupInterface, fIcon.QUICK_NOTE, '名单设置', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.more_settingInterface, fIcon.SETTING, '更多设置', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.password_setInterface, QIcon("app/resource/assets/ic_fluent_shield_keyhole_20_filled.svg"), '安全设置', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.historyInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.quicksetupInterface, QIcon("app/resource/assets/ic_fluent_note_20_filled.svg"), '名单设置', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.more_settingInterface, QIcon("app/resource/assets/ic_fluent_more_horizontal_20_filled.svg"), '更多设置', position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
         """窗口关闭时隐藏主界面"""

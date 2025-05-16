@@ -41,9 +41,9 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.load_students()
 
         # 添加组件到分组中
-        self.addGroup(FIF.SYNC, "刷新列表/记录", "点击按钮刷新班级列表/记录表格", self.refresh_button)
-        self.addGroup(FIF.EDUCATION, "选择班级", "选择需要查看历史记录的班级", self.class_comboBox)
-        self.addGroup(FIF.PEOPLE, "选择同学", "全班同学是详细的内容,个人是只有抽取的时间与方式", self.student_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), "刷新列表/记录", "点击按钮刷新班级列表/记录表格", self.refresh_button)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_class_20_filled.svg"), "选择班级", "选择一个需要查看历史记录的班级", self.class_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_20_filled.svg"), "选择同学", "全班同学是详细的内容,个人是只有抽取的时间与方式", self.student_comboBox)
 
     def refresh_class_list(self):
         try:

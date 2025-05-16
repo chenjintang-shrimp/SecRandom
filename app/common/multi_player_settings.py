@@ -87,13 +87,13 @@ class multi_player_SettinsCard(GroupHeaderCardWidget):
         self.multi_player_class_quantity_comboBox.setFont(QFont(load_custom_font(), 14))
 
         # 添加组件到分组中
-        self.addGroup(FIF.FONT, "字体大小", "设置字体大小", self.multi_player_font_size_edit)
-        self.addGroup(FIF.FEEDBACK, "语音播放", "设置结果公布时是否播放语音", self.multi_player_Voice_comboBox)
-        self.addGroup(FIF.VIDEO, "动画模式", "设置抽取时的动画播放方式", self.multi_player_Animation_comboBox)
-        self.addGroup(FIF.EDIT, "学号格式", "设置学号格式设置", self.multi_player_student_id_comboBox)
-        self.addGroup(FIF.EDIT, "姓名格式", "设置姓名格式设置", self.multi_player_student_name_comboBox)
-        self.addGroup(FIF.PEOPLE, "班级总人数", "设置班级总人数是否显示", self.multi_player_student_quantity_comboBox)
-        self.addGroup(FIF.EDUCATION, "便捷修改班级/小组", "设置便捷修改班级/小组功能是否显示", self.multi_player_class_quantity_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_text_font_size_20_filled.svg"), "字体大小", "设置抽取结果的字体大小", self.multi_player_font_size_edit)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_feedback_20_filled.svg"), "语音播放", "设置结果公布时是否播放语音", self.multi_player_Voice_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_calendar_video_20_filled.svg"), "动画模式", "设置抽取时的动画播放方式", self.multi_player_Animation_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_number_symbol_square_20_filled.svg"), "学号格式", "设置学号格式设置", self.multi_player_student_id_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_rename_20_filled.svg"), "姓名格式", "设置姓名格式设置", self.multi_player_student_name_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "班级总人数", "设置班级总人数是否显示", self.multi_player_student_quantity_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_class_20_filled.svg"), "便捷修改班级/小组", "设置便捷修改班级/小组功能是否显示", self.multi_player_class_quantity_comboBox)
 
         self.load_settings()  # 加载设置
         self.save_settings()  # 保存设置

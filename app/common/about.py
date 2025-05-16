@@ -1,5 +1,6 @@
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
+from PyQt5.QtGui import QIcon   
 
 from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
 
@@ -22,6 +23,6 @@ class aboutCard(GroupHeaderCardWidget):
         self.about_author_label = BodyLabel(f"Copyright © {YEAR} {APPLY_NAME}-{MONTH}-{AUTHOR}")
 
         # 添加组件到分组中
-        self.addGroup(FIF.LINK, "哔哩哔哩", "黎泽懿 - bilibili", self.about_bilibili_Button)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_branch_fork_link_20_filled.svg"), "哔哩哔哩", "黎泽懿 - bilibili", self.about_bilibili_Button)
         self.addGroup(FIF.GITHUB, "Github", "SecRandom(黎泽懿-lzy98276) - github", self.about_github_Button)
-        self.addGroup(FIF.INFO, "版本", "显示的是当前软件版本号", self.about_version_label)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_info_20_filled.svg"), "版本", "显示的是当前软件版本号", self.about_version_label)

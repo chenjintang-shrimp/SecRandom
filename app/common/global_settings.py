@@ -86,14 +86,14 @@ class global_SettinsCard(GroupHeaderCardWidget):
         self.global_class_quantity_switch.setFont(QFont(load_custom_font(), 14))
 
         # 添加组件到分组中
-        self.addGroup(FIF.SYNC, "抽取模式", "设置抽取模式", self.global_Draw_comboBox)
-        self.addGroup(FIF.SHARE, "抽取作用范围", "设置抽取模式的作用范围", self.global_extraction_scope_comboBox)
-        self.addGroup(FIF.FEEDBACK, "语音播放", "设置结果公布时是否播放语音", self.global_Voice_switch)
-        self.addGroup(FIF.VIDEO, "动画模式", "设置抽取时的动画播放方式", self.global_Animation_comboBox)
-        self.addGroup(FIF.EDIT, "学号格式", "设置学号格式设置", self.global_student_id_comboBox)
-        self.addGroup(FIF.EDIT, "姓名格式", "设置姓名格式设置", self.global_student_name_comboBox)
-        self.addGroup(FIF.PEOPLE, "班级总人数", "设置班级总人数是否显示", self.global_student_quantity_switch)
-        self.addGroup(FIF.EDUCATION, "便捷修改班级/小组", "设置便捷修改班级/小组功能是否显示", self.global_class_quantity_switch)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), "抽取模式", "设置抽取模式", self.global_Draw_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_share_20_filled.svg"), "抽取作用范围", "设置抽取模式的作用范围", self.global_extraction_scope_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_feedback_20_filled.svg"), "语音播放", "设置结果公布时是否播放语音", self.global_Voice_switch)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_calendar_video_20_filled.svg"), "动画模式", "设置抽取时的动画播放方式", self.global_Animation_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_number_symbol_square_20_filled.svg"), "学号格式", "设置学号格式设置", self.global_student_id_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_rename_20_filled.svg"), "姓名格式", "设置姓名格式设置", self.global_student_name_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "班级总人数", "设置班级总人数是否显示", self.global_student_quantity_switch)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_class_20_filled.svg"), "便捷修改班级/小组", "设置便捷修改班级/小组功能是否显示", self.global_class_quantity_switch)
 
         self.load_settings()  # 加载设置
         self.save_settings()  # 保存设置

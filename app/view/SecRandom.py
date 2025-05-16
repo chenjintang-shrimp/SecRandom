@@ -21,10 +21,10 @@ if './app/resource/group' != None and not os.path.exists('./app/resource/group')
     os.makedirs('./app/resource/group')
 
 from app.view.settings import settings_Window
-from app.view.single import single
-from app.view.multiplayer import multiplayer
-from app.view.group import groupplayer
-from app.view.history import history
+from app.view.main_page.single import single
+from app.view.main_page.multiplayer import multiplayer
+from app.view.main_page.group import groupplayer
+from app.view.main_page.history import history
 from app.view.levitation import LevitationWindow
 
 class Window(MSFluentWindow):
@@ -116,14 +116,14 @@ class Window(MSFluentWindow):
         self.tray_icon.setToolTip('SecRandom')
         self.tray_menu = RoundMenu(parent=self)
         # 添加关于SecRandom,点击后直接打开到到Github
-        self.tray_menu.addAction(Action(fIcon.INFO, '关于SecRandom', triggered=self.open_github))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_info_20_filled.svg"), '关于SecRandom', triggered=self.open_github))
         self.tray_menu.addSeparator()
-        self.tray_menu.addAction(Action(fIcon.POWER_BUTTON, '暂时显示/隐藏主界面', triggered=self.toggle_window))
-        self.tray_menu.addAction(Action(QIcon("app\\resource\\icon\\SecRandom_floating_100%.png"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
-        self.tray_menu.addAction(Action(fIcon.SETTING, '打开设置界面', triggered=self.show_setting_interface))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_power_20_filled.svg"), '暂时显示/隐藏主界面', triggered=self.toggle_window))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_settings_20_filled.svg"), '打开设置界面', triggered=self.show_setting_interface))
         self.tray_menu.addSeparator()
-        # self.tray_menu.addAction(Action(fIcon.SYNC, '重启', triggered=self.restart_app))
-        self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=self.close_window_secrandom))
+        # self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), '重启', triggered=self.restart_app))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_arrow_exit_20_filled.svg"), '退出', triggered=self.close_window_secrandom))
 
         self.tray_icon.show()
         self.tray_icon.activated.connect(self.contextMenuEvent)
@@ -180,11 +180,11 @@ class Window(MSFluentWindow):
         self.initNavigation()
 
     def initNavigation(self):
-        self.addSubInterface(self.singleInterface, fIcon.ROBOT, '抽单人', position=NavigationItemPosition.TOP)
-        self.addSubInterface(self.multiInterface, fIcon.PEOPLE, '抽多人', position=NavigationItemPosition.TOP)
-        self.addSubInterface(self.groupInterface, fIcon.TILES, '抽小组', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.singleInterface, QIcon("app/resource/assets/ic_fluent_person_20_filled.svg"), '抽单人', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.multiInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽多人', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.groupInterface, QIcon("app/resource/assets/ic_fluent_group_20_filled.svg"), '抽小组', position=NavigationItemPosition.TOP)
 
-        self.addSubInterface(self.historyInterface, fIcon.HISTORY, '历史记录', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.historyInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
         """窗口关闭时隐藏主界面"""

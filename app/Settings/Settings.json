@@ -1,0 +1,59 @@
+{
+    "foundation": {
+        "self_starting_enabled": false,
+        "pumping_floating_enabled": false,
+        "pumping_floating_transparency_mode": 6,
+        "main_window_focus_mode": 0,
+        "main_window_focus_time": 1,
+        "main_window_mode": 0,
+        "settings_window_mode": 0,
+        "main_window_size": 0,
+        "settings_window_size": 0
+    },
+    "global": {
+        "draw_mode": 0,
+        "animation_mode": 0,
+        "voice_enabled": true,
+        "student_id": 0,
+        "student_name": 0,
+        "student_quantity": true,
+        "class_quantity": true,
+        "extraction_scope": 0
+    },
+    "single_player": {
+        "animation_mode": 0,
+        "voice_enabled": 0,
+        "student_id": 0,
+        "student_name": 0,
+        "student_quantity": 0,
+        "class_quantity": 0,
+        "font_size": 100
+    },
+    "multi_player": {
+        "animation_mode": 0,
+        "voice_enabled": 0,
+        "student_id": 0,
+        "student_name": 0,
+        "student_quantity": 0,
+        "class_quantity": 0,
+        "font_size": 50
+    },
+    "group_player": {
+        "animation_mode": 0,
+        "voice_enabled": 0,
+        "student_quantity": 0,
+        "class_quantity": 0,
+        "font_size": 50
+    },
+    "history": {
+        "history_enabled": true
+    },
+    "list_strings": {
+        "use_lists": false,
+        "player_people": 30
+    },
+    "position": {
+        "x": 1539,
+        "y": 837
+    }
+}

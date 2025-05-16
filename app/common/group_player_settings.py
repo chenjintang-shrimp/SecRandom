@@ -73,11 +73,11 @@ class group_player_SettinsCard(GroupHeaderCardWidget):
         self.group_player_class_quantity_comboBox.setFont(QFont(load_custom_font(), 14))
 
         # 添加组件到分组中
-        self.addGroup(FIF.FONT, "字体大小", "设置抽小组界面的字体大小", self.group_player_font_size_edit)
-        self.addGroup(FIF.FEEDBACK, "语音播放", "设置结果公布时是否播放语音", self.group_player_Voice_comboBox)
-        self.addGroup(FIF.VIDEO, "动画模式", "设置抽取时的动画播放方式", self.group_player_Animation_comboBox)
-        self.addGroup(FIF.PEOPLE, "班级总人数", "设置班级总人数是否显示", self.group_player_student_quantity_comboBox)
-        self.addGroup(FIF.EDUCATION, "便捷修改班级/小组", "设置便捷修改班级/小组功能是否显示", self.group_player_class_quantity_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_text_font_size_20_filled.svg"), "字体大小", "设置抽取结果的字体大小", self.group_player_font_size_edit)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_feedback_20_filled.svg"), "语音播放", "设置结果公布时是否播放语音", self.group_player_Voice_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_calendar_video_20_filled.svg"), "动画模式", "设置抽取时的动画播放方式", self.group_player_Animation_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "班级总人数", "设置班级总人数是否显示", self.group_player_student_quantity_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_class_20_filled.svg"), "便捷修改班级/小组", "设置便捷修改班级/小组功能是否显示", self.group_player_class_quantity_comboBox)
 
         self.load_settings()  # 加载设置
         self.save_settings()  # 保存设置
