@@ -21,8 +21,7 @@ if './app/resource/group' != None and not os.path.exists('./app/resource/group')
     os.makedirs('./app/resource/group')
 
 from app.view.settings import settings_Window
-from app.view.main_page.single import single
-from app.view.main_page.multiplayer import multiplayer
+from app.view.main_page.pumping_people import pumping_people
 from app.view.main_page.group import groupplayer
 from app.view.main_page.history import history
 from app.view.levitation import LevitationWindow
@@ -168,11 +167,8 @@ class Window(MSFluentWindow):
         self.historyInterface = history(self)
         self.historyInterface.setObjectName("historyInterface")
 
-        self.singleInterface = single(self)
-        self.singleInterface.setObjectName("singleInterface")
-
-        self.multiInterface = multiplayer(self)
-        self.multiInterface.setObjectName("multiInterface")
+        self.pumping_peopleInterface = pumping_people(self)
+        self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
 
         self.groupInterface = groupplayer(self)
         self.groupInterface.setObjectName("groupInterface")
@@ -180,8 +176,7 @@ class Window(MSFluentWindow):
         self.initNavigation()
 
     def initNavigation(self):
-        self.addSubInterface(self.singleInterface, QIcon("app/resource/assets/ic_fluent_person_20_filled.svg"), '抽单人', position=NavigationItemPosition.TOP)
-        self.addSubInterface(self.multiInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽多人', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.pumping_peopleInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人', position=NavigationItemPosition.TOP)
         self.addSubInterface(self.groupInterface, QIcon("app/resource/assets/ic_fluent_group_20_filled.svg"), '抽小组', position=NavigationItemPosition.TOP)
 
         self.addSubInterface(self.historyInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)

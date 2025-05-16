@@ -11,7 +11,7 @@ from loguru import logger
 
 from ..common.config import load_custom_font
 
-class multiplayer(QWidget):
+class pumping_people(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         # 定义变量
@@ -36,7 +36,6 @@ class multiplayer(QWidget):
                 if multi_player_animation_mode == 0:
                     global_animation_mode = settings['global']['animation_mode']
         except Exception as e:
-            # multi_player_draw_mode = 1
             multi_player_animation_mode = 1
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
