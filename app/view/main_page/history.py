@@ -7,10 +7,10 @@ from PyQt5.QtWidgets import *
 import os
 from loguru import logger
 
-from ..common.config import cfg, AUTHOR, VERSION, YEAR
-from ..common.config import load_custom_font
+from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import load_custom_font
 
-from ..common.history_settings import history_SettinsCard
+from app.common.history_settings import history_SettinsCard
 
 class history(QFrame):
     def __init__(self, parent: QFrame = None):

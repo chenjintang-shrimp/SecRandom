@@ -7,10 +7,10 @@ from PyQt5.QtWidgets import *
 import os
 from loguru import logger
 
-from ..common.config import cfg, AUTHOR, VERSION, YEAR
-from ..common.config import load_custom_font
+from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import load_custom_font
 
-from ..common.list_settings import list_SettinsCard
+from app.common.list_settings import list_SettinsCard
 
 class quicksetup(QFrame):
     def __init__(self, parent: QFrame = None):

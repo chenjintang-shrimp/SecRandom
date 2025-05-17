@@ -7,12 +7,12 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-from ..common.config import cfg, AUTHOR, VERSION, YEAR
-from ..common.config import load_custom_font
+from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import load_custom_font
 
-from ..common.foundation_settings import foundation_settingsCard
-from ..common.senior_settings import senior_settingsCard
-from ..common.about import aboutCard
+from app.common.foundation_settings import foundation_settingsCard
+from app.common.senior_settings import senior_settingsCard
+from app.common.about import aboutCard
 
 
 class more_setting(QFrame):

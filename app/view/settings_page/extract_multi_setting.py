@@ -2,9 +2,9 @@ from qfluentwidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from ..common.config import cfg
+from app.common.config import cfg
 
-from ..common.multi_player_settings import multi_player_SettinsCard
+from app.common.multi_player_settings import multi_player_SettinsCard
 
 
 class multi_setting(QFrame):

@@ -3,10 +3,10 @@ from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from ..common.config import cfg, AUTHOR, VERSION, YEAR
-from ..common.config import load_custom_font
+from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import load_custom_font
 
-from ..common.group_player_settings import group_player_SettinsCard
+from app.common.group_player_settings import group_player_SettinsCard
 
 
 class group_setting(QFrame):

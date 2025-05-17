@@ -2,10 +2,10 @@ from qfluentwidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from ..common.config import cfg, AUTHOR, VERSION, YEAR
-from ..common.config import load_custom_font
+from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import load_custom_font
 
-from ..common.password_settings import password_SettingsCard
+from app.common.password_settings import password_SettingsCard
 
 
 class password_set(QFrame):

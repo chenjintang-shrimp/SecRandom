@@ -8,7 +8,7 @@ import json
 from loguru import logger
 from pathlib import Path
 
-from ..common.config import load_custom_font
+from app.common.config import load_custom_font
 
 class LevitationWindow(QWidget):
     def __init__(self):

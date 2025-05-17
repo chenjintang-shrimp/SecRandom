@@ -2,10 +2,10 @@ from qfluentwidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from ..common.config import cfg, AUTHOR, VERSION, YEAR
-from ..common.config import load_custom_font
+from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import load_custom_font
 
-from ..common.global_settings import global_SettinsCard
+from app.common.global_settings import global_SettinsCard
 
 
 class global_setting(QFrame):

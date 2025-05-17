@@ -9,7 +9,7 @@ import random
 import pyttsx3
 from loguru import logger
 
-from ..common.config import load_custom_font
+from app.common.config import load_custom_font
 
 class pumping_people(QWidget):
     def __init__(self, parent=None):
