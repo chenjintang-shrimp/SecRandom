@@ -117,8 +117,6 @@ class LevitationWindow(QWidget):
             self.setStyleSheet('border-radius: 5px; background-color: rgba(65, 66, 66, 0.3);')
             logger.error(f"加载浮窗背景透明度失败: {e}")
 
-        self.setProperty("radius", 5)
-
         self.people_button.clicked.connect(self.on_people_clicked)
 
     def on_people_clicked(self):

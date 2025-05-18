@@ -7,6 +7,8 @@ import os
 import json
 import random
 import pyttsx3
+import pypinyin
+import re
 from loguru import logger
 
 from app.common.config import load_custom_font
@@ -19,10 +21,11 @@ class pumping_people(QWidget):
         self.draw_mode = "random"
         self.animation_timer = None
         # 使用全局语音引擎单例
-        if not hasattr(QApplication.instance(), 'global_voice_engine'):
-            QApplication.instance().global_voice_engine = pyttsx3.init()
-            QApplication.instance().global_voice_engine.startLoop(False)
-        self.voice_engine = QApplication.instance().global_voice_engine
+        if not hasattr(QApplication.instance(), 'pumping_people_voice_engine'):
+            QApplication.instance().pumping_people_voice_engine = pyttsx3.init()
+            QApplication.instance().pumping_people_voice_engine.startLoop(False)
+        self.voice_engine = QApplication.instance().pumping_people_voice_engine
+
         self.initUI()
     
     def start_draw(self):
@@ -31,25 +34,24 @@ class pumping_people(QWidget):
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                multi_player_animation_mode = settings['multi_player']['animation_mode']
-                global_draw_mode = settings['global']['draw_mode']
-                if multi_player_animation_mode == 0:
-                    global_animation_mode = settings['global']['animation_mode']
+                pumping_people_draw_mode = settings['pumping_people']['draw_mode']
+                pumping_people_animation_mode = settings['pumping_people']['animation_mode']
         except Exception as e:
-            multi_player_animation_mode = 1
+            pumping_people_draw_mode = 0
+            pumping_people_animation_mode = 0
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
         # 根据抽选模式执行不同逻辑
         # 跟随全局设置
-        if global_draw_mode == 0:  # 重复随机
+        if pumping_people_draw_mode == 0:  # 重复随机
             self.draw_mode = "random"
-        elif global_draw_mode == 1:  # 不重复抽取(直到软件重启)
+        elif pumping_people_draw_mode == 1:  # 不重复抽取(直到软件重启)
             self.draw_mode = "until_reboot"
-        elif global_draw_mode == 2:  # 不重复抽取(直到抽完全部人)
+        elif pumping_people_draw_mode == 2:  # 不重复抽取(直到抽完全部人)
             self.draw_mode = "until_all"
             
         # 根据动画模式执行不同逻辑
-        if multi_player_animation_mode == 0 and global_animation_mode == 0:  # 手动停止动画
+        if pumping_people_animation_mode == 0:  # 手动停止动画
             self.start_button.setText("停止")
             self.is_animating = True
             self.animation_timer = QTimer()
@@ -58,51 +60,50 @@ class pumping_people(QWidget):
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self._stop_animation)
             
-        elif multi_player_animation_mode == 0 and global_animation_mode == 1:  # 自动播放完整动画
+        elif pumping_people_animation_mode == 1:  # 自动播放完整动画
             self._play_full_animation()
             
-        elif multi_player_animation_mode == 0 and global_animation_mode == 2:  # 直接显示结果
-            self._show_result_directly()
-            
-        # 跟随单抽动画设置
-        elif multi_player_animation_mode == 1:  # 手动停止动画
-            self.start_button.setText("停止")
-            self.is_animating = True
-            self.animation_timer = QTimer()
-            self.animation_timer.timeout.connect(self._show_random_student)
-            self.animation_timer.start(100)
-            self.start_button.clicked.disconnect()
-            self.start_button.clicked.connect(self._stop_animation)
-            
-        elif multi_player_animation_mode == 2:  # 自动播放完整动画
-            self._play_full_animation()
-            
-        elif multi_player_animation_mode == 3:  # 直接显示结果
+        elif pumping_people_animation_mode == 2:  # 直接显示结果
             self._show_result_directly()
         
     def _show_random_student(self):
         """显示随机学生（用于动画效果）"""
         class_name = self.class_combo.currentText()
-        if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    list_strings_set = settings.get('list_strings', {})
-                    list_strings_settings = list_strings_set.get('use_lists', False)
-                    if not list_strings_settings:
-                        student_file = f"app/resource/students/{class_name}.ini"
-                    else:
-                        student_file = f"app/resource/students/people_{class_name}.ini"
-            except FileNotFoundError as e:
-                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
-            except KeyError:
-                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
-
+        group_name = self.group_combo.currentText()
+        if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
+            student_file = f"app/resource/list/{class_name}.json"
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and '【' not in line.strip() and '】' not in line.strip()]
+                    data = json.load(f)
+                    cleaned_data = []
+
+                    if group_name == '抽取全班学生':
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                cleaned_data.append((id, name))
+                    elif group_name == '抽取小组组号':
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                cleaned_data.append((id, group))
+                    else:
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                if group == group_name:
+                                    cleaned_data.append((id, name))
+
+                    students = cleaned_data
                     if students:
                         # 从self.current_count获取抽取人数
                         draw_count = self.current_count
@@ -130,18 +131,11 @@ class pumping_people(QWidget):
                         try:
                             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                 settings = json.load(f)
-
-                                multi_player_student_id = settings['multi_player']['student_id']
-                                multi_player_student_name = settings['multi_player']['student_name']
-                                if multi_player_student_id == 0:
-                                    global_student_id = settings['global']['student_id']
-                                if multi_player_student_name == 0:
-                                    global_student_name = settings['global']['student_name']
+                                pumping_people_student_id = settings['pumping_people']['student_id']
+                                pumping_people_student_name = settings['pumping_people']['student_name']
                         except Exception as e:
-                            multi_player_student_id = 1
-                            multi_player_student_name = 0
-                            global_student_id = 0
-                            global_student_name = 0
+                            pumping_people_student_id = 0
+                            pumping_people_student_name = 0
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
                         # 创建新布局
@@ -150,8 +144,8 @@ class pumping_people(QWidget):
                         self.student_labels = []
                         for num, name in selected_students:
                             # 整合学号格式和姓名处理逻辑
-                            student_id_format = multi_player_student_id if multi_player_student_id != 0 else global_student_id
-                            student_name_format = multi_player_student_name if multi_player_student_name != 0 else global_student_name
+                            student_id_format = pumping_people_student_id
+                            student_name_format = pumping_people_student_name
                             
                             # 根据学号格式生成标签文本
                             if student_id_format == 0:  # 补零
@@ -165,28 +159,17 @@ class pumping_people(QWidget):
                             if student_name_format == 0 and len(name) == 2:
                                 name = f"{name[0]}    {name[1]}"
 
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    list_strings_set = settings.get('list_strings', {})
-                                    list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if not list_strings_settings:
-                                        label = BodyLabel(f"{student_id_str} {name}")
-                                    else:
-                                        label = BodyLabel(f"{student_id_str}")
-                            except FileNotFoundError as e:
-                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                                label = BodyLabel(f"{student_id_str}")
-                            except KeyError:
-                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
-                                label = BodyLabel(f"{student_id_str}")
+                            if group_name == '抽取小组组号':
+                                label = BodyLabel(f"{name}")
+                            else:
+                                label = BodyLabel(f"{student_id_str} {name}")
 
                             label.setAlignment(Qt.AlignCenter)
                             # 读取设置中的font_size值
                             try:
                                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                     settings = json.load(f)
-                                    font_size = settings['multi_player']['font_size']
+                                    font_size = settings['pumping_people']['font_size']
                                     if font_size < 30:
                                         font_size = 85
                             except Exception as e:
@@ -221,14 +204,14 @@ class pumping_people(QWidget):
                 widget = item.widget()
                 if widget:
                     widget.deleteLater()
-                    
+
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
             # 读取设置中的font_size值
             try:
                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    font_size = settings['multi_player']['font_size']
+                    font_size = settings['pumping_people']['font_size']
                     if font_size < 30:
                         font_size = 85
             except Exception as e:
@@ -261,11 +244,9 @@ class pumping_people(QWidget):
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                voice_enabled = settings['multi_player']['voice_enabled']
-                if voice_enabled == 0:
-                    voice_enabled = settings['global']['voice_enabled']
+                voice_enabled = settings['pumping_people']['voice_enabled']
                 
-                if voice_enabled == 1 or voice_enabled == True:  # 开启语音
+                if voice_enabled == True:  # 开启语音
                     if hasattr(self, 'student_labels'):
                         for label in self.student_labels:
                             parts = label.text().split()
@@ -274,25 +255,8 @@ class pumping_people(QWidget):
                             else:
                                 name = parts[-1]
                             name = name.replace(' ', '')
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    list_strings_set = settings.get('list_strings', {})
-                                    list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if not list_strings_settings:
-                                        self.voice_engine.say(f"{name}")
-                                        self.voice_engine.iterate()
-                                    else:
-                                        self.voice_engine.say(f"{name}号")
-                                        self.voice_engine.iterate()
-                            except FileNotFoundError as e:
-                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号朗读")
-                                self.voice_engine.say(f"{name}号")
-                                self.voice_engine.iterate()
-                            except KeyError:
-                                logger.error(f"设置文件中缺少foundation'键, 使用默认仅学号朗读")
-                                self.voice_engine.say(f"{name}号")
-                                self.voice_engine.iterate()
+                            self.voice_engine.say(f"{name}")
+                            self.voice_engine.iterate()
         except Exception as e:
             logger.error(f"语音播报出错: {e}")
     
@@ -324,11 +288,9 @@ class pumping_people(QWidget):
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                voice_enabled = settings['multi_player']['voice_enabled']
-                if voice_enabled == 0:
-                    voice_enabled = settings['global']['voice_enabled']
+                voice_enabled = settings['pumping_people']['voice_enabled']
                 
-                if voice_enabled == 1 or voice_enabled == True:  # 开启语音
+                if voice_enabled == True:  # 开启语音
                     if hasattr(self, 'student_labels'):
                         for label in self.student_labels:
                             parts = label.text().split()
@@ -337,52 +299,49 @@ class pumping_people(QWidget):
                             else:
                                 name = parts[-1]
                             name = name.replace(' ', '')
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    list_strings_set = settings.get('list_strings', {})
-                                    list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if not list_strings_settings:
-                                        self.voice_engine.say(f"{name}")
-                                        self.voice_engine.iterate()
-                                    else:
-                                        self.voice_engine.say(f"{name}号")
-                                        self.voice_engine.iterate()
-                            except FileNotFoundError as e:
-                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号朗读")
-                                self.voice_engine.say(f"{name}号")
-                                self.voice_engine.iterate()
-                            except KeyError:
-                                logger.error(f"设置文件中缺少foundation'键, 使用默认仅学号朗读")
-                                self.voice_engine.say(f"{name}号")
-                                self.voice_engine.iterate()
+                            self.voice_engine.say(f"{name}")
+                            self.voice_engine.iterate()
         except Exception as e:
             logger.error(f"语音播报出错: {e}")
             
     def random_draw(self):
         """重复随机抽选学生"""
         class_name = self.class_combo.currentText()
-        if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    list_strings_set = settings.get('list_strings', {})
-                    list_strings_settings = list_strings_set.get('use_lists', False)
-                    if not list_strings_settings:
-                        student_file = f"app/resource/students/{class_name}.ini"
-                    else:
-                        student_file = f"app/resource/students/people_{class_name}.ini"
-            except FileNotFoundError as e:
-                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
-            except KeyError:
-                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
-
+        group_name = self.group_combo.currentText()
+        if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
+            student_file = f"app/resource/list/{class_name}.json"
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and '【' not in line.strip() and '】' not in line.strip()]     
-                    available_students = [s for s in students if s[1].replace(' ', '')]
+                    data = json.load(f)
+                    cleaned_data = []
+
+                    if group_name == '抽取全班学生':
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                cleaned_data.append((id, name))
+                    elif group_name == '抽取小组组号':
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                cleaned_data.append((id, group))
+                    else:
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                if group == group_name:
+                                    cleaned_data.append((id, name))
+
+                    available_students = cleaned_data
                     
                     if available_students:
                         # 从self.current_count获取抽取人数
@@ -390,7 +349,7 @@ class pumping_people(QWidget):
                         
                         # 抽取多个学生
                         selected_students = random.sample(available_students, min(draw_count, len(available_students)))
-                        
+
                         # 清除旧布局和标签
                         if hasattr(self, 'container'):
                             self.container.deleteLater()
@@ -410,18 +369,11 @@ class pumping_people(QWidget):
                         try:
                             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                 settings = json.load(f)
-
-                                multi_player_student_id = settings['multi_player']['student_id']
-                                multi_player_student_name = settings['multi_player']['student_name']
-                                if multi_player_student_id == 0:
-                                    global_student_id = settings['global']['student_id']
-                                if multi_player_student_name == 0:
-                                    global_student_name = settings['global']['student_name']
+                                pumping_people_student_id = settings['pumping_people']['student_id']
+                                pumping_people_student_name = settings['pumping_people']['student_name']
                         except Exception as e:
-                            multi_player_student_id = 1
-                            multi_player_student_name = 0
-                            global_student_id = 0
-                            global_student_name = 0
+                            pumping_people_student_id = 0
+                            pumping_people_student_name = 0
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
                         # 创建新布局
@@ -430,8 +382,8 @@ class pumping_people(QWidget):
                         self.student_labels = []
                         for num, selected in selected_students:
                             # 整合学号格式和姓名处理逻辑
-                            student_id_format = multi_player_student_id if multi_player_student_id != 0 else global_student_id
-                            student_name_format = multi_player_student_name if multi_player_student_name != 0 else global_student_name
+                            student_id_format = pumping_people_student_id
+                            student_name_format = pumping_people_student_name
                             
                             # 根据学号格式生成标签文本
                             if student_id_format == 0:  # 补零
@@ -447,6 +399,11 @@ class pumping_people(QWidget):
                             else:
                                 name = selected
 
+                            if group_name == '抽取小组组号':
+                                label = BodyLabel(f"{selected}")
+                            else:
+                                label = BodyLabel(f"{student_id_str} {name}")
+
                             # 读取设置中的history_enabled
                             try:
                                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
@@ -456,86 +413,76 @@ class pumping_people(QWidget):
                                 history_enabled = False
                                 logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
 
-                            if history_enabled:
-                                # 记录抽选历史
-                                try:
-                                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                        settings = json.load(f)
-                                        list_strings_set = settings.get('list_strings', {})
-                                        list_strings_settings = list_strings_set.get('use_lists', False)
-                                        if not list_strings_settings:
-                                            history_file = f"app/resource/history/{class_name}.json"
-                                        else:
-                                            history_file = f"app/resource/history/people_{class_name}.json"
-                                except FileNotFoundError as e:
-                                    logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号记录历史")
-                                    history_file = f"app/resource/history/people_{class_name}.json"
-                                except KeyError:
-                                    logger.error(f"设置文件中缺少foundation键, 使用默认仅学号记录历史")
-                                    history_file = f"app/resource/history/people_{class_name}.json"
+                            class_name = self.class_combo.currentText()
+                            pumping_people_file = f"app/resource/list/{class_name}.json"
+                            if os.path.exists(pumping_people_file):
+                                with open(pumping_people_file, 'r', encoding='utf-8') as f:
+                                    data = json.load(f)
+                                    groups = set()
+                                    for student_name, student_info in data.items():
+                                        if isinstance(student_info, dict) and 'id' in student_info:
+                                            id = student_info.get('id', '')
+                                            name = student_name.replace('【', '').replace('】', '')
+                                            gender = student_info.get('gender', '')
+                                            group = student_info.get('group', '')
+                                            if group:
+                                                groups.add(group)
+                                    cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
+                            
+                            group_students = cleaned_data
 
-                                os.makedirs(os.path.dirname(history_file), exist_ok=True)
-                                
-                                history_data = {}
-                                if os.path.exists(history_file):
-                                    with open(history_file, 'r', encoding='utf-8') as f:
-                                        try:
-                                            history_data = json.load(f)
-                                        except json.JSONDecodeError:
-                                            history_data = {}
-                                
-                                if "multi" not in history_data:
-                                    history_data["multi"] = {}
+                            if selected not in group_students:
+                                if history_enabled:
+                                    # 记录抽选历史
+                                    history_file = f"app/resource/history/{class_name}.json"
 
-                                import datetime
+                                    os.makedirs(os.path.dirname(history_file), exist_ok=True)
+                                    
+                                    history_data = {}
+                                    if os.path.exists(history_file):
+                                        with open(history_file, 'r', encoding='utf-8') as f:
+                                            try:
+                                                history_data = json.load(f)
+                                            except json.JSONDecodeError:
+                                                history_data = {}
+                                    
+                                    if "group" not in history_data:
+                                        history_data["pumping_people"] = {}
 
-                                if selected not in history_data["multi"]:
-                                    history_data["multi"][selected] = {
-                                        "total_number_of_times": 1,
-                                        "time": [
-                                            {
-                                                "draw_method": {
-                                                    self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                    import datetime
+                                    
+                                    if selected not in history_data["pumping_people"]:
+                                        history_data["pumping_people"][selected] = {
+                                            "total_number_of_times": 1,
+                                            "time": [
+                                                {
+                                                    "draw_method": {
+                                                        self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                                    }
                                                 }
-                                            }
-                                        ]
-                                    }
-                                else:
-                                    history_data["multi"][selected]["total_number_of_times"] += 1
-                                    history_data["multi"][selected]["time"].append({
-                                        "draw_method": {
-                                            self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                            ]
                                         }
-                                    })
-                                
-                                with open(history_file, 'w', encoding='utf-8') as f:
-                                    json.dump(history_data, f, ensure_ascii=False, indent=4)
-
-                            else:
-                                logger.info("历史记录功能已被禁用。")
-
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    list_strings_set = settings.get('list_strings', {})
-                                    list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if not list_strings_settings:
-                                        label = BodyLabel(f"{student_id_str} {name}")
                                     else:
-                                        label = BodyLabel(f"{student_id_str}")
-                            except FileNotFoundError as e:
-                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                                label = BodyLabel(f"{student_id_str}")
-                            except KeyError:
-                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
-                                label = BodyLabel(f"{student_id_str}")
+                                        history_data["pumping_people"][selected]["total_number_of_times"] += 1
+                                        history_data["pumping_people"][selected]["time"].append({
+                                            "draw_method": {
+                                                self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                            }
+                                        })
+                                    
+                                    with open(history_file, 'w', encoding='utf-8') as f:
+                                        json.dump(history_data, f, ensure_ascii=False, indent=4)
+                                else:
+                                    logger.info("历史记录功能已被禁用。")
+                            else:
+                                logger.info(f"{selected} 是小组名称，无需记录抽选历史。")
 
                             label.setAlignment(Qt.AlignCenter)
                             # 读取设置中的font_size值
                             try:
                                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                     settings = json.load(f)
-                                    font_size = settings['multi_player']['font_size']
+                                    font_size = settings['pumping_people']['font_size']
                                     if font_size < 30:
                                         font_size = 85
                             except Exception as e:
@@ -548,6 +495,7 @@ class pumping_people(QWidget):
                                 label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
+                            
                         # 创建容器并添加到布局
                         container = QWidget()
                         container.setLayout(vbox_layout)
@@ -577,7 +525,7 @@ class pumping_people(QWidget):
             try:
                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    font_size = settings['multi_player']['font_size']
+                    font_size = settings['pumping_people']['font_size']
                     if font_size < 30:
                         font_size = 85
             except Exception as e:
@@ -594,32 +542,16 @@ class pumping_people(QWidget):
     def until_the_reboot_draw(self):
         """不重复抽取(直到软件重启)"""
         class_name = self.class_combo.currentText()
-        if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    list_strings_set = settings.get('list_strings', {})
-                    list_strings_settings = list_strings_set.get('use_lists', False)
-                    if not list_strings_settings:
-                        student_file = f"app/resource/students/{class_name}.ini"
-                    else:
-                        student_file = f"app/resource/students/people_{class_name}.ini"
-            except FileNotFoundError as e:
-                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
-            except KeyError:
-                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
+        group_name = self.group_combo.currentText()
+        if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
+            student_file = f"app/resource/list/{class_name}.json"
 
-            # 根据抽取作用范围模式确定记录文件名
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                extraction_scope = settings['global']['extraction_scope']
-            
-            if extraction_scope == 1:  # 隔离模式
-                draw_record_file = f"app/resource/Temp/until_the_reboot_scope_{class_name}_multi.json"
-            else:  # 共享模式
-                draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}.json"
+            if group_name == '抽取全班学生':
+                draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}_all.json"
+            elif group_name == '抽取小组组号':
+                draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}_group.json"
+            else:
+                draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}_{group_name}.json"
             
             # 创建Temp目录如果不存在
             os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
@@ -639,8 +571,36 @@ class pumping_people(QWidget):
             
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and '【' not in line.strip() and '】' not in line.strip()]     
-                    available_students = [s for s in students if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]]
+                    data = json.load(f)
+                    cleaned_data = []
+
+                    if group_name == '抽取全班学生':
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                cleaned_data.append((id, name))
+                    elif group_name == '抽取小组组号':
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                cleaned_data.append((id, group))
+                    else:
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                if group == group_name:
+                                    cleaned_data.append((id, name))
+
+                    available_students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]]
                     
                     if available_students:
                         # 从self.current_count获取抽取人数
@@ -668,18 +628,11 @@ class pumping_people(QWidget):
                         try:
                             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                 settings = json.load(f)
-
-                                multi_player_student_id = settings['multi_player']['student_id']
-                                multi_player_student_name = settings['multi_player']['student_name']
-                                if multi_player_student_id == 0:
-                                    global_student_id = settings['global']['student_id']
-                                if multi_player_student_name == 0:
-                                    global_student_name = settings['global']['student_name']
+                                pumping_people_student_id = settings['pumping_people']['student_id']
+                                pumping_people_student_name = settings['pumping_people']['student_name']
                         except Exception as e:
-                            multi_player_student_id = 1
-                            multi_player_student_name = 0
-                            global_student_id = 0
-                            global_student_name = 0
+                            pumping_people_student_id = 0
+                            pumping_people_student_name = 0
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
                         # 创建新布局
@@ -688,8 +641,8 @@ class pumping_people(QWidget):
                         self.student_labels = []
                         for num, selected in selected_students:
                             # 整合学号格式和姓名处理逻辑
-                            student_id_format = multi_player_student_id if multi_player_student_id != 0 else global_student_id
-                            student_name_format = multi_player_student_name if multi_player_student_name != 0 else global_student_name
+                            student_id_format = pumping_people_student_id
+                            student_name_format = pumping_people_student_name
                             
                             # 根据学号格式生成标签文本
                             if student_id_format == 0:  # 补零
@@ -705,6 +658,11 @@ class pumping_people(QWidget):
                             else:
                                 name = selected
 
+                            if group_name == '抽取小组组号':
+                                label = BodyLabel(f"{selected}")
+                            else:
+                                label = BodyLabel(f"{student_id_str} {name}")
+
                             # 读取设置中的history_enabled
                             try:
                                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
@@ -714,86 +672,76 @@ class pumping_people(QWidget):
                                 history_enabled = False
                                 logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
 
-                            if history_enabled:
-                                # 记录抽选历史
-                                try:
-                                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                        settings = json.load(f)
-                                        list_strings_set = settings.get('list_strings', {})
-                                        list_strings_settings = list_strings_set.get('use_lists', False)
-                                        if not list_strings_settings:
-                                            history_file = f"app/resource/history/{class_name}.json"
-                                        else:
-                                            history_file = f"app/resource/history/people_{class_name}.json"
-                                except FileNotFoundError as e:
-                                    logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号记录历史")
-                                    history_file = f"app/resource/history/people_{class_name}.json"
-                                except KeyError:
-                                    logger.error(f"设置文件中缺少foundation键, 使用默认仅学号记录历史")
-                                    history_file = f"app/resource/history/people_{class_name}.json"
+                            class_name = self.class_combo.currentText()
+                            pumping_people_file = f"app/resource/list/{class_name}.json"
+                            if os.path.exists(pumping_people_file):
+                                with open(pumping_people_file, 'r', encoding='utf-8') as f:
+                                    data = json.load(f)
+                                    groups = set()
+                                    for student_name, student_info in data.items():
+                                        if isinstance(student_info, dict) and 'id' in student_info:
+                                            id = student_info.get('id', '')
+                                            name = student_name.replace('【', '').replace('】', '')
+                                            gender = student_info.get('gender', '')
+                                            group = student_info.get('group', '')
+                                            if group:
+                                                groups.add(group)
+                                    cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
+                            
+                            group_students = cleaned_data
 
-                                os.makedirs(os.path.dirname(history_file), exist_ok=True)
-                                
-                                history_data = {}
-                                if os.path.exists(history_file):
-                                    with open(history_file, 'r', encoding='utf-8') as f:
-                                        try:
-                                            history_data = json.load(f)
-                                        except json.JSONDecodeError:
-                                            history_data = {}
-                                
-                                if "multi" not in history_data:
-                                    history_data["multi"] = {}
+                            if selected not in group_students:
+                                if history_enabled:
+                                    # 记录抽选历史
+                                    history_file = f"app/resource/history/{class_name}.json"
 
-                                import datetime
+                                    os.makedirs(os.path.dirname(history_file), exist_ok=True)
+                                    
+                                    history_data = {}
+                                    if os.path.exists(history_file):
+                                        with open(history_file, 'r', encoding='utf-8') as f:
+                                            try:
+                                                history_data = json.load(f)
+                                            except json.JSONDecodeError:
+                                                history_data = {}
+                                    
+                                    if "pumping_people" not in history_data:
+                                        history_data["pumping_people"] = {}
 
-                                if selected not in history_data["multi"]:
-                                    history_data["multi"][selected] = {
-                                        "total_number_of_times": 1,
-                                        "time": [
-                                            {
-                                                "draw_method": {
-                                                    self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                    import datetime
+                                    
+                                    if selected not in history_data["pumping_people"]:
+                                        history_data["pumping_people"][selected] = {
+                                            "total_number_of_times": 1,
+                                            "time": [
+                                                {
+                                                    "draw_method": {
+                                                        self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                                    }
                                                 }
-                                            }
-                                        ]
-                                    }
-                                else:
-                                    history_data["multi"][selected]["total_number_of_times"] += 1
-                                    history_data["multi"][selected]["time"].append({
-                                        "draw_method": {
-                                            self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                            ]
                                         }
-                                    })
-                                
-                                with open(history_file, 'w', encoding='utf-8') as f:
-                                    json.dump(history_data, f, ensure_ascii=False, indent=4)
-
-                            else:
-                                logger.info("历史记录功能已被禁用。")
-
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    list_strings_set = settings.get('list_strings', {})
-                                    list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if not list_strings_settings:
-                                        label = BodyLabel(f"{student_id_str} {name}")
                                     else:
-                                        label = BodyLabel(f"{student_id_str}")
-                            except FileNotFoundError as e:
-                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                                label = BodyLabel(f"{student_id_str}")
-                            except KeyError:
-                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
-                                label = BodyLabel(f"{student_id_str}")
+                                        history_data["pumping_people"][selected]["total_number_of_times"] += 1
+                                        history_data["pumping_people"][selected]["time"].append({
+                                            "draw_method": {
+                                                self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                            }
+                                        })
+                                    
+                                    with open(history_file, 'w', encoding='utf-8') as f:
+                                        json.dump(history_data, f, ensure_ascii=False, indent=4)
+                                else:
+                                    logger.info("历史记录功能已被禁用。")
+                            else:
+                                logger.info(f"{selected} 是小组名称，无需记录抽选历史。")
 
                             label.setAlignment(Qt.AlignCenter)
                             # 读取设置中的font_size值
                             try:
                                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                     settings = json.load(f)
-                                    font_size = settings['multi_player']['font_size']
+                                    font_size = settings['pumping_people']['font_size']
                                     if font_size < 30:
                                         font_size = 85
                             except Exception as e:
@@ -806,6 +754,7 @@ class pumping_people(QWidget):
                                 label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
+
                         # 创建容器并添加到布局
                         container = QWidget()
                         container.setLayout(vbox_layout)
@@ -855,7 +804,7 @@ class pumping_people(QWidget):
             try:
                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    font_size = settings['multi_player']['font_size']
+                    font_size = settings['pumping_people']['font_size']
                     if font_size < 30:
                         font_size = 85
             except Exception as e:
@@ -871,32 +820,16 @@ class pumping_people(QWidget):
     def until_all_draw_mode(self):
         """不重复抽取(直到抽完全部人)"""
         class_name = self.class_combo.currentText()
-        if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    list_strings_set = settings.get('list_strings', {})
-                    list_strings_settings = list_strings_set.get('use_lists', False)
-                    if not list_strings_settings:
-                        student_file = f"app/resource/students/{class_name}.ini"
-                    else:
-                        student_file = f"app/resource/students/people_{class_name}.ini"
-            except FileNotFoundError as e:
-                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
-            except KeyError:
-                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
+        group_name = self.group_combo.currentText()
+        if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
+            student_file = f"app/resource/list/{class_name}.json"
 
-            # 根据抽取作用范围模式确定记录文件名
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                extraction_scope = settings['global']['extraction_scope']
-            
-            if extraction_scope == 1:  # 隔离模式
-                draw_record_file = f"app/resource/Temp/until_all_scope_{class_name}_multi.json"
-            else:  # 共享模式
-                draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}.json"
+            if group_name == '抽取全班学生':
+                draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_all.json"
+            elif group_name == '抽取小组组号':
+                draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_group.json"
+            else:
+                draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}.json"
             
             # 创建Temp目录如果不存在
             os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
@@ -912,13 +845,36 @@ class pumping_people(QWidget):
             
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [(i+1, line.strip().replace(' ', '')) for i, line in enumerate(f) if line.strip() and '【' not in line.strip() and '】' not in line.strip()]
-                    
-                    # 确保draw_record_file存在
-                    if not os.path.exists(draw_record_file):
-                        drawn_students = []
-                        
-                    available_students = [s for s in students if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]]
+                    data = json.load(f)
+                    cleaned_data = []
+
+                    if group_name == '抽取全班学生':
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                cleaned_data.append((id, name))
+                    elif group_name == '抽取小组组号':
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                cleaned_data.append((id, group))
+                    else:
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                if group == group_name:
+                                    cleaned_data.append((id, name))
+
+                    available_students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]]
                     
                     if available_students:
                         # 从self.current_count获取抽取人数
@@ -941,29 +897,17 @@ class pumping_people(QWidget):
                             widget = item.widget()
                             if widget:
                                 widget.deleteLater()
-
+                        
                         # 根据设置格式化学号显示
                         try:
                             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                 settings = json.load(f)
-
-                                multi_player_student_id = settings['multi_player']['student_id']
-                                if multi_player_student_id == 0:
-                                    global_student_id = settings['global']['student_id']
+                                pumping_people_student_id = settings['pumping_people']['student_id']
+                                pumping_people_student_name = settings['pumping_people']['student_name']
                         except Exception as e:
-                            multi_player_student_id = 1
+                            pumping_people_student_id = 0
+                            pumping_people_student_name = 0
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
-
-                        try:
-                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                settings = json.load(f)
-                                multi_player_student_name = settings['multi_player']['student_name']
-                                if multi_player_student_name == 0:
-                                    global_student_name = settings['global']['student_name']
-                        except Exception as e:
-                            multi_player_student_name = 0
-                            global_student_name = 0
-                            logger.error(f"加载姓名格式设置时出错: {e}, 使用默认设置")
 
                         # 创建新布局
                         vbox_layout = QVBoxLayout()
@@ -971,8 +915,8 @@ class pumping_people(QWidget):
                         self.student_labels = []
                         for num, selected in selected_students:
                             # 整合学号格式和姓名处理逻辑
-                            student_id_format = multi_player_student_id if multi_player_student_id != 0 else global_student_id
-                            student_name_format = multi_player_student_name if multi_player_student_name != 0 else global_student_name
+                            student_id_format = pumping_people_student_id
+                            student_name_format = pumping_people_student_name
                             
                             # 根据学号格式生成标签文本
                             if student_id_format == 0:  # 补零
@@ -988,6 +932,11 @@ class pumping_people(QWidget):
                             else:
                                 name = selected
 
+                            if group_name == '抽取小组组号':
+                                label = BodyLabel(f"{selected}")
+                            else:
+                                label = BodyLabel(f"{student_id_str} {name}")
+
                             # 读取设置中的history_enabled
                             try:
                                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
@@ -997,86 +946,76 @@ class pumping_people(QWidget):
                                 history_enabled = False
                                 logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
 
-                            if history_enabled:
-                                # 记录抽选历史
-                                try:
-                                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                        settings = json.load(f)
-                                        list_strings_set = settings.get('list_strings', {})
-                                        list_strings_settings = list_strings_set.get('use_lists', False)
-                                        if not list_strings_settings:
-                                            history_file = f"app/resource/history/{class_name}.json"
-                                        else:
-                                            history_file = f"app/resource/history/people_{class_name}.json"
-                                except FileNotFoundError as e:
-                                    logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号记录历史")
-                                    history_file = f"app/resource/history/people_{class_name}.json"
-                                except KeyError:
-                                    logger.error(f"设置文件中缺少foundation键, 使用默认仅学号记录历史")
-                                    history_file = f"app/resource/history/people_{class_name}.json"
+                            class_name = self.class_combo.currentText()
+                            pumping_people_file = f"app/resource/list/{class_name}.json"
+                            if os.path.exists(pumping_people_file):
+                                with open(pumping_people_file, 'r', encoding='utf-8') as f:
+                                    data = json.load(f)
+                                    groups = set()
+                                    for student_name, student_info in data.items():
+                                        if isinstance(student_info, dict) and 'id' in student_info:
+                                            id = student_info.get('id', '')
+                                            name = student_name.replace('【', '').replace('】', '')
+                                            gender = student_info.get('gender', '')
+                                            group = student_info.get('group', '')
+                                            if group:
+                                                groups.add(group)
+                                    cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
+                            
+                            group_students = cleaned_data
 
-                                os.makedirs(os.path.dirname(history_file), exist_ok=True)
-                                
-                                history_data = {}
-                                if os.path.exists(history_file):
-                                    with open(history_file, 'r', encoding='utf-8') as f:
-                                        try:
-                                            history_data = json.load(f)
-                                        except json.JSONDecodeError:
-                                            history_data = {}
-                                
-                                if "multi" not in history_data:
-                                    history_data["multi"] = {}
+                            if selected not in group_students:
+                                if history_enabled:
+                                    # 记录抽选历史
+                                    history_file = f"app/resource/history/{class_name}.json"
 
-                                import datetime
+                                    os.makedirs(os.path.dirname(history_file), exist_ok=True)
+                                    
+                                    history_data = {}
+                                    if os.path.exists(history_file):
+                                        with open(history_file, 'r', encoding='utf-8') as f:
+                                            try:
+                                                history_data = json.load(f)
+                                            except json.JSONDecodeError:
+                                                history_data = {}
+                                    
+                                    if "group" not in history_data:
+                                        history_data["pumping_people"] = {}
 
-                                if selected not in history_data["multi"]:
-                                    history_data["multi"][selected] = {
-                                        "total_number_of_times": 1,
-                                        "time": [
-                                            {
-                                                "draw_method": {
-                                                    self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                    import datetime
+                                    
+                                    if selected not in history_data["pumping_people"]:
+                                        history_data["pumping_people"][selected] = {
+                                            "total_number_of_times": 1,
+                                            "time": [
+                                                {
+                                                    "draw_method": {
+                                                        self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                                    }
                                                 }
-                                            }
-                                        ]
-                                    }
-                                else:
-                                    history_data["multi"][selected]["total_number_of_times"] += 1
-                                    history_data["multi"][selected]["time"].append({
-                                        "draw_method": {
-                                            self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                            ]
                                         }
-                                    })
-                                
-                                with open(history_file, 'w', encoding='utf-8') as f:
-                                    json.dump(history_data, f, ensure_ascii=False, indent=4)
-
-                            else:
-                                logger.info("历史记录功能已被禁用。")
-
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    list_strings_set = settings.get('list_strings', {})
-                                    list_strings_settings = list_strings_set.get('use_lists', False)
-                                    if not list_strings_settings:
-                                        label = BodyLabel(f"{student_id_str} {name}")
                                     else:
-                                        label = BodyLabel(f"{student_id_str}")
-                            except FileNotFoundError as e:
-                                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                                label = BodyLabel(f"{student_id_str}")
-                            except KeyError:
-                                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
-                                label = BodyLabel(f"{student_id_str}")
+                                        history_data["pumping_people"][selected]["total_number_of_times"] += 1
+                                        history_data["pumping_people"][selected]["time"].append({
+                                            "draw_method": {
+                                                self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                            }
+                                        })
+                                    
+                                    with open(history_file, 'w', encoding='utf-8') as f:
+                                        json.dump(history_data, f, ensure_ascii=False, indent=4)
+                                else:
+                                    logger.info("历史记录功能已被禁用。")
+                            else:
+                                logger.info(f"{selected} 是小组名称，无需记录抽选历史。")
 
                             label.setAlignment(Qt.AlignCenter)
                             # 读取设置中的font_size值
                             try:
                                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                     settings = json.load(f)
-                                    font_size = settings['multi_player']['font_size']
+                                    font_size = settings['pumping_people']['font_size']
                                     if font_size < 30:
                                         font_size = 85
                             except Exception as e:
@@ -1140,7 +1079,7 @@ class pumping_people(QWidget):
             try:
                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    font_size = settings['multi_player']['font_size']
+                    font_size = settings['pumping_people']['font_size']
                     if font_size < 30:
                         font_size = 85
             except Exception as e:
@@ -1152,23 +1091,34 @@ class pumping_people(QWidget):
             else:
                 error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_layout.addWidget(error_label)
+
+    # 扩展匹配规则，支持更多格式，如 '第 1 小组'、'第1组'、数字 1 等
+    def sort_key(self, group):
+        # 尝试匹配 '第X小组' 或 '第X组' 格式
+        match = re.match(r'第\s*(\d+|一|二|三|四|五|六|七|八|九|十)\s*(小组|组)', group)
+        if match:
+            num = match.group(1)
+            num_map = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10}
+            if num in num_map:
+                return num_map[num]
+            else:
+                return int(num)
+        # 尝试匹配仅数字格式
+        try:
+            return int(group)
+        except ValueError:
+            pass
+        # 自定义组名按拼音或字母排序
+        pinyin_list = pypinyin.pinyin(group, style=pypinyin.NORMAL)
+        pinyin_str = ''.join([item[0] for item in pinyin_list])
+        return pinyin_str
         
     def update_total_count(self):
         """根据选择的班级更新总人数显示"""
+        group_name = self.group_combo.currentText()
         class_name = self.class_combo.currentText()
 
-        try:
-            # 根据抽取作用范围模式确定记录文件名
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                extraction_scope = settings['global']['extraction_scope']
-            if extraction_scope == 1:  # 隔离模式
-                draw_record_file = f"app/resource/Temp/until_the_reboot_scope_{class_name}_multi.json"
-            else:  # 共享模式
-                draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}.json"
-        except Exception as e:
-            logger.error(f"加载设置时出错: {e}, 使用默认设置")
-            draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}.json"
+        draw_record_file = f"app/resource/Temp/until_the_reboot_draw_{class_name}_group.json"
 
         # 删除临时文件
         if os.path.exists(draw_record_file):
@@ -1178,25 +1128,43 @@ class pumping_people(QWidget):
         self._update_count_display()
 
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
-            try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    list_strings_set = settings.get('list_strings', {})
-                    list_strings_settings = list_strings_set.get('use_lists', False)
-                    if not list_strings_settings:
-                        student_file = f"app/resource/students/{class_name}.ini"
-                    else:
-                        student_file = f"app/resource/students/people_{class_name}.ini"
-            except FileNotFoundError as e:
-                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
-            except KeyError:
-                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
+            student_file = f"app/resource/list/{class_name}.json"
 
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    count = len([line.strip() for line in f if line.strip() and not line.strip().startswith('【') and not line.strip().endswith('】')])
+                    data = json.load(f)
+                    cleaned_data = []
+
+                    if group_name == '抽取全班学生':
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                cleaned_data.append((id, name))
+                    elif group_name == '抽取小组组号':
+                        groups = set()
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                if group:  # 只添加非空小组
+                                    groups.add(group)
+                        cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
+                    else:
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                if group == group_name:
+                                    cleaned_data.append(name)
+
+                    count = len(cleaned_data)
                     self.total_label.setText(f'总人数: {count}')
                     self.max_count = count
                     self._update_count_display()
@@ -1226,26 +1194,32 @@ class pumping_people(QWidget):
         # 根据当前人数启用/禁用按钮
         self.plus_button.setEnabled(self.current_count < self.max_count)
         self.minus_button.setEnabled(self.current_count > 1)
-            
+             
     def refresh_class_list(self):
         """刷新班级下拉框选项"""
         self.class_combo.clear()
         try:
-            class_file = "app/resource/class/class.ini"
-            if os.path.exists(class_file):
-                with open(class_file, 'r', encoding='utf-8') as f:
-                    classes = [line.strip() for line in f if line.strip()]
-                    if classes:
-                        self.class_combo.addItems(classes)
-                        logger.info("加载班级列表成功！")
-                    else:
-                        logger.error("你暂未添加班级")
-                        self.class_combo.addItem("你暂未添加班级")
+            list_folder = "app/resource/list"
+            if os.path.exists(list_folder) and os.path.isdir(list_folder):
+                files = os.listdir(list_folder)
+                classes = []
+                for file in files:
+                    if file.endswith('.json'):
+                        class_name = os.path.splitext(file)[0]
+                        classes.append(class_name)
+                
+                self.class_combo.clear()
+                if classes:
+                    self.class_combo.addItems(classes)
+                    logger.info("加载班级列表成功！")
+                else:
+                    logger.error("你暂未添加班级")
+                    self.class_combo.addItem("你暂未添加班级")
             else:
                 logger.error("你暂未添加班级")
                 self.class_combo.addItem("你暂未添加班级")
         except Exception as e:
-            logger.error(f"加载班级列表失败: {str(e)}")
+            logger.error(f"加载班级名称失败: {str(e)}")
 
         self.update_total_count()
 
@@ -1258,49 +1232,72 @@ class pumping_people(QWidget):
             duration=3000
         )
 
+    def refresh_group_list(self):
+        """刷新小组下拉框选项"""
+        class_name = self.class_combo.currentText()
+        self.group_combo.clear()
+        self.group_combo.addItem('抽取全班学生')
+
+        self.current_count = 1
+        self._update_count_display()
+
+        if class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"]:
+            pumping_people_file = f'app/resource/list/{class_name}.json'
+            try:
+                if os.path.exists(pumping_people_file):
+                    with open(pumping_people_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        groups = set()
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                if group:  # 只添加非空小组
+                                    groups.add(group)
+                        cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
+                        if groups:
+                            self.group_combo.addItem('抽取小组组号')
+                            self.group_combo.addItems(cleaned_data)
+                        else:
+                            logger.error("你暂未添加小组")
+                            self.group_combo.addItem("你暂未添加小组")
+                else:
+                    logger.error("你暂未添加小组")
+                    self.group_combo.addItem("你暂未添加小组")
+            except Exception as e:
+                logger.error(f"加载小组列表失败: {str(e)}")
+                self.group_combo.addItem("加载小组列表失败")
+        else:
+            logger.error("请先选择有效的班级")
     
     def initUI(self):
         # 加载设置
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                multi_player_student_quantity = settings['multi_player']['student_quantity']
-                multi_player_class_quantity = settings['multi_player']['class_quantity']
-                if multi_player_student_quantity == 0:
-                    global_student_quantity = f"{settings['global']['student_quantity']}"
-                if multi_player_class_quantity == 0:
-                    global_class_quantity = f"{settings['global']['class_quantity']}"
+                pumping_people_student_quantity = f"{settings['pumping_people']['student_quantity']}"
+                pumping_people_class_quantity = f"{settings['pumping_people']['class_quantity']}"
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
-            global_student_quantity = True
-            global_class_quantity = True
-            multi_player_student_quantity = 1
-            multi_player_class_quantity = 1
+            pumping_people_student_quantity = True
+            pumping_people_class_quantity = True
             
         # 根据设置控制UI元素显示状态
-        if multi_player_student_quantity == 0:
-            show_student_quantity = global_student_quantity
-            if show_student_quantity == 'True':
-                show_student_quantity = True
-            else:
-                show_student_quantity = False
-        elif multi_player_student_quantity == 1:
+        show_student_quantity = pumping_people_student_quantity
+        if show_student_quantity == 'True':
             show_student_quantity = True
         else:
             show_student_quantity = False
-            
-        if multi_player_class_quantity == 0:
-            show_class_quantity = global_class_quantity
-            if show_class_quantity == 'True':
-                show_class_quantity = True
-            else:
-                show_class_quantity = False
-        elif multi_player_class_quantity == 1:
+        
+        show_class_quantity = pumping_people_class_quantity
+        if show_class_quantity == 'True':
             show_class_quantity = True
         else:
             show_class_quantity = False
         
-        if multi_player_student_quantity == 1 or multi_player_class_quantity == 1 or global_student_quantity == 'True' or global_class_quantity == 'True':
+        if pumping_people_student_quantity == 'True' or pumping_people_class_quantity == 'True':
             show_refresh_button = True
         else:
             show_refresh_button = False
@@ -1406,7 +1403,7 @@ class pumping_people(QWidget):
         control_panel.addWidget(self.start_button, 0, Qt.AlignVCenter)
         
         # 刷新按钮
-        self.refresh_button = PushButton('刷新班级列表')
+        self.refresh_button = PushButton('刷新列表')
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
         self.refresh_button.clicked.connect(self.refresh_class_list)
@@ -1421,23 +1418,70 @@ class pumping_people(QWidget):
         
         # 加载班级列表
         try:
-            class_file = "app/resource/class/class.ini"
-            if os.path.exists(class_file):
-                with open(class_file, 'r', encoding='utf-8') as f:
-                    classes = [line.strip() for line in f.read().split('\n') if line.strip()]
-                    if classes:
-                        self.class_combo.addItems(classes)
-                    else:
-                        logger.error(f"你暂未添加班级")
-                        self.class_combo.addItem("你暂未添加班级")
+            list_folder = "app/resource/list"
+            if os.path.exists(list_folder) and os.path.isdir(list_folder):
+                files = os.listdir(list_folder)
+                classes = []
+                for file in files:
+                    if file.endswith('.json'):
+                        class_name = os.path.splitext(file)[0]
+                        classes.append(class_name)
+                
+                self.class_combo.clear()
+                if classes:
+                    self.class_combo.addItems(classes)
+                    logger.info("加载班级列表成功！")
+                else:
+                    logger.error("你暂未添加班级")
+                    self.class_combo.addItem("你暂未添加班级")
             else:
-                logger.error(f"你暂未添加班级")
+                logger.error("你暂未添加班级")
                 self.class_combo.addItem("你暂未添加班级")
         except Exception as e:
             logger.error(f"加载班级列表失败: {str(e)}")
             self.class_combo.addItem("加载班级列表失败")
         
         control_panel.addWidget(self.class_combo)
+
+        # 小组下拉框
+        self.group_combo = ComboBox()
+        self.group_combo.setFixedSize(200, 50)
+        self.group_combo.setFont(QFont(load_custom_font(), 15))
+        self.group_combo.setVisible(show_class_quantity)
+        self.group_combo.addItem('抽取全班学生')
+        self.group_combo.currentIndexChanged.connect(self.update_total_count)
+        self.class_combo.currentIndexChanged.connect(self.refresh_group_list)
+
+        class_name = self.class_combo.currentText()
+        pumping_people_file = f'app/resource/list/{class_name}.json'
+        try:
+            if os.path.exists(pumping_people_file):
+                with open(pumping_people_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    groups = set()
+                    for student_name, student_info in data.items():
+                        if isinstance(student_info, dict) and 'id' in student_info:
+                            id = student_info.get('id', '')
+                            name = student_name.replace('【', '').replace('】', '')
+                            gender = student_info.get('gender', '')
+                            group = student_info.get('group', '')
+                            if group:  # 只添加非空小组
+                                groups.add(group)
+                    cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
+                    if groups:
+                        self.group_combo.addItem('抽取小组组号')
+                        self.group_combo.addItems(cleaned_data)
+                    else:
+                        logger.error("你暂未添加小组")
+                        self.group_combo.addItem("你暂未添加小组")
+            else:
+                logger.error("你暂未添加小组")
+                self.group_combo.addItem("你暂未添加小组")
+        except Exception as e:
+            logger.error(f"加载小组列表失败: {str(e)}")
+            self.group_combo.addItem("加载小组列表失败")
+        
+        control_panel.addWidget(self.group_combo)
         
         # 总人数显示
         self.total_label = BodyLabel('总人数: 0')
@@ -1456,7 +1500,7 @@ class pumping_people(QWidget):
         
         # 班级选择变化时更新总人数
         self.class_combo.currentTextChanged.connect(self.update_total_count)
-
+        
         # 初始化抽取人数
         self.current_count = 1
         self.max_count = 0

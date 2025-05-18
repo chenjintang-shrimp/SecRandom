@@ -172,3 +172,6 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+/app/resource/history
+/app/resource/Temp
+/app/resource/list

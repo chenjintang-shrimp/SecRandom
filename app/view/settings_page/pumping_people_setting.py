@@ -5,10 +5,10 @@ from PyQt5.QtWidgets import *
 from app.common.config import cfg, AUTHOR, VERSION, YEAR
 from app.common.config import load_custom_font
 
-from app.common.global_settings import global_SettinsCard
+from app.common.pumping_people_setting import pumping_people_SettinsCard
 
 
-class global_setting(QFrame):
+class pumping_people_setting(QFrame):
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
 
@@ -82,7 +82,7 @@ class global_setting(QFrame):
         inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
 
         # 全局设置卡片组
-        global_setting_card = global_SettinsCard()
+        global_setting_card = pumping_people_SettinsCard()
         inner_layout_personal.addWidget(global_setting_card)
 
         # 将内部的 QFrame 设置为 QScrollArea 的内容

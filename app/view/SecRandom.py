@@ -17,12 +17,8 @@ from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_W
 if './app/Settings' != None and not os.path.exists('./app/Settings'):
     os.makedirs('./app/Settings')
 
-if './app/resource/group' != None and not os.path.exists('./app/resource/group'):
-    os.makedirs('./app/resource/group')
-
 from app.view.settings import settings_Window
 from app.view.main_page.pumping_people import pumping_people
-from app.view.main_page.group import groupplayer
 from app.view.main_page.history import history
 from app.view.levitation import LevitationWindow
 
@@ -121,7 +117,7 @@ class Window(MSFluentWindow):
         self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
         self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_settings_20_filled.svg"), '打开设置界面', triggered=self.show_setting_interface))
         self.tray_menu.addSeparator()
-        # self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), '重启', triggered=self.restart_app))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), '重启', triggered=self.restart_app))
         self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_arrow_exit_20_filled.svg"), '退出', triggered=self.close_window_secrandom))
 
         self.tray_icon.show()
@@ -170,14 +166,10 @@ class Window(MSFluentWindow):
         self.pumping_peopleInterface = pumping_people(self)
         self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
 
-        self.groupInterface = groupplayer(self)
-        self.groupInterface.setObjectName("groupInterface")
-
         self.initNavigation()
 
     def initNavigation(self):
         self.addSubInterface(self.pumping_peopleInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人', position=NavigationItemPosition.TOP)
-        self.addSubInterface(self.groupInterface, QIcon("app/resource/assets/ic_fluent_group_20_filled.svg"), '抽小组', position=NavigationItemPosition.TOP)
 
         self.addSubInterface(self.historyInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)
 
@@ -359,42 +351,8 @@ class Window(MSFluentWindow):
         self.stop_focus_timer()
         if hasattr(self, 'server'):
             self.server.close()
-
-        try:
-            logger.debug("正在通过cmd脚本重启程序...")
-            fixed_path = os.path.abspath(sys.argv[0])
-            root_dir = os.path.dirname(sys.executable)
-            cmd_path = os.path.join(root_dir, "SecRandom_restart.bat")
-
-            # 确保路径用双引号包裹，处理特殊字符
-            cmd_content = f"""@echo off
-TIMEOUT /T 2 /NOBREAK
-cd /d "{root_dir}"
-start "" /B "{fixed_path}"
-( del "%~f0" ) 2>nul
-exit
-"""
-            # 写入批处理文件时指定编码
-            with open(cmd_path, "w", encoding='cp437') as f:  # Windows批处理常用编码
-                f.write(cmd_content)
-
-            logger.debug(f'当前程序位置: {fixed_path}')
-            logger.debug(f'bat内容:\n{cmd_content}')
-
-            # 使用subprocess启动批处理
-            if os.name == 'nt':
-                creation_flags = subprocess.CREATE_NO_WINDOW  # 避免弹出cmd窗口
-            else:
-                creation_flags = 0
-
-            logger.remove()
-            subprocess.Popen(['cmd.exe', '/C', cmd_path], shell=False, creationflags=creation_flags)
-            QApplication.quit()
-
-        except Exception as e:
-            logger.error(f"创建重启脚本失败: {e}, 退出程序")
-            logger.remove()
-            QApplication.quit()
+        logger.remove()
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):
         """显示设置界面"""

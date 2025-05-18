@@ -72,36 +72,38 @@ class history_SettinsCard(GroupHeaderCardWidget):
 
     def refresh_class_list(self):
         try:
-            if os.path.exists("app/resource/class/class.ini"):
-                with open("app/resource/class/class.ini", 'r', encoding='utf-8') as f:
-                    classes = [line.strip() for line in f.read().split('\n') if line.strip()]
-                    self.class_comboBox.clear()
-                    self.class_comboBox.addItems(classes)
+            list_folder = "app/resource/list"
+            if os.path.exists(list_folder) and os.path.isdir(list_folder):
+                files = os.listdir(list_folder)
+                classes = []
+                for file in files:
+                    if file.endswith('.json'):
+                        class_name = os.path.splitext(file)[0]
+                        classes.append(class_name)
+                
+                self.class_comboBox.clear()
+                self.class_comboBox.addItems(classes)
         except Exception as e:
             logger.error(f"加载班级名称失败: {str(e)}")
 
     def load_students(self):
         class_name = self.class_comboBox.currentText()
         try:
-            try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    list_strings_set = settings.get('list_strings', {})
-                    list_strings_settings = list_strings_set.get('use_lists', False)
-                    if not list_strings_settings:
-                        student_file = f"app/resource/students/{class_name}.ini"
-                    else:
-                        student_file = f"app/resource/students/people_{class_name}.ini"
-            except FileNotFoundError as e:
-                logger.error(f"加载设置时出错: {e}, 使用默认显示仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
-            except KeyError:
-                logger.error(f"设置文件中缺少foundation键, 使用默认仅学号显示")
-                student_file = f"app/resource/students/people_{class_name}.ini"
+            student_file = f"app/resource/list/{class_name}.json"
 
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
-                    students = [line.strip() for line in f.read().split('\n') if line.strip()]
+                    data = json.load(f)
+                    cleaned_data = []
+                    for student_name, student_info in data.items():
+                        if isinstance(student_info, dict) and 'id' in student_info:
+                            id = student_info.get('id', '')
+                            name = student_name.replace('【', '').replace('】', '')
+                            gender = student_info.get('gender', '')
+                            group = student_info.get('group', '')
+                            cleaned_data.append(name)
+
+                    students = cleaned_data
                     self.student_comboBox.clear()
                     students = ['全班同学'] + students
                     self.student_comboBox.addItems(students)

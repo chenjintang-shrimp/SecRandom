@@ -135,7 +135,7 @@ class history(QFrame):
                     self.table.item(i, j).setFont(QFont(load_custom_font(), 14)) # 设置字体
                     
             # 设置表头
-            self.table.setHorizontalHeaderLabels(['学号', '姓名', '所处小组', '抽单人被点次数', '抽多人被点次数', '抽小组被点次数', '总计被点次数'])
+            self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组', '抽多人被点次数', '抽小组被点次数', '总计被点次数'])
             self.table.verticalHeader().hide() # 隐藏垂直表头
             self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
             
@@ -197,59 +197,28 @@ class history(QFrame):
         if _student_name == '全班同学':
             if class_name:
                 # 读取配置文件
-                try:
-                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                        settings = json.load(f)
-                        list_strings_set = settings.get('list_strings', {})
-                        list_strings_settings = list_strings_set.get('use_lists', False)
-                        if not list_strings_settings:
-                            student_file = f'app/resource/students/{class_name}.ini'
-                        else:
-                            student_file = f"app/resource/students/people_{class_name}.ini"
-                except FileNotFoundError as e:
-                    logger.error(f"加载设置时出错: {e}")
-                    student_file = f"app/resource/students/people_{class_name}.ini"
-                except KeyError:
-                    logger.error(f"设置文件中缺少foundation键")
-                    student_file = f"app/resource/students/people_{class_name}.ini"
+                student_file = f'app/resource/list/{class_name}.json'
 
                 try:
                     with open(student_file, 'r', encoding='utf-8') as f:
-                        students = [line.strip() for line in f if line.strip()]
+                        data = json.load(f)
+                        cleaned_data = []
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                cleaned_data.append((id, name, gender, group))
+                        students = [item[1] for item in cleaned_data]
                     
-                    # 读取所有小组文件并建立学生-小组映射
-                    group_dict = {}
-                    group_files = [f for f in os.listdir('app/resource/group') 
-                                if f.startswith(class_name + '_') and f.endswith('.ini') and not f.endswith('_group.ini')]
-                    
-                    for group_file in group_files:
-                        group_name = group_file.split('_')[-1].split('.')[0]
-                        with open(f'app/resource/group/{group_file}', 'r', encoding='utf-8') as f:
-                            group_students = [line.strip() for line in f if line.strip()]
-                            for student in group_students:
-                                group_dict[student] = group_name
-                    
-                    # 为每个学生查找对应小组
-                    students_group = [group_dict.get(name, "") for name in students]
+                    # 直接从JSON数据获取小组信息
+                    students_group = [item[3] for item in cleaned_data]
                         
                     # 初始化历史数据字典
                     history_data = {}
                     # 读取历史记录文件
-                    try:
-                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                            settings = json.load(f)
-                            list_strings_set = settings.get('list_strings', {})
-                            list_strings_settings = list_strings_set.get('use_lists', False)
-                            if not list_strings_settings:
-                                history_file = f'app/resource/history/{class_name}.json'
-                            else:
-                                history_file = f"app/resource/history/people_{class_name}.json"
-                    except FileNotFoundError as e:
-                        logger.error(f"加载设置时出错: {e}")
-                        history_file = f"app/resource/history/people_{class_name}.json"
-                    except KeyError:
-                        logger.error(f"设置文件中缺少foundation键")
-                        history_file = f"app/resource/history/people_{class_name}.json"
+                    history_file = f'app/resource/history/{class_name}.json'
 
                     if os.path.exists(history_file):
                         try:
@@ -262,18 +231,15 @@ class history(QFrame):
                     student_data = []
                     # 先遍历一次计算各列最大位数
                     max_digits = {
-                        'id': len(str(len(students))),
-                        'single': 0,
+                        'id': 0,
                         'multi': 0,
                         'group': 0,
                         'total': 0
                     }
 
-                    for student in students:
+                    for i, student in enumerate(students):
                         student_name = student if not (student.startswith('【') and student.endswith('】')) else student[1:-1]
-                        if 'single' in history_data and student_name in history_data['single']:
-                            count = int(history_data['single'][student_name]['total_number_of_times'])
-                            max_digits['single'] = max(max_digits['single'], len(str(count)))
+                        max_digits['id'] = max(max_digits['id'], len(str(cleaned_data[i][0])))
                         if 'multi' in history_data and student_name in history_data['multi']:
                             count = int(history_data['multi'][student_name]['total_number_of_times'])
                             max_digits['multi'] = max(max_digits['multi'], len(str(count)))
@@ -282,63 +248,24 @@ class history(QFrame):
                             max_digits['group'] = max(max_digits['group'], len(str(count)))
 
                     # 计算总计列的最大位数
-                    max_digits['total'] = max(max_digits['single'], max_digits['multi'], max_digits['group'])
+                    max_digits['total'] = max(max_digits['multi'], max_digits['group'])
 
                     # 生成最终数据
                     for i, student in enumerate(students):
                         student_name = student if not (student.startswith('【') and student.endswith('】')) else student[1:-1]
-                        single_count = int(history_data['single'].get(student_name, {}).get('total_number_of_times', 0)) if 'single' in history_data else 0
                         multi_count = int(history_data['multi'].get(student_name, {}).get('total_number_of_times', 0)) if 'multi' in history_data else 0
                         group_count = int(history_data['group'].get(student_name, {}).get('total_number_of_times', 0)) if 'group' in history_data else 0
-                        total_count = single_count + multi_count + group_count
+                        total_count = multi_count + group_count
 
-                        try:
-                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                settings = json.load(f)
-                                list_strings_set = settings.get('list_strings', {})
-                                list_strings_settings = list_strings_set.get('use_lists', False)
-                                if not list_strings_settings:
-                                    student_data.append([
-                                        str(i + 1).zfill(max_digits['id']),
-                                        student_name,
-                                        students_group[i],
-                                        str(single_count).zfill(max_digits['single']),
-                                        str(multi_count).zfill(max_digits['multi']),
-                                        str(group_count).zfill(max_digits['group']),
-                                        str(total_count).zfill(max_digits['total'])
-                                    ])
-                                else:
-                                    student_data.append([
-                                        str(i + 1).zfill(max_digits['id']),
-                                        '',
-                                        students_group[i],
-                                        str(single_count).zfill(max_digits['single']),
-                                        str(multi_count).zfill(max_digits['multi']),
-                                        str(group_count).zfill(max_digits['group']),
-                                        str(total_count).zfill(max_digits['total'])
-                                    ])
-                        except FileNotFoundError as e:
-                            logger.error(f"加载设置时出错: {e}")
-                            student_data.append([
-                                str(i + 1).zfill(max_digits['id']),
-                                '',
-                                students_group[i],
-                                str(single_count).zfill(max_digits['single']),
-                                str(multi_count).zfill(max_digits['multi']),
-                                str(group_count).zfill(max_digits['group']),
-                                str(total_count).zfill(max_digits['total'])
-                            ])
-                        except KeyError:
-                            logger.error(f"设置文件中缺少foundation键")
-                            student_data.append([
-                                str(i + 1).zfill(max_digits['id']),
-                                '',
-                                students_group[i],
-                                str(single_count).zfill(max_digits['single']),
-                                str(multi_count).zfill(max_digits['multi']),
-                                str(group_count).zfill(max_digits['group']),
-                                str(total_count).zfill(max_digits['total'])
-                            ])
+                        student_data.append([
+                            str(cleaned_data[i][0]).zfill(max_digits['id']),
+                            student_name,
+                            cleaned_data[i][2],
+                            students_group[i],
+                            str(multi_count).zfill(max_digits['multi']),
+                            str(group_count).zfill(max_digits['group']),
+                            str(total_count).zfill(max_digits['total'])
+                        ])  
 
                     return student_data
 
@@ -347,7 +274,7 @@ class history(QFrame):
                     InfoBar.error(
                         title="读取学生名单文件失败",
                         content=f"错误信息: （请到日志文件查看）",
-                        duration=5000,
+                        duration=3000,
                         orient=Qt.Horizontal,
                         parent=self,
                         isClosable=True,
@@ -363,21 +290,7 @@ class history(QFrame):
                     # 初始化历史数据字典
                     history_data = {}
                     # 读取历史记录文件
-                    try:
-                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                            settings = json.load(f)
-                            list_strings_set = settings.get('list_strings', {})
-                            list_strings_settings = list_strings_set.get('use_lists', False)
-                            if not list_strings_settings:
-                                history_file = f'app/resource/history/{class_name}.json'
-                            else:
-                                history_file = f"app/resource/history/people_{class_name}.json"
-                    except FileNotFoundError as e:
-                        logger.error(f"加载设置时出错: {e}")
-                        history_file = f"app/resource/history/people_{class_name}.json"
-                    except KeyError:
-                        logger.error(f"设置文件中缺少foundation键")
-                        history_file = f"app/resource/history/people_{class_name}.json"
+                    history_file = f'app/resource/history/{class_name}.json'
 
                     if os.path.exists(history_file):
                         try:
@@ -388,21 +301,6 @@ class history(QFrame):
                     
                     # 假设历史数据中每个抽取记录有时间、抽取方式和被点次数信息
                     student_data = []
-                    if _student_name in history_data.get('single', {}):
-                        single_history = history_data['single'][_student_name]['time']
-                        for record in single_history:
-                            time_data = record.get('draw_method', {})
-                            time = next(iter(time_data.values())) if isinstance(time_data, dict) and time_data else ''
-                            draw_method = next(iter(time_data.keys())) if isinstance(time_data, dict) and time_data else ''
-                            if draw_method == 'random':
-                                draw_method_text = '重复抽取'
-                            elif draw_method == 'until_reboot':
-                                draw_method_text = '不重复抽取(直到软件重启)'
-                            elif draw_method == 'until_all':
-                                draw_method_text = '不重复抽取(直到抽完全部人)'
-                            else:
-                                draw_method_text = draw_method
-                            student_data.append([time, draw_method_text])
                     if _student_name in history_data.get('multi', {}):
                         multi_history = history_data['multi'][_student_name]['time']
                         for record in multi_history:
@@ -440,7 +338,7 @@ class history(QFrame):
                     InfoBar.error(
                         title="读取学生名单文件失败",
                         content=f"错误信息: （请到日志文件查看）",
-                        duration=5000,
+                        duration=3000,
                         orient=Qt.Horizontal,
                         parent=self,
                         isClosable=True,
