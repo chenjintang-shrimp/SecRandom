@@ -13,7 +13,7 @@ from loguru import logger
 
 from app.common.config import load_custom_font
 
-class pumping_people(QWidget):
+class lottery(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         # 定义变量

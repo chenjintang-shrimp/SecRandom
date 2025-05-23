@@ -22,13 +22,16 @@
     },
     "pumping_people": {
         "animation_mode": 1,
-        "voice_enabled": true,
+        "voice_enabled": false,
         "student_id": 0,
         "student_name": 0,
         "student_quantity": true,
         "class_quantity": true,
         "font_size": 50,
-        "draw_mode": 1
+        "draw_mode": 1,
+        "group_quantity": true,
+        "gender_quantity": true,
+        "refresh_button": true
     },
     "group_player": {
         "animation_mode": 0,

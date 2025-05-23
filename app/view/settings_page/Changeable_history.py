@@ -126,17 +126,17 @@ class changeable_history(QFrame):
             # 设置表格行数为实际学生数量
             self.table.setRowCount(len(data))
             self.table.setSortingEnabled(False)
-            self.table.setColumnCount(7)
+            self.table.setColumnCount(5)
             
             # 填充表格数据
             for i, row in enumerate(data):
-                for j in range(7):
+                for j in range(5):
                     self.table.setItem(i, j, QTableWidgetItem(row[j]))
                     self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
                     self.table.item(i, j).setFont(QFont(load_custom_font(), 14)) # 设置字体
                     
             # 设置表头
-            self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组', '抽多人被点次数', '抽小组被点次数', '总计被点次数'])
+            self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组', '总抽取次数'])
             self.table.verticalHeader().hide() # 隐藏垂直表头
             self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
             
@@ -158,17 +158,17 @@ class changeable_history(QFrame):
         else:
             self.table.setRowCount(len(data))
             self.table.setSortingEnabled(False) # 禁止排序
-            self.table.setColumnCount(2)
+            self.table.setColumnCount(5)
             
             # 填充表格数据
             for i, row in enumerate(data):
-                for j in range(2):
+                for j in range(5):
                     self.table.setItem(i, j, QTableWidgetItem(row[j]))
                     self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
                     self.table.item(i, j).setFont(QFont(load_custom_font(), 14)) # 设置字体
                     
             # 设置表头
-            self.table.setHorizontalHeaderLabels(['时间', '抽取方式'])
+            self.table.setHorizontalHeaderLabels(['时间', '抽取方式', '抽取时选择的人数', '抽取时选择的小组', '抽取时选择的性别'])
             self.table.verticalHeader().hide() # 隐藏垂直表头
             self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
             self.table.setSortingEnabled(True) # 启用排序
@@ -233,39 +233,27 @@ class changeable_history(QFrame):
                     # 先遍历一次计算各列最大位数
                     max_digits = {
                         'id': 0,
-                        'multi': 0,
-                        'group': 0,
-                        'total': 0
+                        'pumping_people': 0
                     }
 
                     for i, student in enumerate(students):
                         student_name = student if not (student.startswith('【') and student.endswith('】')) else student[1:-1]
                         max_digits['id'] = max(max_digits['id'], len(str(cleaned_data[i][0])))
-                        if 'multi' in history_data and student_name in history_data['multi']:
-                            count = int(history_data['multi'][student_name]['total_number_of_times'])
-                            max_digits['multi'] = max(max_digits['multi'], len(str(count)))
-                        if 'group' in history_data and student_name in history_data['group']:
-                            count = int(history_data['group'][student_name]['total_number_of_times'])
-                            max_digits['group'] = max(max_digits['group'], len(str(count)))
-
-                    # 计算总计列的最大位数
-                    max_digits['total'] = max(max_digits['multi'], max_digits['group'])
+                        if 'pumping_people' in history_data and student_name in history_data['pumping_people']:
+                            count = int(history_data['pumping_people'][student_name]['total_number_of_times'])
+                            max_digits['pumping_people'] = max(max_digits['pumping_people'], len(str(count)))
 
                     # 生成最终数据
                     for i, student in enumerate(students):
                         student_name = student if not (student.startswith('【') and student.endswith('】')) else student[1:-1]
-                        multi_count = int(history_data['multi'].get(student_name, {}).get('total_number_of_times', 0)) if 'multi' in history_data else 0
-                        group_count = int(history_data['group'].get(student_name, {}).get('total_number_of_times', 0)) if 'group' in history_data else 0
-                        total_count = multi_count + group_count
+                        pumping_people_count = int(history_data['pumping_people'].get(student_name, {}).get('total_number_of_times', 0)) if 'pumping_people' in history_data else 0
 
                         student_data.append([
                             str(cleaned_data[i][0]).zfill(max_digits['id']),
                             student_name,
                             cleaned_data[i][2],
                             students_group[i],
-                            str(multi_count).zfill(max_digits['multi']),
-                            str(group_count).zfill(max_digits['group']),
-                            str(total_count).zfill(max_digits['total'])
+                            str(pumping_people_count).zfill(max_digits['pumping_people'])
                         ])  
 
                     return student_data
@@ -302,9 +290,9 @@ class changeable_history(QFrame):
                     
                     # 假设历史数据中每个抽取记录有时间、抽取方式和被点次数信息
                     student_data = []
-                    if _student_name in history_data.get('multi', {}):
-                        multi_history = history_data['multi'][_student_name]['time']
-                        for record in multi_history:
+                    if _student_name in history_data.get('pumping_people', {}):
+                        pumping_people_history = history_data['pumping_people'][_student_name]['time']
+                        for record in pumping_people_history:
                             time_data = record.get('draw_method', {})
                             time = next(iter(time_data.values())) if isinstance(time_data, dict) and time_data else ''
                             draw_method = next(iter(time_data.keys())) if isinstance(time_data, dict) and time_data else ''
@@ -316,22 +304,10 @@ class changeable_history(QFrame):
                                 draw_method_text = '不重复抽取(直到抽完全部人)'
                             else:
                                 draw_method_text = draw_method
-                            student_data.append([time, draw_method_text])
-                    if _student_name in history_data.get('group', {}):
-                        group_history = history_data['group'][_student_name]['time']
-                        for record in group_history:
-                            time_data = record.get('draw_method', {})
-                            time = next(iter(time_data.values())) if isinstance(time_data, dict) and time_data else ''
-                            draw_method = next(iter(time_data.keys())) if isinstance(time_data, dict) and time_data else ''
-                            if draw_method == 'random':
-                                draw_method_text = '重复抽取'
-                            elif draw_method == 'until_reboot':
-                                draw_method_text = '不重复抽取(直到软件重启)'
-                            elif draw_method == 'until_all':
-                                draw_method_text = '不重复抽取(直到抽完全部人)'
-                            else:
-                                draw_method_text = draw_method
-                            student_data.append([time, draw_method_text])
+                            draw_people_numbers = record.get('draw_people_numbers', '')
+                            draw_group = record.get('draw_group', '')
+                            draw_gender = record.get('draw_gender', '')
+                            student_data.append([time, draw_method_text, f'{draw_people_numbers}', draw_group, draw_gender])
                     return student_data
                     
                 except Exception as e:

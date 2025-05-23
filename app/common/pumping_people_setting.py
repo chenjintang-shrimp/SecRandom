@@ -27,6 +27,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             "student_name": 0,
             "student_quantity": True,
             "class_quantity": True,
+            "group_quantity": True,
+            "gender_quantity": True,
+            "refresh_button": True, 
         }
 
         self.pumping_people_Draw_comboBox = ComboBox()
@@ -34,8 +37,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_Voice_switch = SwitchButton()
         self.pumping_people_student_id_comboBox = ComboBox()
         self.pumping_people_student_name_comboBox = ComboBox()
+        self.pumping_people_refresh_button_switch = SwitchButton()
         self.pumping_people_student_quantity_switch = SwitchButton()
         self.pumping_people_class_quantity_switch = SwitchButton()
+        self.pumping_people_group_quantity_switch = SwitchButton()
+        self.pumping_people_gender_quantity_switch = SwitchButton()
+        
         self.pumping_people_font_size_edit = LineEdit()
         
         # 抽取模式下拉框
@@ -85,6 +92,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_student_name_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_people_student_name_comboBox.setFont(QFont(load_custom_font(), 14))
 
+        # 刷新列表下拉框
+        self.pumping_people_refresh_button_switch.setOnText("显示")
+        self.pumping_people_refresh_button_switch.setOffText("隐藏")
+        self.pumping_people_refresh_button_switch.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
+        self.pumping_people_refresh_button_switch.setFont(QFont(load_custom_font(), 14))
+
         # 班级总人数下拉框
         self.pumping_people_student_quantity_switch.setOnText("显示")
         self.pumping_people_student_quantity_switch.setOffText("隐藏")
@@ -97,6 +110,18 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_class_quantity_switch.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
         self.pumping_people_class_quantity_switch.setFont(QFont(load_custom_font(), 14))
 
+        # 便捷修改小组功能显示下拉框
+        self.pumping_people_group_quantity_switch.setOnText("显示")
+        self.pumping_people_group_quantity_switch.setOffText("隐藏")
+        self.pumping_people_group_quantity_switch.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
+        self.pumping_people_group_quantity_switch.setFont(QFont(load_custom_font(), 14))
+
+        # 便捷修改性别功能显示下拉框
+        self.pumping_people_gender_quantity_switch.setOnText("显示")
+        self.pumping_people_gender_quantity_switch.setOffText("隐藏")
+        self.pumping_people_gender_quantity_switch.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
+        self.pumping_people_gender_quantity_switch.setFont(QFont(load_custom_font(), 14))
+
         # 添加组件到分组中
         self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), "抽取模式", "设置抽取模式", self.pumping_people_Draw_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_text_font_size_20_filled.svg"), "字体大小", "设置抽取结果的字体大小", self.pumping_people_font_size_edit)
@@ -104,8 +129,11 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(QIcon("app/resource/assets/ic_fluent_calendar_video_20_filled.svg"), "动画模式", "设置抽取时的动画播放方式", self.pumping_people_Animation_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_number_symbol_square_20_filled.svg"), "学号格式", "设置学号格式设置", self.pumping_people_student_id_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_rename_20_filled.svg"), "姓名格式", "设置姓名格式设置", self.pumping_people_student_name_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "班级总人数", "设置班级总人数是否显示", self.pumping_people_student_quantity_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_class_20_filled.svg"), "便捷修改班级/小组", "设置便捷修改班级/小组功能是否显示", self.pumping_people_class_quantity_switch)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_apps_list_20_filled.svg"), "刷新列表", "设置该功能是否显示(重启生效)", self.pumping_people_refresh_button_switch)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "班级总人数", "设置该功能是否显示(重启生效)", self.pumping_people_student_quantity_switch)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_class_20_filled.svg"), "便捷修改班级", "设置该功能是否显示(重启生效)", self.pumping_people_class_quantity_switch)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_convert_range_20_filled.svg"), "便捷修改组号/抽取范围", "设置该功能是否显示(重启生效)", self.pumping_people_group_quantity_switch)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_pill_20_filled.svg"), "便捷修改性别", "设置该功能是否显示(重启生效)", self.pumping_people_gender_quantity_switch)
 
         self.load_settings()  # 加载设置
         self.save_settings()  # 保存设置
@@ -204,6 +232,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     student_quantity = pumping_people_settings.get("student_quantity", self.default_settings["student_quantity"])
 
                     class_quantity = pumping_people_settings.get("class_quantity", self.default_settings["class_quantity"])
+
+                    group_quantity = pumping_people_settings.get("group_quantity", self.default_settings["group_quantity"])
+
+                    gender_quantity = pumping_people_settings.get("gender_quantity", self.default_settings["gender_quantity"])
+
+                    refresh_button = pumping_people_settings.get("refresh_button", self.default_settings["refresh_button"])
                     
                     self.pumping_people_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.pumping_people_font_size_edit.setText(str(font_size))
@@ -213,6 +247,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_people_student_name_comboBox.setCurrentIndex(student_name)
                     self.pumping_people_student_quantity_switch.setChecked(student_quantity)
                     self.pumping_people_class_quantity_switch.setChecked(class_quantity)
+                    self.pumping_people_group_quantity_switch.setChecked(group_quantity)
+                    self.pumping_people_gender_quantity_switch.setChecked(gender_quantity)
+                    self.pumping_people_refresh_button_switch.setChecked(refresh_button)
                     logger.info(f"加载抽人设置完成")
             else:
                 self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
@@ -223,6 +260,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                 self.pumping_people_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
                 self.pumping_people_student_quantity_switch.setChecked(self.default_settings["student_quantity"])
                 self.pumping_people_class_quantity_switch.setChecked(self.default_settings["class_quantity"])
+                self.pumping_people_group_quantity_switch.setChecked(self.default_settings["group_quantity"])
+                self.pumping_people_gender_quantity_switch.setChecked(self.default_settings["gender_quantity"])
+                self.pumping_people_refresh_button_switch.setChecked(self.default_settings["refresh_button"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -234,6 +274,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             self.pumping_people_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
             self.pumping_people_student_quantity_switch.setChecked(self.default_settings["student_quantity"])
             self.pumping_people_class_quantity_switch.setChecked(self.default_settings["class_quantity"])
+            self.pumping_people_group_quantity_switch.setChecked(self.default_settings["group_quantity"])
+            self.pumping_people_gender_quantity_switch.setChecked(self.default_settings["gender_quantity"])
+            self.pumping_people_refresh_button_switch.setChecked(self.default_settings["refresh_button"])
             self.save_settings()
     
     def save_settings(self):
@@ -259,6 +302,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         pumping_people_settings["student_name"] = self.pumping_people_student_name_comboBox.currentIndex()
         pumping_people_settings["student_quantity"] = self.pumping_people_student_quantity_switch.isChecked()
         pumping_people_settings["class_quantity"] = self.pumping_people_class_quantity_switch.isChecked()
+        pumping_people_settings["group_quantity"] = self.pumping_people_group_quantity_switch.isChecked()
+        pumping_people_settings["gender_quantity"] = self.pumping_people_gender_quantity_switch.isChecked()
+        pumping_people_settings["refresh_button"] = self.pumping_people_refresh_button_switch.isChecked()
 
         # 保存字体大小
         try:

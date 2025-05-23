@@ -19,6 +19,7 @@ if './app/Settings' != None and not os.path.exists('./app/Settings'):
 
 from app.view.settings import settings_Window
 from app.view.main_page.pumping_people import pumping_people
+from app.view.main_page.lottery import lottery
 from app.view.main_page.history import history
 from app.view.levitation import LevitationWindow
 
@@ -166,10 +167,14 @@ class Window(MSFluentWindow):
         self.pumping_peopleInterface = pumping_people(self)
         self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
 
+        self.lotteryInterface = lottery(self)
+        self.lotteryInterface.setObjectName("lotteryInterface")
+
         self.initNavigation()
 
     def initNavigation(self):
         self.addSubInterface(self.pumping_peopleInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.lotteryInterface, QIcon("app/resource/assets/ic_fluent_reward_20_filled.svg"), '抽奖', position=NavigationItemPosition.TOP)
 
         self.addSubInterface(self.historyInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)
 
@@ -259,6 +264,7 @@ class Window(MSFluentWindow):
         dialog.yesButton.clicked.connect(lambda: webbrowser.open(GITHUB_WEB))
         dialog.setFixedWidth(500)
         dialog.exec()
+        pass
 
     def start_cleanup(self):
         """软件启动时清理临时抽取记录文件"""
@@ -282,8 +288,7 @@ class Window(MSFluentWindow):
                         logger.info(f"已清理临时抽取记录文件: {file}")
                     except Exception as e:
                         logger.error(f"清理临时抽取记录文件失败: {e}")
-            if os.path.exists(temp_dir):
-                for file in glob.glob(f"{temp_dir}/until_the_reboot_scope_*.json"):
+                for file in glob.glob(f"{temp_dir}/until_all_draw_*.json"):
                     try:
                         os.remove(file)
                         logger.info(f"已清理临时抽取记录文件: {file}")
@@ -307,13 +312,6 @@ class Window(MSFluentWindow):
                 self.show()
                 self.activateWindow()
                 self.raise_()
-
-    def show_window(self):
-        self.showNormal()
-        if not self.isVisible():
-            self.show()
-            self.activateWindow()
-            self.raise_()
 
     def calculate_menu_position(self, menu):
         screen = QApplication.primaryScreen().availableGeometry()
@@ -380,9 +378,12 @@ class Window(MSFluentWindow):
         if not hasattr(self, 'settingInterface') or not self.settingInterface:
             self.settingInterface = settings_Window(self)
         if not self.settingInterface.isVisible():
-            self.settingInterface.show()
-            self.settingInterface.activateWindow()
-            self.settingInterface.raise_()
+            if self.settingInterface.isMinimized():
+                self.settingInterface.showNormal()
+            else:
+                self.settingInterface.show()
+                self.settingInterface.activateWindow()
+                self.settingInterface.raise_()
 
     def toggle_levitation_window(self):
         """切换浮窗显示/隐藏状态"""
