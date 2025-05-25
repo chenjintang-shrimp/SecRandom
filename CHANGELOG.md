@@ -4,7 +4,7 @@
 >
 > **旧版名单存储采用ini格式，更新至此版本需要重新添加名单(建议不替换文件进行安装-删了旧版重新弄)**
 >
-> 不了解公平抽取可看[SecRandom-README](https://github.com/SECTL/SecRandom)
+> **不了解公平抽取可看[SecRandom-README](https://github.com/SECTL/SecRandom)**
 
 > [!warning]
 > 注意：
