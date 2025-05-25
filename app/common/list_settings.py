@@ -242,7 +242,7 @@ class ClassInputDialog(QDialog):
         self.setFixedSize(400, 300)
         self.saved = False
         
-        self.text_label = BodyLabel('请输入班级名称，每行一个\n本班级的班级名称向前放\n注:用大写数字排序会乱')
+        self.text_label = BodyLabel('请输入班级名称，每行一个')
         self.text_label.setFont(QFont(load_custom_font(), 14))
 
         self.setStyleSheet("""

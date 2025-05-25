@@ -24,13 +24,12 @@ class pumping_people(QWidget):
         self.is_animating = False
         self.draw_mode = "random"
         self.animation_timer = None
+        self.initUI()
         # 使用全局语音引擎单例
         if not hasattr(QApplication.instance(), 'pumping_people_voice_engine'):
             QApplication.instance().pumping_people_voice_engine = pyttsx3.init()
             QApplication.instance().pumping_people_voice_engine.startLoop(False)
         self.voice_engine = QApplication.instance().pumping_people_voice_engine
-
-        self.initUI()
     
     def start_draw(self):
         """开始抽选学生"""
@@ -82,6 +81,7 @@ class pumping_people(QWidget):
                     data = json.load(f)
                     cleaned_data = []
 
+                    # 获取学生列表
                     if group_name == '抽取全班学生':
                         if genders == '抽取所有性别':
                             for student_name, student_info in data.items():
@@ -90,7 +90,8 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
-                                    cleaned_data.append((id, name))
+                                    exist = student_info.get('exist', True)
+                                    cleaned_data.append((id, name, exist))
                         else:
                             for student_name, student_info in data.items():
                                 if isinstance(student_info, dict) and 'id' in student_info:
@@ -98,8 +99,9 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
+                                    exist = student_info.get('exist', True)
                                     if gender == genders:
-                                        cleaned_data.append((id, name))
+                                        cleaned_data.append((id, name, exist))
                     elif group_name == '抽取小组组号':
                         groups = set()
                         for student_name, student_info in data.items():
@@ -108,8 +110,9 @@ class pumping_people(QWidget):
                                 name = student_name.replace('【', '').replace('】', '')
                                 gender = student_info.get('gender', '')
                                 group = student_info.get('group', '')
+                                exist = student_info.get('exist', True)
                                 if group:  # 只添加非空小组
-                                    groups.add((id, group))
+                                    groups.add((id, group, exist))
                         cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
                     else:
                         if genders == '抽取所有性别':
@@ -119,8 +122,9 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
+                                    exist = student_info.get('exist', True)
                                     if group == group_name:
-                                        cleaned_data.append((id, name))
+                                        cleaned_data.append((id, name, exist))
                         else:
                             for student_name, student_info in data.items():
                                 if isinstance(student_info, dict) and 'id' in student_info:
@@ -128,8 +132,12 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
+                                    exist = student_info.get('exist', True)
                                     if gender == genders and group == group_name:
-                                        cleaned_data.append((id, name))
+                                        cleaned_data.append((id, name, exist))
+
+                    # 过滤学生信息的exist为False的学生
+                    cleaned_data = list(filter(lambda x: x[2], cleaned_data))
 
                     students = cleaned_data
 
@@ -171,7 +179,7 @@ class pumping_people(QWidget):
                         vbox_layout = QVBoxLayout()
                         # 创建新标签列表
                         self.student_labels = []
-                        for num, name in selected_students:
+                        for num, name, exist in selected_students:
                             # 整合学号格式和姓名处理逻辑
                             student_id_format = pumping_people_student_id
                             student_name_format = pumping_people_student_name
@@ -366,6 +374,8 @@ class pumping_people(QWidget):
                         drawn_students = json.load(f)
                     except json.JSONDecodeError:
                         drawn_students = []
+            else:
+                drawn_students = []
             
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
@@ -382,8 +392,9 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
-                                    cleaned_data.append((id, name))
-                                    __cleaned_data.append((id, name, gender, group))
+                                    exist = student_info.get('exist', True)
+                                    cleaned_data.append((id, name, exist))
+                                    __cleaned_data.append((id, name, gender, group, exist))
                         else:
                             for student_name, student_info in data.items():
                                 if isinstance(student_info, dict) and 'id' in student_info:
@@ -391,9 +402,10 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
+                                    exist = student_info.get('exist', True)
                                     if gender == genders:
-                                        cleaned_data.append((id, name))
-                                        __cleaned_data.append((id, name, gender, group))
+                                        cleaned_data.append((id, name, exist))
+                                        __cleaned_data.append((id, name, gender, group, exist))
                     elif group_name == '抽取小组组号':
                         groups = set()
                         for student_name, student_info in data.items():
@@ -402,9 +414,10 @@ class pumping_people(QWidget):
                                 name = student_name.replace('【', '').replace('】', '')
                                 gender = student_info.get('gender', '')
                                 group = student_info.get('group', '')
+                                exist = student_info.get('exist', True)
                                 if group:  # 只添加非空小组
-                                    groups.add((id, group))
-                                    __cleaned_data.append((id, name, gender, group))
+                                    groups.add((id, group, exist))
+                                    __cleaned_data.append((id, name, gender, group, exist))
                         cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
                     else:
                         if genders == '抽取所有性别':
@@ -414,9 +427,10 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
+                                    exist = student_info.get('exist', True)
                                     if group == group_name:
-                                        cleaned_data.append((id, name))
-                                        __cleaned_data.append((id, name, gender, group))
+                                        cleaned_data.append((id, name, exist))
+                                        __cleaned_data.append((id, name, gender, group, exist))
                         else:
                             for student_name, student_info in data.items():
                                 if isinstance(student_info, dict) and 'id' in student_info:
@@ -424,13 +438,18 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
+                                    exist = student_info.get('exist', True)
                                     if gender == genders and group == group_name:
-                                        cleaned_data.append((id, name))
-                                        __cleaned_data.append((id, name, gender, group))
+                                        cleaned_data.append((id, name, exist))
+                                        __cleaned_data.append((id, name, gender, group, exist))
+
+                    # 过滤学生信息的exist为False的学生
+                    cleaned_data = list(filter(lambda x: x[2], cleaned_data))
+                    __cleaned_data = [(id, name, gender, group, exist) for id, name, gender, group, exist in __cleaned_data if exist]
 
                     if self.draw_mode == "random":
                         available_students = cleaned_data
-                    elif self.draw_mode in ["until_reboot", "until_all"]:
+                    elif self.draw_mode == "until_reboot" or self.draw_mode == "until_all":
                         available_students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]]
 
                     if available_students:
@@ -460,7 +479,7 @@ class pumping_people(QWidget):
                             # 初始化权重数据
                             weights = {}
                             
-                            for student_id, student_name in available_students:
+                            for student_id, student_name, exist in available_students:
                                 # 获取学生历史记录
                                 student_history = history_data.get("pumping_people", {}).get(student_name, {
                                     "total_number_of_times": 0,
@@ -524,17 +543,6 @@ class pumping_people(QWidget):
                                 # 确保权重在合理范围内 (0.5~5.0)
                                 final_weight = max(0.5, min(comprehensive_weight, 5.0))
                                 weights[(student_id, student_name)] = final_weight
-
-                            # 在所有学生权重计算完成后，将权重转换为比例
-                            total_final_weight = sum(weights.values())
-                            if total_final_weight > 0:
-                                for key in weights:
-                                    weights[key] /= total_final_weight
-
-                            # # 打印对应同学的学生和对应的权重
-                            # for student_id, student_name in available_students:
-                            #     weight = weights.get((student_id, student_name), 0)
-                            #     logger.debug(f"学生: {student_name}, 权重: {weight}")
                             
                             # 根据权重抽取学生
                             selected_students = []
@@ -595,7 +603,7 @@ class pumping_people(QWidget):
 
                         vbox_layout = QVBoxLayout()
                         self.student_labels = []
-                        for num, selected in selected_students:
+                        for num, selected, exist in selected_students:
                             student_id_format = pumping_people_student_id
                             student_name_format = pumping_people_student_name
                             
@@ -639,14 +647,14 @@ class pumping_people(QWidget):
                         container.setLayout(vbox_layout)
                         self.result_layout.addWidget(container)
                         
-                        if self.draw_mode == "until_reboot" or "until_all":
+                        if self.draw_mode in ["until_reboot", "until_all"]:
                             # 更新抽取记录
                             drawn_students.extend([s[1].replace(' ', '') for s in selected_students])
                             with open(draw_record_file, 'w', encoding='utf-8') as f:
                                 json.dump(drawn_students, f, ensure_ascii=False, indent=4)
                         return
                     else:
-                        if self.draw_mode == "until_reboot" or "until_all":
+                        if self.draw_mode in ["until_reboot", "until_all"]:
                             # 删除临时文件
                             if os.path.exists(draw_record_file):
                                 os.remove(draw_record_file)
@@ -660,7 +668,7 @@ class pumping_people(QWidget):
                                 duration=3000
                             )
 
-                            self.random()
+                        self.random()
                         return
 
         else:
@@ -766,7 +774,7 @@ class pumping_people(QWidget):
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # 更新被选中学生的记录
-        for student_id, student_name in selected_students:
+        for student_id, student_name, exist in selected_students:
             # 获取学生信息
             student_info = student_info_map.get(student_name, {'group': '', 'gender': ''})
             student_group = student_info['group']
@@ -898,7 +906,8 @@ class pumping_people(QWidget):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
-
+                    
+                    # 获取学生列表
                     if group_name == '抽取全班学生':
                         if genders == '抽取所有性别':
                             for student_name, student_info in data.items():
@@ -907,7 +916,8 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
-                                    cleaned_data.append((id, name))
+                                    exist = student_info.get('exist', True)
+                                    cleaned_data.append((id, name, exist))
                         else:
                             for student_name, student_info in data.items():
                                 if isinstance(student_info, dict) and 'id' in student_info:
@@ -915,8 +925,9 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
+                                    exist = student_info.get('exist', True)
                                     if gender == genders:
-                                        cleaned_data.append((id, name))
+                                        cleaned_data.append((id, name, exist))
                     elif group_name == '抽取小组组号':
                         groups = set()
                         for student_name, student_info in data.items():
@@ -925,8 +936,9 @@ class pumping_people(QWidget):
                                 name = student_name.replace('【', '').replace('】', '')
                                 gender = student_info.get('gender', '')
                                 group = student_info.get('group', '')
+                                exist = student_info.get('exist', True)
                                 if group:  # 只添加非空小组
-                                    groups.add(group)
+                                    groups.add((id, group, exist))
                         cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
                     else:
                         if genders == '抽取所有性别':
@@ -936,8 +948,9 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
+                                    exist = student_info.get('exist', True)
                                     if group == group_name:
-                                        cleaned_data.append((id, name))
+                                        cleaned_data.append((id, name, exist))
                         else:
                             for student_name, student_info in data.items():
                                 if isinstance(student_info, dict) and 'id' in student_info:
@@ -945,11 +958,18 @@ class pumping_people(QWidget):
                                     name = student_name.replace('【', '').replace('】', '')
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
+                                    exist = student_info.get('exist', True)
                                     if gender == genders and group == group_name:
-                                        cleaned_data.append((id, name))
+                                        cleaned_data.append((id, name, exist))
+
+                    # 过滤学生信息的exist为False的学生
+                    cleaned_data = list(filter(lambda x: x[2], cleaned_data))
 
                     count = len(cleaned_data)
-                    self.total_label.setText(f'总人数: {count}')
+                    if group_name == '抽取小组组号':
+                        self.total_label.setText(f'总组数: {count}')
+                    else:
+                        self.total_label.setText(f'总人数: {count}')
                     self.max_count = count
                     self._update_count_display()
             else:
