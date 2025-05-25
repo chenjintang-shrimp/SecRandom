@@ -1,20 +1,14 @@
-from venv import logger
-import os
-import sys
-
 from qfluentwidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from ..common.config import cfg, AUTHOR, VERSION, YEAR
-from ..common.config import load_custom_font
+from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import load_custom_font
 
-from ..common.foundation_settings import foundation_settingsCard
-from ..common.senior_settings import senior_settingsCard
-from ..common.about import aboutCard
+from app.common.pumping_people_setting import pumping_people_SettinsCard
 
 
-class more_setting(QFrame):
+class pumping_people_setting(QFrame):
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
 
@@ -87,43 +81,9 @@ class more_setting(QFrame):
         inner_layout_personal = QVBoxLayout(inner_frame_personal)
         inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
 
-        # 基础设置卡片组
-        foundation_settings_Card = foundation_settingsCard()
-        inner_layout_personal.addWidget(foundation_settings_Card)
-
-        # # 高级设置卡片组
-        # senior_settings_Card = senior_settingsCard()
-        # inner_layout_personal.addWidget(senior_settings_Card)
-
-        self.aboutCard = aboutCard()
-        inner_layout_personal.addWidget(self.aboutCard)
-
-        # 创建个性化卡片组
-        self.themeAndZoomCard = SettingCardGroup("个性化", self)
-        
-        # 应用主题设置卡片
-        self.themeCard = OptionsSettingCard(
-            cfg.themeMode,
-            FluentIcon.BRUSH,
-            "应用主题",
-            "调整你的应用外观",
-            ["浅色", "深色", "跟随系统设置"]
-        )
-        # 界面缩放设置卡片
-        self.zoomCard = OptionsSettingCard(
-            cfg.dpiScale,
-            FluentIcon.ZOOM,
-            self.tr("界面缩放"),
-            self.tr("更改界面和字体的大小"),
-            texts=["100%", "125%", "150%", "175%", "200%", self.tr("使用系统设置"),]
-        )
-        
-        # 添加组件到分组中
-        self.themeAndZoomCard.addSettingCard(self.themeCard)
-        self.themeAndZoomCard.addSettingCard(self.zoomCard)
-        
-        # 将卡片组添加到布局中
-        inner_layout_personal.addWidget(self.themeAndZoomCard)
+        # 全局设置卡片组
+        global_setting_card = pumping_people_SettinsCard()
+        inner_layout_personal.addWidget(global_setting_card)
 
         # 将内部的 QFrame 设置为 QScrollArea 的内容
         scroll_area_personal.setWidget(inner_frame_personal)

@@ -8,7 +8,7 @@ import json
 from loguru import logger
 from pathlib import Path
 
-from ..common.config import load_custom_font
+from app.common.config import load_custom_font
 
 class LevitationWindow(QWidget):
     def __init__(self):
@@ -116,8 +116,6 @@ class LevitationWindow(QWidget):
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.setStyleSheet('border-radius: 5px; background-color: rgba(65, 66, 66, 0.3);')
             logger.error(f"加载浮窗背景透明度失败: {e}")
-
-        self.setProperty("radius", 5)
 
         self.people_button.clicked.connect(self.on_people_clicked)
 

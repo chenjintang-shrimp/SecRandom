@@ -29,6 +29,8 @@ logger.add(
     catch=True  # 捕获未处理的异常
 )
 
+setTheme(Theme.LIGHT)
+
 if cfg.get(cfg.dpiScale) == "Auto":
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)

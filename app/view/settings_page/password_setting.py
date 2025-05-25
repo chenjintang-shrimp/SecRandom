@@ -1,15 +1,14 @@
 from qfluentwidgets import *
-from qfluentwidgets import FluentIcon as FIF 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from ..common.config import cfg, AUTHOR, VERSION, YEAR
-from ..common.config import load_custom_font
+from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import load_custom_font
 
-from ..common.group_player_settings import group_player_SettinsCard
+from app.common.password_settings import password_SettingsCard
 
 
-class group_setting(QFrame):
+class password_set(QFrame):
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
 
@@ -49,7 +48,7 @@ class group_setting(QFrame):
             QScrollBar::down-arrow:vertical {
                 height: 0px;
             }
-        
+
             /* 水平滚动条整体 */
             QScrollBar:horizontal {
                 background-color: #E5DDF8;   /* 背景透明 */
@@ -82,9 +81,9 @@ class group_setting(QFrame):
         inner_layout_personal = QVBoxLayout(inner_frame_personal)
         inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
 
-        # 抽小组设置卡片组
-        group_player_setting_card = group_player_SettinsCard()
-        inner_layout_personal.addWidget(group_player_setting_card)
+        # 密码设置卡片组
+        password_settings_card = password_SettingsCard()
+        inner_layout_personal.addWidget(password_settings_card)
 
         # 将内部的 QFrame 设置为 QScrollArea 的内容
         scroll_area_personal.setWidget(inner_frame_personal)

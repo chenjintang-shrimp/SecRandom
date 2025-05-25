@@ -17,14 +17,10 @@ from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_W
 if './app/Settings' != None and not os.path.exists('./app/Settings'):
     os.makedirs('./app/Settings')
 
-if './app/resource/group' != None and not os.path.exists('./app/resource/group'):
-    os.makedirs('./app/resource/group')
-
 from app.view.settings import settings_Window
-from app.view.single import single
-from app.view.multiplayer import multiplayer
-from app.view.group import groupplayer
-from app.view.history import history
+from app.view.main_page.pumping_people import pumping_people
+# from app.view.main_page.lottery import lottery
+from app.view.main_page.history import history
 from app.view.levitation import LevitationWindow
 
 class Window(MSFluentWindow):
@@ -116,14 +112,14 @@ class Window(MSFluentWindow):
         self.tray_icon.setToolTip('SecRandom')
         self.tray_menu = RoundMenu(parent=self)
         # 添加关于SecRandom,点击后直接打开到到Github
-        self.tray_menu.addAction(Action(fIcon.INFO, '关于SecRandom', triggered=self.open_github))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_info_20_filled.svg"), '关于SecRandom', triggered=self.open_github))
         self.tray_menu.addSeparator()
-        self.tray_menu.addAction(Action(fIcon.POWER_BUTTON, '暂时显示/隐藏主界面', triggered=self.toggle_window))
-        self.tray_menu.addAction(Action(QIcon("app\\resource\\icon\\SecRandom_floating_100%.png"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
-        self.tray_menu.addAction(Action(fIcon.SETTING, '打开设置界面', triggered=self.show_setting_interface))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_power_20_filled.svg"), '暂时显示/隐藏主界面', triggered=self.toggle_window))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_settings_20_filled.svg"), '打开设置界面', triggered=self.show_setting_interface))
         self.tray_menu.addSeparator()
-        # self.tray_menu.addAction(Action(fIcon.SYNC, '重启', triggered=self.restart_app))
-        self.tray_menu.addAction(Action(fIcon.CLOSE, '退出', triggered=self.close_window_secrandom))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), '重启', triggered=self.restart_app))
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_arrow_exit_20_filled.svg"), '退出', triggered=self.close_window_secrandom))
 
         self.tray_icon.show()
         self.tray_icon.activated.connect(self.contextMenuEvent)
@@ -168,23 +164,19 @@ class Window(MSFluentWindow):
         self.historyInterface = history(self)
         self.historyInterface.setObjectName("historyInterface")
 
-        self.singleInterface = single(self)
-        self.singleInterface.setObjectName("singleInterface")
+        self.pumping_peopleInterface = pumping_people(self)
+        self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
 
-        self.multiInterface = multiplayer(self)
-        self.multiInterface.setObjectName("multiInterface")
-
-        self.groupInterface = groupplayer(self)
-        self.groupInterface.setObjectName("groupInterface")
+        # self.lotteryInterface = lottery(self)
+        # self.lotteryInterface.setObjectName("lotteryInterface")
 
         self.initNavigation()
 
     def initNavigation(self):
-        self.addSubInterface(self.singleInterface, fIcon.ROBOT, '抽单人', position=NavigationItemPosition.TOP)
-        self.addSubInterface(self.multiInterface, fIcon.PEOPLE, '抽多人', position=NavigationItemPosition.TOP)
-        self.addSubInterface(self.groupInterface, fIcon.TILES, '抽小组', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.pumping_peopleInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人', position=NavigationItemPosition.TOP)
+        # self.addSubInterface(self.lotteryInterface, QIcon("app/resource/assets/ic_fluent_reward_20_filled.svg"), '抽奖', position=NavigationItemPosition.TOP)
 
-        self.addSubInterface(self.historyInterface, fIcon.HISTORY, '历史记录', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.historyInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
         """窗口关闭时隐藏主界面"""
@@ -207,11 +199,12 @@ class Window(MSFluentWindow):
             logger.error(f"密码验证失败: {e}")
             return
 
-        self.start_cleanup()
-        logger.info("应用程序已退出")
-        logger.remove()
+        self.hide()
+        self.levitation_window.hide()
+        self.stop_focus_timer()
         if hasattr(self, 'server'):
             self.server.close()
+        logger.remove()
         QApplication.quit()
 
     def update_focus_mode(self, mode):
@@ -263,40 +256,34 @@ class Window(MSFluentWindow):
         self.last_focus_time = QDateTime.currentDateTime()
 
     def open_github(self):
-        dialog = Dialog(
-            '打开Github-SecRandom',
-            '是否打开Github-SecRandom🤗',
-        )
-        dialog.yesButton.setText("打开")
-        dialog.cancelButton.setText("取消")
-        dialog.yesButton.clicked.connect(lambda: webbrowser.open(GITHUB_WEB))
-        dialog.setFixedWidth(500)
-        dialog.exec()
+        # dialog = Dialog(
+        #     '打开Github-SecRandom',
+        #     '是否打开Github-SecRandom🤗',
+        # )
+        # dialog.yesButton.setText("打开")
+        # dialog.cancelButton.setText("取消")
+        # dialog.yesButton.clicked.connect(lambda: webbrowser.open(GITHUB_WEB))
+        # dialog.setFixedWidth(500)
+        # dialog.exec()
+        webbrowser.open(GITHUB_WEB)
 
     def start_cleanup(self):
         """软件启动时清理临时抽取记录文件"""
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                global_draw_mode = settings['global']['draw_mode']
+                pumping_people_draw_mode = settings['pumping_people']['draw_mode']
 
         except Exception as e:
-            global_draw_mode = 1
+            pumping_people_draw_mode = 1
             logger.error(f"加载抽选模式设置时出错: {e}, 使用默认:不重复抽取(直到软件重启)模式来清理临时抽取记录文件")
 
         import glob
         temp_dir = "app/resource/Temp"
 
-        if global_draw_mode == 1:  # 不重复抽取(直到软件重启)
+        if pumping_people_draw_mode == 1:  # 不重复抽取(直到软件重启)
             if os.path.exists(temp_dir):
                 for file in glob.glob(f"{temp_dir}/until_the_reboot_draw_*.json"):
-                    try:
-                        os.remove(file)
-                        logger.info(f"已清理临时抽取记录文件: {file}")
-                    except Exception as e:
-                        logger.error(f"清理临时抽取记录文件失败: {e}")
-            if os.path.exists(temp_dir):
-                for file in glob.glob(f"{temp_dir}/until_the_reboot_scope_*.json"):
                     try:
                         os.remove(file)
                         logger.info(f"已清理临时抽取记录文件: {file}")
@@ -320,13 +307,6 @@ class Window(MSFluentWindow):
                 self.show()
                 self.activateWindow()
                 self.raise_()
-
-    def show_window(self):
-        self.showNormal()
-        if not self.isVisible():
-            self.show()
-            self.activateWindow()
-            self.raise_()
 
     def calculate_menu_position(self, menu):
         screen = QApplication.primaryScreen().availableGeometry()
@@ -364,42 +344,8 @@ class Window(MSFluentWindow):
         self.stop_focus_timer()
         if hasattr(self, 'server'):
             self.server.close()
-
-        try:
-            logger.debug("正在通过cmd脚本重启程序...")
-            fixed_path = os.path.abspath(sys.argv[0])
-            root_dir = os.path.dirname(sys.executable)
-            cmd_path = os.path.join(root_dir, "SecRandom_restart.bat")
-
-            # 确保路径用双引号包裹，处理特殊字符
-            cmd_content = f"""@echo off
-TIMEOUT /T 2 /NOBREAK
-cd /d "{root_dir}"
-start "" /B "{fixed_path}"
-( del "%~f0" ) 2>nul
-exit
-"""
-            # 写入批处理文件时指定编码
-            with open(cmd_path, "w", encoding='cp437') as f:  # Windows批处理常用编码
-                f.write(cmd_content)
-
-            logger.debug(f'当前程序位置: {fixed_path}')
-            logger.debug(f'bat内容:\n{cmd_content}')
-
-            # 使用subprocess启动批处理
-            if os.name == 'nt':
-                creation_flags = subprocess.CREATE_NO_WINDOW  # 避免弹出cmd窗口
-            else:
-                creation_flags = 0
-
-            logger.remove()
-            subprocess.Popen(['cmd.exe', '/C', cmd_path], shell=False, creationflags=creation_flags)
-            QApplication.quit()
-
-        except Exception as e:
-            logger.error(f"创建重启脚本失败: {e}, 退出程序")
-            logger.remove()
-            QApplication.quit()
+        logger.remove()
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
     def show_setting_interface(self):
         """显示设置界面"""
@@ -427,9 +373,12 @@ exit
         if not hasattr(self, 'settingInterface') or not self.settingInterface:
             self.settingInterface = settings_Window(self)
         if not self.settingInterface.isVisible():
-            self.settingInterface.show()
-            self.settingInterface.activateWindow()
-            self.settingInterface.raise_()
+            if self.settingInterface.isMinimized():
+                self.settingInterface.showNormal()
+            else:
+                self.settingInterface.show()
+                self.settingInterface.activateWindow()
+                self.settingInterface.raise_()
 
     def toggle_levitation_window(self):
         """切换浮窗显示/隐藏状态"""

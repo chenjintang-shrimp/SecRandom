@@ -11,14 +11,13 @@ def load_custom_font():
     return font_family
 
 class Config(QConfig):
-    # 主题模式
     dpiScale = OptionsConfigItem(
         "Window", "DpiScale", "Auto", OptionsValidator([1, 1.25, 1.5, 1.75, 2, "Auto"]), restart=True)
 
 YEAR = 2025
 MONTH = 4
 AUTHOR = "lzy98276"
-VERSION = "v1.0.2.3-beta"
+VERSION = "v1.0.3.0-beta"
 APPLY_NAME = "SecRandom"
 GITHUB_WEB = "https://github.com/SECTL/SecRandom"
 BILIBILI_WEB = "https://space.bilibili.com/520571577"

@@ -1,14 +1,20 @@
+from venv import logger
+import os
+import sys
+
 from qfluentwidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
 
-from ..common.config import cfg, AUTHOR, VERSION, YEAR
-from ..common.config import load_custom_font
+from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import load_custom_font
 
-from ..common.global_settings import global_SettinsCard
+from app.common.foundation_settings import foundation_settingsCard
+from app.common.about import aboutCard
 
 
-class global_setting(QFrame):
+class more_setting(QFrame):
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
 
@@ -81,9 +87,30 @@ class global_setting(QFrame):
         inner_layout_personal = QVBoxLayout(inner_frame_personal)
         inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
 
-        # 全局设置卡片组
-        global_setting_card = global_SettinsCard()
-        inner_layout_personal.addWidget(global_setting_card)
+        # 基础设置卡片组
+        foundation_settings_Card = foundation_settingsCard()
+        inner_layout_personal.addWidget(foundation_settings_Card)
+
+        self.aboutCard = aboutCard()
+        inner_layout_personal.addWidget(self.aboutCard)
+
+        # 创建个性化卡片组
+        self.themeAndZoomCard = SettingCardGroup("个性化", self)
+
+        # 界面缩放设置卡片
+        self.zoomCard = OptionsSettingCard(
+            cfg.dpiScale,
+            QIcon("app/resource/assets/ic_fluent_zoom_fit_20_filled.svg"),
+            self.tr("界面缩放"),
+            self.tr("更改界面和字体的大小"),
+            texts=["100%", "125%", "150%", "175%", "200%", self.tr("使用系统设置"),]
+        )
+        
+        # 添加组件到分组中
+        self.themeAndZoomCard.addSettingCard(self.zoomCard)
+        
+        # 将卡片组添加到布局中
+        inner_layout_personal.addWidget(self.themeAndZoomCard)
 
         # 将内部的 QFrame 设置为 QScrollArea 的内容
         scroll_area_personal.setWidget(inner_frame_personal)
