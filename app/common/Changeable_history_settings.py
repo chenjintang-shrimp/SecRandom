@@ -62,7 +62,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(QIcon("app/resource/assets/ic_fluent_class_20_filled.svg"), "选择班级", "选择一个需要查看历史记录的班级", self.class_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_person_20_filled.svg"), "选择同学", "全班同学是详细的内容,个人是只有抽取的时间与方式", self.student_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_delete_dismiss_20_filled.svg"), "清除历史记录", "点击按钮清除当前选择的班级点名历史记录", self.clear_history_Button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "历史记录", "选择是否开启历史记录功能", self.history_switch)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "历史记录", "选择是否开启该功能(如果使用更'精确'的公平抽取务必打开)", self.history_switch)
 
         self.load_settings()
         self.save_settings()
