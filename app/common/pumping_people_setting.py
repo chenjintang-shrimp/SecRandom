@@ -21,6 +21,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             "extraction_scope": 0,
             "font_size": 50,
             "draw_mode": 0,
+            "draw_pumping": 0,
             "animation_mode": 0,
             "voice_enabled": True,
             "student_id": 0,
@@ -33,6 +34,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         }
 
         self.pumping_people_Draw_comboBox = ComboBox()
+        self.pumping_Draw_comboBox = ComboBox()
         self.pumping_people_Animation_comboBox = ComboBox()
         self.pumping_people_Voice_switch = SwitchButton()
         self.pumping_people_student_id_comboBox = ComboBox()
@@ -46,10 +48,16 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_font_size_edit = LineEdit()
         
         # 抽取模式下拉框
-        self.pumping_people_Draw_comboBox.setFixedWidth(320) # 设置下拉框宽度为320像素
+        self.pumping_people_Draw_comboBox.setFixedWidth(320)
         self.pumping_people_Draw_comboBox.addItems(["重复抽取", "不重复抽取(直到软件重启)", "不重复抽取(直到抽完全部人)"])
         self.pumping_people_Draw_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_people_Draw_comboBox.setFont(QFont(load_custom_font(), 14))
+
+        # 抽取方式下拉框
+        self.pumping_Draw_comboBox.setFixedWidth(320)
+        self.pumping_Draw_comboBox.addItems(["可预测抽取", "不可预测抽取", "公平可预测抽取", "公平不可预测抽取"])
+        self.pumping_Draw_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.pumping_Draw_comboBox.setFont(QFont(load_custom_font(), 14))
 
         # 字体大小
         self.pumping_people_font_size_edit.setPlaceholderText("请输入字体大小 (30-200)")
@@ -124,6 +132,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
 
         # 添加组件到分组中
         self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), "抽取模式", "设置抽取模式", self.pumping_people_Draw_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), "抽取方式", "设置抽取方式", self.pumping_Draw_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_text_font_size_20_filled.svg"), "字体大小", "设置抽取结果的字体大小", self.pumping_people_font_size_edit)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_person_feedback_20_filled.svg"), "语音播放", "设置结果公布时是否播放语音", self.pumping_people_Voice_switch)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_calendar_video_20_filled.svg"), "动画模式", "设置抽取时的动画播放方式", self.pumping_people_Animation_comboBox)
@@ -211,6 +220,11 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     if draw_mode < 0 or draw_mode >= self.pumping_people_Draw_comboBox.count():
                         logger.warning(f"无效的抽取模式索引: {draw_mode}")
                         draw_mode = self.default_settings["draw_mode"]
+
+                    draw_pumping = pumping_people_settings.get("draw_pumping", self.default_settings["draw_pumping"])
+                    if draw_pumping < 0 or draw_pumping >= self.pumping_Draw_comboBox.count():
+                        logger.warning(f"无效的抽取方式索引: {draw_pumping}")
+                        draw_pumping = self.default_settings["draw_pumping"]
                         
                     animation_mode = pumping_people_settings.get("animation_mode", self.default_settings["animation_mode"])
                     if animation_mode < 0 or animation_mode >= self.pumping_people_Animation_comboBox.count():
@@ -230,16 +244,13 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                         student_name = self.default_settings["student_name"]
 
                     student_quantity = pumping_people_settings.get("student_quantity", self.default_settings["student_quantity"])
-
                     class_quantity = pumping_people_settings.get("class_quantity", self.default_settings["class_quantity"])
-
                     group_quantity = pumping_people_settings.get("group_quantity", self.default_settings["group_quantity"])
-
                     gender_quantity = pumping_people_settings.get("gender_quantity", self.default_settings["gender_quantity"])
-
                     refresh_button = pumping_people_settings.get("refresh_button", self.default_settings["refresh_button"])
                     
                     self.pumping_people_Draw_comboBox.setCurrentIndex(draw_mode)
+                    self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
                     self.pumping_people_font_size_edit.setText(str(font_size))
                     self.pumping_people_Animation_comboBox.setCurrentIndex(animation_mode)
                     self.pumping_people_Voice_switch.setChecked(voice_enabled)
@@ -253,6 +264,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     logger.info(f"加载抽人设置完成")
             else:
                 self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
+                self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
                 self.pumping_people_font_size_edit.setText(str(self.default_settings["font_size"]))
                 self.pumping_people_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
                 self.pumping_people_Voice_switch.setChecked(self.default_settings["voice_enabled"])
@@ -267,6 +279,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
+            self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
             self.pumping_people_font_size_edit.setText(str(self.default_settings["font_size"]))
             self.pumping_people_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
             self.pumping_people_Voice_switch.setChecked(self.default_settings["voice_enabled"])
@@ -296,6 +309,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         pumping_people_settings = existing_settings["pumping_people"]
         # 只保存索引值
         pumping_people_settings["draw_mode"] = self.pumping_people_Draw_comboBox.currentIndex()
+        pumping_people_settings["draw_pumping"] = self.pumping_Draw_comboBox.currentIndex()
         pumping_people_settings["animation_mode"] = self.pumping_people_Animation_comboBox.currentIndex()
         pumping_people_settings["voice_enabled"] = self.pumping_people_Voice_switch.isChecked()
         pumping_people_settings["student_id"] = self.pumping_people_student_id_comboBox.currentIndex()
