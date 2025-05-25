@@ -272,16 +272,16 @@ class Window(MSFluentWindow):
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                global_draw_mode = settings['global']['draw_mode']
+                pumping_people_draw_mode = settings['pumping_people']['draw_mode']
 
         except Exception as e:
-            global_draw_mode = 1
+            pumping_people_draw_mode = 1
             logger.error(f"加载抽选模式设置时出错: {e}, 使用默认:不重复抽取(直到软件重启)模式来清理临时抽取记录文件")
 
         import glob
         temp_dir = "app/resource/Temp"
 
-        if global_draw_mode == 1:  # 不重复抽取(直到软件重启)
+        if pumping_people_draw_mode == 1:  # 不重复抽取(直到软件重启)
             if os.path.exists(temp_dir):
                 for file in glob.glob(f"{temp_dir}/until_the_reboot_draw_*.json"):
                     try:
