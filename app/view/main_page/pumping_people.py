@@ -9,7 +9,11 @@ import random
 import pyttsx3
 import pypinyin
 import re
+import datetime
+import math
 from loguru import logger
+from random import SystemRandom
+system_random = SystemRandom()
 
 from app.common.config import load_custom_font
 
@@ -105,7 +109,7 @@ class pumping_people(QWidget):
                                 gender = student_info.get('gender', '')
                                 group = student_info.get('group', '')
                                 if group:  # 只添加非空小组
-                                    groups.add(group)
+                                    groups.add((id, group))
                         cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
                     else:
                         if genders == '抽取所有性别':
@@ -128,6 +132,7 @@ class pumping_people(QWidget):
                                         cleaned_data.append((id, name))
 
                     students = cleaned_data
+
                     if students:
                         # 从self.current_count获取抽取人数
                         draw_count = self.current_count
@@ -256,13 +261,8 @@ class pumping_people(QWidget):
         self.start_button.clicked.disconnect()
         self.start_button.clicked.connect(self.start_draw)
         
-        # 根据抽选模式显示最终结果
-        if self.draw_mode == "random":
-            self.random_draw()
-        elif self.draw_mode == "until_reboot":
-            self.until_the_reboot_draw()
-        elif self.draw_mode == "until_all":
-            self.until_all_draw_mode()
+        # 显示最终结果
+        self.random()
             
         # 动画结束后进行语音播报
         try:
@@ -301,12 +301,7 @@ class pumping_people(QWidget):
     
     def _show_result_directly(self):
         """直接显示结果（无动画效果）"""
-        if self.draw_mode == "random":
-            self.random_draw()
-        elif self.draw_mode == "until_reboot":
-            self.until_the_reboot_draw()
-        elif self.draw_mode == "until_all":
-            self.until_all_draw_mode()
+        self.random()
 
         # 动画结束后进行语音播报
         try:
@@ -327,601 +322,45 @@ class pumping_people(QWidget):
                             self.voice_engine.iterate()
         except Exception as e:
             logger.error(f"语音播报出错: {e}")
-            
-    def random_draw(self):
-        """重复随机抽选学生"""
-        class_name = self.class_combo.currentText()
-        group_name = self.group_combo.currentText()
-        genders = self.gender_combo.currentText()
-        if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
-            student_file = f"app/resource/list/{class_name}.json"
-            if os.path.exists(student_file):
-                with open(student_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    cleaned_data = []
-
-                    if group_name == '抽取全班学生':
-                        if genders == '抽取所有性别':
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    cleaned_data.append((id, name))
-                        else:
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    if gender == genders:
-                                        cleaned_data.append((id, name))
-                    elif group_name == '抽取小组组号':
-                        groups = set()
-                        for student_name, student_info in data.items():
-                            if isinstance(student_info, dict) and 'id' in student_info:
-                                id = student_info.get('id', '')
-                                name = student_name.replace('【', '').replace('】', '')
-                                gender = student_info.get('gender', '')
-                                group = student_info.get('group', '')
-                                if group:  # 只添加非空小组
-                                    groups.add(group)
-                        cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
-                    else:
-                        if genders == '抽取所有性别':
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    if group == group_name:
-                                        cleaned_data.append((id, name))
-                        else:
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    if gender == genders and group == group_name:
-                                        cleaned_data.append((id, name))
-
-                    available_students = cleaned_data
-                    
-                    if available_students:
-                        # 从self.current_count获取抽取人数
-                        draw_count = self.current_count
-                        
-                        # 抽取多个学生
-                        selected_students = random.sample(available_students, min(draw_count, len(available_students)))
-
-                        # 清除旧布局和标签
-                        if hasattr(self, 'container'):
-                            self.container.deleteLater()
-                            del self.container
-                        if hasattr(self, 'student_labels'):
-                            for label in self.student_labels:
-                                label.deleteLater()
-
-                        # 删除布局中的所有内容
-                        while self.result_layout.count(): 
-                            item = self.result_layout.takeAt(0)
-                            widget = item.widget()
-                            if widget:
-                                widget.deleteLater()
-                        
-                        # 根据设置格式化学号显示
-                        try:
-                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                settings = json.load(f)
-                                pumping_people_student_id = settings['pumping_people']['student_id']
-                                pumping_people_student_name = settings['pumping_people']['student_name']
-                        except Exception as e:
-                            pumping_people_student_id = 0
-                            pumping_people_student_name = 0
-                            logger.error(f"加载设置时出错: {e}, 使用默认设置")
-
-                        # 创建新布局
-                        vbox_layout = QVBoxLayout()
-                        # 创建新标签列表
-                        self.student_labels = []
-                        for num, selected in selected_students:
-                            # 整合学号格式和姓名处理逻辑
-                            student_id_format = pumping_people_student_id
-                            student_name_format = pumping_people_student_name
-                            
-                            # 根据学号格式生成标签文本
-                            if student_id_format == 0:  # 补零
-                                student_id_str = f"{num:02}"
-                            elif student_id_format == 1:  # 居中显示
-                                student_id_str = f"{num:^5}"
-                            else:
-                                student_id_str = f"{num:02}"
-                            
-                            # 处理两字姓名
-                            if student_name_format == 0 and len(selected) == 2:
-                                name = f"{selected[0]}    {selected[1]}"
-                            else:
-                                name = selected
-
-                            if group_name == '抽取小组组号':
-                                label = BodyLabel(f"{selected}")
-                            else:
-                                label = BodyLabel(f"{student_id_str} {name}")
-
-                            # 读取设置中的history_enabled
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    history_enabled = settings['history']['history_enabled']
-                            except Exception as e:
-                                history_enabled = False
-                                logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
-
-                            class_name = self.class_combo.currentText()
-                            pumping_people_file = f"app/resource/list/{class_name}.json"
-                            if os.path.exists(pumping_people_file):
-                                with open(pumping_people_file, 'r', encoding='utf-8') as f:
-                                    data = json.load(f)
-                                    groups = set()
-                                    for student_name, student_info in data.items():
-                                        if isinstance(student_info, dict) and 'id' in student_info:
-                                            id = student_info.get('id', '')
-                                            name = student_name.replace('【', '').replace('】', '')
-                                            gender = student_info.get('gender', '')
-                                            group = student_info.get('group', '')
-                                            if group:
-                                                groups.add(group)
-                                    cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
-                            
-                            group_students = cleaned_data
-
-                            if selected not in group_students:
-                                if history_enabled:
-                                    # 记录抽选历史
-                                    history_file = f"app/resource/history/{class_name}.json"
-
-                                    os.makedirs(os.path.dirname(history_file), exist_ok=True)
-                                    
-                                    history_data = {}
-                                    if os.path.exists(history_file):
-                                        with open(history_file, 'r', encoding='utf-8') as f:
-                                            try:
-                                                history_data = json.load(f)
-                                            except json.JSONDecodeError:
-                                                history_data = {}
-                                    
-                                    if "group" not in history_data:
-                                        history_data["pumping_people"] = {}
-
-                                    import datetime
-                                    
-                                    if selected not in history_data["pumping_people"]:
-                                        history_data["pumping_people"][selected] = {
-                                            "total_number_of_times": 1,
-                                            "time": [
-                                                {
-                                                    "draw_method": {
-                                                        self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                                    },
-                                                    "draw_people_numbers": self.current_count,
-                                                    "draw_group": group_name,
-                                                    "draw_gender": genders
-                                                }
-                                            ]
-                                        }
-                                    else:
-                                        history_data["pumping_people"][selected]["total_number_of_times"] += 1
-                                        history_data["pumping_people"][selected]["time"].append({
-                                            "draw_method": {
-                                                self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                            },
-                                            "draw_people_numbers": self.current_count,
-                                            "draw_group": group_name,
-                                            "draw_gender": genders
-                                        })
-                                    
-                                    with open(history_file, 'w', encoding='utf-8') as f:
-                                        json.dump(history_data, f, ensure_ascii=False, indent=4)
-                                else:
-                                    logger.info("历史记录功能已被禁用。")
-                            else:
-                                logger.info(f"{selected} 是小组名称，无需记录抽选历史。")
-
-                            label.setAlignment(Qt.AlignCenter)
-                            # 读取设置中的font_size值
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    font_size = settings['pumping_people']['font_size']
-                                    if font_size < 30:
-                                        font_size = 85
-                            except Exception as e:
-                                font_size = 85
-                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
-                            # 根据设置调整字体大小
-                            if font_size < 30:
-                                label.setFont(QFont(load_custom_font(), 85))
-                            else:
-                                label.setFont(QFont(load_custom_font(), font_size))
-                            self.student_labels.append(label)
-                            vbox_layout.addWidget(label)
-                            
-                        # 创建容器并添加到布局
-                        container = QWidget()
-                        container.setLayout(vbox_layout)
-                        self.result_layout.addWidget(container)
-
-                        return
-            
-        else:
-            # 清除旧布局和标签
-            if hasattr(self, 'container'):
-                self.container.deleteLater()
-                del self.container
-            if hasattr(self, 'student_labels'):
-                for label in self.student_labels:
-                    label.deleteLater()
-
-            # 删除布局中的所有内容
-            while self.result_layout.count(): 
-                item = self.result_layout.takeAt(0)
-                widget = item.widget()
-                if widget:
-                    widget.deleteLater()
-
-            error_label = BodyLabel("-- 抽选失败")
-            error_label.setAlignment(Qt.AlignCenter)
-            # 读取设置中的font_size值
-            try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    font_size = settings['pumping_people']['font_size']
-                    if font_size < 30:
-                        font_size = 85
-            except Exception as e:
-                font_size = 85
-                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
-            # 根据设置调整字体大小
-            if font_size < 30:
-                error_label.setFont(QFont(load_custom_font(), 85))
-            else:
-                error_label.setFont(QFont(load_custom_font(), font_size))
-            self.result_layout.addWidget(error_label)
     
-        
-    def until_the_reboot_draw(self):
-        """不重复抽取(直到软件重启)"""
+    # 根据抽取模式抽选学生
+    def random(self):
+        """根据抽取模式抽选学生"""
         class_name = self.class_combo.currentText()
         group_name = self.group_combo.currentText()
         genders = self.gender_combo.currentText()
-        if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
-            student_file = f"app/resource/list/{class_name}.json"
-
-            if group_name == '抽取全班学生':
-                draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
-            elif group_name == '抽取小组组号':
-                draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}.json"
-            else:
-                draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
-            
-            # 创建Temp目录如果不存在
-            os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
-            
-            # 初始化抽取记录文件
-            if not os.path.exists(draw_record_file):
-                with open(draw_record_file, 'w', encoding='utf-8') as f:
-                    json.dump([], f, ensure_ascii=False, indent=4)
-            
-            # 读取已抽取记录
-            drawn_students = []
-            with open(draw_record_file, 'r', encoding='utf-8') as f:
-                try:
-                    drawn_students = json.load(f)
-                except json.JSONDecodeError:
-                    drawn_students = []
-            
-            if os.path.exists(student_file):
-                with open(student_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    cleaned_data = []
-
-                    if group_name == '抽取全班学生':
-                        if genders == '抽取所有性别':
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    cleaned_data.append((id, name))
-                        else:
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    if gender == genders:
-                                        cleaned_data.append((id, name))
-                    elif group_name == '抽取小组组号':
-                        groups = set()
-                        for student_name, student_info in data.items():
-                            if isinstance(student_info, dict) and 'id' in student_info:
-                                id = student_info.get('id', '')
-                                name = student_name.replace('【', '').replace('】', '')
-                                gender = student_info.get('gender', '')
-                                group = student_info.get('group', '')
-                                if group:  # 只添加非空小组
-                                    groups.add(group)
-                        cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
-                    else:
-                        if genders == '抽取所有性别':
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    if group == group_name:
-                                        cleaned_data.append((id, name))
-                        else:
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    if gender == genders and group == group_name:
-                                        cleaned_data.append((id, name))
-
-                    available_students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]]
-                    
-                    if available_students:
-                        # 从self.current_count获取抽取人数
-                        draw_count = self.current_count
-                        
-                        # 抽取多个学生
-                        selected_students = random.sample(available_students, min(draw_count, len(available_students)))
-                        
-                        # 清除旧布局和标签
-                        if hasattr(self, 'container'):
-                            self.container.deleteLater()
-                            del self.container
-                        if hasattr(self, 'student_labels'):
-                            for label in self.student_labels:
-                                label.deleteLater()
-
-                        # 删除布局中的所有内容
-                        while self.result_layout.count(): 
-                            item = self.result_layout.takeAt(0)
-                            widget = item.widget()
-                            if widget:
-                                widget.deleteLater()
-                        
-                        # 根据设置格式化学号显示
-                        try:
-                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                settings = json.load(f)
-                                pumping_people_student_id = settings['pumping_people']['student_id']
-                                pumping_people_student_name = settings['pumping_people']['student_name']
-                        except Exception as e:
-                            pumping_people_student_id = 0
-                            pumping_people_student_name = 0
-                            logger.error(f"加载设置时出错: {e}, 使用默认设置")
-
-                        # 创建新布局
-                        vbox_layout = QVBoxLayout()
-                        # 创建新标签列表
-                        self.student_labels = []
-                        for num, selected in selected_students:
-                            # 整合学号格式和姓名处理逻辑
-                            student_id_format = pumping_people_student_id
-                            student_name_format = pumping_people_student_name
-                            
-                            # 根据学号格式生成标签文本
-                            if student_id_format == 0:  # 补零
-                                student_id_str = f"{num:02}"
-                            elif student_id_format == 1:  # 居中显示
-                                student_id_str = f"{num:^5}"
-                            else:
-                                student_id_str = f"{num:02}"
-                            
-                            # 处理两字姓名
-                            if student_name_format == 0 and len(selected) == 2:
-                                name = f"{selected[0]}    {selected[1]}"
-                            else:
-                                name = selected
-
-                            if group_name == '抽取小组组号':
-                                label = BodyLabel(f"{selected}")
-                            else:
-                                label = BodyLabel(f"{student_id_str} {name}")
-
-                            # 读取设置中的history_enabled
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    history_enabled = settings['history']['history_enabled']
-                            except Exception as e:
-                                history_enabled = False
-                                logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
-
-                            class_name = self.class_combo.currentText()
-                            pumping_people_file = f"app/resource/list/{class_name}.json"
-                            if os.path.exists(pumping_people_file):
-                                with open(pumping_people_file, 'r', encoding='utf-8') as f:
-                                    data = json.load(f)
-                                    groups = set()
-                                    for student_name, student_info in data.items():
-                                        if isinstance(student_info, dict) and 'id' in student_info:
-                                            id = student_info.get('id', '')
-                                            name = student_name.replace('【', '').replace('】', '')
-                                            gender = student_info.get('gender', '')
-                                            group = student_info.get('group', '')
-                                            if group:
-                                                groups.add(group)
-                                    cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
-                            
-                            group_students = cleaned_data
-
-                            if selected not in group_students:
-                                if history_enabled:
-                                    # 记录抽选历史
-                                    history_file = f"app/resource/history/{class_name}.json"
-
-                                    os.makedirs(os.path.dirname(history_file), exist_ok=True)
-                                    
-                                    history_data = {}
-                                    if os.path.exists(history_file):
-                                        with open(history_file, 'r', encoding='utf-8') as f:
-                                            try:
-                                                history_data = json.load(f)
-                                            except json.JSONDecodeError:
-                                                history_data = {}
-                                    
-                                    if "pumping_people" not in history_data:
-                                        history_data["pumping_people"] = {}
-
-                                    import datetime
-                                    
-                                    if selected not in history_data["pumping_people"]:
-                                        history_data["pumping_people"][selected] = {
-                                            "total_number_of_times": 1,
-                                            "time": [
-                                                {
-                                                    "draw_method": {
-                                                        self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                                    },
-                                                    "draw_people_numbers": self.current_count,
-                                                    "draw_group": group_name,
-                                                    "draw_gender": genders
-                                                }
-                                            ]
-                                        }
-                                    else:
-                                        history_data["pumping_people"][selected]["total_number_of_times"] += 1
-                                        history_data["pumping_people"][selected]["time"].append({
-                                            "draw_method": {
-                                                self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                            },
-                                            "draw_people_numbers": self.current_count,
-                                            "draw_group": group_name,
-                                            "draw_gender": genders
-                                        })
-                                    
-                                    with open(history_file, 'w', encoding='utf-8') as f:
-                                        json.dump(history_data, f, ensure_ascii=False, indent=4)
-                                else:
-                                    logger.info("历史记录功能已被禁用。")
-                            else:
-                                logger.info(f"{selected} 是小组名称，无需记录抽选历史。")
-
-                            label.setAlignment(Qt.AlignCenter)
-                            # 读取设置中的font_size值
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    font_size = settings['pumping_people']['font_size']
-                                    if font_size < 30:
-                                        font_size = 85
-                            except Exception as e:
-                                font_size = 85
-                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
-                            # 根据设置调整字体大小
-                            if font_size < 30:
-                                label.setFont(QFont(load_custom_font(), 85))
-                            else:
-                                label.setFont(QFont(load_custom_font(), font_size))
-                            self.student_labels.append(label)
-                            vbox_layout.addWidget(label)
-
-                        # 创建容器并添加到布局
-                        container = QWidget()
-                        container.setLayout(vbox_layout)
-                        self.result_layout.addWidget(container)
-                        
-                        # 更新抽取记录
-                        drawn_students.extend([s[1].replace(' ', '') for s in selected_students])
-                        with open(draw_record_file, 'w', encoding='utf-8') as f:
-                            json.dump(drawn_students, f, ensure_ascii=False, indent=4)
-                        return
-                    else:
-                        # 删除临时文件
-                        if os.path.exists(draw_record_file):
-                            os.remove(draw_record_file)
-
-                        InfoBar.success(
-                            title='抽选完成',
-                            content="所有学生都已被抽选完毕，临时记录已清除\n显示的结果为新一轮抽选的结果,您可继续抽取",
-                            orient=Qt.Horizontal,
-                            parent=self,
-                            isClosable=True,
-                            duration=3000
-                        )
-
-                        self.until_the_reboot_draw()
-                        return
-
-        else:
-            # 清除旧布局和标签
-            if hasattr(self, 'container'):
-                self.container.deleteLater()
-                del self.container
-            if hasattr(self, 'student_labels'):
-                for label in self.student_labels:
-                    label.deleteLater()
-
-            # 删除布局中的所有内容
-            while self.result_layout.count(): 
-                item = self.result_layout.takeAt(0)
-                widget = item.widget()
-                if widget:
-                    widget.deleteLater()
-
-            error_label = BodyLabel("-- 抽选失败")
-            error_label.setAlignment(Qt.AlignCenter)
-            # 读取设置中的font_size值
-            try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    font_size = settings['pumping_people']['font_size']
-                    if font_size < 30:
-                        font_size = 85
-            except Exception as e:
-                font_size = 85
-                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
-            # 根据设置调整字体大小
-            if font_size < 30:
-                error_label.setFont(QFont(load_custom_font(), 85))
-            else:
-                error_label.setFont(QFont(load_custom_font(), font_size))
-            self.result_layout.addWidget(error_label)
+        is_group_mode = group_name == '抽取小组组号'
+        is_specific_gender = genders != '抽取所有性别'
         
-    def until_all_draw_mode(self):
-        """不重复抽取(直到抽完全部人)"""
-        class_name = self.class_combo.currentText()
-        group_name = self.group_combo.currentText()
-        genders = self.gender_combo.currentText()
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
             student_file = f"app/resource/list/{class_name}.json"
 
-            if group_name == '抽取全班学生':
-                draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
-            elif group_name == '抽取小组组号':
-                draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}.json"
-            else:
-                draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
+            if self.draw_mode == "until_reboot":
+                if group_name == '抽取全班学生':
+                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
+                elif group_name == '抽取小组组号':
+                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}.json"
+                else:
+                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
+            elif self.draw_mode == "until_all":
+                if group_name == '抽取全班学生':
+                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
+                elif group_name == '抽取小组组号':
+                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}.json"
+                else:
+                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
             
-            # 创建Temp目录如果不存在
-            os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
-            
-            # 读取已抽取记录
-            drawn_students = []
-            if os.path.exists(draw_record_file):
+            if self.draw_mode in ["until_reboot", "until_all"]:
+                # 创建Temp目录如果不存在
+                os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
+                
+                # 初始化抽取记录文件
+                if not os.path.exists(draw_record_file):
+                    with open(draw_record_file, 'w', encoding='utf-8') as f:
+                        json.dump([], f, ensure_ascii=False, indent=4)
+                
+                # 读取已抽取记录
+                drawn_students = []
                 with open(draw_record_file, 'r', encoding='utf-8') as f:
                     try:
                         drawn_students = json.load(f)
@@ -932,7 +371,9 @@ class pumping_people(QWidget):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
-
+                    __cleaned_data = []
+                    
+                    # 获取学生列表
                     if group_name == '抽取全班学生':
                         if genders == '抽取所有性别':
                             for student_name, student_info in data.items():
@@ -942,6 +383,7 @@ class pumping_people(QWidget):
                                     gender = student_info.get('gender', '')
                                     group = student_info.get('group', '')
                                     cleaned_data.append((id, name))
+                                    __cleaned_data.append((id, name, gender, group))
                         else:
                             for student_name, student_info in data.items():
                                 if isinstance(student_info, dict) and 'id' in student_info:
@@ -951,6 +393,7 @@ class pumping_people(QWidget):
                                     group = student_info.get('group', '')
                                     if gender == genders:
                                         cleaned_data.append((id, name))
+                                        __cleaned_data.append((id, name, gender, group))
                     elif group_name == '抽取小组组号':
                         groups = set()
                         for student_name, student_info in data.items():
@@ -960,7 +403,8 @@ class pumping_people(QWidget):
                                 gender = student_info.get('gender', '')
                                 group = student_info.get('group', '')
                                 if group:  # 只添加非空小组
-                                    groups.add(group)
+                                    groups.add((id, group))
+                                    __cleaned_data.append((id, name, gender, group))
                         cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
                     else:
                         if genders == '抽取所有性别':
@@ -972,6 +416,7 @@ class pumping_people(QWidget):
                                     group = student_info.get('group', '')
                                     if group == group_name:
                                         cleaned_data.append((id, name))
+                                        __cleaned_data.append((id, name, gender, group))
                         else:
                             for student_name, student_info in data.items():
                                 if isinstance(student_info, dict) and 'id' in student_info:
@@ -981,17 +426,150 @@ class pumping_people(QWidget):
                                     group = student_info.get('group', '')
                                     if gender == genders and group == group_name:
                                         cleaned_data.append((id, name))
+                                        __cleaned_data.append((id, name, gender, group))
 
-                    available_students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]]
-                    
+                    if self.draw_mode == "random":
+                        available_students = cleaned_data
+                    elif self.draw_mode in ["until_reboot", "until_all"]:
+                        available_students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]]
+
                     if available_students:
                         # 从self.current_count获取抽取人数
                         draw_count = self.current_count
                         
-                        # 抽取多个学生
-                        selected_students = random.sample(available_students, min(draw_count, len(available_students)))
+                        # 根据设置选项选择随机方法
+                        use_system_random = self.get_random_method_setting()
                         
-                        # 清除旧布局和标签
+                        if use_system_random == 1:  # 使用SystemRandom的方式-不可预测抽取
+                            if len(available_students) <= draw_count:
+                                selected_students = available_students
+                            else:
+                                selected_students = system_random.sample(available_students, draw_count)
+
+                        elif use_system_random == 2 or use_system_random == 3:  # 动态权重调整抽取系统
+                            # 加载历史记录
+                            history_file = f"app/resource/history/{class_name}.json"
+                            history_data = {}
+                            if os.path.exists(history_file):
+                                with open(history_file, 'r', encoding='utf-8') as f:
+                                    try:
+                                        history_data = json.load(f)
+                                    except json.JSONDecodeError:
+                                        history_data = {}
+                            
+                            # 初始化权重数据
+                            weights = {}
+                            
+                            for student_id, student_name in available_students:
+                                # 获取学生历史记录
+                                student_history = history_data.get("pumping_people", {}).get(student_name, {
+                                    "total_number_of_times": 0,
+                                    "last_drawn_time": None,
+                                    "rounds_missed": 0,
+                                    "time": []
+                                })
+                                
+                                # 基础参数配置
+                                COLD_START_ROUNDS = 10       # 冷启动轮次
+                                BASE_WEIGHT = 1.0            # 基础权重
+
+                                # 计算各权重因子
+                                # 因子1: 抽取频率惩罚（被抽中次数越多权重越低）
+                                frequency_factor = 1.0 / math.sqrt(student_history["total_number_of_times"] * 2 + 1)
+
+                                # 因子2: 小组平衡（仅当有足够数据时生效）
+                                group_factor = 1.0
+                                if len(history_data.get("group_stats", {})) > 3:  # 至少3个小组有数据
+                                    for student in __cleaned_data:
+                                        if student[1] == student_name:
+                                            current_student_group = student[3]
+                                            break
+                                    else:
+                                        current_student_group = ''
+                                    group_history = history_data["group_stats"].get(current_student_group, 0)
+                                    group_factor = 1.0 / (group_history * 0.2 + 1)  # 小组被抽1次→0.83, 2次→0.71
+
+                                # 因子3: 性别平衡（仅当两种性别都有数据时生效）
+                                gender_factor = 1.0
+                                if len(history_data.get("gender_stats", {})) >= 2:
+                                    for student in __cleaned_data:
+                                        if student[1] == student_name:
+                                            current_student_gender = student[2]
+                                            break
+                                    else:
+                                        current_student_gender = ''
+                                    gender_history = history_data["gender_stats"].get(current_student_gender, 0)
+                                    gender_factor = 1.0 / (gender_history * 0.2 + 1)
+
+                                # 冷启动特殊处理
+                                current_round = history_data.get("total_rounds", 0)
+                                if current_round < COLD_START_ROUNDS:
+                                    frequency_factor = min(0.8, frequency_factor)  # 防止新学生权重过低
+
+                                # 综合权重计算
+                                student_weights = {
+                                    'base': BASE_WEIGHT * 0.2,                    # 基础权重
+                                    'frequency': frequency_factor * 3.0,          # 频率惩罚
+                                    'group': group_factor * 0.8,                  # 小组平衡
+                                    'gender': gender_factor * 0.8                 # 性别平衡
+                                }
+
+                                if self.draw_mode in ['until_reboot', 'until_all'] and student_name in drawn_students:
+                                    # 如果是不重复抽取模式，且该学生已被抽中，则权重为0
+                                    comprehensive_weight = 0
+                                else:
+                                    comprehensive_weight = sum(student_weights.values())
+
+                                # 5. 最终调整与限制
+                                # 确保权重在合理范围内 (0.5~5.0)
+                                final_weight = max(0.5, min(comprehensive_weight, 5.0))
+                                weights[(student_id, student_name)] = final_weight
+
+                            # 在所有学生权重计算完成后，将权重转换为比例
+                            total_final_weight = sum(weights.values())
+                            if total_final_weight > 0:
+                                for key in weights:
+                                    weights[key] /= total_final_weight
+
+                            # # 打印对应同学的学生和对应的权重
+                            # for student_id, student_name in available_students:
+                            #     weight = weights.get((student_id, student_name), 0)
+                            #     logger.debug(f"学生: {student_name}, 权重: {weight}")
+                            
+                            # 根据权重抽取学生
+                            selected_students = []
+                            remaining_students = available_students.copy()
+
+                            use_system_random = self.get_random_method_setting()
+                            if use_system_random == 3:
+                                random_module = system_random
+                            elif use_system_random == 2:
+                                random_module = random
+                            else:
+                                random_module = random
+                            
+                            for _ in range(min(draw_count, len(available_students))):
+                                total_weight = sum(weights[s] for s in remaining_students)
+                                r = random_module.uniform(0, total_weight)
+                                accumulator = 0
+                                
+                                for student in remaining_students:
+                                    accumulator += weights[student]
+                                    if accumulator >= r:
+                                        selected_students.append(student)
+                                        remaining_students.remove(student)
+                                        break
+
+                        else:  # 默认使用random的方式-可预测抽取
+                            if len(available_students) <= draw_count:
+                                selected_students = available_students
+                            else:
+                                selected_students = random.sample(available_students, draw_count)
+
+                        # 更新历史记录
+                        self._update_history(class_name, group_name, genders, selected_students)
+                        
+                        # 显示结果
                         if hasattr(self, 'container'):
                             self.container.deleteLater()
                             del self.container
@@ -999,14 +577,12 @@ class pumping_people(QWidget):
                             for label in self.student_labels:
                                 label.deleteLater()
 
-                        # 删除布局中的所有内容
                         while self.result_layout.count(): 
                             item = self.result_layout.takeAt(0)
                             widget = item.widget()
                             if widget:
                                 widget.deleteLater()
                         
-                        # 根据设置格式化学号显示
                         try:
                             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                 settings = json.load(f)
@@ -1017,24 +593,19 @@ class pumping_people(QWidget):
                             pumping_people_student_name = 0
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
-                        # 创建新布局
                         vbox_layout = QVBoxLayout()
-                        # 创建新标签列表
                         self.student_labels = []
                         for num, selected in selected_students:
-                            # 整合学号格式和姓名处理逻辑
                             student_id_format = pumping_people_student_id
                             student_name_format = pumping_people_student_name
                             
-                            # 根据学号格式生成标签文本
-                            if student_id_format == 0:  # 补零
+                            if student_id_format == 0:
                                 student_id_str = f"{num:02}"
-                            elif student_id_format == 1:  # 居中显示
+                            elif student_id_format == 1:
                                 student_id_str = f"{num:^5}"
                             else:
                                 student_id_str = f"{num:02}"
                             
-                            # 处理两字姓名
                             if student_name_format == 0 and len(selected) == 2:
                                 name = f"{selected[0]}    {selected[1]}"
                             else:
@@ -1045,87 +616,7 @@ class pumping_people(QWidget):
                             else:
                                 label = BodyLabel(f"{student_id_str} {name}")
 
-                            # 读取设置中的history_enabled
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    history_enabled = settings['history']['history_enabled']
-                            except Exception as e:
-                                history_enabled = False
-                                logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
-
-                            class_name = self.class_combo.currentText()
-                            pumping_people_file = f"app/resource/list/{class_name}.json"
-                            if os.path.exists(pumping_people_file):
-                                with open(pumping_people_file, 'r', encoding='utf-8') as f:
-                                    data = json.load(f)
-                                    groups = set()
-                                    for student_name, student_info in data.items():
-                                        if isinstance(student_info, dict) and 'id' in student_info:
-                                            id = student_info.get('id', '')
-                                            name = student_name.replace('【', '').replace('】', '')
-                                            gender = student_info.get('gender', '')
-                                            group = student_info.get('group', '')
-                                            if group:
-                                                groups.add(group)
-                                    cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
-                            
-                            group_students = cleaned_data
-
-                            if selected not in group_students:
-                                if history_enabled:
-                                    # 记录抽选历史
-                                    history_file = f"app/resource/history/{class_name}.json"
-
-                                    os.makedirs(os.path.dirname(history_file), exist_ok=True)
-                                    
-                                    history_data = {}
-                                    if os.path.exists(history_file):
-                                        with open(history_file, 'r', encoding='utf-8') as f:
-                                            try:
-                                                history_data = json.load(f)
-                                            except json.JSONDecodeError:
-                                                history_data = {}
-                                    
-                                    if "group" not in history_data:
-                                        history_data["pumping_people"] = {}
-
-                                    import datetime
-                                    
-                                    if selected not in history_data["pumping_people"]:
-                                        history_data["pumping_people"][selected] = {
-                                            "total_number_of_times": 1,
-                                            "time": [
-                                                {
-                                                    "draw_method": {
-                                                        self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                                    },
-                                                    "draw_people_numbers": self.current_count,
-                                                    "draw_group": group_name,
-                                                    "draw_gender": genders
-                                                }
-                                            ]
-                                        }
-                                    else:
-                                        history_data["pumping_people"][selected]["total_number_of_times"] += 1
-                                        history_data["pumping_people"][selected]["time"].append({
-                                            "draw_method": {
-                                                self.draw_mode: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                                            },
-                                            "draw_people_numbers": self.current_count,
-                                            "draw_group": group_name,
-                                            "draw_gender": genders
-                                        })
-                                    
-                                    with open(history_file, 'w', encoding='utf-8') as f:
-                                        json.dump(history_data, f, ensure_ascii=False, indent=4)
-                                else:
-                                    logger.info("历史记录功能已被禁用。")
-                            else:
-                                logger.info(f"{selected} 是小组名称，无需记录抽选历史。")
-
                             label.setAlignment(Qt.AlignCenter)
-                            # 读取设置中的font_size值
                             try:
                                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                     settings = json.load(f)
@@ -1135,44 +626,45 @@ class pumping_people(QWidget):
                             except Exception as e:
                                 font_size = 85
                                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
-                            # 根据设置调整字体大小
+                            
                             if font_size < 30:
                                 label.setFont(QFont(load_custom_font(), 85))
                             else:
                                 label.setFont(QFont(load_custom_font(), font_size))
+                            
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
-
-                        # 创建容器并添加到布局
+                        
                         container = QWidget()
                         container.setLayout(vbox_layout)
                         self.result_layout.addWidget(container)
                         
-                        # 更新抽取记录
-                        drawn_students.extend([s[1].replace(' ', '') for s in selected_students])
-                        with open(draw_record_file, 'w', encoding='utf-8') as f:
-                            json.dump(drawn_students, f, ensure_ascii=False, indent=4)
+                        if self.draw_mode == "until_reboot" or "until_all":
+                            # 更新抽取记录
+                            drawn_students.extend([s[1].replace(' ', '') for s in selected_students])
+                            with open(draw_record_file, 'w', encoding='utf-8') as f:
+                                json.dump(drawn_students, f, ensure_ascii=False, indent=4)
                         return
                     else:
-                        # 删除临时文件
-                        if os.path.exists(draw_record_file):
-                            os.remove(draw_record_file)
+                        if self.draw_mode == "until_reboot" or "until_all":
+                            # 删除临时文件
+                            if os.path.exists(draw_record_file):
+                                os.remove(draw_record_file)
 
-                        InfoBar.success(
-                            title='抽选完成',
-                            content="所有学生都已被抽选完毕，记录已清除\n显示的结果为新一轮抽选的结果, 您可继续抽取",
-                            orient=Qt.Horizontal,
-                            parent=self,
-                            isClosable=True,
-                            duration=3000
-                        )
-                        
-                        # 重新开始新一轮抽选
-                        self.until_all_draw_mode()
+                            InfoBar.success(
+                                title='抽选完成',
+                                content="所有学生都已被抽选完毕，临时记录已清除\n显示的结果为新一轮抽选的结果,您可继续抽取",
+                                orient=Qt.Horizontal,
+                                parent=self,
+                                isClosable=True,
+                                duration=3000
+                            )
+
+                            self.random()
                         return
 
         else:
-            # 清除旧布局和标签
+            # 错误处理
             if hasattr(self, 'container'):
                 self.container.deleteLater()
                 del self.container
@@ -1180,7 +672,6 @@ class pumping_people(QWidget):
                 for label in self.student_labels:
                     label.deleteLater()
 
-            # 删除布局中的所有内容
             while self.result_layout.count(): 
                 item = self.result_layout.takeAt(0)
                 widget = item.widget()
@@ -1189,24 +680,177 @@ class pumping_people(QWidget):
 
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
-            # 读取设置中的font_size值
             try:
                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     font_size = settings['pumping_people']['font_size']
                     if font_size < 30:
-                        font_size = 85
+                        font_size = 50
             except Exception as e:
-                font_size = 85
+                font_size = 50
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
-            # 根据设置调整字体大小
+            
             if font_size < 30:
                 error_label.setFont(QFont(load_custom_font(), 85))
             else:
                 error_label.setFont(QFont(load_custom_font(), font_size))
+            
             self.result_layout.addWidget(error_label)
 
-    # 扩展匹配规则，支持更多格式，如 '第 1 小组'、'第1组'、数字 1 等
+    def get_random_method_setting(self):
+        """获取随机抽取方法的设置"""
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                random_method = settings['pumping_people']['draw_pumping']
+                return random_method
+        except Exception as e:
+            logger.error(f"加载随机抽取方法设置时出错: {e}, 使用默认设置")
+            return 0
+
+    # 更新历史记录
+    def _update_history(self, class_name, group_name, genders, selected_students):
+        """更新历史记录"""
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                history_enabled = settings['history']['history_enabled']
+        except Exception as e:
+            history_enabled = False
+            logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
+        
+        if not history_enabled:
+            logger.info("历史记录功能已被禁用。")
+            return
+        
+        history_file = f"app/resource/history/{class_name}.json"
+        os.makedirs(os.path.dirname(history_file), exist_ok=True)
+        
+        history_data = {}
+        if os.path.exists(history_file):
+            with open(history_file, 'r', encoding='utf-8') as f:
+                try:
+                    history_data = json.load(f)
+                except json.JSONDecodeError:
+                    history_data = {}
+        
+        # 初始化数据结构
+        if "pumping_people" not in history_data:
+            history_data["pumping_people"] = {}
+        if "pumping_group" not in history_data:
+            history_data["pumping_group"] = {}
+        if "group_stats" not in history_data:
+            history_data["group_stats"] = {}
+        if "gender_stats" not in history_data:
+            history_data["gender_stats"] = {}
+        if "total_rounds" not in history_data:
+            history_data["total_rounds"] = 0
+        
+        # 更新总轮次
+        history_data["total_rounds"] += 1
+
+        # 加载学生数据以获取小组和性别信息
+        student_info_map = {}
+        student_file = f"app/resource/list/{class_name}.json"
+        if os.path.exists(student_file):
+            with open(student_file, 'r', encoding='utf-8') as f:
+                student_data = json.load(f)
+                for name, info in student_data.items():
+                    if isinstance(info, dict) and 'id' in info:
+                        student_name = name.replace('【', '').replace('】', '')
+                        student_info_map[student_name] = {
+                            'group': info.get('group', ''),
+                            'gender': info.get('gender', '')
+                        }
+        
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # 更新被选中学生的记录
+        for student_id, student_name in selected_students:
+            # 获取学生信息
+            student_info = student_info_map.get(student_name, {'group': '', 'gender': ''})
+            student_group = student_info['group']
+            student_gender = student_info['gender']
+
+            if student_group not in history_data["group_stats"]:
+                history_data["group_stats"][student_group] = 0
+            if student_gender not in history_data["gender_stats"]:
+                history_data["gender_stats"][student_gender] = 0
+
+            if group_name == '抽取小组组号':
+                history_data["group_stats"][student_group] += 1
+            else:
+                history_data["group_stats"][student_group] += 1
+                history_data["gender_stats"][student_gender] += 1
+
+            if group_name == '抽取小组组号':
+                if student_name not in history_data["pumping_group"]:
+                    history_data["pumping_group"][student_name] = {
+                        "total_number_of_times": 1,
+                        "last_drawn_time": current_time,
+                        "rounds_missed": 0,
+                        "time": [{
+                            "draw_method": self.draw_mode,
+                            "draw_time": current_time,
+                            "draw_people_numbers": self.current_count
+                        }]
+                    }
+                else:
+                    history_data["pumping_group"][student_name]["total_number_of_times"] += 1
+                    history_data["pumping_group"][student_name]["last_drawn_time"] = current_time
+                    history_data["pumping_group"][student_name]["rounds_missed"] = 0
+                    history_data["pumping_group"][student_name]["time"].append({
+                        "draw_method": self.draw_mode,
+                        "draw_time": current_time,
+                        "draw_people_numbers": self.current_count
+                    })
+            else:
+                if student_name not in history_data["pumping_people"]:
+                    history_data["pumping_people"][student_name] = {
+                        "total_number_of_times": 1,
+                        "last_drawn_time": current_time,
+                        "rounds_missed": 0,
+                        "time": [{
+                            "draw_method": self.draw_mode,
+                            "draw_time": current_time,
+                            "draw_people_numbers": self.current_count,
+                            "draw_group": group_name,
+                            "draw_gender": genders
+                        }]
+                    }
+                else:
+                    history_data["pumping_people"][student_name]["total_number_of_times"] += 1
+                    history_data["pumping_people"][student_name]["last_drawn_time"] = current_time
+                    history_data["pumping_people"][student_name]["rounds_missed"] = 0
+                    history_data["pumping_people"][student_name]["time"].append({
+                        "draw_method": self.draw_mode,
+                        "draw_time": current_time,
+                        "draw_people_numbers": self.current_count,
+                        "draw_group": group_name,
+                        "draw_gender": genders
+                    })
+        
+        # 更新未被选中学生的rounds_missed
+        all_students = set()
+        student_file = f"app/resource/list/{class_name}.json"
+        if os.path.exists(student_file):
+            with open(student_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                for student_name, student_info in data.items():
+                    if isinstance(student_info, dict) and 'id' in student_info:
+                        name = student_name.replace('【', '').replace('】', '')
+                        all_students.add(name)
+        
+        selected_names = {s[1] for s in selected_students}
+        for student_name in all_students:
+            if student_name in history_data["pumping_people"] and student_name not in selected_names:
+                history_data["pumping_people"][student_name]["rounds_missed"] += 1
+        
+        # 保存历史记录
+        with open(history_file, 'w', encoding='utf-8') as f:
+            json.dump(history_data, f, ensure_ascii=False, indent=4)
+
+    # 将小组名称转换为排序键
     def sort_key(self, group):
         # 尝试匹配 '第X小组' 或 '第X组' 格式
         match = re.match(r'第\s*(\d+|一|二|三|四|五|六|七|八|九|十)\s*(小组|组)', group)
@@ -1226,7 +870,8 @@ class pumping_people(QWidget):
         pinyin_list = pypinyin.pinyin(group, style=pypinyin.NORMAL)
         pinyin_str = ''.join([item[0] for item in pinyin_list])
         return pinyin_str
-        
+
+    # 更新总人数显示   
     def update_total_count(self):
         """根据选择的班级更新总人数显示"""
         group_name = self.group_combo.currentText()
@@ -1237,12 +882,6 @@ class pumping_people(QWidget):
         temp_dir = "app/resource/Temp"
         if os.path.exists(temp_dir):
             for file in glob.glob(f"{temp_dir}/until_the_reboot_*.json"):
-                try:
-                    os.remove(file)
-                    logger.info(f"已清理临时抽取记录文件: {file}")
-                except Exception as e:
-                    logger.error(f"清理临时抽取记录文件失败: {e}")
-            for file in glob.glob(f"{temp_dir}/until_all_draw_*.json"):
                 try:
                     os.remove(file)
                     logger.info(f"已清理临时抽取记录文件: {file}")
@@ -1319,19 +958,22 @@ class pumping_people(QWidget):
         else:
             self.total_label.setText('总人数: 0')
             self.max_count = 0
-            
+    
+    # 增加抽取人数
     def _increase_count(self):
         """增加抽取人数"""
         if self.current_count < self.max_count:
             self.current_count += 1
             self._update_count_display()
-            
+
+    # 减少抽取人数        
     def _decrease_count(self):
         """减少抽取人数"""
         if self.current_count > 1:
             self.current_count -= 1
             self._update_count_display()
-            
+
+    # 更新人数显示        
     def _update_count_display(self):
         """更新人数显示"""
         self.count_label.setText(str(self.current_count))
@@ -1340,7 +982,8 @@ class pumping_people(QWidget):
         self.plus_button.setEnabled(self.current_count < self.max_count)
         self.minus_button.setEnabled(self.current_count > 1)
         self.start_button.setEnabled(self.current_count <= self.max_count and self.current_count > 0)
-             
+    
+    # 刷新班级列表         
     def refresh_class_list(self):
         """刷新班级下拉框选项"""
         self.class_combo.clear()
@@ -1378,6 +1021,7 @@ class pumping_people(QWidget):
             duration=3000
         )
 
+    # 刷新小组列表
     def refresh_group_list(self):
         """刷新小组下拉框选项"""
         class_name = self.class_combo.currentText()
@@ -1418,6 +1062,7 @@ class pumping_people(QWidget):
         else:
             logger.error("请先选择有效的班级")
 
+    # 刷新性别列表
     def refresh_gender_list(self):
         """刷新性别下拉框选项"""
         class_name = self.class_combo.currentText()
