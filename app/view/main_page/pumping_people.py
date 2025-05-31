@@ -24,10 +24,15 @@ class pumping_people(QWidget):
         self.is_animating = False
         self.draw_mode = "random"
         self.animation_timer = None
-        if not hasattr(QApplication.instance(), 'pumping_people_voice_engine'):
-            QApplication.instance().pumping_people_voice_engine = pyttsx3.init()
-            QApplication.instance().pumping_people_voice_engine.startLoop(False)
-        self.voice_engine = QApplication.instance().pumping_people_voice_engine
+        # 使用全局语音引擎单例
+        self.voice_engine = None
+        try:
+            if not hasattr(QApplication.instance(), 'pumping_people_voice_engine'):
+                QApplication.instance().pumping_people_voice_engine = pyttsx3.init()
+                QApplication.instance().pumping_people_voice_engine.startLoop(False)
+            self.voice_engine = QApplication.instance().pumping_people_voice_engine
+        except Exception as e:
+            logger.warning(f"无法初始化语音引擎: {e}, 语音功能将被禁用")
         self.initUI()
     
     def start_draw(self):
