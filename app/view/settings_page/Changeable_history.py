@@ -136,7 +136,7 @@ class changeable_history(QFrame):
                     for j in range(6):
                         self.table.setItem(i, j, QTableWidgetItem(row[j]))
                         self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
-                        self.table.item(i, j).setFont(QFont(load_custom_font(), 14)) # 设置字体
+                        self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
                 # 设置表头
                 self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组', '总抽取次数', '下次抽取概率'])
             else:
@@ -146,7 +146,7 @@ class changeable_history(QFrame):
                     for j in range(5):
                         self.table.setItem(i, j, QTableWidgetItem(row[j]))
                         self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
-                        self.table.item(i, j).setFont(QFont(load_custom_font(), 14)) # 设置字体
+                        self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
                 # 设置表头
                 self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组', '总抽取次数'])
 
@@ -178,7 +178,7 @@ class changeable_history(QFrame):
                 for j in range(5):
                     self.table.setItem(i, j, QTableWidgetItem(row[j]))
                     self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
-                    self.table.item(i, j).setFont(QFont(load_custom_font(), 14)) # 设置字体
+                    self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
                     
             # 设置表头
             self.table.setHorizontalHeaderLabels(['时间', '抽取方式', '抽取时选择的人数', '抽取时选择的小组', '抽取时选择的性别'])
@@ -235,9 +235,14 @@ class changeable_history(QFrame):
                                 name = student_name.replace('【', '').replace('】', '')
                                 gender = student_info.get('gender', '')
                                 group = student_info.get('group', '')
-                                cleaned_data.append((id, name, gender, group))
-                                __cleaned_data.append((id, name))
-                        students = [item[1] for item in cleaned_data]
+                                exist = student_info.get('exist', True)
+                                cleaned_data.append((id, name, gender, group, exist))
+                                __cleaned_data.append((id, name, exist))
+
+                    cleaned_data = list(filter(lambda x: x[4], cleaned_data))
+                    __cleaned_data = list(filter(lambda x: x[2], __cleaned_data))
+                    
+                    students = [item[1] for item in cleaned_data]
                     
                     # 直接从JSON数据获取小组信息
                     students_group = [item[3] for item in cleaned_data]
@@ -332,7 +337,7 @@ class changeable_history(QFrame):
                         total_weight = 0
                         available_students_weights = {}
 
-                        for student_id, student_name in available_students:
+                        for student_id, student_name, exist in available_students:
                             # 获取学生历史记录
                             student_history = history_data.get("pumping_people", {}).get(student_name, {
                                 "total_number_of_times": 0,
