@@ -189,20 +189,36 @@ class pumping_people(QWidget):
                         selected_students = random.sample(students, min(draw_count, len(students)))
                         
                         # 清除旧布局和标签
-                        if hasattr(self, 'container'):
-                            self.container.deleteLater()
+                        if hasattr(self, 'container') and isinstance(self.container, list):
+                            for label in self.container:
+                                label.deleteLater()
+                            self.container = []
+                        elif hasattr(self, 'container') and isinstance(self.container, QWidget):
+                            try:
+                                if self.container:
+                                    self.container.deleteLater()
+                            except RuntimeError:
+                                pass
                             del self.container
 
                         if hasattr(self, 'student_labels'):
                             for label in self.student_labels:
-                                label.deleteLater()
+                                try:
+                                    if label:
+                                        label.deleteLater()
+                                except RuntimeError:
+                                    pass
+                            self.student_labels = []
 
                         # 删除布局中的所有内容
                         while self.result_grid.count(): 
                             item = self.result_grid.takeAt(0)
                             widget = item.widget()
                             if widget:
-                                widget.deleteLater()
+                                try:
+                                    widget.deleteLater()
+                                except RuntimeError:
+                                    pass
                         
                         # 根据设置格式化学号显示
                         try:
@@ -216,8 +232,6 @@ class pumping_people(QWidget):
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
                         # 创建新布局
-                        from PyQt5.QtWidgets import QGridLayout
-
                         vbox_layout = QGridLayout()
                         # 创建新标签列表
                         self.student_labels = []
@@ -299,15 +313,7 @@ class pumping_people(QWidget):
                         return
         
         else:
-            # 清除旧布局和标签
-            def clear_layout(layout):
-                while layout.count():
-                    item = layout.takeAt(0)
-                    widget = item.widget()
-                    if widget:
-                        widget.deleteLater()
-            
-            clear_layout(self.result_grid)
+            self.clear_layout(self.result_grid)
             if hasattr(self, 'container'):
                 self.container.deleteLater()
                 del self.container
@@ -764,15 +770,7 @@ class pumping_people(QWidget):
                         return
 
         else:
-            # 清除旧布局和标签
-            def clear_layout(layout):
-                while layout.count():
-                    item = layout.takeAt(0)
-                    widget = item.widget()
-                    if widget:
-                        widget.deleteLater()
-            
-            clear_layout(self.result_grid)
+            self.clear_layout(self.result_grid)
             if hasattr(self, 'container'):
                 self.container.deleteLater()
                 del self.container
@@ -795,6 +793,14 @@ class pumping_people(QWidget):
             
             error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_grid.addWidget(error_label)
+
+    # 清除旧布局和标签
+    def clear_layout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
 
     # 获取随机抽取方法的设置
     def get_random_method_setting(self):
@@ -1250,7 +1256,7 @@ class pumping_people(QWidget):
         """恢复初始状态"""
         self._clean_temp_files()
         self.current_count = 1
-        self.result_grid.clear()
+        self.clear_layout(self.result_grid)
         self.update_total_count()
 
     # 清理临时文件
@@ -1399,7 +1405,7 @@ class pumping_people(QWidget):
         self.refresh_button = PushButton('重置记录')
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
-        self.refresh_button.clicked.connect(self.refresh_class_list)
+        self.refresh_button.clicked.connect(self._reset_to_initial_state)
         self.refresh_button.setVisible(show_refresh_button)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
@@ -1425,7 +1431,7 @@ class pumping_people(QWidget):
         self.count_label = BodyLabel('1')
         self.count_label.setAlignment(Qt.AlignCenter)
         self.count_label.setFont(QFont(load_custom_font(), 30))
-        self.count_label.setFixedWidth(60)
+        self.count_label.setFixedWidth(65)
         horizontal_layout.addWidget(self.count_label, 0, Qt.AlignLeft)
 
         # 加号按钮
