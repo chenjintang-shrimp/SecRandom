@@ -283,7 +283,7 @@ class Window(MSFluentWindow):
 
         if pumping_people_draw_mode == 1:  # 不重复抽取(直到软件重启)
             if os.path.exists(temp_dir):
-                for file in glob.glob(f"{temp_dir}/until_the_reboot_draw_*.json"):
+                for file in glob.glob(f"{temp_dir}/until_the_reboot_*.json"):
                     try:
                         os.remove(file)
                         logger.info(f"已清理临时抽取记录文件: {file}")
