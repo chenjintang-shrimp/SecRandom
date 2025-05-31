@@ -332,30 +332,30 @@ class password_SettingsCard(GroupHeaderCardWidget):
         self.start_password_switch.setOnText("开启")
         self.start_password_switch.setOffText("关闭")
         self.start_password_switch.checkedChanged.connect(self.start_password_switch_checked)
-        self.start_password_switch.setFont(QFont(load_custom_font(), 14))
+        self.start_password_switch.setFont(QFont(load_custom_font(), 12))
 
         # 设置是否启用加密相关设置/名单文件开关
         self.encrypt_setting_switch = SwitchButton()
         self.encrypt_setting_switch.setOnText("开启")
         self.encrypt_setting_switch.setOffText("关闭")
         self.encrypt_setting_switch.checkedChanged.connect(self.save_settings)
-        self.encrypt_setting_switch.setFont(QFont(load_custom_font(), 14))
+        self.encrypt_setting_switch.setFont(QFont(load_custom_font(), 12))
 
         # 设置2FA开关
         self.two_factor_switch = SwitchButton()
         self.two_factor_switch.setOnText("启用")
         self.two_factor_switch.setOffText("关闭")
         self.two_factor_switch.checkedChanged.connect(self.on_2fa_changed)
-        self.two_factor_switch.setFont(QFont(load_custom_font(), 14))
+        self.two_factor_switch.setFont(QFont(load_custom_font(), 12))
 
         # 导出密钥按钮
         self.export_key_button = PushButton('导出密钥')
-        self.export_key_button.setFont(QFont(load_custom_font(), 14))
+        self.export_key_button.setFont(QFont(load_custom_font(), 12))
         self.export_key_button.clicked.connect(self.export_key_file)
 
         # 设置密码按钮
         self.set_password_button = PushButton('设置密码')
-        self.set_password_button.setFont(QFont(load_custom_font(), 14))
+        self.set_password_button.setFont(QFont(load_custom_font(), 12))
         self.set_password_button.clicked.connect(self.show_password_dialog)
 
         # 退出软件是否需要验证密码开关
@@ -363,21 +363,21 @@ class password_SettingsCard(GroupHeaderCardWidget):
         self.exit_verification_switch.setOnText("开启")
         self.exit_verification_switch.setOffText("关闭")
         self.exit_verification_switch.checkedChanged.connect(lambda: self.verify_password_for_action('退出软件需要密码', 'exit'))
-        self.exit_verification_switch.setFont(QFont(load_custom_font(), 14))
+        self.exit_verification_switch.setFont(QFont(load_custom_font(), 12))
 
         # 重启软件是否需要验证密码开关
         self.restart_verification_switch = SwitchButton()
         self.restart_verification_switch.setOnText("开启")
         self.restart_verification_switch.setOffText("关闭")
         self.restart_verification_switch.checkedChanged.connect(lambda: self.verify_password_for_action('重启软件需要密码', 'restart'))
-        self.restart_verification_switch.setFont(QFont(load_custom_font(), 14))
+        self.restart_verification_switch.setFont(QFont(load_custom_font(), 12))
 
         # 暂时显示/隐藏悬浮窗是否需要验证密码开关
         self.show_hide_verification_switch = SwitchButton()
         self.show_hide_verification_switch.setOnText("开启")
         self.show_hide_verification_switch.setOffText("关闭")
         self.show_hide_verification_switch.checkedChanged.connect(lambda: self.verify_password_for_action('显示/隐藏悬浮窗需要密码', 'show_hide'))
-        self.show_hide_verification_switch.setFont(QFont(load_custom_font(), 14))
+        self.show_hide_verification_switch.setFont(QFont(load_custom_font(), 12))
 
         # 添加组件到分组中
         self.addGroup(QIcon("app/resource/assets/ic_fluent_person_passkey_20_filled.svg"), "密码功能", "启用后将启用该设置卡的所有功能", self.start_password_switch)

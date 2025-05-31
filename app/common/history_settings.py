@@ -17,24 +17,24 @@ class history_SettinsCard(GroupHeaderCardWidget):
 
         # 刷新按钮
         self.refresh_button = PrimaryPushButton('刷新列表/记录')
-        self.refresh_button.setFixedSize(180, 50)
-        self.refresh_button.setFont(QFont(load_custom_font(), 15))
+        self.refresh_button.setFixedSize(150, 35)
+        self.refresh_button.setFont(QFont(load_custom_font(), 14))
         self.refresh_button.clicked.connect(self.refresh_class_list)
         
         # 选择班级的下拉框
         self.class_comboBox = ComboBox()
-        self.class_comboBox.setFixedWidth(320)
+        self.class_comboBox.setFixedWidth(250)
         self.class_comboBox.setPlaceholderText("选择需要查看历史记录的班级")
         self.class_comboBox.addItems([])
-        self.class_comboBox.setFont(QFont(load_custom_font(), 15))
+        self.class_comboBox.setFont(QFont(load_custom_font(), 12))
         self.class_comboBox.currentIndexChanged.connect(self.load_students)
 
         # 选择同学的下拉框
         self.student_comboBox = ComboBox()
-        self.student_comboBox.setFixedWidth(320)
+        self.student_comboBox.setFixedWidth(250)
         self.student_comboBox.setPlaceholderText("选择需要查看历史记录的同学")
         self.student_comboBox.addItems([])
-        self.student_comboBox.setFont(QFont(load_custom_font(), 15))
+        self.student_comboBox.setFont(QFont(load_custom_font(), 12))
         
         # 程序启动时自动加载班级名称
         self.refresh_class_list()

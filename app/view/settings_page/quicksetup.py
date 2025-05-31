@@ -129,7 +129,7 @@ class quicksetup(QFrame):
                 item = self.table.item(i, j)
                 if item:
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
-                    item.setFont(QFont(load_custom_font(), 14)) # 设置字体
+                    item.setFont(QFont(load_custom_font(), 12)) # 设置字体
                 
         # 设置表头
         self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组'])

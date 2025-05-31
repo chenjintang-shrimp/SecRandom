@@ -40,7 +40,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         # 开机自启动按钮
         self.self_starting_switch.setOnText("开启")
         self.self_starting_switch.setOffText("关闭")
-        self.self_starting_switch.setFont(QFont(load_custom_font(), 14))
+        self.self_starting_switch.setFont(QFont(load_custom_font(), 12))
         self.self_starting_switch.checkedChanged.connect(self.on_pumping_floating_switch_changed)
         self.self_starting_switch.checkedChanged.connect(self.setting_startup)
 
@@ -48,7 +48,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.pumping_floating_switch.setOnText("显示")
         self.pumping_floating_switch.setOffText("隐藏")
         self.pumping_floating_switch.checkedChanged.connect(self.on_pumping_floating_switch_changed)
-        self.pumping_floating_switch.setFont(QFont(load_custom_font(), 14))
+        self.pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
 
         # 浮窗透明度设置下拉框
         self.pumping_floating_transparency_comboBox.setFixedWidth(200)

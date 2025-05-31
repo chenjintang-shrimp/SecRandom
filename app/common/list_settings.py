@@ -21,26 +21,26 @@ class list_SettinsCard(GroupHeaderCardWidget):
 
         self.class_Button = PushButton("设置班级名称")
         self.class_Button.clicked.connect(self.show_class_dialog)
-        self.class_Button.setFont(QFont(load_custom_font(), 14))
+        self.class_Button.setFont(QFont(load_custom_font(), 12))
         
         self.class_comboBox = ComboBox()
         self.class_comboBox.setFixedWidth(320)
         self.class_comboBox.setPlaceholderText("选择一个需要设置名单的班级")
         self.class_comboBox.addItems([])
-        self.class_comboBox.setFont(QFont(load_custom_font(), 14))
+        self.class_comboBox.setFont(QFont(load_custom_font(), 12))
         self.class_comboBox.currentIndexChanged.connect(lambda: self.refresh_signal.emit())
 
         self.student_Button = PushButton("设置班级名单")
         self.student_Button.clicked.connect(self.show_student_dialog)
-        self.student_Button.setFont(QFont(load_custom_font(), 14))
+        self.student_Button.setFont(QFont(load_custom_font(), 12))
 
         self.gender_Button = PushButton("设置学生性别")
         self.gender_Button.clicked.connect(self.show_gender_dialog)
-        self.gender_Button.setFont(QFont(load_custom_font(), 14))
+        self.gender_Button.setFont(QFont(load_custom_font(), 12))
 
         self.group_Button = PushButton("设置学生小组")
         self.group_Button.clicked.connect(self.show_group_dialog)
-        self.group_Button.setFont(QFont(load_custom_font(), 14))
+        self.group_Button.setFont(QFont(load_custom_font(), 12))
         
         try:
             list_folder = "app/resource/list"
@@ -243,7 +243,7 @@ class ClassInputDialog(QDialog):
         self.saved = False
         
         self.text_label = BodyLabel('请输入班级名称，每行一个')
-        self.text_label.setFont(QFont(load_custom_font(), 14))
+        self.text_label.setFont(QFont(load_custom_font(), 12))
 
         self.setStyleSheet("""
             QDialog, QDialog * {
@@ -254,9 +254,9 @@ class ClassInputDialog(QDialog):
         
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入班级名称，每行一个")
-        self.textEdit.setFont(QFont(load_custom_font(), 14))
+        self.textEdit.setFont(QFont(load_custom_font(), 12))
         
-        self.setFont(QFont(load_custom_font(), 14))
+        self.setFont(QFont(load_custom_font(), 12))
 
         try:
             list_folder = "app/resource/list"
@@ -276,8 +276,8 @@ class ClassInputDialog(QDialog):
         self.cancelButton = PushButton("取消")
         self.saveButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
-        self.saveButton.setFont(QFont(load_custom_font(), 14))
-        self.cancelButton.setFont(QFont(load_custom_font(), 14))
+        self.saveButton.setFont(QFont(load_custom_font(), 12))
+        self.cancelButton.setFont(QFont(load_custom_font(), 12))
         
         layout = QVBoxLayout()
         layout.addWidget(self.text_label)
@@ -294,7 +294,7 @@ class ClassInputDialog(QDialog):
     def closeEvent(self, event):
         if self.textEdit.toPlainText() and not self.saved:
             w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
-            w.setFont(QFont(load_custom_font(), 14))
+            w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
             w.yesButton = PrimaryPushButton('确定')
@@ -319,7 +319,7 @@ class StudentInputDialog(QDialog):
         self.saved = False
 
         self.text_label = BodyLabel('请输入学生姓名，每行一个\n在输入已经不在当前班级的学生时\n请在姓名前后加上【】')
-        self.text_label.setFont(QFont(load_custom_font(), 14))
+        self.text_label.setFont(QFont(load_custom_font(), 12))
 
         self.setStyleSheet("""
             QDialog, QDialog * {
@@ -330,9 +330,9 @@ class StudentInputDialog(QDialog):
         
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入学生姓名，每行一个")
-        self.textEdit.setFont(QFont(load_custom_font(), 14))
+        self.textEdit.setFont(QFont(load_custom_font(), 12))
         
-        self.setFont(QFont(load_custom_font(), 14))
+        self.setFont(QFont(load_custom_font(), 12))
         
         class_name = self.parent().class_comboBox.currentText()
         try:
@@ -365,8 +365,8 @@ class StudentInputDialog(QDialog):
         self.cancelButton = PushButton("取消")
         self.saveButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
-        self.saveButton.setFont(QFont(load_custom_font(), 14))
-        self.cancelButton.setFont(QFont(load_custom_font(), 14))
+        self.saveButton.setFont(QFont(load_custom_font(), 12))
+        self.cancelButton.setFont(QFont(load_custom_font(), 12))
         
         layout = QVBoxLayout()
         layout.addWidget(self.text_label)
@@ -383,7 +383,7 @@ class StudentInputDialog(QDialog):
     def closeEvent(self, event):
         if self.textEdit.toPlainText() and not self.saved:
             w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
-            w.setFont(QFont(load_custom_font(), 14))
+            w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
             w.yesButton = PrimaryPushButton('确定')
@@ -408,7 +408,7 @@ class GenderInputDialog(QDialog):
         self.saved = False
 
         self.text_label = BodyLabel('请输入每个人对应的性别，每行一个\n例:男 或 女(其它的?自己试一试吧)\n注:尽量在表格中复制后直接粘贴')
-        self.text_label.setFont(QFont(load_custom_font(), 14))
+        self.text_label.setFont(QFont(load_custom_font(), 12))
 
         self.setStyleSheet("""
             QDialog, QDialog * {
@@ -419,10 +419,10 @@ class GenderInputDialog(QDialog):
 
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入每个人对应的性别，每行一个")
-        self.textEdit.setFont(QFont(load_custom_font(), 14))
+        self.textEdit.setFont(QFont(load_custom_font(), 12))
         
         # 统一设置对话框字体
-        self.setFont(QFont(load_custom_font(), 14))
+        self.setFont(QFont(load_custom_font(), 12))
         
         class_name = self.parent().class_comboBox.currentText()
         # 尝试读取已保存的性别值
@@ -451,8 +451,8 @@ class GenderInputDialog(QDialog):
         self.cancelButton = PushButton("取消")
         self.saveButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
-        self.saveButton.setFont(QFont(load_custom_font(), 14))
-        self.cancelButton.setFont(QFont(load_custom_font(), 14))
+        self.saveButton.setFont(QFont(load_custom_font(), 12))
+        self.cancelButton.setFont(QFont(load_custom_font(), 12))
         
         layout = QVBoxLayout()
         layout.addWidget(self.text_label)
@@ -469,7 +469,7 @@ class GenderInputDialog(QDialog):
     def closeEvent(self, event):
         if self.textEdit.toPlainText() and not self.saved:
             w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
-            w.setFont(QFont(load_custom_font(), 14))
+            w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
             w.yesButton = PrimaryPushButton('确定')
@@ -494,7 +494,7 @@ class GroupInputDialog(QDialog):
         self.saved = False
 
         self.text_label = BodyLabel('请输入每个人对应的小组名称，每行一个\n例:第1小组 或 第一小组\n注:尽量在表格中复制后直接粘贴')
-        self.text_label.setFont(QFont(load_custom_font(), 14))
+        self.text_label.setFont(QFont(load_custom_font(), 12))
 
         self.setStyleSheet("""
             QDialog, QDialog * {
@@ -505,10 +505,10 @@ class GroupInputDialog(QDialog):
 
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入小组名称，每行一个")
-        self.textEdit.setFont(QFont(load_custom_font(), 14))
+        self.textEdit.setFont(QFont(load_custom_font(), 12))
         
         # 统一设置对话框字体
-        self.setFont(QFont(load_custom_font(), 14))
+        self.setFont(QFont(load_custom_font(), 12))
         
         class_name = self.parent().class_comboBox.currentText()
         # 尝试读取已保存的小组值
@@ -537,8 +537,8 @@ class GroupInputDialog(QDialog):
         self.cancelButton = PushButton("取消")
         self.saveButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
-        self.saveButton.setFont(QFont(load_custom_font(), 14))
-        self.cancelButton.setFont(QFont(load_custom_font(), 14))
+        self.saveButton.setFont(QFont(load_custom_font(), 12))
+        self.cancelButton.setFont(QFont(load_custom_font(), 12))
         
         layout = QVBoxLayout()
         layout.addWidget(self.text_label)
@@ -555,7 +555,7 @@ class GroupInputDialog(QDialog):
     def closeEvent(self, event):
         if self.textEdit.toPlainText() and not self.saved:
             w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
-            w.setFont(QFont(load_custom_font(), 14))
+            w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
             w.yesButton = PrimaryPushButton('确定')
