@@ -24,12 +24,11 @@ class pumping_people(QWidget):
         self.is_animating = False
         self.draw_mode = "random"
         self.animation_timer = None
-        self.initUI()
-        # 使用全局语音引擎单例
         if not hasattr(QApplication.instance(), 'pumping_people_voice_engine'):
             QApplication.instance().pumping_people_voice_engine = pyttsx3.init()
             QApplication.instance().pumping_people_voice_engine.startLoop(False)
         self.voice_engine = QApplication.instance().pumping_people_voice_engine
+        self.initUI()
     
     def start_draw(self):
         """开始抽选学生"""
@@ -74,13 +73,48 @@ class pumping_people(QWidget):
         class_name = self.class_combo.currentText()
         group_name = self.group_combo.currentText()
         genders = self.gender_combo.currentText()
+
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
             student_file = f"app/resource/list/{class_name}.json"
+
+            if self.draw_mode == "until_reboot":
+                if group_name == '抽取全班学生':
+                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
+                elif group_name == '抽取小组组号':
+                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}.json"
+                else:
+                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
+            elif self.draw_mode == "until_all":
+                if group_name == '抽取全班学生':
+                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
+                elif group_name == '抽取小组组号':
+                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}.json"
+                else:
+                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
+            
+            if self.draw_mode in ["until_reboot", "until_all"]:
+                # 创建Temp目录如果不存在
+                os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
+                
+                # 初始化抽取记录文件
+                if not os.path.exists(draw_record_file):
+                    with open(draw_record_file, 'w', encoding='utf-8') as f:
+                        json.dump([], f, ensure_ascii=False, indent=4)
+                
+                # 读取已抽取记录
+                drawn_students = []
+                with open(draw_record_file, 'r', encoding='utf-8') as f:
+                    try:
+                        drawn_students = json.load(f)
+                    except json.JSONDecodeError:
+                        drawn_students = []
+            else:
+                drawn_students = []
+
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
-
                     # 获取学生列表
                     if group_name == '抽取全班学生':
                         if genders == '抽取所有性别':
@@ -139,7 +173,8 @@ class pumping_people(QWidget):
                     # 过滤学生信息的exist为False的学生
                     cleaned_data = list(filter(lambda x: x[2], cleaned_data))
 
-                    students = cleaned_data
+                    # 如果所有学生都已抽取过，则使用全部学生名单
+                    students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]] or cleaned_data
 
                     if students:
                         # 从self.current_count获取抽取人数
@@ -158,8 +193,8 @@ class pumping_people(QWidget):
                                 label.deleteLater()
 
                         # 删除布局中的所有内容
-                        while self.result_layout.count(): 
-                            item = self.result_layout.takeAt(0)
+                        while self.result_grid.count(): 
+                            item = self.result_grid.takeAt(0)
                             widget = item.widget()
                             if widget:
                                 widget.deleteLater()
@@ -176,7 +211,9 @@ class pumping_people(QWidget):
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
                         # 创建新布局
-                        vbox_layout = QVBoxLayout()
+                        from PyQt5.QtWidgets import QGridLayout
+
+                        vbox_layout = QGridLayout()
                         # 创建新标签列表
                         self.student_labels = []
                         for num, name, exist in selected_students:
@@ -219,48 +256,77 @@ class pumping_people(QWidget):
                                 label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
                             vbox_layout.addWidget(label)
-                        # 创建容器并添加到布局
-                        container = QWidget()
-                        container.setLayout(vbox_layout)
-                        self.result_layout.addWidget(container)
+
+                        # 计算所有标签的宽度之和，并考虑间距和边距
+                        if self.student_labels:
+                            total_width = sum(label.sizeHint().width() for label in self.student_labels) + \
+                                          len(self.student_labels) * 180
+                            available_width = self.width() - 20
+                            
+                            # 如果总宽度超过可用宽度，则计算每行最多能放几个标签
+                            if total_width > available_width:
+                                avg_label_width = total_width / len(self.student_labels)
+                                max_columns = max(1, int(available_width // avg_label_width))
+                            else:
+                                max_columns = len(self.student_labels)  # 一行显示所有标签
+                        else:
+                            max_columns = 1
+                        
+                        # 复用 container 和 vbox_layout
+                        if not hasattr(self, 'container'):
+                            self.container = QWidget()
+                            self.vbox_layout = QGridLayout()
+                            self.container.setLayout(self.vbox_layout)
+                        else:
+                            # 清空旧标签
+                            for i in reversed(range(self.vbox_layout.count())):
+                                item = self.vbox_layout.itemAt(i)
+                                if item.widget():
+                                    item.widget().setParent(None)
+
+                        for i, label in enumerate(self.student_labels):
+                            row = i // max_columns
+                            col = i % max_columns
+                            self.vbox_layout.addWidget(label, row, col)
+                        
+                        self.result_grid.addWidget(self.container)
                         
                         return
         
         else:
             # 清除旧布局和标签
+            def clear_layout(layout):
+                while layout.count():
+                    item = layout.takeAt(0)
+                    widget = item.widget()
+                    if widget:
+                        widget.deleteLater()
+            
+            clear_layout(self.result_grid)
             if hasattr(self, 'container'):
                 self.container.deleteLater()
                 del self.container
             if hasattr(self, 'student_labels'):
                 for label in self.student_labels:
                     label.deleteLater()
-
-            # 删除布局中的所有内容
-            while self.result_layout.count(): 
-                item = self.result_layout.takeAt(0)
-                widget = item.widget()
-                if widget:
-                    widget.deleteLater()
-
+            
+            # 创建错误标签
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
-            # 读取设置中的font_size值
+            
+            # 获取字体大小设置
+            font_size = 85
             try:
                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    font_size = settings['pumping_people']['font_size']
-                    if font_size < 30:
-                        font_size = 85
+                    font_size = max(settings['pumping_people']['font_size'], 30)
             except Exception as e:
-                font_size = 85
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
-            # 根据设置调整字体大小
-            if font_size < 30:
-                error_label.setFont(QFont(load_custom_font(), 85))
-            else:
-                error_label.setFont(QFont(load_custom_font(), font_size))
-            self.result_layout.addWidget(error_label)
+            
+            error_label.setFont(QFont(load_custom_font(), font_size))
+            self.result_grid.addWidget(error_label)
     
+    # 停止动画并显示最终结果
     def _stop_animation(self):
         """停止动画并显示最终结果"""
         self.animation_timer.stop()
@@ -292,6 +358,7 @@ class pumping_people(QWidget):
         except Exception as e:
             logger.error(f"语音播报出错: {e}")
     
+    # 播放完整动画（快速显示5个随机学生后显示最终结果）
     def _play_full_animation(self):
         """播放完整动画（快速显示5个随机学生后显示最终结果）"""
         self.is_animating = True
@@ -307,6 +374,7 @@ class pumping_people(QWidget):
             self.start_button.setEnabled(True)  # 恢复按钮
           ])
     
+    # 直接显示结果（无动画效果）
     def _show_result_directly(self):
         """直接显示结果（无动画效果）"""
         self.random()
@@ -337,8 +405,6 @@ class pumping_people(QWidget):
         class_name = self.class_combo.currentText()
         group_name = self.group_combo.currentText()
         genders = self.gender_combo.currentText()
-        is_group_mode = group_name == '抽取小组组号'
-        is_specific_gender = genders != '抽取所有性别'
         
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
             student_file = f"app/resource/list/{class_name}.json"
@@ -445,7 +511,7 @@ class pumping_people(QWidget):
 
                     # 过滤学生信息的exist为False的学生
                     cleaned_data = list(filter(lambda x: x[2], cleaned_data))
-                    __cleaned_data = [(id, name, gender, group, exist) for id, name, gender, group, exist in __cleaned_data if exist]
+                    __cleaned_data = list(filter(lambda x: x[4], __cleaned_data))
 
                     if self.draw_mode == "random":
                         available_students = cleaned_data
@@ -542,7 +608,7 @@ class pumping_people(QWidget):
                                 # 5. 最终调整与限制
                                 # 确保权重在合理范围内 (0.5~5.0)
                                 final_weight = max(0.5, min(comprehensive_weight, 5.0))
-                                weights[(student_id, student_name)] = final_weight
+                                weights[(student_id, student_name, exist)] = final_weight
                             
                             # 根据权重抽取学生
                             selected_students = []
@@ -585,8 +651,8 @@ class pumping_people(QWidget):
                             for label in self.student_labels:
                                 label.deleteLater()
 
-                        while self.result_layout.count(): 
-                            item = self.result_layout.takeAt(0)
+                        while self.result_grid.count(): 
+                            item = self.result_grid.takeAt(0)
                             widget = item.widget()
                             if widget:
                                 widget.deleteLater()
@@ -601,7 +667,6 @@ class pumping_people(QWidget):
                             pumping_people_student_name = 0
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
-                        vbox_layout = QVBoxLayout()
                         self.student_labels = []
                         for num, selected, exist in selected_students:
                             student_id_format = pumping_people_student_id
@@ -641,17 +706,48 @@ class pumping_people(QWidget):
                                 label.setFont(QFont(load_custom_font(), font_size))
                             
                             self.student_labels.append(label)
-                            vbox_layout.addWidget(label)
+
+                        # 计算所有标签的宽度之和，并考虑间距和边距
+                        if self.student_labels:
+                            total_width = sum(label.sizeHint().width() for label in self.student_labels) + \
+                                          len(self.student_labels) * 180
+                            available_width = self.width() - 20
+                            
+                            # 如果总宽度超过可用宽度，则计算每行最多能放几个标签
+                            if total_width > available_width:
+                                avg_label_width = total_width / len(self.student_labels)
+                                max_columns = max(1, int(available_width // avg_label_width))
+                            else:
+                                max_columns = len(self.student_labels)  # 一行显示所有标签
+                        else:
+                            max_columns = 1
                         
-                        container = QWidget()
-                        container.setLayout(vbox_layout)
-                        self.result_layout.addWidget(container)
+                        # 复用 container 和 vbox_layout
+                        if not hasattr(self, 'container'):
+                            self.container = QWidget()
+                            self.vbox_layout = QGridLayout()
+                            self.container.setLayout(self.vbox_layout)
+                        else:
+                            # 清空旧标签
+                            for i in reversed(range(self.vbox_layout.count())):
+                                item = self.vbox_layout.itemAt(i)
+                                if item.widget():
+                                    item.widget().setParent(None)
+
+                        for i, label in enumerate(self.student_labels):
+                            row = i // max_columns
+                            col = i % max_columns
+                            self.vbox_layout.addWidget(label, row, col)
+                        
+                        self.result_grid.addWidget(self.container)
                         
                         if self.draw_mode in ["until_reboot", "until_all"]:
                             # 更新抽取记录
                             drawn_students.extend([s[1].replace(' ', '') for s in selected_students])
                             with open(draw_record_file, 'w', encoding='utf-8') as f:
                                 json.dump(drawn_students, f, ensure_ascii=False, indent=4)
+
+                        self.update_total_count()
                         return
                     else:
                         if self.draw_mode in ["until_reboot", "until_all"]:
@@ -659,52 +755,43 @@ class pumping_people(QWidget):
                             if os.path.exists(draw_record_file):
                                 os.remove(draw_record_file)
 
-                            InfoBar.success(
-                                title='抽选完成',
-                                content="所有学生都已被抽选完毕，临时记录已清除\n显示的结果为新一轮抽选的结果,您可继续抽取",
-                                orient=Qt.Horizontal,
-                                parent=self,
-                                isClosable=True,
-                                duration=3000
-                            )
-
                         self.random()
                         return
 
         else:
-            # 错误处理
+            # 清除旧布局和标签
+            def clear_layout(layout):
+                while layout.count():
+                    item = layout.takeAt(0)
+                    widget = item.widget()
+                    if widget:
+                        widget.deleteLater()
+            
+            clear_layout(self.result_grid)
             if hasattr(self, 'container'):
                 self.container.deleteLater()
                 del self.container
             if hasattr(self, 'student_labels'):
                 for label in self.student_labels:
                     label.deleteLater()
-
-            while self.result_layout.count(): 
-                item = self.result_layout.takeAt(0)
-                widget = item.widget()
-                if widget:
-                    widget.deleteLater()
-
+            
+            # 创建错误标签
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
+            
+            # 获取字体大小设置
+            font_size = 85
             try:
                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    font_size = settings['pumping_people']['font_size']
-                    if font_size < 30:
-                        font_size = 50
+                    font_size = max(settings['pumping_people']['font_size'], 30)
             except Exception as e:
-                font_size = 50
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
             
-            if font_size < 30:
-                error_label.setFont(QFont(load_custom_font(), 85))
-            else:
-                error_label.setFont(QFont(load_custom_font(), font_size))
-            
-            self.result_layout.addWidget(error_label)
+            error_label.setFont(QFont(load_custom_font(), font_size))
+            self.result_grid.addWidget(error_label)
 
+    # 获取随机抽取方法的设置
     def get_random_method_setting(self):
         """获取随机抽取方法的设置"""
         try:
@@ -866,18 +953,20 @@ class pumping_people(QWidget):
             num = match.group(1)
             num_map = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10}
             if num in num_map:
-                return num_map[num]
+                return (1, num_map[num])  # 类型1: 中文数字组
             else:
-                return int(num)
+                return (1, int(num))       # 类型1: 阿拉伯数字组
+        
         # 尝试匹配仅数字格式
         try:
-            return int(group)
+            return (2, int(group))         # 类型2: 纯数字组
         except ValueError:
             pass
+        
         # 自定义组名按拼音或字母排序
         pinyin_list = pypinyin.pinyin(group, style=pypinyin.NORMAL)
         pinyin_str = ''.join([item[0] for item in pinyin_list])
-        return pinyin_str
+        return (3, pinyin_str)             # 类型3: 其他名称组
 
     # 更新总人数显示   
     def update_total_count(self):
@@ -886,98 +975,127 @@ class pumping_people(QWidget):
         class_name = self.class_combo.currentText()
         genders = self.gender_combo.currentText()
 
-        import glob
-        temp_dir = "app/resource/Temp"
-        if os.path.exists(temp_dir):
-            for file in glob.glob(f"{temp_dir}/until_the_reboot_*.json"):
-                try:
-                    os.remove(file)
-                    logger.info(f"已清理临时抽取记录文件: {file}")
-                except Exception as e:
-                    logger.error(f"清理临时抽取记录文件失败: {e}")
-        
-        self.current_count = 1
         self._update_count_display()
+
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                pumping_people_student_quantity = f"{settings['pumping_people']['people_theme']}"
+        except Exception:
+            pumping_people_student_quantity = 0
 
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败"]:
             student_file = f"app/resource/list/{class_name}.json"
-
             if os.path.exists(student_file):
-                with open(student_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    cleaned_data = []
-                    
-                    # 获取学生列表
-                    if group_name == '抽取全班学生':
-                        if genders == '抽取所有性别':
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    exist = student_info.get('exist', True)
-                                    cleaned_data.append((id, name, exist))
-                        else:
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    exist = student_info.get('exist', True)
-                                    if gender == genders:
-                                        cleaned_data.append((id, name, exist))
-                    elif group_name == '抽取小组组号':
-                        groups = set()
-                        for student_name, student_info in data.items():
-                            if isinstance(student_info, dict) and 'id' in student_info:
-                                id = student_info.get('id', '')
-                                name = student_name.replace('【', '').replace('】', '')
-                                gender = student_info.get('gender', '')
-                                group = student_info.get('group', '')
-                                exist = student_info.get('exist', True)
-                                if group:  # 只添加非空小组
-                                    groups.add((id, group, exist))
-                        cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
-                    else:
-                        if genders == '抽取所有性别':
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    exist = student_info.get('exist', True)
-                                    if group == group_name:
-                                        cleaned_data.append((id, name, exist))
-                        else:
-                            for student_name, student_info in data.items():
-                                if isinstance(student_info, dict) and 'id' in student_info:
-                                    id = student_info.get('id', '')
-                                    name = student_name.replace('【', '').replace('】', '')
-                                    gender = student_info.get('gender', '')
-                                    group = student_info.get('group', '')
-                                    exist = student_info.get('exist', True)
-                                    if gender == genders and group == group_name:
-                                        cleaned_data.append((id, name, exist))
-
-                    # 过滤学生信息的exist为False的学生
-                    cleaned_data = list(filter(lambda x: x[2], cleaned_data))
-
-                    count = len(cleaned_data)
-                    if group_name == '抽取小组组号':
-                        self.total_label.setText(f'总组数: {count}')
-                    else:
-                        self.total_label.setText(f'总人数: {count}')
-                    self.max_count = count
-                    self._update_count_display()
+                cleaned_data = self._get_cleaned_data(student_file, group_name, genders)
+                drawn_count = self._get_drawn_count(class_name, group_name, genders)
+                if group_name == '抽取全班学生':
+                    _count = len(cleaned_data) - drawn_count
+                elif group_name == '抽取小组组号':
+                    _count = len(set(group for _, group, _ in cleaned_data)) - drawn_count
+                else:
+                    _count = len(cleaned_data) - drawn_count
+                count = len(cleaned_data)
+                entity_type = '组数' if group_name == '抽取小组组号' else '人数'
+                if pumping_people_student_quantity == 1:
+                    self.total_label = BodyLabel('总人数: 0')
+                    self.total_label.setText(f'总{entity_type}: {count}')
+                if pumping_people_student_quantity == 2:
+                    self.total_label = BodyLabel('剩余人数: 0')
+                    self.total_label.setText(f'剩余{entity_type}: {_count}')
+                else:
+                    self.total_label.setText(f'总{entity_type}: {count} | 剩余{entity_type}: {_count}')
+                self.max_count = count
+                self._update_count_display()
             else:
-                self.total_label.setText('总人数: 0')
-                self.max_count = 0
+                self._set_default_count(pumping_people_student_quantity)
         else:
-            self.total_label.setText('总人数: 0')
-            self.max_count = 0
+            self._set_default_count(pumping_people_student_quantity)
+
+    # 对用户的选择进行返回学生数量或小组数量
+    def _get_cleaned_data(self, student_file, group_name, genders):
+        with open(student_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            # 初始化不同情况的列表
+            group_data = []
+            student_data = []
+            for student_name, student_info in data.items():
+                if isinstance(student_info, dict) and 'id' in student_info:
+                    id = student_info.get('id', '')
+                    name = student_name.replace('【', '').replace('】', '')
+                    gender = student_info.get('gender', '')
+                    group = student_info.get('group', '')
+                    exist = student_info.get('exist', True)
+                    if group_name == '抽取小组组号':
+                        group_data.append((id, group, exist))
+                    elif self._should_include(group_name, genders, gender, group):
+                        student_data.append((id, name, exist))
+                        
+            if group_name == '抽取小组组号':
+                valid_groups = set()
+                group_exist_map = {}
+                for _, group, exist in group_data:
+                    if group not in group_exist_map:
+                        group_exist_map[group] = exist
+                    else:
+                        group_exist_map[group] = group_exist_map[group] or exist
+                for group, has_exist in group_exist_map.items():
+                    if has_exist:
+                        valid_groups.add(group)
+                unique_groups = sorted(valid_groups, key=self.sort_key)
+                cleaned_data = [(group_id, group, True) for group_id, group in enumerate(sorted(unique_groups, key=self.sort_key), start=1)]
+            else:
+                cleaned_data = [data for data in student_data if data[2]]
+            return cleaned_data
+
+    # 对用户的选择进行处理
+    def _should_include(self, group_name, genders, gender, group):
+        if group_name == '抽取全班学生':
+            return genders == '抽取所有性别' or gender == genders
+        elif group_name == '抽取小组组号':
+            return group
+        else:
+            return (genders == '抽取所有性别' or gender == genders) and group == group_name
+
+    # 获取已抽取人数
+    def _get_drawn_count(self, class_name, group_name, genders):
+        if self.draw_mode in ["until_reboot", "until_all"]:
+            if self.draw_mode == "until_reboot":
+                if group_name == '抽取全班学生':
+                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
+                elif group_name == '抽取小组组号':
+                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}.json"
+                else:
+                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
+            elif self.draw_mode == "until_all":
+                if group_name == '抽取全班学生':
+                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
+                elif group_name == '抽取小组组号':
+                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}.json"
+                else:
+                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
+            if os.path.exists(draw_record_file):
+                try:
+                    with open(draw_record_file, 'r', encoding='utf-8') as f:
+                        return len(json.load(f))
+                except Exception as e:
+                    # 处理加载文件出错的情况，返回 0
+                    logger.error(f"加载抽取记录文件 {draw_record_file} 出错: {e}")
+                    return 0
+            else:
+                return 0
+        else:
+            return 0
+
+    # 设置默认总人数显示
+    def _set_default_count(self, pumping_people_student_quantity):
+        if pumping_people_student_quantity == 1:
+            self.total_label = BodyLabel('总人数: 0')
+        if pumping_people_student_quantity == 2:
+            self.total_label = BodyLabel('剩余人数: 0')
+        else:
+            self.total_label = BodyLabel('总人数: 0 | 剩余人数: 0')
+        self.max_count = 0
     
     # 增加抽取人数
     def _increase_count(self):
@@ -1034,7 +1152,7 @@ class pumping_people(QWidget):
 
         InfoBar.success(
             title='班级列表',
-            content="班级列表更新，临时记录已被清除\n选取人数已重置为1",
+            content="班级列表更新成功！",
             orient=Qt.Horizontal,
             parent=self,
             isClosable=True,
@@ -1122,27 +1240,50 @@ class pumping_people(QWidget):
         else:
             logger.error("请先选择有效的班级")
     
+    # 恢复初始状态
+    def _reset_to_initial_state(self):
+        """恢复初始状态"""
+        self._clean_temp_files()
+        self.current_count = 1
+        self.result_grid.clear()
+        self.update_total_count()
+
+    # 清理临时文件
+    def _clean_temp_files(self):
+        import glob
+        temp_dir = "app/resource/Temp"
+        if os.path.exists(temp_dir):
+            for file in glob.glob(f"{temp_dir}/until_the_reboot_*.json"):
+                try:
+                    os.remove(file)
+                    logger.info(f"已清理临时抽取记录文件: {file}")
+                except Exception as e:
+                    logger.error(f"清理临时抽取记录文件失败: {e}")
+
+    # 初始化UI
     def initUI(self):
         # 加载设置
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                pumping_people_student_quantity = f"{settings['pumping_people']['student_quantity']}"
+                pumping_people_student_quantity = f"{settings['pumping_people']['people_theme']}"
                 pumping_people_class_quantity = f"{settings['pumping_people']['class_quantity']}"
                 pumping_people_group_quantity = f"{settings['pumping_people']['group_quantity']}"
                 pumping_people_gender_quantity = f"{settings['pumping_people']['gender_quantity']}"
                 pumping_people_refresh_button = f"{settings['pumping_people']['refresh_button']}"
+                pumping_people_list_refresh_button = f"{settings['pumping_people']['list_refresh_button']}"
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
-            pumping_people_student_quantity = True
+            pumping_people_student_quantity = 0
             pumping_people_class_quantity = True
             pumping_people_group_quantity = True
             pumping_people_gender_quantity = True
             pumping_people_refresh_button = True
+            pumping_people_list_refresh_button = True
             
         # 根据设置控制UI元素显示状态
         show_student_quantity = pumping_people_student_quantity
-        if show_student_quantity == 'True':
+        if show_student_quantity == 3:
             show_student_quantity = True
         else:
             show_student_quantity = False
@@ -1164,7 +1305,13 @@ class pumping_people(QWidget):
             show_gender_quantity = True
         else:
             show_gender_quantity = False
-        
+
+        show_list_refresh_button = pumping_people_list_refresh_button
+        if show_list_refresh_button == 'True':
+            show_list_refresh_button = True
+        else:
+            show_list_refresh_button = False
+
         show_refresh_button = pumping_people_refresh_button
         if show_refresh_button == 'True':
             show_refresh_button = True
@@ -1241,7 +1388,15 @@ class pumping_people(QWidget):
         
         # 控制面板
         control_panel = QVBoxLayout()
-        control_panel.setContentsMargins(20, 20, 50, 20)
+        control_panel.setContentsMargins(10, 10, 50, 10)
+
+        # 刷新按钮
+        self.refresh_button = PushButton('重置记录')
+        self.refresh_button.setFixedSize(200, 50)
+        self.refresh_button.setFont(QFont(load_custom_font(), 15))
+        self.refresh_button.clicked.connect(self.refresh_class_list)
+        self.refresh_button.setVisible(show_refresh_button)
+        control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 刷新按钮
         self.refresh_button = PushButton('刷新列表')
@@ -1259,21 +1414,21 @@ class pumping_people(QWidget):
         self.minus_button.setFixedSize(60, 50)
         self.minus_button.setFont(QFont(load_custom_font(), 30))
         self.minus_button.clicked.connect(self._decrease_count)
-        horizontal_layout.addWidget(self.minus_button)
+        horizontal_layout.addWidget(self.minus_button, 0, Qt.AlignLeft)
 
         # 人数显示
         self.count_label = BodyLabel('1')
         self.count_label.setAlignment(Qt.AlignCenter)
         self.count_label.setFont(QFont(load_custom_font(), 30))
         self.count_label.setFixedWidth(60)
-        horizontal_layout.addWidget(self.count_label)
+        horizontal_layout.addWidget(self.count_label, 0, Qt.AlignLeft)
 
         # 加号按钮
         self.plus_button = PushButton('+')
         self.plus_button.setFixedSize(60, 50)
         self.plus_button.setFont(QFont(load_custom_font(), 30))
         self.plus_button.clicked.connect(self._increase_count)
-        horizontal_layout.addWidget(self.plus_button)
+        horizontal_layout.addWidget(self.plus_button, 0, Qt.AlignLeft)
 
         # 将水平布局添加到控制面板
         control_panel.addLayout(horizontal_layout)
@@ -1398,20 +1553,27 @@ class pumping_people(QWidget):
         
         control_panel.addWidget(self.gender_combo)
         
-        # 总人数显示
-        self.total_label = BodyLabel('总人数: 0')
+        # 总人数和剩余人数显示
+        if pumping_people_student_quantity == 1:
+            self.total_label = BodyLabel('总人数: 0')
+        if pumping_people_student_quantity == 2:
+            self.total_label = BodyLabel('剩余人数: 0')
+        else:
+            self.total_label = BodyLabel('总人数: 0 | 剩余人数: 0')
         self.total_label.setFont(QFont(load_custom_font(), 14))
         self.total_label.setAlignment(Qt.AlignCenter)
-        self.total_label.setFixedWidth(200)
+        self.total_label.setFixedWidth(250)
         self.total_label.setVisible(show_student_quantity)
-        control_panel.addWidget(self.total_label)
+        control_panel.addWidget(self.total_label, 0, Qt.AlignLeft)
         
         control_panel.addStretch(1)
         
         # 结果区域布局
-        self.result_layout = QVBoxLayout()
-        
-        scroll_area_container.addLayout(self.result_layout)
+        self.result_grid = QGridLayout()
+        self.result_grid.setSpacing(10)
+        self.result_grid.setAlignment(Qt.AlignTop)
+
+        scroll_area_container.addLayout(self.result_grid)
         
         # 班级选择变化时更新总人数
         self.class_combo.currentTextChanged.connect(self.update_total_count)
