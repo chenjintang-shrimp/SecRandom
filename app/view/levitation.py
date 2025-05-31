@@ -127,7 +127,7 @@ class LevitationWindow(QWidget):
                 break
 
         if main_window:
-            main_window.show_window()
+            main_window.toggle_window()
         else:
             logger.error("未找到主窗口实例")
             self.show_connection_error_dialog()
