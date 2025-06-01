@@ -4,6 +4,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 import os
+import sys
 import json
 import random
 import pyttsx3
@@ -25,14 +26,14 @@ class pumping_people(QWidget):
         self.draw_mode = "random"
         self.animation_timer = None
         # 使用全局语音引擎单例
-        self.voice_engine = None
-        try:
-            if not hasattr(QApplication.instance(), 'pumping_people_voice_engine'):
-                QApplication.instance().pumping_people_voice_engine = pyttsx3.init()
-                QApplication.instance().pumping_people_voice_engine.startLoop(False)
-            self.voice_engine = QApplication.instance().pumping_people_voice_engine
-        except Exception as e:
-            logger.warning(f"无法初始化语音引擎: {e}, 语音功能将被禁用")
+        # 检查系统版本是否为Windows 10及以上
+        if sys.platform == 'win32' and sys.getwindowsversion().major >= 10:
+            if not hasattr(QApplication.instance(), 'pumping_reward_voice_engine'):
+                QApplication.instance().pumping_reward_voice_engine = pyttsx3.init()
+                QApplication.instance().pumping_reward_voice_engine.startLoop(False)
+            self.voice_engine = QApplication.instance().pumping_reward_voice_engine
+        else:
+            logger.warning("语音功能仅在Windows 10及以上系统可用")
         self.initUI()
     
     def start_draw(self):
@@ -1007,6 +1008,17 @@ class pumping_people(QWidget):
                 else:
                     _count = len(cleaned_data) - drawn_count
                 count = len(cleaned_data)
+                if _count <= 0:
+                    _count = count
+                    InfoBar.success(
+                        title='抽取完成',
+                        content="抽取完了所有学生了！记录已清除!",
+                        orient=Qt.Horizontal,
+                        parent=self,
+                        isClosable=True,
+                        duration=3000,
+                        position=InfoBarPosition.TOP
+                    )
                 entity_type = '组数' if group_name == '抽取小组组号' else '人数'
                 if pumping_people_student_quantity == 1:
                     self.total_label = BodyLabel('总人数: 0')
@@ -1167,7 +1179,8 @@ class pumping_people(QWidget):
             orient=Qt.Horizontal,
             parent=self,
             isClosable=True,
-            duration=3000
+            duration=3000,
+            position=InfoBarPosition.TOP
         )
 
     # 刷新小组列表
@@ -1294,7 +1307,7 @@ class pumping_people(QWidget):
             
         # 根据设置控制UI元素显示状态
         show_student_quantity = pumping_people_student_quantity
-        if show_student_quantity == 3:
+        if show_student_quantity != 3:
             show_student_quantity = True
         else:
             show_student_quantity = False
@@ -1571,9 +1584,9 @@ class pumping_people(QWidget):
             self.total_label = BodyLabel('剩余人数: 0')
         else:
             self.total_label = BodyLabel('总人数: 0 | 剩余人数: 0')
-        self.total_label.setFont(QFont(load_custom_font(), 14))
+        self.total_label.setFont(QFont(load_custom_font(), 12))
         self.total_label.setAlignment(Qt.AlignCenter)
-        self.total_label.setFixedWidth(250)
+        self.total_label.setFixedWidth(200)
         self.total_label.setVisible(show_student_quantity)
         control_panel.addWidget(self.total_label, 0, Qt.AlignLeft)
         
