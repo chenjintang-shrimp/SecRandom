@@ -122,6 +122,7 @@ class changeable_history(QFrame):
                 orient=Qt.Horizontal,
                 parent=self,
                 isClosable=True,
+                position=InfoBarPosition.TOP
             )
         
         if student_name == '全班同学':
@@ -438,6 +439,7 @@ class changeable_history(QFrame):
                         orient=Qt.Horizontal,
                         parent=self,
                         isClosable=True,
+                        position=InfoBarPosition.TOP
                     )
                     return []
             else:
@@ -489,6 +491,7 @@ class changeable_history(QFrame):
                         orient=Qt.Horizontal,
                         parent=self,
                         isClosable=True,
+                        position=InfoBarPosition.TOP
                     )
                     return []
             else:

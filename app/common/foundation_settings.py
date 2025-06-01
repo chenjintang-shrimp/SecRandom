@@ -18,6 +18,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.default_settings = {
             "self_starting_enabled": False,
             "pumping_floating_enabled": False,
+            "pumping_floating_side": 0,
+            "pumping_reward_side": 0,
             "pumping_floating_transparency_mode": 6,
             "main_window_focus_mode": 0,
             "main_window_focus_time": 1,
@@ -29,6 +31,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         self.self_starting_switch = SwitchButton()
         self.pumping_floating_switch = SwitchButton()
+        self.pumping_floating_side_comboBox = ComboBox()
+        self.pumping_reward_side_comboBox = ComboBox()
         self.pumping_floating_transparency_comboBox = ComboBox()
         self.main_window_focus_comboBox = ComboBox()
         self.main_window_focus_time_comboBox = ComboBox()
@@ -49,6 +53,18 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.pumping_floating_switch.setOffText("隐藏")
         self.pumping_floating_switch.checkedChanged.connect(self.on_pumping_floating_switch_changed)
         self.pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
+
+        # 抽人选项侧边栏位置设置
+        self.pumping_floating_side_comboBox.setFixedWidth(100)
+        self.pumping_floating_side_comboBox.addItems(["顶部", "底部"])
+        self.pumping_floating_side_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.pumping_floating_side_comboBox.setFont(QFont(load_custom_font(), 12))
+
+        # 抽奖选项侧边栏位置设置
+        self.pumping_reward_side_comboBox.setFixedWidth(100)
+        self.pumping_reward_side_comboBox.addItems(["顶部", "底部"])
+        self.pumping_reward_side_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.pumping_reward_side_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 浮窗透明度设置下拉框
         self.pumping_floating_transparency_comboBox.setFixedWidth(200)
@@ -100,7 +116,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         # 添加组件到分组中
         self.addGroup(QIcon("app/resource/assets/ic_fluent_branch_compare_20_filled.svg"), "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_window_ad_20_filled"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_window_ad_20_filled.svg"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_autofit_height_20_filled.svg"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_autofit_height_20_filled.svg"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_window_inprivate_20_filled.svg"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_layout_row_two_focus_top_settings_20_filled.svg"), "主窗口焦点", "设置主窗口不是焦点时关闭延迟", self.main_window_focus_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_timer_20_filled.svg"), "检测主窗口焦点时间", "设置检测主窗口焦点时间", self.main_window_focus_time_comboBox)
@@ -211,6 +229,16 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self_starting_enabled = foundation_settings.get("self_starting_enabled", self.default_settings["self_starting_enabled"])
 
                     pumping_floating_enabled = foundation_settings.get("pumping_floating_enabled", self.default_settings["pumping_floating_enabled"])
+
+                    pumping_floating_side = foundation_settings.get("pumping_floating_side", self.default_settings["pumping_floating_side"])
+                    if pumping_floating_side < 0 or pumping_floating_side >= self.pumping_floating_side_comboBox.count():
+                        # 如果索引值无效，则使用默认值
+                        pumping_floating_side = self.default_settings["pumping_floating_side"]
+
+                    pumping_reward_side = foundation_settings.get("pumping_reward_side", self.default_settings["pumping_reward_side"])
+                    if pumping_reward_side < 0 or pumping_reward_side >= self.pumping_reward_side_comboBox.count():
+                        # 如果索引值无效，则使用默认值
+                        pumping_reward_side = self.default_settings["pumping_reward_side"]
                         
                     main_window_mode = foundation_settings.get("main_window_mode", self.default_settings["main_window_mode"])
                     if main_window_mode < 0 or main_window_mode >= self.main_window_comboBox.count():
@@ -249,6 +277,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
+                    self.pumping_floating_side_comboBox.setCurrentIndex(pumping_floating_side)
+                    self.pumping_reward_side_comboBox.setCurrentIndex(pumping_reward_side)
                     self.pumping_floating_transparency_comboBox.setCurrentIndex(pumping_floating_transparency_mode)
                     self.main_window_focus_comboBox.setCurrentIndex(main_window_focus_mode)
                     self.main_window_focus_time_comboBox.setCurrentIndex(main_window_focus_time)
@@ -261,6 +291,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
                 self.pumping_floating_switch.setChecked(self.default_settings["pumping_floating_enabled"])
+                self.pumping_floating_side_comboBox.setCurrentIndex(self.default_settings["pumping_floating_side"])
+                self.pumping_reward_side_comboBox.setCurrentIndex(self.default_settings["pumping_reward_side"])
                 self.pumping_floating_transparency_comboBox.setCurrentIndex(self.default_settings["pumping_floating_transparency_mode"])
                 self.main_window_focus_comboBox.setCurrentIndex(self.default_settings["main_window_focus_mode"])
                 self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
@@ -273,6 +305,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             logger.error(f"加载设置时出错: {e}")
             self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
             self.pumping_floating_switch.setChecked(self.default_settings["pumping_floating_enabled"])
+            self.pumping_floating_side_comboBox.setCurrentIndex(self.default_settings["pumping_floating_side"])
+            self.pumping_reward_side_comboBox.setCurrentIndex(self.default_settings["pumping_reward_side"])
             self.pumping_floating_transparency_comboBox.setCurrentIndex(self.default_settings["pumping_floating_transparency_mode"])
             self.main_window_focus_comboBox.setCurrentIndex(self.default_settings["main_window_focus_mode"])
             self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
@@ -300,6 +334,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         # 删除保存文字选项的代码
         foundation_settings["self_starting_enabled"] = self.self_starting_switch.isChecked()
         foundation_settings["pumping_floating_enabled"] = self.pumping_floating_switch.isChecked()
+        foundation_settings["pumping_floating_side"] = self.pumping_floating_side_comboBox.currentIndex()
+        foundation_settings["pumping_reward_side"] = self.pumping_reward_side_comboBox.currentIndex()
         foundation_settings["pumping_floating_transparency_mode"] = self.pumping_floating_transparency_comboBox.currentIndex()
         foundation_settings["main_window_focus_mode"] = self.main_window_focus_comboBox.currentIndex()
         foundation_settings["main_window_focus_time"] = self.main_window_focus_time_comboBox.currentIndex()
