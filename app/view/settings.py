@@ -8,10 +8,10 @@ from loguru import logger
 
 # 导入子页面
 from app.view.settings_page.more_setting import more_setting
-from app.view.settings_page.pumping_people_setting import pumping_people_setting
-from app.view.settings_page.Changeable_history import changeable_history
-from app.view.settings_page.quicksetup import quicksetup
+from app.view.settings_page.Changeable_history_handoff_setting import changeable_history_handoff_setting
 from app.view.settings_page.password_setting import password_set
+from app.view.settings_page.about_setting import about
+from app.view.settings_page.pumping_handoff_setting import pumping_handoff_setting
 
 class settings_Window(MSFluentWindow):
     def __init__(self, parent=None):
@@ -65,14 +65,14 @@ class settings_Window(MSFluentWindow):
         self.more_settingInterface = more_setting(self)
         self.more_settingInterface.setObjectName("more_settingInterface")
 
-        self.pumping_people_settingInterface = pumping_people_setting(self)
-        self.pumping_people_settingInterface.setObjectName("pumping_people_settingInterface")
+        self.pumping_handoff_settingInterface = pumping_handoff_setting(self)
+        self.pumping_handoff_settingInterface.setObjectName("pumping_handoff_settingInterface")
 
-        self.historyInterface = changeable_history(self)
-        self.historyInterface.setObjectName("historyInterface")
+        self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
+        self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
 
-        self.quicksetupInterface = quicksetup(self)
-        self.quicksetupInterface.setObjectName("quicksetupInterface")
+        self.about_settingInterface = about(self)
+        self.about_settingInterface.setObjectName("about_settingInterface")
 
         self.password_setInterface = password_set(self)
         self.password_setInterface.setObjectName("password_setInterface")
@@ -81,11 +81,11 @@ class settings_Window(MSFluentWindow):
 
     def initNavigation(self):
         # 使用 MSFluentWindow 的 addSubInterface 方法
-        self.addSubInterface(self.pumping_people_settingInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人设置', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.pumping_handoff_settingInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽取设置', position=NavigationItemPosition.TOP)
 
         self.addSubInterface(self.password_setInterface, QIcon("app/resource/assets/ic_fluent_shield_keyhole_20_filled.svg"), '安全设置', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.historyInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.quicksetupInterface, QIcon("app/resource/assets/ic_fluent_note_20_filled.svg"), '名单设置', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.changeable_history_handoff_settingInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.about_settingInterface, QIcon("app/resource/assets/ic_fluent_info_20_filled.svg"), '关于', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.more_settingInterface, QIcon("app/resource/assets/ic_fluent_more_horizontal_20_filled.svg"), '更多设置', position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
