@@ -2,6 +2,7 @@ from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
 
 import json
 import os
@@ -66,6 +67,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.pumping_reward_side_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_reward_side_comboBox.setFont(QFont(load_custom_font(), 12))
 
+        # 定时清理按钮
+        self.cleanup_button = PushButton("设置定时清理")
+        self.cleanup_button.clicked.connect(self.show_cleanup_dialog)
+        self.cleanup_button.setFont(QFont(load_custom_font(), 12))
+
         # 浮窗透明度设置下拉框
         self.pumping_floating_transparency_comboBox.setFixedWidth(200)
         self.pumping_floating_transparency_comboBox.addItems(["100%", "90%", "80%", "70%", "60%", "50%", "40%", "30%", "20%", "10%"])
@@ -119,6 +125,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(QIcon("app/resource/assets/ic_fluent_window_ad_20_filled.svg"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_autofit_height_20_filled.svg"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_autofit_height_20_filled.svg"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
+        self.addGroup(QIcon("app/resource/assets/ic_fluent_clock_20_filled.svg"), "定时清理", "设置定时清理抽取记录的时间", self.cleanup_button)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_window_inprivate_20_filled.svg"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_layout_row_two_focus_top_settings_20_filled.svg"), "主窗口焦点", "设置主窗口不是焦点时关闭延迟", self.main_window_focus_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_timer_20_filled.svg"), "检测主窗口焦点时间", "设置检测主窗口焦点时间", self.main_window_focus_time_comboBox)
@@ -126,6 +133,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(QIcon("app/resource/assets/ic_fluent_resize_large_20_filled.svg"), "主窗口大小", "设置主窗口的显示大小", self.main_window_size_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_window_location_target_20_filled.svg"), "设置窗口位置", "设置设置窗口的显示位置", self.settings_window_comboBox)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_resize_large_20_filled.svg"), "设置窗口大小", "设置设置窗口的显示大小", self.settings_window_size_comboBox)
+        
+        # 定时检查清理
+        self.cleanup_timer = QTimer(self)
+        self.cleanup_timer.timeout.connect(self.check_cleanup_time)
+        self.cleanup_timer.start(1000)
 
         self.load_settings()
         self.save_settings()
@@ -316,6 +328,132 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.settings_window_size_comboBox.setCurrentIndex(self.default_settings["settings_window_size"])
             self.save_settings()
     
+    def show_cleanup_dialog(self):
+        dialog = CleanupTimeDialog(self)
+        if dialog.exec():
+            cleanup_times = dialog.getText()
+            if cleanup_times:
+                try:
+                    # 确保Settings目录存在
+                    os.makedirs(os.path.dirname('app/Settings/CleanupTimes.json'), exist_ok=True)
+                    
+                    settings = {}
+                    if os.path.exists('app/Settings/CleanupTimes.json'):
+                        with open('app/Settings/CleanupTimes.json', 'r', encoding='utf-8') as f:
+                            settings = json.load(f)
+                    
+                    # 处理多个时间输入
+                    time_list = [time.strip() for time in cleanup_times.split('\n') if time.strip()]
+                    
+                    # 清空现有设置
+                    if 'foundation' in settings:
+                        settings['foundation'] = {}
+                    
+                    # 验证并收集所有有效时间
+                    valid_times = []
+                    for time_str in time_list:
+                        try:
+                            # 验证时间格式
+                            time_str = time_str.replace('：', ':')  # 中文冒号转英文
+                            
+                            # 支持HH:MM或HH:MM:SS格式
+                            parts = time_str.split(':')
+                            if len(parts) == 2:
+                                hours, minutes = parts
+                                seconds = '00'
+                                time_str = f"{hours}:{minutes}:{seconds}"  # 转换为完整格式
+                            elif len(parts) == 3:
+                                hours, minutes, seconds = parts
+                            else:
+                                raise ValueError(f"时间格式应为'HH:MM'或'HH:MM:SS'，当前输入: {time_str}")
+                            
+                            # 确保所有部分都存在
+                            if not all([hours, minutes, seconds]):
+                                raise ValueError(f"时间格式不完整，应为'HH:MM'或'HH:MM:SS'，当前输入: {time_str}")
+                                
+                            hours = int(hours.strip())
+                            minutes = int(minutes.strip())
+                            seconds = int(seconds.strip())
+                            
+                            if hours < 0 or hours > 23:
+                                raise ValueError(f"小时数必须在0-23之间，当前输入: {hours}")
+                            if minutes < 0 or minutes > 59:
+                                raise ValueError(f"分钟数必须在0-59之间，当前输入: {minutes}")
+                            if seconds < 0 or seconds > 59:
+                                raise ValueError(f"秒数必须在0-59之间，当前输入: {seconds}")
+                            
+                            valid_times.append(time_str)
+                        except Exception as e:
+                            logger.error(f"时间格式验证失败: {str(e)}")
+                            continue
+                    
+                    # 按时间排序
+                    valid_times.sort(key=lambda x: tuple(map(int, x.split(':'))))
+                    
+                    # 重新编号并保存
+                    for idx, time_str in enumerate(valid_times, 1):
+                        settings.setdefault('foundation', {})[str(idx)] = time_str
+                    
+                    with open('app/Settings/CleanupTimes.json', 'w', encoding='utf-8') as f:
+                        json.dump(settings, f, ensure_ascii=False, indent=4)
+                        logger.info(f"成功保存{len(time_list)}个定时清理时间设置")
+                        InfoBar.success(
+                            title='设置成功',
+                            content=f"成功保存{len(time_list)}个定时清理时间!",
+                            orient=Qt.Horizontal,
+                            isClosable=True,
+                            position=InfoBarPosition.TOP,
+                            duration=3000,
+                            parent=self
+                        )
+                except Exception as e:
+                    logger.error(f"保存定时清理时间失败: {str(e)}")
+                    InfoBar.error(
+                        title='设置失败',
+                        content=f"保存定时清理时间失败: {str(e)}",
+                        orient=Qt.Horizontal,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP,
+                        duration=3000,
+                        parent=self
+                    )
+    
+    def check_cleanup_time(self):
+        try:
+            current_time = QTime.currentTime().toString("HH:mm:ss")
+            if os.path.exists('app/Settings/CleanupTimes.json'):
+                with open('app/Settings/CleanupTimes.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    # 检查所有设置的时间
+                    foundation_times = settings.get('foundation', {})
+                    for time_id, cleanup_time in foundation_times.items():
+                        if cleanup_time and current_time == cleanup_time:
+                            self.cleanup_temp_files()
+                            InfoBar.success(
+                                title='清理完成',
+                                content=f"定时清理时间 {cleanup_time} 已触发，已清理抽取记录",
+                                orient=Qt.Horizontal,
+                                isClosable=True,
+                                position=InfoBarPosition.TOP,
+                                duration=3000,
+                                parent=self
+                            )
+                            break
+        except Exception as e:
+            logger.error(f"检查定时清理时间时出错: {str(e)}")
+    
+    def cleanup_temp_files(self):
+        try:
+            temp_dir = "app/resource/Temp"
+            if os.path.exists(temp_dir):
+                for filename in os.listdir(temp_dir):
+                    if filename.endswith(".json"):
+                        file_path = os.path.join(temp_dir, filename)
+                        os.remove(file_path)
+                        logger.info(f"已清理文件: {file_path}")
+        except Exception as e:
+            logger.error(f"清理TEMP文件夹时出错: {str(e)}")
+
     def save_settings(self):
         # 先读取现有设置
         existing_settings = {}
@@ -347,3 +485,80 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)
+
+class CleanupTimeDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("输入定时清理记录时间")
+        self.setFixedSize(400, 300)
+        self.saved = False
+        
+        self.text_label = BodyLabel('请输入定时清理记录时间，每行一个\n格式为：HH:mm\n例如：12:00 或 20:00')
+        self.text_label.setFont(QFont(load_custom_font(), 12))
+
+        self.setStyleSheet("""
+            QDialog, QDialog * {
+                color: black;
+                background-color: white;
+            }
+        """)
+        
+        self.textEdit = PlainTextEdit()
+        self.textEdit.setPlaceholderText("请输入定时清理记录时间，每行一个\n格式为：HH:mm\n例如：12:00 或 20:00")
+        self.textEdit.setFont(QFont(load_custom_font(), 12))
+        
+        self.setFont(QFont(load_custom_font(), 12))
+
+        try:
+            if os.path.exists('app/Settings/CleanupTimes.json'):
+                with open('app/Settings/CleanupTimes.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    
+                    # 获取所有清理时间并格式化为字符串
+                    cleanup_times = settings.get('foundation', {})
+                    if cleanup_times:
+                        times_list = [str(time) for time_id, time in cleanup_times.items()]
+                        self.textEdit.setPlainText('\n'.join(times_list))
+                    else:
+                        pass
+        except Exception as e:
+            logger.error(f"加载定时清理记录时间失败: {str(e)}")
+
+        self.saveButton = PrimaryPushButton("保存")
+        self.cancelButton = PushButton("取消")
+        self.saveButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        self.saveButton.setFont(QFont(load_custom_font(), 12))
+        self.cancelButton.setFont(QFont(load_custom_font(), 12))
+        
+        layout = QVBoxLayout()
+        layout.addWidget(self.text_label)
+        layout.addWidget(self.textEdit)
+        
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addStretch(1)
+        buttonLayout.addWidget(self.cancelButton)
+        buttonLayout.addWidget(self.saveButton)
+        
+        layout.addLayout(buttonLayout)
+        self.setLayout(layout)
+        
+    def closeEvent(self, event):
+        if self.textEdit.toPlainText() and not self.saved:
+            w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
+            w.setFont(QFont(load_custom_font(), 12))
+            w.yesButton.setText("确定")
+            w.cancelButton.setText("取消")
+            w.yesButton = PrimaryPushButton('确定')
+            w.cancelButton = PushButton('取消')
+            
+            if w.exec():
+                self.reject
+                return
+            else:
+                event.ignore()
+                return
+        event.accept()
+    
+    def getText(self):
+        return self.textEdit.toPlainText()
