@@ -11,7 +11,6 @@ from app.common.config import cfg, AUTHOR, VERSION, YEAR
 from app.common.config import load_custom_font
 
 from app.common.foundation_settings import foundation_settingsCard
-from app.common.about import aboutCard
 
 
 class more_setting(QFrame):
@@ -90,9 +89,6 @@ class more_setting(QFrame):
         # 基础设置卡片组
         foundation_settings_Card = foundation_settingsCard()
         inner_layout_personal.addWidget(foundation_settings_Card)
-
-        self.aboutCard = aboutCard()
-        inner_layout_personal.addWidget(self.aboutCard)
 
         # 创建个性化卡片组
         self.themeAndZoomCard = SettingCardGroup("个性化", self)
