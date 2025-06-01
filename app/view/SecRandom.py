@@ -19,9 +19,10 @@ if './app/Settings' != None and not os.path.exists('./app/Settings'):
 
 from app.view.settings import settings_Window
 from app.view.main_page.pumping_people import pumping_people
-# from app.view.main_page.lottery import lottery
-from app.view.main_page.history import history
+from app.view.main_page.pumping_reward import pumping_reward
+from app.view.main_page.history_handoff_setting import history_handoff_setting
 from app.view.levitation import LevitationWindow
+from app.view.settings_page.about_setting import about
 
 class Window(MSFluentWindow):
     def __init__(self):
@@ -111,8 +112,8 @@ class Window(MSFluentWindow):
         self.tray_icon.setIcon(QIcon('./app/resource/icon/SecRandom.png'))
         self.tray_icon.setToolTip('SecRandom')
         self.tray_menu = RoundMenu(parent=self)
-        # 添加关于SecRandom,点击后直接打开到到Github
-        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_info_20_filled.svg"), '关于SecRandom', triggered=self.open_github))
+        # 添加关于SecRandom,点击后打开主界面的关于选项卡
+        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_info_20_filled.svg"), '关于SecRandom', triggered=self.show_about_tab))
         self.tray_menu.addSeparator()
         self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_power_20_filled.svg"), '暂时显示/隐藏主界面', triggered=self.toggle_window))
         self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
@@ -161,22 +162,40 @@ class Window(MSFluentWindow):
         self.settingInterface = settings_Window(self)
         self.settingInterface.setObjectName("settingInterface")
 
-        self.historyInterface = history(self)
-        self.historyInterface.setObjectName("historyInterface")
+        self.history_handoff_settingInterface = history_handoff_setting(self)
+        self.history_handoff_settingInterface.setObjectName("history_handoff_settingInterface")
 
         self.pumping_peopleInterface = pumping_people(self)
         self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
 
-        # self.lotteryInterface = lottery(self)
-        # self.lotteryInterface.setObjectName("lotteryInterface")
+        self.about_settingInterface = about(self)
+        self.about_settingInterface.setObjectName("about_settingInterface")
+
+        self.pumping_rewardInterface = pumping_reward(self)
+        self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
 
         self.initNavigation()
 
     def initNavigation(self):
-        self.addSubInterface(self.pumping_peopleInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人', position=NavigationItemPosition.TOP)
-        # self.addSubInterface(self.lotteryInterface, QIcon("app/resource/assets/ic_fluent_reward_20_filled.svg"), '抽奖', position=NavigationItemPosition.TOP)
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                if foundation_settings.get('pumping_floating_side', 0) == 1:
+                    self.addSubInterface(self.pumping_peopleInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人', position=NavigationItemPosition.BOTTOM)
+                else:
+                    self.addSubInterface(self.pumping_peopleInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人', position=NavigationItemPosition.TOP)
+                if foundation_settings.get('pumping_reward_side', 0) == 1:
+                    self.addSubInterface(self.pumping_rewardInterface, QIcon("app/resource/assets/ic_fluent_reward_20_filled.svg"), '抽奖', position=NavigationItemPosition.BOTTOM)
+                else:
+                    self.addSubInterface(self.pumping_rewardInterface, QIcon("app/resource/assets/ic_fluent_reward_20_filled.svg"), '抽奖', position=NavigationItemPosition.TOP)
+        except FileNotFoundError as e:
+            logger.error(f"加载设置时出错: {e}, 使用默认顶部显示抽人功能")
+            self.addSubInterface(self.pumping_peopleInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人', position=NavigationItemPosition.TOP)
+            self.addSubInterface(self.pumping_rewardInterface, QIcon("app/resource/assets/ic_fluent_reward_20_filled.svg"), '抽奖', position=NavigationItemPosition.TOP)
 
-        self.addSubInterface(self.historyInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.history_handoff_settingInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.about_settingInterface, QIcon("app/resource/assets/ic_fluent_info_20_filled.svg"), '关于', position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
         """窗口关闭时隐藏主界面"""
@@ -255,17 +274,15 @@ class Window(MSFluentWindow):
         super().focusInEvent(event)
         self.last_focus_time = QDateTime.currentDateTime()
 
-    def open_github(self):
-        # dialog = Dialog(
-        #     '打开Github-SecRandom',
-        #     '是否打开Github-SecRandom🤗',
-        # )
-        # dialog.yesButton.setText("打开")
-        # dialog.cancelButton.setText("取消")
-        # dialog.yesButton.clicked.connect(lambda: webbrowser.open(GITHUB_WEB))
-        # dialog.setFixedWidth(500)
-        # dialog.exec()
-        webbrowser.open(GITHUB_WEB)
+    def show_about_tab(self):
+        """显示主界面的关于选项卡"""
+        if self.isMinimized():
+            self.showNormal()
+        else:
+            self.show()
+            self.activateWindow()
+            self.raise_()
+        self.switchTo(self.about_settingInterface)
 
     def start_cleanup(self):
         """软件启动时清理临时抽取记录文件"""
@@ -307,6 +324,7 @@ class Window(MSFluentWindow):
                 self.show()
                 self.activateWindow()
                 self.raise_()
+        self.switchTo(self.pumping_peopleInterface)
 
     def calculate_menu_position(self, menu):
         screen = QApplication.primaryScreen().availableGeometry()
