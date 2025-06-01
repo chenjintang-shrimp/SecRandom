@@ -172,7 +172,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     orient=Qt.Horizontal,
                     parent=self,
                     isClosable=True,
-                    duration=3000
+                    duration=3000,
+                    position=InfoBarPosition.TOP
                 )
             else:
                 logger.warning(f"字体大小超出范围: {font_size}")
@@ -182,7 +183,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     orient=Qt.Horizontal,
                     parent=self,
                     isClosable=True,
-                    duration=3000
+                    duration=3000,
+                    position=InfoBarPosition.TOP
                 )
         except ValueError:
             logger.warning(f"无效的字体大小输入: {self.pumping_people_font_size_edit.text()}")
@@ -192,7 +194,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                 orient=Qt.Horizontal,
                 parent=self,
                 isClosable=True,
-                duration=3000
+                duration=3000,
+                    position=InfoBarPosition.TOP
             )
 
     def reset_font_size(self):
@@ -352,7 +355,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     orient=Qt.Horizontal,
                     parent=self,
                     isClosable=True,
-                    duration=3000
+                    duration=3000,
+                    position=InfoBarPosition.TOP
                 )
         except ValueError:
             logger.warning(f"无效的字体大小输入: {self.pumping_people_font_size_edit.text()}")
@@ -362,7 +366,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                 orient=Qt.Horizontal,
                 parent=self,
                 isClosable=True,
-                duration=3000
+                duration=3000,
+                    position=InfoBarPosition.TOP
             )
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)

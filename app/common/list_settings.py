@@ -15,7 +15,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
     refresh_signal = pyqtSignal()
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle("名单设置")
+        self.setTitle("抽人名单")
         self.setBorderRadius(8)
         self.settings_file = "app/Settings/Settings.json"
 
@@ -24,7 +24,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.class_Button.setFont(QFont(load_custom_font(), 12))
         
         self.class_comboBox = ComboBox()
-        self.class_comboBox.setFixedWidth(320)
+        self.class_comboBox.setFixedWidth(250)
         self.class_comboBox.setPlaceholderText("选择一个需要设置名单的班级")
         self.class_comboBox.addItems([])
         self.class_comboBox.setFont(QFont(load_custom_font(), 12))
@@ -63,6 +63,66 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(QIcon("app/resource/assets/ic_fluent_people_list_20_filled.svg"), "设置班级名单", "点击按钮设置学生姓名", self.student_Button)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_person_pill_20_filled.svg"), "设置学生性别", "点击按钮设置学生性别", self.gender_Button)
         self.addGroup(QIcon("app/resource/assets/ic_fluent_group_20_filled.svg"), "设置小组", "点击按钮设置小组名单", self.group_Button)
+
+        # 创建表格
+        self.table = TableWidget(self)
+        self.table.setBorderVisible(True)
+        self.table.setBorderRadius(8)
+        self.table.setWordWrap(False)
+        self.table.setColumnCount(4)
+        self.table.setEditTriggers(TableWidget.NoEditTriggers)
+        self.table.setSortingEnabled(True)
+        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.verticalHeader().hide()
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组'])
+        self.show_table()
+        self.refresh_signal.connect(self.show_table)
+        # 布局
+        self.layout().addWidget(self.table)
+
+    def show_table(self):
+        class_name = self.class_comboBox.currentText()
+        if class_name:
+            try:
+                with open(f"app/resource/list/{class_name}.json", 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                self.table.setRowCount(len(data))
+                self.table.clearContents()
+                
+                # 计算最大ID位数
+                max_digits = max(len(str(info['id'])) for info in data.values())
+                
+                self.table.setSortingEnabled(False)
+                for i, (name, info) in enumerate(data.items()):
+                    self.table.setItem(i, 0, QTableWidgetItem(str(info['id']).zfill(max_digits)))
+                    self.table.setItem(i, 1, QTableWidgetItem(name.replace('【', '').replace('】', '')))
+                    self.table.setItem(i, 2, QTableWidgetItem(info['gender']))
+                    self.table.setItem(i, 3, QTableWidgetItem(info['group']))
+                    for j in range(4):
+                        item = self.table.item(i, j)
+                        if item:
+                            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                            item.setFont(QFont(load_custom_font(), 12))
+                self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组'])
+                self.table.setSortingEnabled(True)
+            except FileNotFoundError:
+                self.table.setRowCount(0)
+                self.table.setHorizontalHeaderLabels([])
+                logger.error(f"班级文件 '{class_name}.json' 不存在")
+            except json.JSONDecodeError:
+                self.table.setRowCount(0)
+                self.table.setHorizontalHeaderLabels([])
+                logger.error(f"班级文件 '{class_name}.json' 格式错误")
+            except Exception as e:
+                self.table.setRowCount(0)
+                self.table.setHorizontalHeaderLabels([])
+                logger.error(f"显示表格时出错: {str(e)}")
+        else:
+            self.table.setRowCount(0)
+            self.table.setHorizontalHeaderLabels([])
+            logger.error("未选择班级")
             
     def show_class_dialog(self):
         dialog = ClassInputDialog(self)
