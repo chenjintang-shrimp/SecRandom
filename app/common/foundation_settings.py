@@ -332,91 +332,90 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         dialog = CleanupTimeDialog(self)
         if dialog.exec():
             cleanup_times = dialog.getText()
-            if cleanup_times:
-                try:
-                    # 确保Settings目录存在
-                    os.makedirs(os.path.dirname('app/Settings/CleanupTimes.json'), exist_ok=True)
-                    
-                    settings = {}
-                    if os.path.exists('app/Settings/CleanupTimes.json'):
-                        with open('app/Settings/CleanupTimes.json', 'r', encoding='utf-8') as f:
-                            settings = json.load(f)
-                    
-                    # 处理多个时间输入
-                    time_list = [time.strip() for time in cleanup_times.split('\n') if time.strip()]
-                    
-                    # 清空现有设置
-                    if 'foundation' in settings:
-                        settings['foundation'] = {}
-                    
-                    # 验证并收集所有有效时间
-                    valid_times = []
-                    for time_str in time_list:
-                        try:
-                            # 验证时间格式
-                            time_str = time_str.replace('：', ':')  # 中文冒号转英文
+            try:
+                # 确保Settings目录存在
+                os.makedirs(os.path.dirname('app/Settings/CleanupTimes.json'), exist_ok=True)
+                
+                settings = {}
+                if os.path.exists('app/Settings/CleanupTimes.json'):
+                    with open('app/Settings/CleanupTimes.json', 'r', encoding='utf-8') as f:
+                        settings = json.load(f)
+                
+                # 处理多个时间输入
+                time_list = [time.strip() for time in cleanup_times.split('\n') if time.strip()]
+                
+                # 清空现有设置
+                if 'foundation' in settings:
+                    settings['foundation'] = {}
+                
+                # 验证并收集所有有效时间
+                valid_times = []
+                for time_str in time_list:
+                    try:
+                        # 验证时间格式
+                        time_str = time_str.replace('：', ':')  # 中文冒号转英文
+                        
+                        # 支持HH:MM或HH:MM:SS格式
+                        parts = time_str.split(':')
+                        if len(parts) == 2:
+                            hours, minutes = parts
+                            seconds = '00'
+                            time_str = f"{hours}:{minutes}:{seconds}"  # 转换为完整格式
+                        elif len(parts) == 3:
+                            hours, minutes, seconds = parts
+                        else:
+                            raise ValueError(f"时间格式应为'HH:MM'或'HH:MM:SS'，当前输入: {time_str}")
+                        
+                        # 确保所有部分都存在
+                        if not all([hours, minutes, seconds]):
+                            raise ValueError(f"时间格式不完整，应为'HH:MM'或'HH:MM:SS'，当前输入: {time_str}")
                             
-                            # 支持HH:MM或HH:MM:SS格式
-                            parts = time_str.split(':')
-                            if len(parts) == 2:
-                                hours, minutes = parts
-                                seconds = '00'
-                                time_str = f"{hours}:{minutes}:{seconds}"  # 转换为完整格式
-                            elif len(parts) == 3:
-                                hours, minutes, seconds = parts
-                            else:
-                                raise ValueError(f"时间格式应为'HH:MM'或'HH:MM:SS'，当前输入: {time_str}")
-                            
-                            # 确保所有部分都存在
-                            if not all([hours, minutes, seconds]):
-                                raise ValueError(f"时间格式不完整，应为'HH:MM'或'HH:MM:SS'，当前输入: {time_str}")
-                                
-                            hours = int(hours.strip())
-                            minutes = int(minutes.strip())
-                            seconds = int(seconds.strip())
-                            
-                            if hours < 0 or hours > 23:
-                                raise ValueError(f"小时数必须在0-23之间，当前输入: {hours}")
-                            if minutes < 0 or minutes > 59:
-                                raise ValueError(f"分钟数必须在0-59之间，当前输入: {minutes}")
-                            if seconds < 0 or seconds > 59:
-                                raise ValueError(f"秒数必须在0-59之间，当前输入: {seconds}")
-                            
-                            valid_times.append(time_str)
-                        except Exception as e:
-                            logger.error(f"时间格式验证失败: {str(e)}")
-                            continue
-                    
-                    # 按时间排序
-                    valid_times.sort(key=lambda x: tuple(map(int, x.split(':'))))
-                    
-                    # 重新编号并保存
-                    for idx, time_str in enumerate(valid_times, 1):
-                        settings.setdefault('foundation', {})[str(idx)] = time_str
-                    
-                    with open('app/Settings/CleanupTimes.json', 'w', encoding='utf-8') as f:
-                        json.dump(settings, f, ensure_ascii=False, indent=4)
-                        logger.info(f"成功保存{len(time_list)}个定时清理时间设置")
-                        InfoBar.success(
-                            title='设置成功',
-                            content=f"成功保存{len(time_list)}个定时清理时间!",
-                            orient=Qt.Horizontal,
-                            isClosable=True,
-                            position=InfoBarPosition.TOP,
-                            duration=3000,
-                            parent=self
-                        )
-                except Exception as e:
-                    logger.error(f"保存定时清理时间失败: {str(e)}")
-                    InfoBar.error(
-                        title='设置失败',
-                        content=f"保存定时清理时间失败: {str(e)}",
+                        hours = int(hours.strip())
+                        minutes = int(minutes.strip())
+                        seconds = int(seconds.strip())
+                        
+                        if hours < 0 or hours > 23:
+                            raise ValueError(f"小时数必须在0-23之间，当前输入: {hours}")
+                        if minutes < 0 or minutes > 59:
+                            raise ValueError(f"分钟数必须在0-59之间，当前输入: {minutes}")
+                        if seconds < 0 or seconds > 59:
+                            raise ValueError(f"秒数必须在0-59之间，当前输入: {seconds}")
+                        
+                        valid_times.append(time_str)
+                    except Exception as e:
+                        logger.error(f"时间格式验证失败: {str(e)}")
+                        continue
+                
+                # 按时间排序
+                valid_times.sort(key=lambda x: tuple(map(int, x.split(':'))))
+                
+                # 重新编号并保存
+                for idx, time_str in enumerate(valid_times, 1):
+                    settings.setdefault('foundation', {})[str(idx)] = time_str
+                
+                with open('app/Settings/CleanupTimes.json', 'w', encoding='utf-8') as f:
+                    json.dump(settings, f, ensure_ascii=False, indent=4)
+                    logger.info(f"成功保存{len(time_list)}个定时清理时间设置")
+                    InfoBar.success(
+                        title='设置成功',
+                        content=f"成功保存{len(time_list)}个定时清理时间!",
                         orient=Qt.Horizontal,
                         isClosable=True,
                         position=InfoBarPosition.TOP,
                         duration=3000,
                         parent=self
                     )
+            except Exception as e:
+                logger.error(f"保存定时清理时间失败: {str(e)}")
+                InfoBar.error(
+                    title='设置失败',
+                    content=f"保存定时清理时间失败: {str(e)}",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
     
     def check_cleanup_time(self):
         try:
@@ -493,7 +492,7 @@ class CleanupTimeDialog(QDialog):
         self.setFixedSize(400, 300)
         self.saved = False
         
-        self.text_label = BodyLabel('请输入定时清理记录时间，每行一个\n格式为：HH:mm\n例如：12:00 或 20:00')
+        self.text_label = BodyLabel('请输入定时清理记录时间，每行一个\n格式为：HH:mm\n例如：12:00:00 或 20:00:00\n中文冒号自动转英文冒号\n自动补秒位为00')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
         self.setStyleSheet("""
@@ -504,7 +503,7 @@ class CleanupTimeDialog(QDialog):
         """)
         
         self.textEdit = PlainTextEdit()
-        self.textEdit.setPlaceholderText("请输入定时清理记录时间，每行一个\n格式为：HH:mm\n例如：12:00 或 20:00")
+        self.textEdit.setPlaceholderText("请输入定时清理记录时间，每行一个")
         self.textEdit.setFont(QFont(load_custom_font(), 12))
         
         self.setFont(QFont(load_custom_font(), 12))
@@ -544,8 +543,8 @@ class CleanupTimeDialog(QDialog):
         self.setLayout(layout)
         
     def closeEvent(self, event):
-        if self.textEdit.toPlainText() and not self.saved:
-            w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
+        if not self.saved:
+            w = Dialog('未保存内容', '确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
