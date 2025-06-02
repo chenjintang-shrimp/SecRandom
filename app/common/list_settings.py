@@ -84,6 +84,32 @@ class list_SettinsCard(GroupHeaderCardWidget):
 
     def show_table(self):
         class_name = self.class_comboBox.currentText()
+        # 获取是否存在学生
+        if os.path.exists(f"app/resource/list/{class_name}.json"):
+            with open(f"app/resource/list/{class_name}.json", 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        else:
+            data = []
+
+        if not class_name:
+            self.student_Button.setEnabled(False)
+            self.gender_Button.setEnabled(False)
+            self.group_Button.setEnabled(False)
+            self.class_comboBox.setPlaceholderText("选择一个需要设置名单的班级")
+        elif not data:
+            self.student_Button.setEnabled(True)
+            self.gender_Button.setEnabled(False)
+            self.group_Button.setEnabled(False)
+        else:
+            self.student_Button.setEnabled(True)
+            self.gender_Button.setEnabled(True)
+            self.group_Button.setEnabled(True)
+
+        if class_name and (not data):
+            self.table.setRowCount(0)
+            self.table.setHorizontalHeaderLabels([])
+            return
+
         if class_name:
             try:
                 with open(f"app/resource/list/{class_name}.json", 'r', encoding='utf-8') as f:
@@ -128,60 +154,59 @@ class list_SettinsCard(GroupHeaderCardWidget):
         dialog = ClassInputDialog(self)
         if dialog.exec():
             class_text = dialog.getText()
-            if class_text:
-                try:
-                    classes = [line.strip() for line in class_text.split('\n') if line.strip()]
-                    
-                    # 获取当前所有班级文件
-                    list_folder = "app/resource/list"
-                    existing_classes = []
-                    if os.path.exists(list_folder):
-                        existing_classes = [f.split('.')[0] for f in os.listdir(list_folder) if f.endswith('.json')]
-                    
-                    # 删除不再需要的班级文件
-                    for existing_class in existing_classes:
-                        if existing_class not in classes:
-                            class_file = f"app/resource/list/{existing_class}.json"
-                            history_file = f"app/resource/history/{existing_class}.json"
-                            try:
-                                os.remove(class_file)
-                                logger.info(f"已删除班级文件: {class_file}")
-                                # 删除对应的历史记录文件
-                                if os.path.exists(f"app/resource/history/{existing_class}.json"):
-                                    os.remove(history_file)
-                                    logger.info(f"已删除历史记录文件: {history_file}")
-                            except Exception as e:
-                                logger.error(f"删除文件失败: {class_file}或{history_file}, 错误: {str(e)}")
+            try:
+                classes = [line.strip() for line in class_text.split('\n') if line.strip()]
+                
+                # 获取当前所有班级文件
+                list_folder = "app/resource/list"
+                existing_classes = []
+                if os.path.exists(list_folder):
+                    existing_classes = [f.split('.')[0] for f in os.listdir(list_folder) if f.endswith('.json')]
+                
+                # 删除不再需要的班级文件
+                for existing_class in existing_classes:
+                    if existing_class not in classes:
+                        class_file = f"app/resource/list/{existing_class}.json"
+                        history_file = f"app/resource/history/{existing_class}.json"
+                        try:
+                            os.remove(class_file)
+                            logger.info(f"已删除班级文件: {class_file}")
+                            # 删除对应的历史记录文件
+                            if os.path.exists(f"app/resource/history/{existing_class}.json"):
+                                os.remove(history_file)
+                                logger.info(f"已删除历史记录文件: {history_file}")
+                        except Exception as e:
+                            logger.error(f"删除文件失败: {class_file}或{history_file}, 错误: {str(e)}")
 
-                    os.makedirs("app/resource/list", exist_ok=True)
-                    
-                    for class_name in classes:
-                        class_file = f"app/resource/list/{class_name}.json"
-                        if not os.path.exists(class_file):
-                            with open(class_file, 'w', encoding='utf-8') as f:
-                                basic_structure = {
-                                    "示例学生": {
-                                        "id": 1,
-                                        "gender": "男",
-                                        "group": "第一小组",
-                                        "exist": True
-                                    }
+                os.makedirs("app/resource/list", exist_ok=True)
+                
+                for class_name in classes:
+                    class_file = f"app/resource/list/{class_name}.json"
+                    if not os.path.exists(class_file):
+                        with open(class_file, 'w', encoding='utf-8') as f:
+                            basic_structure = {
+                                "示例学生": {
+                                    "id": 1,
+                                    "gender": "男",
+                                    "group": "第一小组",
+                                    "exist": True
                                 }
-                                json.dump(basic_structure, f, ensure_ascii=False, indent=4)
+                            }
+                            json.dump(basic_structure, f, ensure_ascii=False, indent=4)
 
-                    self.class_comboBox.clear()
-                    self.class_comboBox.addItems(classes)
-                    self.refresh_signal.emit()
-                    logger.info("班级名单保存成功！")
-                except Exception as e:
-                    logger.error(f"保存失败: {str(e)}")
+                self.class_comboBox.clear()
+                self.class_comboBox.addItems(classes)
+                self.refresh_signal.emit()
+                logger.info("班级名单保存成功！")
+            except Exception as e:
+                logger.error(f"保存失败: {str(e)}")
     
     def show_student_dialog(self):
         dialog = StudentInputDialog(self)
         if dialog.exec():
             student_text = dialog.getText()
             selected_class = self.class_comboBox.currentText()
-            if student_text and selected_class:
+            if selected_class:
                 try:
                     students = [line.strip() for line in student_text.split('\n') if line.strip()]
                     
@@ -233,7 +258,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
         if dialog.exec():
             gender_text = dialog.getText()
             class_name = self.class_comboBox.currentText()
-            if gender_text:
+            if class_name:
                 try:
                     genders = [line.strip() for line in gender_text.split('\n') if line.strip()]
                     
@@ -266,7 +291,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
         if dialog.exec():
             group_text = dialog.getText()
             class_name = self.class_comboBox.currentText()
-            if group_text:
+            if class_name:
                 try:
                     groups = [line.strip() for line in group_text.split('\n') if line.strip()]
                     
@@ -352,8 +377,8 @@ class ClassInputDialog(QDialog):
         self.setLayout(layout)
         
     def closeEvent(self, event):
-        if self.textEdit.toPlainText() and not self.saved:
-            w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
+        if not self.saved:
+            w = Dialog('未保存内容', '确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
@@ -441,8 +466,8 @@ class StudentInputDialog(QDialog):
         self.setLayout(layout)
         
     def closeEvent(self, event):
-        if self.textEdit.toPlainText() and not self.saved:
-            w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
+        if not self.saved:
+            w = Dialog('未保存内容', '确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
@@ -527,8 +552,8 @@ class GenderInputDialog(QDialog):
         self.setLayout(layout)
         
     def closeEvent(self, event):
-        if self.textEdit.toPlainText() and not self.saved:
-            w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
+        if not self.saved:
+            w = Dialog('未保存内容', '确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
@@ -613,8 +638,8 @@ class GroupInputDialog(QDialog):
         self.setLayout(layout)
         
     def closeEvent(self, event):
-        if self.textEdit.toPlainText() and not self.saved:
-            w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
+        if not self.saved:
+            w = Dialog('未保存内容', '确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")

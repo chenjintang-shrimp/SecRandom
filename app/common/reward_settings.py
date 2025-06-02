@@ -79,6 +79,29 @@ class reward_SettinsCard(GroupHeaderCardWidget):
 
     def show_table(self):
         prize_pools_name = self.prize_pools_comboBox.currentText()
+        # 获取是否存在奖品
+        if os.path.exists(f"app/resource/reward/{prize_pools_name}.json"):
+            with open(f"app/resource/reward/{prize_pools_name}.json", 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        else:
+            data = []
+
+        if not prize_pools_name:
+            self.prize_Button.setEnabled(False)
+            self.probability_Button.setEnabled(False)
+            self.prize_pools_comboBox.setPlaceholderText("选择一个需要设置奖品的奖池")
+        elif not data:
+            self.prize_Button.setEnabled(True)
+            self.probability_Button.setEnabled(False)
+        else:
+            self.prize_Button.setEnabled(True)
+            self.probability_Button.setEnabled(True)
+
+        if prize_pools_name and (not data):
+            self.table.setRowCount(0)
+            self.table.setHorizontalHeaderLabels([])
+            return
+            
         if prize_pools_name:
             try:
                 with open(f"app/resource/reward/{prize_pools_name}.json", 'r', encoding='utf-8') as f:
@@ -122,58 +145,57 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         dialog = Prize_pools_InputDialog(self)
         if dialog.exec():
             prize_pools_text = dialog.getText()
-            if prize_pools_text:
-                try:
-                    prize_poolss = [line.strip() for line in prize_pools_text.split('\n') if line.strip()]
-                    
-                    # 获取当前所有班级文件
-                    list_folder = "app/resource/reward"
-                    existing_prize_poolss = []
-                    if os.path.exists(list_folder):
-                        existing_prize_poolss = [f.split('.')[0] for f in os.listdir(list_folder) if f.endswith('.json')]
-                    
-                    # 删除不再需要的班级文件
-                    for existing_prize in existing_prize_poolss:
-                        if existing_prize not in prize_poolss:
-                            prize_pools_file = f"app/resource/reward/{existing_prize}.json"
-                            history_file = f"app/resource/reward/history/{existing_prize}.json"
-                            try:
-                                os.remove(prize_pools_file)
-                                logger.info(f"已删除班级文件: {prize_pools_file}")
-                                # 删除对应的历史记录文件
-                                if os.path.exists(f"app/resource/reward/history/{existing_prize}.json"):
-                                    os.remove(history_file)
-                                    logger.info(f"已删除历史记录文件: {history_file}")
-                            except Exception as e:
-                                logger.error(f"删除文件失败: {prize_pools_file}或{history_file}, 错误: {str(e)}")
+            try:
+                prize_poolss = [line.strip() for line in prize_pools_text.split('\n') if line.strip()]
+                
+                # 获取当前所有奖池文件
+                list_folder = "app/resource/reward"
+                existing_prize_poolss = []
+                if os.path.exists(list_folder):
+                    existing_prize_poolss = [f.split('.')[0] for f in os.listdir(list_folder) if f.endswith('.json')]
+                
+                # 删除不再需要的奖池文件
+                for existing_prize in existing_prize_poolss:
+                    if existing_prize not in prize_poolss:
+                        prize_pools_file = f"app/resource/reward/{existing_prize}.json"
+                        history_file = f"app/resource/reward/history/{existing_prize}.json"
+                        try:
+                            os.remove(prize_pools_file)
+                            logger.info(f"已删除奖池文件: {prize_pools_file}")
+                            # 删除对应的历史记录文件
+                            if os.path.exists(f"app/resource/reward/history/{existing_prize}.json"):
+                                os.remove(history_file)
+                                logger.info(f"已删除历史记录文件: {history_file}")
+                        except Exception as e:
+                            logger.error(f"删除文件失败: {prize_pools_file}或{history_file}, 错误: {str(e)}")
 
-                    os.makedirs("app/resource/reward", exist_ok=True)
-                    
-                    for prize_pools_name in prize_poolss:
-                        prize_pools_file = f"app/resource/reward/{prize_pools_name}.json"
-                        if not os.path.exists(prize_pools_file):
-                            with open(prize_pools_file, 'w', encoding='utf-8') as f:
-                                basic_structure = {
-                                    "示例奖品": {
-                                        "id": 1,
-                                        "probability": "1",
-                                    }
+                os.makedirs("app/resource/reward", exist_ok=True)
+                
+                for prize_pools_name in prize_poolss:
+                    prize_pools_file = f"app/resource/reward/{prize_pools_name}.json"
+                    if not os.path.exists(prize_pools_file):
+                        with open(prize_pools_file, 'w', encoding='utf-8') as f:
+                            basic_structure = {
+                                "示例奖品": {
+                                    "id": 1,
+                                    "probability": "1",
                                 }
-                                json.dump(basic_structure, f, ensure_ascii=False, indent=4)
+                            }
+                            json.dump(basic_structure, f, ensure_ascii=False, indent=4)
 
-                    self.prize_pools_comboBox.clear()
-                    self.prize_pools_comboBox.addItems(prize_poolss)
-                    self.refresh_signal.emit()
-                    logger.info("奖品名单保存成功！")
-                except Exception as e:
-                    logger.error(f"保存失败: {str(e)}")
+                self.prize_pools_comboBox.clear()
+                self.prize_pools_comboBox.addItems(prize_poolss)
+                self.refresh_signal.emit()
+                logger.info("奖池名单保存成功！")
+            except Exception as e:
+                logger.error(f"保存失败: {str(e)}")
     
     def show_prize_dialog(self):
         dialog = PrizeInputDialog(self)
         if dialog.exec():
             prize_text = dialog.getText()
             selected_prize = self.prize_pools_comboBox.currentText()
-            if prize_text and selected_prize:
+            if selected_prize:
                 try:
                     students = [line.strip() for line in prize_text.split('\n') if line.strip()]
                     
@@ -200,7 +222,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                             original_info = {}
                         new_prize_data[prize_name] = {
                             "id": idx,
-                            "probability": original_info.get("probability", "")
+                            "probability": original_info.get("probability", "1")
                         }
                     prize_data = new_prize_data
                     
@@ -217,7 +239,15 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         if dialog.exec():
             probability_text = dialog.getText()
             prize_pools_name = self.prize_pools_comboBox.currentText()
-            if probability_text:
+            # 获取是否存在奖品
+            if os.path.exists(f"app/resource/reward/{prize_pools_name}.json"):
+                with open(f"app/resource/reward/{prize_pools_name}.json", 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            if not data:
+                self.table.setRowCount(0)
+                self.table.setHorizontalHeaderLabels([])
+                return
+            if prize_pools_name:
                 try:
                     probabilitys = [line.strip() for line in probability_text.split('\n') if line.strip()]
                     
@@ -304,8 +334,8 @@ class Prize_pools_InputDialog(QDialog):
         self.setLayout(layout)
         
     def closeEvent(self, event):
-        if self.textEdit.toPlainText() and not self.saved:
-            w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
+        if not self.saved:
+            w = Dialog('未保存内容', '确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
@@ -393,8 +423,8 @@ class PrizeInputDialog(QDialog):
         self.setLayout(layout)
         
     def closeEvent(self, event):
-        if self.textEdit.toPlainText() and not self.saved:
-            w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
+        if not self.saved:
+            w = Dialog('未保存内容', '确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
@@ -477,8 +507,8 @@ class ProbabilityInputDialog(QDialog):
         self.setLayout(layout)
         
     def closeEvent(self, event):
-        if self.textEdit.toPlainText() and not self.saved:
-            w = Dialog('未保存内容', '有未保存的内容，确定要关闭吗？', self)
+        if not self.saved:
+            w = Dialog('未保存内容', '确定要关闭吗？', self)
             w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
