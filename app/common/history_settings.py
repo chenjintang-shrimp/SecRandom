@@ -20,6 +20,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.refresh_button.setFixedSize(150, 35)
         self.refresh_button.setFont(QFont(load_custom_font(), 14))
         self.refresh_button.clicked.connect(self.refresh_class_list)
+        self.refresh_button.clicked.connect(self.load_students)
         
         # 选择班级的下拉框
         self.class_comboBox = ComboBox()
@@ -83,5 +84,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
                     self.student_comboBox.clear()
                     students = ['全班同学'] + students
                     self.student_comboBox.addItems(students)
+            else:
+                self.student_comboBox.clear()
         except Exception as e:
             logger.error(f"加载学生名称失败: {str(e)}")

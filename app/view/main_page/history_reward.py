@@ -108,6 +108,11 @@ class history_reward(QFrame):
         # 根据班级名称获取学生名单数据
         data = self.__getClassrewards()
 
+        # 如果data为空，则显示提示信息
+        # 获取当前时间
+        current_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
+
+        # 获取选择的奖池和奖品名称
         prize_pools_name = self.history_setting_card.prize_pools_comboBox.currentText()
         reward_name = self.history_setting_card.reward_comboBox.currentText()
 
@@ -123,6 +128,8 @@ class history_reward(QFrame):
             )
         
         if reward_name == '全部奖品':
+            if not data:
+                data = [['0', '无', '无', '无']]
             # 设置表格行数为实际学生数量
             self.table.setRowCount(len(data))
             self.table.setSortingEnabled(False)
@@ -154,6 +161,8 @@ class history_reward(QFrame):
                 # 如果已有布局，只需更新内容
                 self.layout().addWidget(self.scroll_area_personal)
         else:
+            if not data:
+                data = [[f'{current_time}', '无', '无']]
             self.table.setRowCount(len(data))
             self.table.setSortingEnabled(False) # 禁止排序
             self.table.setColumnCount(3)

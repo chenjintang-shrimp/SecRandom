@@ -24,6 +24,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         self.refresh_button.setFixedSize(150, 35)
         self.refresh_button.setFont(QFont(load_custom_font(), 14))
         self.refresh_button.clicked.connect(self.refresh_reward_list)
+        self.refresh_button.clicked.connect(self.load_students)
         
         # 选择奖池的下拉框
         self.prize_pools_comboBox = ComboBox()
@@ -83,6 +84,8 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
                 
                 self.prize_pools_comboBox.clear()
                 self.prize_pools_comboBox.addItems(classes)
+            else:
+                self.prize_pools_comboBox.clear()
         except Exception as e:
             logger.error(f"加载奖池名称失败: {str(e)}")
 
@@ -106,6 +109,8 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
                     self.reward_comboBox.clear()
                     students = ['全部奖品'] + students
                     self.reward_comboBox.addItems(students)
+            else:
+                self.reward_comboBox.clear()
         except Exception as e:
             logger.error(f"加载奖品名称失败: {str(e)}")
 

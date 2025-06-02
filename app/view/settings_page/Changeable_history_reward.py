@@ -110,6 +110,13 @@ class changeable_history_reward(QFrame):
         # 根据班级名称获取学生名单数据
         data = self.__getClassrewards()
 
+        # 如果data为空，则显示提示信息
+        # 获取当前时间
+        current_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
+        if not data:
+            data = [[f'{current_time}', '无', '无']]
+
+        # 获取选择的奖池和奖品名称
         prize_pools_name = self.history_setting_card.prize_pools_comboBox.currentText()
         reward_name = self.history_setting_card.reward_comboBox.currentText()
 
@@ -285,9 +292,9 @@ class changeable_history_reward(QFrame):
                         return reward_data
 
                 except Exception as e:
-                    logger.error(f"读取学生名单文件失败: {e}")
+                    logger.error(f"读取奖池名单文件失败: {e}")
                     InfoBar.error(
-                        title="读取学生名单文件失败",
+                        title="读取奖池名单文件失败",
                         content=f"错误信息: （请到日志文件查看）",
                         duration=3000,
                         orient=Qt.Horizontal,
@@ -301,7 +308,6 @@ class changeable_history_reward(QFrame):
         
         else:
             if prize_pools_name:
-                _reward_name = _reward_name if not _reward_name else _reward_name[1:-1]
                 try:
                     # 初始化历史数据字典
                     history_data = {}
@@ -327,17 +333,18 @@ class changeable_history_reward(QFrame):
                             elif draw_method == 'until_reboot':
                                 draw_method_text = '不重复抽取(直到软件重启)'
                             elif draw_method == 'until_all':
-                                draw_method_text = '不重复抽取(直到抽完全部人)'
+                                draw_method_text = '不重复抽取(直到抽完全部奖)'
                             else:
                                 draw_method_text = draw_method
                             draw_reward_numbers = record.get('draw_reward_numbers', '')
                             reward_data.append([time, draw_method_text, f'{draw_reward_numbers}'])
+                    print(reward_data)
                     return reward_data
                     
                 except Exception as e:
-                    logger.error(f"读取学生名单文件失败: {e}")
+                    logger.error(f"读取奖池名单文件失败: {e}")
                     InfoBar.error(
-                        title="读取学生名单文件失败",
+                        title="读取奖池名单文件失败",
                         content=f"错误信息: （请到日志文件查看）",
                         duration=3000,
                         orient=Qt.Horizontal,
