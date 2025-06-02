@@ -987,8 +987,6 @@ class pumping_people(QWidget):
         class_name = self.class_combo.currentText()
         genders = self.gender_combo.currentText()
 
-        self._update_count_display()
-
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
@@ -1051,7 +1049,7 @@ class pumping_people(QWidget):
                     exist = student_info.get('exist', True)
                     if group_name == '抽取小组组号':
                         group_data.append((id, group, exist))
-                    elif self._should_include(group_name, genders, gender, group):
+                    else:
                         student_data.append((id, name, exist))
                         
             if group_name == '抽取小组组号':
@@ -1070,15 +1068,6 @@ class pumping_people(QWidget):
             else:
                 cleaned_data = [data for data in student_data if data[2]]
             return cleaned_data
-
-    # 对用户的选择进行处理
-    def _should_include(self, group_name, genders, gender, group):
-        if group_name == '抽取全班学生':
-            return genders == '抽取所有性别' or gender == genders
-        elif group_name == '抽取小组组号':
-            return group
-        else:
-            return (genders == '抽取所有性别' or gender == genders) and group == group_name
 
     # 获取已抽取人数
     def _get_drawn_count(self, class_name, group_name, genders):
@@ -1119,6 +1108,7 @@ class pumping_people(QWidget):
         else:
             self.total_label = BodyLabel('总人数: 0 | 剩余人数: 0')
         self.max_count = 0
+        self._update_count_display()
     
     # 增加抽取人数
     def _increase_count(self):
@@ -1269,8 +1259,8 @@ class pumping_people(QWidget):
         """恢复初始状态"""
         self._clean_temp_files()
         self.current_count = 1
-        self.clear_layout(self.result_grid)
         self.update_total_count()
+        self.clear_layout(self.result_grid)
 
     # 清理临时文件
     def _clean_temp_files(self):
