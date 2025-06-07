@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [ x86, x64 ]
+        arch: [ x64 ]
         os: [ windows-latest ]
     runs-on: ${{ matrix.os }}
     steps:
@@ -62,7 +62,7 @@ jobs:
           # 复制 LICENSE 文件到zip_dist/SecRandom目录下
           Copy-Item LICENSE zip_dist/SecRandom
           # 使用系统自带的 Compress-Archive 压缩文件
-          Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ matrix.arch }}.zip" -Force
+          Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}.zip" -Force
 
 
       - name: 上传已签名的应用程序
