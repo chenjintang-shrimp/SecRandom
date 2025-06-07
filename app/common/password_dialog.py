@@ -6,7 +6,7 @@ import hashlib
 import json
 import pyotp
 from loguru import logger
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 
 class PasswordDialog(QDialog):
     def __init__(self, parent=None):
@@ -78,36 +78,74 @@ class PasswordDialog(QDialog):
 
     def update_theme_style(self):
         """根据当前主题更新样式"""
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #2b2b2b;
-                color: #ffffff;
-            }
-            QLineEdit {
-                background-color: #3c3c3c;
-                color: #ffffff;
-                border: 1px solid #555555;
-                border-radius: 4px;
-                padding: 5px;
-            }
-            QPushButton {
-                background-color: #505050;
-                color: #ffffff;
-                border: 1px solid #555555;
-                border-radius: 4px;
-                padding: 5px;
-            }
-            QPushButton:hover {
-                background-color: #606060;
-            }
-            QComboBox {
-                background-color: #3c3c3c;
-                color: #ffffff;
-                border: 1px solid #555555;
-                border-radius: 4px;
-                padding: 5px;
-            }
-        """)
+        if qconfig.theme == Theme.AUTO:
+            # 获取系统当前主题
+            lightness = QApplication.palette().color(QPalette.Window).lightness()
+            is_dark = lightness <= 127
+        else:
+            is_dark = qconfig.theme == Theme.DARK
+        if is_dark:
+            self.setStyleSheet("""
+                QDialog {
+                    background-color: #2b2b2b;
+                    color: #ffffff;
+                }
+                QLineEdit {
+                    background-color: #3c3c3c;
+                    color: #ffffff;
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 5px;
+                }
+                QPushButton {
+                    background-color: #505050;
+                    color: #ffffff;
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 5px;
+                }
+                QPushButton:hover {
+                    background-color: #606060;
+                }
+                QComboBox {
+                    background-color: #3c3c3c;
+                    color: #ffffff;
+                    border: 1px solid #555555;
+                    border-radius: 4px;
+                    padding: 5px;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QDialog {
+                    background-color: #ffffff;
+                    color: #000000;
+                }
+                QLineEdit {
+                    background-color: #ffffff;
+                    color: #000000;
+                    border: 1px solid #cccccc;
+                    border-radius: 4px;
+                    padding: 5px;
+                }
+                QPushButton {
+                    background-color: #f0f0f0;
+                    color: #000000;
+                    border: 1px solid #cccccc;
+                    border-radius: 4px;
+                    padding: 5px;
+                }
+                QPushButton:hover {
+                    background-color: #e0e0e0;
+                }
+                QComboBox {
+                    background-color: #ffffff;
+                    color: #000000;
+                    border: 1px solid #cccccc;
+                    border-radius: 4px;
+                    padding: 5px;
+                }
+            """)
 
     def closeEvent(self, event):
         """窗口关闭时隐藏主界面"""
