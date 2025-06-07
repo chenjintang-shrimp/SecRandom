@@ -9,7 +9,7 @@ import os
 import json
 from loguru import logger
 
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 
 class reward_SettinsCard(GroupHeaderCardWidget):
     refresh_signal = pyqtSignal()
@@ -54,10 +54,10 @@ class reward_SettinsCard(GroupHeaderCardWidget):
             logger.error(f"加载奖品名称失败: {str(e)}")
 
         # 添加组件到分组中
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_class_20_filled.svg"), "设置奖池", "设置奖池名称", self.prize_pools_Button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_multiselect_ltr_20_filled.svg"), "选择奖池", "选择一个需要设置奖品的奖池", self.prize_pools_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_list_20_filled.svg"), "设置奖池奖品", "设置该奖池的奖品", self.prize_Button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_pill_20_filled.svg"), "设置奖品权重", "设置奖品权重", self.probability_Button)
+        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "设置奖池", "设置奖池名称", self.prize_pools_Button)
+        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "选择奖池", "选择一个需要设置奖品的奖池", self.prize_pools_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置奖池奖品", "设置该奖池的奖品", self.prize_Button)
+        self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置奖品权重", "设置奖品权重", self.probability_Button)
 
         # 创建表格
         self.table = TableWidget(self)

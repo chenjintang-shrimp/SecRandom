@@ -15,7 +15,7 @@ import re
 import secrets
 import ctypes
 
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 
 def create_hidden_folder(path):
     """创建隐藏文件夹"""
@@ -380,14 +380,14 @@ class password_SettingsCard(GroupHeaderCardWidget):
         self.show_hide_verification_switch.setFont(QFont(load_custom_font(), 12))
 
         # 添加组件到分组中
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_passkey_20_filled.svg"), "密码功能", "启用后将启用该设置卡的所有功能", self.start_password_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_password_20_filled.svg"), "设置密码", "设置管理员账号密码", self.set_password_button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_document_key_20_filled.svg"), '密钥导出', '导出密钥文件', self.export_key_button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_certificate_20_filled.svg"), "双重认证", "启用2FA验证", self.two_factor_switch)
+        self.addGroup(get_theme_icon("ic_fluent_person_passkey_20_filled"), "密码功能", "启用后将启用该设置卡的所有功能", self.start_password_switch)
+        self.addGroup(get_theme_icon("ic_fluent_password_20_filled"), "设置密码", "设置管理员账号密码", self.set_password_button)
+        self.addGroup(get_theme_icon("ic_fluent_document_key_20_filled"), '密钥导出', '导出密钥文件', self.export_key_button)
+        self.addGroup(get_theme_icon("ic_fluent_certificate_20_filled"), "双重认证", "启用2FA验证", self.two_factor_switch)
         # self.addGroup(FIF.VPN, "数据加密", "加密设置和名单文件", self.encrypt_setting_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_reset_20_filled.svg"), "重启软件验证", "重启软件时需要验证密码", self.restart_verification_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_exit_20_filled.svg"), "退出软件验证", "退出软件时需要验证密码", self.exit_verification_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_window_ad_20_filled.svg"), "暂时显示/隐藏悬浮窗验证", "暂时显示/隐藏悬浮窗时需要验证密码", self.show_hide_verification_switch)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_reset_20_filled"), "重启软件验证", "重启软件时需要验证密码", self.restart_verification_switch)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_exit_20_filled"), "退出软件验证", "退出软件时需要验证密码", self.exit_verification_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "暂时显示/隐藏悬浮窗验证", "暂时显示/隐藏悬浮窗时需要验证密码", self.show_hide_verification_switch)
 
 
         self.load_settings()

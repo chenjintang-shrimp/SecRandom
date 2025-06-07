@@ -9,7 +9,7 @@ import os
 import json
 from loguru import logger
 
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 
 class list_SettinsCard(GroupHeaderCardWidget):
     refresh_signal = pyqtSignal()
@@ -58,11 +58,11 @@ class list_SettinsCard(GroupHeaderCardWidget):
             logger.error(f"加载班级名称失败: {str(e)}")
 
         # 添加组件到分组中
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_class_20_filled.svg"), "设置班级", "点击按钮设置班级名称", self.class_Button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_multiselect_ltr_20_filled.svg"), "选择班级", "选择一个需要设置学生姓名的班级", self.class_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_list_20_filled.svg"), "设置班级名单", "点击按钮设置学生姓名", self.student_Button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_pill_20_filled.svg"), "设置学生性别", "点击按钮设置学生性别", self.gender_Button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_group_20_filled.svg"), "设置小组", "点击按钮设置小组名单", self.group_Button)
+        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "设置班级", "点击按钮设置班级名称", self.class_Button)
+        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "选择班级", "选择一个需要设置学生姓名的班级", self.class_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置班级名单", "点击按钮设置学生姓名", self.student_Button)
+        self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置学生性别", "点击按钮设置学生性别", self.gender_Button)
+        self.addGroup(get_theme_icon("ic_fluent_group_20_filled"), "设置小组", "点击按钮设置小组名单", self.group_Button)
 
         # 创建表格
         self.table = TableWidget(self)

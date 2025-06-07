@@ -8,7 +8,7 @@ import json
 import os
 from loguru import logger
 
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 from app.view.main_page import pumping_people
 
 
@@ -140,19 +140,19 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_gender_quantity_switch.setFont(QFont(load_custom_font(), 12))
 
         # 添加组件到分组中
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), "抽取模式", "设置抽取模式", self.pumping_people_Draw_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), "抽取方式", "设置抽取方式", self.pumping_Draw_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_text_font_size_20_filled.svg"), "字体大小", "设置抽取结果的字体大小", self.pumping_people_font_size_edit)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_feedback_20_filled.svg"), "语音播放", "设置结果公布时是否播放语音", self.pumping_people_Voice_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_calendar_video_20_filled.svg"), "动画模式", "设置抽取时的动画播放方式", self.pumping_people_Animation_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_number_symbol_square_20_filled.svg"), "学号格式", "设置学号格式设置", self.pumping_people_student_id_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_rename_20_filled.svg"), "姓名格式", "设置姓名格式设置", self.pumping_people_student_name_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "班级人|组数", "设置该功能的显示格式", self.pumping_people_theme_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "重置记录", "设置该功能是否显示(重启生效)", self.pumping_people_list_refresh_button_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_apps_list_20_filled.svg"), "刷新列表", "设置该功能是否显示(重启生效)", self.pumping_people_refresh_button_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_class_20_filled.svg"), "便捷修改班级", "设置该功能是否显示(重启生效)", self.pumping_people_class_quantity_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_convert_range_20_filled.svg"), "便捷修改组号/抽取范围", "设置该功能是否显示(重启生效)", self.pumping_people_group_quantity_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_pill_20_filled.svg"), "便捷修改性别", "设置该功能是否显示(重启生效)", self.pumping_people_gender_quantity_switch)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_people_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小", self.pumping_people_font_size_edit)
+        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语音播放", "设置结果公布时是否播放语音", self.pumping_people_Voice_switch)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_people_Animation_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_number_symbol_square_20_filled"), "学号格式", "设置学号格式设置", self.pumping_people_student_id_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_rename_20_filled"), "姓名格式", "设置姓名格式设置", self.pumping_people_student_name_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "班级人|组数", "设置该功能的显示格式", self.pumping_people_theme_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "重置记录", "设置该功能是否显示(重启生效)", self.pumping_people_list_refresh_button_switch)
+        self.addGroup(get_theme_icon("ic_fluent_apps_list_20_filled"), "刷新列表", "设置该功能是否显示(重启生效)", self.pumping_people_refresh_button_switch)
+        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "便捷修改班级", "设置该功能是否显示(重启生效)", self.pumping_people_class_quantity_switch)
+        self.addGroup(get_theme_icon("ic_fluent_convert_range_20_filled"), "便捷修改组号/抽取范围", "设置该功能是否显示(重启生效)", self.pumping_people_group_quantity_switch)
+        self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "便捷修改性别", "设置该功能是否显示(重启生效)", self.pumping_people_gender_quantity_switch)
 
         self.load_settings()  # 加载设置
         self.save_settings()  # 保存设置

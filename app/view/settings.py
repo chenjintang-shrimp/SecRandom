@@ -6,6 +6,8 @@ from PyQt5.QtCore import *
 import os
 from loguru import logger
 
+from app.common.config import get_theme_icon, load_custom_font
+
 # 导入子页面
 from app.view.settings_page.more_setting import more_setting
 from app.view.settings_page.Changeable_history_handoff_setting import changeable_history_handoff_setting
@@ -81,12 +83,12 @@ class settings_Window(MSFluentWindow):
 
     def initNavigation(self):
         # 使用 MSFluentWindow 的 addSubInterface 方法
-        self.addSubInterface(self.pumping_handoff_settingInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽取设置', position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.pumping_handoff_settingInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽取设置', position=NavigationItemPosition.TOP)
 
-        self.addSubInterface(self.password_setInterface, QIcon("app/resource/assets/ic_fluent_shield_keyhole_20_filled.svg"), '安全设置', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.changeable_history_handoff_settingInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.about_settingInterface, QIcon("app/resource/assets/ic_fluent_info_20_filled.svg"), '关于', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.more_settingInterface, QIcon("app/resource/assets/ic_fluent_more_horizontal_20_filled.svg"), '更多设置', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.more_settingInterface, get_theme_icon("ic_fluent_more_horizontal_20_filled"), '更多设置', position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
         """窗口关闭时隐藏主界面"""

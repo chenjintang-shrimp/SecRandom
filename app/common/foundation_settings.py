@@ -8,7 +8,7 @@ import json
 import os
 from loguru import logger
 
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 
 class foundation_settingsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -121,18 +121,18 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.settings_window_size_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 添加组件到分组中
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_branch_compare_20_filled.svg"), "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_window_ad_20_filled.svg"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_autofit_height_20_filled.svg"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_autofit_height_20_filled.svg"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_clock_20_filled.svg"), "定时清理", "设置定时清理抽取记录的时间", self.cleanup_button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_window_inprivate_20_filled.svg"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_layout_row_two_focus_top_settings_20_filled.svg"), "主窗口焦点", "设置主窗口不是焦点时关闭延迟", self.main_window_focus_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_timer_20_filled.svg"), "检测主窗口焦点时间", "设置检测主窗口焦点时间", self.main_window_focus_time_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_window_location_target_20_filled.svg"), "主窗口位置", "设置主窗口的显示位置", self.main_window_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_resize_large_20_filled.svg"), "主窗口大小", "设置主窗口的显示大小", self.main_window_size_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_window_location_target_20_filled.svg"), "设置窗口位置", "设置设置窗口的显示位置", self.settings_window_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_resize_large_20_filled.svg"), "设置窗口大小", "设置设置窗口的显示大小", self.settings_window_size_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_branch_compare_20_filled"), "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "定时清理", "设置定时清理抽取记录的时间", self.cleanup_button)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_layout_row_two_focus_top_settings_20_filled"), "主窗口焦点", "设置主窗口不是焦点时关闭延迟", self.main_window_focus_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "检测主窗口焦点时间", "设置检测主窗口焦点时间", self.main_window_focus_time_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "主窗口位置", "设置主窗口的显示位置", self.main_window_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_resize_large_20_filled"), "主窗口大小", "设置主窗口的显示大小", self.main_window_size_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "设置窗口位置", "设置设置窗口的显示位置", self.settings_window_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_resize_large_20_filled"), "设置窗口大小", "设置设置窗口的显示大小", self.settings_window_size_comboBox)
         
         # 定时检查清理
         self.cleanup_timer = QTimer(self)

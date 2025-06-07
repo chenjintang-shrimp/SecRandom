@@ -8,7 +8,7 @@ import json
 import os
 from loguru import logger
 
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 
 class pumping_reward_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -106,15 +106,15 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_prize_pools_quantity_switch.setFont(QFont(load_custom_font(), 12))
 
         # 添加组件到分组中
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), "抽取模式", "设置抽取模式", self.pumping_reward_Draw_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), "抽取方式", "设置抽取方式", self.pumping_reward_mode_Draw_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_text_font_size_20_filled.svg"), "字体大小", "设置抽取结果的字体大小", self.pumping_reward_font_size_edit)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_feedback_20_filled.svg"), "语音播放", "设置结果公布时是否播放语音", self.pumping_reward_Voice_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_calendar_video_20_filled.svg"), "动画模式", "设置抽取时的动画播放方式", self.pumping_reward_Animation_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "奖品量", "设置该功能的显示格式", self.pumping_reward_theme_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "重置记录", "设置该功能是否显示(重启生效)", self.pumping_reward_list_refresh_button_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_apps_list_20_filled.svg"), "刷新列表", "设置该功能是否显示(重启生效)", self.pumping_reward_refresh_button_switch)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_convert_range_20_filled.svg"), "切换奖池", "设置该功能是否显示(重启生效)", self.pumping_reward_prize_pools_quantity_switch)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_reward_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_reward_mode_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小", self.pumping_reward_font_size_edit)
+        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语音播放", "设置结果公布时是否播放语音", self.pumping_reward_Voice_switch)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_reward_Animation_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品量", "设置该功能的显示格式", self.pumping_reward_theme_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "重置记录", "设置该功能是否显示(重启生效)", self.pumping_reward_list_refresh_button_switch)
+        self.addGroup(get_theme_icon("ic_fluent_apps_list_20_filled"), "刷新列表", "设置该功能是否显示(重启生效)", self.pumping_reward_refresh_button_switch)
+        self.addGroup(get_theme_icon("ic_fluent_convert_range_20_filled"), "切换奖池", "设置该功能是否显示(重启生效)", self.pumping_reward_prize_pools_quantity_switch)
 
         self.load_settings()  # 加载设置
         self.save_settings()  # 保存设置

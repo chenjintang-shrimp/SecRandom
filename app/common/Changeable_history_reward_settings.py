@@ -7,7 +7,7 @@ from PyQt5.QtGui import *
 import os
 from loguru import logger
 
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 
 class history_reward_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -59,11 +59,11 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         self.load_students()
 
         # 添加组件到分组中
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), "刷新列表/记录", "点击按钮刷新奖池列表/记录表格", self.refresh_button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_reward_20_filled.svg"), "选择奖池", "选择一个需要查看历史记录的奖池", self.prize_pools_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_20_filled.svg"), "选择奖品", "这个一个可查看单个奖品的功能", self.reward_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_delete_dismiss_20_filled.svg"), "清除历史记录", "点击按钮清除当前选择的奖池点名历史记录", self.clear_history_Button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "历史记录", "选择是否开启该功能", self.history_switch)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "点击按钮刷新奖池列表/记录表格", self.refresh_button)
+        self.addGroup(get_theme_icon("ic_fluent_reward_20_filled"), "选择奖池", "选择一个需要查看历史记录的奖池", self.prize_pools_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择奖品", "这个一个可查看单个奖品的功能", self.reward_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_delete_dismiss_20_filled"), "清除历史记录", "点击按钮清除当前选择的奖池点名历史记录", self.clear_history_Button)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "历史记录", "选择是否开启该功能", self.history_switch)
 
         self.load_settings()
         self.save_settings()
