@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
 from app.common.config import cfg, AUTHOR, VERSION, YEAR
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 
 from app.common.foundation_settings import foundation_settingsCard
 
@@ -93,16 +93,26 @@ class more_setting(QFrame):
         # 创建个性化卡片组
         self.themeAndZoomCard = SettingCardGroup("个性化", self)
 
+        # 主题设置卡片
+        self.themeCard = OptionsSettingCard(
+            cfg.themeMode,
+            get_theme_icon("ic_fluent_color_20_filled"),
+            self.tr("主题"),
+            self.tr("更改应用程序的主题"),
+            texts=["浅色", "深色", "跟随系统设置"]
+        )
+
         # 界面缩放设置卡片
         self.zoomCard = OptionsSettingCard(
             cfg.dpiScale,
-            QIcon("app/resource/assets/ic_fluent_zoom_fit_20_filled.svg"),
+            get_theme_icon("ic_fluent_zoom_fit_20_filled"),
             self.tr("界面缩放"),
             self.tr("更改界面和字体的大小"),
             texts=["100%", "125%", "150%", "175%", "200%", self.tr("使用系统设置"),]
         )
         
         # 添加组件到分组中
+        self.themeAndZoomCard.addSettingCard(self.themeCard)
         self.themeAndZoomCard.addSettingCard(self.zoomCard)
         
         # 将卡片组添加到布局中
