@@ -16,7 +16,7 @@ from loguru import logger
 from random import SystemRandom
 system_random = SystemRandom()
 
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 
 class pumping_people(QWidget):
     def __init__(self, parent=None):
@@ -576,26 +576,30 @@ class pumping_people(QWidget):
 
                                 # 因子2: 小组平衡（仅当有足够数据时生效）
                                 group_factor = 1.0
-                                if len(history_data.get("group_stats", {})) > 3:  # 至少3个小组有数据
-                                    for student in __cleaned_data:
+                                # 获取有效小组统计数量（值>0的条目）
+                                valid_groups = [v for v in history_data.get("group_stats", {}).values() if v > 0]
+                                if len(valid_groups) > 3:  # 有效小组数量达标
+                                    for student in cleaned_data:
                                         if student[1] == student_name:
                                             current_student_group = student[3]
                                             break
                                     else:
                                         current_student_group = ''
-                                    group_history = history_data["group_stats"].get(current_student_group, 0)
-                                    group_factor = 1.0 / (group_history * 0.2 + 1)  # 小组被抽1次→0.83, 2次→0.71
+                                    group_history = max(history_data["group_stats"].get(current_student_group, 0), 0)
+                                    group_factor = 1.0 / (group_history * 0.2 + 1)
 
                                 # 因子3: 性别平衡（仅当两种性别都有数据时生效）
                                 gender_factor = 1.0
-                                if len(history_data.get("gender_stats", {})) >= 2:
-                                    for student in __cleaned_data:
+                                # 获取有效性别统计数量（值>0的条目）
+                                valid_gender = [v for v in history_data.get("gender_stats", {}).values() if v > 0]
+                                if len(valid_gender) > 3:  # 有效性别数量达标
+                                    for student in cleaned_data:
                                         if student[1] == student_name:
                                             current_student_gender = student[2]
                                             break
                                     else:
                                         current_student_gender = ''
-                                    gender_history = history_data["gender_stats"].get(current_student_gender, 0)
+                                    gender_history = max(history_data["gender_stats"].get(current_student_gender, 0), 0)
                                     gender_factor = 1.0 / (gender_history * 0.2 + 1)
 
                                 # 冷启动特殊处理
@@ -850,11 +854,10 @@ class pumping_people(QWidget):
             history_data["group_stats"] = {}
         if "gender_stats" not in history_data:
             history_data["gender_stats"] = {}
-        if "total_rounds" not in history_data:
-            history_data["total_rounds"] = 0
-        
-        # 更新总轮次
-        history_data["total_rounds"] += 1
+        # 初始化统计数据字段
+        for field in ["total_rounds", "total_stats"]:
+            if field not in history_data:
+                history_data[field] = 0
 
         # 加载学生数据以获取小组和性别信息
         student_info_map = {}
@@ -884,12 +887,15 @@ class pumping_people(QWidget):
             if student_gender not in history_data["gender_stats"]:
                 history_data["gender_stats"][student_gender] = 0
 
-            if group_name == '抽取小组组号':
-                history_data["group_stats"][student_group] += 1
-            else:
-                history_data["group_stats"][student_group] += 1
-                history_data["gender_stats"][student_gender] += 1
+            history_data["total_rounds"] += 1
 
+            if (not genders or '抽取所有性别' in genders) and group_name == '抽取全班学生':
+                if "total_stats" not in history_data:
+                    history_data["total_stats"] = 0
+                history_data["total_stats"] += 1
+                history_data["gender_stats"][student_gender] += 1
+                history_data["group_stats"][student_group] += 1
+                
             if group_name == '抽取小组组号':
                 if student_name not in history_data["pumping_group"]:
                     history_data["pumping_group"][student_name] = {
@@ -913,20 +919,39 @@ class pumping_people(QWidget):
                     })
             else:
                 if student_name not in history_data["pumping_people"]:
-                    history_data["pumping_people"][student_name] = {
-                        "total_number_of_times": 1,
-                        "last_drawn_time": current_time,
-                        "rounds_missed": 0,
-                        "time": [{
-                            "draw_method": self.draw_mode,
-                            "draw_time": current_time,
-                            "draw_people_numbers": self.current_count,
-                            "draw_group": group_name,
-                            "draw_gender": genders
-                        }]
-                    }
+                    if not genders or '抽取所有性别' in genders:
+                        history_data["pumping_people"][student_name] = {
+                            "total_number_of_times": 1,
+                            "total_number_auxiliary": 0,
+                            "last_drawn_time": current_time,
+                            "rounds_missed": 0,
+                            "time": [{
+                                "draw_method": self.draw_mode,
+                                "draw_time": current_time,
+                                "draw_people_numbers": self.current_count,
+                                "draw_group": group_name,
+                                "draw_gender": genders
+                            }]
+                        }
+                    else:
+                        history_data["pumping_people"][student_name] = {
+                            "total_number_of_times": 0,
+                            "total_number_auxiliary": 1,
+                            "last_drawn_time": current_time,
+                            "rounds_missed": 0,
+                            "time": [{
+                                "draw_method": self.draw_mode,
+                                "draw_time": current_time,
+                                "draw_people_numbers": self.current_count,
+                                "draw_group": group_name,
+                                "draw_gender": genders
+                            }]
+                        }
                 else:
-                    history_data["pumping_people"][student_name]["total_number_of_times"] += 1
+                    if not genders or '抽取所有性别' in genders: 
+                        history_data["pumping_people"][student_name]["total_number_of_times"] += 1
+                    else:
+                        history_data["pumping_people"][student_name]["total_number_auxiliary"] += 1
                     history_data["pumping_people"][student_name]["last_drawn_time"] = current_time
                     history_data["pumping_people"][student_name]["rounds_missed"] = 0
                     history_data["pumping_people"][student_name]["time"].append({
@@ -1049,8 +1074,12 @@ class pumping_people(QWidget):
                     exist = student_info.get('exist', True)
                     if group_name == '抽取小组组号':
                         group_data.append((id, group, exist))
-                    else:
-                        student_data.append((id, name, exist))
+                    elif group_name == group:
+                        if (not genders) or (genders and gender in genders) or (genders == '抽取所有性别'):
+                            student_data.append((id, name, exist))
+                    elif group_name == '抽取全班学生':
+                        if (not genders) or (genders and gender in genders) or (genders == '抽取所有性别'):
+                            student_data.append((id, name, exist))
                         
             if group_name == '抽取小组组号':
                 valid_groups = set()
@@ -1260,6 +1289,7 @@ class pumping_people(QWidget):
         self._clean_temp_files()
         self.current_count = 1
         self.update_total_count()
+        self.refresh_class_list()
         self.clear_layout(self.result_grid)
 
     # 清理临时文件

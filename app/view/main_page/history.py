@@ -10,7 +10,7 @@ import math
 from loguru import logger
 
 from app.common.config import cfg, AUTHOR, VERSION, YEAR
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 
 from app.common.history_settings import history_SettinsCard
 from app.view.main_page.pumping_people import pumping_people
@@ -146,7 +146,11 @@ class history(QFrame):
                         self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
                         self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
                 # 设置表头
-                self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组', '总抽取次数', '下次抽取概率'])
+                probability_weight_method = self.get_probability_weight_method_setting()
+                if probability_weight_method == 1:
+                    self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组', '总抽取次数', '下次抽取概率'])
+                else:
+                    self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组', '总抽取次数', '下次抽取权重'])
             else:
                 self.table.setColumnCount(5)
                 # 填充表格数据
@@ -220,6 +224,17 @@ class history(QFrame):
                 settings = json.load(f)
                 random_method = settings['pumping_people']['draw_pumping']
                 return random_method
+        except Exception as e:
+            logger.error(f"加载随机抽取方法设置时出错: {e}, 使用默认设置")
+            return 0
+
+    def get_probability_weight_method_setting(self):
+        """获取随机抽取方法的设置"""
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                probability_weight_method = settings['history']['probability_weight']
+                return probability_weight_method
         except Exception as e:
             logger.error(f"加载随机抽取方法设置时出错: {e}, 使用默认设置")
             return 0
@@ -341,119 +356,100 @@ class history(QFrame):
                     else:
                         drawn_students = []
 
-                    # 生成最终数据
-                    for i, student in enumerate(students):
-                        # 计算所有学生的综合权重
-                        total_weight = 0
-                        available_students_weights = {}
+                    # 预加载设置文件
+                    try:
+                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                            settings = json.load(f)
+                            probability_weight = settings['history']['probability_weight']
+                    except Exception as e:
+                        probability_weight = 1
+                        logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
-                        for student_id, student_name, exist in available_students:
-                            # 获取学生历史记录
-                            student_history = history_data.get("pumping_people", {}).get(student_name, {
-                                "total_number_of_times": 0,
-                                "last_drawn_time": None,
-                                "rounds_missed": 0,
-                                "time": []
-                            })
+                    # 预计算有效统计
+                    valid_groups = {group: count for group, count in history_data.get("group_stats", {}).items() if count > 0}
+                    valid_genders = {gender: count for gender, count in history_data.get("gender_stats", {}).items() if count > 0}
 
-                            def calculate_comprehensive_weight(student_history, student_info, history_data):
-                                # 基础参数配置
-                                COLD_START_ROUNDS = 10       # 冷启动轮次
-                                BASE_WEIGHT = 1.0            # 基础权重
+                    # 创建学生信息映射表
+                    student_info_map = {
+                        student[1]: (student[3], student[2]) 
+                        for student in cleaned_data
+                    }
 
-                                # 计算各权重因子
-                                # 因子1: 抽取频率惩罚（被抽中次数越多权重越低）
-                                frequency_factor = 1.0 / math.sqrt(student_history["total_number_of_times"] * 2 + 1)
+                    # 批量计算权重
+                    available_students_weights = {}
+                    total_weight = 0
 
-                                # 因子2: 小组平衡（仅当有足够数据时生效）
-                                group_factor = 1.0
-                                if len(history_data.get("group_stats", {})) > 3:  # 至少3个小组有数据
-                                    for student in cleaned_data:
-                                        if student[1] == student_name:
-                                            current_student_group = student[3]
-                                            break
-                                    else:
-                                        current_student_group = ''
-                                    group_history = history_data["group_stats"].get(current_student_group, 0)
-                                    group_factor = 1.0 / (group_history * 0.2 + 1)  # 小组被抽1次→0.83, 2次→0.71
+                    for student_id, student_name, exist in available_students:
+                        if not exist:
+                            continue
 
-                                # 因子3: 性别平衡（仅当两种性别都有数据时生效）
-                                gender_factor = 1.0
-                                if len(history_data.get("gender_stats", {})) >= 2:
-                                    for student in cleaned_data:
-                                        if student[1] == student_name:
-                                            current_student_gender = student[2]
-                                            break
-                                    else:
-                                        current_student_gender = ''
-                                    gender_history = history_data["gender_stats"].get(current_student_gender, 0)
-                                    gender_factor = 1.0 / (gender_history * 0.2 + 1)
+                        # 获取预存的学生信息
+                        current_student_group, current_student_gender = student_info_map.get(student_name, ('', ''))
 
-                                # 冷启动特殊处理
-                                current_round = history_data.get("total_rounds", 0)
-                                if current_round < COLD_START_ROUNDS:
-                                    frequency_factor = min(0.8, frequency_factor)  # 防止新学生权重过低
+                        # 快速计算权重因子
+                        student_history = history_data.get("pumping_people", {}).get(student_name, {
+                            "total_number_of_times": 0,
+                            "last_drawn_time": None,
+                            "rounds_missed": 0,
+                            "time": []
+                        })
 
-                                # 综合权重计算
-                                weights = {
-                                    'base': BASE_WEIGHT * 0.2,
-                                    'frequency': frequency_factor * 3.0,
-                                    'group': group_factor * 0.8,
-                                    'gender': gender_factor * 0.8
-                                }
-                                
-                                comprehensive_weight = sum(weights.values())
-                                
-                                # 5. 最终调整与限制
-                                # 确保权重在合理范围内 (0.5~5.0)
-                                final_weight = max(0.5, min(comprehensive_weight, 5.0))
-                                
-                                # # 调试输出
-                                # debug_info = {
-                                #     'name': student_name,
-                                #     'final': round(final_weight, 2),
-                                #     'factors': {k: round(v, 2) for k,v in weights.items()},
-                                #     'history': {
-                                #         'drawn_times': student_history["total_number_of_times"],
-                                #         'missed': student_history.get("rounds_missed", 0)
-                                #     }
-                                # }
-                                # print(debug_info)
-                                
-                                return final_weight
+                        # 频率因子
+                        freq = student_history["total_number_of_times"]
+                        frequency_factor = 1.0 / math.sqrt(freq * 2 + 1)
 
-                            if self.draw_mode in ['until_reboot', 'until_all'] and student_name in drawn_students and len(drawn_students) < len(students):
-                                # 如果是不重复抽取模式，且该学生已被抽中，且未全部抽完，则权重为0
-                                comprehensive_weight = 0
-                            else:
-                                comprehensive_weight = calculate_comprehensive_weight(student_history, student_info, history_data)
-                            available_students_weights[student_name] = comprehensive_weight
-                            total_weight += comprehensive_weight
+                        # 小组因子
+                        group_history = valid_groups.get(current_student_group, 0)
+                        group_factor = 1.0 / (group_history * 0.2 + 1) if len(valid_groups) > 3 else 1.0
 
-                        for i, student in enumerate(students):
-                            student_name = student if not (student.startswith('【') and student.endswith('】')) else student[1:-1]
-                            if student_name in available_students_weights:
-                                probability = available_students_weights[student_name] / total_weight if total_weight > 0 else 0
-                                probability = probability * 100
-                                if probability < 10:
-                                    probability_str = '0{:.1f}%'.format(probability)
-                                else:
-                                    probability_str = '{:.1f}%'.format(probability)
-                            else:
-                                probability_str = '00.0%'
+                        # 性别因子
+                        gender_history = valid_genders.get(current_student_gender, 0)
+                        gender_factor = 1.0 / (gender_history * 0.2 + 1) if len(valid_genders) > 3 else 1.0
 
-                            pumping_people_count = int(history_data['pumping_people'].get(student_name, {}).get('total_number_of_times', 0)) if 'pumping_people' in history_data else 0
+                        # 冷启动处理
+                        current_round = history_data.get("total_rounds", 0)
+                        if current_round < 10:
+                            frequency_factor = min(0.8, frequency_factor)
 
-                            student_data.append([
-                                str(cleaned_data[i][0]).zfill(max_digits['id']),
-                                student_name,
-                                cleaned_data[i][2],
-                                students_group[i],
-                                str(pumping_people_count).zfill(max_digits['pumping_people']),
-                                probability_str
-                            ])
+                        # 综合权重
+                        comprehensive_weight = 0.2 + (frequency_factor * 3) + (group_factor * 0.8) + (gender_factor * 0.8)
+                        comprehensive_weight = max(0.5, min(comprehensive_weight, 5.0))
 
-                        return student_data
+                        # 处理不重复模式
+                        if self.draw_mode in ['until_reboot', 'until_all'] and \
+                           student_name in drawn_students and \
+                           len(drawn_students) < len(students):
+                            comprehensive_weight = 0
+
+                        available_students_weights[student_name] = comprehensive_weight
+                        total_weight += comprehensive_weight
+
+                    # 批量生成结果数据
+                    student_data = []
+                    for i, (student, cleaned) in enumerate(zip(students, cleaned_data)):
+                        student_name = student[1:-1] if student.startswith('【') and student.endswith('】') else student
+                        
+                        # 计算概率/权重值
+                        weight_value = available_students_weights.get(student_name, 0)
+                        if probability_weight == 1:
+                            prob = (weight_value / total_weight) * 100 if total_weight > 0 else 0
+                            probability_str = f"{prob:.2f}%"
+                        else:
+                            probability_str = f"{weight_value:.2f}"
+
+                        # 获取抽取次数
+                        pumping_count = history_data.get('pumping_people', {}).get(student_name, {}).get('total_number_of_times', 0)
+
+                        student_data.append([
+                            str(cleaned[0]).zfill(max_digits['id']),
+                            student_name,
+                            cleaned[2],
+                            cleaned[3],
+                            str(pumping_count).zfill(max_digits['pumping_people']),
+                            probability_str
+                        ])
+
+                    return student_data
 
                 except Exception as e:
                     logger.error(f"读取学生名单文件失败: {e}")

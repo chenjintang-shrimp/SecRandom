@@ -7,7 +7,7 @@ from PyQt5.QtGui import *
 import os
 from loguru import logger
 
-from app.common.config import load_custom_font
+from app.common.config import get_theme_icon, load_custom_font
 
 class history_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -16,6 +16,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.setBorderRadius(8)
         self.settings_file = "app/Settings/Settings.json"
         self.default_settings = {
+            "probability_weight": 0,
             "history_enabled": True
         }
 
@@ -46,6 +47,14 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.clear_history_Button.clicked.connect(self.clear_history)
         self.clear_history_Button.setFont(QFont(load_custom_font(), 12))
 
+        # 权重还是概率
+        self.probability_or_weight = ComboBox()
+        self.probability_or_weight.setFixedWidth(100)
+        self.probability_or_weight.setPlaceholderText("选择权重|概率")
+        self.probability_or_weight.addItems(["权重", "概率"])
+        self.probability_or_weight.currentIndexChanged.connect(self.save_settings)
+        self.probability_or_weight.setFont(QFont(load_custom_font(), 12))
+
         # 历史记录开关
         self.history_switch = SwitchButton()
         self.history_switch.setOnText("开启")
@@ -59,11 +68,12 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.load_students()
 
         # 添加组件到分组中
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), "刷新列表/记录", "点击按钮刷新班级列表/记录表格", self.refresh_button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_class_20_filled.svg"), "选择班级", "选择一个需要查看历史记录的班级", self.class_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_person_20_filled.svg"), "选择学生", "这个一个可查看单个学生的功能", self.student_comboBox)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_delete_dismiss_20_filled.svg"), "清除历史记录", "点击按钮清除当前选择的班级点名历史记录", self.clear_history_Button)
-        self.addGroup(QIcon("app/resource/assets/ic_fluent_people_eye_20_filled.svg"), "历史记录", "选择是否开启该功能(如果使用更'精确'的公平抽取务必打开)", self.history_switch)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "点击按钮刷新班级列表/记录表格", self.refresh_button)
+        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "选择班级", "选择一个需要查看历史记录的班级", self.class_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择学生", "这个一个可查看单个学生的功能", self.student_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_delete_dismiss_20_filled"), "清除历史记录", "点击按钮清除当前选择的班级点名历史记录", self.clear_history_Button)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "权重|概率", "选择是否使用'权重'还是'概率'进行显示以及公平抽取", self.probability_or_weight)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "历史记录", "选择是否开启该功能(如果使用更'精确'的公平抽取务必打开)", self.history_switch)
 
         self.load_settings()
         self.save_settings()
@@ -161,16 +171,24 @@ class history_SettinsCard(GroupHeaderCardWidget):
                     history_settings = settings.get("history", {})
                         
                     history_enabled = history_settings.get("history_enabled", self.default_settings["history_enabled"])
+
+                    probability_weight = history_settings.get("probability_weight", self.default_settings["probability_weight"])
+                    if probability_weight < 0 or probability_weight >= self.probability_or_weight.count():
+                        # 如果索引值无效，则使用默认值
+                        probability_weight = self.default_settings["probability_weight"]
                     
                     self.history_switch.setChecked(history_enabled)
+                    self.probability_or_weight.setCurrentIndex(probability_weight)
                     logger.info(f"加载历史记录设置完成")
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.history_switch.setChecked(self.default_settings["history_enabled"])
+                self.probability_or_weight.setCurrentIndex(self.default_settings["probability_weight"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.history_switch.setChecked(self.default_settings["history_enabled"])
+            self.probability_or_weight.setCurrentIndex(self.default_settings["probability_weight"])
             self.save_settings()
     
     def save_settings(self):
@@ -188,6 +206,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
             
         history_settings = existing_settings["history"]
         history_settings["history_enabled"] = self.history_switch.isChecked()
+        history_settings["probability_weight"] = self.probability_or_weight.currentIndex()
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open(self.settings_file, 'w', encoding='utf-8') as f:
