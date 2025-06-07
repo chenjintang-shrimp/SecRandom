@@ -47,6 +47,7 @@ jobs:
             -F `
             -i ./resources/SecRandom.ico `
             -n SecRandom `
+            --hidden-import=_overlapped `
             --contents-directory . `
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:. `
