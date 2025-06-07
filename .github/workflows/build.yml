@@ -47,7 +47,10 @@ jobs:
             -F `
             -i ./resources/SecRandom.ico `
             -n SecRandom `
+            --exclude-module=darkdetect `
             --hidden-import=_overlapped `
+            --hidden-import=sip `
+            --onefile `
             --contents-directory . `
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:. `
