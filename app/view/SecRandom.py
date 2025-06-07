@@ -8,11 +8,10 @@ from PyQt5.QtNetwork import *
 import json
 import os
 import sys
-import webbrowser
-import subprocess
 from loguru import logger
 
 from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
+from app.common.config import get_theme_icon, load_custom_font
 
 if './app/Settings' != None and not os.path.exists('./app/Settings'):
     os.makedirs('./app/Settings')
@@ -34,6 +33,8 @@ class Window(MSFluentWindow):
         self.focus_timer = QTimer(self)
         self.focus_timer.timeout.connect(self.check_focus_timeout)
         self.last_focus_time = QDateTime.currentDateTime()
+
+        qconfig.themeChanged.connect(self.restart_app)
 
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
@@ -113,14 +114,14 @@ class Window(MSFluentWindow):
         self.tray_icon.setToolTip('SecRandom')
         self.tray_menu = RoundMenu(parent=self)
         # 添加关于SecRandom,点击后打开主界面的关于选项卡
-        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_info_20_filled.svg"), '关于SecRandom', triggered=self.show_about_tab))
+        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_info_20_filled"), '关于SecRandom', triggered=self.show_about_tab))
         self.tray_menu.addSeparator()
-        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_power_20_filled.svg"), '暂时显示/隐藏主界面', triggered=self.toggle_window))
-        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
-        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_settings_20_filled.svg"), '打开设置界面', triggered=self.show_setting_interface))
+        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_power_20_filled"), '暂时显示/隐藏主界面', triggered=self.toggle_window))
+        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
+        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_settings_20_filled"), '打开设置界面', triggered=self.show_setting_interface))
         self.tray_menu.addSeparator()
-        # self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_arrow_sync_20_filled.svg"), '重启', triggered=self.restart_app))
-        self.tray_menu.addAction(Action(QIcon("app/resource/assets/ic_fluent_arrow_exit_20_filled.svg"), '退出', triggered=self.close_window_secrandom))
+        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.restart_app))
+        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_exit_20_filled"), '退出', triggered=self.close_window_secrandom))
 
         self.tray_icon.show()
         self.tray_icon.activated.connect(self.contextMenuEvent)
@@ -182,20 +183,20 @@ class Window(MSFluentWindow):
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
                 if foundation_settings.get('pumping_floating_side', 0) == 1:
-                    self.addSubInterface(self.pumping_peopleInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人', position=NavigationItemPosition.BOTTOM)
+                    self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.BOTTOM)
                 else:
-                    self.addSubInterface(self.pumping_peopleInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人', position=NavigationItemPosition.TOP)
+                    self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
                 if foundation_settings.get('pumping_reward_side', 0) == 1:
-                    self.addSubInterface(self.pumping_rewardInterface, QIcon("app/resource/assets/ic_fluent_reward_20_filled.svg"), '抽奖', position=NavigationItemPosition.BOTTOM)
+                    self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.BOTTOM)
                 else:
-                    self.addSubInterface(self.pumping_rewardInterface, QIcon("app/resource/assets/ic_fluent_reward_20_filled.svg"), '抽奖', position=NavigationItemPosition.TOP)
+                    self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
         except FileNotFoundError as e:
             logger.error(f"加载设置时出错: {e}, 使用默认顶部显示抽人功能")
-            self.addSubInterface(self.pumping_peopleInterface, QIcon("app/resource/assets/ic_fluent_people_community_20_filled.svg"), '抽人', position=NavigationItemPosition.TOP)
-            self.addSubInterface(self.pumping_rewardInterface, QIcon("app/resource/assets/ic_fluent_reward_20_filled.svg"), '抽奖', position=NavigationItemPosition.TOP)
+            self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
+            self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
 
-        self.addSubInterface(self.history_handoff_settingInterface, QIcon("app/resource/assets/ic_fluent_chat_history_20_filled.svg"), '历史记录', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.about_settingInterface, QIcon("app/resource/assets/ic_fluent_info_20_filled.svg"), '关于', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
         """窗口关闭时隐藏主界面"""

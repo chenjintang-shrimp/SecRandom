@@ -29,8 +29,6 @@ logger.add(
     catch=True  # 捕获未处理的异常
 )
 
-setTheme(Theme.LIGHT)
-
 if cfg.get(cfg.dpiScale) == "Auto":
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
@@ -110,4 +108,8 @@ except Exception as e:
     logger.error(f"加载设置时出错: {e}, 使用默认显示主窗口")
     sec.show()
 
-sys.exit(app.exec_())
+try:
+    app.exec_()
+finally:
+    shared_memory.detach()
+    sys.exit()
