@@ -50,6 +50,7 @@ jobs:
       - name: 准备 artifacts 
         run: |
           mv artifacts/windows-latest-x64/* release/
+          mv artifacts/windows-latest-x86/* release/
 
       - name: 计算 SHA256 值
         run: |
