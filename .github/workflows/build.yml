@@ -31,7 +31,9 @@ jobs:
         run: mkdir zip
 
       - name: 生成comtypes类型库
-        run: python -m comtypes.client.generate -i
+        run: |
+          uv pip install comtypes
+          python -m comtypes.client.generate -i
 
       - name: 运行 Windows 构建
         if: ${{ matrix.os == 'windows-latest' }}
