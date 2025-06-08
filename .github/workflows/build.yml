@@ -30,6 +30,9 @@ jobs:
       - name: 初始化 zip 文件夹
         run: mkdir zip
 
+      - name: 生成comtypes类型库
+        run: python -m comtypes.client.generate -i
+
       - name: 运行 Windows 构建
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
@@ -49,6 +52,7 @@ jobs:
             -n SecRandom `
             --onefile `
             --contents-directory . `
+            --add-data .venv/Lib/site-packages/comtypes/gen;comtypes/gen `
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:. `
             --version-file=version_info.txt
