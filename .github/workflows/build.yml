@@ -49,7 +49,6 @@ jobs:
             -n SecRandom `
             --onefile `
             --contents-directory . `
-            --add-data .venv/Lib/site-packages/comtypes/gen;comtypes/gen `
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:. `
             --version-file=version_info.txt
