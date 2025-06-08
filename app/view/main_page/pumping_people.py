@@ -26,14 +26,14 @@ class pumping_people(QWidget):
         self.draw_mode = "random"
         self.animation_timer = None
         # 使用全局语音引擎单例
-        # 检查系统版本是否为Windows 10及以上
-        if sys.platform == 'win32' and sys.getwindowsversion().major >= 10:
+        # 检查系统版本是否为Windows 10及以上且非x86架构
+        if sys.platform == 'win32' and sys.getwindowsversion().major >= 10 and platform.machine() != 'x86':
             if not hasattr(QApplication.instance(), 'pumping_reward_voice_engine'):
                 QApplication.instance().pumping_reward_voice_engine = pyttsx3.init()
                 QApplication.instance().pumping_reward_voice_engine.startLoop(False)
             self.voice_engine = QApplication.instance().pumping_reward_voice_engine
         else:
-            logger.warning("语音功能仅在Windows 10及以上系统可用")
+            logger.warning("语音功能仅在Windows 10及以上系统且非x86架构可用")
         self.initUI()
     
     def start_draw(self):
