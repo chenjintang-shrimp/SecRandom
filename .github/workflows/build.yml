@@ -30,13 +30,6 @@ jobs:
       - name: 初始化 zip 文件夹
         run: mkdir zip
 
-      - name: 生成comtypes类型库
-        run: |
-          uv venv
-          .venv/Scripts/activate
-          uv pip install comtypes
-          python -m comtypes.tools.tlbimp
-
       - name: 运行 Windows 构建
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
