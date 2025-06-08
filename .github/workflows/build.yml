@@ -32,6 +32,8 @@ jobs:
 
       - name: 生成comtypes类型库
         run: |
+          uv venv
+          .venv/Scripts/activate
           uv pip install comtypes
           python -m comtypes.client.generate -i
 
