@@ -35,7 +35,7 @@ jobs:
           uv venv
           .venv/Scripts/activate
           uv pip install comtypes
-          python -m comtypes.client.generate -i
+          python -c "import comtypes.client; comtypes.client.generate()"
 
       - name: 运行 Windows 构建
         if: ${{ matrix.os == 'windows-latest' }}
