@@ -71,19 +71,8 @@ jobs:
 
       - name: 生成 需发布 的表格信息
         run: |
-          # 自动获取上一个版本号（完全自动化，无需手动填写）
-          if [[ "${{ github.ref_name }}" == *"alpha"* ]]; then
-            # 获取上一个alpha版本（排除当前版本）
-            PREVIOUS_TAG=$(git tag --list "v*alpha*" | grep -v "${{ github.ref_name }}" | sort -V | tail -n 1)
-          elif [[ "${{ github.ref_name }}" == *"beta"* ]]; then
-            # 获取上一个beta版本（排除当前版本）
-            PREVIOUS_TAG=$(git tag --list "v*beta*" | grep -v "${{ github.ref_name }}" | sort -V | tail -n 1)
-          else
-            # 获取上一个正式版本（排除alpha、beta和当前版本）
-            PREVIOUS_TAG=$(git tag --list "v*" | grep -v -E "alpha|beta|${{ github.ref_name }}" | sort -V | tail -n 1)
-          fi
-          # 如果没有找到上一个版本，使用初始版本
-          PREVIOUS_TAG=${PREVIOUS_TAG:-v1.0.0.4}
+          # 手动设置上一个版本号
+          PREVIOUS_TAG=v1.1.0.1
           echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
           cd release
           echo "" >> ../CHANGELOG.md
