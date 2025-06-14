@@ -441,13 +441,14 @@ class changeable_history(QFrame):
 
                         # 获取抽取次数
                         pumping_count = history_data.get('pumping_people', {}).get(student_name, {}).get('total_number_of_times', 0)
+                        pumping_count_auxiliary = history_data.get('pumping_people', {}).get(student_name, {}).get('total_number_auxiliary', 0)
 
                         student_data.append([
                             str(cleaned[0]).zfill(max_digits['id']),
                             student_name,
                             cleaned[2],
                             cleaned[3],
-                            str(pumping_count).zfill(max_digits['pumping_people']),
+                            str(pumping_count + pumping_count_auxiliary).zfill(max_digits['pumping_people']),
                             probability_str
                         ])
 
