@@ -36,6 +36,7 @@ jobs:
           python-version: '3.x'
 
       - name: 更新 version_info.txt
+        if: startsWith(github.ref_name, 'v')
         run: |
           python update_version.py
         env:
