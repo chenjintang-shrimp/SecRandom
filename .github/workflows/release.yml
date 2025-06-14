@@ -69,10 +69,40 @@ jobs:
           fi
           cd ..
 
-      - name: 生成 SHA256 的表格信息
+      - name: 生成 需发布 的表格信息
         run: |
+          # 自动获取上一个版本号（完全自动化，无需手动填写）
+          if [[ "${{ github.ref_name }}" == *"alpha"* ]]; then
+            # 获取上一个alpha版本（排除当前版本）
+            PREVIOUS_TAG=$(git tag --list "v*alpha*" | grep -v "${{ github.ref_name }}" | sort -V | tail -n 1)
+          elif [[ "${{ github.ref_name }}" == *"beta"* ]]; then
+            # 获取上一个beta版本（排除当前版本）
+            PREVIOUS_TAG=$(git tag --list "v*beta*" | grep -v "${{ github.ref_name }}" | sort -V | tail -n 1)
+          else
+            # 获取上一个正式版本（排除alpha、beta和当前版本）
+            PREVIOUS_TAG=$(git tag --list "v*" | grep -v -E "alpha|beta|${{ github.ref_name }}" | sort -V | tail -n 1)
+          fi
+          # 如果没有找到上一个版本，使用初始版本
+          PREVIOUS_TAG=${PREVIOUS_TAG:-v1.0.0.4}
+          echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
           cd release
-          echo "**请核对下载的文件的SHA256值是否正确**" >> ../CHANGELOG.md
+          echo "" >> ../CHANGELOG.md
+          echo "## Full Changelog: [${{ env.PREVIOUS_TAG }}...${{ github.ref_name }}](https://github.com/SECTL/SecRandom/compare/${{ env.PREVIOUS_TAG }}...${{ github.ref_name }})" >> ../CHANGELOG.md
+          echo "" >> ../CHANGELOG.md
+          echo "**国内 下载链接**" >> ../CHANGELOG.md
+          echo "| 平台/打包方式 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
+          echo "| --- | --- | --- |" >> ../CHANGELOG.md
+          echo "| Windows | x86, x64 | [下载](https://www.123684.com/s/9529jv-U4Fxh) |" >> ../CHANGELOG.md
+          echo "" >> ../CHANGELOG.md
+          echo "**Github 镜像 下载链接**" >> ../CHANGELOG.md
+          echo "| 镜像源 | 平台/打包方式 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
+          echo "| --- | --- | --- | --- |" >> ../CHANGELOG.md
+          echo "| ghfast.top | Windows | x86 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x86.zip) |" >> ../CHANGELOG.md
+          echo "| ghfast.top | Windows | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64.zip) |" >> ../CHANGELOG.md
+          echo "| gh-proxy.com | Windows | x86 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x86.zip) |" >> ../CHANGELOG.md
+          echo "| gh-proxy.com | Windows | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64.zip) |" >> ../CHANGELOG.md
+          echo "" >> ../CHANGELOG.md
+          echo "**SHA256 校验值-请核对下载的文件的SHA256值是否正确**" >> ../CHANGELOG.md
           echo "| 文件名 | SHA256 值 |" >> ../CHANGELOG.md
           echo "| --- | --- |" >> ../CHANGELOG.md
           while read -r line; do
