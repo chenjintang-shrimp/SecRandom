@@ -76,7 +76,7 @@ jobs:
           echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
           cd release
           echo "" >> ../CHANGELOG.md
-          echo "## Full Changelog: [${{ env.PREVIOUS_TAG }}...${{ github.ref_name }}](https://github.com/SECTL/SecRandom/compare/${{ env.PREVIOUS_TAG }}...${{ github.ref_name }})" >> ../CHANGELOG.md
+          echo "Full Changelog: [${{ env.PREVIOUS_TAG }}...${{ github.ref_name }}](https://github.com/SECTL/SecRandom/compare/${{ env.PREVIOUS_TAG }}...${{ github.ref_name }})" >> ../CHANGELOG.md
           echo "" >> ../CHANGELOG.md
           echo "**国内 下载链接**" >> ../CHANGELOG.md
           echo "| 平台/打包方式 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
