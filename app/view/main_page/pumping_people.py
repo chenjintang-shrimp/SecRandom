@@ -580,7 +580,7 @@ class pumping_people(QWidget):
                                 # 获取有效小组统计数量（值>0的条目）
                                 valid_groups = [v for v in history_data.get("group_stats", {}).values() if v > 0]
                                 if len(valid_groups) > 3:  # 有效小组数量达标
-                                    for student in cleaned_data:
+                                    for student in __cleaned_data:
                                         if student[1] == student_name:
                                             current_student_group = student[3]
                                             break
@@ -594,7 +594,7 @@ class pumping_people(QWidget):
                                 # 获取有效性别统计数量（值>0的条目）
                                 valid_gender = [v for v in history_data.get("gender_stats", {}).values() if v > 0]
                                 if len(valid_gender) > 3:  # 有效性别数量达标
-                                    for student in cleaned_data:
+                                    for student in __cleaned_data:
                                         if student[1] == student_name:
                                             current_student_gender = student[2]
                                             break
