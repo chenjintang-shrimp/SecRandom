@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -54,19 +55,55 @@ if not shared_memory.create(1):
     socket = QLocalSocket()
     socket.connectToServer("SecRandomIPC")
 
+    url_arg = None
+    # 读取设置文件中的URL协议启用状态
+    url_protocol_enabled = False
+    try:
+        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            settings = json.load(f)
+            url_protocol_enabled = settings.get('foundation', {}).get('url_protocol_enabled', False)
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+    if url_protocol_enabled:
+        for arg in sys.argv:
+            if arg.startswith('secrandom://'):
+                url_arg = arg
+                break
+
     if socket.waitForConnected(1000):
-        socket.write(b"show")
+        if url_arg:
+            socket.write(url_arg.encode())
+        else:
+            socket.write(b"show")
         socket.flush()
         socket.waitForBytesWritten(1000)
         socket.disconnectFromServer()
         sys.exit()
     else:
         def sec_():
+            # 只有在URL协议已启用时才处理URL参数
+            url_arg = None
+            # 读取设置文件中的URL协议启用状态
+            url_protocol_enabled = False
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    url_protocol_enabled = settings.get('foundation', {}).get('url_protocol_enabled', False)
+            except (FileNotFoundError, json.JSONDecodeError):
+                pass
+            if url_protocol_enabled:
+                for arg in sys.argv:
+                    if arg.startswith('secrandom://'):
+                        url_arg = arg
+                        break
             # 再次尝试IPC
             socket = QLocalSocket()
             socket.connectToServer("SecRandomIPC")
             if socket.waitForConnected(1000):
-                socket.write(b"show")
+                if url_arg:
+                    socket.write(url_arg.encode())
+                else:
+                    socket.write(b"show")
                 socket.flush()
                 socket.waitForBytesWritten(1000)
                 socket.disconnectFromServer()

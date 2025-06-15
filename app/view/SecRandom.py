@@ -118,7 +118,7 @@ class Window(MSFluentWindow):
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.toggle_levitation_window))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_settings_20_filled"), '打开设置界面', triggered=self.show_setting_interface))
         self.tray_menu.addSeparator()
-        # self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.restart_app))
+        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.restart_app))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_exit_20_filled"), '退出', triggered=self.close_window_secrandom))
 
         self.tray_icon.show()
@@ -218,12 +218,20 @@ class Window(MSFluentWindow):
             return
 
         self.hide()
-        self.levitation_window.hide()
-        self.stop_focus_timer()
+        if hasattr(self, 'levitation_window'):
+            self.levitation_window.hide()
+        if hasattr(self, 'focus_timer'):
+            self.stop_focus_timer()
         if hasattr(self, 'server'):
             self.server.close()
+        # 关闭共享内存
+        if hasattr(self, 'shared_memory'):
+            self.shared_memory.detach()
+            logger.info("共享内存已关闭")
         logger.remove()
+        # 确保完全退出应用程序
         QApplication.quit()
+        sys.exit(0)
 
     def update_focus_mode(self, mode):
         """更新焦点模式"""
@@ -353,18 +361,35 @@ class Window(MSFluentWindow):
                             logger.warning("用户取消重启操作")
                             return
         except Exception as e:
-            logger.error(f"密码验证失败: {e}")
-            return
+            logger.error(f"密码验证过程出错: {e}")
+            # 出错时仍尝试重启
 
-        self.hide()
-        self.levitation_window.hide()
-        self.stop_focus_timer()
-        if hasattr(self, 'server'):
-            self.server.close()
+        try:
+            self.hide()
+            if hasattr(self, 'levitation_window'):
+                self.levitation_window.hide()
+            if hasattr(self, 'focus_timer'):
+                self.stop_focus_timer()
+            if hasattr(self, 'server'):
+                self.server.close()
+        except Exception as e:
+            logger.error(f"重启前清理资源失败: {e}")
+
+        # 关闭共享内存
+        if hasattr(self, 'shared_memory'):
+            self.shared_memory.detach()
+            logger.info("共享内存已关闭")
+
         logger.remove()
-        os.execl(sys.executable, sys.executable, *sys.argv)
 
-    def show_setting_interface(self):
+        # 启动新进程
+        import subprocess
+        subprocess.Popen([sys.executable] + sys.argv)
+
+        # 退出当前进程
+        sys.exit(0)
+
+    def show_setting_interface(self, target_page=None):
         """显示设置界面"""
         try:
             with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
@@ -396,6 +421,20 @@ class Window(MSFluentWindow):
                 self.settingInterface.show()
                 self.settingInterface.activateWindow()
                 self.settingInterface.raise_()
+                
+                # 如果指定了目标页面，则切换到对应设置子页面
+                if target_page:
+                    # 根据页面参数切换到不同设置子界面
+                    if target_page == 'pumping':
+                        self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.pumping_handoff_settingInterface)
+                    elif target_page == 'security':
+                        self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.password_setInterface)
+                    elif target_page == 'history':
+                        self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.changeable_history_handoff_settingInterface)
+                    elif target_page == 'about':
+                        self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.about_settingInterface)
+                    elif target_page == 'more':
+                        self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.more_settingInterface)
 
     def toggle_levitation_window(self):
         """切换浮窗显示/隐藏状态"""
@@ -429,10 +468,38 @@ class Window(MSFluentWindow):
             socket.readyRead.connect(lambda: self.show_window_from_ipc(socket))
 
     def show_window_from_ipc(self, socket):
-        """从IPC接收显示窗口请求"""
-        socket.readAll()
+        """从IPC接收显示窗口请求并处理URL参数"""
+        data = socket.readAll().data().decode().strip()
         self.show()
         self.activateWindow()
         self.raise_()
+        
+        # 解析URL参数
+        if data.startswith('secrandom://'):
+            from urllib.parse import urlparse, parse_qs
+            parsed_url = urlparse(data)
+            query_params = parse_qs(parsed_url.query)
+            
+            # 根据不同路径执行不同操作
+            if parsed_url.path == 'pump':
+                # 切换到抽人界面
+                self.switchTo(self.pumping_peopleInterface)
+                # 如果有type参数，切换不同的抽取类型
+                if 'type' in query_params:
+                    pump_type = query_params['type'][0]
+                    if pump_type == 'reward':
+                        self.switchTo(self.pumping_rewardInterface)
+            elif parsed_url.path == 'history':
+                # 切换到主页面的历史记录界面
+                self.switchTo(self.history_handoff_settingInterface)
+            elif parsed_url.path == 'about':
+                # 切换到主界面的关于界面
+                self.switchTo(self.about_settingInterface)
+            elif parsed_url.path == 'settings':
+                # 解析设置页面参数
+                settings_page = query_params.get('page', [None])[0]
+                # 打开设置界面并传递页面参数
+                self.show_setting_interface(settings_page)
+        
         socket.disconnectFromServer()
         self.levitation_window.raise_()
