@@ -1,6 +1,6 @@
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
