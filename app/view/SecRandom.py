@@ -34,6 +34,10 @@ class Window(MSFluentWindow):
         self.focus_timer.timeout.connect(self.check_focus_timeout)
         self.last_focus_time = QDateTime.currentDateTime()
 
+        self.resize_timer = QTimer(self)
+        self.resize_timer.setSingleShot(True)
+        self.resize_timer.timeout.connect(self.save_window_size)
+
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
@@ -74,19 +78,17 @@ class Window(MSFluentWindow):
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
-                main_window_size = foundation_settings.get('main_window_size', 0)
-                if main_window_size == 0:
-                    self.resize(800, 600)
-                elif main_window_size == 1:
-                    self.resize(1200, 800)
-                else:
-                    self.resize(800, 600)
+                # 读取保存的窗口大小，默认为800x600
+                window_width = foundation_settings.get('window_width', 800)
+                window_height = foundation_settings.get('window_height', 600)
+                self.resize(window_width, window_height)
         except FileNotFoundError as e:
             logger.error(f"加载设置时出错: {e}, 使用默认大小:800x600")
             self.resize(800, 600)
-        except KeyError:
-            logger.error(f"设置文件中缺少foundation键, 使用默认大小:800x600")
+        except Exception as e:
+            logger.error(f"加载窗口大小设置失败: {e}, 使用默认大小:800x600")
             self.resize(800, 600)
+
         self.setMinimumSize(600, 400)
         self.setWindowTitle('SecRandom')
         self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
@@ -122,7 +124,7 @@ class Window(MSFluentWindow):
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_exit_20_filled"), '退出', triggered=self.close_window_secrandom))
 
         self.tray_icon.show()
-        self.tray_icon.activated.connect(self.contextMenuEvent)
+        self.tray_icon.activated.connect(self.trayIconActivated)
 
         screen = QApplication.primaryScreen()
         desktop = screen.availableGeometry()
@@ -197,9 +199,40 @@ class Window(MSFluentWindow):
         self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
+        # 仅在窗口非最大化状态时保存大小
+        self.save_window_size()
         """窗口关闭时隐藏主界面"""
         self.hide()
         event.ignore()
+
+    def resizeEvent(self, event):
+        # 调整大小时重启计时器，仅在停止调整后保存
+        self.resize_timer.start(500)  # 500毫秒延迟
+        super().resizeEvent(event)
+
+    def save_window_size(self):
+        if not self.isMaximized():
+            try:
+                # 读取现有设置
+                try:
+                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                        settings = json.load(f)
+                except FileNotFoundError:
+                    settings = {}
+                
+                # 确保foundation键存在
+                if 'foundation' not in settings:
+                    settings['foundation'] = {}
+                
+                # 更新窗口大小设置
+                settings['foundation']['window_width'] = self.width()
+                settings['foundation']['window_height'] = self.height()
+                
+                # 保存设置
+                with open('app/Settings/Settings.json', 'w', encoding='utf-8') as f:
+                    json.dump(settings, f, ensure_ascii=False, indent=4)
+            except Exception as e:
+                logger.error(f"保存窗口大小设置失败: {e}")
 
     def close_window_secrandom(self):
         """关闭应用程序"""
@@ -314,9 +347,10 @@ class Window(MSFluentWindow):
                     except Exception as e:
                         logger.error(f"清理临时抽取记录文件失败: {e}")
 
-    def contextMenuEvent(self):
-        pos = self.calculate_menu_position(self.tray_menu)
-        self.tray_menu.exec_(pos)
+    def trayIconActivated(self, reason):
+        if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.Context):
+            pos = QCursor.pos()
+            self.tray_menu.exec_(pos)
 
     def toggle_window(self):
         """切换窗口显示/隐藏状态"""  
