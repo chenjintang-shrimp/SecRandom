@@ -42,11 +42,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_student_id_comboBox = ComboBox()
         self.pumping_people_student_name_comboBox = ComboBox()
         self.pumping_people_theme_comboBox = ComboBox()
-        self.pumping_people_list_refresh_button_switch = SwitchButton()
-        self.pumping_people_refresh_button_switch = SwitchButton()
-        self.pumping_people_class_quantity_switch = SwitchButton()
-        self.pumping_people_group_quantity_switch = SwitchButton()
-        self.pumping_people_gender_quantity_switch = SwitchButton()
         
         self.pumping_people_font_size_edit = LineEdit()
         
@@ -105,39 +100,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
 
         # 人数/组数样式下拉框
         self.pumping_people_theme_comboBox.setFixedWidth(150)
-        self.pumping_people_theme_comboBox.addItems(["总数 | 剩余", "总数", "剩余", "不显示"])
+        self.pumping_people_theme_comboBox.addItems(["总数 | 剩余", "总数", "剩余"])
         self.pumping_people_theme_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_people_theme_comboBox.setFont(QFont(load_custom_font(), 12))
-
-        # 重置记录显隐
-        self.pumping_people_list_refresh_button_switch.setOnText("显示")
-        self.pumping_people_list_refresh_button_switch.setOffText("隐藏")
-        self.pumping_people_list_refresh_button_switch.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
-        self.pumping_people_list_refresh_button_switch.setFont(QFont(load_custom_font(), 12))
-
-        # 刷新列表显隐
-        self.pumping_people_refresh_button_switch.setOnText("显示")
-        self.pumping_people_refresh_button_switch.setOffText("隐藏")
-        self.pumping_people_refresh_button_switch.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
-        self.pumping_people_refresh_button_switch.setFont(QFont(load_custom_font(), 12))
-
-        # 便捷修改班级功能显示显隐
-        self.pumping_people_class_quantity_switch.setOnText("显示")
-        self.pumping_people_class_quantity_switch.setOffText("隐藏")
-        self.pumping_people_class_quantity_switch.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
-        self.pumping_people_class_quantity_switch.setFont(QFont(load_custom_font(), 12))
-
-        # 便捷修改小组功能显示显隐
-        self.pumping_people_group_quantity_switch.setOnText("显示")
-        self.pumping_people_group_quantity_switch.setOffText("隐藏")
-        self.pumping_people_group_quantity_switch.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
-        self.pumping_people_group_quantity_switch.setFont(QFont(load_custom_font(), 12))
-
-        # 便捷修改性别功能显示显隐
-        self.pumping_people_gender_quantity_switch.setOnText("显示")
-        self.pumping_people_gender_quantity_switch.setOffText("隐藏")
-        self.pumping_people_gender_quantity_switch.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
-        self.pumping_people_gender_quantity_switch.setFont(QFont(load_custom_font(), 12))
 
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_people_Draw_comboBox)
@@ -148,11 +113,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_number_symbol_square_20_filled"), "学号格式", "设置学号格式设置", self.pumping_people_student_id_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_rename_20_filled"), "姓名格式", "设置姓名格式设置", self.pumping_people_student_name_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "班级人|组数", "设置该功能的显示格式", self.pumping_people_theme_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "重置记录", "设置该功能是否显示(重启生效)", self.pumping_people_list_refresh_button_switch)
-        self.addGroup(get_theme_icon("ic_fluent_apps_list_20_filled"), "刷新列表", "设置该功能是否显示(重启生效)", self.pumping_people_refresh_button_switch)
-        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "便捷修改班级", "设置该功能是否显示(重启生效)", self.pumping_people_class_quantity_switch)
-        self.addGroup(get_theme_icon("ic_fluent_convert_range_20_filled"), "便捷修改组号/抽取范围", "设置该功能是否显示(重启生效)", self.pumping_people_group_quantity_switch)
-        self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "便捷修改性别", "设置该功能是否显示(重启生效)", self.pumping_people_gender_quantity_switch)
 
         self.load_settings()  # 加载设置
         self.save_settings()  # 保存设置
@@ -162,60 +122,46 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
 
     def apply_font_size(self):
         try:
-            font_size = int(self.pumping_people_font_size_edit.text())
-            if 30 <= font_size <= 200:
-                self.pumping_people_font_size_edit.setText(str(font_size))
+            font_size_str = self.pumping_people_font_size_edit.text().strip()
+            # 检查是否为一位小数
+            if '.' in font_size_str:
+                integer_part, decimal_part = font_size_str.split('.', 1)
+                if len(decimal_part) > 1:
+                    raise ValueError("最多只能输入一位小数")
+            font_size = float(font_size_str)
+            if 30.0 <= font_size <= 200.0:
+                # 格式化保留一位小数
+                self.pumping_people_font_size_edit.setText(f"{font_size:.1f}")
                 self.save_settings()
                 InfoBar.success(
                     title='设置成功',
-                    content=f"设置字体大小为: {font_size}",
-                    orient=Qt.Horizontal,
-                    parent=self,
-                    isClosable=True,
-                    duration=3000,
-                    position=InfoBarPosition.TOP
+                    content=f"设置字体大小为: {font_size:.1f}",
+                    orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
             else:
                 logger.warning(f"字体大小超出范围: {font_size}")
                 InfoBar.warning(
                     title='字体大小超出范围',
-                    content=f"字体大小超出范围，请输入30-200之间的整数: {font_size}",
-                    orient=Qt.Horizontal,
-                    parent=self,
-                    isClosable=True,
-                    duration=3000,
-                    position=InfoBarPosition.TOP
+                    content=f"字体大小超出范围，请输入30.0-200.0之间的数字，最多一位小数: {font_size}",
+                    orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
-        except ValueError:
+        except ValueError as e:
             logger.warning(f"无效的字体大小输入: {self.pumping_people_font_size_edit.text()}")
             InfoBar.warning(
                 title='无效的字体大小输入',
-                content=f"无效的字体大小输入(需要是整数)：{self.pumping_people_font_size_edit.text()}",
-                orient=Qt.Horizontal,
-                parent=self,
-                isClosable=True,
-                duration=3000,
-                    position=InfoBarPosition.TOP
+                content=f"无效的字体大小输入: {str(e)}",
+                orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
             )
 
     def reset_font_size(self):
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                foundation_settings = settings.get('foundation', {})
-                main_window_size = foundation_settings.get('main_window_size', 0)
-                if main_window_size == 0:
-                    self.pumping_people_font_size_edit.setText(str("50"))
-                elif main_window_size == 1:
-                    self.pumping_people_font_size_edit.setText(str("85"))
-                else:
-                    self.pumping_people_font_size_edit.setText(str("50"))
+            self.pumping_people_font_size_edit.setText(str("50.0"))
         except FileNotFoundError as e:
-            logger.error(f"加载设置时出错: {e}, 使用默认大小:50")
-            self.pumping_people_font_size_edit.setText(str("50"))
+            logger.error(f"加载设置时出错: {e}, 使用默认大小:50.0")
+            self.pumping_people_font_size_edit.setText(str("50.0"))
         except KeyError:
-            logger.error(f"设置文件中缺少'foundation'键, 使用默认大小:50")
-            self.pumping_people_font_size_edit.setText(str("50"))
+            logger.error(f"设置文件中缺少'foundation'键, 使用默认大小:50.0")
+            self.pumping_people_font_size_edit.setText(str("50.0"))
         self.save_settings()
         self.load_settings()
         
@@ -260,12 +206,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     if people_theme < 0 or people_theme >= self.pumping_people_theme_comboBox.count():
                         logger.warning(f"无效的人数/组数样式索引: {people_theme}")
                         people_theme = self.default_settings["people_theme"]
-
-                    class_quantity = pumping_people_settings.get("class_quantity", self.default_settings["class_quantity"])
-                    group_quantity = pumping_people_settings.get("group_quantity", self.default_settings["group_quantity"])
-                    gender_quantity = pumping_people_settings.get("gender_quantity", self.default_settings["gender_quantity"])
-                    refresh_button = pumping_people_settings.get("refresh_button", self.default_settings["refresh_button"])
-                    list_refresh_button = pumping_people_settings.get("list_refresh_button", self.default_settings["list_refresh_button"])
                     
                     self.pumping_people_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
@@ -275,11 +215,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_people_student_id_comboBox.setCurrentIndex(student_id)
                     self.pumping_people_student_name_comboBox.setCurrentIndex(student_name)
                     self.pumping_people_theme_comboBox.setCurrentIndex(people_theme)
-                    self.pumping_people_list_refresh_button_switch.setChecked(list_refresh_button)
-                    self.pumping_people_class_quantity_switch.setChecked(class_quantity)
-                    self.pumping_people_group_quantity_switch.setChecked(group_quantity)
-                    self.pumping_people_gender_quantity_switch.setChecked(gender_quantity)
-                    self.pumping_people_refresh_button_switch.setChecked(refresh_button)
                     logger.info(f"加载抽人设置完成")
             else:
                 self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
@@ -290,11 +225,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                 self.pumping_people_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
                 self.pumping_people_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
                 self.pumping_people_theme_comboBox.setCurrentIndex(self.default_settings["people_theme"])
-                self.pumping_people_list_refresh_button_switch.setChecked(self.default_settings["list_refresh_button"]) 
-                self.pumping_people_class_quantity_switch.setChecked(self.default_settings["class_quantity"])
-                self.pumping_people_group_quantity_switch.setChecked(self.default_settings["group_quantity"])
-                self.pumping_people_gender_quantity_switch.setChecked(self.default_settings["gender_quantity"])
-                self.pumping_people_refresh_button_switch.setChecked(self.default_settings["refresh_button"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -306,11 +236,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             self.pumping_people_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
             self.pumping_people_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
             self.pumping_people_theme_comboBox.setCurrentIndex(self.default_settings["people_theme"])
-            self.pumping_people_list_refresh_button_switch.setChecked(self.default_settings["list_refresh_button"])
-            self.pumping_people_class_quantity_switch.setChecked(self.default_settings["class_quantity"])
-            self.pumping_people_group_quantity_switch.setChecked(self.default_settings["group_quantity"])
-            self.pumping_people_gender_quantity_switch.setChecked(self.default_settings["gender_quantity"])
-            self.pumping_people_refresh_button_switch.setChecked(self.default_settings["refresh_button"])
             self.save_settings()
     
     def save_settings(self):
@@ -336,39 +261,16 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         pumping_people_settings["student_id"] = self.pumping_people_student_id_comboBox.currentIndex()
         pumping_people_settings["student_name"] = self.pumping_people_student_name_comboBox.currentIndex()
         pumping_people_settings["people_theme"] = self.pumping_people_theme_comboBox.currentIndex()
-        pumping_people_settings["list_refresh_button"] = self.pumping_people_list_refresh_button_switch.isChecked()
-        pumping_people_settings["class_quantity"] = self.pumping_people_class_quantity_switch.isChecked()
-        pumping_people_settings["group_quantity"] = self.pumping_people_group_quantity_switch.isChecked()
-        pumping_people_settings["gender_quantity"] = self.pumping_people_gender_quantity_switch.isChecked()
-        pumping_people_settings["refresh_button"] = self.pumping_people_refresh_button_switch.isChecked()
 
         # 保存字体大小
         try:
-            font_size = int(self.pumping_people_font_size_edit.text())
-            if 30 <= font_size <= 200:
+            font_size = float(self.pumping_people_font_size_edit.text())
+            if 30.0 <= font_size <= 200.0:
                 pumping_people_settings["font_size"] = font_size
             else:
                 logger.warning(f"字体大小超出范围: {font_size}")
-                InfoBar.warning(
-                    title='字体大小超出范围',
-                    content=f"字体大小超出范围，请输入30-200之间的整数: {font_size}",
-                    orient=Qt.Horizontal,
-                    parent=self,
-                    isClosable=True,
-                    duration=3000,
-                    position=InfoBarPosition.TOP
-                )
         except ValueError:
             logger.warning(f"无效的字体大小输入: {self.pumping_people_font_size_edit.text()}")
-            InfoBar.warning(
-                title='无效的字体大小输入',
-                content=f"无效的字体大小输入(需要是整数)：{self.pumping_people_font_size_edit.text()}",
-                orient=Qt.Horizontal,
-                parent=self,
-                isClosable=True,
-                duration=3000,
-                    position=InfoBarPosition.TOP
-            )
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open(self.settings_file, 'w', encoding='utf-8') as f:

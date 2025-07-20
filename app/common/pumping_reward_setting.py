@@ -34,9 +34,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_Animation_comboBox = ComboBox()
         self.pumping_reward_theme_comboBox = ComboBox()
         self.pumping_reward_Voice_switch = SwitchButton()
-        self.pumping_reward_list_refresh_button_switch = SwitchButton()
-        self.pumping_reward_refresh_button_switch = SwitchButton()
-        self.pumping_reward_prize_pools_quantity_switch = SwitchButton()
         
         self.pumping_reward_font_size_edit = LineEdit()
         
@@ -83,27 +80,9 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
 
         # 奖品量样式下拉框
         self.pumping_reward_theme_comboBox.setFixedWidth(150)
-        self.pumping_reward_theme_comboBox.addItems(["总数 | 剩余", "总数", "剩余", "不显示"])
+        self.pumping_reward_theme_comboBox.addItems(["总数 | 剩余", "总数", "剩余"])
         self.pumping_reward_theme_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_reward_theme_comboBox.setFont(QFont(load_custom_font(), 12))
-
-        # 重置记录显隐
-        self.pumping_reward_list_refresh_button_switch.setOnText("显示")
-        self.pumping_reward_list_refresh_button_switch.setOffText("隐藏")
-        self.pumping_reward_list_refresh_button_switch.checkedChanged.connect(self.on_pumping_reward_Voice_switch_changed)
-        self.pumping_reward_list_refresh_button_switch.setFont(QFont(load_custom_font(), 12))
-
-        # 刷新列表显隐
-        self.pumping_reward_refresh_button_switch.setOnText("显示")
-        self.pumping_reward_refresh_button_switch.setOffText("隐藏")
-        self.pumping_reward_refresh_button_switch.checkedChanged.connect(self.on_pumping_reward_Voice_switch_changed)
-        self.pumping_reward_refresh_button_switch.setFont(QFont(load_custom_font(), 12))
-
-        # 便捷修改奖池功能显示显隐
-        self.pumping_reward_prize_pools_quantity_switch.setOnText("显示")
-        self.pumping_reward_prize_pools_quantity_switch.setOffText("隐藏")
-        self.pumping_reward_prize_pools_quantity_switch.checkedChanged.connect(self.on_pumping_reward_Voice_switch_changed)
-        self.pumping_reward_prize_pools_quantity_switch.setFont(QFont(load_custom_font(), 12))
 
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_reward_Draw_comboBox)
@@ -112,9 +91,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语音播放", "设置结果公布时是否播放语音", self.pumping_reward_Voice_switch)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_reward_Animation_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品量", "设置该功能的显示格式", self.pumping_reward_theme_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "重置记录", "设置该功能是否显示(重启生效)", self.pumping_reward_list_refresh_button_switch)
-        self.addGroup(get_theme_icon("ic_fluent_apps_list_20_filled"), "刷新列表", "设置该功能是否显示(重启生效)", self.pumping_reward_refresh_button_switch)
-        self.addGroup(get_theme_icon("ic_fluent_convert_range_20_filled"), "切换奖池", "设置该功能是否显示(重启生效)", self.pumping_reward_prize_pools_quantity_switch)
 
         self.load_settings()  # 加载设置
         self.save_settings()  # 保存设置
@@ -124,40 +100,35 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
 
     def apply_font_size(self):
         try:
-            font_size = int(self.pumping_reward_font_size_edit.text())
-            if 30 <= font_size <= 200:
-                self.pumping_reward_font_size_edit.setText(str(font_size))
+            font_size_str = self.pumping_reward_font_size_edit.text().strip()
+            # 检查是否为一位小数
+            if '.' in font_size_str:
+                integer_part, decimal_part = font_size_str.split('.', 1)
+                if len(decimal_part) > 1:
+                    raise ValueError("最多只能输入一位小数")
+            font_size = float(font_size_str)
+            if 30.0 <= font_size <= 200.0:
+                # 格式化保留一位小数
+                self.pumping_reward_font_size_edit.setText(f"{font_size:.1f}")
                 self.save_settings()
                 InfoBar.success(
                     title='设置成功',
-                    content=f"设置字体大小为: {font_size}",
-                    orient=Qt.Horizontal,
-                    parent=self,
-                    isClosable=True,
-                    duration=3000,
-                    position=InfoBarPosition.TOP
+                    content=f"设置字体大小为: {font_size:.1f}",
+                    orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
             else:
                 logger.warning(f"字体大小超出范围: {font_size}")
                 InfoBar.warning(
                     title='字体大小超出范围',
-                    content=f"字体大小超出范围，请输入30-200之间的整数: {font_size}",
-                    orient=Qt.Horizontal,
-                    parent=self,
-                    isClosable=True,
-                    duration=3000,
-                    position=InfoBarPosition.TOP
+                    content=f"字体大小超出范围，请输入30.0-200.0之间的数字，最多一位小数: {font_size}",
+                    orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
-        except ValueError:
+        except ValueError as e:
             logger.warning(f"无效的字体大小输入: {self.pumping_reward_font_size_edit.text()}")
             InfoBar.warning(
                 title='无效的字体大小输入',
-                content=f"无效的字体大小输入(需要是整数)：{self.pumping_reward_font_size_edit.text()}",
-                orient=Qt.Horizontal,
-                parent=self,
-                isClosable=True,
-                duration=3000,
-                position=InfoBarPosition.TOP
+                content=f"无效的字体大小输入: {str(e)}",
+                orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
             )
 
     def reset_font_size(self):
@@ -212,10 +183,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     if reward_theme < 0 or reward_theme >= self.pumping_reward_theme_comboBox.count():
                         logger.warning(f"无效的人数/组数样式索引: {reward_theme}")
                         reward_theme = self.default_settings["reward_theme"]
-
-                    prize_pools_quantity = pumping_reward_settings.get("prize_pools_quantity", self.default_settings["prize_pools_quantity"])
-                    refresh_button = pumping_reward_settings.get("refresh_button", self.default_settings["refresh_button"])
-                    list_refresh_button = pumping_reward_settings.get("list_refresh_button", self.default_settings["list_refresh_button"])
                     
                     self.pumping_reward_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(draw_pumping)
@@ -223,9 +190,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_reward_Animation_comboBox.setCurrentIndex(animation_mode)
                     self.pumping_reward_Voice_switch.setChecked(voice_enabled)
                     self.pumping_reward_theme_comboBox.setCurrentIndex(reward_theme)
-                    self.pumping_reward_list_refresh_button_switch.setChecked(list_refresh_button)
-                    self.pumping_reward_prize_pools_quantity_switch.setChecked(prize_pools_quantity)
-                    self.pumping_reward_refresh_button_switch.setChecked(refresh_button)
                     logger.info(f"加载抽奖设置完成")
             else:
                 self.pumping_reward_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
@@ -234,9 +198,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                 self.pumping_reward_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
                 self.pumping_reward_Voice_switch.setChecked(self.default_settings["voice_enabled"])
                 self.pumping_reward_theme_comboBox.setCurrentIndex(self.default_settings["reward_theme"])
-                self.pumping_reward_list_refresh_button_switch.setChecked(self.default_settings["list_refresh_button"]) 
-                self.pumping_reward_prize_pools_quantity_switch.setChecked(self.default_settings["prize_pools_quantity"])
-                self.pumping_reward_refresh_button_switch.setChecked(self.default_settings["refresh_button"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -246,9 +207,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             self.pumping_reward_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
             self.pumping_reward_Voice_switch.setChecked(self.default_settings["voice_enabled"])
             self.pumping_reward_theme_comboBox.setCurrentIndex(self.default_settings["reward_theme"])
-            self.pumping_reward_list_refresh_button_switch.setChecked(self.default_settings["list_refresh_button"])
-            self.pumping_reward_prize_pools_quantity_switch.setChecked(self.default_settings["prize_pools_quantity"])
-            self.pumping_reward_refresh_button_switch.setChecked(self.default_settings["refresh_button"])
             self.save_settings()
     
     def save_settings(self):
@@ -272,37 +230,16 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         pumping_reward_settings["animation_mode"] = self.pumping_reward_Animation_comboBox.currentIndex()
         pumping_reward_settings["voice_enabled"] = self.pumping_reward_Voice_switch.isChecked()
         pumping_reward_settings["reward_theme"] = self.pumping_reward_theme_comboBox.currentIndex()
-        pumping_reward_settings["list_refresh_button"] = self.pumping_reward_list_refresh_button_switch.isChecked()
-        pumping_reward_settings["prize_pools_quantity"] = self.pumping_reward_prize_pools_quantity_switch.isChecked()
-        pumping_reward_settings["refresh_button"] = self.pumping_reward_refresh_button_switch.isChecked()
 
         # 保存字体大小
         try:
-            font_size = int(self.pumping_reward_font_size_edit.text())
-            if 30 <= font_size <= 200:
+            font_size = float(self.pumping_reward_font_size_edit.text())
+            if 30.0 <= font_size <= 200.0:
                 pumping_reward_settings["font_size"] = font_size
             else:
                 logger.warning(f"字体大小超出范围: {font_size}")
-                InfoBar.warning(
-                    title='字体大小超出范围',
-                    content=f"字体大小超出范围，请输入30-200之间的整数: {font_size}",
-                    orient=Qt.Horizontal,
-                    parent=self,
-                    isClosable=True,
-                    duration=3000,
-                    position=InfoBarPosition.TOP
-                )
         except ValueError:
             logger.warning(f"无效的字体大小输入: {self.pumping_reward_font_size_edit.text()}")
-            InfoBar.warning(
-                title='无效的字体大小输入',
-                content=f"无效的字体大小输入(需要是整数)：{self.pumping_reward_font_size_edit.text()}",
-                orient=Qt.Horizontal,
-                parent=self,
-                isClosable=True,
-                duration=3000,
-                position=InfoBarPosition.TOP
-            )
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open(self.settings_file, 'w', encoding='utf-8') as f:
