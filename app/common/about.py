@@ -49,7 +49,7 @@ class ContributorDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('贡献人员')
-        self.setMinimumSize(600, 400)
+        self.setMinimumSize(600, 150)
         self.update_theme_style() 
         
         # 主布局
@@ -58,10 +58,22 @@ class ContributorDialog(QDialog):
         # 贡献者数据
         contributors = [
             {
-                'name': '黎泽懿 (lzy98276)',
-                'role': '负责: 设计, 创意&策划, 维护, 文档',
+                'name': '黎泽懿_Aionflux (lzy98276)',
+                'role': '设计, 创意&策划, 维护, 文档',
                 'github': 'https://github.com/lzy98276',
                 'avatar': 'app\\resource\\icon\\contributor1.png'
+            },
+            {
+                'name': '弃稞之草 (QiKeZhiCao)',
+                'role': '创意, 维护',
+                'github': 'https://github.com/QiKeZhiCao',
+                'avatar': 'app\\resource\\icon\\contributor2.png'
+            },
+            {
+                'name': 'system-linux-cmb',
+                'role': '测试',
+                'github': 'https://github.com/system-linux-cmb',
+                'avatar': 'app\\resource\\icon\\contributor3.png'
             }
         ]
         
@@ -153,8 +165,8 @@ class ContributorDialog(QDialog):
                 QWidget#contributorCard {
                     background: 2b2b2b;
                     border-radius: 8px;
-                    padding: 15px;
-                    margin-bottom: 15px;
+                    padding: 10px;
+                    margin-bottom: 10px;
                 }
             ''')
         else:
@@ -162,8 +174,8 @@ class ContributorDialog(QDialog):
                 QWidget#contributorCard {
                     background: white;
                     border-radius: 8px;
-                    padding: 15px;
-                    margin-bottom: 15px;
+                    padding: 10px;
+                    margin-bottom: 10px;
                 }
             ''')
     
@@ -172,36 +184,41 @@ class ContributorDialog(QDialog):
         card = QWidget()
         card.setObjectName('contributorCard')
         self.update_card_theme_style(card)
-        cardLayout = QVBoxLayout(card)
-        cardLayout.setSpacing(10)
+        cardLayout = QHBoxLayout(card)
 
         # 头像
         avatar = QLabel()
         avatar.setPixmap(QPixmap(contributor['avatar']).scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        avatar.setAlignment(Qt.AlignCenter)
-        cardLayout.addWidget(avatar)
+        avatar.setAlignment(Qt.AlignLeft)
+        cardLayout.addWidget(avatar, 0, Qt.AlignCenter)
 
         # 昵称
         name = TitleLabel(contributor['name'])
-        name.setAlignment(Qt.AlignCenter)
+        name.setAlignment(Qt.AlignLeft)
         name.setFont(QFont(load_custom_font(), 14))
-        cardLayout.addWidget(name)
+        # 创建垂直布局存放文本信息
+        textLayout = QVBoxLayout()
+        textLayout.setContentsMargins(5, 8, 0, 8)
+
+        # 添加姓名
+        textLayout.addWidget(name)
 
         # 职责
         role = BodyLabel(contributor['role'])
-        role.setAlignment(Qt.AlignCenter)
+        role.setAlignment(Qt.AlignLeft)
         role.setFont(QFont(load_custom_font(), 12))
-        cardLayout.addWidget(role)
+        textLayout.addWidget(role)
 
         # GitHub链接
-        github = HyperlinkButton(
-            url=contributor['github'],
-            text=f'GitHub',
-            parent=self
-        )
-        github.setIconSize(QSize(16, 16))
-        github.setFixedWidth(120)
-        cardLayout.addWidget(github, 0, Qt.AlignCenter)
+        github_link = HyperlinkButton(contributor['github'], 'GitHub', self)
+        github_link.setMinimumWidth(40)
+        github_link.setIconSize(QSize(16, 16))
+        github_link.setFixedWidth(70)
+        textLayout.addWidget(github_link)
+        
+        textLayout.setAlignment(Qt.AlignLeft | Qt.AlignVCenter) 
+
+        cardLayout.addLayout(textLayout, 0)
 
         self.layout.addWidget(card)
         
