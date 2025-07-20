@@ -8,6 +8,7 @@ from PyQt5.QtNetwork import *
 import json
 import os
 import sys
+import subprocess
 from loguru import logger
 
 from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
@@ -396,30 +397,25 @@ class Window(MSFluentWindow):
                             return
         except Exception as e:
             logger.error(f"密码验证过程出错: {e}")
-            # 出错时仍尝试重启
-
         try:
             self.hide()
             if hasattr(self, 'levitation_window'):
                 self.levitation_window.hide()
+            # 清理定时器资源
             if hasattr(self, 'focus_timer'):
                 self.stop_focus_timer()
+                self.focus_timer.deleteLater()
             if hasattr(self, 'server'):
                 self.server.close()
         except Exception as e:
             logger.error(f"重启前清理资源失败: {e}")
-
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
             self.shared_memory.detach()
             logger.info("共享内存已关闭")
-
         logger.remove()
-
-        # 启动新进程
-        import subprocess
-        subprocess.Popen([sys.executable] + sys.argv)
-
+        # 使用新进程组启动，避免被当前进程退出影响
+        subprocess.Popen([sys.executable] + sys.argv, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
         # 退出当前进程
         sys.exit(0)
 

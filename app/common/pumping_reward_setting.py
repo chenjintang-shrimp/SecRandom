@@ -236,10 +236,11 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             font_size = float(self.pumping_reward_font_size_edit.text())
             if 30.0 <= font_size <= 200.0:
                 pumping_reward_settings["font_size"] = font_size
-            else:
-                logger.warning(f"字体大小超出范围: {font_size}")
+            # else:
+            #     logger.warning(f"字体大小超出范围: {font_size}")
         except ValueError:
-            logger.warning(f"无效的字体大小输入: {self.pumping_reward_font_size_edit.text()}")
+            # logger.warning(f"无效的字体大小输入: {self.pumping_reward_font_size_edit.text()}")
+            pass
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open(self.settings_file, 'w', encoding='utf-8') as f:
