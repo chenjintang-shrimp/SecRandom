@@ -1312,56 +1312,9 @@ class pumping_people(QWidget):
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 pumping_people_student_quantity = f"{settings['pumping_people']['people_theme']}"
-                pumping_people_class_quantity = f"{settings['pumping_people']['class_quantity']}"
-                pumping_people_group_quantity = f"{settings['pumping_people']['group_quantity']}"
-                pumping_people_gender_quantity = f"{settings['pumping_people']['gender_quantity']}"
-                pumping_people_refresh_button = f"{settings['pumping_people']['refresh_button']}"
-                pumping_people_list_refresh_button = f"{settings['pumping_people']['list_refresh_button']}"
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             pumping_people_student_quantity = 0
-            pumping_people_class_quantity = True
-            pumping_people_group_quantity = True
-            pumping_people_gender_quantity = True
-            pumping_people_refresh_button = True
-            pumping_people_list_refresh_button = True
-            
-        # 根据设置控制UI元素显示状态
-        show_student_quantity = pumping_people_student_quantity
-        if show_student_quantity != 3:
-            show_student_quantity = True
-        else:
-            show_student_quantity = False
-        
-        show_class_quantity = pumping_people_class_quantity
-        if show_class_quantity == 'True':
-            show_class_quantity = True
-        else:
-            show_class_quantity = False
-
-        show_group_quantity = pumping_people_group_quantity
-        if show_group_quantity == 'True':
-            show_group_quantity = True
-        else:
-            show_group_quantity = False
-
-        show_gender_quantity = pumping_people_gender_quantity
-        if show_gender_quantity == 'True':
-            show_gender_quantity = True
-        else:
-            show_gender_quantity = False
-
-        show_list_refresh_button = pumping_people_list_refresh_button
-        if show_list_refresh_button == 'True':
-            show_list_refresh_button = True
-        else:
-            show_list_refresh_button = False
-
-        show_refresh_button = pumping_people_refresh_button
-        if show_refresh_button == 'True':
-            show_refresh_button = True
-        else:
-            show_refresh_button = False
             
         # 主布局
         scroll_area = QScrollArea()
@@ -1436,19 +1389,17 @@ class pumping_people(QWidget):
         control_panel.setContentsMargins(10, 10, 50, 10)
 
         # 刷新按钮
-        self.refresh_button = PushButton('重置记录')
+        self.refresh_button = PushButton('重置已抽取名单')
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
         self.refresh_button.clicked.connect(self._reset_to_initial_state)
-        self.refresh_button.setVisible(show_refresh_button)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 刷新按钮
-        self.refresh_button = PushButton('刷新列表')
+        self.refresh_button = PushButton('刷新学生列表')
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
         self.refresh_button.clicked.connect(self.refresh_class_list)
-        self.refresh_button.setVisible(show_refresh_button)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 创建一个水平布局
@@ -1489,7 +1440,6 @@ class pumping_people(QWidget):
         self.class_combo = ComboBox()
         self.class_combo.setFixedSize(200, 50)
         self.class_combo.setFont(QFont(load_custom_font(), 15))
-        self.class_combo.setVisible(show_class_quantity)
         
         # 加载班级列表
         try:
@@ -1522,7 +1472,6 @@ class pumping_people(QWidget):
         self.group_combo = ComboBox()
         self.group_combo.setFixedSize(200, 50)
         self.group_combo.setFont(QFont(load_custom_font(), 15))
-        self.group_combo.setVisible(show_group_quantity)
         self.group_combo.addItem('抽取全班学生')
         self.group_combo.currentIndexChanged.connect(self.update_total_count)
         self.class_combo.currentIndexChanged.connect(self.refresh_group_list)
@@ -1563,7 +1512,6 @@ class pumping_people(QWidget):
         self.gender_combo.setFixedSize(200, 50)
         self.gender_combo.setFont(QFont(load_custom_font(), 15))
         self.gender_combo.addItem('抽取所有性别')
-        self.gender_combo.setVisible(show_gender_quantity)
         self.gender_combo.currentIndexChanged.connect(self.update_total_count)
         self.class_combo.currentIndexChanged.connect(self.refresh_gender_list)
         self.group_combo.currentIndexChanged.connect(self.refresh_gender_list)
@@ -1608,7 +1556,6 @@ class pumping_people(QWidget):
         self.total_label.setFont(QFont(load_custom_font(), 12))
         self.total_label.setAlignment(Qt.AlignCenter)
         self.total_label.setFixedWidth(200)
-        self.total_label.setVisible(show_student_quantity)
         control_panel.addWidget(self.total_label, 0, Qt.AlignLeft)
         
         control_panel.addStretch(1)

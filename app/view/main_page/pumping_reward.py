@@ -897,40 +897,10 @@ class pumping_reward(QWidget):
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 pumping_reward_reward_quantity = f"{settings['pumping_reward']['reward_theme']}"
-                pumping_reward_prize_pools_quantity = f"{settings['pumping_reward']['prize_pools_quantity']}"
-                pumping_reward_refresh_button = f"{settings['pumping_reward']['refresh_button']}"
-                pumping_reward_list_refresh_button = f"{settings['pumping_reward']['list_refresh_button']}"
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             pumping_reward_reward_quantity = 0
-            pumping_reward_prize_pools_quantity = True
-            pumping_reward_refresh_button = True
-            pumping_reward_list_refresh_button = True
-            
-        # 根据设置控制UI元素显示状态
-        show_reward_quantity = pumping_reward_reward_quantity
-        if show_reward_quantity != 3:
-            show_reward_quantity = True
-        else:
-            show_reward_quantity = False
-        
-        show_prize_pools_quantity = pumping_reward_prize_pools_quantity
-        if show_prize_pools_quantity == 'True':
-            show_prize_pools_quantity = True
-        else:
-            show_prize_pools_quantity = False
 
-        show_list_refresh_button = pumping_reward_list_refresh_button
-        if show_list_refresh_button == 'True':
-            show_list_refresh_button = True
-        else:
-            show_list_refresh_button = False
-
-        show_refresh_button = pumping_reward_refresh_button
-        if show_refresh_button == 'True':
-            show_refresh_button = True
-        else:
-            show_refresh_button = False
         # 主布局
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -1004,19 +974,17 @@ class pumping_reward(QWidget):
         control_panel.setContentsMargins(10, 10, 50, 10)
 
         # 刷新按钮
-        self.refresh_button = PushButton('重置记录')
+        self.refresh_button = PushButton('重置已抽取名单')
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
         self.refresh_button.clicked.connect(self._reset_to_initial_state)
-        self.refresh_button.setVisible(show_refresh_button)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 刷新按钮
-        self.refresh_button = PushButton('刷新列表')
+        self.refresh_button = PushButton('刷新奖品列表')
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
         self.refresh_button.clicked.connect(self.refresh_reward_list)
-        self.refresh_button.setVisible(show_refresh_button)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 创建一个水平布局
@@ -1057,7 +1025,6 @@ class pumping_reward(QWidget):
         self.reward_combo = ComboBox()
         self.reward_combo.setFixedSize(200, 50)
         self.reward_combo.setFont(QFont(load_custom_font(), 15))
-        self.reward_combo.setVisible(show_prize_pools_quantity)
         
         # 加载奖池列表
         try:
@@ -1096,7 +1063,6 @@ class pumping_reward(QWidget):
         self.total_label.setFont(QFont(load_custom_font(), 12))
         self.total_label.setAlignment(Qt.AlignCenter)
         self.total_label.setFixedWidth(200)
-        self.total_label.setVisible(show_reward_quantity)
         control_panel.addWidget(self.total_label, 0, Qt.AlignLeft)
         
         control_panel.addStretch(1)
