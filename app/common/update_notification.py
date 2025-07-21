@@ -6,6 +6,22 @@ import webbrowser
 
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, VERSION
 
+def show_update_notification(latest_version):
+    """显示更新通知窗口"""
+    if hasattr(QApplication.instance(), 'update_notification_window'):
+        # 如果窗口已存在则激活它
+        notification_window = QApplication.instance().update_notification_window()
+        if notification_window.isHidden():
+            notification_window.show()
+        notification_window.raise_()
+        notification_window.activateWindow()
+        return
+
+    # 创建新的通知窗口
+    notification_window = UpdateNotification(latest_version)
+    QApplication.instance().update_notification_window = notification_window
+    notification_window.show()
+
 class UpdateNotification(QWidget):
     """自定义更新通知窗口"""
     def __init__(self, latest_version, parent=None):
