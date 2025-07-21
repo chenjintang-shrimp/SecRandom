@@ -6,6 +6,9 @@ from PyQt5.QtCore import *
 
 import json
 import os
+import sys
+import platform
+import winreg
 from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font
@@ -159,11 +162,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             main_window.update_focus_time(index)
 
     def setting_url_protocol(self):
-        import sys
-        import os
-        import platform
-        import winreg
-
         # 获取当前程序路径
         executable = sys.executable
         logger.info(f"设置URL协议的程序路径: {executable}")
@@ -181,38 +179,42 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 logger.error("仅支持Windows系统")
                 return
 
-            # 注册表路径
-            reg_path = r'Software\Classes\secrandom'
+            # 注册表路径常量
+            REG_PATH = r'Software\Classes\secrandom'
+            COMMAND_PATH = os.path.join(REG_PATH, r'shell\open\command')
 
             if checked:
-                # 创建注册表项
-                with winreg.CreateKey(winreg.HKEY_CURRENT_USER, reg_path) as key:
+                # 创建主注册表项
+                with winreg.CreateKey(winreg.HKEY_CURRENT_USER, REG_PATH) as key:
                     winreg.SetValueEx(key, '', 0, winreg.REG_SZ, 'URL:SecRandom Protocol')
                     winreg.SetValueEx(key, 'URL Protocol', 0, winreg.REG_SZ, '')
 
-                # 创建shell\open\command子项
-                command_path = os.path.join(reg_path, r'shell\open\command')
-                with winreg.CreateKey(winreg.HKEY_CURRENT_USER, command_path) as key:
+                # 创建命令子项
+                with winreg.CreateKey(winreg.HKEY_CURRENT_USER, COMMAND_PATH) as key:
                     # 设置命令值，包含可执行文件路径和%1参数
                     cmd = f'"{executable}" "%1"'
                     winreg.SetValueEx(key, '', 0, winreg.REG_SZ, cmd)
 
                 logger.success("URL协议注册成功")
             else:
-                # 删除注册表项
-                try:
-                    winreg.DeleteKey(winreg.HKEY_CURRENT_USER, os.path.join(reg_path, r'shell\open\command'))
-                    winreg.DeleteKey(winreg.HKEY_CURRENT_USER, os.path.join(reg_path, 'shell\open'))
-                    winreg.DeleteKey(winreg.HKEY_CURRENT_USER, os.path.join(reg_path, 'shell'))
-                    winreg.DeleteKey(winreg.HKEY_CURRENT_USER, reg_path)
-                    logger.success("URL协议取消注册成功")
-                except FileNotFoundError:
-                    logger.info("URL协议项不存在，无需取消")
-                except Exception as e:
-                    logger.error(f"删除注册表项失败: {e}")
+                # 删除注册表项 - 采用安全删除顺序
+                for path in [COMMAND_PATH, os.path.join(REG_PATH, 'shell\open'), os.path.join(REG_PATH, 'shell'), REG_PATH]:
+                    try:
+                        winreg.DeleteKey(winreg.HKEY_CURRENT_USER, path)
+                        logger.debug(f"成功删除注册表项: {path}")
+                    except FileNotFoundError:
+                        logger.debug(f"注册表项不存在，无需删除: {path}")
+                    except Exception as e:
+                        logger.warning(f"删除注册表项 {path} 失败: {e}")
+                        # 继续尝试删除其他项
 
+                logger.success("URL协议取消注册完成")
+
+        except PermissionError:
+            logger.error("URL协议设置失败: 没有足够的权限操作注册表，请以管理员身份运行程序")
+            self.url_protocol_switch.setChecked(not checked)
         except Exception as e:
-            logger.error(f"URL协议设置失败: {e}")
+            logger.error(f"URL协议设置失败: {str(e)}")
             self.url_protocol_switch.setChecked(not checked)
 
     def setting_startup(self):
