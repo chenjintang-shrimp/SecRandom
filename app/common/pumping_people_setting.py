@@ -36,7 +36,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             "gender_quantity": True,
             "refresh_button": True,
             "voice_volume": 100,
-            "voice_speed": 100, 
+            "voice_speed": 100,
+            "show_random_member": False,
+            "random_member_format": 2,
         }
 
         self.pumping_people_Draw_comboBox = ComboBox()
@@ -163,18 +165,40 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         pumping_people_system_volume_layout.addWidget(self.pumping_people_system_volume_slider)
         pumping_people_system_volume_layout.addWidget(self.pumping_people_system_volume_label)
 
+        # 随机组员显示设置
+        self.show_random_member_checkbox = SwitchButton()
+        self.show_random_member_checkbox.setOnText("开启")
+        self.show_random_member_checkbox.setOffText("关闭")
+        self.show_random_member_checkbox.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
+        self.show_random_member_checkbox.setFont(QFont(load_custom_font(), 12))
+
+        # 随机组员格式设置
+        self.random_member_format_comboBox = ComboBox()
+        self.random_member_format_comboBox.addItems([
+            "[组名]-随机组员:[姓名]",
+            "[组名]-随机:[姓名]",
+            "[组名]-[姓名]",
+            "[组名]>[姓名]",
+            "[组名]>[姓名]<"
+        ])
+        self.random_member_format_comboBox.setCurrentIndex(2)
+        self.random_member_format_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.random_member_format_comboBox.setFont(QFont(load_custom_font(), 12))
+
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_people_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小", self.pumping_people_font_size_edit)
         self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语音播放", "设置结果公布时是否播放语音", self.pumping_people_Voice_switch)
-        self.addGroup(get_theme_icon("ic_fluent_volume_20_filled"), "音量大小", "调节播报音量 (0-100)", pumping_people_volume_widget)
-        self.addGroup(get_theme_icon("ic_fluent_tachometer_20_filled"), "语速调节", "调节播报语速 (50%-500%)", pumping_people_speed_widget)
-        self.addGroup(get_theme_icon("ic_fluent_volume_20_filled"), "系统音量控制", "抽取完成后自动设置系统音量", self.pumping_people_system_volume_switch)
-        self.addGroup(get_theme_icon("ic_fluent_slider_20_filled"), "系统音量值", "设置抽取完成后的系统音量 (0-100)", pumping_people_system_volume_widget)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "音量大小", "调节播报音量 (0-100)", pumping_people_volume_widget)
+        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语速调节", "调节播报语速 (50%-500%)", pumping_people_speed_widget)
+        self.addGroup(get_theme_icon("ic_fluent_person_voice_20_filled"), "系统音量控制", "抽取完成后自动设置系统音量", self.pumping_people_system_volume_switch)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "系统音量大小", "设置抽取完成后的系统音量 (0-100)", pumping_people_system_volume_widget)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_people_Animation_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_number_symbol_square_20_filled"), "学号格式", "设置学号格式设置", self.pumping_people_student_id_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_rename_20_filled"), "姓名格式", "设置姓名格式设置", self.pumping_people_student_name_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "显示随机组员", "抽取小组时是否显示随机组员", self.show_random_member_checkbox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "组员显示格式", "设置随机组员的显示格式", self.random_member_format_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "班级人|组数", "设置该功能的显示格式", self.pumping_people_theme_comboBox)
 
         self.load_settings()  # 加载设置
@@ -284,6 +308,10 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     # 加载系统音量设置
                     system_volume_enabled = pumping_people_settings.get("system_volume_enabled", self.default_settings["system_volume_enabled"])
                     system_volume_value = pumping_people_settings.get("system_volume_value", self.default_settings["system_volume_value"])
+
+                    # 加载随机组员显示设置
+                    show_random_member = pumping_people_settings.get("show_random_member", self.default_settings["show_random_member"])
+                    random_member_format = pumping_people_settings.get("random_member_format", self.default_settings["random_member_format"])
                     
                     self.pumping_people_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
@@ -297,6 +325,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_people_voice_speed_slider.setValue(voice_speed)
                     self.pumping_people_system_volume_switch.setChecked(system_volume_enabled)
                     self.pumping_people_system_volume_slider.setValue(system_volume_value)
+                    self.show_random_member_checkbox.setChecked(show_random_member)
+                    self.random_member_format_comboBox.setCurrentIndex(random_member_format)
                     logger.info(f"加载抽人设置完成")
             else:
                 self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
@@ -311,6 +341,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                 self.pumping_people_voice_speed_slider.setValue(self.default_settings["voice_speed"])
                 self.pumping_people_system_volume_switch.setChecked(self.default_settings["system_volume_enabled"])
                 self.pumping_people_system_volume_slider.setValue(self.default_settings["system_volume_value"])
+                self.show_random_member_checkbox.setChecked(self.default_settings["show_random_member"])
+                self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -326,6 +358,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             self.pumping_people_voice_speed_slider.setValue(self.default_settings["voice_speed"])
             self.pumping_people_system_volume_switch.setChecked(self.default_settings["system_volume_enabled"])
             self.pumping_people_system_volume_slider.setValue(self.default_settings["system_volume_value"])
+            self.show_random_member_checkbox.setChecked(self.default_settings["show_random_member"])
+            self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
 
             self.save_settings()
     
@@ -356,6 +390,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         pumping_people_settings["voice_speed"] = self.pumping_people_voice_speed_slider.value()
         pumping_people_settings["system_volume_enabled"] = self.pumping_people_system_volume_switch.isChecked()
         pumping_people_settings["system_volume_value"] = self.pumping_people_system_volume_slider.value()
+        pumping_people_settings["show_random_member"] = self.show_random_member_checkbox.isChecked()
+        pumping_people_settings["random_member_format"] = self.random_member_format_comboBox.currentIndex()
 
         # 保存字体大小
         try:

@@ -696,7 +696,63 @@ class pumping_people(QWidget):
                                 name = selected
 
                             if group_name == '抽取小组组号':
-                                label = BodyLabel(f"{selected}")
+                                # 定义格式常量
+                                FORMAT_GROUP_RANDOM_MEMBER = 0
+                                FORMAT_GROUP_RANDOM = 1
+                                FORMAT_GROUP_SIMPLE = 2
+                                FORMAT_GROUP_ARROW = 3
+                                FORMAT_GROUP_ARROW_BRACKET = 4
+
+                                # 格式映射字典
+                                FORMAT_MAPPINGS = {
+                                    FORMAT_GROUP_RANDOM_MEMBER: f"{{selected}}-随机组员:{{random_member}}",
+                                    FORMAT_GROUP_RANDOM: f"{{selected}}-随机:{{random_member}}",
+                                    FORMAT_GROUP_SIMPLE: f"{{selected}}-{{random_member}}",
+                                    FORMAT_GROUP_ARROW: f"{{selected}}>{{random_member}}",
+                                    FORMAT_GROUP_ARROW_BRACKET: f"{{selected}}>{{random_member}}<"
+                                }
+
+                                # 构建学生数据文件路径
+                                student_file = os.path.join("app", "resource", "list", f"{self.class_combo.currentText()}.json")
+                                members = []
+
+                                # 加载学生数据和筛选组成员
+                                if os.path.exists(student_file):
+                                    try:
+                                        with open(student_file, 'r', encoding='utf-8') as f:
+                                            data = json.load(f)
+                                            members = [
+                                                name.replace('【', '').replace('】', '') 
+                                                for name, info in data.items()
+                                                if isinstance(info, dict) and info.get('group') == selected and info.get('exist', True)
+                                            ]
+                                    except (json.JSONDecodeError, IOError) as e:
+                                        # 记录具体错误但不中断程序
+                                        print(f"加载学生数据失败: {str(e)}")
+
+                                # 随机选择成员
+                                random_member = random.choice(members) if members else ''
+                                display_text = selected  # 默认显示组号
+
+                                # 加载显示设置
+                                try:
+                                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                        settings = json.load(f)
+                                        show_random = settings['pumping_people'].get('show_random_member', False)
+                                        format_str = settings['pumping_people'].get('random_member_format', FORMAT_GROUP_SIMPLE)
+                                except (json.JSONDecodeError, IOError, KeyError) as e:
+                                    show_random = False
+                                    format_str = FORMAT_GROUP_SIMPLE
+                                    print(f"加载设置失败: {str(e)}")
+
+                                # 应用格式设置
+                                if show_random and random_member and format_str in FORMAT_MAPPINGS:
+                                    display_text = FORMAT_MAPPINGS[format_str].format(
+                                        selected=selected, 
+                                        random_member=random_member
+                                    )
+
+                                label = BodyLabel(display_text)
                             else:
                                 label = BodyLabel(f"{student_id_str} {name}")
 
