@@ -9,6 +9,7 @@ import json
 import os
 import sys
 import subprocess
+from urllib.parse import urlparse, parse_qs
 from loguru import logger
 
 from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
@@ -500,36 +501,115 @@ class Window(MSFluentWindow):
     def show_window_from_ipc(self, socket):
         """从IPC接收显示窗口请求并处理URL参数"""
         data = socket.readAll().data().decode().strip()
+        logger.info(f"接收到IPC窗口显示请求: {data}")
+        
+        # 确保主窗口资源正确加载
+        self._ensure_resources_loaded()
+        
         self.show()
         self.activateWindow()
         self.raise_()
         
         # 解析URL参数
+        target_interface = None
         if data.startswith('secrandom://'):
-            from urllib.parse import urlparse, parse_qs
-            parsed_url = urlparse(data)
-            query_params = parse_qs(parsed_url.query)
-            
-            # 根据不同路径执行不同操作
-            if parsed_url.path == 'pump':
-                # 切换到抽人界面
-                self.switchTo(self.pumping_peopleInterface)
-                # 如果有type参数，切换不同的抽取类型
-                if 'type' in query_params:
-                    pump_type = query_params['type'][0]
-                    if pump_type == 'reward':
-                        self.switchTo(self.pumping_rewardInterface)
-            elif parsed_url.path == 'history':
-                # 切换到主页面的历史记录界面
-                self.switchTo(self.history_handoff_settingInterface)
-            elif parsed_url.path == 'about':
-                # 切换到主界面的关于界面
-                self.switchTo(self.about_settingInterface)
-            elif parsed_url.path == 'settings':
-                # 解析设置页面参数
-                settings_page = query_params.get('page', [None])[0]
-                # 打开设置界面并传递页面参数
-                self.show_setting_interface(settings_page)
+            try:
+                parsed_url = urlparse(data)
+                query_params = parse_qs(parsed_url.query)
+                logger.debug(f"解析URL参数: 路径={parsed_url.path}, 参数={query_params}")
+                
+                # 路径处理映射表
+                path_handlers = {
+                    'pump': lambda: self._handle_pump_path(query_params),
+                    'history': lambda: self.switch_history_tab(),
+                    'about': lambda: self.show_about_tab(),
+                    'settings': lambda: self._handle_settings_path(query_params)
+                }
+                
+                # 获取目标界面
+                handler = path_handlers.get(parsed_url.path)
+                if handler:
+                    target_interface = handler()
+                else:
+                    logger.warning(f"未支持的URL路径: {parsed_url.path}")
+            except Exception as e:
+                logger.error(f"URL参数解析失败: {str(e)}", exc_info=True)
+        
+        # 确保界面正确切换
+        if target_interface:
+            if self.isMinimized():
+                self.showNormal()
+            else:
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            try:
+                self.switchTo(target_interface)
+                logger.debug(f"成功切换到界面: {target_interface.__class__.__name__}")
+            except Exception as e:
+                logger.error(f"界面切换失败: {str(e)}", exc_info=True)
+                self.switchTo(self.pumping_peopleInterface)  # 切换到默认界面
         
         socket.disconnectFromServer()
-        self.levitation_window.raise_()
+        
+        # 安全处理悬浮窗口
+        if hasattr(self, 'levitation_window') and self.levitation_window:
+            self.levitation_window.raise_()
+            self.levitation_window.activateWindow()
+        
+    def _ensure_resources_loaded(self):
+        """确保所有资源正确加载"""
+        resource_loaded = True
+        
+        # 验证并加载托盘图标
+        if not (hasattr(self, 'tray_icon') and self.tray_icon.isVisible()):
+            try:
+                self.tray_icon.show()
+                if not self.tray_icon.isVisible():
+                    raise Exception("托盘图标初始化失败")
+                logger.info("托盘图标已重新初始化")
+            except Exception as e:
+                logger.error(f"托盘图标加载失败: {str(e)}")
+                resource_loaded = False
+        
+        return resource_loaded
+    
+    def _handle_pump_path(self, query_params):
+        """处理抽人路径逻辑并返回目标界面"""
+        pump_type = query_params.get('type', [None])[0]
+        if self.isMinimized():
+            self.showNormal()
+        else:
+            self.show()
+            self.activateWindow()
+            self.raise_()
+        if pump_type == 'reward':
+            logger.debug(f"切换到奖励抽选界面: {pump_type}")
+            return self.pumping_rewardInterface
+        return self.pumping_peopleInterface
+    
+    def switch_history_tab(self, pump_type):
+        """根据页面类型切换历史记录界面"""
+        if pump_type == 'setting_history':
+            self.show_setting_interface('history')
+            if self.isMinimized():
+                self.showNormal()
+            else:
+                self.show()
+                self.activateWindow()
+                self.raise_()
+        elif pump_type == 'main_history':
+            if self.isMinimized():
+                self.showNormal()
+            else:
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            self.history_handoff_settingInterface()
+        
+    def _handle_settings_path(self, query_params):
+        """处理设置路径逻辑并返回设置界面"""
+        settings_page = query_params.get('page', [None])[0]
+        self.show_setting_interface(settings_page)
+        logger.debug(f"打开设置界面: {settings_page or '默认页面'}")
+        return self.show_setting_interface('pumping')
