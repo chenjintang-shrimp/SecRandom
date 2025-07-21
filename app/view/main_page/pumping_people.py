@@ -17,7 +17,7 @@ from loguru import logger
 from random import SystemRandom
 system_random = SystemRandom()
 
-from app.common.config import get_theme_icon, load_custom_font
+from app.common.config import get_theme_icon, load_custom_font, restore_volume
 
 class pumping_people(QWidget):
     def __init__(self, parent=None):
@@ -356,8 +356,19 @@ class pumping_people(QWidget):
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 voice_enabled = settings['pumping_people']['voice_enabled']
+                system_volume_enabled = settings['pumping_people']['system_volume_enabled']
+                voice_volume = settings['pumping_people'].get('voice_volume', 100) / 100.0
+                voice_speed = settings['pumping_people'].get('voice_speed', 100)
+                volume_value = settings['pumping_people'].get('system_volume_value', 50)
                 
                 if voice_enabled == True:  # 开启语音
+                    if system_volume_enabled == True: # 开启系统音量
+                        # 设置系统音量
+                        restore_volume(volume_value)
+                    # 设置音量
+                    self.voice_engine.setProperty('volume', voice_volume)
+                    # 设置语速
+                    self.voice_engine.setProperty('rate', int(200 * (voice_speed / 100)))
                     if hasattr(self, 'student_labels'):
                         for label in self.student_labels:
                             parts = label.text().split()
@@ -397,8 +408,19 @@ class pumping_people(QWidget):
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 voice_enabled = settings['pumping_people']['voice_enabled']
+                system_volume_enabled = settings['pumping_people']['system_volume_enabled']
+                voice_volume = settings['pumping_people'].get('voice_volume', 100) / 100.0
+                voice_speed = settings['pumping_people'].get('voice_speed', 100)
+                volume_value = settings['pumping_people'].get('system_volume_value', 50)
                 
                 if voice_enabled == True:  # 开启语音
+                    if system_volume_enabled == True: # 开启系统音量
+                        # 设置系统音量
+                        restore_volume(volume_value)
+                    # 设置音量
+                    self.voice_engine.setProperty('volume', voice_volume)
+                    # 设置语速
+                    self.voice_engine.setProperty('rate', int(200 * (voice_speed / 100)))
                     if hasattr(self, 'student_labels'):
                         for label in self.student_labels:
                             parts = label.text().split()

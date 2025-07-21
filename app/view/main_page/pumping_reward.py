@@ -8,12 +8,13 @@ import sys
 import json
 import random
 import pyttsx3
+import platform
 import datetime
 from loguru import logger
 from random import SystemRandom
 system_random = SystemRandom()
 
-from app.common.config import load_custom_font
+from app.common.config import load_custom_font, restore_volume
 
 class pumping_reward(QWidget):
     def __init__(self, parent=None):
@@ -23,14 +24,14 @@ class pumping_reward(QWidget):
         self.draw_mode = "random"
         self.animation_timer = None
         # 使用全局语音引擎单例
-        # 检查系统版本是否为Windows 10及以上
-        if sys.platform == 'win32' and sys.getwindowsversion().major >= 10:
+        # 检查系统版本是否为Windows 10及以上且非x86架构
+        if sys.platform == 'win32' and sys.getwindowsversion().major >= 10 and platform.machine() != 'x86':
             if not hasattr(QApplication.instance(), 'pumping_reward_voice_engine'):
                 QApplication.instance().pumping_reward_voice_engine = pyttsx3.init()
                 QApplication.instance().pumping_reward_voice_engine.startLoop(False)
             self.voice_engine = QApplication.instance().pumping_reward_voice_engine
         else:
-            logger.warning("语音功能仅在Windows 10及以上系统可用")
+            logger.warning("语音功能仅在Windows 10及以上系统且非x86架构可用")
         self.initUI()
     
     def start_draw(self):
@@ -323,8 +324,19 @@ class pumping_reward(QWidget):
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 voice_enabled = settings['pumping_reward']['voice_enabled']
+                system_volume_enabled = settings['pumping_reward']['system_volume_enabled']
+                voice_volume = settings['pumping_reward'].get('voice_volume', 100) / 100.0
+                voice_speed = settings['pumping_reward'].get('voice_speed', 100)
+                volume_value = settings['pumping_reward'].get('system_volume_value', 50)
                 
                 if voice_enabled == True:  # 开启语音
+                    if system_volume_enabled == True: # 开启系统音量
+                        # 设置系统音量
+                        restore_volume(volume_value)
+                    # 设置音量
+                    self.voice_engine.setProperty('volume', voice_volume)
+                    # 设置语速
+                    self.voice_engine.setProperty('rate', int(200 * (voice_speed / 100)))
                     if hasattr(self, 'reward_labels'):
                         for label in self.reward_labels:
                             parts = label.text().split()
@@ -364,8 +376,19 @@ class pumping_reward(QWidget):
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 voice_enabled = settings['pumping_reward']['voice_enabled']
+                system_volume_enabled = settings['pumping_reward']['system_volume_enabled']
+                voice_volume = settings['pumping_reward'].get('voice_volume', 100) / 100.0
+                voice_speed = settings['pumping_reward'].get('voice_speed', 100)
+                volume_value = settings['pumping_reward'].get('system_volume_value', 50)
                 
                 if voice_enabled == True:  # 开启语音
+                    if system_volume_enabled == True: # 开启系统音量
+                        # 设置系统音量
+                        restore_volume(volume_value)
+                    # 设置音量
+                    self.voice_engine.setProperty('volume', voice_volume)
+                    # 设置语速
+                    self.voice_engine.setProperty('rate', int(200 * (voice_speed / 100)))
                     if hasattr(self, 'reward_labels'):
                         for label in self.reward_labels:
                             parts = label.text().split()
