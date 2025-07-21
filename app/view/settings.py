@@ -92,6 +92,12 @@ class settings_Window(MSFluentWindow):
         self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.more_settingInterface, get_theme_icon("ic_fluent_more_horizontal_20_filled"), '更多设置', position=NavigationItemPosition.BOTTOM)
 
+    def closeEvent(self, event):
+        """窗口关闭时隐藏主界面"""
+        self.hide()
+        event.ignore()
+        self.save_settings_window_size()
+
     def resizeEvent(self, event):
         # 调整大小时重启计时器，仅在停止调整后保存
         self.resize_timer.start(500)  # 500毫秒延迟
