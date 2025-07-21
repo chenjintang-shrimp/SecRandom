@@ -527,7 +527,9 @@ class Window(MSFluentWindow):
                 }
                 
                 # 获取目标界面
-                handler = path_handlers.get(parsed_url.path)
+                # 标准化路径，去除首尾斜杠
+                path = parsed_url.path.strip('/')
+                handler = path_handlers.get(path)
                 if handler:
                     target_interface = handler()
                 else:
@@ -537,12 +539,6 @@ class Window(MSFluentWindow):
         
         # 确保界面正确切换
         if target_interface:
-            if self.isMinimized():
-                self.showNormal()
-            else:
-                self.show()
-                self.activateWindow()
-                self.raise_()
             try:
                 self.switchTo(target_interface)
                 logger.debug(f"成功切换到界面: {target_interface.__class__.__name__}")
@@ -577,12 +573,6 @@ class Window(MSFluentWindow):
     def _handle_pump_path(self, query_params):
         """处理抽人路径逻辑并返回目标界面"""
         pump_type = query_params.get('type', [None])[0]
-        if self.isMinimized():
-            self.showNormal()
-        else:
-            self.show()
-            self.activateWindow()
-            self.raise_()
         if pump_type == 'reward':
             logger.debug(f"切换到奖励抽选界面: {pump_type}")
             return self.pumping_rewardInterface
@@ -592,19 +582,7 @@ class Window(MSFluentWindow):
         """根据页面类型切换历史记录界面"""
         if pump_type == 'setting_history':
             self.show_setting_interface('history')
-            if self.isMinimized():
-                self.showNormal()
-            else:
-                self.show()
-                self.activateWindow()
-                self.raise_()
         elif pump_type == 'main_history':
-            if self.isMinimized():
-                self.showNormal()
-            else:
-                self.show()
-                self.activateWindow()
-                self.raise_()
             self.history_handoff_settingInterface()
         
     def _handle_settings_path(self, query_params):
