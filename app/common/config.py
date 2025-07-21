@@ -5,6 +5,10 @@ from PyQt5.QtWidgets import *
 import os
 from loguru import logger
 
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+import comtypes
+from comtypes import POINTER
+
 def load_custom_font():
     font_path = './app/resource/font/HarmonyOS_Sans_SC_Bold.ttf'
     font_id = QFontDatabase.addApplicationFont(font_path)
@@ -38,6 +42,26 @@ def get_theme_icon(icon_name):
     except Exception as e:
         logger.error(f"加载图标{icon_name}出错: {str(e)}")
         return QIcon()
+
+def restore_volume(volume_value):
+    # 初始化COM库
+    comtypes.CoInitialize()
+    
+    # 获取默认音频设备
+    devices = AudioUtilities.GetSpeakers()
+    interface = devices.Activate(
+        IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None)
+    volume = comtypes.cast(interface, POINTER(IAudioEndpointVolume))
+    
+    # 取消静音
+    volume.SetMute(0, None)
+    
+    # 设置音量为100%
+    volume.SetMasterVolumeLevelScalar(volume_value / 100.0, None)
+    
+    # 释放COM库
+    comtypes.CoUninitialize()
+
 
 class Config(QConfig):
     dpiScale = OptionsConfigItem(
