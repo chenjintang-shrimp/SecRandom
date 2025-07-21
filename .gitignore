@@ -179,3 +179,4 @@ cython_debug/
 /app/SecRandom
 /app/Settings
 /app/resource/reward
+/.vercel
