@@ -85,7 +85,7 @@ class Window(MSFluentWindow):
                 self.focus_time = foundation_settings.get('main_window_focus_time', 0)
         except Exception as e:
             logger.error(f"加载检测焦点时间设置时出错: {e}")
-            self.focus_time = 1
+            self.focus_time = 0
 
         self.focus_timeout_map = [
             0, 0, 3000, 5000, 10000, 15000, 30000, 60000, 120000, 180000, 300000, 600000, 1800000,
@@ -178,16 +178,18 @@ class Window(MSFluentWindow):
         try:
             with open('./app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
+                check_startup = settings.get('foundation', {}).get('check_on_startup', True)
             if settings.get('toggle_window') == 'show':
                 self.show()
         except Exception as e:
             logger.error(f"无法加载设置文件: {e}")
+            check_startup = True
 
         self.createSubInterface()
         self.splashScreen.finish()
 
-        # 异步检查更新
-        QTimer.singleShot(1000, self.check_updates_async)
+        if check_startup:
+            QTimer.singleShot(1000, self.check_updates_async)
 
     class UpdateCheckWorker(QThread):
         result_ready = pyqtSignal(bool, str)
@@ -250,11 +252,10 @@ class Window(MSFluentWindow):
         self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
-        # 仅在窗口非最大化状态时保存大小
-        self.save_window_size()
         """窗口关闭时隐藏主界面"""
         self.hide()
         event.ignore()
+        self.save_window_size()
 
     def resizeEvent(self, event):
         # 调整大小时重启计时器，仅在停止调整后保存
