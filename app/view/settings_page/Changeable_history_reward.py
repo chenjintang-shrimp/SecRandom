@@ -162,6 +162,43 @@ class changeable_history_reward(QFrame):
             else:
                 # 如果已有布局，只需更新内容
                 self.layout().addWidget(self.scroll_area_personal)
+
+        elif reward_name == '奖品记录_时间排序':
+            if not data:
+                data = [['无', '0', '无', '无']]
+            # 设置表格行数为实际学生数量
+            self.table.setRowCount(len(data))
+            self.table.setSortingEnabled(False)
+            use_system_random = self.get_random_method_setting()
+            self.table.setColumnCount(4)
+            # 填充表格数据
+            for i, row in enumerate(data):
+                for j in range(4):
+                    self.table.setItem(i, j, QTableWidgetItem(row[j]))
+                    self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
+                    self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
+            # 设置表头
+            self.table.setHorizontalHeaderLabels(['时间', '序号', '奖品', '默认权重'])
+
+            self.table.verticalHeader().hide() # 隐藏垂直表头
+            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
+            
+            # 添加到布局
+            self.inner_layout_personal.addWidget(self.table)
+
+            # 将内部的 QFrame 设置为 QScrollArea 的内容
+            self.scroll_area_personal.setWidget(self.inner_frame_personal)
+
+            self.table.setSortingEnabled(True) # 启用排序
+
+            # 设置主布局
+            if not self.layout():
+                main_layout = QVBoxLayout(self)
+                main_layout.addWidget(self.scroll_area_personal)
+            else:
+                # 如果已有布局，只需更新内容
+                self.layout().addWidget(self.scroll_area_personal)
+
         else:
             self.table.setRowCount(len(data))
             self.table.setSortingEnabled(False) # 禁止排序
@@ -305,6 +342,70 @@ class changeable_history_reward(QFrame):
                     return []
             else:
                 return []
+
+        elif _reward_name == '奖品记录_时间排序':
+            if prize_pools_name:
+                # 奖品数据文件路径
+                reward_file = f'app/resource/reward/{prize_pools_name}.json'
+                history_file = f'app/resource/reward/history/{prize_pools_name}.json'
+                
+                # 读取奖品配置
+                reward_data = {}
+                try:
+                    with open(reward_file, 'r', encoding='utf-8') as f:
+                        reward_data = json.load(f)
+                except (FileNotFoundError, json.JSONDecodeError):
+                    logger.error(f"奖品配置文件不存在或格式错误: {reward_file}")
+                    return []
+
+                # 读取奖品发放历史
+                history_data = {}
+                if os.path.exists(history_file):
+                    try:
+                        with open(history_file, 'r', encoding='utf-8') as f:
+                            history_data = json.load(f).get('pumping_reward', {})
+                    except json.JSONDecodeError:
+                        logger.error(f"奖品历史记录格式错误: {history_file}")
+                        pass
+
+                # 收集所有奖品发放记录
+                all_records = []
+                reward_items = reward_data
+                
+                # 遍历奖品历史记录
+                for reward_id, distribution_records in history_data.items():
+                    reward_info = reward_items.get(reward_id, {})
+                    reward_name = reward_id  # 直接使用键名作为奖品名称
+                    
+                    for record in distribution_records.get('time', []):
+                        draw_time = record.get('draw_time', '')
+                        if draw_time:
+                            all_records.append({
+                                'time': draw_time,
+                                'reward_id': reward_id,
+                                'name': reward_name,
+                                'weight': reward_info.get('probability', '1')
+                            })
+                
+                # 按时间降序排序
+                sorted_records = sorted(all_records, key=lambda x: x['time'], reverse=True)
+                
+                # 转换为规范格式返回
+                result = []
+                for record in sorted_records:
+                    # 将概率字符串转换为整数权重
+                        weight = int(record['weight']) if record['weight'].isdigit() else 1
+                        result.append([
+                            record['time'],
+                            record['reward_id'],
+                            record['name'],
+                            str(weight)
+                        ])
+                
+                return result
+            else:
+                return []
+        
         
         else:
             if prize_pools_name:

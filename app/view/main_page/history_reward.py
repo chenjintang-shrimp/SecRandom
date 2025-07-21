@@ -119,7 +119,7 @@ class history_reward(QFrame):
         if data:
             InfoBar.success(
                 title="读取历史记录文件成功",
-                content=f"读取历史记录文件成功,班级:{prize_pools_name},学生:{reward_name}",
+                content=f"读取历史记录文件成功,奖池:{prize_pools_name},奖品:{reward_name}",
                 duration=6000,
                 orient=Qt.Horizontal,
                 parent=self,
@@ -152,6 +152,8 @@ class history_reward(QFrame):
             self.scroll_area_personal.setWidget(self.inner_frame_personal)
 
             self.table.setSortingEnabled(True) # 启用排序
+            # 正序
+            self.table.sortItems(0, Qt.AscendingOrder)
 
             # 设置主布局
             if not self.layout():
@@ -160,6 +162,43 @@ class history_reward(QFrame):
             else:
                 # 如果已有布局，只需更新内容
                 self.layout().addWidget(self.scroll_area_personal)
+
+        elif reward_name == '奖品记录_时间排序':
+            if not data:
+                data = [['无', '0', '无', '无']]
+            # 设置表格行数为实际学生数量
+            self.table.setRowCount(len(data))
+            self.table.setSortingEnabled(False)
+            use_system_random = self.get_random_method_setting()
+            self.table.setColumnCount(4)
+            # 填充表格数据
+            for i, row in enumerate(data):
+                for j in range(4):
+                    self.table.setItem(i, j, QTableWidgetItem(row[j]))
+                    self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
+                    self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
+            # 设置表头
+            self.table.setHorizontalHeaderLabels(['时间', '序号', '奖品', '默认权重'])
+
+            self.table.verticalHeader().hide() # 隐藏垂直表头
+            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
+            
+            # 添加到布局
+            self.inner_layout_personal.addWidget(self.table)
+
+            # 将内部的 QFrame 设置为 QScrollArea 的内容
+            self.scroll_area_personal.setWidget(self.inner_frame_personal)
+
+            self.table.setSortingEnabled(True) # 启用排序
+
+            # 设置主布局
+            if not self.layout():
+                main_layout = QVBoxLayout(self)
+                main_layout.addWidget(self.scroll_area_personal)
+            else:
+                # 如果已有布局，只需更新内容
+                self.layout().addWidget(self.scroll_area_personal)   
+
         else:
             if not data:
                 data = [[f'{current_time}', '无', '无']]
@@ -278,21 +317,18 @@ class history_reward(QFrame):
 
                     # 生成最终数据
                     for i, reward in enumerate(rewards):
-                        for i, reward in enumerate(rewards):
+                        pumping_reward_count = int(history_data['pumping_reward'].get(reward, {}).get('total_number_of_times', 0)) if 'pumping_reward' in history_data else 0
+                        reward_data.append([
+                            str(cleaned_data[i][0]).zfill(max_digits['id']),
+                            reward,
+                            cleaned_data[i][2],
+                            str(pumping_reward_count).zfill(max_digits['pumping_reward'])
+                        ])
 
-                            pumping_reward_count = int(history_data['pumping_reward'].get(reward, {}).get('total_number_of_times', 0)) if 'pumping_reward' in history_data else 0
-
-                            reward_data.append([
-                                str(cleaned_data[i][0]).zfill(max_digits['id']),
-                                reward,
-                                cleaned_data[i][2],
-                                str(pumping_reward_count).zfill(max_digits['pumping_reward'])
-                            ])
-
-                        return reward_data
+                    return reward_data
 
                 except Exception as e:
-                    logger.error(f"读取学生名单文件失败: {e}")
+                    logger.error(f"读取奖励历史文件失败: {e}")
                     InfoBar.error(
                         title="读取学生名单文件失败",
                         content=f"错误信息: （请到日志文件查看）",
@@ -305,10 +341,72 @@ class history_reward(QFrame):
                     return []
             else:
                 return []
+
+        elif _reward_name == '奖品记录_时间排序':
+            if prize_pools_name:
+                # 奖品数据文件路径
+                reward_file = f'app/resource/reward/{prize_pools_name}.json'
+                history_file = f'app/resource/reward/history/{prize_pools_name}.json'
+                
+                # 读取奖品配置
+                reward_data = {}
+                try:
+                    with open(reward_file, 'r', encoding='utf-8') as f:
+                        reward_data = json.load(f)
+                except (FileNotFoundError, json.JSONDecodeError):
+                    logger.error(f"奖品配置文件不存在或格式错误: {reward_file}")
+                    return []
+
+                # 读取奖品发放历史
+                history_data = {}
+                if os.path.exists(history_file):
+                    try:
+                        with open(history_file, 'r', encoding='utf-8') as f:
+                            history_data = json.load(f).get('pumping_reward', {})
+                    except json.JSONDecodeError:
+                        logger.error(f"奖品历史记录格式错误: {history_file}")
+                        pass
+
+                # 收集所有奖品发放记录
+                all_records = []
+                reward_items = reward_data
+                
+                # 遍历奖品历史记录
+                for reward_id, distribution_records in history_data.items():
+                    reward_info = reward_items.get(reward_id, {})
+                    reward_name = reward_id  # 直接使用键名作为奖品名称
+                    
+                    for record in distribution_records.get('time', []):
+                        draw_time = record.get('draw_time', '')
+                        if draw_time:
+                            all_records.append({
+                                'time': draw_time,
+                                'reward_id': reward_id,
+                                'name': reward_name,
+                                'weight': reward_info.get('probability', '1')
+                            })
+                
+                # 按时间降序排序
+                sorted_records = sorted(all_records, key=lambda x: x['time'], reverse=True)
+                
+                # 转换为规范格式返回
+                result = []
+                for record in sorted_records:
+                    # 将概率字符串转换为整数权重
+                        weight = int(record['weight']) if record['weight'].isdigit() else 1
+                        result.append([
+                            record['time'],
+                            record['reward_id'],
+                            record['name'],
+                            str(weight)
+                        ])
+                
+                return result
+            else:
+                return []
         
         else:
             if prize_pools_name:
-                _reward_name = _reward_name if not _reward_name else _reward_name[1:-1]
                 try:
                     # 初始化历史数据字典
                     history_data = {}
@@ -322,29 +420,46 @@ class history_reward(QFrame):
                         except json.JSONDecodeError:
                             history_data = {}
                     
-                    # 假设历史数据中每个抽取记录有时间、抽取方式和被点次数信息
+                    # 修复历史记录数据访问路径
                     reward_data = []
-                    if _reward_name in history_data.get('pumping_reward', {}):
-                        pumping_reward_history = history_data['pumping_reward'][_reward_name]['time']
-                        for record in pumping_reward_history:
-                            time = record.get('draw_time', '')
-                            draw_method = record.get('draw_method', '')
-                            if draw_method == 'random':
-                                draw_method_text = '重复抽取'
-                            elif draw_method == 'until_reboot':
-                                draw_method_text = '不重复抽取(直到软件重启)'
-                            elif draw_method == 'until_all':
-                                draw_method_text = '不重复抽取(直到抽完全部人)'
-                            else:
-                                draw_method_text = draw_method
-                            draw_reward_numbers = record.get('draw_reward_numbers', '')
-                            reward_data.append([time, draw_method_text, f'{draw_reward_numbers}'])
+                    pumping_reward = history_data.get('pumping_reward', {})
+                    
+                    # 添加调试日志
+                    logger.debug(f"当前选择的奖励名称: {_reward_name}")
+                    
+                    # 尝试直接访问时间记录（适配实际数据结构）
+                    if isinstance(pumping_reward, dict):
+                        # 根据用户选择的奖励名称筛选记录
+                        for reward_id, reward_info in pumping_reward.items():
+                            # 检查当前奖励ID是否与用户选择的奖励名称匹配
+                            if reward_id == _reward_name and isinstance(reward_info, dict) and 'time' in reward_info:
+                                for record in reward_info['time']:
+                                    time = record.get('draw_time', '')
+                                    draw_method = record.get('draw_method', '')
+                                    
+                                    # 统一处理抽取方式文本
+                                    draw_method_map = {
+                                        'random': '重复抽取',
+                                        'until_reboot': '不重复抽取(直到软件重启)',
+                                        'until_all': '不重复抽取(直到抽完全部人)'
+                                    }
+                                    draw_method_text = draw_method_map.get(draw_method, draw_method)
+                                    
+                                    # 获取抽取数量，支持列表或单个值
+                                    draw_reward_numbers = record.get('draw_reward_numbers', '')
+                                    if isinstance(draw_reward_numbers, list):
+                                        draw_reward_numbers = ', '.join(map(str, draw_reward_numbers))
+                                    
+                                    reward_data.append([time, draw_method_text, str(draw_reward_numbers)])
+                    
+                    # 按时间倒序排序
+                    reward_data.sort(reverse=True, key=lambda x: x[0])
                     return reward_data
                     
                 except Exception as e:
-                    logger.error(f"读取学生名单文件失败: {e}")
+                    logger.error(f"读取奖品名单文件失败: {e}")
                     InfoBar.error(
-                        title="读取学生名单文件失败",
+                        title="读取奖品名单文件失败",
                         content=f"错误信息: （请到日志文件查看）",
                         duration=3000,
                         orient=Qt.Horizontal,

@@ -180,6 +180,43 @@ class changeable_history(QFrame):
             else:
                 # 如果已有布局，只需更新内容
                 self.layout().addWidget(self.scroll_area_personal)
+
+        elif student_name == '全班同学_时间排序':
+            if not data:
+                data = [['无', '0', '无', '无', '无']]
+            # 设置表格行数为实际学生数量
+            self.table.setRowCount(len(data))
+            self.table.setSortingEnabled(False)
+            use_system_random = self.get_random_method_setting()
+            self.table.setColumnCount(5)
+            # 填充表格数据
+            for i, row in enumerate(data):
+                for j in range(5):
+                    self.table.setItem(i, j, QTableWidgetItem(row[j]))
+                    self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
+                    self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
+            # 设置表头
+            self.table.setHorizontalHeaderLabels(['时间', '学号', '姓名', '性别', '所处小组'])
+
+            self.table.verticalHeader().hide() # 隐藏垂直表头
+            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
+            
+            # 添加到布局
+            self.inner_layout_personal.addWidget(self.table)
+
+            # 将内部的 QFrame 设置为 QScrollArea 的内容
+            self.scroll_area_personal.setWidget(self.inner_frame_personal)
+
+            self.table.setSortingEnabled(True) # 启用排序
+
+            # 设置主布局
+            if not self.layout():
+                main_layout = QVBoxLayout(self)
+                main_layout.addWidget(self.scroll_area_personal)
+            else:
+                # 如果已有布局，只需更新内容
+                self.layout().addWidget(self.scroll_area_personal)   
+
         else:
             if not data:
                 data = [[f'{current_time}', '无', '无', '无', '无']]
@@ -466,6 +503,80 @@ class changeable_history(QFrame):
                         position=InfoBarPosition.TOP
                     )
                     return []
+            else:
+                return []
+
+        elif _student_name == '全班同学_时间排序':
+            if class_name:
+                student_file = f'app/resource/list/{class_name}.json'
+                history_file = f'app/resource/history/{class_name}.json'
+                
+                # 读取学生名单
+                try:
+                    with open(student_file, 'r', encoding='utf-8') as f:
+                        class_data = json.load(f)
+                except (FileNotFoundError, json.JSONDecodeError):
+                    return []
+
+                # 清理学生数据
+                cleaned_students = []
+                for name, info in class_data.items():
+                    if isinstance(info, dict) and info.get('exist', True):
+                        cleaned_name = name.replace('【', '').replace('】', '')
+                        cleaned_students.append((
+                            info.get('id', ''),
+                            cleaned_name,
+                            info.get('gender', ''),
+                            info.get('group', '')
+                        ))
+
+                # 读取历史记录
+                history_data = {}
+                if os.path.exists(history_file):
+                    try:
+                        with open(history_file, 'r', encoding='utf-8') as f:
+                            history_data = json.load(f).get('pumping_people', {})
+                    except json.JSONDecodeError:
+                        pass
+
+                # 计算学号最大位数（用于补零对齐）
+                max_id_length = max(len(str(student[0])) for student in cleaned_students) if cleaned_students else 0
+
+                # 收集所有抽取记录
+                all_records = []
+                
+                # 遍历每个学生的历史记录
+                for (student_id, name, gender, group) in cleaned_students:
+                    student_history = history_data.get(name, {})
+                    time_records = student_history.get('time', [])
+                    
+                    for record in time_records:
+                        draw_time = record.get('draw_time', '')
+                        if draw_time:
+                            formatted_id = str(student_id).zfill(max_id_length)
+                            all_records.append({
+                                'time': draw_time,
+                                'id': formatted_id,
+                                'name': name,
+                                'gender': gender,
+                                'group': group
+                            })
+                
+                # 降序
+                sorted_records = sorted(all_records, key=lambda x: x['time'], reverse=True)
+                
+                # 转换为列表格式返回
+                result = []
+                for record in sorted_records:
+                    result.append([
+                        record['time'],
+                        record['id'],
+                        record['name'],
+                        record['gender'],
+                        record['group']
+                    ])
+                
+                return result
             else:
                 return []
         
