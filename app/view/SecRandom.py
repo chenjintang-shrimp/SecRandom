@@ -43,6 +43,10 @@ def show_update_notification(latest_version):
         # 创建并显示通知窗口
         notification = UpdateNotification(latest_version)
         notification.show()
+        # 防止通知窗口关闭时程序退出
+        original_quit_setting = app.quitOnLastWindowClosed()
+        app.setQuitOnLastWindowClosed(False)
+        notification.destroyed.connect(lambda: app.setQuitOnLastWindowClosed(original_quit_setting))
         logger.info(f"自定义更新通知已显示，版本: {latest_version}")
 
     except ImportError as e:
@@ -185,10 +189,22 @@ class Window(MSFluentWindow):
         # 异步检查更新
         QTimer.singleShot(1000, self.check_updates_async)
 
+    class UpdateCheckWorker(QThread):
+        result_ready = pyqtSignal(bool, str)
+        
+        def run(self):
+            update_available, latest_version = check_for_updates()
+            self.result_ready.emit(update_available, latest_version)
+    
     def check_updates_async(self):
-        update_available, latest_version = check_for_updates()
+        self.update_worker = self.UpdateCheckWorker()
+        self.update_worker.result_ready.connect(self.on_update_check_finished)
+        self.update_worker.start()
+    
+    def on_update_check_finished(self, update_available, latest_version):
         if update_available and latest_version:
             show_update_notification(latest_version)
+        self.update_worker.deleteLater()
 
     def createSubInterface(self):
         loop = QEventLoop(self)

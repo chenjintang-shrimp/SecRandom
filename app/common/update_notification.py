@@ -19,12 +19,25 @@ class UpdateNotification(QWidget):
     def init_ui(self):
         """初始化UI界面"""
         # 设置窗口大小、无边框和透明背景
-        self.setFixedSize(400, 180)
+        # 自适应屏幕尺寸设置
+        # 移动时重新计算当前屏幕
+        cursor_pos = QCursor.pos()
+        for screen in QGuiApplication.screens():
+            if screen.geometry().contains(cursor_pos):
+                target_screen = screen
+                break
+        else:
+            target_screen = QGuiApplication.primaryScreen()
+        screen_geometry = target_screen.availableGeometry()
+        max_width = min(int(screen_geometry.width() * 0.3), 500)  # 最大宽度为屏幕30%或500px取较小值
+        self.setMaximumWidth(max_width)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setStyleSheet("""
             background-color: rgba(255, 255, 255, 1);
-            border-radius: 32px;
+            border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 1);
+            padding: 15px;
         """)
 
         # 创建主布局
@@ -38,7 +51,7 @@ class UpdateNotification(QWidget):
 
         # 更新图标
         icon_label = QLabel()
-        icon_label.setPixmap(QIcon('./app/resource/icon/SecRandom.png').pixmap(24, 24))
+        icon_label.setPixmap(QIcon('./app/resource/icon/SecRandom.png').pixmap(55, 55))
         icon_label.setStyleSheet("background: transparent;")
 
         # 标题文本
@@ -48,12 +61,8 @@ class UpdateNotification(QWidget):
 
         # 关闭按钮
         close_btn = PushButton("")
-        close_btn.setIcon(FluentIcon.CLOSE)
-        close_btn.setFixedSize(20, 20)
-        close_btn.setStyleSheet(""
-            "QPushButton {background-color: transparent; border-radius: 12px; color: #000000;}"
-            "QPushButton:hover {background-color: #F2F2F2; color: #000000; border-radius: 12px;}"
-        )
+        close_btn.setIcon(QIcon('./app/resource/assets/dark/ic_fluent_arrow_exit_20_filled_dark.svg'))
+        close_btn.setStyleSheet("background: transparent;")
         close_btn.clicked.connect(self.close)
 
         # 添加到标题布局
@@ -73,7 +82,7 @@ class UpdateNotification(QWidget):
         btn_layout.setSpacing(10)
 
         # GitHub下载按钮
-        github_btn = PushButton("   GitHub 更新")
+        github_btn = PushButton("     GitHub 更新")
         github_btn.setIcon(FluentIcon.GITHUB)
         github_btn.setStyleSheet(""
             "QPushButton {background-color: #2563eb; color: white; border-radius: 8px; padding: 8px 16px; font-weight: 500;}"
@@ -84,7 +93,7 @@ class UpdateNotification(QWidget):
         github_btn.clicked.connect(self.on_github_clicked)
 
         # 云盘下载按钮
-        cloud_btn = PushButton("   123云盘 更新")
+        cloud_btn = PushButton("     123云盘 更新")
         cloud_btn.setIcon(FluentIcon.CLOUD)
         cloud_btn.setStyleSheet(""
             "QPushButton {background-color: #10b981; color: white; border-radius: 8px; padding: 8px 16px; font-weight: 500;}"
@@ -138,11 +147,18 @@ class UpdateNotification(QWidget):
         self.timer.timeout.connect(self.close_with_animation)
         self.timer.start(self.duration)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        # 确保窗口尺寸已确定后再计算位置
+        QTimer.singleShot(100, self.move_to_bottom_right)
+
     def move_to_bottom_right(self):
         """将窗口移动到屏幕右下角"""
-        screen_geometry = QApplication.desktop().availableGeometry()
-        x = screen_geometry.width() - self.width() - 20
-        y = screen_geometry.height() - self.height() - 30  # 距离底部30px
+        screen_geometry = QGuiApplication.primaryScreen().availableGeometry()
+        # 重新获取窗口尺寸确保准确性
+        self.adjustSize()
+        x = max(0, screen_geometry.width() - self.width() - 20)
+        y = max(0, screen_geometry.height() - self.height() - 20)
         self.move(x, y)
 
     def on_github_clicked(self):
