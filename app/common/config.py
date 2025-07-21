@@ -6,8 +6,35 @@ import os
 from loguru import logger
 
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from packaging.version import Version
+import requests
 import comtypes
 from comtypes import POINTER
+
+def check_for_updates():
+    try:
+        current_version = VERSION.lstrip('v')
+        url = "https://api.github.com/repos/SECTL/SecRandom/releases/latest"
+        response = requests.get(url, timeout=10, verify=False)
+        response.raise_for_status()
+        latest_release = response.json()
+        latest_version_tag = latest_release['tag_name']
+        latest_version = latest_version_tag.lstrip('v')
+        if Version(latest_version) > Version(current_version):
+            logger.info(f"当前版本: {current_version}, 最新版本: {latest_version_tag}, 需要更新")
+            return True, latest_version_tag
+        else:
+            logger.info(f"当前版本: {current_version}, 最新版本: {latest_version_tag}, 无需更新")
+            return False, None
+    except requests.exceptions.RequestException as e:
+        logger.error(f"网络请求错误: {e}")
+        return False, None
+    except KeyError as e:
+        logger.error(f"API响应格式错误: {e}")
+        return False, None
+    except Exception as e:
+        logger.error(f"检查更新失败: {e}")
+        return False, None
 
 def load_custom_font():
     font_path = './app/resource/font/HarmonyOS_Sans_SC_Bold.ttf'
@@ -70,7 +97,7 @@ class Config(QConfig):
 YEAR = 2025
 MONTH = 4
 AUTHOR = "lzy98276"
-VERSION = "v1.9.9.9"
+VERSION = "v0.9.9.9"
 APPLY_NAME = "SecRandom"
 GITHUB_WEB = "https://github.com/SECTL/SecRandom"
 BILIBILI_WEB = "https://space.bilibili.com/520571577"
