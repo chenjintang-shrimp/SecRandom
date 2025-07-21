@@ -13,7 +13,10 @@ from urllib.parse import urlparse, parse_qs
 from loguru import logger
 
 from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
-from app.common.config import get_theme_icon, load_custom_font
+from app.common.config import get_theme_icon, load_custom_font, check_for_updates
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
+warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
 if './app/Settings' != None and not os.path.exists('./app/Settings'):
     os.makedirs('./app/Settings')
@@ -24,6 +27,28 @@ from app.view.main_page.pumping_reward import pumping_reward
 from app.view.main_page.history_handoff_setting import history_handoff_setting
 from app.view.levitation import LevitationWindow
 from app.view.settings_page.about_setting import about
+
+def show_update_notification(latest_version):
+    """显示自定义更新通知窗口"""
+    try:
+        from app.common.update_notification import UpdateNotification
+        import sys
+
+        # 确保有应用实例
+        if QApplication.instance() is None:
+            app = QApplication(sys.argv)
+        else:
+            app = QApplication.instance()
+
+        # 创建并显示通知窗口
+        notification = UpdateNotification(latest_version)
+        notification.show()
+        logger.info(f"自定义更新通知已显示，版本: {latest_version}")
+
+    except ImportError as e:
+        logger.error(f"导入自定义通知失败: {str(e)}")
+    except Exception as e:
+        logger.error(f"显示更新通知失败: {str(e)}", exc_info=True)
 
 class Window(MSFluentWindow):
     def __init__(self):
@@ -156,6 +181,14 @@ class Window(MSFluentWindow):
 
         self.createSubInterface()
         self.splashScreen.finish()
+
+        # 异步检查更新
+        QTimer.singleShot(1000, self.check_updates_async)
+
+    def check_updates_async(self):
+        update_available, latest_version = check_for_updates()
+        if update_available and latest_version:
+            show_update_notification(latest_version)
 
     def createSubInterface(self):
         loop = QEventLoop(self)
@@ -453,19 +486,19 @@ class Window(MSFluentWindow):
                 self.settingInterface.activateWindow()
                 self.settingInterface.raise_()
                 
-                # 如果指定了目标页面，则切换到对应设置子页面
-                if target_page:
-                    # 根据页面参数切换到不同设置子界面
-                    if target_page == 'pumping':
-                        self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.pumping_handoff_settingInterface)
-                    elif target_page == 'security':
-                        self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.password_setInterface)
-                    elif target_page == 'history':
-                        self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.changeable_history_handoff_settingInterface)
-                    elif target_page == 'about':
-                        self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.about_settingInterface)
-                    elif target_page == 'more':
-                        self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.more_settingInterface)
+        # 如果指定了目标页面，则切换到对应设置子页面
+        if target_page:
+            # 根据页面参数切换到不同设置子界面
+            if target_page == 'pumping':
+                self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.pumping_handoff_settingInterface)
+            elif target_page == 'security':
+                self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.password_setInterface)
+            elif target_page == 'history':
+                self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.changeable_history_handoff_settingInterface)
+            elif target_page == 'about':
+                self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.about_settingInterface)
+            elif target_page == 'more':
+                self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.more_settingInterface)
 
     def toggle_levitation_window(self):
         """切换浮窗显示/隐藏状态"""
@@ -497,78 +530,28 @@ class Window(MSFluentWindow):
         socket = self.server.nextPendingConnection()
         if socket:
             socket.readyRead.connect(lambda: self.show_window_from_ipc(socket))
+            socket.disconnected.connect(socket.deleteLater)
 
     def show_window_from_ipc(self, socket):
-        """从IPC接收显示窗口请求并处理URL参数"""
+        """从IPC接收显示窗口请求并激活窗口"""
         data = socket.readAll().data().decode().strip()
         logger.info(f"接收到IPC窗口显示请求: {data}")
         
-        # 确保主窗口资源正确加载
-        self._ensure_resources_loaded()
-        
+        # 确保主窗口资源正确加载并显示
         self.show()
         self.activateWindow()
         self.raise_()
         
-        # 解析URL参数
-        target_interface = None
-        if data.startswith('secrandom://'):
-            try:
-                parsed_url = urlparse(data)
-                query_params = parse_qs(parsed_url.query)
-                logger.debug(f"解析URL参数: 路径={parsed_url.path}, 参数={query_params}")
-                
-                # 路径处理映射表
-                path_handlers = {
-                    'pump': lambda: self._handle_pump_path(query_params),
-                    'history': lambda: self.switch_history_tab(),
-                    'about': lambda: self.show_about_tab(),
-                    'settings': lambda: self._handle_settings_path(query_params)
-                }
-                
-                # 获取目标界面
-                # 标准化路径，去除首尾斜杠
-                path = parsed_url.path.strip('/')
-                handler = path_handlers.get(path)
-                if handler:
-                    target_interface = handler()
-                else:
-                    logger.warning(f"未支持的URL路径: {parsed_url.path}")
-            except Exception as e:
-                logger.error(f"URL参数解析失败: {str(e)}", exc_info=True)
-        
-        # 确保界面正确切换
-        if target_interface:
-            try:
-                self.switchTo(target_interface)
-                logger.debug(f"成功切换到界面: {target_interface.__class__.__name__}")
-            except Exception as e:
-                logger.error(f"界面切换失败: {str(e)}", exc_info=True)
-                self.switchTo(self.pumping_peopleInterface)  # 切换到默认界面
+        # 处理悬浮窗口
+        self._handle_levitation_window()
         
         socket.disconnectFromServer()
-        
-        # 安全处理悬浮窗口
+
+    def _handle_levitation_window(self):
+        """处理悬浮窗口激活"""
         if hasattr(self, 'levitation_window') and self.levitation_window:
             self.levitation_window.raise_()
             self.levitation_window.activateWindow()
-        
-    def _ensure_resources_loaded(self):
-        """确保所有资源正确加载"""
-        resource_loaded = True
-        
-        # 验证并加载托盘图标
-        if not (hasattr(self, 'tray_icon') and self.tray_icon.isVisible()):
-            try:
-                self.tray_icon.show()
-                if not self.tray_icon.isVisible():
-                    raise Exception("托盘图标初始化失败")
-                logger.info("托盘图标已重新初始化")
-            except Exception as e:
-                logger.error(f"托盘图标加载失败: {str(e)}")
-                resource_loaded = False
-        
-        return resource_loaded
     
     def _handle_pump_path(self, query_params):
         """处理抽人路径逻辑并返回目标界面"""
