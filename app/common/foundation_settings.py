@@ -20,14 +20,15 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.setBorderRadius(8)
         self.settings_file = "app/Settings/Settings.json"
         self.default_settings = {
+            "check_on_startup": True,
             "self_starting_enabled": False,
             "url_protocol_enabled": False,
-            "pumping_floating_enabled": False,
+            "pumping_floating_enabled": True,
             "pumping_floating_side": 0,
             "pumping_reward_side": 0,
             "pumping_floating_transparency_mode": 6,
             "main_window_focus_mode": 0,
-            "main_window_focus_time": 1,
+            "main_window_focus_time": 0,
             "main_window_mode": 0,
             "settings_window_mode": 0
         }
@@ -116,6 +117,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.settings_window_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 添加组件到分组中
+        self.check_on_startup = SwitchButton()
+        self.check_on_startup.setOnText("开启")
+        self.check_on_startup.setOffText("关闭")
+        self.check_on_startup.setFont(QFont(load_custom_font(), 12))
+        self.check_on_startup.checkedChanged.connect(self.save_settings)
+        
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新设置", "启动时自动检查软件更新", self.check_on_startup)
         self.addGroup(get_theme_icon("ic_fluent_branch_compare_20_filled"), "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
         self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "URL协议注册", "允许其他程序通过secrandom://协议调用本应用", self.url_protocol_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
@@ -329,6 +337,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         # 如果索引值无效，则使用默认值
                         settings_window_mode = self.default_settings["settings_window_mode"]
 
+                    check_on_startup = foundation_settings.get("check_on_startup", self.default_settings["check_on_startup"])
+
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.url_protocol_switch.setChecked(url_protocol_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
@@ -339,6 +349,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.main_window_focus_time_comboBox.setCurrentIndex(main_window_focus_time)
                     self.main_window_comboBox.setCurrentIndex(main_window_mode)
                     self.settings_window_comboBox.setCurrentIndex(settings_window_mode)
+                    self.check_on_startup.setChecked(check_on_startup)
                     logger.info(f"加载基础设置完成")
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
@@ -351,6 +362,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
                 self.main_window_comboBox.setCurrentIndex(self.default_settings["main_window_mode"])
                 self.settings_window_comboBox.setCurrentIndex(self.default_settings["settings_window_mode"])
+                self.check_on_startup.setChecked(self.default_settings["check_on_startup"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -363,6 +375,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
             self.main_window_comboBox.setCurrentIndex(self.default_settings["main_window_mode"])
             self.settings_window_comboBox.setCurrentIndex(self.default_settings["settings_window_mode"])
+            self.check_on_startup.setChecked(self.default_settings["check_on_startup"])
             self.save_settings()
     
     def show_cleanup_dialog(self):
@@ -516,6 +529,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings["main_window_focus_time"] = self.main_window_focus_time_comboBox.currentIndex()
         foundation_settings["main_window_mode"] = self.main_window_comboBox.currentIndex()
         foundation_settings["settings_window_mode"] = self.settings_window_comboBox.currentIndex()
+        foundation_settings["check_on_startup"] = self.check_on_startup.isChecked()
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open(self.settings_file, 'w', encoding='utf-8') as f:
