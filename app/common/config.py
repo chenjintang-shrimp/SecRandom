@@ -47,11 +47,7 @@ def load_custom_font():
 
 def get_theme_icon(icon_name):
     try:
-        if qconfig.theme == Theme.AUTO:
-            lightness = QApplication.palette().color(QPalette.Window).lightness()
-            is_dark = lightness <= 127
-        else:
-            is_dark = qconfig.theme == Theme.DARK
+        is_dark = is_dark_theme(qconfig) # True: 深色, False: 浅色
         
         prefix = "light" if is_dark else "dark"
         suffix = "_light" if is_dark else "_dark"
@@ -69,6 +65,13 @@ def get_theme_icon(icon_name):
     except Exception as e:
         logger.error(f"加载图标{icon_name}出错: {str(e)}")
         return QIcon()
+
+def is_dark_theme(qconfig):
+    if qconfig.theme == Theme.AUTO:
+        lightness = QApplication.palette().color(QPalette.Window).lightness()
+        return lightness <= 127
+    else:
+        return qconfig.theme == Theme.DARK
 
 def restore_volume(volume_value):
     # 初始化COM库
@@ -97,7 +100,7 @@ class Config(QConfig):
 YEAR = 2025
 MONTH = 4
 AUTHOR = "lzy98276"
-VERSION = "v1.9.9.9"
+VERSION = "v0.0.0.0"
 APPLY_NAME = "SecRandom"
 GITHUB_WEB = "https://github.com/SECTL/SecRandom"
 BILIBILI_WEB = "https://space.bilibili.com/520571577"
