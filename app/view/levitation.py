@@ -100,7 +100,7 @@ class LevitationWindow(QWidget):
         layout.addWidget(self.container_button)
 
         self.setLayout(layout)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.X11BypassWindowManagerHint)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
         try:
             settings_path = Path('app/Settings/Settings.json')
