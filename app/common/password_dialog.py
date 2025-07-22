@@ -6,7 +6,7 @@ import hashlib
 import json
 import pyotp
 from loguru import logger
-from app.common.config import get_theme_icon, load_custom_font
+from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 
 class PasswordDialog(QDialog):
     def __init__(self, parent=None):
@@ -38,6 +38,8 @@ class PasswordDialog(QDialog):
         self.password_input.setPlaceholderText("请输入密码")
         self.password_input.setEchoMode(QLineEdit.Password)
         self.password_input.setFont(QFont(load_custom_font(), 14))
+        # 回车确认
+        self.password_input.returnPressed.connect(self.verify)
         layout.addWidget(self.password_input)
 
         # 密钥文件选择
@@ -64,6 +66,8 @@ class PasswordDialog(QDialog):
         self.totp_input = LineEdit()
         self.totp_input.setPlaceholderText("请输入2FA验证码")
         self.totp_input.setFont(QFont(load_custom_font(), 14))
+        # 回车确认
+        self.totp_input.returnPressed.connect(self.verify)
         layout.addWidget(self.totp_input)
 
         # 按钮
@@ -78,12 +82,7 @@ class PasswordDialog(QDialog):
 
     def update_theme_style(self):
         """根据当前主题更新样式"""
-        if qconfig.theme == Theme.AUTO:
-            # 获取系统当前主题
-            lightness = QApplication.palette().color(QPalette.Window).lightness()
-            is_dark = lightness <= 127
-        else:
-            is_dark = qconfig.theme == Theme.DARK
+        is_dark = is_dark_theme(qconfig)
         if is_dark:
             self.setStyleSheet("""
                 QDialog {
