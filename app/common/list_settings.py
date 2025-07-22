@@ -9,7 +9,9 @@ import os
 import json
 from loguru import logger
 
-from app.common.config import get_theme_icon, load_custom_font
+from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
+
+is_dark = not is_dark_theme(qconfig)
 
 class list_SettinsCard(GroupHeaderCardWidget):
     refresh_signal = pyqtSignal()
@@ -330,12 +332,8 @@ class ClassInputDialog(QDialog):
         self.text_label = BodyLabel('请输入班级名称，每行一个')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
-        self.setStyleSheet("""
-            QDialog, QDialog * {
-                color: black;
-                background-color: white;
-            }
-        """)
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
         
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入班级名称，每行一个")
@@ -375,6 +373,22 @@ class ClassInputDialog(QDialog):
         
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
+    
+    def update_theme_style(self):
+        if is_dark:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
         
     def closeEvent(self, event):
         if not self.saved:
@@ -406,12 +420,8 @@ class StudentInputDialog(QDialog):
         self.text_label = BodyLabel('请输入学生姓名，每行一个\n在输入已经不在当前班级的学生时\n请在姓名前后加上【】')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
-        self.setStyleSheet("""
-            QDialog, QDialog * {
-                color: black;
-                background-color: white;
-            }
-        """)
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
         
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入学生姓名，每行一个")
@@ -464,6 +474,22 @@ class StudentInputDialog(QDialog):
         
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
+
+    def update_theme_style(self):
+        if is_dark:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
         
     def closeEvent(self, event):
         if not self.saved:
@@ -495,12 +521,8 @@ class GenderInputDialog(QDialog):
         self.text_label = BodyLabel('请输入每个人对应的性别，每行一个\n例:男 或 女(其它的?自己试一试吧)\n注:尽量在表格中复制后直接粘贴')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
-        self.setStyleSheet("""
-            QDialog, QDialog * {
-                color: black;
-                background-color: white;
-            }
-        """)
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
 
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入每个人对应的性别，每行一个")
@@ -550,6 +572,22 @@ class GenderInputDialog(QDialog):
         
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
+
+    def update_theme_style(self):
+        if is_dark:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
         
     def closeEvent(self, event):
         if not self.saved:
@@ -581,12 +619,8 @@ class GroupInputDialog(QDialog):
         self.text_label = BodyLabel('请输入每个人对应的小组名称，每行一个\n例:第1小组 或 第一小组\n注:尽量在表格中复制后直接粘贴')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
-        self.setStyleSheet("""
-            QDialog, QDialog * {
-                color: black;
-                background-color: white;
-            }
-        """)
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
 
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入小组名称，每行一个")
@@ -636,6 +670,22 @@ class GroupInputDialog(QDialog):
         
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
+
+    def update_theme_style(self):
+        if is_dark:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
         
     def closeEvent(self, event):
         if not self.saved:

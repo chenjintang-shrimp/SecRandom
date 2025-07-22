@@ -9,7 +9,9 @@ import os
 import json
 from loguru import logger
 
-from app.common.config import get_theme_icon, load_custom_font
+from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
+
+is_dark = not is_dark_theme(qconfig)
 
 class reward_SettinsCard(GroupHeaderCardWidget):
     refresh_signal = pyqtSignal()
@@ -287,12 +289,8 @@ class Prize_pools_InputDialog(QDialog):
         self.text_label = BodyLabel('请输入奖池名称，每行一个')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
-        self.setStyleSheet("""
-            QDialog, QDialog * {
-                color: black;
-                background-color: white;
-            }
-        """)
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
         
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入奖池名称，每行一个")
@@ -332,6 +330,22 @@ class Prize_pools_InputDialog(QDialog):
         
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
+
+    def update_theme_style(self):
+        if is_dark:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
         
     def closeEvent(self, event):
         if not self.saved:
@@ -363,12 +377,8 @@ class PrizeInputDialog(QDialog):
         self.text_label = BodyLabel('请输入奖品名称，每行一个')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
-        self.setStyleSheet("""
-            QDialog, QDialog * {
-                color: black;
-                background-color: white;
-            }
-        """)
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
         
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入奖品名称，每行一个")
@@ -421,6 +431,22 @@ class PrizeInputDialog(QDialog):
         
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
+
+    def update_theme_style(self):
+        if is_dark:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
         
     def closeEvent(self, event):
         if not self.saved:
@@ -452,12 +478,8 @@ class ProbabilityInputDialog(QDialog):
         self.text_label = BodyLabel('请输入每项奖品对应的权重，每行一个\n例:1 或 5\n注:尽量在表格中复制后直接粘贴')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
-        self.setStyleSheet("""
-            QDialog, QDialog * {
-                color: black;
-                background-color: white;
-            }
-        """)
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
 
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入每项奖品对应的权重，每行一个")
@@ -505,6 +527,22 @@ class ProbabilityInputDialog(QDialog):
         
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
+
+    def update_theme_style(self):
+        if is_dark:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
         
     def closeEvent(self, event):
         if not self.saved:
