@@ -22,10 +22,10 @@ def show_update_notification(latest_version):
     QApplication.instance().update_notification_window = notification_window
     notification_window.show()
 
-class UpdateNotification(QWidget):
+class UpdateNotification(QDialog):
     """自定义更新通知窗口"""
-    def __init__(self, latest_version, parent=None):
-        super().__init__(None, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+    def __init__(self, latest_version):
+        super().__init__(parent=None, flags=Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.latest_version = latest_version
         self.duration = 15000  # 默认显示15秒
         self.init_ui()
@@ -34,9 +34,6 @@ class UpdateNotification(QWidget):
 
     def init_ui(self):
         """初始化UI界面"""
-        # 设置窗口大小、无边框和透明背景
-        # 自适应屏幕尺寸设置
-        # 移动时重新计算当前屏幕
         cursor_pos = QCursor.pos()
         for screen in QGuiApplication.screens():
             if screen.geometry().contains(cursor_pos):
@@ -50,10 +47,12 @@ class UpdateNotification(QWidget):
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setStyleSheet("""
-            background-color: rgba(255, 255, 255, 1);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 1);
-            padding: 15px;
+            QDialog {
+                background-color: rgba(235, 238, 242, 0.5);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 5px;
+                opacity: 0;
+            }
         """)
 
         # 创建主布局
@@ -68,30 +67,30 @@ class UpdateNotification(QWidget):
         # 更新图标
         icon_label = QLabel()
         icon_label.setPixmap(QIcon('./app/resource/icon/SecRandom.png').pixmap(55, 55))
-        icon_label.setStyleSheet("background: transparent;")
+        icon_label.setStyleSheet("background: transparent; border: none;")
 
         # 标题文本
         title_label = BodyLabel("SecRandom 有新版本可用")
         title_label.setFont(QFont(load_custom_font(), 14, QFont.Bold))
-        title_label.setStyleSheet("color: #2d3436; border: none; background: transparent;")
+        title_label.setStyleSheet("color: #1a1a1a; border: none; background: transparent;")
+
+        # 版本信息
+        version_label = BodyLabel(f"📌 当前版本: {VERSION}\n🎉 发现新版本 {self.latest_version}\n✨ 包含多项功能优化和体验改进")
+        version_label.setFont(QFont(load_custom_font(), 12))
+        version_label.setStyleSheet("color: #2d3436; border: none; background: transparent;")
+        version_label.setAlignment(Qt.AlignCenter)
 
         # 关闭按钮
         close_btn = PushButton("")
         close_btn.setIcon(QIcon('./app/resource/assets/dark/ic_fluent_arrow_exit_20_filled_dark.svg'))
-        close_btn.setStyleSheet("background: transparent;")
-        close_btn.clicked.connect(self.close)
+        close_btn.setStyleSheet("background: transparent; border: none;")
+        close_btn.clicked.connect(self.close_with_animation)
 
         # 添加到标题布局
         title_layout.addWidget(icon_label)
         title_layout.addWidget(title_label)
         title_layout.addSpacerItem(QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
         title_layout.addWidget(close_btn)
-
-        # 版本信息
-        version_label = BodyLabel(f"最新版本: {self.latest_version} 当前版本: {VERSION}")
-        version_label.setFont(QFont(load_custom_font(), 12))
-        version_label.setStyleSheet("color: #495057; border: none; background: transparent;")
-        version_label.setAlignment(Qt.AlignCenter)
 
         # 按钮布局
         btn_layout = QHBoxLayout()
@@ -101,8 +100,8 @@ class UpdateNotification(QWidget):
         github_btn = PushButton("     GitHub 更新")
         github_btn.setIcon(FluentIcon.GITHUB)
         github_btn.setStyleSheet(""
-            "QPushButton {background-color: #2563eb; color: white; border-radius: 8px; padding: 8px 16px; font-weight: 500;}"
-            "QPushButton:hover {background-color: #1d4ed8;}"
+            "QPushButton {background-color: #4a6cf7; color: white; border-radius: 8px; padding: 8px 16px; font-weight: 500; border: none;}"
+            "QPushButton:hover {background-color: #3a5bdb;}"
 
         )
         github_btn.setFont(QFont(load_custom_font(), 12))
@@ -112,8 +111,8 @@ class UpdateNotification(QWidget):
         cloud_btn = PushButton("     123云盘 更新")
         cloud_btn.setIcon(FluentIcon.CLOUD)
         cloud_btn.setStyleSheet(""
-            "QPushButton {background-color: #10b981; color: white; border-radius: 8px; padding: 8px 16px; font-weight: 500;}"
-            "QPushButton:hover {background-color: #059669;}"
+            "QPushButton {background-color: #36b37e; color: white; border-radius: 8px; padding: 8px 16px; font-weight: 500; border: none;}"
+            "QPushButton:hover {background-color: #2d8f68;}"
 
         )
         cloud_btn.setFont(QFont(load_custom_font(), 12))
@@ -139,19 +138,19 @@ class UpdateNotification(QWidget):
         
         # 创建位置动画
         self.pos_animation = QPropertyAnimation(self, b"pos")
-        self.pos_animation.setDuration(500)
-        self.pos_animation.setEasingCurve(QEasingCurve.InOutQuad)
+        self.pos_animation.setDuration(600)
+        self.pos_animation.setEasingCurve(QEasingCurve.OutCubic)
         self.pos_animation.setStartValue(QPoint(screen_geometry.width(), self.y()))
         self.pos_animation.setEndValue(QPoint(screen_geometry.width() - self.width() - 20, self.y()))
         
         # 创建透明度动画
         self.opacity_animation = QPropertyAnimation(self, b"windowOpacity")
-        self.opacity_animation.setDuration(300)
+        self.opacity_animation.setDuration(400)
         self.opacity_animation.setEasingCurve(QEasingCurve.InOutQuad)
         self.opacity_animation.setStartValue(0.0)
         self.opacity_animation.setEndValue(1.0)
         
-        # 并行运行位置和透明度动画
+        # 并行运行所有动画
         self.group_animation = QParallelAnimationGroup(self)
         self.group_animation.addAnimation(self.pos_animation)
         self.group_animation.addAnimation(self.opacity_animation)
@@ -195,19 +194,19 @@ class UpdateNotification(QWidget):
         
         # 创建位置动画到屏幕右侧外
         self.pos_animation = QPropertyAnimation(self, b"pos")
-        self.pos_animation.setEasingCurve(QEasingCurve.InOutQuad)
-        self.pos_animation.setDuration(500)
+        self.pos_animation.setEasingCurve(QEasingCurve.InCubic)
+        self.pos_animation.setDuration(600)
         self.pos_animation.setStartValue(self.pos())
         self.pos_animation.setEndValue(QPoint(screen_geometry.width(), self.y()))
         
         # 创建透明度动画
         self.opacity_animation = QPropertyAnimation(self, b"windowOpacity")
         self.opacity_animation.setEasingCurve(QEasingCurve.InOutQuad)
-        self.opacity_animation.setDuration(300)
+        self.opacity_animation.setDuration(400)
         self.opacity_animation.setStartValue(1.0)
         self.opacity_animation.setEndValue(0.0)
         
-        # 并行运行位置和透明度动画
+        # 并行运行所有动画
         self.group_animation = QParallelAnimationGroup(self)
         self.group_animation.addAnimation(self.pos_animation)
         self.group_animation.addAnimation(self.opacity_animation)
@@ -224,3 +223,8 @@ class UpdateNotification(QWidget):
         """显示事件 - 确保窗口在最前面"""
         self.raise_()
         super().showEvent(event)
+
+    def closeEvent(self, event):
+        if hasattr(QApplication.instance(), 'update_notification_window'):
+            del QApplication.instance().update_notification_window
+        super().closeEvent(event)
