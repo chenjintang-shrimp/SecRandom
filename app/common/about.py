@@ -18,15 +18,19 @@ class aboutCard(GroupHeaderCardWidget):
 
         # 打开GitHub按钮
         self.about_github_Button = HyperlinkButton(FIF.GITHUB, GITHUB_WEB, 'Github')
+        self.about_github_Button.setFont(QFont(load_custom_font(), 12))
 
         # 打开bilibili按钮
         self.about_bilibili_Button = HyperlinkButton(BILIBILI_WEB, 'Bilibili')
+        self.about_bilibili_Button.setFont(QFont(load_custom_font(), 12))
 
         # 查看当前软件版本号
         self.about_version_label = BodyLabel(f"当前版本: {VERSION}")
+        self.about_version_label.setFont(QFont(load_custom_font(), 12))
 
         # 查看当前软件版权所属
         self.about_author_label = BodyLabel(f"Copyright © {YEAR} {APPLY_NAME}")
+        self.about_author_label.setFont(QFont(load_custom_font(), 12))
 
         # 创建贡献人员按钮
         self.contributor_button = PushButton('贡献人员')
