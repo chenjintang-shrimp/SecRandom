@@ -17,7 +17,8 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.settings_file = "app/Settings/Settings.json"
         self.default_settings = {
             "probability_weight": 0,
-            "history_enabled": True
+            "history_enabled": True,
+            "history_days": 0
         }
 
         # 刷新按钮
@@ -41,6 +42,14 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.student_comboBox.setPlaceholderText("选择需要查看历史记录的同学")
         self.student_comboBox.addItems([])
         self.student_comboBox.setFont(QFont(load_custom_font(), 12))
+
+        # 选择过期天数
+        self.history_spinBox = SpinBox()
+        self.history_spinBox.setRange(0, 365)
+        self.history_spinBox.setValue(0)
+        self.history_spinBox.valueChanged.connect(self.save_settings)
+        self.history_spinBox.setSuffix("天")
+        self.history_spinBox.setFont(QFont(load_custom_font(), 12))
 
         # 清除历史记录按钮
         self.clear_history_Button = PushButton("清除历史记录")
@@ -71,6 +80,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "点击按钮刷新班级列表/记录表格", self.refresh_button)
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "选择班级", "选择一个需要查看历史记录的班级", self.class_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择学生", "这个一个可查看单个学生的功能", self.student_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "配置过期天数", "配置历史记录中抽取时间戳的过期天数", self.history_spinBox)
         self.addGroup(get_theme_icon("ic_fluent_delete_dismiss_20_filled"), "清除历史记录", "点击按钮清除当前选择的班级点名历史记录", self.clear_history_Button)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "权重|概率", "选择是否使用'权重'还是'概率'进行显示以及公平抽取", self.probability_or_weight)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "历史记录", "选择是否开启该功能(如果使用更'精确'的公平抽取务必打开)", self.history_switch)
@@ -176,19 +186,27 @@ class history_SettinsCard(GroupHeaderCardWidget):
                     if probability_weight < 0 or probability_weight >= self.probability_or_weight.count():
                         # 如果索引值无效，则使用默认值
                         probability_weight = self.default_settings["probability_weight"]
+
+                    history_days = history_settings.get("history_days", self.default_settings["history_days"])
+                    if history_days < 0 or history_days > 365:
+                        # 如果索引值无效，则使用默认值
+                        history_days = self.default_settings["history_days"]
                     
                     self.history_switch.setChecked(history_enabled)
                     self.probability_or_weight.setCurrentIndex(probability_weight)
+                    self.history_spinBox.setValue(history_days)
                     logger.info(f"加载历史记录设置完成")
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.history_switch.setChecked(self.default_settings["history_enabled"])
                 self.probability_or_weight.setCurrentIndex(self.default_settings["probability_weight"])
+                self.history_spinBox.setValue(self.default_settings["history_days"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.history_switch.setChecked(self.default_settings["history_enabled"])
             self.probability_or_weight.setCurrentIndex(self.default_settings["probability_weight"])
+            self.history_spinBox.setValue(self.default_settings["history_days"])
             self.save_settings()
     
     def save_settings(self):
@@ -207,6 +225,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
         history_settings = existing_settings["history"]
         history_settings["history_enabled"] = self.history_switch.isChecked()
         history_settings["probability_weight"] = self.probability_or_weight.currentIndex()
+        history_settings["history_days"] = self.history_spinBox.value()
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open(self.settings_file, 'w', encoding='utf-8') as f:

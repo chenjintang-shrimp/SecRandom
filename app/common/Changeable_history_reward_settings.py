@@ -16,7 +16,8 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         self.setBorderRadius(8)
         self.settings_file = "app/Settings/Settings.json"
         self.default_settings = {
-            "reward_history_enabled": True
+            "reward_history_enabled": True,
+            "history_reward_days": 0
         }
 
         # 刷新按钮
@@ -41,6 +42,13 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         self.reward_comboBox.addItems([])
         self.reward_comboBox.setFont(QFont(load_custom_font(), 12))
 
+        self.history_reward_spinBox = SpinBox()
+        self.history_reward_spinBox.setRange(0, 365)
+        self.history_reward_spinBox.setValue(0)
+        self.history_reward_spinBox.valueChanged.connect(self.save_settings)
+        self.history_reward_spinBox.setSuffix("天")
+        self.history_reward_spinBox.setFont(QFont(load_custom_font(), 12))
+
         # 清除历史记录按钮
         self.clear_history_Button = PushButton("清除历史记录")
         self.clear_history_Button.clicked.connect(self.clear_history)
@@ -62,6 +70,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "点击按钮刷新奖池列表/记录表格", self.refresh_button)
         self.addGroup(get_theme_icon("ic_fluent_reward_20_filled"), "选择奖池", "选择一个需要查看历史记录的奖池", self.prize_pools_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择奖品", "这个一个可查看单个奖品的功能", self.reward_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_delete_dismiss_20_filled"), "配置过期天数", "配置历史记录中抽取时间戳的过期天数", self.history_reward_spinBox)
         self.addGroup(get_theme_icon("ic_fluent_delete_dismiss_20_filled"), "清除历史记录", "点击按钮清除当前选择的奖池点名历史记录", self.clear_history_Button)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "历史记录", "选择是否开启该功能", self.history_switch)
 
@@ -160,16 +169,20 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
                     history_settings = settings.get("history", {})
                         
                     reward_history_enabled = history_settings.get("reward_history_enabled", self.default_settings["reward_history_enabled"])
+                    history_reward_days = history_settings.get("history_days", self.default_settings["history_reward_days"])
                     
                     self.history_switch.setChecked(reward_history_enabled)
+                    self.history_reward_spinBox.setValue(history_reward_days)
                     logger.info(f"加载历史记录设置完成")
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.history_switch.setChecked(self.default_settings["reward_history_enabled"])
+                self.history_reward_spinBox.setValue(self.default_settings["history_reward_days"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.history_switch.setChecked(self.default_settings["reward_history_enabled"])
+            self.history_reward_spinBox.setValue(self.default_settings["history_reward_days"])
             self.save_settings()
     
     def save_settings(self):
@@ -187,6 +200,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
             
         history_settings = existing_settings["history"]
         history_settings["reward_history_enabled"] = self.history_switch.isChecked()
+        history_settings["history_reward_days"] = self.history_reward_spinBox.value()
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open(self.settings_file, 'w', encoding='utf-8') as f:

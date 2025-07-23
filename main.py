@@ -116,6 +116,11 @@ logger.info("软件启动")
 logger.info(f"软件作者: lzy98276")
 logger.info(f"软件Github地址: https://github.com/SECTL/SecRandom")
 
+# 清理过期历史记录
+from app.common.history_cleaner import clean_expired_history, clean_expired_reward_history
+clean_expired_history()
+clean_expired_reward_history()
+
 sec = Window()
 try:
     with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
