@@ -20,7 +20,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.settings_file = "app/Settings/Settings.json"
         self.default_settings = {
             "system_volume_enabled": False,
-            "system_volume_value": 50,
+            "system_volume_value": 100,
             "extraction_scope": 0,
             "font_size": 50.0,
             "draw_mode": 0,
@@ -48,10 +48,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_student_id_comboBox = ComboBox()
         self.pumping_people_student_name_comboBox = ComboBox()
         self.pumping_people_theme_comboBox = ComboBox()
-        self.pumping_people_voice_volume_slider = Slider(Qt.Horizontal)
-        self.pumping_people_voice_speed_slider = Slider(Qt.Horizontal)
-        
-        self.pumping_people_font_size_edit = LineEdit()
+        self.pumping_people_voice_volume_SpinBox = SpinBox()
+        self.pumping_people_voice_speed_SpinBox = SpinBox()
+        self.pumping_people_font_size_SpinBox = DoubleSpinBox()
+        self.pumping_people_system_volume_switch = SwitchButton()
+        self.pumping_people_system_volume_SpinBox = SpinBox()
+        self.show_random_member_checkbox = SwitchButton()
         
         # 抽取模式下拉框
         self.pumping_people_Draw_comboBox.setFixedWidth(250)
@@ -66,21 +68,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_Draw_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 字体大小
-        self.pumping_people_font_size_edit.setPlaceholderText("请输入字体大小 (30-200)")
-        self.pumping_people_font_size_edit.setClearButtonEnabled(True)
-        # 设置宽度和高度
-        self.pumping_people_font_size_edit.setFixedWidth(150)
-        self.pumping_people_font_size_edit.setFixedHeight(32)
-        # 设置字体
-        self.pumping_people_font_size_edit.setFont(QFont(load_custom_font(), 12))
-
-        # 添加重置按钮
-        reset_action = QAction(FluentIcon.SYNC.qicon(), "", triggered=self.reset_font_size)
-        self.pumping_people_font_size_edit.addAction(reset_action, QLineEdit.LeadingPosition)
-
-        # 添加应用按钮
-        apply_action = QAction(FluentIcon.SAVE.qicon(), "", triggered=self.apply_font_size)
-        self.pumping_people_font_size_edit.addAction(apply_action, QLineEdit.TrailingPosition)
+        self.pumping_people_font_size_SpinBox.setRange(30.0, 200.0)
+        self.pumping_people_font_size_SpinBox.setValue(50.0)
+        self.pumping_people_font_size_SpinBox.setSingleStep(0.5)
+        self.pumping_people_font_size_SpinBox.setDecimals(1)
+        self.pumping_people_font_size_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_people_font_size_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 语音播放按钮
         self.pumping_people_Voice_switch.setOnText("开启")
@@ -112,61 +105,31 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_theme_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_people_theme_comboBox.setFont(QFont(load_custom_font(), 12))
 
-        # 音量滑块
-        self.pumping_people_voice_volume_slider.setRange(0, 100)
-        self.pumping_people_voice_volume_slider.setFixedWidth(150)
-        self.pumping_people_voice_volume_slider.valueChanged.connect(self.save_settings)
-        self.pumping_people_volume_label = BodyLabel(str(self.pumping_people_voice_volume_slider.value()))
-        self.pumping_people_volume_label.setFixedWidth(40)
-        self.pumping_people_volume_label.setFont(QFont(load_custom_font(), 12))
-        self.pumping_people_voice_volume_slider.valueChanged.connect(lambda v: self.pumping_people_volume_label.setText(str(v)))
+        # 音量
+        self.pumping_people_voice_volume_SpinBox.setRange(0, 100)
+        self.pumping_people_voice_volume_SpinBox.setValue(100)
+        self.pumping_people_voice_volume_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_people_voice_volume_SpinBox.setFont(QFont(load_custom_font(), 12))
 
-        # 音量滑块布局
-        pumping_people_volume_widget = QWidget()
-        pumping_people_volume_layout = QHBoxLayout(pumping_people_volume_widget)
-        pumping_people_volume_layout.addWidget(self.pumping_people_voice_volume_slider)
-        pumping_people_volume_layout.addWidget(self.pumping_people_volume_label)
-
-        # 语速滑块
-        self.pumping_people_voice_speed_slider.setRange(50, 500)
-        self.pumping_people_voice_speed_slider.setFixedWidth(150)
-        self.pumping_people_voice_speed_slider.valueChanged.connect(self.save_settings)
-        self.pumping_people_speed_label = BodyLabel(str(self.pumping_people_voice_speed_slider.value()))
-        self.pumping_people_speed_label.setFixedWidth(40)
-        self.pumping_people_speed_label.setFont(QFont(load_custom_font(), 12))
-        self.pumping_people_voice_speed_slider.valueChanged.connect(lambda v: self.pumping_people_speed_label.setText(str(v)))
-
-        # 语速滑块布局
-        pumping_people_speed_widget = QWidget()
-        pumping_people_speed_layout = QHBoxLayout(pumping_people_speed_widget)
-        pumping_people_speed_layout.addWidget(self.pumping_people_voice_speed_slider)
-        pumping_people_speed_layout.addWidget(self.pumping_people_speed_label)
+        # 语速
+        self.pumping_people_voice_speed_SpinBox.setRange(1, 500)
+        self.pumping_people_voice_speed_SpinBox.setValue(100)
+        self.pumping_people_voice_speed_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_people_voice_speed_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 系统音量控制开关
-        self.pumping_people_system_volume_switch = SwitchButton()
         self.pumping_people_system_volume_switch.setOnText("开启")
         self.pumping_people_system_volume_switch.setOffText("关闭")
         self.pumping_people_system_volume_switch.checkedChanged.connect(self.save_settings)
         self.pumping_people_system_volume_switch.setFont(QFont(load_custom_font(), 12))
 
-        # 系统音量滑块
-        self.pumping_people_system_volume_slider = Slider(Qt.Horizontal)
-        self.pumping_people_system_volume_slider.setRange(0, 100)
-        self.pumping_people_system_volume_slider.setFixedWidth(150)
-        self.pumping_people_system_volume_slider.valueChanged.connect(self.save_settings)
-        self.pumping_people_system_volume_label = BodyLabel(str(self.pumping_people_system_volume_slider.value()))
-        self.pumping_people_system_volume_label.setFixedWidth(40)
-        self.pumping_people_system_volume_label.setFont(QFont(load_custom_font(), 12))
-        self.pumping_people_system_volume_slider.valueChanged.connect(lambda v: self.pumping_people_system_volume_label.setText(str(v)))
-
-        # 创建系统音量滑块布局
-        pumping_people_system_volume_widget = QWidget()
-        pumping_people_system_volume_layout = QHBoxLayout(pumping_people_system_volume_widget)
-        pumping_people_system_volume_layout.addWidget(self.pumping_people_system_volume_slider)
-        pumping_people_system_volume_layout.addWidget(self.pumping_people_system_volume_label)
+        # 系统音量
+        self.pumping_people_system_volume_SpinBox.setRange(0, 100)
+        self.pumping_people_system_volume_SpinBox.setValue(100)
+        self.pumping_people_system_volume_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_people_system_volume_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 随机组员显示设置
-        self.show_random_member_checkbox = SwitchButton()
         self.show_random_member_checkbox.setOnText("开启")
         self.show_random_member_checkbox.setOffText("关闭")
         self.show_random_member_checkbox.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
@@ -188,12 +151,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_people_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_Draw_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小", self.pumping_people_font_size_edit)
+        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小(支持小数)", self.pumping_people_font_size_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语音播放", "设置结果公布时是否播放语音", self.pumping_people_Voice_switch)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "音量大小", "调节播报音量 (0-100)", pumping_people_volume_widget)
-        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语速调节", "调节播报语速 (50%-500%)", pumping_people_speed_widget)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "音量大小", "调节播报音量 (0-100)", self.pumping_people_voice_volume_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语速调节", "调节播报语速 (1%-500%)", self.pumping_people_voice_speed_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_person_voice_20_filled"), "系统音量控制", "抽取完成后自动设置系统音量", self.pumping_people_system_volume_switch)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "系统音量大小", "设置抽取完成后的系统音量 (0-100)", pumping_people_system_volume_widget)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "系统音量大小", "设置抽取完成后的系统音量 (0-100)", self.pumping_people_system_volume_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_people_Animation_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_number_symbol_square_20_filled"), "学号格式", "设置学号格式设置", self.pumping_people_student_id_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_rename_20_filled"), "姓名格式", "设置姓名格式设置", self.pumping_people_student_name_comboBox)
@@ -209,7 +172,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
 
     def apply_font_size(self):
         try:
-            font_size_str = self.pumping_people_font_size_edit.text().strip()
+            font_size_str = self.pumping_people_font_size_SpinBox.value()
             # 检查是否为一位小数
             if '.' in font_size_str:
                 integer_part, decimal_part = font_size_str.split('.', 1)
@@ -218,7 +181,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             font_size = float(font_size_str)
             if 30.0 <= font_size <= 200.0:
                 # 格式化保留一位小数
-                self.pumping_people_font_size_edit.setText(f"{font_size:.1f}")
+                self.pumping_people_font_size_SpinBox.setValue(font_size)
                 self.save_settings()
                 InfoBar.success(
                     title='设置成功',
@@ -233,7 +196,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
         except ValueError as e:
-            logger.warning(f"无效的字体大小输入: {self.pumping_people_font_size_edit.text()}")
+            logger.warning(f"无效的字体大小输入: {self.pumping_people_font_size_SpinBox.value()}")
             InfoBar.warning(
                 title='无效的字体大小输入',
                 content=f"无效的字体大小输入: {str(e)}",
@@ -242,13 +205,13 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
 
     def reset_font_size(self):
         try:
-            self.pumping_people_font_size_edit.setText(str("50.0"))
+            self.pumping_people_font_size_SpinBox.setValue("50.0")
         except FileNotFoundError as e:
             logger.error(f"加载设置时出错: {e}, 使用默认大小:50.0")
-            self.pumping_people_font_size_edit.setText(str("50.0"))
+            self.pumping_people_font_size_SpinBox.setValue("50.0")
         except KeyError:
             logger.error(f"设置文件中缺少'foundation'键, 使用默认大小:50.0")
-            self.pumping_people_font_size_edit.setText(str("50.0"))
+            self.pumping_people_font_size_SpinBox.setValue("50.0")
         self.save_settings()
         self.load_settings()
         
@@ -301,7 +264,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                         voice_volume = self.default_settings["voice_volume"]
 
                     voice_speed = pumping_people_settings.get("voice_speed", self.default_settings["voice_speed"])
-                    if voice_speed < 50 or voice_speed > 500:
+                    if voice_speed < 1 or voice_speed > 500:
                         logger.warning(f"无效的语速值: {voice_speed}")
                         voice_speed = self.default_settings["voice_speed"]
 
@@ -315,32 +278,32 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     
                     self.pumping_people_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
-                    self.pumping_people_font_size_edit.setText(str(font_size))
+                    self.pumping_people_font_size_SpinBox.setValue(font_size)
                     self.pumping_people_Animation_comboBox.setCurrentIndex(animation_mode)
                     self.pumping_people_Voice_switch.setChecked(voice_enabled)
                     self.pumping_people_student_id_comboBox.setCurrentIndex(student_id)
                     self.pumping_people_student_name_comboBox.setCurrentIndex(student_name)
                     self.pumping_people_theme_comboBox.setCurrentIndex(people_theme)
-                    self.pumping_people_voice_volume_slider.setValue(voice_volume)
-                    self.pumping_people_voice_speed_slider.setValue(voice_speed)
+                    self.pumping_people_voice_volume_SpinBox.setValue(voice_volume)
+                    self.pumping_people_voice_speed_SpinBox.setValue(voice_speed)
                     self.pumping_people_system_volume_switch.setChecked(system_volume_enabled)
-                    self.pumping_people_system_volume_slider.setValue(system_volume_value)
+                    self.pumping_people_system_volume_SpinBox.setValue(system_volume_value)
                     self.show_random_member_checkbox.setChecked(show_random_member)
                     self.random_member_format_comboBox.setCurrentIndex(random_member_format)
                     logger.info(f"加载抽人设置完成")
             else:
                 self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
                 self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
-                self.pumping_people_font_size_edit.setText(str(self.default_settings["font_size"]))
+                self.pumping_people_font_size_SpinBox.setValue(self.default_settings["font_size"])
                 self.pumping_people_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
                 self.pumping_people_Voice_switch.setChecked(self.default_settings["voice_enabled"])
                 self.pumping_people_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
                 self.pumping_people_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
                 self.pumping_people_theme_comboBox.setCurrentIndex(self.default_settings["people_theme"])
-                self.pumping_people_voice_volume_slider.setValue(self.default_settings["voice_volume"])
-                self.pumping_people_voice_speed_slider.setValue(self.default_settings["voice_speed"])
+                self.pumping_people_voice_volume_SpinBox.setValue(self.default_settings["voice_volume"])
+                self.pumping_people_voice_speed_SpinBox.setValue(self.default_settings["voice_speed"])
                 self.pumping_people_system_volume_switch.setChecked(self.default_settings["system_volume_enabled"])
-                self.pumping_people_system_volume_slider.setValue(self.default_settings["system_volume_value"])
+                self.pumping_people_system_volume_SpinBox.setValue(self.default_settings["system_volume_value"])
                 self.show_random_member_checkbox.setChecked(self.default_settings["show_random_member"])
                 self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
                 self.save_settings()
@@ -348,16 +311,16 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             logger.error(f"加载设置时出错: {e}")
             self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
             self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
-            self.pumping_people_font_size_edit.setText(str(self.default_settings["font_size"]))
+            self.pumping_people_font_size_SpinBox.setValue(self.default_settings["font_size"])
             self.pumping_people_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
             self.pumping_people_Voice_switch.setChecked(self.default_settings["voice_enabled"])
             self.pumping_people_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
             self.pumping_people_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
             self.pumping_people_theme_comboBox.setCurrentIndex(self.default_settings["people_theme"])
-            self.pumping_people_voice_volume_slider.setValue(self.default_settings["voice_volume"])
-            self.pumping_people_voice_speed_slider.setValue(self.default_settings["voice_speed"])
+            self.pumping_people_voice_volume_SpinBox.setValue(self.default_settings["voice_volume"])
+            self.pumping_people_voice_speed_SpinBox.setValue(self.default_settings["voice_speed"])
             self.pumping_people_system_volume_switch.setChecked(self.default_settings["system_volume_enabled"])
-            self.pumping_people_system_volume_slider.setValue(self.default_settings["system_volume_value"])
+            self.pumping_people_system_volume_SpinBox.setValue(self.default_settings["system_volume_value"])
             self.show_random_member_checkbox.setChecked(self.default_settings["show_random_member"])
             self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
 
@@ -386,16 +349,16 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         pumping_people_settings["student_id"] = self.pumping_people_student_id_comboBox.currentIndex()
         pumping_people_settings["student_name"] = self.pumping_people_student_name_comboBox.currentIndex()
         pumping_people_settings["people_theme"] = self.pumping_people_theme_comboBox.currentIndex()
-        pumping_people_settings["voice_volume"] = self.pumping_people_voice_volume_slider.value()
-        pumping_people_settings["voice_speed"] = self.pumping_people_voice_speed_slider.value()
+        pumping_people_settings["voice_volume"] = self.pumping_people_voice_volume_SpinBox.value()
+        pumping_people_settings["voice_speed"] = self.pumping_people_voice_speed_SpinBox.value()
         pumping_people_settings["system_volume_enabled"] = self.pumping_people_system_volume_switch.isChecked()
-        pumping_people_settings["system_volume_value"] = self.pumping_people_system_volume_slider.value()
+        pumping_people_settings["system_volume_value"] = self.pumping_people_system_volume_SpinBox.value()
         pumping_people_settings["show_random_member"] = self.show_random_member_checkbox.isChecked()
         pumping_people_settings["random_member_format"] = self.random_member_format_comboBox.currentIndex()
 
         # 保存字体大小
         try:
-            font_size = float(self.pumping_people_font_size_edit.text())
+            font_size = float(self.pumping_people_font_size_SpinBox.value())
             if 30.0 <= font_size <= 200.0:
                 pumping_people_settings["font_size"] = font_size
             # else:

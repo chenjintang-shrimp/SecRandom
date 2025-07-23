@@ -19,7 +19,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.settings_file = "app/Settings/Settings.json"
         self.default_settings = {
             "system_volume_enabled": False,
-            "system_volume_value": 50,
+            "system_volume_value": 100,
             "extraction_scope": 0,
             "font_size": 50.0,
             "draw_mode": 0,
@@ -39,10 +39,11 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_Animation_comboBox = ComboBox()
         self.pumping_reward_theme_comboBox = ComboBox()
         self.pumping_reward_Voice_switch = SwitchButton()
-        self.pumping_reward_voice_speed_slider = Slider(Qt.Horizontal)
-        self.pumping_reward_volume_slider = Slider(Qt.Horizontal)
-        
-        self.pumping_reward_font_size_edit = LineEdit()
+        self.pumping_reward_voice_volume_SpinBox = SpinBox()
+        self.pumping_reward_voice_speed_SpinBox = SpinBox()
+        self.pumping_reward_font_size_SpinBox = DoubleSpinBox()
+        self.pumping_reward_system_volume_switch = SwitchButton()
+        self.pumping_reward_system_volume_SpinBox = SpinBox()
         
         # 抽取模式下拉框
         self.pumping_reward_Draw_comboBox.setFixedWidth(250)
@@ -57,21 +58,12 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_mode_Draw_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 字体大小
-        self.pumping_reward_font_size_edit.setPlaceholderText("请输入字体大小 (30-200)")
-        self.pumping_reward_font_size_edit.setClearButtonEnabled(True)
-        # 设置宽度和高度
-        self.pumping_reward_font_size_edit.setFixedWidth(150)
-        self.pumping_reward_font_size_edit.setFixedHeight(32)
-        # 设置字体
-        self.pumping_reward_font_size_edit.setFont(QFont(load_custom_font(), 12))
-
-        # 添加重置按钮
-        reset_action = QAction(FluentIcon.SYNC.qicon(), "", triggered=self.reset_font_size)
-        self.pumping_reward_font_size_edit.addAction(reset_action, QLineEdit.LeadingPosition)
-
-        # 添加应用按钮
-        apply_action = QAction(FluentIcon.SAVE.qicon(), "", triggered=self.apply_font_size)
-        self.pumping_reward_font_size_edit.addAction(apply_action, QLineEdit.TrailingPosition)
+        self.pumping_reward_font_size_SpinBox.setRange(30.0, 200.0)
+        self.pumping_reward_font_size_SpinBox.setValue(50.0)
+        self.pumping_reward_font_size_SpinBox.setSingleStep(0.5)
+        self.pumping_reward_font_size_SpinBox.setDecimals(1)
+        self.pumping_reward_font_size_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_reward_font_size_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 语音播放按钮
         self.pumping_reward_Voice_switch.setOnText("开启")
@@ -91,68 +83,39 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_theme_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_reward_theme_comboBox.setFont(QFont(load_custom_font(), 12))
 
-        # 音量滑块
-        self.pumping_reward_volume_slider.setRange(0, 100)
-        self.pumping_reward_volume_slider.setFixedWidth(150)
-        self.pumping_reward_volume_slider.valueChanged.connect(self.save_settings)
-        self.pumping_reward_volume_label = BodyLabel(str(self.pumping_reward_volume_slider.value()))
-        self.pumping_reward_volume_label.setFixedWidth(40)
-        self.pumping_reward_volume_label.setFont(QFont(load_custom_font(), 12))
-        self.pumping_reward_volume_slider.valueChanged.connect(lambda v: self.pumping_reward_volume_label.setText(str(v)))
+        # 音量
+        self.pumping_reward_voice_volume_SpinBox.setRange(0, 100)
+        self.pumping_reward_voice_volume_SpinBox.setValue(100)
+        self.pumping_reward_voice_volume_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_reward_voice_volume_SpinBox.setFont(QFont(load_custom_font(), 12))
 
-        # 音量滑块布局
-        pumping_reward_volume_widget = QWidget()
-        pumping_reward_volume_layout = QHBoxLayout(pumping_reward_volume_widget)
-        pumping_reward_volume_layout.addWidget(self.pumping_reward_volume_slider)
-        pumping_reward_volume_layout.addWidget(self.pumping_reward_volume_label)
-
-        # 语速滑块
-        self.pumping_reward_voice_speed_slider.setRange(50, 500)
-        self.pumping_reward_voice_speed_slider.setFixedWidth(150)
-        self.pumping_reward_voice_speed_slider.valueChanged.connect(self.save_settings)
-        self.pumping_reward_speed_label = BodyLabel(str(self.pumping_reward_voice_speed_slider.value()))
-        self.pumping_reward_speed_label.setFixedWidth(40)
-        self.pumping_reward_speed_label.setFont(QFont(load_custom_font(), 12))
-        self.pumping_reward_voice_speed_slider.valueChanged.connect(lambda v: self.pumping_reward_speed_label.setText(str(v)))
-
-        # 语速滑块布局
-        pumping_reward_speed_widget = QWidget()
-        pumping_reward_speed_layout = QHBoxLayout(pumping_reward_speed_widget)
-        pumping_reward_speed_layout.addWidget(self.pumping_reward_voice_speed_slider)
-        pumping_reward_speed_layout.addWidget(self.pumping_reward_speed_label)
+        # 语速
+        self.pumping_reward_voice_speed_SpinBox.setRange(1, 500)
+        self.pumping_reward_voice_speed_SpinBox.setValue(100)
+        self.pumping_reward_voice_speed_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_reward_voice_speed_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 系统音量控制开关
-        self.pumping_reward_system_volume_switch = SwitchButton()
         self.pumping_reward_system_volume_switch.setOnText("开启")
         self.pumping_reward_system_volume_switch.setOffText("关闭")
         self.pumping_reward_system_volume_switch.checkedChanged.connect(self.save_settings)
         self.pumping_reward_system_volume_switch.setFont(QFont(load_custom_font(), 12))
 
-        # 系统音量滑块
-        self.pumping_reward_system_volume_slider = Slider(Qt.Horizontal)
-        self.pumping_reward_system_volume_slider.setRange(0, 100)
-        self.pumping_reward_system_volume_slider.setFixedWidth(150)
-        self.pumping_reward_system_volume_slider.valueChanged.connect(self.save_settings)
-        self.pumping_reward_system_volume_label = BodyLabel(str(self.pumping_reward_system_volume_slider.value()))
-        self.pumping_reward_system_volume_label.setFixedWidth(40)
-        self.pumping_reward_system_volume_label.setFont(QFont(load_custom_font(), 12))
-        self.pumping_reward_system_volume_slider.valueChanged.connect(lambda v: self.pumping_reward_system_volume_label.setText(str(v)))
-
-        # 创建系统音量滑块布局
-        pumping_reward_system_volume_widget = QWidget()
-        pumping_reward_system_volume_layout = QHBoxLayout(pumping_reward_system_volume_widget)
-        pumping_reward_system_volume_layout.addWidget(self.pumping_reward_system_volume_slider)
-        pumping_reward_system_volume_layout.addWidget(self.pumping_reward_system_volume_label)
+        # 系统音量
+        self.pumping_reward_system_volume_SpinBox.setRange(0, 100)
+        self.pumping_reward_system_volume_SpinBox.setValue(100)
+        self.pumping_reward_system_volume_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_reward_system_volume_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_reward_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_reward_mode_Draw_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小", self.pumping_reward_font_size_edit)
+        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小", self.pumping_reward_font_size_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语音播放", "设置结果公布时是否播放语音", self.pumping_reward_Voice_switch)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "音量大小", "调节播报音量 (0-100)", pumping_reward_volume_widget)
-        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语速调节", "调节播报语速 (50%-500%)", pumping_reward_speed_widget)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "音量大小", "调节播报音量 (0-100)", self.pumping_reward_voice_volume_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语速调节", "调节播报语速 (1%-500%)", self.pumping_reward_voice_speed_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_person_voice_20_filled"), "系统音量控制", "抽取完成后自动设置系统音量", self.pumping_reward_system_volume_switch)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "系统音量大小", "设置抽取完成后的系统音量 (0-100)", pumping_reward_system_volume_widget)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "系统音量大小", "设置抽取完成后的系统音量 (0-100)", self.pumping_reward_system_volume_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_reward_Animation_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品量", "设置该功能的显示格式", self.pumping_reward_theme_comboBox)
 
@@ -164,7 +127,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
 
     def apply_font_size(self):
         try:
-            font_size_str = self.pumping_reward_font_size_edit.text().strip()
+            font_size_str = self.pumping_reward_font_size_SpinBox.value()
             # 检查是否为一位小数
             if '.' in font_size_str:
                 integer_part, decimal_part = font_size_str.split('.', 1)
@@ -173,7 +136,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             font_size = float(font_size_str)
             if 30.0 <= font_size <= 200.0:
                 # 格式化保留一位小数
-                self.pumping_reward_font_size_edit.setText(f"{font_size:.1f}")
+                self.pumping_reward_font_size_SpinBox.setValue(font_size)
                 self.save_settings()
                 InfoBar.success(
                     title='设置成功',
@@ -188,31 +151,22 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
         except ValueError as e:
-            logger.warning(f"无效的字体大小输入: {self.pumping_reward_font_size_edit.text()}")
+            logger.warning(f"无效的字体大小输入: {self.pumping_reward_font_size_SpinBox.value()}")
             InfoBar.warning(
                 title='无效的字体大小输入',
-                content=f"无效的字体大小输入: {str(e)}",
+                content=f"无效的字体大小输入: {e}",
                 orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
             )
 
     def reset_font_size(self):
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                foundation_settings = settings.get('foundation', {})
-                main_window_size = foundation_settings.get('main_window_size', 0)
-                if main_window_size == 0:
-                    self.pumping_reward_font_size_edit.setText(str("50"))
-                elif main_window_size == 1:
-                    self.pumping_reward_font_size_edit.setText(str("85"))
-                else:
-                    self.pumping_reward_font_size_edit.setText(str("50"))
+            self.pumping_reward_font_size_SpinBox.setValue("50.0")
         except FileNotFoundError as e:
-            logger.error(f"加载设置时出错: {e}, 使用默认大小:50")
-            self.pumping_reward_font_size_edit.setText(str("50"))
+            logger.error(f"加载设置时出错: {e}, 使用默认大小:50.0")
+            self.pumping_reward_font_size_SpinBox.setValue("50.0")
         except KeyError:
-            logger.error(f"设置文件中缺少'foundation'键, 使用默认大小:50")
-            self.pumping_reward_font_size_edit.setText(str("50"))
+            logger.error(f"设置文件中缺少'foundation'键, 使用默认大小:50.0")
+            self.pumping_reward_font_size_SpinBox.setValue("50.0")
         self.save_settings()
         self.load_settings()
         
@@ -255,7 +209,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                         voice_volume = self.default_settings["voice_volume"]
 
                     voice_speed = pumping_reward_settings.get("voice_speed", self.default_settings["voice_speed"])
-                    if voice_speed < 50 or voice_speed > 500:
+                    if voice_speed < 1 or voice_speed > 500:
                         logger.warning(f"无效的语速值: {voice_speed}")
                         voice_speed = self.default_settings["voice_speed"]
 
@@ -265,40 +219,40 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     
                     self.pumping_reward_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(draw_pumping)
-                    self.pumping_reward_font_size_edit.setText(str(font_size))
+                    self.pumping_reward_font_size_SpinBox.setValue(font_size)
                     self.pumping_reward_Animation_comboBox.setCurrentIndex(animation_mode)
                     self.pumping_reward_Voice_switch.setChecked(voice_enabled)
                     self.pumping_reward_theme_comboBox.setCurrentIndex(reward_theme)
-                    self.pumping_reward_volume_slider.setValue(voice_volume)
-                    self.pumping_reward_voice_speed_slider.setValue(voice_speed)
+                    self.pumping_reward_voice_volume_SpinBox.setValue(voice_volume)
+                    self.pumping_reward_voice_speed_SpinBox.setValue(voice_speed)
                     self.pumping_reward_system_volume_switch.setChecked(system_volume_enabled)
-                    self.pumping_reward_system_volume_slider.setValue(system_volume_value)
+                    self.pumping_reward_system_volume_SpinBox.setValue(system_volume_value)
                     logger.info(f"加载抽奖设置完成")
             else:
                 self.pumping_reward_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
                 self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
-                self.pumping_reward_font_size_edit.setText(str(self.default_settings["font_size"]))
+                self.pumping_reward_font_size_SpinBox.setValue(self.default_settings["font_size"])
                 self.pumping_reward_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
                 self.pumping_reward_Voice_switch.setChecked(self.default_settings["voice_enabled"])
                 self.pumping_reward_theme_comboBox.setCurrentIndex(self.default_settings["reward_theme"])
-                self.pumping_reward_volume_slider.setValue(self.default_settings["voice_volume"])
-                self.pumping_reward_voice_speed_slider.setValue(self.default_settings["voice_speed"])
+                self.pumping_reward_voice_volume_SpinBox.setValue(self.default_settings["voice_volume"])
+                self.pumping_reward_voice_speed_SpinBox.setValue(self.default_settings["voice_speed"])
                 self.pumping_reward_system_volume_switch.setChecked(self.default_settings["system_volume_enabled"])
-                self.pumping_reward_system_volume_slider.setValue(self.default_settings["system_volume_value"])
+                self.pumping_reward_system_volume_SpinBox.setValue(self.default_settings["system_volume_value"])
 
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.pumping_reward_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
             self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
-            self.pumping_reward_font_size_edit.setText(str(self.default_settings["font_size"]))
+            self.pumping_reward_font_size_SpinBox.setValue(self.default_settings["font_size"])
             self.pumping_reward_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
             self.pumping_reward_Voice_switch.setChecked(self.default_settings["voice_enabled"])
             self.pumping_reward_theme_comboBox.setCurrentIndex(self.default_settings["reward_theme"])
-            self.pumping_reward_volume_slider.setValue(self.default_settings["voice_volume"])
-            self.pumping_reward_voice_speed_slider.setValue(self.default_settings["voice_speed"])
+            self.pumping_reward_voice_volume_SpinBox.setValue(self.default_settings["voice_volume"])
+            self.pumping_reward_voice_speed_SpinBox.setValue(self.default_settings["voice_speed"])
             self.pumping_reward_system_volume_switch.setChecked(self.default_settings["system_volume_enabled"])
-            self.pumping_reward_system_volume_slider.setValue(self.default_settings["system_volume_value"])
+            self.pumping_reward_system_volume_SpinBox.setValue(self.default_settings["system_volume_value"])
 
             self.save_settings()
     
@@ -323,14 +277,14 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         pumping_reward_settings["animation_mode"] = self.pumping_reward_Animation_comboBox.currentIndex()
         pumping_reward_settings["voice_enabled"] = self.pumping_reward_Voice_switch.isChecked()
         pumping_reward_settings["reward_theme"] = self.pumping_reward_theme_comboBox.currentIndex()
-        pumping_reward_settings["voice_volume"] = self.pumping_reward_volume_slider.value()
-        pumping_reward_settings["voice_speed"] = self.pumping_reward_voice_speed_slider.value()
+        pumping_reward_settings["voice_volume"] = self.pumping_reward_voice_volume_SpinBox.value()
+        pumping_reward_settings["voice_speed"] = self.pumping_reward_voice_speed_SpinBox.value()
         pumping_reward_settings["system_volume_enabled"] = self.pumping_reward_system_volume_switch.isChecked()
-        pumping_reward_settings["system_volume_value"] = self.pumping_reward_system_volume_slider.value()
+        pumping_reward_settings["system_volume_value"] = self.pumping_reward_system_volume_SpinBox.value()
 
         # 保存字体大小
         try:
-            font_size = float(self.pumping_reward_font_size_edit.text())
+            font_size = float(self.pumping_reward_font_size_SpinBox.value())
             if 30.0 <= font_size <= 200.0:
                 pumping_reward_settings["font_size"] = font_size
             # else:
