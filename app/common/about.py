@@ -109,7 +109,7 @@ class ContributorDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('贡献人员')
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(600, 600)
         self.update_theme_style() 
         
         # 创建滚动区域
@@ -127,13 +127,13 @@ class ContributorDialog(QDialog):
         contributors = [
             {
                 'name': '黎泽懿_Aionflux (lzy98276)',
-                'role': '设计,创意&策划\n维护,文档,测试',
+                'role': '设计&创意&策划&\n维护&文档&测试',
                 'github': 'https://github.com/lzy98276',
                 'avatar': 'app\\resource\\icon\\contributor1.png'
             },
             {
                 'name': '弃稞之草 (QiKeZhiCao)',
-                'role': '创意,维护',
+                'role': '创意&维护',
                 'github': 'https://github.com/QiKeZhiCao',
                 'avatar': 'app\\resource\\icon\\contributor2.png'
             },
@@ -144,8 +144,8 @@ class ContributorDialog(QDialog):
                 'avatar': 'app\\resource\\icon\\contributor3.png'
             },
             {
-                'name': 'yuanbenxin',
-                'role': '响应式前端页面设计及维护,文档',
+                'name': '本新同学 (yuanbenxin)',
+                'role': '响应式前端页面\n设计及维护&文档',
                 'github': 'https://github.com/yuanbenxin',
                 'avatar': 'app\\resource\\icon\\contributor4.png'
             },
@@ -318,7 +318,7 @@ class ContributorDialog(QDialog):
         role.setAlignment(Qt.AlignCenter)
         role.setFont(QFont(load_custom_font(), 12))
         role.setWordWrap(True)
-        role.setMaximumWidth(300)
+        role.setMaximumWidth(500)
         cardLayout.addWidget(role, 0, Qt.AlignCenter)
 
         return card
