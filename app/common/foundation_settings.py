@@ -11,7 +11,9 @@ import platform
 import winreg
 from loguru import logger
 
-from app.common.config import get_theme_icon, load_custom_font
+from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
+
+is_dark = not is_dark_theme(qconfig)
 
 class foundation_settingsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -545,12 +547,8 @@ class CleanupTimeDialog(QDialog):
         self.text_label = BodyLabel('请输入定时清理记录时间，每行一个\n格式为：HH:mm\n例如：12:00:00 或 20:00:00\n中文冒号自动转英文冒号\n自动补秒位为00')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
-        self.setStyleSheet("""
-            QDialog, QDialog * {
-                color: black;
-                background-color: white;
-            }
-        """)
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
         
         self.textEdit = PlainTextEdit()
         self.textEdit.setPlaceholderText("请输入定时清理记录时间，每行一个")
@@ -591,6 +589,22 @@ class CleanupTimeDialog(QDialog):
         
         layout.addLayout(buttonLayout)
         self.setLayout(layout)
+
+    def update_theme_style(self):
+        if is_dark:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: black;
+                    background-color: white;
+                }
+            """)
+        else:
+            self.setStyleSheet("""
+                QDialog, QDialog * {
+                    color: white;
+                    background-color: black;
+                }
+            """)
         
     def closeEvent(self, event):
         if not self.saved:
