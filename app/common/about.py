@@ -81,7 +81,7 @@ class ContributorDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('贡献人员')
-        self.setMinimumSize(600, 150)
+        self.setMinimumSize(600, 200)
         self.update_theme_style() 
         
         # 主布局
@@ -91,7 +91,7 @@ class ContributorDialog(QDialog):
         contributors = [
             {
                 'name': '黎泽懿_Aionflux (lzy98276)',
-                'role': '设计, 创意&策划, 维护, 文档',
+                'role': '设计, 创意&策划, 维护, 文档, 测试',
                 'github': 'https://github.com/lzy98276',
                 'avatar': 'app\\resource\\icon\\contributor1.png'
             },
@@ -103,10 +103,16 @@ class ContributorDialog(QDialog):
             },
             {
                 'name': 'system-linux-cmb',
-                'role': '测试',
+                'role': '应用测试',
                 'github': 'https://github.com/system-linux-cmb',
                 'avatar': 'app\\resource\\icon\\contributor3.png'
-            }
+            },
+            {
+                'name': 'yuanbenxin',
+                'role': '响应式前端页面设计及维护, 文档',
+                'github': 'https://github.com/yuanbenxin',
+                'avatar': 'app\\resource\\icon\\contributor4.png'
+            },
         ]
         
         # 添加贡献者卡片
@@ -219,8 +225,8 @@ class ContributorDialog(QDialog):
         cardLayout = QHBoxLayout(card)
 
         # 头像
-        avatar = QLabel()
-        avatar.setPixmap(QPixmap(contributor['avatar']).scaled(80, 80, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        avatar = AvatarWidget(contributor['avatar'])
+        avatar.setRadius(48)
         avatar.setAlignment(Qt.AlignLeft)
         cardLayout.addWidget(avatar, 0, Qt.AlignCenter)
 
