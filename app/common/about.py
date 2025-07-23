@@ -109,23 +109,31 @@ class ContributorDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('贡献人员')
-        self.setMinimumSize(600, 200)
+        self.setMinimumSize(800, 600)
         self.update_theme_style() 
+        
+        # 创建滚动区域
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        content = QWidget()
+        self.grid_layout = QGridLayout(content)
+        scroll.setWidget(content)
         
         # 主布局
         self.layout = QVBoxLayout(self)
+        self.layout.addWidget(scroll)
         
         # 贡献者数据
         contributors = [
             {
                 'name': '黎泽懿_Aionflux (lzy98276)',
-                'role': '设计, 创意&策划, 维护, 文档, 测试',
+                'role': '设计,创意&策划\n维护,文档,测试',
                 'github': 'https://github.com/lzy98276',
                 'avatar': 'app\\resource\\icon\\contributor1.png'
             },
             {
                 'name': '弃稞之草 (QiKeZhiCao)',
-                'role': '创意, 维护',
+                'role': '创意,维护',
                 'github': 'https://github.com/QiKeZhiCao',
                 'avatar': 'app\\resource\\icon\\contributor2.png'
             },
@@ -137,15 +145,54 @@ class ContributorDialog(QDialog):
             },
             {
                 'name': 'yuanbenxin',
-                'role': '响应式前端页面设计及维护, 文档',
+                'role': '响应式前端页面设计及维护,文档',
                 'github': 'https://github.com/yuanbenxin',
                 'avatar': 'app\\resource\\icon\\contributor4.png'
             },
         ]
         
+        self.cards = []
         # 添加贡献者卡片
         for contributor in contributors:
-            self.addContributorCard(contributor)
+            card = self.addContributorCard(contributor)
+            self.cards.append(card)
+        
+        self.update_layout()
+
+    def update_layout(self):
+        # 清空网格布局
+        while self.grid_layout.count():
+            item = self.grid_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.hide()
+        
+        # 响应式布局配置
+        CARD_MIN_WIDTH = 250  # 卡片最小宽度
+        MAX_COLUMNS = 6       # 最大列数限制
+
+        def calculate_columns(width):
+            """根据窗口宽度和卡片尺寸动态计算列数"""
+            if width <= 0:
+                return 1
+            # 计算最大可能列数（不超过MAX_COLUMNS）
+            cols = min(width // CARD_MIN_WIDTH, MAX_COLUMNS)
+            # 至少显示1列
+            return max(cols, 1)
+
+        # 根据窗口宽度计算列数
+        cols = calculate_columns(self.width())
+        
+        # 添加卡片到网格
+        for i, card in enumerate(self.cards):
+            row = i // cols
+            col = i % cols
+            self.grid_layout.addWidget(card, row, col, Qt.AlignCenter)
+            card.show()
+
+    def resizeEvent(self, event):
+        self.update_layout()
+        super().resizeEvent(event)
 
     def update_theme_style(self):
         """根据当前主题更新样式"""
@@ -250,50 +297,28 @@ class ContributorDialog(QDialog):
         card = QWidget()
         card.setObjectName('contributorCard')
         self.update_card_theme_style(card)
-        cardLayout = QHBoxLayout(card)
+        cardLayout = QVBoxLayout(card)  # 垂直布局
+        cardLayout.setContentsMargins(15, 15, 15, 15)
+        cardLayout.setSpacing(10)
 
         # 头像
         avatar = AvatarWidget(contributor['avatar'])
-        avatar.setRadius(48)
-        avatar.setAlignment(Qt.AlignLeft)
+        avatar.setRadius(64)
+        avatar.setAlignment(Qt.AlignCenter)
         cardLayout.addWidget(avatar, 0, Qt.AlignCenter)
 
-        # 昵称
-        name = TitleLabel(contributor['name'])
-        name.setAlignment(Qt.AlignLeft)
+        # 昵称作为GitHub链接
+        name = HyperlinkButton(contributor['github'], contributor['name'], self)
         name.setFont(QFont(load_custom_font(), 14))
-        # 创建垂直布局存放文本信息
-        textLayout = QVBoxLayout()
-        textLayout.setContentsMargins(5, 8, 0, 8)
-
-        # 添加姓名
-        textLayout.addWidget(name)
+        name.setStyleSheet('text-decoration: underline; color: #0066cc; background: transparent; border: none; padding: 0;')
+        cardLayout.addWidget(name, 0, Qt.AlignCenter)
 
         # 职责
         role = BodyLabel(contributor['role'])
-        role.setAlignment(Qt.AlignLeft)
+        role.setAlignment(Qt.AlignCenter)
         role.setFont(QFont(load_custom_font(), 12))
-        textLayout.addWidget(role)
+        role.setWordWrap(True)
+        role.setMaximumWidth(300)
+        cardLayout.addWidget(role, 0, Qt.AlignCenter)
 
-        # GitHub链接
-        github_link = HyperlinkButton(contributor['github'], 'GitHub', self)
-        github_link.setMinimumWidth(40)
-        github_link.setIconSize(QSize(16, 16))
-        github_link.setFixedWidth(70)
-        textLayout.addWidget(github_link)
-        
-        textLayout.setAlignment(Qt.AlignLeft | Qt.AlignVCenter) 
-
-        cardLayout.addLayout(textLayout, 0)
-
-        self.layout.addWidget(card)
-        
-        # 添加滚动区域
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        content = QWidget()
-        # 假设需要创建一个合适的布局实例
-        layout_instance = QVBoxLayout()
-        content.setLayout(layout_instance)
-        scroll.setWidget(content)
-        self.layout.addWidget(scroll)
+        return card
