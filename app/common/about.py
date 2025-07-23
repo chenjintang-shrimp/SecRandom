@@ -8,7 +8,7 @@ from PyQt5.QtGui import *
 
 from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
 from app.common.update_notification import show_update_notification
-from app.common.config import get_theme_icon, load_custom_font, check_for_updates
+from app.common.config import get_theme_icon, load_custom_font, check_for_updates, get_update_channel, set_update_channel
 
 class aboutCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -32,18 +32,31 @@ class aboutCard(GroupHeaderCardWidget):
         self.contributor_button = PushButton('贡献人员')
         self.contributor_button.setIcon(get_theme_icon("ic_fluent_document_person_20_filled"))
         self.contributor_button.clicked.connect(self.show_contributors)
+        self.contributor_button.setFont(QFont(load_custom_font(), 12))
 
         # 检查更新按钮
         self.check_update_button = PushButton('检查更新')
         self.check_update_button.setIcon(get_theme_icon("ic_fluent_arrow_sync_20_filled"))
         self.check_update_button.clicked.connect(self.check_updates_async)
+        self.check_update_button.setFont(QFont(load_custom_font(), 12))
+
+        # 添加更新通道选择
+        self.channel_combo = ComboBox()
+        self.channel_combo.addItems(["稳定通道", "测试通道"])
+        self.channel_combo.setCurrentIndex(0)
+        self.channel_combo.currentIndexChanged.connect(self.on_channel_changed)
+        self.channel_combo.setFont(QFont(load_custom_font(), 12))
             
         self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "哔哩哔哩", "黎泽懿 - bilibili", self.about_bilibili_Button)
         self.addGroup(FIF.GITHUB, "Github", "SecRandom - github", self.about_github_Button)
         self.addGroup(get_theme_icon("ic_fluent_document_person_20_filled"), "贡献人员", "点击查看详细贡献者信息", self.contributor_button)
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "版权", "SecRandom 遵循 GPL-3.0 协议", self.about_author_label)
         self.addGroup(get_theme_icon("ic_fluent_info_20_filled"), "版本", "软件版本号", self.about_version_label)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新通道", "选择更新通道", self.channel_combo)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "检查更新", "检查是否为最新版本(应用启动时会自动检查更新)", self.check_update_button)
+
+        self.on_channel_changed(self.channel_combo.currentIndex())
+        self.read_channel_setting()
 
     class UpdateCheckWorker(QThread):
         result_ready = pyqtSignal(bool, str)
@@ -68,6 +81,17 @@ class aboutCard(GroupHeaderCardWidget):
             if w.exec():
                 logger.info("用户点击了知道啦👌")
         self.update_worker.deleteLater()
+
+    def on_channel_changed(self, index):
+        channel = 'stable' if index == 0 else 'beta'
+        set_update_channel(channel)
+
+    def read_channel_setting(self):
+        channel = get_update_channel()
+        if channel == 'stable':
+            self.channel_combo.setCurrentIndex(0)
+        else:
+            self.channel_combo.setCurrentIndex(1)
 
     def show_contributors(self):
         """ 显示贡献人员 """

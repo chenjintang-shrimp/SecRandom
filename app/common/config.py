@@ -2,6 +2,7 @@ from qfluentwidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+import json
 import os
 from loguru import logger
 
@@ -11,14 +12,79 @@ import requests
 import comtypes
 from comtypes import POINTER
 
-def check_for_updates():
+# 默认更新通道配置文件路径
+CHANNEL_CONFIG_PATH = './app/Settings/Settings.json'
+
+def get_update_channel():
+    """获取当前选择的更新通道，默认为稳定通道"""
+    try:
+        if os.path.exists(CHANNEL_CONFIG_PATH):
+            with open(CHANNEL_CONFIG_PATH, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                return config.get('channel', 'stable')
+        return 'stable'
+    except Exception as e:
+        logger.error(f"读取更新通道配置失败: {e}")
+        return 'stable'
+
+
+def set_update_channel(channel):
+    """保存更新通道配置，保留其他配置信息"""
+    try:
+        # 读取现有配置
+        config = {}
+        if os.path.exists(CHANNEL_CONFIG_PATH):
+            with open(CHANNEL_CONFIG_PATH, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        
+        # 更新通道配置
+        config['channel'] = channel
+        
+        # 保存更新后的配置
+        with open(CHANNEL_CONFIG_PATH, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=2)
+        logger.info(f"更新通道已设置为: {channel}")
+    except json.JSONDecodeError:
+        logger.error("配置文件格式错误，将创建新的配置文件")
+        # 创建新的配置文件
+        with open(CHANNEL_CONFIG_PATH, 'w', encoding='utf-8') as f:
+            json.dump({'channel': channel}, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        logger.error(f"保存更新通道配置失败: {e}")
+
+
+def check_for_updates(channel=None):
+    """检查更新，支持稳定通道(stable)和测试通道(beta)"""
+    # 如果未指定通道，使用配置中的默认通道
+    if channel is None:
+        channel = get_update_channel()
     try:
         current_version = VERSION.lstrip('v')
-        url = "https://api.github.com/repos/SECTL/SecRandom/releases/latest"
+        if channel == 'stable':
+            url = "https://api.github.com/repos/SECTL/SecRandom/releases/latest"
+        else:
+            url = "https://api.github.com/repos/SECTL/SecRandom/releases"
         response = requests.get(url, timeout=10, verify=False)
         response.raise_for_status()
-        latest_release = response.json()
-        latest_version_tag = latest_release['tag_name']
+        if channel == 'stable':
+            latest_release = response.json()
+            latest_version_tag = latest_release['tag_name']
+        else:
+            # 获取所有发布并筛选预发布版本
+            releases = response.json()
+            # 解析所有版本并比较版本号
+            all_versions = []
+            for release in releases:
+                version_tag = release['tag_name']
+                # 提取版本号并移除'v'前缀
+                version = version_tag.lstrip('v')
+                all_versions.append((Version(version), release))
+            # 按版本号降序排序
+            all_versions.sort(reverse=True, key=lambda x: x[0])
+            if not all_versions:
+                return False, None
+            latest_version, latest_release = all_versions[0]
+            latest_version_tag = latest_release['tag_name']
         latest_version = latest_version_tag.lstrip('v')
         if Version(latest_version) > Version(current_version):
             logger.info(f"当前版本: {current_version}, 最新版本: {latest_version_tag}, 需要更新")

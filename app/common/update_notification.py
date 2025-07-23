@@ -10,7 +10,7 @@ def show_update_notification(latest_version):
     """显示更新通知窗口"""
     if hasattr(QApplication.instance(), 'update_notification_window'):
         # 如果窗口已存在则激活它
-        notification_window = QApplication.instance().update_notification_window()
+        notification_window = QApplication.instance().update_notification_window
         if notification_window.isHidden():
             notification_window.show()
         notification_window.raise_()

@@ -13,7 +13,7 @@ from urllib.parse import urlparse, parse_qs
 from loguru import logger
 
 from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
-from app.common.config import get_theme_icon, load_custom_font, check_for_updates
+from app.common.config import get_theme_icon, load_custom_font, check_for_updates, get_update_channel
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
 warnings.filterwarnings('ignore', category=InsecureRequestWarning)
@@ -195,7 +195,8 @@ class Window(MSFluentWindow):
         result_ready = pyqtSignal(bool, str)
         
         def run(self):
-            update_available, latest_version = check_for_updates()
+            channel = get_update_channel()
+            update_available, latest_version = check_for_updates(channel)
             self.result_ready.emit(update_available, latest_version)
     
     def check_updates_async(self):
