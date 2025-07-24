@@ -455,16 +455,39 @@ class Window(MSFluentWindow):
         IPC_SERVER_NAME = 'SecRandomIPC'
         
         socket = QLocalSocket()
-        socket.connectToServer(IPC_SERVER_NAME)
+        max_retries = 3
+        retry_interval = 1000  # 毫秒
+        success = False
         
-        if socket.waitForConnected(1000):
-            socket.write(b"restart")
-            socket.flush()
-            socket.waitForBytesWritten(1000)
-            socket.disconnectFromServer()
-            logger.info("已发送重启命令到主进程")
+        for attempt in range(max_retries):
+            socket.connectToServer(IPC_SERVER_NAME)
+            
+            if socket.waitForConnected(1000):
+                logger.info(f"第{attempt+1}次尝试连接成功")
+                success = True
+                break
+            else:
+                logger.warning(f"第{attempt+1}次尝试连接失败: {socket.errorString()}")
+                if attempt < max_retries - 1:
+                    QThread.msleep(retry_interval)
+                    socket.abort()
+        
+        if not success:
+            logger.error("所有连接尝试均失败")
+            return
+        
+        # 连接成功，发送重启命令
+        bytes_written = socket.write(b"restart")
+        socket.flush()
+        
+        # 发送重启命令后无需等待确认，直接断开连接
+        if bytes_written == -1:
+            logger.error("写入数据失败")
         else:
-            logger.error("无法连接到主进程，重启失败")
+            logger.info(f"已发送{bytes_written}字节的重启命令到主进程")
+        
+        socket.disconnectFromServer()
+
 
     def show_setting_interface(self, target_page=None):
         """显示设置界面"""
