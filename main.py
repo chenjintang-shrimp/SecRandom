@@ -53,58 +53,35 @@ except Exception as e:
     logger.error(f"写入verification_start失败: {e}")
 
 def main():
+    # 单实例检测
+    url_protocol_enabled = load_url_protocol_setting()
+    url_arg = parse_url_arg(sys.argv) if url_protocol_enabled else None
+
+    shared_memory = QSharedMemory(SHARED_MEMORY_KEY)
+    max_retries, retry_delay = 3, 0.2
+    instance_detected = True
+
+    for attempt in range(max_retries):
+        if shared_memory.create(1):
+            logger.info(f"共享内存创建成功 (尝试 {attempt + 1}/{max_retries})")
+            instance_detected = False
+            break
+        logger.error(f"共享内存创建失败 (尝试 {attempt + 1}/{max_retries}): {shared_memory.errorString()}")
+        if attempt < max_retries - 1: time.sleep(retry_delay)
+
+    if instance_detected:
+        logger.debug('检测到已有 SecRandom 实例运行')
+        if send_ipc_message(url_arg): sys.exit()
+        sys.exit()
+
+    # 初始化应用
     app = QApplication(sys.argv)
     shared_memory = None
 
     try:
-        # 初始化日志
-        os.makedirs(LOG_DIR, exist_ok=True)
-        logger.configure(patcher=lambda record: record)
-        logger.add(
-            os.path.join(LOG_DIR, "SecRandom_{time:YYYY-MM-DD}.log"),
-            rotation="1 MB", encoding="utf-8", retention="30 days",
-            format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}",
-            enqueue=True, compression="tar.gz", backtrace=True, diagnose=True, catch=True, delay=True
-        )
 
-        # DPI设置
-        if cfg.get(cfg.dpiScale) == "Auto":
-            QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
-            QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-        else:
-            os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
-            os.environ["QT_SCALE_FACTOR"] = str(cfg.get(cfg.dpiScale))
-
-        # 更新加密设置
-        try:
-            with open('app/SecRandom/enc_set.json', 'r+', encoding='utf-8') as f:
-                settings = json.load(f)
-                settings['hashed_set']['verification_start'] = False
-                f.seek(0)
-                json.dump(settings, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            logger.error(f"写入verification_start失败: {e}")
-
-        # 单实例检测
-        url_protocol_enabled = load_url_protocol_setting()
-        url_arg = parse_url_arg(sys.argv) if url_protocol_enabled else None
-
-        shared_memory = QSharedMemory(SHARED_MEMORY_KEY)
-        max_retries, retry_delay = 10, 2
-        instance_detected = True
-
-        for attempt in range(max_retries):
-            if shared_memory.create(1):
-                logger.info(f"共享内存创建成功 (尝试 {attempt + 1}/{max_retries})")
-                instance_detected = False
-                break
-            logger.error(f"共享内存创建失败 (尝试 {attempt + 1}/{max_retries}): {shared_memory.errorString()}")
-            if attempt < max_retries - 1: time.sleep(retry_delay)
-
-        if instance_detected:
-            logger.debug('检测到已有 SecRandom 实例运行')
-            if send_ipc_message(url_arg): sys.exit()
-            sys.exit()
+        # 启动IPC服务器
+        start_ipc_server(None)  # 临时传递None，后续会更新
 
         # 启动日志
         logger.info("软件启动")
@@ -126,13 +103,20 @@ def main():
             logger.error(f"加载设置时出错: {e}, 使用默认显示主窗口")
             sec.show()
 
-        # 启动IPC服务器
-        start_ipc_server()
+        # 更新IPC服务器的主窗口引用
+        for server in QLocalServer.allServers():
+            if server.serverName() == IPC_SERVER_NAME:
+                server.newConnection.disconnect()
+                server.newConnection.connect(lambda: handle_new_connection(server, sec))
+                break
 
         return app.exec_()
 
     finally:
         if shared_memory and shared_memory.isAttached():
+            shared_memory.detach()
+            time.sleep(0.5)  # 等待共享内存完全释放
+            logger.info("共享内存已释放并等待0.5秒")
             shared_memory.detach()
         sys.exit()
 
@@ -146,48 +130,63 @@ def load_url_protocol_setting():
 
 
 def parse_url_arg(args, protocol_prefix=APP_PROTOCOL):
-    return next((arg for arg in args if arg.startswith(protocol_prefix)), None)
+    url = next((arg for arg in args if arg.startswith(protocol_prefix)), None)
+    if url:
+        # 提取协议后的路径部分并分割命令
+        path = url[len(protocol_prefix):].split('?')[0]  # 忽略查询参数
+        command = path.split('/')[0].lower()  # 获取第一个路径段并转为小写
+        return command if command else None
+    return None
 
 
 def send_ipc_message(url_arg=None):
     socket = QLocalSocket()
+    socket.setSocketOption(QLocalSocket.SendBufferSizeSocketOption, 4096)
+    socket.setSocketOption(QLocalSocket.ReceiveBufferSizeSocketOption, 4096)
     logger.info(f"尝试连接到IPC服务器: {IPC_SERVER_NAME}")
-    socket.connectToServer(IPC_SERVER_NAME)
-
-    if socket.waitForConnected(1000):
-        logger.info(f"成功连接到IPC服务器，发送消息: {url_arg or 'show'}")
-        socket.write(b"restart" if url_arg == "restart" else url_arg.encode() if url_arg else b"show")
-        socket.flush()
-        status = "成功" if socket.waitForBytesWritten(1000) else "超时"
-        logger.info(f"消息发送{status}")
-        socket.disconnectFromServer()
-        return status == "成功"
-    logger.error(f"无法连接到IPC服务器: {socket.errorString()}")
+    
+    for attempt in range(2):
+        socket.connectToServer(IPC_SERVER_NAME)
+        if socket.waitForConnected(500):
+            logger.info(f"成功连接到IPC服务器，发送消息: {url_arg or 'show'}")
+            socket.write(b"restart" if url_arg == "restart" else url_arg.encode() if url_arg else b"show")
+            socket.flush()
+            # 短暂等待确保数据发送完成
+            socket.waitForBytesWritten(100)
+            socket.disconnectFromServer()
+            logger.info("消息已发送")
+            return True
+        logger.warning(f"连接尝试 {attempt+1} 失败: {socket.errorString()}")
+        if attempt < 1:
+            socket.abort()
+            time.sleep(0.1)
+    
+    logger.error("所有连接尝试均失败")
     return False
 
 
-def start_ipc_server():
+def start_ipc_server(main_window):
     server = QLocalServer()
     if not server.listen(IPC_SERVER_NAME):
         logger.error(f"无法启动IPC服务器: {server.errorString()}")
         return False
     
     logger.info(f"IPC服务器启动，监听: {IPC_SERVER_NAME}")
-    server.newConnection.connect(lambda: handle_new_connection(server))
+    server.newConnection.connect(lambda: handle_new_connection(server, main_window))
     return True
 
 
-def handle_new_connection(server):
+def handle_new_connection(server, main_window):
     client_socket = server.nextPendingConnection()
     if not client_socket:
         logger.error("获取客户端连接失败")
         return
-    client_socket.readyRead.connect(lambda: process_client_message(client_socket))
+    client_socket.readyRead.connect(lambda: process_client_message(client_socket, main_window))
     client_socket.disconnected.connect(client_socket.deleteLater)
     logger.info("新的IPC客户端已连接")
 
 
-def process_client_message(socket):
+def process_client_message(socket, main_window):
     data = socket.readAll().data().decode().strip()
     logger.info(f"收到IPC消息: {data}")
     if data == "restart":
@@ -197,6 +196,14 @@ def process_client_message(socket):
             logger.info("重启命令处理完成")
         except Exception as e:
             logger.error(f"重启过程发生异常: {str(e)}", exc_info=True)
+    elif data == "show":
+        if main_window is None:
+            logger.warning("主窗口尚未初始化，无法处理显示命令")
+            return
+        logger.info("收到显示窗口命令，激活主窗口")
+        main_window.show()
+        main_window.raise_()
+        main_window.activateWindow()
     socket.disconnectFromServer()
 
 
