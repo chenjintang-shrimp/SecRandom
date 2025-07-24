@@ -173,7 +173,6 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
                     
                     self.history_switch.setChecked(reward_history_enabled)
                     self.history_reward_spinBox.setValue(history_reward_days)
-                    logger.info(f"加载历史记录设置完成")
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.history_switch.setChecked(self.default_settings["reward_history_enabled"])

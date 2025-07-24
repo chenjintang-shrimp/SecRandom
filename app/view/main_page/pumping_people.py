@@ -1288,7 +1288,6 @@ class pumping_people(QWidget):
                 self.class_combo.clear()
                 if classes:
                     self.class_combo.addItems(classes)
-                    logger.info("加载班级列表成功！")
                 else:
                     logger.error("你暂未添加班级")
                     self.class_combo.addItem("你暂未添加班级")
@@ -1562,7 +1561,6 @@ class pumping_people(QWidget):
                 self.class_combo.clear()
                 if classes:
                     self.class_combo.addItems(classes)
-                    logger.info("加载班级列表成功！")
                 else:
                     logger.error("你暂未添加班级")
                     self.class_combo.addItem("你暂未添加班级")

@@ -845,7 +845,6 @@ class pumping_reward(QWidget):
                 self.reward_combo.clear()
                 if classes:
                     self.reward_combo.addItems(classes)
-                    logger.info("加载奖池列表成功！")
                 else:
                     logger.error("你暂未添加奖池")
                     self.reward_combo.addItem("你暂未添加奖池")
@@ -1037,7 +1036,6 @@ class pumping_reward(QWidget):
                 self.reward_combo.clear()
                 if classes:
                     self.reward_combo.addItems(classes)
-                    logger.info("加载奖池列表成功！")
                 else:
                     logger.error("你暂未添加奖池")
                     self.reward_combo.addItem("你暂未添加奖池")

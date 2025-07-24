@@ -254,8 +254,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_reward_system_volume_SpinBox.setValue(system_volume_value)
                     self.pumping_reward_animation_interval_SpinBox.setValue(animation_interval)
                     self.pumping_reward_animation_auto_play_SpinBox.setValue(animation_auto_play)
-
-                    logger.info(f"加载抽奖设置完成")
             else:
                 self.pumping_reward_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
                 self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])

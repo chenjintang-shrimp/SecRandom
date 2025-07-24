@@ -352,7 +352,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.main_window_comboBox.setCurrentIndex(main_window_mode)
                     self.settings_window_comboBox.setCurrentIndex(settings_window_mode)
                     self.check_on_startup.setChecked(check_on_startup)
-                    logger.info(f"加载基础设置完成")
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])

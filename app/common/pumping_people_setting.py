@@ -318,7 +318,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     self.random_member_format_comboBox.setCurrentIndex(random_member_format)
                     self.pumping_people_Animation_interval_SpinBox.setValue(animation_interval)
                     self.pumping_people_Animation_auto_play_SpinBox.setValue(animation_auto_play)
-                    logger.info(f"加载抽人设置完成")
             else:
                 self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
                 self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
