@@ -449,27 +449,22 @@ class Window(MSFluentWindow):
                             return
         except Exception as e:
             logger.error(f"密码验证过程出错: {e}")
-        try:
-            self.hide()
-            if hasattr(self, 'levitation_window'):
-                self.levitation_window.hide()
-            # 清理定时器资源
-            if hasattr(self, 'focus_timer'):
-                self.stop_focus_timer()
-                self.focus_timer.deleteLater()
-            if hasattr(self, 'server'):
-                self.server.close()
-        except Exception as e:
-            logger.error(f"重启前清理资源失败: {e}")
-        # 关闭共享内存
-        if hasattr(self, 'shared_memory'):
-            self.shared_memory.detach()
-            logger.info("共享内存已关闭")
-        logger.remove()
-        # 使用新进程组启动，避免被当前进程退出影响
-        subprocess.Popen([sys.executable] + sys.argv, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
-        # 退出当前进程
-        sys.exit(0)
+            return
+        
+        # 通过IPC发送重启命令给主进程
+        IPC_SERVER_NAME = 'SecRandomIPC'
+        
+        socket = QLocalSocket()
+        socket.connectToServer(IPC_SERVER_NAME)
+        
+        if socket.waitForConnected(1000):
+            socket.write(b"restart")
+            socket.flush()
+            socket.waitForBytesWritten(1000)
+            socket.disconnectFromServer()
+            logger.info("已发送重启命令到主进程")
+        else:
+            logger.error("无法连接到主进程，重启失败")
 
     def show_setting_interface(self, target_page=None):
         """显示设置界面"""
