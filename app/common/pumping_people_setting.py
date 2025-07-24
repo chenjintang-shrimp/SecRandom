@@ -39,6 +39,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             "voice_speed": 100,
             "show_random_member": False,
             "random_member_format": 2,
+            "animation_interval": 100,
+            "animation_auto_play": 5,
         }
 
         self.pumping_people_Draw_comboBox = ComboBox()
@@ -54,6 +56,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_system_volume_switch = SwitchButton()
         self.pumping_people_system_volume_SpinBox = SpinBox()
         self.show_random_member_checkbox = SwitchButton()
+        self.pumping_people_Animation_interval_SpinBox = SpinBox()
+        self.pumping_people_Animation_auto_play_SpinBox = SpinBox()
         
         # 抽取模式下拉框
         self.pumping_people_Draw_comboBox.setFixedWidth(250)
@@ -86,6 +90,22 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_Animation_comboBox.addItems(["手动停止动画", "自动播放完整动画", "直接显示结果"])
         self.pumping_people_Animation_comboBox.currentIndexChanged.connect(lambda: self.save_settings())
         self.pumping_people_Animation_comboBox.setFont(QFont(load_custom_font(), 12))
+
+        # 结果动画间隔（毫秒）
+        self.pumping_people_Animation_interval_SpinBox.setRange(10, 2000)
+        self.pumping_people_Animation_interval_SpinBox.setValue(100)
+        self.pumping_people_Animation_interval_SpinBox.setSingleStep(10) 
+        self.pumping_people_Animation_interval_SpinBox.setSuffix("ms")
+        self.pumping_people_Animation_interval_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_people_Animation_interval_SpinBox.setFont(QFont(load_custom_font(), 12))
+
+        # 自动播放间隔结果次数
+        self.pumping_people_Animation_auto_play_SpinBox.setRange(1, 50)
+        self.pumping_people_Animation_auto_play_SpinBox.setValue(5)
+        self.pumping_people_Animation_auto_play_SpinBox.setSingleStep(5)
+        self.pumping_people_Animation_auto_play_SpinBox.setSuffix("次")
+        self.pumping_people_Animation_auto_play_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_people_Animation_auto_play_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 学号格式下拉框
         self.pumping_people_student_id_comboBox.setFixedWidth(150)
@@ -158,6 +178,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_person_voice_20_filled"), "系统音量控制", "抽取完成后自动设置系统音量", self.pumping_people_system_volume_switch)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "系统音量大小", "设置抽取完成后的系统音量 (0-100)", self.pumping_people_system_volume_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_people_Animation_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "设置抽取时的动画播放间隔(10-2000)(<1,2号动画模式>适用)", self.pumping_people_Animation_interval_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置抽取时的自动播放次数(1-50)(<2号动画模式>适用)", self.pumping_people_Animation_auto_play_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_number_symbol_square_20_filled"), "学号格式", "设置学号格式设置", self.pumping_people_student_id_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_rename_20_filled"), "姓名格式", "设置姓名格式设置", self.pumping_people_student_name_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "显示随机组员", "抽取小组时是否显示随机组员", self.show_random_member_checkbox)
@@ -275,6 +297,10 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     # 加载随机组员显示设置
                     show_random_member = pumping_people_settings.get("show_random_member", self.default_settings["show_random_member"])
                     random_member_format = pumping_people_settings.get("random_member_format", self.default_settings["random_member_format"])
+
+                    # 加载动画设置
+                    animation_interval = pumping_people_settings.get("animation_interval", self.default_settings["animation_interval"])
+                    animation_auto_play = pumping_people_settings.get("animation_auto_play", self.default_settings["animation_auto_play"])
                     
                     self.pumping_people_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
@@ -290,6 +316,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_people_system_volume_SpinBox.setValue(system_volume_value)
                     self.show_random_member_checkbox.setChecked(show_random_member)
                     self.random_member_format_comboBox.setCurrentIndex(random_member_format)
+                    self.pumping_people_Animation_interval_SpinBox.setValue(animation_interval)
+                    self.pumping_people_Animation_auto_play_SpinBox.setValue(animation_auto_play)
                     logger.info(f"加载抽人设置完成")
             else:
                 self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
@@ -306,6 +334,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                 self.pumping_people_system_volume_SpinBox.setValue(self.default_settings["system_volume_value"])
                 self.show_random_member_checkbox.setChecked(self.default_settings["show_random_member"])
                 self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
+                self.pumping_people_Animation_interval_SpinBox.setValue(self.default_settings["animation_interval"])
+                self.pumping_people_Animation_auto_play_SpinBox.setValue(self.default_settings["animation_auto_play"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -323,6 +353,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             self.pumping_people_system_volume_SpinBox.setValue(self.default_settings["system_volume_value"])
             self.show_random_member_checkbox.setChecked(self.default_settings["show_random_member"])
             self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
+            self.pumping_people_Animation_interval_SpinBox.setValue(self.default_settings["animation_interval"])
+            self.pumping_people_Animation_auto_play_SpinBox.setValue(self.default_settings["animation_auto_play"])
 
             self.save_settings()
     
@@ -355,6 +387,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         pumping_people_settings["system_volume_value"] = self.pumping_people_system_volume_SpinBox.value()
         pumping_people_settings["show_random_member"] = self.show_random_member_checkbox.isChecked()
         pumping_people_settings["random_member_format"] = self.random_member_format_comboBox.currentIndex()
+        pumping_people_settings["animation_interval"] = self.pumping_people_Animation_interval_SpinBox.value()
+        pumping_people_settings["animation_auto_play"] = self.pumping_people_Animation_auto_play_SpinBox.value()
 
         # 保存字体大小
         try:

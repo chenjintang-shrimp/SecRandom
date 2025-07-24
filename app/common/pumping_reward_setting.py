@@ -32,6 +32,8 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             "refresh_button": True,
             "voice_volume": 100,
             "voice_speed": 100,
+            "animation_interval": 100,
+            "animation_auto_play": 5,
         }
 
         self.pumping_reward_Draw_comboBox = ComboBox()
@@ -44,6 +46,8 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_font_size_SpinBox = DoubleSpinBox()
         self.pumping_reward_system_volume_switch = SwitchButton()
         self.pumping_reward_system_volume_SpinBox = SpinBox()
+        self.pumping_reward_animation_interval_SpinBox = SpinBox()
+        self.pumping_reward_animation_auto_play_SpinBox = SpinBox()
         
         # 抽取模式下拉框
         self.pumping_reward_Draw_comboBox.setFixedWidth(250)
@@ -76,6 +80,22 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_Animation_comboBox.addItems(["手动停止动画", "自动播放完整动画", "直接显示结果"])
         self.pumping_reward_Animation_comboBox.currentIndexChanged.connect(lambda: self.save_settings())
         self.pumping_reward_Animation_comboBox.setFont(QFont(load_custom_font(), 12))
+
+        # 动画间隔
+        self.pumping_reward_animation_interval_SpinBox.setRange(100, 1000)
+        self.pumping_reward_animation_interval_SpinBox.setValue(100)
+        self.pumping_reward_animation_interval_SpinBox.setSingleStep(10)
+        self.pumping_reward_animation_interval_SpinBox.setSuffix("ms")
+        self.pumping_reward_animation_interval_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_reward_animation_interval_SpinBox.setFont(QFont(load_custom_font(), 12))
+
+        # 自动播放次数
+        self.pumping_reward_animation_auto_play_SpinBox.setRange(1, 50)
+        self.pumping_reward_animation_auto_play_SpinBox.setValue(5)
+        self.pumping_reward_animation_auto_play_SpinBox.setSingleStep(1)
+        self.pumping_reward_animation_auto_play_SpinBox.setSuffix("次")
+        self.pumping_reward_animation_auto_play_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_reward_animation_auto_play_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 奖品量样式下拉框
         self.pumping_reward_theme_comboBox.setFixedWidth(150)
@@ -110,13 +130,15 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_reward_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_reward_mode_Draw_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小", self.pumping_reward_font_size_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小(支持小数)", self.pumping_reward_font_size_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语音播放", "设置结果公布时是否播放语音", self.pumping_reward_Voice_switch)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "音量大小", "调节播报音量 (0-100)", self.pumping_reward_voice_volume_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语速调节", "调节播报语速 (1%-500%)", self.pumping_reward_voice_speed_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_person_voice_20_filled"), "系统音量控制", "抽取完成后自动设置系统音量", self.pumping_reward_system_volume_switch)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "系统音量大小", "设置抽取完成后的系统音量 (0-100)", self.pumping_reward_system_volume_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_reward_Animation_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "设置抽取时的动画播放间隔(10-2000)(<1,2号动画模式>适用)", self.pumping_reward_animation_interval_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置抽取时的自动播放次数(1-50)(<2号动画模式>适用)", self.pumping_reward_animation_auto_play_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品量", "设置该功能的显示格式", self.pumping_reward_theme_comboBox)
 
         self.load_settings()  # 加载设置
@@ -216,6 +238,9 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     # 加载系统音量设置
                     system_volume_enabled = pumping_reward_settings.get("system_volume_enabled", self.default_settings["system_volume_enabled"])
                     system_volume_value = pumping_reward_settings.get("system_volume_value", self.default_settings["system_volume_value"])
+
+                    animation_interval = pumping_reward_settings.get("animation_interval", self.default_settings["animation_interval"])
+                    animation_auto_play = pumping_reward_settings.get("animation_auto_play", self.default_settings["animation_auto_play"])
                     
                     self.pumping_reward_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(draw_pumping)
@@ -227,6 +252,9 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_reward_voice_speed_SpinBox.setValue(voice_speed)
                     self.pumping_reward_system_volume_switch.setChecked(system_volume_enabled)
                     self.pumping_reward_system_volume_SpinBox.setValue(system_volume_value)
+                    self.pumping_reward_animation_interval_SpinBox.setValue(animation_interval)
+                    self.pumping_reward_animation_auto_play_SpinBox.setValue(animation_auto_play)
+
                     logger.info(f"加载抽奖设置完成")
             else:
                 self.pumping_reward_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
@@ -239,6 +267,8 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                 self.pumping_reward_voice_speed_SpinBox.setValue(self.default_settings["voice_speed"])
                 self.pumping_reward_system_volume_switch.setChecked(self.default_settings["system_volume_enabled"])
                 self.pumping_reward_system_volume_SpinBox.setValue(self.default_settings["system_volume_value"])
+                self.pumping_reward_animation_interval_SpinBox.setValue(self.default_settings["animation_interval"])
+                self.pumping_reward_animation_auto_play_SpinBox.setValue(self.default_settings["animation_auto_play"])
 
                 self.save_settings()
         except Exception as e:
@@ -253,6 +283,8 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             self.pumping_reward_voice_speed_SpinBox.setValue(self.default_settings["voice_speed"])
             self.pumping_reward_system_volume_switch.setChecked(self.default_settings["system_volume_enabled"])
             self.pumping_reward_system_volume_SpinBox.setValue(self.default_settings["system_volume_value"])
+            self.pumping_reward_animation_interval_SpinBox.setValue(self.default_settings["animation_interval"])
+            self.pumping_reward_animation_auto_play_SpinBox.setValue(self.default_settings["animation_auto_play"])
 
             self.save_settings()
     
@@ -281,6 +313,8 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         pumping_reward_settings["voice_speed"] = self.pumping_reward_voice_speed_SpinBox.value()
         pumping_reward_settings["system_volume_enabled"] = self.pumping_reward_system_volume_switch.isChecked()
         pumping_reward_settings["system_volume_value"] = self.pumping_reward_system_volume_SpinBox.value()
+        pumping_reward_settings["animation_interval"] = self.pumping_reward_animation_interval_SpinBox.value()
+        pumping_reward_settings["animation_auto_play"] = self.pumping_reward_animation_auto_play_SpinBox.value()
 
         # 保存字体大小
         try:

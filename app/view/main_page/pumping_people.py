@@ -45,6 +45,8 @@ class pumping_people(QWidget):
                 settings = json.load(f)
                 pumping_people_draw_mode = settings['pumping_people']['draw_mode']
                 pumping_people_animation_mode = settings['pumping_people']['animation_mode']
+                self.interval = settings['pumping_people']['animation_interval']
+                self.auto_play = settings['pumping_people']['animation_auto_play']
         except Exception as e:
             pumping_people_draw_mode = 0
             pumping_people_animation_mode = 0
@@ -65,7 +67,7 @@ class pumping_people(QWidget):
             self.is_animating = True
             self.animation_timer = QTimer()
             self.animation_timer.timeout.connect(self._show_random_student)
-            self.animation_timer.start(100)
+            self.animation_timer.start(self.interval)
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self._stop_animation)
             
@@ -237,7 +239,7 @@ class pumping_people(QWidget):
                         vbox_layout = QGridLayout()
                         # 创建新标签列表
                         self.student_labels = []
-                        for num, name, exist in selected_students:
+                        for num, selected, exist in selected_students:
                             # 整合学号格式和姓名处理逻辑
                             student_id_format = pumping_people_student_id
                             student_name_format = pumping_people_student_name
@@ -251,11 +253,67 @@ class pumping_people(QWidget):
                                 student_id_str = f"{num:02}"
                             
                             # 处理两字姓名
-                            if student_name_format == 0 and len(name) == 2:
-                                name = f"{name[0]}    {name[1]}"
+                            if student_name_format == 0 and len(selected) == 2:
+                                name = f"{selected[0]}    {selected[1]}"
 
                             if group_name == '抽取小组组号':
-                                label = BodyLabel(f"{name}")
+                                # 定义格式常量
+                                FORMAT_GROUP_RANDOM_MEMBER = 0
+                                FORMAT_GROUP_RANDOM = 1
+                                FORMAT_GROUP_SIMPLE = 2
+                                FORMAT_GROUP_ARROW = 3
+                                FORMAT_GROUP_ARROW_BRACKET = 4
+
+                                # 格式映射字典
+                                FORMAT_MAPPINGS = {
+                                    FORMAT_GROUP_RANDOM_MEMBER: f"{{selected}}-随机组员:{{random_member}}",
+                                    FORMAT_GROUP_RANDOM: f"{{selected}}-随机:{{random_member}}",
+                                    FORMAT_GROUP_SIMPLE: f"{{selected}}-{{random_member}}",
+                                    FORMAT_GROUP_ARROW: f"{{selected}}>{{random_member}}",
+                                    FORMAT_GROUP_ARROW_BRACKET: f"{{selected}}>{{random_member}}<"
+                                }
+
+                                # 构建学生数据文件路径
+                                student_file = os.path.join("app", "resource", "list", f"{self.class_combo.currentText()}.json")
+                                members = []
+
+                                # 加载学生数据和筛选组成员
+                                if os.path.exists(student_file):
+                                    try:
+                                        with open(student_file, 'r', encoding='utf-8') as f:
+                                            data = json.load(f)
+                                            members = [
+                                                name.replace('【', '').replace('】', '') 
+                                                for name, info in data.items()
+                                                if isinstance(info, dict) and info.get('group') == selected and info.get('exist', True)
+                                            ]
+                                    except (json.JSONDecodeError, IOError) as e:
+                                        # 记录具体错误但不中断程序
+                                        print(f"加载学生数据失败: {str(e)}")
+
+                                # 随机选择成员
+                                random_member = random.choice(members) if members else ''
+                                display_text = selected  # 默认显示组号
+
+                                # 加载显示设置
+                                try:
+                                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                        settings = json.load(f)
+                                        show_random = settings['pumping_people'].get('show_random_member', False)
+                                        format_str = settings['pumping_people'].get('random_member_format', FORMAT_GROUP_SIMPLE)
+                                except (json.JSONDecodeError, IOError, KeyError) as e:
+                                    show_random = False
+                                    format_str = FORMAT_GROUP_SIMPLE
+                                    print(f"加载设置失败: {str(e)}")
+
+                                # 应用格式设置
+                                if show_random and random_member and format_str in FORMAT_MAPPINGS:
+                                    display_text = FORMAT_MAPPINGS[format_str].format(
+                                        selected=selected, 
+                                        random_member=random_member
+                                    )
+
+                                label = BodyLabel(display_text)
                             else:
                                 label = BodyLabel(f"{student_id_str} {name}")
 
@@ -352,17 +410,16 @@ class pumping_people(QWidget):
         self.random()
         self.voice_play()
     
-    # 播放完整动画（快速显示5个随机学生后显示最终结果）
     def _play_full_animation(self):
-        """播放完整动画（快速显示5个随机学生后显示最终结果）"""
+        """播放完整动画（快速显示n个随机学生后显示最终结果）"""
         self.is_animating = True
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self._show_random_student)
-        self.animation_timer.start(100)
+        self.animation_timer.start(self.interval)
         self.start_button.setEnabled(False)  # 禁用按钮
         
-        # 5次随机后停止
-        QTimer.singleShot(500, lambda: [
+        # n次随机后停止
+        QTimer.singleShot(self.auto_play * self.interval, lambda: [
             self.animation_timer.stop(),
             self._stop_animation(),
             self.start_button.setEnabled(True)  # 恢复按钮

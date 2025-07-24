@@ -42,6 +42,8 @@ class pumping_reward(QWidget):
                 settings = json.load(f)
                 pumping_reward_draw_mode = settings['pumping_reward']['draw_mode']
                 pumping_reward_animation_mode = settings['pumping_reward']['animation_mode']
+                self.interval = settings['pumping_reward']['animation_interval']
+                self.auto_play = settings['pumping_reward']['animation_auto_play']
         except Exception as e:
             pumping_reward_draw_mode = 0
             pumping_reward_animation_mode = 0
@@ -62,7 +64,7 @@ class pumping_reward(QWidget):
             self.is_animating = True
             self.animation_timer = QTimer()
             self.animation_timer.timeout.connect(self._show_random_reward)
-            self.animation_timer.start(100)
+            self.animation_timer.start(self.interval)
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self._stop_animation)
             
@@ -320,17 +322,17 @@ class pumping_reward(QWidget):
         self.random()
         self.voice_play()
     
-    # 播放完整动画（快速显示5个随机奖品后显示最终结果）
+    # 播放完整动画
     def _play_full_animation(self):
-        """播放完整动画（快速显示5个随机奖品后显示最终结果）"""
+        """播放完整动画（快速显示n个随机奖品后显示最终结果）"""
         self.is_animating = True
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self._show_random_reward)
-        self.animation_timer.start(100)
+        self.animation_timer.start(self.interval)
         self.start_button.setEnabled(False)  # 禁用按钮
         
-        # 5次随机后停止
-        QTimer.singleShot(500, lambda: [
+        # n次随机后停止
+        QTimer.singleShot(self.auto_play * self.interval, lambda: [
             self.animation_timer.stop(),
             self._stop_animation(),
             self.start_button.setEnabled(True)  # 恢复按钮
