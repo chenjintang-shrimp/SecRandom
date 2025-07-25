@@ -138,9 +138,9 @@ class ContributorDialog(QDialog):
                 'avatar': 'app\\resource\\icon\\contributor2.png'
             },
             {
-                'name': 'system-linux-cmb',
+                'name': 'Fox-block-offcial',
                 'role': '应用测试',
-                'github': 'https://github.com/system-linux-cmb',
+                'github': 'https://github.com/Fox-block-offcial',
                 'avatar': 'app\\resource\\icon\\contributor3.png'
             },
             {
