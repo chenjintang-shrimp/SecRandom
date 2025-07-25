@@ -9,7 +9,6 @@ import json
 import random
 import pyttsx3
 import platform
-import pypinyin
 import re
 import datetime
 import math
