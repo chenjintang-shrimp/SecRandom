@@ -63,6 +63,7 @@ jobs:
             --contents-directory . `
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:. `
+            --add-data C:\Python\Lib\site-packages\pypinyin\pinyin_dict.json;pypinyin `
             --version-file=version_info.txt
           # 创建zip_dist/SecRandom目录
           mkdir zip_dist/SecRandom
