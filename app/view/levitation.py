@@ -31,7 +31,7 @@ class LevitationWindow(QWidget):
         MENU_DEFAULT_ICON_PATH = Path("app/resource/icon/SecRandom_menu_30%.png")
 
         # 左侧 MENU 图标
-        self.menu_button = ToolButton(self.container_button)
+        self.menu_label = QLabel(self.container_button)
         try:
             settings_path = Path('app/Settings/Settings.json')
             with open(settings_path, 'r', encoding='utf-8') as f:
@@ -44,23 +44,24 @@ class LevitationWindow(QWidget):
                 icon_path = Path(f"app/resource/icon/SecRandom_menu_{(10 - self_starting_enabled) * 10}%.png")
                 if not icon_path.exists():
                     icon_path = MENU_DEFAULT_ICON_PATH
-                self.menu_button.setIcon(QIcon(str(icon_path)))
+                pixmap = QPixmap(str(icon_path))
+                self.menu_label.setPixmap(pixmap.scaled(27, 27, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            self.menu_button.setIcon(QIcon(str(MENU_DEFAULT_ICON_PATH)))
+            pixmap = QPixmap(str(MENU_DEFAULT_ICON_PATH))
+            self.menu_label.setPixmap(pixmap.scaled(27, 27, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             logger.error(f"加载浮窗'点击抽人'图标透明度失败: {e}")
 
-        # 设置图标大小
-        self.menu_button.setIconSize(QSize(27, 27))
         # 设置透明度
-        self.menu_button.setStyleSheet('opacity: 0;')
+        self.menu_label.setStyleSheet('opacity: 0;')
         # 添加长按拖动功能
-        self.menu_button.pressed.connect(self.start_drag)
-        self.menu_button.released.connect(self.stop_drag)
-        # 设置按钮的尺寸
-        self.menu_button.setFixedSize(40, 50)
-        button_layout.addWidget(self.menu_button)
+        self.menu_label.mousePressEvent = self.start_drag
+        self.menu_label.mouseReleaseEvent = self.stop_drag
+        # 设置标签的尺寸
+        self.menu_label.setFixedSize(40, 50)
+        self.menu_label.setAlignment(Qt.AlignCenter)
+        button_layout.addWidget(self.menu_label)
         # 添加字体
-        self.menu_button.setFont(QFont(load_custom_font(), 12))
+        self.menu_label.setFont(QFont(load_custom_font(), 12))
 
 
         # 默认图标路径
@@ -134,7 +135,8 @@ class LevitationWindow(QWidget):
 
     def start_drag(self, event=None):
         if event and event.button() or not event:
-            self.drag_position = self.menu_button.mapToGlobal(self.menu_button.pos()) - self.pos()
+            # 星野导航：记录鼠标相对于窗口的初始位置
+            self.drag_position = event.pos()
 
     def mousePressEvent(self, event):
         # 禁用点击功能，只允许长按拖动
@@ -143,7 +145,7 @@ class LevitationWindow(QWidget):
         else:
             event.ignore()
 
-    def stop_drag(self):
+    def stop_drag(self, event=None):
         self.save_position()
 
     def __init__(self):
@@ -157,7 +159,8 @@ class LevitationWindow(QWidget):
     def mouseMoveEvent(self, event):
         if event.buttons() in [Qt.LeftButton, Qt.RightButton]:
             # 计算窗口位置
-            new_pos = QPoint(event.globalPos().x() + 5, event.globalPos().y() + 5)
+            # 星野导航：计算窗口新位置（鼠标位置 - 拖动偏移量）
+            new_pos = event.globalPos() - self.drag_position
 
             # 获取屏幕尺寸
             screen = QApplication.desktop().screenGeometry()
