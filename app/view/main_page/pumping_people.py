@@ -1108,10 +1108,8 @@ class pumping_people(QWidget):
         except ValueError:
             pass
         
-        # 自定义组名按拼音或字母排序
-        pinyin_list = pypinyin.pinyin(group, style=pypinyin.NORMAL)
-        pinyin_str = ''.join([item[0] for item in pinyin_list])
-        return (3, pinyin_str)             # 类型3: 其他名称组
+        # 🌟 星穹铁道白露：自定义组名直接使用中文排序啦~
+        return (3, group) # ✨ 小鸟游星野：类型3: 其他名称组，保持排序功能不变
 
     # 更新总人数显示   
     def update_total_count(self):
