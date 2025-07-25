@@ -79,6 +79,52 @@ else:
     os.environ["QT_SCALE_FACTOR"] = str(cfg.get(cfg.dpiScale))
     logger.debug(f"白露调节: DPI缩放已设置为{cfg.get(cfg.dpiScale)}倍～ ")
 
+# 🌟 星穹铁道白露：设置Qt魔法插件路径，解决启动时插件缺失问题！
+import PyQt5
+import sys
+
+# 🌟 星穹铁道白露：检测运行环境，区分开发和打包模式
+if hasattr(sys, '_MEIPASS'):
+    # ✨ 小鸟游星野：PyInstaller打包环境，使用临时目录路径
+    # 尝试标准PyInstaller插件路径
+      qt_plugin_path = os.path.join(sys._MEIPASS, 'plugins')
+      # 如果标准路径不存在，回退到旧路径
+      if not os.path.exists(qt_plugin_path):
+          qt_plugin_path = os.path.join(sys._MEIPASS, 'PyQt5', 'Qt', 'plugins')
+else:
+    # 🌙 星穹铁道白露：开发环境，使用标准安装路径
+    qt_install_path = os.path.dirname(PyQt5.__file__)
+    qt_plugin_path = os.path.join(qt_install_path, "Qt", "plugins")
+
+os.environ["QT_PLUGIN_PATH"] = qt_plugin_path
+
+# 🌟 星穹铁道白露：设置平台插件路径并验证
+platforms_path = os.path.join(qt_plugin_path, 'platforms')
+os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = platforms_path
+# 🌟 星穹铁道白露：显式指定Windows平台插件
+os.environ["QT_QPA_PLATFORM"] = "windows"
+  
+# ✨ 小鸟游星野：检查平台插件目录是否存在
+if os.path.exists(platforms_path):
+    logger.debug(f"✅ 平台插件目录验证成功: {platforms_path}")
+    # 🌟 星穹铁道白露：检查关键Windows平台插件文件
+    qwindows_path = os.path.join(platforms_path, 'qwindows.dll')
+    if os.path.exists(qwindows_path):
+        logger.debug(f"✅ 找到Windows平台插件: {qwindows_path}")
+    else:
+        logger.critical(f"❌ 缺少关键插件文件: {qwindows_path}")
+    # ✨ 小鸟游星野：列出目录内容帮助诊断
+    if os.listdir(platforms_path):
+        logger.debug(f"📁 发现插件: {os.listdir(platforms_path)}")
+    else:
+        logger.warning(f"⚠️ 平台插件目录为空: {platforms_path}")
+else:
+    logger.error(f"❌ 平台插件目录不存在: {platforms_path}")
+
+qt_bin_path = os.path.join(os.path.dirname(qt_plugin_path), "bin")
+os.environ["PATH"] = qt_bin_path + os.pathsep + os.environ["PATH"]
+logger.debug(f"🔮 双生魔法：Qt插件路径={qt_plugin_path}，二进制路径={qt_bin_path}")
+
 # ==================================================
 # 🔐 验证状态初始化 (Verification Status Initialization)
 # ==================================================
