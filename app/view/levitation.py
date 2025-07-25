@@ -11,12 +11,14 @@ from pathlib import Path
 from app.common.config import load_custom_font
 
 class LevitationWindow(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.initUI()
         self.load_position()
-
-        self.levitation_window = LevitationWindow(self)
+        self.drag_position = QPoint()  # 小鸟游星野：初始化拖动位置，让窗口乖乖听话~ ✨
+        self.move_timer = QTimer(self)
+        self.move_timer.setSingleShot(True)
+        self.move_timer.timeout.connect(self.save_position)
 
     def initUI(self):
         layout = QHBoxLayout()
@@ -139,22 +141,14 @@ class LevitationWindow(QWidget):
             self.drag_position = event.pos()
 
     def mousePressEvent(self, event):
-        # 禁用点击功能，只允许长按拖动
-        if event.button() and event.pos() in self.menu_button.geometry():
+        # 星穹铁道白露：右键点击也会触发事件哦~ 要检查正确的控件呀 (๑•̀ㅂ•́)و✧
+        if event.button() and hasattr(self, 'menu_label') and event.pos() in self.menu_label.geometry():
             self.start_drag(event)
         else:
             event.ignore()
 
     def stop_drag(self, event=None):
         self.save_position()
-
-    def __init__(self):
-        super().__init__()
-        self.initUI()
-        self.load_position()
-        self.move_timer = QTimer(self)
-        self.move_timer.setSingleShot(True)
-        self.move_timer.timeout.connect(self.save_position)
 
     def mouseMoveEvent(self, event):
         if event.buttons() in [Qt.LeftButton, Qt.RightButton]:
