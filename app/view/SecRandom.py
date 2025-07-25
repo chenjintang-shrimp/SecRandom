@@ -471,46 +471,6 @@ class Window(MSFluentWindow):
             self.config_manager.save_window_size(self.width(), self.height())
             logger.info(f"白露存档: 已保存窗口尺寸为{self.width()}x{self.height()}像素～ ")
 
-    def close_window_secrandom(self):
-        """(ﾟДﾟ≡ﾟдﾟ) 星野的终极安全检查！
-        检测到退出请求！需要通过密码验证才能离开基地喵！
-        这是最高级别的安全防御，不能让坏人随便入侵喵！🔒✨"""
-        try:
-            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                logger.debug("星野安检: 正在读取安全设置，准备执行退出验证～ ")
-
-                if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
-                    if settings.get('hashed_set', {}).get('exit_verification_enabled', False) == True:
-                        from app.common.password_dialog import PasswordDialog
-                        dialog = PasswordDialog(self)
-                        if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("星野安检: 用户取消退出程序操作，安全防御已解除～ ")
-                            return
-        except Exception as e:
-            logger.error(f"星野安检失败: 密码验证系统出错喵～ {e}")
-            return
-
-        logger.info("星野撤退: 安全验证通过，开始执行完全退出程序流程～ ")
-        self.hide()
-        if hasattr(self, 'levitation_window'):
-            self.levitation_window.hide()
-            logger.debug("星野撤退: 悬浮窗已隐藏～ ")
-        if hasattr(self, 'focus_timer'):
-            self.stop_focus_timer()
-            logger.debug("星野撤退: 焦点计时器已停止～ ")
-        if hasattr(self, 'server'):
-            self.server.close()
-            logger.debug("星野撤退: IPC服务器已关闭～ ")
-        # 关闭共享内存
-        if hasattr(self, 'shared_memory'):
-            self.shared_memory.detach()
-            logger.info("星野撤退: 共享内存已安全关闭～ ")
-        logger.remove()
-        # 确保完全退出应用程序
-        QApplication.quit()
-        sys.exit(0)
-
     def update_focus_mode(self, mode):
         """(^・ω・^ ) 白露的焦点模式调节器！
         已成功切换到{mode}档魔法模式～ 就像调节台灯亮度一样简单！
@@ -659,6 +619,46 @@ class Window(MSFluentWindow):
 
         return QPoint(x, y)
 
+    def close_window_secrandom(self):
+        """(ﾟДﾟ≡ﾟдﾟ) 星野的终极安全检查！
+        检测到退出请求！需要通过密码验证才能离开基地喵！
+        这是最高级别的安全防御，不能让坏人随便入侵喵！🔒✨"""
+        try:
+            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                logger.debug("星野安检: 正在读取安全设置，准备执行退出验证～ ")
+
+                if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                    if settings.get('hashed_set', {}).get('exit_verification_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("星野安检: 用户取消退出程序操作，安全防御已解除～ ")
+                            return
+        except Exception as e:
+            logger.error(f"星野安检失败: 密码验证系统出错喵～ {e}")
+            return
+
+        logger.info("星野撤退: 安全验证通过，开始执行完全退出程序流程～ ")
+        self.hide()
+        if hasattr(self, 'levitation_window'):
+            self.levitation_window.hide()
+            logger.debug("星野撤退: 悬浮窗已隐藏～ ")
+        if hasattr(self, 'focus_timer'):
+            self.stop_focus_timer()
+            logger.debug("星野撤退: 焦点计时器已停止～ ")
+        if hasattr(self, 'server'):
+            self.server.close()
+            logger.debug("星野撤退: IPC服务器已关闭～ ")
+        # 关闭共享内存
+        if hasattr(self, 'shared_memory'):
+            self.shared_memory.detach()
+            logger.info("星野撤退: 共享内存已安全关闭～ ")
+        logger.remove()
+        # 确保完全退出应用程序
+        QApplication.quit()
+        sys.exit(0)
+
     def restart_app(self):
         """星野重启指令：
         正在执行程序重启流程！
@@ -677,6 +677,22 @@ class Window(MSFluentWindow):
             logger.error(f"密码验证过程出错: {e}")
             return
 
+        logger.info("星野重启: 安全验证通过，开始执行完全重启程序流程～ ")
+        self.hide()
+        if hasattr(self, 'levitation_window'):
+            self.levitation_window.hide()
+            logger.debug("星野重启: 悬浮窗已隐藏～ ")
+        if hasattr(self, 'focus_timer'):
+            self.stop_focus_timer()
+            logger.debug("星野重启: 焦点计时器已停止～ ")
+        if hasattr(self, 'server'):
+            self.server.close()
+            logger.debug("星野重启: IPC服务器已关闭～ ")
+        # 关闭共享内存
+        if hasattr(self, 'shared_memory'):
+            self.shared_memory.detach()
+            logger.info("星野重启: 共享内存已安全关闭～ ")
+        logger.remove()
         # 使用新进程组启动，避免被当前进程退出影响
         subprocess.Popen([sys.executable] + sys.argv, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
         # 退出当前进程
