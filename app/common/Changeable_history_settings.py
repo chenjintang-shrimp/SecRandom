@@ -128,7 +128,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
 
                     students = cleaned_data
                     self.student_comboBox.clear()
-                    students = ['全班同学'] + students
+                    students = ['全班同学'] + ['全班同学_时间排序'] + students
                     self.student_comboBox.addItems(students)
             else:
                 self.student_comboBox.clear()

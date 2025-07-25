@@ -116,7 +116,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
 
                     students = cleaned_data
                     self.reward_comboBox.clear()
-                    students = ['全部奖品'] + students
+                    students = ['全部奖品'] + ['奖品记录_时间排序'] + students
                     self.reward_comboBox.addItems(students)
             else:
                 self.reward_comboBox.clear()
