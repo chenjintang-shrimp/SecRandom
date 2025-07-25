@@ -24,7 +24,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.default_settings = {
             "check_on_startup": True,
             "self_starting_enabled": False,
-            "url_protocol_enabled": False,
             "pumping_floating_enabled": True,
             "pumping_floating_side": 0,
             "pumping_reward_side": 0,
@@ -36,7 +35,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         }
 
         self.self_starting_switch = SwitchButton()
-        self.url_protocol_switch = SwitchButton()
         self.pumping_floating_switch = SwitchButton()
         self.pumping_floating_side_comboBox = ComboBox()
         self.pumping_reward_side_comboBox = ComboBox()
@@ -52,12 +50,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.self_starting_switch.setFont(QFont(load_custom_font(), 12))
         self.self_starting_switch.checkedChanged.connect(self.on_pumping_floating_switch_changed)
         self.self_starting_switch.checkedChanged.connect(self.setting_startup)
-
-        # URL协议注册开关
-        self.url_protocol_switch.setOnText("开启")
-        self.url_protocol_switch.setOffText("关闭")
-        self.url_protocol_switch.setFont(QFont(load_custom_font(), 12))
-        self.url_protocol_switch.checkedChanged.connect(self.setting_url_protocol)
 
         # 浮窗显示/隐藏按钮
         self.pumping_floating_switch.setOnText("显示")
@@ -127,7 +119,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新设置", "启动时自动检查软件更新", self.check_on_startup)
         self.addGroup(get_theme_icon("ic_fluent_branch_compare_20_filled"), "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
-        self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "URL协议注册", "允许其他程序通过secrandom://协议调用本应用", self.url_protocol_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
@@ -170,63 +161,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 break
         if main_window:
             main_window.update_focus_time(index)
-
-    def setting_url_protocol(self):
-        self.save_settings()
-        # 获取当前程序路径
-        executable = sys.executable
-        logger.info(f"设置URL协议的程序路径: {executable}")
-
-        if not executable:
-            logger.error("无法获取可执行文件路径")
-            return
-
-        try:
-            # 读取设置状态
-            checked = self.url_protocol_switch.isChecked()
-
-            if platform.system() != 'Windows':
-                self.url_protocol_switch.setChecked(False)
-                logger.error("仅支持Windows系统")
-                return
-
-            # 注册表路径常量
-            REG_PATH = r'Software\Classes\secrandom'
-            COMMAND_PATH = os.path.join(REG_PATH, r'shell\open\command')
-
-            if checked:
-                # 创建主注册表项
-                with winreg.CreateKey(winreg.HKEY_CURRENT_USER, REG_PATH) as key:
-                    winreg.SetValueEx(key, '', 0, winreg.REG_SZ, 'URL:SecRandom Protocol')
-                    winreg.SetValueEx(key, 'URL Protocol', 0, winreg.REG_SZ, '')
-
-                # 创建命令子项
-                with winreg.CreateKey(winreg.HKEY_CURRENT_USER, COMMAND_PATH) as key:
-                    # 设置命令值，包含可执行文件路径和%1参数
-                    cmd = f'"{executable}" "%1"'
-                    winreg.SetValueEx(key, '', 0, winreg.REG_SZ, cmd)
-
-                logger.success("URL协议注册成功")
-            else:
-                # 删除注册表项 - 采用安全删除顺序
-                for path in [COMMAND_PATH, os.path.join(REG_PATH, 'shell\open'), os.path.join(REG_PATH, 'shell'), REG_PATH]:
-                    try:
-                        winreg.DeleteKey(winreg.HKEY_CURRENT_USER, path)
-                        logger.debug(f"成功删除注册表项: {path}")
-                    except FileNotFoundError:
-                        logger.debug(f"注册表项不存在，无需删除: {path}")
-                    except Exception as e:
-                        logger.warning(f"删除注册表项 {path} 失败: {e}")
-                        # 继续尝试删除其他项
-
-                logger.success("URL协议取消注册完成")
-
-        except PermissionError:
-            logger.error("URL协议设置失败: 没有足够的权限操作注册表，请以管理员身份运行程序")
-            self.url_protocol_switch.setChecked(not checked)
-        except Exception as e:
-            logger.error(f"URL协议设置失败: {str(e)}")
-            self.url_protocol_switch.setChecked(not checked)
 
     def setting_startup(self):
         import sys
@@ -290,7 +224,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         except Exception as e:
             logger.error(f"读取设置文件时出错: {e}")
 
-        
     def load_settings(self):
         try:
             if os.path.exists(self.settings_file):
@@ -300,7 +233,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     
                     # 优先使用保存的文字选项
                     self_starting_enabled = foundation_settings.get("self_starting_enabled", self.default_settings["self_starting_enabled"])
-                    url_protocol_enabled = foundation_settings.get("url_protocol_enabled", self.default_settings["url_protocol_enabled"])
 
                     pumping_floating_enabled = foundation_settings.get("pumping_floating_enabled", self.default_settings["pumping_floating_enabled"])
 
@@ -342,7 +274,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     check_on_startup = foundation_settings.get("check_on_startup", self.default_settings["check_on_startup"])
 
                     self.self_starting_switch.setChecked(self_starting_enabled)
-                    self.url_protocol_switch.setChecked(url_protocol_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
                     self.pumping_floating_side_comboBox.setCurrentIndex(pumping_floating_side)
                     self.pumping_reward_side_comboBox.setCurrentIndex(pumping_reward_side)
@@ -521,7 +452,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings = existing_settings["foundation"]
         # 删除保存文字选项的代码
         foundation_settings["self_starting_enabled"] = self.self_starting_switch.isChecked()
-        foundation_settings["url_protocol_enabled"] = self.url_protocol_switch.isChecked()
         foundation_settings["pumping_floating_enabled"] = self.pumping_floating_switch.isChecked()
         foundation_settings["pumping_floating_side"] = self.pumping_floating_side_comboBox.currentIndex()
         foundation_settings["pumping_reward_side"] = self.pumping_reward_side_comboBox.currentIndex()
