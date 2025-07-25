@@ -151,8 +151,31 @@ class ContributorDialog(QDialog):
             },
         ]
         
+        # 星野和白露的可爱注释：计算所有职责文本的行数，让它们变得整齐划一~ ✨
+        font = QFont(load_custom_font(), 12)  # 使用和职责文本相同的字体设置
+        fm = QFontMetrics(font)
+        max_lines = 0
+        role_lines = []
+
+        # 第一步：找出最长的职责文本有多少行 (｡•̀ᴗ-)✧
+        for contributor in contributors:
+            role_text = contributor['role']
+            # 计算文本在500像素宽度下的行数（和UI显示保持一致）
+            text_rect = fm.boundingRect(QRect(0, 0, 500, 0), Qt.TextWordWrap, role_text)
+            line_count = text_rect.height() // fm.lineSpacing()
+            role_lines.append(line_count)
+            if line_count > max_lines:
+                max_lines = line_count
+
+        # 第二步：为每个职责文本添加换行符，确保行数相同 ٩(๑•̀ω•́๑)۶
+        for i, contributor in enumerate(contributors):
+            current_lines = role_lines[i]
+            if current_lines < max_lines:
+                # 添加缺少的换行符~ (星野：这里要小心，别加太多啦~)
+                contributor['role'] += '\n' * (max_lines - current_lines)
+
         self.cards = []
-        # 添加贡献者卡片
+        # 添加贡献者卡片 (白露：所有卡片现在都整齐啦！)
         for contributor in contributors:
             card = self.addContributorCard(contributor)
             self.cards.append(card)
