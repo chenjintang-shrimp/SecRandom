@@ -120,8 +120,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         
         # 是否显示浮窗左侧控件
         self.left_pumping_floating_switch = SwitchButton()
-        self.left_pumping_floating_switch.setOnText("显示")
-        self.left_pumping_floating_switch.setOffText("隐藏")
+        self.left_pumping_floating_switch.setOnText("简洁版")
+        self.left_pumping_floating_switch.setOffText("经典版")
         self.left_pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
         self.left_pumping_floating_switch.checkedChanged.connect(self.save_settings)
 
@@ -131,7 +131,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "定时清理", "设置定时清理抽取记录的时间", self.cleanup_button)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗左侧控件", "设置是否显示浮窗左侧控件", self.left_pumping_floating_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗样式", "设置便捷抽人的浮窗样式", self.left_pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_layout_row_two_focus_top_settings_20_filled"), "主窗口焦点", "设置主窗口不是焦点时关闭延迟", self.main_window_focus_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "检测主窗口焦点时间", "设置检测主窗口焦点时间", self.main_window_focus_time_comboBox)
