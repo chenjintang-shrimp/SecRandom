@@ -254,6 +254,8 @@ class pumping_people(QWidget):
                             # 处理两字姓名
                             if student_name_format == 0 and len(selected) == 2:
                                 name = f"{selected[0]}    {selected[1]}"
+                            else:
+                                name = selected
 
                             if group_name == '抽取小组组号':
                                 # 定义格式常量
