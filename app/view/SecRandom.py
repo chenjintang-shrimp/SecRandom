@@ -460,7 +460,6 @@ class Window(MSFluentWindow):
         检测到窗口大小变化喵～ 正在启动尺寸记录倒计时！
         500毫秒内如果不再变化就会自动保存新尺寸喵～(=｀ω´=)"""
         self.resize_timer.start(500)
-        logger.debug(f"星野感应: 窗口尺寸变为{self.width()}x{self.height()}，启动500ms保存倒计时～ ")
         super().resizeEvent(event)
 
     def save_window_size(self):
