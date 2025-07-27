@@ -13,116 +13,137 @@ from app.common.config import load_custom_font
 class LevitationWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.initUI()
+        self._load_settings()  # 加载配置
+        self._init_ui_components()  # 初始化UI组件
+        self._setup_event_handlers()  # 设置事件处理器
+        self._init_drag_system()  # 初始化拖动系统
         self.load_position()
-        self.drag_position = QPoint()  # 小鸟游星野：初始化拖动位置，让窗口乖乖听话~ ✨
-        self.move_timer = QTimer(self)
-        self.move_timer.setSingleShot(True)
-        self.move_timer.timeout.connect(self.save_position)
 
-    def initUI(self):
-        layout = QHBoxLayout()
+    def _load_settings(self):
+        # 小鸟游星野：加载基础设置和透明度配置
+        settings_path = Path('app/Settings/Settings.json')
+        try:
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                self.transparency_mode = foundation_settings.get('pumping_floating_transparency_mode', 6)
+                self.floating_visible = foundation_settings.get('pumping_floating_visible', True)
+                # 确保透明度值在有效范围内
+                self.transparency_mode = max(0, min(self.transparency_mode, 9))
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            self.transparency_mode = 6
+            self.floating_visible = True
+            logger.error(f"加载基础设置失败: {e}")
 
-        # 创建容器按钮
+    def _init_ui_components(self):
+        # 白露：初始化所有UI组件
+        self._setup_main_layout()
+        if self.floating_visible:
+            self._init_menu_label()
+        self._init_people_label()
+        self._apply_window_styles()
+
+    def _setup_main_layout(self):
+        # 小鸟游星野：设置主布局容器
         self.container_button = QWidget()
         button_layout = QHBoxLayout(self.container_button)
         button_layout.setContentsMargins(0, 0, 0, 0)
         button_layout.setSpacing(0)
 
-        # 默认图标路径
-        MENU_DEFAULT_ICON_PATH = Path("app/resource/icon/SecRandom_menu_30%.png")
+        main_layout = QHBoxLayout(self)
+        main_layout.addWidget(self.container_button)
+        self.setLayout(main_layout)
 
-        # 左侧 MENU 图标
+    def _init_menu_label(self):
+        # 白露：初始化菜单标签
+        MENU_DEFAULT_ICON_PATH = Path("app/resource/icon/SecRandom_menu_30%.png")
         self.menu_label = QLabel(self.container_button)
         try:
-            settings_path = Path('app/Settings/Settings.json')
-            with open(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                foundation_settings = settings.get('foundation', {})
-                self_starting_enabled = foundation_settings.get('pumping_floating_transparency_mode', 6)
-
-                # 根据 self_starting_enabled 设置图标
-                self_starting_enabled = max(0, min(self_starting_enabled, 9))  # 确保值在 0 到 9 之间
-                icon_path = Path(f"app/resource/icon/SecRandom_menu_{(10 - self_starting_enabled) * 10}%.png")
-                if not icon_path.exists():
-                    icon_path = MENU_DEFAULT_ICON_PATH
-                pixmap = QPixmap(str(icon_path))
-                self.menu_label.setPixmap(pixmap.scaled(27, 27, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        except (FileNotFoundError, json.JSONDecodeError) as e:
+            icon_path = Path(f"app/resource/icon/SecRandom_menu_{(10 - self.transparency_mode) * 10}%.png")
+            if not icon_path.exists():
+                icon_path = MENU_DEFAULT_ICON_PATH
+            pixmap = QPixmap(str(icon_path))
+            self.menu_label.setPixmap(pixmap.scaled(27, 27, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        except FileNotFoundError as e:
             pixmap = QPixmap(str(MENU_DEFAULT_ICON_PATH))
             self.menu_label.setPixmap(pixmap.scaled(27, 27, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-            logger.error(f"加载浮窗'点击抽人'图标透明度失败: {e}")
+            logger.error(f"加载菜单图标失败: {e}")
 
-        # 设置透明度
         self.menu_label.setStyleSheet('opacity: 0;')
-        # 添加长按拖动功能
-        self.menu_label.mousePressEvent = self.start_drag
-        self.menu_label.mouseReleaseEvent = self.stop_drag
-        # 设置标签的尺寸
         self.menu_label.setFixedSize(40, 50)
         self.menu_label.setAlignment(Qt.AlignCenter)
-        button_layout.addWidget(self.menu_label)
-        # 添加字体
         self.menu_label.setFont(QFont(load_custom_font(), 12))
+        self.container_button.layout().addWidget(self.menu_label)
 
-
-        # 默认图标路径
+    def _init_people_label(self):
+        # 小鸟游星野：初始化人物标签
         FLOATING_DEFAULT_ICON_PATH = Path("app/resource/icon/SecRandom_floating_30%.png")
-
-        # 左侧 PEOPLE 图标
-        self.people_button = ToolButton(self.container_button)
+        self.people_label = QLabel(self.container_button)
         try:
-            settings_path = Path('app/Settings/Settings.json')
-            with open(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                foundation_settings = settings.get('foundation', {})
-                self_starting_enabled = foundation_settings.get('pumping_floating_transparency_mode', 6)
+            icon_path = Path(f"app/resource/icon/SecRandom_floating_{(10 - self.transparency_mode) * 10}%.png")
+            if not icon_path.exists():
+                icon_path = FLOATING_DEFAULT_ICON_PATH
+            pixmap = QPixmap(str(icon_path))
+            self.people_label.setPixmap(pixmap.scaled(50, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        except FileNotFoundError as e:
+            pixmap = QPixmap(str(FLOATING_DEFAULT_ICON_PATH))
+            self.people_label.setPixmap(pixmap.scaled(50, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            logger.error(f"加载人物图标失败: {e}")
 
-                # 根据 self_starting_enabled 设置图标
-                self_starting_enabled = max(0, min(self_starting_enabled, 9))  # 确保值在 0 到 9 之间
-                icon_path = Path(f"app/resource/icon/SecRandom_floating_{(10 - self_starting_enabled) * 10}%.png")
-                if not icon_path.exists():
-                    icon_path = FLOATING_DEFAULT_ICON_PATH
-                self.people_button.setIcon(QIcon(str(icon_path)))
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            self.people_button.setIcon(QIcon(str(FLOATING_DEFAULT_ICON_PATH)))
-            logger.error(f"加载浮窗'长按拖动'图标透明度失败: {e}")
-        # 设置图标大小
-        self.people_button.setIconSize(QSize(50, 50))
-        # 设置透明度
-        self.people_button.setStyleSheet('opacity: 0;')
-        # 设置按钮的尺寸
-        self.people_button.setFixedSize(60, 50)
-        # 鼠标放上去会变成手型
-        self.people_button.setCursor(Qt.PointingHandCursor)
-        button_layout.addWidget(self.people_button)
-        # 添加字体
-        self.people_button.setFont(QFont(load_custom_font(), 12))
-        
-        # 将容器按钮添加到主布局
-        layout.addWidget(self.container_button)
+        self.people_label.setStyleSheet('opacity: 0;')
+        self.people_label.setFixedSize(60, 50)
+        self.people_label.setAlignment(Qt.AlignCenter)
+        self.people_label.setFont(QFont(load_custom_font(), 12))
+        self.container_button.layout().addWidget(self.people_label)
 
-        self.setLayout(layout)
+    def _apply_window_styles(self):
+        # 白露：应用窗口样式和标志
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
         try:
-            settings_path = Path('app/Settings/Settings.json')
-            with open(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                foundation_settings = settings.get('foundation', {})
-                self_starting_enabled = foundation_settings.get('pumping_floating_transparency_mode', 6)
-
-                # 根据 self_starting_enabled 设置图标
-                self_starting_enabled = max(0, min(self_starting_enabled, 9))  # 确保值在 0 到 9 之间
-                icon_ = (10 - self_starting_enabled) * 0.1
-                self.setStyleSheet(f'border-radius: 5px; background-color: rgba(65, 66, 66, {icon_});')
-        except (FileNotFoundError, json.JSONDecodeError) as e:
+            opacity = (10 - self.transparency_mode) * 0.1
+            self.setStyleSheet(f'border-radius: 5px; background-color: rgba(65, 66, 66, {opacity});')
+        except Exception as e:
             self.setStyleSheet('border-radius: 5px; background-color: rgba(65, 66, 66, 0.3);')
-            logger.error(f"加载浮窗背景透明度失败: {e}")
+            logger.error(f"应用窗口样式失败: {e}")
 
-        self.people_button.clicked.connect(self.on_people_clicked)
+    def _setup_event_handlers(self):
+        # 小鸟游星野：设置所有事件处理器
+        if hasattr(self, 'menu_label'):
+            self.menu_label.mousePressEvent = self.start_drag
+            self.menu_label.mouseReleaseEvent = self.stop_drag
 
-    def on_people_clicked(self):
+        self.people_label.mousePressEvent = self.on_people_press
+        self.people_label.mouseReleaseEvent = self.on_people_release
+
+    def _init_drag_system(self):
+        # 白露：初始化拖动系统
+        self.drag_position = QPoint()
+        self.drag_start_position = QPoint()
+        self.is_dragging = False
+        self.click_timer = QTimer(self)
+        self.click_timer.setSingleShot(True)
+        self.click_timer.timeout.connect(self.start_drag)
+
+        self.move_timer = QTimer(self)
+        self.move_timer.setSingleShot(True)
+        self.move_timer.timeout.connect(self.save_position)
+
+    def on_people_press(self, event):
+        # 小鸟游星野：记录拖动起始位置 ✧(๑•̀ㅂ•́)و✧
+        self.drag_start_position = event.pos()
+        # 启动长按计时器（100毫秒 - 进一步优化响应速度）
+        self.click_timer.start(100)
+
+    def on_people_release(self, event):
+        if self.click_timer.isActive():
+            # 短按：停止计时器并触发点击事件
+            self.click_timer.stop()
+            self.on_people_clicked()
+            # 长按：计时器已触发拖动，不执行点击
+
+    # 白露：处理人物标签点击事件（忽略事件参数）
+    def on_people_clicked(self, event=None):
         main_window = None
         for widget in QApplication.topLevelWidgets():
             if hasattr(widget, 'toggle_window'):  # 通过特征识别主窗口
@@ -136,9 +157,57 @@ class LevitationWindow(QWidget):
             self.show_connection_error_dialog()
 
     def start_drag(self, event=None):
-        if event and event.button() or not event:
-            # 星野导航：记录鼠标相对于窗口的初始位置
-            self.drag_position = event.pos()
+        # 白露：开始拖动逻辑 - 使用之前记录的起始位置
+        self.drag_position = self.drag_start_position
+        self.is_dragging = True
+
+    def mouseMoveEvent(self, event):
+        # 白露：处理鼠标移动事件 - 实现窗口跟随拖动
+        # 检测长按计时期间的鼠标移动，超过阈值立即触发拖动
+        if self.click_timer.isActive() and event.buttons() == Qt.LeftButton:
+            delta = event.pos() - self.drag_start_position
+            if abs(delta.x()) > 2 or abs(delta.y()) > 2:
+                self.click_timer.stop()
+                self.start_drag()
+
+        if hasattr(self, 'is_dragging') and self.is_dragging and event.buttons() == Qt.LeftButton:
+            # 计算鼠标移动偏移量并保持相对位置
+            delta = event.globalPos() - self.mapToGlobal(self.drag_position)
+            # 移动窗口到新位置
+            new_pos = self.pos() + delta
+
+            # 获取屏幕尺寸
+            screen = QApplication.desktop().screenGeometry()
+
+            # 限制窗口不超出屏幕
+            new_pos.setX(max(0, min(new_pos.x(), screen.width() - self.width())))
+            new_pos.setY(max(0, min(new_pos.y(), screen.height() - self.height())))
+
+            self.move(new_pos)
+        super().mouseMoveEvent(event)
+
+    def on_people_release(self, event):
+        if hasattr(self, 'is_dragging'):
+            self.is_dragging = False
+        if self.click_timer.isActive():
+            # 短按：停止计时器并触发点击事件
+            self.click_timer.stop()
+            self.on_people_clicked()
+            # 长按：计时器已触发拖动，不执行点击
+
+    # 白露：处理人物标签点击事件（忽略事件参数）
+    def on_people_clicked(self, event=None):
+        main_window = None
+        for widget in QApplication.topLevelWidgets():
+            if hasattr(widget, 'toggle_window'):  # 通过特征识别主窗口
+                main_window = widget
+                break
+
+        if main_window:
+            main_window.toggle_window()
+        else:
+            logger.error("未找到主窗口实例")
+            self.show_connection_error_dialog()
 
     def mousePressEvent(self, event):
         # 星穹铁道白露：右键点击也会触发事件哦~ 要检查正确的控件呀 (๑•̀ㅂ•́)و✧
@@ -149,23 +218,8 @@ class LevitationWindow(QWidget):
 
     def stop_drag(self, event=None):
         self.save_position()
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() in [Qt.LeftButton, Qt.RightButton]:
-            # 计算窗口位置
-            # 星野导航：计算窗口新位置（鼠标位置 - 拖动偏移量）
-            new_pos = event.globalPos() - self.drag_position
-
-            # 获取屏幕尺寸
-            screen = QApplication.desktop().screenGeometry()
-
-            # 限制窗口不超出屏幕
-            new_pos.setX(max(0, min(new_pos.x(), screen.width() - self.width())))
-            new_pos.setY(max(0, min(new_pos.y(), screen.height() - self.height())))
-
-            self.move(new_pos)
-            self.move_timer.stop()
-            self.move_timer.start(300)
+        self.move_timer.stop()
+        self.move_timer.start(300)
 
     def save_position(self):
         pos = self.pos()
