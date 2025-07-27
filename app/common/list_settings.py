@@ -373,7 +373,7 @@ class ImportStudentDialog(QDialog):
 
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)و✧
-        colors = {'text': 'black', 'bg': 'white'} if is_dark else {'text': 'white', 'bg': 'black'}
+        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
         self.setStyleSheet(f"""
             QDialog, QDialog * {{
                 color: {colors['text']};
@@ -828,20 +828,14 @@ class ClassInputDialog(QDialog):
         self.setLayout(layout)
     
     def update_theme_style(self):
-        if is_dark:
-            self.setStyleSheet("""
-                QDialog, QDialog * {
-                    color: black;
-                    background-color: white;
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QDialog, QDialog * {
-                    color: white;
-                    background-color: black;
-                }
-            """)
+        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)و✧
+        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
+        self.setStyleSheet(f"""
+            QDialog, QDialog * {{
+                color: {colors['text']};
+                background-color: {colors['bg']};
+            }}
+        """)
         
     def closeEvent(self, event):
         if not self.saved:
@@ -929,20 +923,14 @@ class StudentInputDialog(QDialog):
         self.setLayout(layout)
 
     def update_theme_style(self):
-        if is_dark:
-            self.setStyleSheet("""
-                QDialog, QDialog * {
-                    color: black;
-                    background-color: white;
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QDialog, QDialog * {
-                    color: white;
-                    background-color: black;
-                }
-            """)
+        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)و✧
+        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
+        self.setStyleSheet(f"""
+            QDialog, QDialog * {{
+                color: {colors['text']};
+                background-color: {colors['bg']};
+            }}
+        """)
         
     def closeEvent(self, event):
         if not self.saved:
@@ -1027,20 +1015,14 @@ class GenderInputDialog(QDialog):
         self.setLayout(layout)
 
     def update_theme_style(self):
-        if is_dark:
-            self.setStyleSheet("""
-                QDialog, QDialog * {
-                    color: black;
-                    background-color: white;
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QDialog, QDialog * {
-                    color: white;
-                    background-color: black;
-                }
-            """)
+        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)و✧
+        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
+        self.setStyleSheet(f"""
+            QDialog, QDialog * {{
+                color: {colors['text']};
+                background-color: {colors['bg']};
+            }}
+        """)
         
     def closeEvent(self, event):
         if not self.saved:
@@ -1125,20 +1107,14 @@ class GroupInputDialog(QDialog):
         self.setLayout(layout)
 
     def update_theme_style(self):
-        if is_dark:
-            self.setStyleSheet("""
-                QDialog, QDialog * {
-                    color: black;
-                    background-color: white;
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QDialog, QDialog * {
-                    color: white;
-                    background-color: black;
-                }
-            """)
+        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)و✧
+        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
+        self.setStyleSheet(f"""
+            QDialog, QDialog * {{
+                color: {colors['text']};
+                background-color: {colors['bg']};
+            }}
+        """)
         
     def closeEvent(self, event):
         if not self.saved:

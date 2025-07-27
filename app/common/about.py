@@ -228,8 +228,8 @@ class ContributorDialog(QDialog):
         if is_dark:
             self.setStyleSheet("""
                 QDialog {
-                    background-color: #202020;
-                    color: #ffffff;
+                    background-color: #111116;
+                    color: #F5F5F5;
                 }
                 QLineEdit {
                     background-color: #3c3c3c;
@@ -259,8 +259,8 @@ class ContributorDialog(QDialog):
         else:
             self.setStyleSheet("""
                 QDialog {
-                    background-color: #ffffff;
-                    color: #000000;
+                    background-color: #F5F5F5;
+                    color: #111116;
                 }
                 QLineEdit {
                     background-color: #ffffff;

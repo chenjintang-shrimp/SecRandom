@@ -86,8 +86,8 @@ class PasswordDialog(QDialog):
         if is_dark:
             self.setStyleSheet("""
                 QDialog {
-                    background-color: #2b2b2b;
-                    color: #ffffff;
+                    background-color: #111116;
+                    color: #F5F5F5;
                 }
                 QLineEdit {
                     background-color: #3c3c3c;
@@ -117,8 +117,8 @@ class PasswordDialog(QDialog):
         else:
             self.setStyleSheet("""
                 QDialog {
-                    background-color: #ffffff;
-                    color: #000000;
+                    background-color: #111116;
+                    color: #F5F5F5;
                 }
                 QLineEdit {
                     background-color: #ffffff;
