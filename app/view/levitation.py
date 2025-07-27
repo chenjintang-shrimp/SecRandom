@@ -108,11 +108,12 @@ class LevitationWindow(QWidget):
             logger.error(f"应用窗口样式失败: {e}")
 
     def _setup_event_handlers(self):
-        # 小鸟游星野：设置所有事件处理器
-        if hasattr(self, 'menu_label'):
+        # 小鸟游星野：设置所有事件处理器 - 无论控件是否显示都要绑定 ✧(๑•̀ㅂ•́)و✧
+        if hasattr(self, 'menu_label') and self.menu_label is not None:
             self.menu_label.mousePressEvent = self.start_drag
             self.menu_label.mouseReleaseEvent = self.stop_drag
 
+        # 白露：人物标签始终存在，必须绑定事件处理器
         self.people_label.mousePressEvent = self.on_people_press
         self.people_label.mouseReleaseEvent = self.on_people_release
 
@@ -187,13 +188,19 @@ class LevitationWindow(QWidget):
         super().mouseMoveEvent(event)
 
     def on_people_release(self, event):
-        if hasattr(self, 'is_dragging'):
-            self.is_dragging = False
+        # 星穹铁道白露：人物标签释放事件处理 - 区分点击和拖动 (≧∇≦)ﾉ
+        was_dragging = getattr(self, 'is_dragging', False)
+        self.is_dragging = False
+        
         if self.click_timer.isActive():
-            # 短按：停止计时器并触发点击事件
+            # 小鸟游星野：短按点击，触发主页面打开 ✧(๑•̀ㅂ•́)و✧
             self.click_timer.stop()
             self.on_people_clicked()
-            # 长按：计时器已触发拖动，不执行点击
+        elif was_dragging:
+            # 白露：拖动结束，保存新位置 (≧∇≦)ﾉ
+            self.save_position()
+        
+        event.accept()
 
     # 白露：处理人物标签点击事件（忽略事件参数）
     def on_people_clicked(self, event=None):
@@ -217,9 +224,18 @@ class LevitationWindow(QWidget):
             event.ignore()
 
     def stop_drag(self, event=None):
-        self.save_position()
+        # 小鸟游星野：停止拖动时的处理逻辑 - 菜单标签专用 ✧(๑•̀ㅂ•́)و✧
+        self.setCursor(Qt.ArrowCursor)
         self.move_timer.stop()
+        
+        # 白露：菜单标签拖动结束，保存新位置
+        self.save_position()
+        
+        # 小鸟游星野：延迟保存，避免频繁写入
         self.move_timer.start(300)
+        
+        if event:
+            event.accept()
 
     def save_position(self):
         pos = self.pos()
