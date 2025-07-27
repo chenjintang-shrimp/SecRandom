@@ -1,22 +1,24 @@
 <div align="center">
 
-<image src="resources/SecRandom.png" height="128"/>
+![SecRandom](resources/SecRandom.png)
 
-# SecRandom
+# SecRandom - 公平随机抽取系统
 
-[![Downloads](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=social&label=下载量&logo=github)](https://github.com/SECTL/SecRandom/releases/latest)
-[![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=social-square&logo=github&label=问题&color=%233fb950)](https://github.com/SECTL/SecRandom/issues)
-[![Release](https://img.shields.io/github/v/release/SECTL/SecRandom?style=flat&color=%233fb950&label=正式版)](https://github.com/SECTL/SecRandom/releases/latest)
-[![Beta](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=social-square&label=测试版)](https://github.com/SECTL/SecRandom/releases/)
-[![Github Last Commit](https://img.shields.io/github/last-commit/SECTL/SecRandom?label=最后摸鱼时间)](https://github.com/SECTL/SecRandom/commits/master)
-[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%EF%BD%9C833875216-blue?style=flat&logo=TencentQQ)](https://qm.qq.com/q/iWcfaPHn7W)
-[![bilibili](https://img.shields.io/badge/-UP%E4%B8%BB%EF%BD%9C黎泽懿-%23FB7299?style=flat&logo=bilibili)](https://space.bilibili.com/520571577)
+🚀 **现代化教育工具** | 🎯 **智能权重算法** | 🎨 **优雅交互体验**
 
-该软件能以多种方式进行完全公平的随机抽取 抽单人/抽多人/抽小组/抽性别...
+</div>
 
-| [Github(镜像) 下载](https://github.com/SECTL/SecRandom/releases) | [123云盘 下载](https://www.123684.com/s/9529jv-U4Fxh) |
+<!-- 星穹列车·白露的医疗舱公告 -->
+<div align="center">
 
-<!-- [切换语言](javascript:void(0)) | [English](README_ALL/readme_en.md) | [白露版(仅供娱乐)](README_ALL/readme_bailu.md) -->
+[![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=问题)](https://github.com/SECTL/SecRandom/issues)
+[![最新版本](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=最新正式版)](https://github.com/SECTL/SecRandom/releases/latest)
+[![最新Beta版本](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=测试版)](https://github.com/SECTL/SecRandom/releases/)
+[![上次更新](https://img.shields.io/github/last-commit/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=最后摸鱼时间)](https://github.com/SECTL/SecRandom/commits/master)
+[![下载统计](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=for-the-badge&color=00b4ab&label=累计下载)](https://github.com/SECTL/SecRandom/releases)
+[![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%EF%BD%9C833875216-blue?style=for-the-badge&logo=TencentQQ)](https://qm.qq.com/q/iWcfaPHn7W)
+[![bilibili](https://img.shields.io/badge/-UP%E4%B8%BB%EF%BD%9C黎泽懿-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
+
 
 </div>
 
@@ -29,6 +31,16 @@
 ## 📄 **文档**
  - **SecRandom 官方文档正在制作中，将制作网页版**
  - [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
+
+## 🌈 核心功能
+
+### 🛡️ 基础特性
+- **跨平台支持**：完美兼容 Windows 7/10/11 系统
+- **架构适配**：原生支持 x64 架构
+
+### 🎯 核心能力
+<details>
+<summary>📦 点击展开完整功能列表</summary>
 
 ## 💻 **适配系统**
 - ✅ Windows 7 及以上版本操作系统
@@ -48,6 +60,8 @@
 - ✅ **抽取结果播报支持更多功能**
 - ✅ **开机自启动支持**
 - ✅ **现代化UI设计**
+
+</details>
 
 ## 📮 **联系方式**
 * 📧 [邮箱](mailto:lzy.12@foxmail.com)
@@ -73,26 +87,34 @@
 > 4. 基础权重
 > 5. 冷启动(防止新学生权重过低)
 
-## 📌 **软件截图-v1.1.0.0**
-| 浅色-抽人 | 浅色-抽奖 |
-|-------------|-------------|
-| ![抽人](ScreenSots/主界面_抽人_浅色.png) | ![抽奖](ScreenSots/主界面_抽奖_浅色.png) |
+## 🚀 快速开始
 
-| 浅色-抽人设置 | 浅色-抽奖设置 |
-|-------------|-------------|
-| ![抽人设置](ScreenSots/设置_抽人设置_浅色.png) | ![抽奖设置](ScreenSots/设置_抽奖设置_浅色.png) |
+### 📥 环境准备
+```bash
+# 请先确保已安装 Python 3.8+ 和 pip
+python -m venv .venv
+.venv\Scripts\activate
+```
 
-| 浅色-抽人名单 | 浅色-抽奖名单 |
-|-------------|-------------|
-| ![抽人名单](ScreenSots/设置_抽人名单_浅色.png) | ![抽奖名单](ScreenSots/设置_抽奖名单_浅色.png) |
+### ⚙️ 安装步骤
+```bash
+# 星野前辈的安装指南
+pip install -r requirements.txt
+```
 
-| 浅色-抽人历史记录设置 | 浅色-抽奖历史记录设置 |
-|-------------|-------------|
-| ![抽人历史记录设置](ScreenSots/设置_抽人历史记录设置_浅色.png) | ![抽奖历史记录设置](ScreenSots/设置_抽奖历史记录设置_浅色.png) |
+### 🎮 启动命令
+```bash
+# 启动主程序 (带调试模式)
+python main.py
+```
 
-| 浅色-安全设置 | 浅色-更多设置 |
-|-------------|-------------|
-| ![安全设置](ScreenSots/设置_安全设置_浅色.png) | ![更多设置](ScreenSots/更多设置_浅色.png) |
+## 📌 使用小贴士
+<!-- 白露的温馨提醒 -->
+> 悬浮窗可快速开启「闪电抽取」模式⚡
+
+## 📌 **软件截图**
+![抽人](ScreenSots/主界面_抽人_浅色.png)
+![抽奖](ScreenSots/主界面_抽奖_浅色.png)
 
 ## ✨ **Star历程**
 <picture>
@@ -100,4 +122,4 @@
   <img alt="Star History" src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date">
 </picture>
 
-**Copyright © 2025 lzy98276**
+**Copyright © 2025 SECTL**
