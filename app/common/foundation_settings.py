@@ -484,11 +484,44 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 class CleanupTimeDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
+        # 🌟 星穹铁道白露：设置无边框窗口样式并解决屏幕设置冲突~ 
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("输入定时清理记录时间")
         self.setFixedSize(400, 300)
         self.saved = False
+        self.dragging = False
+        self.drag_position = None
         
-        self.text_label = BodyLabel('请输入定时清理记录时间，每行一个\n格式为：HH:mm\n例如：12:00:00 或 20:00:00\n中文冒号自动转英文冒号\n自动补秒位为00')
+        # 确保不设置子窗口的屏幕属性
+        if parent is not None:
+            self.setParent(parent)
+        
+        # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
+        self.title_bar = QWidget()
+        self.title_bar.setObjectName("CustomTitleBar")
+        self.title_bar.setFixedHeight(35)
+        
+        # 标题栏布局
+        title_layout = QHBoxLayout(self.title_bar)
+        title_layout.setContentsMargins(10, 0, 10, 0)
+        
+        # 窗口标题
+        self.title_label = QLabel("输入定时清理记录时间")
+        self.title_label.setObjectName("TitleLabel")
+        self.title_label.setFont(QFont(load_custom_font(), 12))
+        
+        # 窗口控制按钮
+        self.close_btn = QPushButton("✕")
+        self.close_btn.setObjectName("CloseButton")
+        self.close_btn.setFixedSize(25, 25)
+        self.close_btn.clicked.connect(self.reject)
+        
+        # 添加组件到标题栏
+        title_layout.addWidget(self.title_label)
+        title_layout.addStretch()
+        title_layout.addWidget(self.close_btn)
+        
+        self.text_label = BodyLabel('请输入定时清理记录时间，每行一个\n格式为：HH:mm:ss\n例如：12:00:00 或 20:00:00\n中文冒号自动转英文冒号\n自动补秒位为00')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
         self.update_theme_style()
@@ -523,26 +556,78 @@ class CleanupTimeDialog(QDialog):
         self.cancelButton.setFont(QFont(load_custom_font(), 12))
         
         layout = QVBoxLayout()
-        layout.addWidget(self.text_label)
-        layout.addWidget(self.textEdit)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        # 添加自定义标题栏
+        layout.addWidget(self.title_bar)
+        # 添加内容区域
+        content_layout = QVBoxLayout()
+        content_layout.addWidget(self.text_label)
+        content_layout.addWidget(self.textEdit)
         
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.cancelButton)
         buttonLayout.addWidget(self.saveButton)
         
-        layout.addLayout(buttonLayout)
+        content_layout.addLayout(buttonLayout)
+        content_layout.setContentsMargins(20, 10, 20, 20)
+        layout.addLayout(content_layout)
         self.setLayout(layout)
 
+    def mousePressEvent(self, event):
+        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+        if event.button() == Qt.LeftButton and self.title_bar.underMouse():
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.dragging and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.dragging = False
+
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)و✧
-        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
+        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
         self.setStyleSheet(f"""
-            QDialog, QDialog * {{
-                color: {colors['text']};
-                background-color: {colors['bg']};
+            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
+            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
+            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            #CloseButton {{ 
+                background-color: transparent; 
+                color: {colors['text']}; 
+                border-radius: 4px; 
+                font-weight: bold; 
             }}
+            #CloseButton:hover {{ background-color: #ff4d4d; color: white; }}
+            QLabel, QPushButton, QTextEdit {{ color: {colors['text']}; }}
         """)
+        
+        # 设置标题栏颜色以匹配背景色（仅Windows系统）
+        if os.name == 'nt':
+            try:
+                import ctypes
+                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
+                hwnd = int(self.winId())  # 转换为整数句柄
+                
+                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
+                bg_color = colors['bg'].lstrip('#')
+                # 转换为ARGB格式（添加不透明通道）
+                rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
+                
+                # 设置窗口标题栏颜色
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_int(hwnd),  # 窗口句柄（整数类型）
+                    35,  # DWMWA_CAPTION_COLOR
+                    ctypes.byref(ctypes.c_uint(rgb_color)),  # 颜色值指针
+                    ctypes.sizeof(ctypes.c_uint)  # 数据大小
+                )
+            except Exception as e:
+                logger.warning(f"设置标题栏颜色失败: {str(e)}")
         
     def closeEvent(self, event):
         if not self.saved:
