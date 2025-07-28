@@ -41,6 +41,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             "random_member_format": 2,
             "animation_interval": 100,
             "animation_auto_play": 5,
+            "animation_music_enabled": False,
+            "result_music_enabled": False,
+            "animation_music_volume": 5,
+            "result_music_volume": 5,
+            "music_fade_in": 300,
+            "music_fade_out": 300,
         }
 
         self.pumping_people_Draw_comboBox = ComboBox()
@@ -92,7 +98,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_Animation_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 结果动画间隔（毫秒）
-        self.pumping_people_Animation_interval_SpinBox.setRange(10, 2000)
+        self.pumping_people_Animation_interval_SpinBox.setRange(50, 2000)
         self.pumping_people_Animation_interval_SpinBox.setValue(100)
         self.pumping_people_Animation_interval_SpinBox.setSingleStep(10) 
         self.pumping_people_Animation_interval_SpinBox.setSuffix("ms")
@@ -100,7 +106,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_Animation_interval_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 自动播放间隔结果次数
-        self.pumping_people_Animation_auto_play_SpinBox.setRange(1, 50)
+        self.pumping_people_Animation_auto_play_SpinBox.setRange(1, 200)
         self.pumping_people_Animation_auto_play_SpinBox.setValue(5)
         self.pumping_people_Animation_auto_play_SpinBox.setSingleStep(5)
         self.pumping_people_Animation_auto_play_SpinBox.setSuffix("次")
@@ -128,12 +134,16 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         # 音量
         self.pumping_people_voice_volume_SpinBox.setRange(0, 100)
         self.pumping_people_voice_volume_SpinBox.setValue(100)
+        self.pumping_people_voice_volume_SpinBox.setSingleStep(5)
+        self.pumping_people_voice_volume_SpinBox.setSuffix("%")
         self.pumping_people_voice_volume_SpinBox.valueChanged.connect(self.save_settings)
         self.pumping_people_voice_volume_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 语速
         self.pumping_people_voice_speed_SpinBox.setRange(1, 500)
         self.pumping_people_voice_speed_SpinBox.setValue(100)
+        self.pumping_people_voice_speed_SpinBox.setSingleStep(10)
+        self.pumping_people_voice_speed_SpinBox.setSuffix("wpm")
         self.pumping_people_voice_speed_SpinBox.valueChanged.connect(self.save_settings)
         self.pumping_people_voice_speed_SpinBox.setFont(QFont(load_custom_font(), 12))
 
@@ -146,6 +156,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         # 系统音量
         self.pumping_people_system_volume_SpinBox.setRange(0, 100)
         self.pumping_people_system_volume_SpinBox.setValue(100)
+        self.pumping_people_system_volume_SpinBox.setSingleStep(5)
+        self.pumping_people_system_volume_SpinBox.setSuffix("%")
         self.pumping_people_system_volume_SpinBox.valueChanged.connect(self.save_settings)
         self.pumping_people_system_volume_SpinBox.setFont(QFont(load_custom_font(), 12))
 
@@ -168,29 +180,112 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.random_member_format_comboBox.currentIndexChanged.connect(self.save_settings)
         self.random_member_format_comboBox.setFont(QFont(load_custom_font(), 12))
 
+        # 动画音乐开关
+        self.pumping_people_Animation_music_switch = SwitchButton()
+        self.pumping_people_Animation_music_switch.setOnText("开启")
+        self.pumping_people_Animation_music_switch.setOffText("关闭")
+        self.pumping_people_Animation_music_switch.checkedChanged.connect(self.save_settings)
+        self.pumping_people_Animation_music_switch.setFont(QFont(load_custom_font(), 12))
+
+        # 结果音乐开关
+        self.pumping_people_result_music_switch = SwitchButton()
+        self.pumping_people_result_music_switch.setOnText("开启")
+        self.pumping_people_result_music_switch.setOffText("关闭")
+        self.pumping_people_result_music_switch.checkedChanged.connect(self.save_settings)
+        self.pumping_people_result_music_switch.setFont(QFont(load_custom_font(), 12))
+
+        # 动画音乐文件夹
+        self.pumping_people_Animation_music_path_button = PushButton("动画音乐文件夹")
+        self.pumping_people_Animation_music_path_button.setFont(QFont(load_custom_font(), 12))
+        self.pumping_people_Animation_music_path_button.clicked.connect(lambda: self.open_music_path('Animation_music'))
+
+        # 结果音乐文件夹
+        self.pumping_people_result_music_path_button = PushButton("结果音乐文件夹")
+        self.pumping_people_result_music_path_button.setFont(QFont(load_custom_font(), 12))
+        self.pumping_people_result_music_path_button.clicked.connect(lambda: self.open_music_path('result_music'))
+
+        # 动画音乐音量
+        self.pumping_people_Animation_music_volume_SpinBox = SpinBox()
+        self.pumping_people_Animation_music_volume_SpinBox.setRange(0, 100)
+        self.pumping_people_Animation_music_volume_SpinBox.setValue(5)
+        self.pumping_people_Animation_music_volume_SpinBox.setSingleStep(5)
+        self.pumping_people_Animation_music_volume_SpinBox.setSuffix("%")
+        self.pumping_people_Animation_music_volume_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_people_Animation_music_volume_SpinBox.setFont(QFont(load_custom_font(), 12))
+
+        # 结果音乐音量
+        self.pumping_people_result_music_volume_SpinBox = SpinBox()
+        self.pumping_people_result_music_volume_SpinBox.setRange(0, 100)
+        self.pumping_people_result_music_volume_SpinBox.setValue(5)
+        self.pumping_people_result_music_volume_SpinBox.setSingleStep(5)
+        self.pumping_people_result_music_volume_SpinBox.setSuffix("%")
+        self.pumping_people_result_music_volume_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_people_result_music_volume_SpinBox.setFont(QFont(load_custom_font(), 12))
+
+        # 渐入时间
+        self.pumping_people_music_fade_in_SpinBox = SpinBox()
+        self.pumping_people_music_fade_in_SpinBox.setRange(0, 1000)
+        self.pumping_people_music_fade_in_SpinBox.setValue(300)
+        self.pumping_people_music_fade_in_SpinBox.setSingleStep(100)
+        self.pumping_people_music_fade_in_SpinBox.setSuffix("ms")
+        self.pumping_people_music_fade_in_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_people_music_fade_in_SpinBox.setFont(QFont(load_custom_font(), 12))
+
+        # 渐出时间
+        self.pumping_people_music_fade_out_SpinBox = SpinBox()
+        self.pumping_people_music_fade_out_SpinBox.setRange(0, 1000)
+        self.pumping_people_music_fade_out_SpinBox.setValue(300)
+        self.pumping_people_music_fade_out_SpinBox.setSingleStep(100)
+        self.pumping_people_music_fade_out_SpinBox.setSuffix("ms")
+        self.pumping_people_music_fade_out_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_people_music_fade_out_SpinBox.setFont(QFont(load_custom_font(), 12))
+
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_people_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小(支持小数)", self.pumping_people_font_size_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语音播放", "设置结果公布时是否播放语音", self.pumping_people_Voice_switch)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "音量大小", "调节播报音量 (0-100)", self.pumping_people_voice_volume_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语速调节", "调节播报语速 (1%-500%)", self.pumping_people_voice_speed_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_person_voice_20_filled"), "系统音量控制", "抽取完成后自动设置系统音量", self.pumping_people_system_volume_switch)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "系统音量大小", "设置抽取完成后的系统音量 (0-100)", self.pumping_people_system_volume_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_people_Animation_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "设置抽取时的动画播放间隔(10-2000)(<1,2号动画模式>适用)", self.pumping_people_Animation_interval_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置抽取时的自动播放次数(1-50)(<2号动画模式>适用)", self.pumping_people_Animation_auto_play_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_number_symbol_square_20_filled"), "学号格式", "设置学号格式设置", self.pumping_people_student_id_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_rename_20_filled"), "姓名格式", "设置姓名格式设置", self.pumping_people_student_name_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "显示随机组员", "抽取小组时是否显示随机组员", self.show_random_member_checkbox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "组员显示格式", "设置随机组员的显示格式", self.random_member_format_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "班级人|组数", "设置该功能的显示格式", self.pumping_people_theme_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_people_Animation_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "设置抽取时的动画播放间隔(50-2000)(<1,2号动画模式>适用)", self.pumping_people_Animation_interval_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置抽取时的自动播放次数(1-200)(<2号动画模式>适用)", self.pumping_people_Animation_auto_play_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语音播放", "设置结果公布时是否播放语音", self.pumping_people_Voice_switch)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "音量大小", "调节播报音量 (0-100)", self.pumping_people_voice_volume_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语速调节", "调节播报语速 (1-500)", self.pumping_people_voice_speed_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_voice_20_filled"), "系统音量控制", "抽取完成后自动设置系统音量", self.pumping_people_system_volume_switch)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "系统音量大小", "设置抽取完成后的系统音量 (0-100)", self.pumping_people_system_volume_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐", "抽取动画背景音乐是否进行播放", self.pumping_people_Animation_music_switch)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐", "抽取结果背景音乐是否进行播放", self.pumping_people_result_music_switch)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐文件夹", "点击打开抽取动画背景音乐目录", self.pumping_people_Animation_music_path_button)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐文件夹", "点击打开抽取结果背景音乐目录", self.pumping_people_result_music_path_button)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐音量", "设置抽取动画背景音乐音量 (0-100)", self.pumping_people_Animation_music_volume_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐音量", "设置抽取结果背景音乐音量 (0-100)", self.pumping_people_result_music_volume_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐入时间", "设置抽取动画/结果背景音乐渐入时间 (0-1000)(ms)", self.pumping_people_music_fade_in_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐出时间", "设置抽取动画/结果背景音乐渐出时间 (0-1000)(ms)", self.pumping_people_music_fade_out_SpinBox)
 
         self.load_settings()  # 加载设置
         self.save_settings()  # 保存设置
 
     def on_pumping_people_Voice_switch_changed(self, checked):
         self.save_settings()
+
+    def open_music_path(self, button):
+        BGM_ANIMATION_PATH = './app/resource/music/pumping_people/Animation_music'
+        BGM_RESULT_PATH = './app/resource/music/pumping_people/result_music'
+        if not os.path.exists(BGM_ANIMATION_PATH):
+            os.makedirs(BGM_ANIMATION_PATH)
+        if not os.path.exists(BGM_RESULT_PATH):
+            os.makedirs(BGM_RESULT_PATH)
+        # 星野引导：根据按钮选择打开对应的音乐文件夹 (๑•̀ㅂ•́)و✧
+        if button == 'Animation_music':
+            # 白露提示：确保路径是文件夹格式再打开哦～
+            os.startfile(os.path.abspath(BGM_ANIMATION_PATH))
+        elif button == 'result_music':
+            # 星野守护：用绝对路径确保文件夹正确打开～
+            os.startfile(os.path.abspath(BGM_RESULT_PATH))
 
     def apply_font_size(self):
         try:
@@ -301,6 +396,15 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     # 加载动画设置
                     animation_interval = pumping_people_settings.get("animation_interval", self.default_settings["animation_interval"])
                     animation_auto_play = pumping_people_settings.get("animation_auto_play", self.default_settings["animation_auto_play"])
+
+                    # 加载动画音乐设置
+                    animation_music_enabled = pumping_people_settings.get("animation_music_enabled", self.default_settings["animation_music_enabled"])
+                    result_music_enabled = pumping_people_settings.get("result_music_enabled", self.default_settings["result_music_enabled"])
+                    animation_music_volume = pumping_people_settings.get("animation_music_volume", self.default_settings["animation_music_volume"])
+                    result_music_volume = pumping_people_settings.get("result_music_volume", self.default_settings["result_music_volume"])
+                    music_fade_in = pumping_people_settings.get("music_fade_in", self.default_settings["music_fade_in"])
+                    music_fade_out = pumping_people_settings.get("music_fade_out", self.default_settings["music_fade_out"])
+
                     
                     self.pumping_people_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
@@ -318,6 +422,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     self.random_member_format_comboBox.setCurrentIndex(random_member_format)
                     self.pumping_people_Animation_interval_SpinBox.setValue(animation_interval)
                     self.pumping_people_Animation_auto_play_SpinBox.setValue(animation_auto_play)
+                    self.pumping_people_Animation_music_switch.setChecked(animation_music_enabled)
+                    self.pumping_people_result_music_switch.setChecked(result_music_enabled)
+                    self.pumping_people_Animation_music_volume_SpinBox.setValue(animation_music_volume)
+                    self.pumping_people_result_music_volume_SpinBox.setValue(result_music_volume)
+                    self.pumping_people_music_fade_in_SpinBox.setValue(music_fade_in)
+                    self.pumping_people_music_fade_out_SpinBox.setValue(music_fade_out)
             else:
                 self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
                 self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
@@ -335,6 +445,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                 self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
                 self.pumping_people_Animation_interval_SpinBox.setValue(self.default_settings["animation_interval"])
                 self.pumping_people_Animation_auto_play_SpinBox.setValue(self.default_settings["animation_auto_play"])
+                self.pumping_people_Animation_music_switch.setChecked(self.default_settings["animation_music_enabled"])
+                self.pumping_people_result_music_switch.setChecked(self.default_settings["result_music_enabled"])
+                self.pumping_people_Animation_music_volume_SpinBox.setValue(self.default_settings["animation_music_volume"])
+                self.pumping_people_result_music_volume_SpinBox.setValue(self.default_settings["result_music_volume"])
+                self.pumping_people_music_fade_in_SpinBox.setValue(self.default_settings["music_fade_in"])
+                self.pumping_people_music_fade_out_SpinBox.setValue(self.default_settings["music_fade_out"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -354,6 +470,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
             self.pumping_people_Animation_interval_SpinBox.setValue(self.default_settings["animation_interval"])
             self.pumping_people_Animation_auto_play_SpinBox.setValue(self.default_settings["animation_auto_play"])
+            self.pumping_people_Animation_music_switch.setChecked(self.default_settings["animation_music_enabled"])
+            self.pumping_people_result_music_switch.setChecked(self.default_settings["result_music_enabled"])
+            self.pumping_people_Animation_music_volume_SpinBox.setValue(self.default_settings["animation_music_volume"])
+            self.pumping_people_result_music_volume_SpinBox.setValue(self.default_settings["result_music_volume"])
+            self.pumping_people_music_fade_in_SpinBox.setValue(self.default_settings["music_fade_in"])
+            self.pumping_people_music_fade_out_SpinBox.setValue(self.default_settings["music_fade_out"])
 
             self.save_settings()
     
@@ -388,6 +510,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         pumping_people_settings["random_member_format"] = self.random_member_format_comboBox.currentIndex()
         pumping_people_settings["animation_interval"] = self.pumping_people_Animation_interval_SpinBox.value()
         pumping_people_settings["animation_auto_play"] = self.pumping_people_Animation_auto_play_SpinBox.value()
+        pumping_people_settings["animation_music_enabled"] = self.pumping_people_Animation_music_switch.isChecked()
+        pumping_people_settings["result_music_enabled"] = self.pumping_people_result_music_switch.isChecked()
+        pumping_people_settings["animation_music_volume"] = self.pumping_people_Animation_music_volume_SpinBox.value()
+        pumping_people_settings["result_music_volume"] = self.pumping_people_result_music_volume_SpinBox.value()
+        pumping_people_settings["music_fade_in"] = self.pumping_people_music_fade_in_SpinBox.value()
+        pumping_people_settings["music_fade_out"] = self.pumping_people_music_fade_out_SpinBox.value()
 
         # 保存字体大小
         try:

@@ -2,8 +2,10 @@ from qfluentwidgets import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+from PyQt5.QtMultimedia import *
 
 import os
+import glob
 import sys
 import json
 import random
@@ -16,6 +18,10 @@ from loguru import logger
 from random import SystemRandom
 system_random = SystemRandom()
 
+# 音乐文件路径定义 ~(≧▽≦)/~ 星野最喜欢的动画BGM存放地
+BGM_ANIMATION_PATH = os.path.abspath('./app/resource/music/pumping_people/Animation_music')
+BGM_RESULT_PATH = os.path.abspath('./app/resource/music/pumping_people/result_music')
+
 from app.common.config import get_theme_icon, load_custom_font, restore_volume
 
 class pumping_people(QWidget):
@@ -25,6 +31,8 @@ class pumping_people(QWidget):
         self.is_animating = False
         self.draw_mode = "random"
         self.animation_timer = None
+        # 音乐播放器初始化 ✧(◍˃̶ᗜ˂̶◍)✩ 感谢白露提供的播放器
+        self.music_player = QMediaPlayer()
         # 使用全局语音引擎单例
         # 检查系统版本是否为Windows 10及以上且非x86架构
         if sys.platform == 'win32' and sys.getwindowsversion().major >= 10 and platform.machine() != 'x86':
@@ -46,6 +54,13 @@ class pumping_people(QWidget):
                 pumping_people_animation_mode = settings['pumping_people']['animation_mode']
                 self.interval = settings['pumping_people']['animation_interval']
                 self.auto_play = settings['pumping_people']['animation_auto_play']
+                self.animation_music_enabled = settings['pumping_people']['animation_music_enabled']
+                self.result_music_enabled = settings['pumping_people']['result_music_enabled']
+                self.animation_music_volume = settings['pumping_people']['animation_music_volume']
+                self.result_music_volume = settings['pumping_people']['result_music_volume']
+                self.music_fade_in = settings['pumping_people']['music_fade_in']
+                self.music_fade_out = settings['pumping_people']['music_fade_out']
+                
         except Exception as e:
             pumping_people_draw_mode = 0
             pumping_people_animation_mode = 0
@@ -67,6 +82,8 @@ class pumping_people(QWidget):
             self.animation_timer = QTimer()
             self.animation_timer.timeout.connect(self._show_random_student)
             self.animation_timer.start(self.interval)
+            # 开始播放动画音乐 ✧*｡٩(ˊᗜˋ*)و✧*｡
+            self._play_animation_music()
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self._stop_animation)
             
@@ -402,6 +419,21 @@ class pumping_people(QWidget):
     def _stop_animation(self):
         """停止动画并显示最终结果"""
         self.animation_timer.stop()
+        # 创建音量渐出动画 ～(￣▽￣)～* 白露负责温柔收尾
+        self.fade_out_animation = QPropertyAnimation(self.music_player, b"volume")
+        self.fade_out_animation.setDuration(self.music_fade_out)
+        self.fade_out_animation.setStartValue(self.music_player.volume())
+        self.fade_out_animation.setEndValue(0)
+        self.fade_out_animation.setEasingCurve(QEasingCurve.InOutQuad)
+        
+        # 动画结束后停止播放
+        def stop_after_fade():
+            self.music_player.stop()
+            self.music_player.setVolume(100)  # 重置音量为最大，准备下次播放
+            self._play_result_music()
+        
+        self.fade_out_animation.finished.connect(stop_after_fade)
+        self.fade_out_animation.start()
         self.is_animating = False
         self.start_button.setText("开始")
         self.start_button.clicked.disconnect()
@@ -412,25 +444,126 @@ class pumping_people(QWidget):
         self.voice_play()
     
     def _play_full_animation(self):
-        """播放完整动画（快速显示n个随机学生后显示最终结果）"""
+        """播放完整动画（快速显示n个随机学生后显示最终结果）
+        星野：动画开始啦~ 让我们看看谁是幸运儿！🎡
+        白露：背景音乐和动画会同步播放哦~ 🎵"""
         self.is_animating = True
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self._show_random_student)
         self.animation_timer.start(self.interval)
-        self.start_button.setEnabled(False)  # 禁用按钮
+        self._play_animation_music()
+        self.start_button.setEnabled(False)  # 禁用按钮（星野：抽奖中不能重复点击哦~）
         
         # n次随机后停止
         QTimer.singleShot(self.auto_play * self.interval, lambda: [
             self.animation_timer.stop(),
             self._stop_animation(),
-            self.start_button.setEnabled(True)  # 恢复按钮
+            self.start_button.setEnabled(True)  # 白露：按钮恢复啦~ 可以再次抽奖哦！😊
           ])
     
     # 直接显示结果（无动画效果）
     def _show_result_directly(self):
         """直接显示结果（无动画效果）"""
         self.random()
+        self._play_result_music()
         self.voice_play()
+
+    def _play_result_music(self):
+        """播放结果音乐
+        星野：恭喜你抽中啦！🎉 来听听胜利的音乐吧~
+        白露：结果音乐和动画音乐是分开的呢~ 真有趣！"""
+        if not self.result_music_enabled:
+            return
+        try:
+            # 检查音乐目录是否存在
+            if not os.path.exists(BGM_RESULT_PATH):
+                logger.warning(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
+                return
+
+            # 获取所有支持的音乐文件 (｡･ω･｡)ﾉ♡
+            music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
+            music_files = []
+            for ext in music_extensions:
+                music_files.extend(glob.glob(os.path.join(BGM_RESULT_PATH, ext)))
+
+            if not music_files:
+                logger.warning(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
+                return
+
+            # 随机选择一首音乐 ♪(^∇^*)
+            selected_music = random.choice(music_files)
+            logger.info(f"正在播放结果音乐: {selected_music}")
+
+            # 设置并播放音乐，准备渐入效果 ✧*｡٩(ˊᗜˋ*)و✧*｡
+            self.music_player.setMedia(QMediaContent(QUrl.fromLocalFile(selected_music)))
+            self.music_player.setVolume(0)  # 初始音量设为0
+            self.music_player.play()
+            
+            # 创建音量渐入动画 ～(￣▽￣)～* 星野的魔法音量调节
+            self.fade_in_animation = QPropertyAnimation(self.music_player, b"volume")
+            self.fade_in_animation.setDuration(self.music_fade_in)
+            self.fade_in_animation.setStartValue(0)
+            self.fade_in_animation.setEndValue(self.result_music_volume)
+            self.fade_in_animation.setEasingCurve(QEasingCurve.InOutQuad)
+            self.fade_in_animation.start()
+
+            if self.music_player.state() == QMediaPlayer.PlayingState:
+                # 创建音量渐出动画
+                fade_out_animation = QPropertyAnimation(self.music_player, b"volume")
+                fade_out_animation.setDuration(self.music_fade_out)
+                fade_out_animation.setStartValue(self.music_player.volume())
+                fade_out_animation.setEndValue(0)
+                fade_out_animation.setEasingCurve(QEasingCurve.InOutQuad)
+
+                # 动画结束后停止播放并重置音量
+                def final_stop():
+                    self.music_player.stop()
+                    self.music_player.setVolume(self.result_music_volume)
+
+                fade_out_animation.finished.connect(final_stop)
+                fade_out_animation.start()
+
+        except Exception as e:
+            logger.error(f"播放结果音乐时出错: {e}")
+
+    def _play_animation_music(self):
+        """播放动画背景音乐 ～(￣▽￣)～* 星野和白露的音乐时间"""
+        if not self.animation_music_enabled:
+            return
+        try:
+            # 检查音乐目录是否存在
+            if not os.path.exists(BGM_ANIMATION_PATH):
+                logger.warning(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
+                return
+
+            # 获取所有支持的音乐文件 (｡･ω･｡)ﾉ♡
+            music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
+            music_files = []
+            for ext in music_extensions:
+                music_files.extend(glob.glob(os.path.join(BGM_ANIMATION_PATH, ext)))
+
+            if not music_files:
+                logger.warning(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
+                return
+
+            # 随机选择一首音乐 ♪(^∇^*)
+            selected_music = random.choice(music_files)
+            logger.info(f"正在播放音乐: {selected_music}")
+
+            # 设置并播放音乐，准备渐入效果 ✧*｡٩(ˊᗜˋ*)و✧*｡
+            self.music_player.setMedia(QMediaContent(QUrl.fromLocalFile(selected_music)))
+            self.music_player.setVolume(0)  # 初始音量设为0
+            self.music_player.play()
+            
+            # 创建音量渐入动画 ～(￣▽￣)～* 星野的魔法音量调节
+            self.fade_in_animation = QPropertyAnimation(self.music_player, b"volume")
+            self.fade_in_animation.setDuration(self.music_fade_in)
+            self.fade_in_animation.setStartValue(0)
+            self.fade_in_animation.setEndValue(self.animation_music_volume)
+            self.fade_in_animation.setEasingCurve(QEasingCurve.InOutQuad)
+            self.fade_in_animation.start()
+        except Exception as e:
+            logger.error(f"播放音乐时出错: {e}")
 
     def voice_play(self):
         """语音播报部分"""
@@ -880,7 +1013,8 @@ class pumping_people(QWidget):
                             if os.path.exists(draw_record_file):
                                 os.remove(draw_record_file)
 
-                        self.random()
+                        # 星野酱修复：移除递归调用，避免无限循环 ✧⁺⸜(●˙▾˙●)⸝⁺✧
+                        self.start_button.setEnabled(True)  # 重新启用开始按钮
                         return
 
         else:
