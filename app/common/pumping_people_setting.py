@@ -81,6 +81,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_font_size_SpinBox.setRange(30, 200)
         self.pumping_people_font_size_SpinBox.setValue(50)
         self.pumping_people_font_size_SpinBox.setSingleStep(5)
+        self.pumping_people_font_size_SpinBox.setDecimals(0)
         self.pumping_people_font_size_SpinBox.valueChanged.connect(self.save_settings)
         self.pumping_people_font_size_SpinBox.setFont(QFont(load_custom_font(), 12))
 
