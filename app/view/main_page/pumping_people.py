@@ -82,12 +82,15 @@ class pumping_people(QWidget):
         # 根据动画模式执行不同逻辑
         if pumping_people_animation_mode == 0:  # 手动停止动画
             self.start_button.setText("停止")
+            if self.animation_music_enabled:
+                self._play_animation_music()
             self.is_animating = True
             self.animation_timer = QTimer()
             self.animation_timer.timeout.connect(self._show_random_student)
+            logger.debug(f"间隔: {self.interval}ms")
+            logger.debug(f"动画开始")
             self.animation_timer.start(self.interval)
-            if self.animation_music_enabled:
-                self._play_animation_music()
+            logger.debug(f"动画间隔: {self.interval}ms")
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self._stop_animation)
             
@@ -573,8 +576,6 @@ class pumping_people(QWidget):
             self.music_player.play()
             # 连接错误信号
             self.music_player.error.connect(self.handle_media_error)
-
-            logger.debug("动画音乐播放开始")
             
             # 创建音量渐入动画 ～(￣▽￣)～* 星野的魔法音量调节
             self.fade_in_animation = QPropertyAnimation(self.music_player, b"volume")
@@ -583,8 +584,6 @@ class pumping_people(QWidget):
             self.fade_in_animation.setEndValue(self.animation_music_volume)
             self.fade_in_animation.setEasingCurve(QEasingCurve.InOutQuad)
             self.fade_in_animation.start()
-
-            logger.debug("动画音乐播放完成")
         except Exception as e:
             logger.error(f"播放音乐时出错: {e}")
 
