@@ -18,7 +18,7 @@ pyqrcode~=1.2.1
 pypng~=0.20220715.0
 pillow~=10.4.0
 psutil~=7.0.0
-pandas==2.3.1
+pandas==2.0.3
 pycaw==20240210
 openpyxl==3.1.5
 requests==2.32.4
