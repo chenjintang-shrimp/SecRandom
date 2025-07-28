@@ -18,10 +18,6 @@ from loguru import logger
 from random import SystemRandom
 system_random = SystemRandom()
 
-# 音乐文件路径定义 ~(≧▽≦)/~ 星野最喜欢的动画BGM存放地
-BGM_ANIMATION_PATH = os.path.abspath('./app/resource/music/pumping_people/Animation_music')
-BGM_RESULT_PATH = os.path.abspath('./app/resource/music/pumping_people/result_music')
-
 from app.common.config import get_theme_icon, load_custom_font, restore_volume
 
 class pumping_people(QWidget):
@@ -480,6 +476,7 @@ class pumping_people(QWidget):
         星野：恭喜你抽中啦！🎉 来听听胜利的音乐吧~
         白露：结果音乐和动画音乐是分开的呢~ 真有趣！"""
         try:
+            BGM_RESULT_PATH = os.path.abspath('./app/resource/music/pumping_people/result_music')
             # 检查音乐目录是否存在
             if not os.path.exists(BGM_RESULT_PATH):
                 logger.warning(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
@@ -539,6 +536,7 @@ class pumping_people(QWidget):
     def _play_animation_music(self):
         """播放动画背景音乐 ～(￣▽￣)～* 星野和白露的音乐时间"""
         try:
+            BGM_ANIMATION_PATH = os.path.abspath('./app/resource/music/pumping_people/Animation_music')
             # 检查音乐目录是否存在
             if not os.path.exists(BGM_ANIMATION_PATH):
                 logger.warning(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
