@@ -62,6 +62,13 @@ class pumping_reward(QWidget):
         except Exception as e:
             pumping_reward_draw_mode = 0
             pumping_reward_animation_mode = 0
+            self.auto_play = 5
+            self.animation_music_enabled = False
+            self.result_music_enabled = False
+            self.animation_music_volume = 5
+            self.result_music_volume = 5
+            self.music_fade_in = 300
+            self.music_fade_out = 300
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
         # 根据抽选模式执行不同逻辑
@@ -80,8 +87,8 @@ class pumping_reward(QWidget):
             self.animation_timer = QTimer()
             self.animation_timer.timeout.connect(self._show_random_reward)
             self.animation_timer.start(self.interval)
-            # 开始播放动画音乐 ✧*｡٩(ˊᗜˋ*)و✧*｡
-            self._play_animation_music()
+            if self.animation_music_enabled:
+                self._play_animation_music()
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self._stop_animation)
             
@@ -330,21 +337,23 @@ class pumping_reward(QWidget):
     def _stop_animation(self):
         """停止动画并显示最终结果"""
         self.animation_timer.stop()
-        # 创建音量渐出动画 ～(￣▽￣)～* 白露负责温柔收尾
-        self.fade_out_animation = QPropertyAnimation(self.music_player, b"volume")
-        self.fade_out_animation.setDuration(self.music_fade_out)
-        self.fade_out_animation.setStartValue(self.music_player.volume())
-        self.fade_out_animation.setEndValue(0)
-        self.fade_out_animation.setEasingCurve(QEasingCurve.InOutQuad)
-        
-        # 动画结束后停止播放
-        def stop_after_fade():
-            self.music_player.stop()
-            self.music_player.setVolume(100)  # 重置音量为最大，准备下次播放
+        if self.animation_music_enabled:
+            # 创建音量渐出动画 ～(￣▽￣)～* 白露负责温柔收尾
+            self.fade_out_animation = QPropertyAnimation(self.music_player, b"volume")
+            self.fade_out_animation.setDuration(self.music_fade_out)
+            self.fade_out_animation.setStartValue(self.music_player.volume())
+            self.fade_out_animation.setEndValue(0)
+            self.fade_out_animation.setEasingCurve(QEasingCurve.InOutQuad)
+            
+            # 动画结束后停止播放
+            def stop_after_fade():
+                self.music_player.stop()
+                self.music_player.setVolume(100)  # 重置音量为最大，准备下次播放
+            
+            self.fade_out_animation.finished.connect(stop_after_fade)
+            self.fade_out_animation.start()
+        if self.result_music_enabled:
             self._play_result_music()
-        
-        self.fade_out_animation.finished.connect(stop_after_fade)
-        self.fade_out_animation.start()
         self.is_animating = False
         self.start_button.setText("开始")
         self.start_button.clicked.disconnect()
@@ -361,7 +370,8 @@ class pumping_reward(QWidget):
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self._show_random_reward)
         self.animation_timer.start(self.interval)
-        self._play_animation_music()
+        if self.animation_music_enabled:
+            self._play_animation_music()
         self.start_button.setEnabled(False)  # 禁用按钮
         
         # n次随机后停止
@@ -374,16 +384,15 @@ class pumping_reward(QWidget):
     # 直接显示结果（无动画效果）
     def _show_result_directly(self):
         """直接显示结果（无动画效果）"""
+        if self.result_music_enabled:
+            self._play_result_music()
         self.random()
-        self._play_result_music()
         self.voice_play()
 
     def _play_result_music(self):
         """播放结果音乐
         星野：恭喜你抽中啦！🎉 来听听胜利的音乐吧~
         白露：结果音乐和动画音乐是分开的呢~ 真有趣！"""
-        if not self.result_music_enabled:
-            return
         try:
             # 检查音乐目录是否存在
             if not os.path.exists(BGM_RESULT_PATH):
@@ -438,8 +447,6 @@ class pumping_reward(QWidget):
 
     def _play_animation_music(self):
         """播放动画背景音乐 ～(￣▽￣)～* 星野和白露的音乐时间"""
-        if not self.animation_music_enabled:
-            return
         try:
             # 检查音乐目录是否存在
             if not os.path.exists(BGM_ANIMATION_PATH):

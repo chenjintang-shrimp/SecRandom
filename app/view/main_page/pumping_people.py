@@ -64,6 +64,14 @@ class pumping_people(QWidget):
         except Exception as e:
             pumping_people_draw_mode = 0
             pumping_people_animation_mode = 0
+            self.interval = 100
+            self.auto_play = 5
+            self.animation_music_enabled = False
+            self.result_music_enabled = False
+            self.animation_music_volume = 5
+            self.result_music_volume = 5
+            self.music_fade_in = 300
+            self.music_fade_out = 300
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
         # 根据抽选模式执行不同逻辑
@@ -82,8 +90,8 @@ class pumping_people(QWidget):
             self.animation_timer = QTimer()
             self.animation_timer.timeout.connect(self._show_random_student)
             self.animation_timer.start(self.interval)
-            # 开始播放动画音乐 ✧*｡٩(ˊᗜˋ*)و✧*｡
-            self._play_animation_music()
+            if self.animation_music_enabled:
+                self._play_animation_music()
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self._stop_animation)
             
@@ -419,21 +427,23 @@ class pumping_people(QWidget):
     def _stop_animation(self):
         """停止动画并显示最终结果"""
         self.animation_timer.stop()
-        # 创建音量渐出动画 ～(￣▽￣)～* 白露负责温柔收尾
-        self.fade_out_animation = QPropertyAnimation(self.music_player, b"volume")
-        self.fade_out_animation.setDuration(self.music_fade_out)
-        self.fade_out_animation.setStartValue(self.music_player.volume())
-        self.fade_out_animation.setEndValue(0)
-        self.fade_out_animation.setEasingCurve(QEasingCurve.InOutQuad)
+        if self.animation_music_enabled:
+            # 创建音量渐出动画 ～(￣▽￣)～* 白露负责温柔收尾
+            self.fade_out_animation = QPropertyAnimation(self.music_player, b"volume")
+            self.fade_out_animation.setDuration(self.music_fade_out)
+            self.fade_out_animation.setStartValue(self.music_player.volume())
+            self.fade_out_animation.setEndValue(0)
+            self.fade_out_animation.setEasingCurve(QEasingCurve.InOutQuad)
         
-        # 动画结束后停止播放
-        def stop_after_fade():
-            self.music_player.stop()
-            self.music_player.setVolume(100)  # 重置音量为最大，准备下次播放
+            # 动画结束后停止播放
+            def stop_after_fade():
+                self.music_player.stop()
+                self.music_player.setVolume(100)  # 重置音量为最大，准备下次播放
+            
+            self.fade_out_animation.finished.connect(stop_after_fade)
+            self.fade_out_animation.start()
+        if self.result_music_enabled:
             self._play_result_music()
-        
-        self.fade_out_animation.finished.connect(stop_after_fade)
-        self.fade_out_animation.start()
         self.is_animating = False
         self.start_button.setText("开始")
         self.start_button.clicked.disconnect()
@@ -451,7 +461,8 @@ class pumping_people(QWidget):
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self._show_random_student)
         self.animation_timer.start(self.interval)
-        self._play_animation_music()
+        if self.animation_music_enabled:
+            self._play_animation_music()
         self.start_button.setEnabled(False)  # 禁用按钮（星野：抽奖中不能重复点击哦~）
         
         # n次随机后停止
@@ -464,16 +475,15 @@ class pumping_people(QWidget):
     # 直接显示结果（无动画效果）
     def _show_result_directly(self):
         """直接显示结果（无动画效果）"""
+        if self.result_music_enabled:
+            self._play_result_music()
         self.random()
-        self._play_result_music()
         self.voice_play()
 
     def _play_result_music(self):
         """播放结果音乐
         星野：恭喜你抽中啦！🎉 来听听胜利的音乐吧~
         白露：结果音乐和动画音乐是分开的呢~ 真有趣！"""
-        if not self.result_music_enabled:
-            return
         try:
             # 检查音乐目录是否存在
             if not os.path.exists(BGM_RESULT_PATH):
@@ -528,34 +538,17 @@ class pumping_people(QWidget):
 
     def _play_animation_music(self):
         """播放动画背景音乐 ～(￣▽￣)～* 星野和白露的音乐时间"""
-        if not self.animation_music_enabled:
-            return
         try:
-            # 声明全局变量 (星野的作用域魔法)
-            global BGM_ANIMATION_PATH
-            # 调试: 打印当前工作目录和音乐路径 (白露的侦探笔记)
-            logger.debug(f"当前工作目录: {os.getcwd()}")
-            logger.debug(f"音乐目录配置路径: {BGM_ANIMATION_PATH}")
-            logger.debug(f"音乐目录绝对路径: {os.path.abspath(BGM_ANIMATION_PATH)}")
-
             # 检查音乐目录是否存在
             if not os.path.exists(BGM_ANIMATION_PATH):
                 logger.warning(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
-                # 尝试使用打包后的资源路径 (星野的应急方案)
-                packaged_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'resource', 'Animation_music')
-                if os.path.exists(packaged_path):
-                    logger.info(f"使用打包后的音乐路径: {packaged_path}")
-                    BGM_ANIMATION_PATH = packaged_path
-                else:
-                    return
+                return
 
             # 获取所有支持的音乐文件 (｡･ω･｡)ﾉ♡
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
-                found_files = glob.glob(os.path.join(BGM_ANIMATION_PATH, ext))
-                logger.debug(f"找到{len(found_files)}个{ext}文件")
-                music_files.extend(found_files)
+                music_files.extend(glob.glob(os.path.join(BGM_ANIMATION_PATH, ext)))
 
             if not music_files:
                 logger.warning(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
@@ -564,58 +557,11 @@ class pumping_people(QWidget):
             # 随机选择一首音乐 ♪(^∇^*)
             selected_music = random.choice(music_files)
             logger.info(f"正在播放音乐: {selected_music}")
-            logger.debug(f"音乐文件是否存在: {os.path.exists(selected_music)}")
-            logger.debug(f"音乐文件绝对路径: {os.path.abspath(selected_music)}")
-
-            # 设置Qt错误处理 (白露的错误捕获魔法)
-            self.music_player.error.connect(self._handle_media_error)
 
             # 设置并播放音乐，准备渐入效果 ✧*｡٩(ˊᗜˋ*)و✧*｡
-            media_content = QMediaContent(QUrl.fromLocalFile(selected_music))
-            self.music_player.setMedia(media_content)
+            self.music_player.setMedia(QMediaContent(QUrl.fromLocalFile(selected_music)))
             self.music_player.setVolume(0)  # 初始音量设为0
-            
-            # 媒体状态文字描述 (白露的状态翻译器)
-            status_map = {
-                QMediaPlayer.NoMedia: "无媒体",
-                QMediaPlayer.LoadingMedia: "加载中",
-                QMediaPlayer.LoadedMedia: "已加载",
-                QMediaPlayer.StalledMedia: "播放停滞",
-                QMediaPlayer.BufferingMedia: "缓冲中",
-                QMediaPlayer.BufferedMedia: "已缓冲",
-                QMediaPlayer.EndOfMedia: "播放结束",
-                QMediaPlayer.InvalidMedia: "无效媒体",
-                QMediaPlayer.UnknownMediaStatus: "未知状态"
-            }
-            current_status = self.music_player.mediaStatus()
-            logger.debug(f"当前媒体状态: {current_status} ({status_map.get(current_status, '未知')})")
-
-            # 星野的耐心等待机制: 等待媒体加载完成
-            max_loading_time = 1000  # 1秒加载时间 (≧∇≦)ﾉ
-            check_interval = 200     # 检查间隔(毫秒)
-            elapsed_time = 0
-            loading_statuses = {QMediaPlayer.LoadingMedia, QMediaPlayer.StalledMedia, QMediaPlayer.BufferingMedia}
-            
-            while elapsed_time < max_loading_time and self.music_player.mediaStatus() in loading_statuses:
-                # 记录加载进度 (白露的进度报告)
-                current_status = self.music_player.mediaStatus()
-                logger.debug(f"加载中... {elapsed_time}/{max_loading_time}ms, 状态: {current_status} ({status_map.get(current_status, '未知')})")
-                
-                QThread.msleep(check_interval)
-                QApplication.processEvents()
-                elapsed_time += check_interval
-
-            # 最终状态检查
-            final_status = self.music_player.mediaStatus()
-            logger.debug(f"加载等待结束，总耗时: {elapsed_time}ms, 最终状态: {final_status} ({status_map.get(final_status, '未知')})")
-            if final_status == QMediaPlayer.LoadedMedia:
-                logger.debug(f"媒体加载成功，耗时{elapsed_time}毫秒 ✧⁺⸜(●˙▾˙●)⸝⁺✧")
-                self.music_player.play()
-            else:
-                logger.warning(f"音乐加载失败，最终状态: {final_status} ({status_map.get(final_status, '未知')}) ＞﹏＜")
-                # 即使加载未完成也尝试播放，让Qt自己处理
-                self.music_player.play()
-            logger.debug(f"播放状态: {self.music_player.state()}")
+            self.music_player.play()
             
             # 创建音量渐入动画 ～(￣▽￣)～* 星野的魔法音量调节
             self.fade_in_animation = QPropertyAnimation(self.music_player, b"volume")
@@ -625,21 +571,7 @@ class pumping_people(QWidget):
             self.fade_in_animation.setEasingCurve(QEasingCurve.InOutQuad)
             self.fade_in_animation.start()
         except Exception as e:
-            logger.error(f"播放音乐时出错: {e}", exc_info=True)  # 详细异常信息
-
-    def _handle_media_error(self, error):
-        """处理Qt多媒体错误 (白露的错误处理小课堂)"""
-        error_str = self.music_player.errorString()
-        error_types = {
-            QMediaPlayer.NoError: "无错误",
-            QMediaPlayer.ResourceError: "资源无法访问",
-            QMediaPlayer.FormatError: "不支持的格式",
-            QMediaPlayer.NetworkError: "网络错误",
-            QMediaPlayer.AccessDeniedError: "权限被拒绝",
-            QMediaPlayer.ServiceMissingError: "多媒体服务缺失"
-        }
-        error_type = error_types.get(error, f"未知错误 ({error})")
-        logger.error(f"Qt多媒体错误: {error_type} - {error_str}")
+            logger.error(f"播放音乐时出错: {e}")
 
     def voice_play(self):
         """语音播报部分"""
