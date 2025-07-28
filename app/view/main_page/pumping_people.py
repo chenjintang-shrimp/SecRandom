@@ -87,10 +87,7 @@ class pumping_people(QWidget):
             self.is_animating = True
             self.animation_timer = QTimer()
             self.animation_timer.timeout.connect(self._show_random_student)
-            logger.debug(f"间隔: {self.interval}ms")
-            logger.debug(f"动画开始")
             self.animation_timer.start(self.interval)
-            logger.debug(f"动画间隔: {self.interval}ms")
             self.start_button.clicked.disconnect()
             self.start_button.clicked.connect(self._stop_animation)
             

@@ -22,7 +22,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             "system_volume_enabled": False,
             "system_volume_value": 100,
             "extraction_scope": 0,
-            "font_size": 50.0,
+            "font_size": 50,
             "draw_mode": 0,
             "draw_pumping": 0,
             "animation_mode": 0,
@@ -78,10 +78,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_Draw_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 字体大小
-        self.pumping_people_font_size_SpinBox.setRange(30.0, 200.0)
-        self.pumping_people_font_size_SpinBox.setValue(50.0)
-        self.pumping_people_font_size_SpinBox.setSingleStep(0.5)
-        self.pumping_people_font_size_SpinBox.setDecimals(1)
+        self.pumping_people_font_size_SpinBox.setRange(30, 200)
+        self.pumping_people_font_size_SpinBox.setValue(50)
+        self.pumping_people_font_size_SpinBox.setSingleStep(5)
         self.pumping_people_font_size_SpinBox.valueChanged.connect(self.save_settings)
         self.pumping_people_font_size_SpinBox.setFont(QFont(load_custom_font(), 12))
 
@@ -290,26 +289,21 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
     def apply_font_size(self):
         try:
             font_size_str = self.pumping_people_font_size_SpinBox.value()
-            # 检查是否为一位小数
-            if '.' in font_size_str:
-                integer_part, decimal_part = font_size_str.split('.', 1)
-                if len(decimal_part) > 1:
-                    raise ValueError("最多只能输入一位小数")
-            font_size = float(font_size_str)
-            if 30.0 <= font_size <= 200.0:
+            font_size = int(font_size_str)
+            if 30 <= font_size <= 200:
                 # 格式化保留一位小数
                 self.pumping_people_font_size_SpinBox.setValue(font_size)
                 self.save_settings()
                 InfoBar.success(
                     title='设置成功',
-                    content=f"设置字体大小为: {font_size:.1f}",
+                    content=f"设置字体大小为: {font_size}",
                     orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
             else:
                 logger.warning(f"字体大小超出范围: {font_size}")
                 InfoBar.warning(
                     title='字体大小超出范围',
-                    content=f"字体大小超出范围，请输入30.0-200.0之间的数字，最多一位小数: {font_size}",
+                    content=f"字体大小超出范围，请输入30-200之间的数字: {font_size}",
                     orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
         except ValueError as e:
@@ -322,13 +316,13 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
 
     def reset_font_size(self):
         try:
-            self.pumping_people_font_size_SpinBox.setValue("50.0")
+            self.pumping_people_font_size_SpinBox.setValue("50")
         except FileNotFoundError as e:
-            logger.error(f"加载设置时出错: {e}, 使用默认大小:50.0")
-            self.pumping_people_font_size_SpinBox.setValue("50.0")
+            logger.error(f"加载设置时出错: {e}, 使用默认大小:50")
+            self.pumping_people_font_size_SpinBox.setValue("50")
         except KeyError:
-            logger.error(f"设置文件中缺少'foundation'键, 使用默认大小:50.0")
-            self.pumping_people_font_size_SpinBox.setValue("50.0")
+            logger.error(f"设置文件中缺少'foundation'键, 使用默认大小:50")
+            self.pumping_people_font_size_SpinBox.setValue("50")
         self.save_settings()
         self.load_settings()
         
@@ -519,8 +513,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
 
         # 保存字体大小
         try:
-            font_size = float(self.pumping_people_font_size_SpinBox.value())
-            if 30.0 <= font_size <= 200.0:
+            font_size = int(self.pumping_people_font_size_SpinBox.value())
+            if 30 <= font_size <= 200:
                 pumping_people_settings["font_size"] = font_size
             # else:
             #     logger.warning(f"字体大小超出范围: {font_size}")
