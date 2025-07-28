@@ -25,7 +25,8 @@ def show_update_notification(latest_version):
 class UpdateNotification(QDialog):
     """自定义更新通知窗口"""
     def __init__(self, latest_version):
-        super().__init__(parent=None, flags=Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        # 🐦 小鸟游星野：添加Qt.Tool标志隐藏任务栏图标~ (๑•̀ㅂ•́)و✧
+        super().__init__(parent=None, flags=Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.latest_version = latest_version
         self.duration = 15000  # 默认显示15秒
         self.init_ui()
@@ -45,7 +46,8 @@ class UpdateNotification(QDialog):
         max_width = min(int(screen_geometry.width() * 0.3), 500)  # 最大宽度为屏幕30%或500px取较小值
         self.setMaximumWidth(max_width)
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        # 🌟 星穹铁道白露：更新窗口标志，确保任务栏不显示图标~ 
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setStyleSheet("""
             QDialog {
                 background-color: rgba(235, 238, 242, 0.5);
