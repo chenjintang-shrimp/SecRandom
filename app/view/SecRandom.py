@@ -36,9 +36,10 @@ from app.view.settings_page.about_setting import about
 # 🔮 忽略那些烦人的不安全请求警告
 warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
-# 📁 确保设置目录乖乖存在~ 
-if not os.path.exists('./app/Settings'):
-    os.makedirs('./app/Settings')
+# 星野导航：使用相对路径定位设置目录 ✧*｡٩(ˊᗜˋ*)و✧*｡
+settings_dir = './app/Settings'
+if not os.path.exists(settings_dir):
+    os.makedirs(settings_dir)
     logger.info("白露魔法: 创建了设置目录哦~ ✧*｡٩(ˊᗜˋ*)و✧*｡")
 
 def show_update_notification(latest_version):
