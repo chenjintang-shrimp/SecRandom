@@ -227,7 +227,12 @@ class pumping_people(QWidget):
 
                         if hasattr(self, 'student_labels'):
                             for label in self.student_labels:
-                                label.deleteLater()
+                                try:
+                                    if label:
+                                        label.deleteLater()
+                                except RuntimeError:
+                                    pass
+                            self.student_labels = []
                             
                         # 删除布局中的所有内容
                         while self.result_grid.count(): 
