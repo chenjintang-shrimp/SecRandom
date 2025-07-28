@@ -231,13 +231,8 @@ class pumping_people(QWidget):
 
                         if hasattr(self, 'student_labels'):
                             for label in self.student_labels:
-                                try:
-                                    if label:
-                                        label.deleteLater()
-                                except RuntimeError:
-                                    pass
-                            self.student_labels = []
-
+                                label.deleteLater()
+                            
                         # 删除布局中的所有内容
                         while self.result_grid.count(): 
                             item = self.result_grid.takeAt(0)
@@ -506,8 +501,13 @@ class pumping_people(QWidget):
 
             # 设置并播放音乐，准备渐入效果 ✧*｡٩(ˊᗜˋ*)و✧*｡
             self.music_player.setMedia(QMediaContent(QUrl.fromLocalFile(selected_music)))
+            if self.music_player.mediaStatus() == QMediaPlayer.InvalidMedia:
+                logger.error(f"无效的媒体文件: {selected_music}")
+                return
             self.music_player.setVolume(0)  # 初始音量设为0
             self.music_player.play()
+            # 连接错误信号
+            self.music_player.error.connect(self.handle_media_error)
             
             # 创建音量渐入动画 ～(￣▽￣)～* 星野的魔法音量调节
             self.fade_in_animation = QPropertyAnimation(self.music_player, b"volume")
@@ -560,8 +560,13 @@ class pumping_people(QWidget):
 
             # 设置并播放音乐，准备渐入效果 ✧*｡٩(ˊᗜˋ*)و✧*｡
             self.music_player.setMedia(QMediaContent(QUrl.fromLocalFile(selected_music)))
+            if self.music_player.mediaStatus() == QMediaPlayer.InvalidMedia:
+                logger.error(f"无效的媒体文件: {selected_music}")
+                return
             self.music_player.setVolume(0)  # 初始音量设为0
             self.music_player.play()
+            # 连接错误信号
+            self.music_player.error.connect(self.handle_media_error)
             
             # 创建音量渐入动画 ～(￣▽￣)～* 星野的魔法音量调节
             self.fade_in_animation = QPropertyAnimation(self.music_player, b"volume")
@@ -572,6 +577,12 @@ class pumping_people(QWidget):
             self.fade_in_animation.start()
         except Exception as e:
             logger.error(f"播放音乐时出错: {e}")
+
+    def handle_media_error(self, error):
+        """处理媒体播放错误 ～(T_T)～ 星野的音乐播放失败了"""
+        error_str = self.music_player.errorString()
+        logger.error(f"媒体播放错误: {error_str} (错误代码: {error})")
+        self.music_player.stop()
 
     def voice_play(self):
         """语音播报部分"""
