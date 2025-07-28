@@ -1,6 +1,6 @@
 <div align="center">
 
-![SecRandom](resources/SecRandom.png)
+<image src="resources/SecRandom.png" height="128"/>
 
 # SecRandom - 公平随机抽取系统
 
@@ -69,8 +69,11 @@
 * 🎥 [B站主页](https://space.bilibili.com/520571577)
 
 ## 📖 **公平抽取**
+<details>
+<summary>📖 **公平抽取**</summary>
+
 > [!note]
-> 
+>
 > **简介**:
 > 公平抽取是一种随机抽取方式，它确保每个成员被抽取的权重由系统决定，从而避免不公平的结果。
 > 这种方式适用于需要随机且公平的抽取学生回答问题或进行其他需要公平分配的场景。
@@ -86,6 +89,8 @@
 > 3. 抽取各性别次数
 > 4. 基础权重
 > 5. 冷启动(防止新学生权重过低)
+
+</details>
 
 ## 🚀 快速开始
 
@@ -113,8 +118,13 @@ python main.py
 > 悬浮窗可快速开启「闪电抽取」模式⚡
 
 ## 📌 **软件截图**
+<details>
+<summary>📸 软件截图展示 ✨</summary>
+
 ![抽人](ScreenSots/主界面_抽人_浅色.png)
 ![抽奖](ScreenSots/主界面_抽奖_浅色.png)
+
+</details>
 
 ## ✨ **Star历程**
 <picture>
