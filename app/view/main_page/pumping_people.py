@@ -393,6 +393,9 @@ class pumping_people(QWidget):
                         self.result_grid.addWidget(self.container)
                         
                         return
+                    else:
+                        return
+
         
         else:
             self.clear_layout(self.result_grid)
@@ -570,6 +573,8 @@ class pumping_people(QWidget):
             self.music_player.play()
             # 连接错误信号
             self.music_player.error.connect(self.handle_media_error)
+
+            logger.debug("动画音乐播放开始")
             
             # 创建音量渐入动画 ～(￣▽￣)～* 星野的魔法音量调节
             self.fade_in_animation = QPropertyAnimation(self.music_player, b"volume")
@@ -578,6 +583,8 @@ class pumping_people(QWidget):
             self.fade_in_animation.setEndValue(self.animation_music_volume)
             self.fade_in_animation.setEasingCurve(QEasingCurve.InOutQuad)
             self.fade_in_animation.start()
+
+            logger.debug("动画音乐播放完成")
         except Exception as e:
             logger.error(f"播放音乐时出错: {e}")
 
@@ -1035,8 +1042,6 @@ class pumping_people(QWidget):
                             if os.path.exists(draw_record_file):
                                 os.remove(draw_record_file)
 
-                        # 星野酱修复：移除递归调用，避免无限循环 ✧⁺⸜(●˙▾˙●)⸝⁺✧
-                        self.start_button.setEnabled(True)  # 重新启用开始按钮
                         return
 
         else:
@@ -1535,6 +1540,7 @@ class pumping_people(QWidget):
                             self.gender_combo.addItems(cleaned_data)
                         else:
                             logger.error("你暂未添加性别")
+                            self.gender_combo.addItem('抽取所有性别')
                             self.gender_combo.addItem("你暂未添加性别")
                 else:
                     logger.error("你暂未添加性别")
