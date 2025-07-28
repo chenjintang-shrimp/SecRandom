@@ -94,6 +94,9 @@
 
 ## 🚀 快速开始
 
+<details>
+<summary>📋 安装指南 🛠️</summary>
+
 ### 📥 环境准备
 ```bash
 # 请先确保已安装 Python 3.8+ 和 pip
@@ -112,6 +115,8 @@ pip install -r requirements.txt
 # 启动主程序 (带调试模式)
 python main.py
 ```
+
+</details>
 
 ## 📌 使用小贴士
 <!-- 白露的温馨提醒 -->
