@@ -120,8 +120,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         
         # 是否显示浮窗左侧控件
         self.left_pumping_floating_switch = SwitchButton()
-        self.left_pumping_floating_switch.setOnText("简洁版")
-        self.left_pumping_floating_switch.setOffText("经典版")
+        self.left_pumping_floating_switch.setOnText("经典版")
+        self.left_pumping_floating_switch.setOffText("简洁版")
         self.left_pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
         self.left_pumping_floating_switch.checkedChanged.connect(self.save_settings)
 
