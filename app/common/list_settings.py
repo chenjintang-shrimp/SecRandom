@@ -253,9 +253,18 @@ class list_SettinsCard(GroupHeaderCardWidget):
                             student_data = json.load(f)
                     
                     # 先删除不在新名单中的学生
-                    existing_students = {name.replace('【', '').replace('】', '') for name in student_data.keys()}
-                    new_students = {student.strip().replace('【', '').replace('】', '') for student in students if student.strip()}
-                    for student_to_remove in existing_students - new_students:
+                    # ✨ 小鸟游星野：保留原始键名处理特殊字符
+                    existing_students = {name for name in student_data.keys()}
+                    new_students_cleaned = {student.strip().replace('【', '').replace('】', '') for student in students if student.strip()}
+                    
+                    # 找出需要删除的学生（原始键名）
+                    students_to_remove = []
+                    for name in existing_students:
+                        cleaned_name = name.replace('【', '').replace('】', '')
+                        if cleaned_name not in new_students_cleaned:
+                            students_to_remove.append(name)
+                    
+                    for student_to_remove in students_to_remove:
                         del student_data[student_to_remove]
                     
                     # 更新或添加新学生

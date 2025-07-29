@@ -113,10 +113,20 @@ class ContributorDialog(QDialog):
         self.update_theme_style() 
         
         # 创建滚动区域
-        scroll = QScrollArea()
+        scroll = SingleDirectionScrollArea()
         scroll.setWidgetResizable(True)
         content = QWidget()
         self.grid_layout = QGridLayout(content)
+        scroll.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
         scroll.setWidget(content)
         
         # 主布局

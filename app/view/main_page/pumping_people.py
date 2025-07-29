@@ -1445,11 +1445,11 @@ class pumping_people(QWidget):
                 if classes:
                     self.class_combo.addItems(classes)
                 else:
-                    logger.error("你暂未添加班级")
+                    logger.warning("班级文件夹为空")
                     self.class_combo.addItem("你暂未添加班级")
             else:
-                logger.error("你暂未添加班级")
-                self.class_combo.addItem("你暂未添加班级")
+                logger.error(f"班级列表文件夹不存在: {list_folder}")
+                self.class_combo.addItem("加载班级列表失败")
         except Exception as e:
             logger.error(f"加载班级名称失败: {str(e)}")
 
@@ -1580,7 +1580,7 @@ class pumping_people(QWidget):
             pumping_people_student_quantity = 0
             
         # 主布局
-        scroll_area = QScrollArea()
+        scroll_area = SingleDirectionScrollArea()
         scroll_area.setWidgetResizable(True)
         # 设置滚动条样式
         scroll_area.setStyleSheet("""
@@ -1591,53 +1591,6 @@ class pumping_people(QWidget):
             QScrollArea QWidget {
                 border: none;
                 background-color: transparent;
-            }
-            /* 垂直滚动条整体 */
-            QScrollBar:vertical {
-                background-color: #E5DDF8;   /* 背景透明 */
-                width: 8px;                    /* 宽度 */
-                margin: 0px;                   /* 外边距 */
-            }
-            /* 垂直滚动条的滑块 */
-            QScrollBar::handle:vertical {
-                background-color: rgba(0, 0, 0, 0.3);    /* 半透明滑块 */
-                border-radius: 4px;                      /* 圆角 */
-                min-height: 20px;                        /* 最小高度 */
-            }
-            /* 鼠标悬停在滑块上 */
-            QScrollBar::handle:vertical:hover {
-                background-color: rgba(0, 0, 0, 0.5);
-            }
-            /* 滚动条的上下按钮和顶部、底部区域 */
-            QScrollBar::add-line:vertical,
-            QScrollBar::sub-line:vertical,
-            QScrollBar::up-arrow:vertical,
-            QScrollBar::down-arrow:vertical {
-                height: 0px;
-            }
-        
-            /* 水平滚动条整体 */
-            QScrollBar:horizontal {
-                background-color: #E5DDF8;   /* 背景透明 */
-                height: 8px;
-                margin: 0px;
-            }
-            /* 水平滚动条的滑块 */
-            QScrollBar::handle:horizontal {
-                background-color: rgba(0, 0, 0, 0.3);
-                border-radius: 4px;
-                min-width: 20px;
-            }
-            /* 鼠标悬停在滑块上 */
-            QScrollBar::handle:horizontal:hover {
-                background-color: rgba(0, 0, 0, 0.5);
-            }
-            /* 滚动条的左右按钮和左侧、右侧区域 */
-            QScrollBar::add-line:horizontal,
-            QScrollBar::sub-line:horizontal,
-            QScrollBar::left-arrow:horizontal,
-            QScrollBar::right-arrow:horizontal {
-                width: 0px;
             }
         """)
         # 启用触屏滚动
@@ -1656,6 +1609,7 @@ class pumping_people(QWidget):
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
         self.refresh_button.clicked.connect(self._reset_to_initial_state)
+        self.refresh_button.clicked.connect(self.update_total_count)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 刷新按钮
@@ -1663,6 +1617,7 @@ class pumping_people(QWidget):
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
         self.refresh_button.clicked.connect(self.refresh_class_list)
+        self.refresh_button.clicked.connect(self.update_total_count)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 创建一个水平布局
@@ -1844,7 +1799,7 @@ class pumping_people(QWidget):
 
         control_button_layout = QVBoxLayout()
 
-        control_button_layout.addStretch(5)
+        control_button_layout.addStretch(1)
         
         # 将control_panel布局包裹在QWidget中
         control_panel_widget = QWidget()

@@ -291,10 +291,13 @@ class Window(MSFluentWindow):
             self.focus_time = 1
 
         # 启动焦点计时器
+        # ✨ 小鸟游星野：修复CPU占用过高问题，设置最低计时器间隔为200ms
         if self.focus_time == 0:
-            self.focus_timer.start(0)
+            self.focus_timer.start(200)  # 避免0ms间隔导致的CPU满载
         else:
-            self.focus_timer.start(self.FOCUS_TIMEOUT_TIME[self.focus_time])
+            # 🌟 星穹铁道白露：确保计时器间隔不小于200ms
+            interval = max(self.FOCUS_TIMEOUT_TIME[self.focus_time], 200)
+            self.focus_timer.start(interval)
 
         # 设置窗口属性
         window_width = self.config_manager.get_foundation_setting('window_width')
