@@ -40,6 +40,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             "result_music_volume": 5,
             "music_fade_in": 300,
             "music_fade_out": 300,
+            "animation_color": 0,
         }
 
         self.pumping_reward_Draw_comboBox = ComboBox()
@@ -199,11 +200,35 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_music_fade_out_SpinBox.valueChanged.connect(self.save_settings)
         self.pumping_reward_music_fade_out_SpinBox.setFont(QFont(load_custom_font(), 12))
 
+        # 随机颜色
+        self.pumping_reward_student_name_color_comboBox = ComboBox()
+        self.pumping_reward_student_name_color_comboBox.addItems([
+            "关闭",
+            "随机颜色",
+            "固定颜色"
+        ])
+        self.pumping_reward_student_name_color_comboBox.setCurrentIndex(0)
+        self.pumping_reward_student_name_color_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.pumping_reward_student_name_color_comboBox.setFont(QFont(load_custom_font(), 12))
+
+        # 固定颜色按钮-动画
+        self.pumping_reward_animation_color_fixed_dialog_button = PushButton("动画固定颜色")
+        self.pumping_reward_animation_color_fixed_dialog_button.setFont(QFont(load_custom_font(), 12))
+        self.pumping_reward_animation_color_fixed_dialog_button.clicked.connect(lambda: self.on_color_animation_dialog())
+
+        # 固定颜色按钮-结果
+        self.pumping_reward_result_color_fixed_dialog_button = PushButton("结果固定颜色")
+        self.pumping_reward_result_color_fixed_dialog_button.setFont(QFont(load_custom_font(), 12))
+        self.pumping_reward_result_color_fixed_dialog_button.clicked.connect(lambda: self.on_color_result_dialog())
+
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_reward_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_reward_mode_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小", self.pumping_reward_font_size_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品量", "设置该功能的显示格式", self.pumping_reward_theme_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画/结果颜色", "设置动画/结果的字体颜色", self.pumping_reward_student_name_color_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画颜色", "设置动画的固定字体颜色", self.pumping_reward_animation_color_fixed_dialog_button)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "结果颜色", "设置结果的固定字体颜色", self.pumping_reward_result_color_fixed_dialog_button)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_reward_Animation_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "设置抽取时的动画播放间隔(50-2000)(<1,2号动画模式>适用)", self.pumping_reward_animation_interval_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置抽取时的自动播放次数(1-200)(<2号动画模式>适用)", self.pumping_reward_animation_auto_play_SpinBox)
@@ -226,6 +251,27 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
 
     def on_pumping_reward_Voice_switch_changed(self, checked):
         self.save_settings()
+
+    # 🌟 小鸟游星野：动画颜色选择器 ⭐
+    def on_color_animation_dialog(self):
+        # ✨ 星穹铁道白露：让颜色选择器在新窗口飞翔 ~
+        color_type = "animation"
+        self.load_color_settings()
+        pumping_reward_animation_color_fixed_dialog = ColorDialog(QColor(self.pumping_reward_animation_color_fixed), "动画颜色", self, enableAlpha=False)
+        pumping_reward_animation_color_fixed_dialog.setModal(False)
+        pumping_reward_animation_color_fixed_dialog.colorChanged.connect(lambda color: self.save_color_settings(color.name(), color_type))
+        pumping_reward_animation_color_fixed_dialog.setFont(QFont(load_custom_font(), 12))
+        pumping_reward_animation_color_fixed_dialog.show()
+
+    def on_color_result_dialog(self):
+        # ✨ 星穹铁道白露：结果颜色选择器也需要自由 ~
+        color_type = "result"
+        self.load_color_settings()
+        pumping_reward_result_color_fixed_dialog = ColorDialog(QColor(self.pumping_reward_result_color_fixed), "结果颜色", self, enableAlpha=False)
+        pumping_reward_result_color_fixed_dialog.setModal(False)
+        pumping_reward_result_color_fixed_dialog.colorChanged.connect(lambda color: self.save_color_settings(color.name(), color_type))
+        pumping_reward_result_color_fixed_dialog.setFont(QFont(load_custom_font(), 12))
+        pumping_reward_result_color_fixed_dialog.show()
 
     def open_music_path(self, button):
         BGM_ANIMATION_PATH = './app/resource/music/pumping_reward/Animation_music'
@@ -339,6 +385,12 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     result_music_volume = pumping_reward_settings.get("result_music_volume", self.default_settings["result_music_volume"])
                     music_fade_in = pumping_reward_settings.get("music_fade_in", self.default_settings["music_fade_in"])
                     music_fade_out = pumping_reward_settings.get("music_fade_out", self.default_settings["music_fade_out"])
+
+                    # 动画/结果颜色
+                    animation_color = pumping_reward_settings.get("animation_color", self.default_settings["animation_color"])
+                    if animation_color < 0 or animation_color >= self.pumping_reward_student_name_color_comboBox.count():
+                        logger.warning(f"无效的动画/结果颜色索引: {animation_color}")
+                        animation_color = self.default_settings["animation_color"]
                     
                     self.pumping_reward_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(draw_pumping)
@@ -358,6 +410,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_reward_result_music_volume_SpinBox.setValue(result_music_volume)
                     self.pumping_reward_music_fade_in_SpinBox.setValue(music_fade_in)
                     self.pumping_reward_music_fade_out_SpinBox.setValue(music_fade_out)
+                    self.pumping_reward_student_name_color_comboBox.setCurrentIndex(animation_color)
             else:
                 self.pumping_reward_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
                 self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
@@ -377,6 +430,8 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                 self.pumping_reward_result_music_volume_SpinBox.setValue(self.default_settings["result_music_volume"])
                 self.pumping_reward_music_fade_in_SpinBox.setValue(self.default_settings["music_fade_in"])
                 self.pumping_reward_music_fade_out_SpinBox.setValue(self.default_settings["music_fade_out"])
+                self.pumping_reward_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
+                self.pumping_reward_student_name_color_comboBox.setCurrentIndex(self.default_settings["animation_color"])
 
                 self.save_settings()
         except Exception as e:
@@ -399,6 +454,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             self.pumping_reward_result_music_volume_SpinBox.setValue(self.default_settings["result_music_volume"])
             self.pumping_reward_music_fade_in_SpinBox.setValue(self.default_settings["music_fade_in"])
             self.pumping_reward_music_fade_out_SpinBox.setValue(self.default_settings["music_fade_out"])
+            self.pumping_reward_student_name_color_comboBox.setCurrentIndex(self.default_settings["animation_color"])
 
             self.save_settings()
     
@@ -435,6 +491,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         pumping_reward_settings["result_music_volume"] = self.pumping_reward_result_music_volume_SpinBox.value()
         pumping_reward_settings["music_fade_in"] = self.pumping_reward_music_fade_in_SpinBox.value()
         pumping_reward_settings["music_fade_out"] = self.pumping_reward_music_fade_out_SpinBox.value()
+        pumping_reward_settings["animation_color"] = self.pumping_reward_student_name_color_comboBox.currentIndex()
 
         # 保存字体大小
         try:
@@ -446,6 +503,43 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         except ValueError:
             # logger.warning(f"无效的字体大小输入: {self.pumping_reward_font_size_edit.text()}")
             pass
+        
+        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
+        with open(self.settings_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_settings, f, indent=4)
+
+    # 读取颜色设置
+    def load_color_settings(self):
+        existing_settings = {}
+        if os.path.exists(self.settings_file):
+            with open(self.settings_file, 'r', encoding='utf-8') as f:
+                try:
+                    existing_settings = json.load(f)
+                except json.JSONDecodeError:
+                    existing_settings = {}
+        pumping_reward_settings = existing_settings.get("pumping_reward", {})
+        self.pumping_reward_animation_color_fixed = (pumping_reward_settings.get("_animation_color", "#ffffff"))
+        self.pumping_reward_result_color_fixed = (pumping_reward_settings.get("_result_color", "#ffffff"))
+
+    def save_color_settings(self, color_name, color_type):
+        # 先读取现有设置
+        existing_settings = {}
+        if os.path.exists(self.settings_file):
+            with open(self.settings_file, 'r', encoding='utf-8') as f:
+                try:
+                    existing_settings = json.load(f)
+                except json.JSONDecodeError:
+                    existing_settings = {}
+        
+        # 更新pumping_reward部分的所有设置
+        if "pumping_reward" not in existing_settings:
+            existing_settings["pumping_reward"] = {}
+
+        pumping_reward_settings = existing_settings["pumping_reward"]
+        if color_type == "animation":
+            pumping_reward_settings["_animation_color"] = color_name
+        elif color_type == "result":
+            pumping_reward_settings["_result_color"] = color_name
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open(self.settings_file, 'w', encoding='utf-8') as f:

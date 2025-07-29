@@ -259,16 +259,18 @@ class pumping_reward(QWidget):
                                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                     settings = json.load(f)
                                     font_size = settings['pumping_reward']['font_size']
-                                    if font_size < 30:
-                                        font_size = 85
+                                    animation_color = settings['pumping_reward']['animation_color']
+                                    _animation_color = settings['pumping_reward'].get('_animation_color', '#ffffff')
                             except Exception as e:
-                                font_size = 85
-                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
-                            # 根据设置调整字体大小
-                            if font_size < 30:
-                                label.setFont(QFont(load_custom_font(), 85))
-                            else:
-                                label.setFont(QFont(load_custom_font(), font_size))
+                                font_size = 50
+                                animation_color = 0
+                                _animation_color = "#ffffff"
+                                
+                            label.setFont(QFont(load_custom_font(), font_size))
+                            if animation_color == 1:
+                                label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                            elif animation_color == 2:
+                                label.setStyleSheet(f"color: {_animation_color};")
                             self.reward_labels.append(label)
                             vbox_layout.addWidget(label)
 
@@ -320,16 +322,13 @@ class pumping_reward(QWidget):
             # 创建错误标签
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
-            
-            # 获取字体大小设置
-            font_size = 85
             try:
                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    font_size = max(settings['pumping_reward']['font_size'], 30)
+                    font_size = settings['pumping_reward']['font_size']
             except Exception as e:
+                font_size = 50
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
-            
             error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_grid.addWidget(error_label)
     
@@ -660,17 +659,18 @@ class pumping_reward(QWidget):
                                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                                     settings = json.load(f)
                                     font_size = settings['pumping_reward']['font_size']
-                                    if font_size < 30:
-                                        font_size = 85
+                                    animation_color = settings['pumping_reward']['animation_color']
+                                    _result_color = settings['pumping_reward'].get('_result_color', '#ffffff')
                             except Exception as e:
-                                font_size = 85
-                                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                                font_size = 50
+                                animation_color = 0
+                                _result_color = "#ffffff"
                             
-                            if font_size < 30:
-                                label.setFont(QFont(load_custom_font(), 85))
-                            else:
-                                label.setFont(QFont(load_custom_font(), font_size))
-                            
+                            label.setFont(QFont(load_custom_font(), font_size))
+                            if animation_color == 1:
+                                label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                            elif animation_color == 2:
+                                label.setStyleSheet(f"color: {_result_color};")
                             self.reward_labels.append(label)
 
                         # 计算所有标签的宽度之和，并考虑间距和边距
@@ -738,14 +738,13 @@ class pumping_reward(QWidget):
             error_label.setAlignment(Qt.AlignCenter)
             
             # 获取字体大小设置
-            font_size = 85
             try:
                 with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    font_size = max(settings['pumping_reward']['font_size'], 30)
+                    font_size = settings['pumping_reward']['font_size']
             except Exception as e:
+                font_size = 50
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
-            
             error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_grid.addWidget(error_label)
 
