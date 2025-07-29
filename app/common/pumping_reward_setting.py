@@ -40,6 +40,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             "result_music_volume": 5,
             "music_fade_in": 300,
             "music_fade_out": 300,
+            "display_format": 0,
             "animation_color": 0,
         }
 
@@ -200,6 +201,17 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_music_fade_out_SpinBox.valueChanged.connect(self.save_settings)
         self.pumping_reward_music_fade_out_SpinBox.setFont(QFont(load_custom_font(), 12))
 
+        # 显示格式
+        self.pumping_reward_display_format_comboBox = ComboBox()
+        self.pumping_reward_display_format_comboBox.addItems([
+            "学号 奖品",
+            "奖品",
+            "学号"
+        ])
+        self.pumping_reward_display_format_comboBox.setCurrentIndex(0)
+        self.pumping_reward_display_format_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.pumping_reward_display_format_comboBox.setFont(QFont(load_custom_font(), 12))
+
         # 随机颜色
         self.pumping_reward_student_name_color_comboBox = ComboBox()
         self.pumping_reward_student_name_color_comboBox.addItems([
@@ -226,6 +238,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_reward_mode_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小", self.pumping_reward_font_size_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品量", "设置该功能的显示格式", self.pumping_reward_theme_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "显示格式", "设置抽取结果的显示格式", self.pumping_reward_display_format_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画/结果颜色", "设置动画/结果的字体颜色", self.pumping_reward_student_name_color_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画颜色", "设置动画的固定字体颜色", self.pumping_reward_animation_color_fixed_dialog_button)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "结果颜色", "设置结果的固定字体颜色", self.pumping_reward_result_color_fixed_dialog_button)
@@ -239,8 +252,8 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "系统音量大小", "设置抽取完成后的系统音量 (0-100)", self.pumping_reward_system_volume_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐", "抽取动画背景音乐是否进行播放", self.pumping_reward_Animation_music_switch)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐", "抽取结果背景音乐是否进行播放", self.pumping_reward_result_music_switch)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐文件夹", "点击打开抽取动画背景音乐目录", self.pumping_reward_Animation_music_path_button)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐文件夹", "点击打开抽取结果背景音乐目录", self.pumping_reward_result_music_path_button)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐文件夹", "点击打开抽取动画背景音乐目录(支持mp3,wav,flac,ogg)", self.pumping_reward_Animation_music_path_button)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐文件夹", "点击打开抽取结果背景音乐目录(支持mp3,wav,flac,ogg)", self.pumping_reward_result_music_path_button)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐音量", "设置抽取动画背景音乐音量 (0-100)", self.pumping_reward_Animation_music_volume_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐音量", "设置抽取结果背景音乐音量 (0-100)", self.pumping_reward_result_music_volume_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐入时间", "设置抽取动画/结果背景音乐渐入时间 (0-1000)(ms)", self.pumping_reward_music_fade_in_SpinBox)
@@ -386,6 +399,12 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     music_fade_in = pumping_reward_settings.get("music_fade_in", self.default_settings["music_fade_in"])
                     music_fade_out = pumping_reward_settings.get("music_fade_out", self.default_settings["music_fade_out"])
 
+                    # 显示格式
+                    display_format = pumping_reward_settings.get("display_format", self.default_settings["display_format"])
+                    if display_format < 0 or display_format >= self.pumping_reward_display_format_comboBox.count():
+                        logger.warning(f"无效的显示格式索引: {display_format}")
+                        display_format = self.default_settings["display_format"]
+
                     # 动画/结果颜色
                     animation_color = pumping_reward_settings.get("animation_color", self.default_settings["animation_color"])
                     if animation_color < 0 or animation_color >= self.pumping_reward_student_name_color_comboBox.count():
@@ -410,6 +429,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_reward_result_music_volume_SpinBox.setValue(result_music_volume)
                     self.pumping_reward_music_fade_in_SpinBox.setValue(music_fade_in)
                     self.pumping_reward_music_fade_out_SpinBox.setValue(music_fade_out)
+                    self.pumping_reward_display_format_comboBox.setCurrentIndex(display_format)
                     self.pumping_reward_student_name_color_comboBox.setCurrentIndex(animation_color)
             else:
                 self.pumping_reward_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
@@ -431,6 +451,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                 self.pumping_reward_music_fade_in_SpinBox.setValue(self.default_settings["music_fade_in"])
                 self.pumping_reward_music_fade_out_SpinBox.setValue(self.default_settings["music_fade_out"])
                 self.pumping_reward_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
+                self.pumping_reward_display_format_comboBox.setCurrentIndex(self.default_settings["display_format"])
                 self.pumping_reward_student_name_color_comboBox.setCurrentIndex(self.default_settings["animation_color"])
 
                 self.save_settings()
@@ -454,6 +475,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             self.pumping_reward_result_music_volume_SpinBox.setValue(self.default_settings["result_music_volume"])
             self.pumping_reward_music_fade_in_SpinBox.setValue(self.default_settings["music_fade_in"])
             self.pumping_reward_music_fade_out_SpinBox.setValue(self.default_settings["music_fade_out"])
+            self.pumping_reward_display_format_comboBox.setCurrentIndex(self.default_settings["display_format"])
             self.pumping_reward_student_name_color_comboBox.setCurrentIndex(self.default_settings["animation_color"])
 
             self.save_settings()
@@ -491,6 +513,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         pumping_reward_settings["result_music_volume"] = self.pumping_reward_result_music_volume_SpinBox.value()
         pumping_reward_settings["music_fade_in"] = self.pumping_reward_music_fade_in_SpinBox.value()
         pumping_reward_settings["music_fade_out"] = self.pumping_reward_music_fade_out_SpinBox.value()
+        pumping_reward_settings["display_format"] = self.pumping_reward_display_format_comboBox.currentIndex()
         pumping_reward_settings["animation_color"] = self.pumping_reward_student_name_color_comboBox.currentIndex()
 
         # 保存字体大小

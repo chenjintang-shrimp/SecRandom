@@ -245,27 +245,33 @@ class pumping_reward(QWidget):
                                 except RuntimeError:
                                     pass
 
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                font_size = settings['pumping_reward']['font_size']
+                                display_format = settings['pumping_reward']['display_format']
+                                animation_color = settings['pumping_reward']['animation_color']
+                                _animation_color = settings['pumping_reward'].get('_animation_color', '#ffffff')
+                        except Exception as e:
+                            font_size = 50
+                            display_format = 0
+                            animation_color = 0
+                            _animation_color = "#ffffff"
+
                         # 创建新布局
                         vbox_layout = QGridLayout()
                         # 创建新标签列表
                         self.reward_labels = []
                         for num, name, probability in selected_rewards:
                             reward_id_str = f"{num:02}"
-                            label = BodyLabel(f"{reward_id_str} {name}")
+                            if display_format == 1:
+                                label = BodyLabel(f"{name}")
+                            elif display_format == 2:
+                                label = BodyLabel(f"{reward_id_str}")
+                            else:
+                                label = BodyLabel(f"{reward_id_str} {name}")
 
                             label.setAlignment(Qt.AlignCenter)
-                            # 读取设置中的font_size值
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    font_size = settings['pumping_reward']['font_size']
-                                    animation_color = settings['pumping_reward']['animation_color']
-                                    _animation_color = settings['pumping_reward'].get('_animation_color', '#ffffff')
-                            except Exception as e:
-                                font_size = 50
-                                animation_color = 0
-                                _animation_color = "#ffffff"
-                                
                             label.setFont(QFont(load_custom_font(), font_size))
                             if animation_color == 1:
                                 label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
@@ -648,24 +654,30 @@ class pumping_reward(QWidget):
                             widget = item.widget()
                             if widget:
                                 widget.deleteLater()
+                        try:
+                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                settings = json.load(f)
+                                font_size = settings['pumping_reward']['font_size']
+                                display_format = settings['pumping_reward']['display_format']
+                                animation_color = settings['pumping_reward']['animation_color']
+                                _result_color = settings['pumping_reward'].get('_result_color', '#ffffff')
+                        except Exception as e:
+                            font_size = 50
+                            display_format = 0
+                            animation_color = 0
+                            _result_color = "#ffffff"
 
                         self.reward_labels = []
                         for num, selected, probability in selected_rewards:
                             reward_id_str = f"{num:02}"
-                            label = BodyLabel(f"{reward_id_str} {selected}")
+                            if display_format == 1:
+                                label = BodyLabel(f"{name}")
+                            elif display_format == 2:
+                                label = BodyLabel(f"{reward_id_str}")
+                            else:
+                                label = BodyLabel(f"{reward_id_str} {name}")
 
                             label.setAlignment(Qt.AlignCenter)
-                            try:
-                                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                                    settings = json.load(f)
-                                    font_size = settings['pumping_reward']['font_size']
-                                    animation_color = settings['pumping_reward']['animation_color']
-                                    _result_color = settings['pumping_reward'].get('_result_color', '#ffffff')
-                            except Exception as e:
-                                font_size = 50
-                                animation_color = 0
-                                _result_color = "#ffffff"
-                            
                             label.setFont(QFont(load_custom_font(), font_size))
                             if animation_color == 1:
                                 label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
@@ -859,7 +871,7 @@ class pumping_reward(QWidget):
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                pumping_reward_reward_quantity = f"{settings['pumping_reward']['reward_theme']}"
+                pumping_reward_reward_quantity = settings['pumping_reward']['reward_theme']
         except Exception:
             pumping_reward_reward_quantity = 0
 
@@ -1029,7 +1041,7 @@ class pumping_reward(QWidget):
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                pumping_reward_reward_quantity = f"{settings['pumping_reward']['reward_theme']}"
+                pumping_reward_reward_quantity = settings['pumping_reward']['reward_theme']
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             pumping_reward_reward_quantity = 0
