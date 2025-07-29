@@ -47,6 +47,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             "result_music_volume": 5,
             "music_fade_in": 300,
             "music_fade_out": 300,
+            "display_format": 0,
         }
 
         self.pumping_people_Draw_comboBox = ComboBox()
@@ -240,12 +241,24 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_music_fade_out_SpinBox.valueChanged.connect(self.save_settings)
         self.pumping_people_music_fade_out_SpinBox.setFont(QFont(load_custom_font(), 12))
 
+        # 显示格式
+        self.pumping_people_display_format_comboBox = ComboBox()
+        self.pumping_people_display_format_comboBox.addItems([
+            "学号 姓名",
+            "姓名",
+            "学号"
+        ])
+        self.pumping_people_display_format_comboBox.setCurrentIndex(0)
+        self.pumping_people_display_format_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.pumping_people_display_format_comboBox.setFont(QFont(load_custom_font(), 12))
+
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_people_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_Draw_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小(支持小数)", self.pumping_people_font_size_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_number_symbol_square_20_filled"), "学号格式", "设置学号格式设置", self.pumping_people_student_id_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_rename_20_filled"), "姓名格式", "设置姓名格式设置", self.pumping_people_student_name_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "显示格式", "设置抽取结果的显示格式", self.pumping_people_display_format_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "显示随机组员", "抽取小组时是否显示随机组员", self.show_random_member_checkbox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "组员显示格式", "设置随机组员的显示格式", self.random_member_format_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "班级人|组数", "设置该功能的显示格式", self.pumping_people_theme_comboBox)
@@ -400,6 +413,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     music_fade_in = pumping_people_settings.get("music_fade_in", self.default_settings["music_fade_in"])
                     music_fade_out = pumping_people_settings.get("music_fade_out", self.default_settings["music_fade_out"])
 
+                    # 加载抽取结果显示格式
+                    display_format = pumping_people_settings.get("display_format", self.default_settings["display_format"])
+                    if display_format < 0 or display_format >= self.pumping_people_display_format_comboBox.count():
+                        logger.warning(f"无效的抽取结果显示格式索引: {display_format}")
+                        display_format = self.default_settings["display_format"]
+
                     
                     self.pumping_people_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
@@ -423,6 +442,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_people_result_music_volume_SpinBox.setValue(result_music_volume)
                     self.pumping_people_music_fade_in_SpinBox.setValue(music_fade_in)
                     self.pumping_people_music_fade_out_SpinBox.setValue(music_fade_out)
+                    self.pumping_people_display_format_comboBox.setCurrentIndex(display_format)
             else:
                 self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
                 self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
@@ -446,6 +466,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                 self.pumping_people_result_music_volume_SpinBox.setValue(self.default_settings["result_music_volume"])
                 self.pumping_people_music_fade_in_SpinBox.setValue(self.default_settings["music_fade_in"])
                 self.pumping_people_music_fade_out_SpinBox.setValue(self.default_settings["music_fade_out"])
+                self.pumping_people_display_format_comboBox.setCurrentIndex(self.default_settings["display_format"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -471,6 +492,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             self.pumping_people_result_music_volume_SpinBox.setValue(self.default_settings["result_music_volume"])
             self.pumping_people_music_fade_in_SpinBox.setValue(self.default_settings["music_fade_in"])
             self.pumping_people_music_fade_out_SpinBox.setValue(self.default_settings["music_fade_out"])
+            self.pumping_people_display_format_comboBox.setCurrentIndex(self.default_settings["display_format"])
 
             self.save_settings()
     
@@ -511,6 +533,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         pumping_people_settings["result_music_volume"] = self.pumping_people_result_music_volume_SpinBox.value()
         pumping_people_settings["music_fade_in"] = self.pumping_people_music_fade_in_SpinBox.value()
         pumping_people_settings["music_fade_out"] = self.pumping_people_music_fade_out_SpinBox.value()
+        pumping_people_settings["display_format"] = self.pumping_people_display_format_comboBox.currentIndex()
 
         # 保存字体大小
         try:

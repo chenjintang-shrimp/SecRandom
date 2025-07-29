@@ -250,9 +250,11 @@ class pumping_people(QWidget):
                                 settings = json.load(f)
                                 pumping_people_student_id = settings['pumping_people']['student_id']
                                 pumping_people_student_name = settings['pumping_people']['student_name']
+                                display_format = settings['pumping_people']['display_format']
                         except Exception as e:
                             pumping_people_student_id = 0
                             pumping_people_student_name = 0
+                            display_format = 0
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
                         # 创建新布局
@@ -337,7 +339,12 @@ class pumping_people(QWidget):
 
                                 label = BodyLabel(display_text)
                             else:
-                                label = BodyLabel(f"{student_id_str} {name}")
+                                if display_format == 1:
+                                    label = BodyLabel(f"{name}")
+                                elif display_format == 2:
+                                    label = BodyLabel(f"{student_id_str}")
+                                elif display_format == 0:
+                                    label = BodyLabel(f"{student_id_str} {name}")
 
                             label.setAlignment(Qt.AlignCenter)
                             # 读取设置中的font_size值
@@ -889,9 +896,11 @@ class pumping_people(QWidget):
                                 settings = json.load(f)
                                 pumping_people_student_id = settings['pumping_people']['student_id']
                                 pumping_people_student_name = settings['pumping_people']['student_name']
+                                display_format = settings['pumping_people']['display_format']
                         except Exception as e:
                             pumping_people_student_id = 0
                             pumping_people_student_name = 0
+                            display_format = 0
                             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
                         self.student_labels = []
@@ -970,7 +979,12 @@ class pumping_people(QWidget):
 
                                 label = BodyLabel(display_text)
                             else:
-                                label = BodyLabel(f"{student_id_str} {name}")
+                                if display_format == 1:
+                                    label = BodyLabel(f"{name}")
+                                elif display_format == 2:
+                                    label = BodyLabel(f"{student_id_str}")
+                                elif display_format == 0:
+                                    label = BodyLabel(f"{student_id_str} {name}")
 
                             label.setAlignment(Qt.AlignCenter)
                             try:
@@ -1279,7 +1293,7 @@ class pumping_people(QWidget):
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                pumping_people_student_quantity = f"{settings['pumping_people']['people_theme']}"
+                pumping_people_student_quantity = settings['pumping_people']['people_theme']
         except Exception:
             pumping_people_student_quantity = 0
 
@@ -1308,10 +1322,8 @@ class pumping_people(QWidget):
                     )
                 entity_type = '组数' if group_name == '抽取小组组号' else '人数'
                 if pumping_people_student_quantity == 1:
-                    self.total_label = BodyLabel('总人数: 0')
                     self.total_label.setText(f'总{entity_type}: {count}')
-                if pumping_people_student_quantity == 2:
-                    self.total_label = BodyLabel('剩余人数: 0')
+                elif pumping_people_student_quantity == 2:
                     self.total_label.setText(f'剩余{entity_type}: {_count}')
                 else:
                     self.total_label.setText(f'总{entity_type}: {count} | 剩余{entity_type}: {_count}')
@@ -1396,7 +1408,7 @@ class pumping_people(QWidget):
     def _set_default_count(self, pumping_people_student_quantity):
         if pumping_people_student_quantity == 1:
             self.total_label = BodyLabel('总人数: 0')
-        if pumping_people_student_quantity == 2:
+        elif pumping_people_student_quantity == 2:
             self.total_label = BodyLabel('剩余人数: 0')
         else:
             self.total_label = BodyLabel('总人数: 0 | 剩余人数: 0')
@@ -1574,7 +1586,7 @@ class pumping_people(QWidget):
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                pumping_people_student_quantity = f"{settings['pumping_people']['people_theme']}"
+                pumping_people_student_quantity = settings['pumping_people']['people_theme']
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             pumping_people_student_quantity = 0
@@ -1766,7 +1778,7 @@ class pumping_people(QWidget):
         # 总人数和剩余人数显示
         if pumping_people_student_quantity == 1:
             self.total_label = BodyLabel('总人数: 0')
-        if pumping_people_student_quantity == 2:
+        elif pumping_people_student_quantity == 2:
             self.total_label = BodyLabel('剩余人数: 0')
         else:
             self.total_label = BodyLabel('总人数: 0 | 剩余人数: 0')
