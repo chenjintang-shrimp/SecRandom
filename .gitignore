@@ -181,3 +181,4 @@ cython_debug/
 /app/resource/reward
 /.vercel
 /app/resource/music
+/app/cache
