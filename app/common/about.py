@@ -44,6 +44,10 @@ class aboutCard(GroupHeaderCardWidget):
         self.check_update_button.clicked.connect(self.check_updates_async)
         self.check_update_button.setFont(QFont(load_custom_font(), 12))
 
+        # 🌟 小鸟游星野：官网链接按钮 ~ (๑•̀ㅂ•́)ญ✧
+        self.about_website_Button = HyperlinkButton(FIF.GLOBE, "https://secrandom.netlify.app/", 'SecRandom 官网')
+        self.about_website_Button.setFont(QFont(load_custom_font(), 12))
+
         # 添加更新通道选择
         self.channel_combo = ComboBox()
         self.channel_combo.addItems(["稳定通道", "测试通道"])
@@ -55,6 +59,7 @@ class aboutCard(GroupHeaderCardWidget):
         self.addGroup(FIF.GITHUB, "Github", "SecRandom - github", self.about_github_Button)
         self.addGroup(get_theme_icon("ic_fluent_document_person_20_filled"), "贡献人员", "点击查看详细贡献者信息", self.contributor_button)
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "版权", "SecRandom 遵循 GPL-3.0 协议", self.about_author_label)
+        self.addGroup(FIF.GLOBE, "官网", "访问 SecRandom 官方网站", self.about_website_Button)
         self.addGroup(get_theme_icon("ic_fluent_info_20_filled"), "版本", "软件版本号", self.about_version_label)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新通道", "选择更新通道", self.channel_combo)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "检查更新", "检查是否为最新版本(应用启动时会自动检查更新)", self.check_update_button)
