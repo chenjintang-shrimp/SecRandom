@@ -67,7 +67,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         self.table.setBorderRadius(8)
         self.table.setWordWrap(False)
         self.table.setColumnCount(3)
-        self.table.setEditTriggers(TableWidget.NoEditTriggers)
+        self.table.setEditTriggers(TableWidget.DoubleClicked)
         self.table.setSortingEnabled(True)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -75,10 +75,12 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setHorizontalHeaderLabels(['序号', '奖品', '权重'])
         self.show_table()
+        self.table.itemChanged.connect(self.save_table_data)
         self.refresh_signal.connect(self.show_table)
         # 布局
         self.layout().addWidget(self.table)
 
+    # 🌟 小鸟游星野：奖品名单导入功能 ~ (๑•̀ㅂ•́)ญ✧
     def show_table(self):
         prize_pools_name = self.prize_pools_comboBox.currentText()
         # 获取是否存在奖品
@@ -106,6 +108,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
             
         if prize_pools_name:
             try:
+                # 🌟 小鸟游星野：确保目录存在并写入数据 ~ (๑•̀ㅂ•́)ญ✧
                 with open(f"app/resource/reward/{prize_pools_name}.json", 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 self.table.setRowCount(len(data))
@@ -115,16 +118,28 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                 max_digits = max(len(str(info['id'])) for info in data.values())
                 
                 self.table.setSortingEnabled(False)
-                for i, (name, info) in enumerate(data.items()):
-                    self.table.setItem(i, 0, QTableWidgetItem(str(info['id']).zfill(max_digits)))
-                    self.table.setItem(i, 1, QTableWidgetItem(name))
-                    self.table.setItem(i, 2, QTableWidgetItem(info['probability']))
+                self.table.blockSignals(True)
+                # 🌟 小鸟游星野：准备表格数据 ~ (๑•̀ㅂ•́)ญ✧
+                table_data = []
+                for name, info in data.items():
+                    table_data.append([
+                        str(info['id']).zfill(max_digits),
+                        name,
+                        f"{float(info['probability'])}".rstrip('0').rstrip('.')
+                    ])
+                
+                # 🌟 星穹铁道白露：填充表格数据 ~ (๑•̀ㅂ•́)ญ✧
+                for i, row in enumerate(table_data):
                     for j in range(3):
+                        self.table.setItem(i, j, QTableWidgetItem(row[j]))
                         item = self.table.item(i, j)
-                        if item:
-                            item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                            item.setFont(QFont(load_custom_font(), 12))
+                        item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                        item.setFont(QFont(load_custom_font(), 12))
+                        # 🌟 小鸟游星野：序号列不可编辑哦 ~ (๑•̀ㅂ•́)ญ✧
+                        if j == 0:
+                            item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                 self.table.setHorizontalHeaderLabels(['序号', '奖品', '权重'])
+                self.table.blockSignals(False)
                 self.table.setSortingEnabled(True)
             except FileNotFoundError:
                 self.table.setRowCount(0)
@@ -180,7 +195,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                             basic_structure = {
                                 "示例奖品": {
                                     "id": 1,
-                                    "probability": "1",
+                                    "probability": "1.0",
                                 }
                             }
                             json.dump(basic_structure, f, ensure_ascii=False, indent=4)
@@ -224,7 +239,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                             original_info = {}
                         new_prize_data[prize_name] = {
                             "id": idx,
-                            "probability": original_info.get("probability", "1")
+                            "probability": original_info.get("probability", "1.0")
                         }
                     prize_data = new_prize_data
                     
@@ -277,6 +292,63 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                 except Exception as e:
                     logger.error(f"保存失败: {str(e)}")
 
+
+    # 🌟 小鸟游星野：保存奖品表格编辑的数据 ~ (๑•̀ㅂ•́)ญ✧
+    def save_table_data(self, item):
+        # 获取当前选中的奖池
+        prize_pool = self.prize_pools_comboBox.currentText()
+        if not prize_pool:
+            return
+        
+        row = item.row()
+        col = item.column()
+        
+        # 获取当前行的奖品名称（索引1）
+        name_item = self.table.item(row, 1)
+        if not name_item:
+            return
+        prize_name = name_item.text()
+        
+        # 加载当前奖池的奖品数据
+        prize_file = f"app/resource/reward/{prize_pool}.json"
+        try:
+            with open(prize_file, 'r', encoding='utf-8') as f:
+                prize_data = json.load(f)
+        except Exception as e:
+            logger.error(f"加载奖品数据失败: {str(e)}")
+            return
+        
+        # 找到对应的奖品键
+        matched_key = None
+        for key in prize_data.keys():
+            if key == prize_name:
+                matched_key = key
+                break
+        if not matched_key:
+            logger.error(f"未找到奖品: {prize_name}")
+            return
+        
+        # 根据列索引更新相应的字段
+        new_value = item.text()
+        if col == 1:  # 奖品名称列
+            # 修改名称需要重命名键
+            old_key = matched_key
+            new_key = new_value
+            if old_key != new_key:
+                prize_data[new_key] = prize_data.pop(old_key)
+        if col == 2:  # 权重列
+            prize_data[matched_key]['probability'] = float(new_value)
+        
+        # 保存更新后的数据
+        try:
+            with open(prize_file, 'w', encoding='utf-8') as f:
+                json.dump(prize_data, f, ensure_ascii=False, indent=4)
+            logger.info(f"奖品数据更新成功: {prize_name}")
+        except Exception as e:
+            logger.error(f"保存奖品数据失败: {str(e)}")
+            # 如果保存失败，恢复原来的值
+            original_value = prize_data[matched_key]['probability'] if col == 2 else "1.0"
+            item.setText(str(original_value))
 
 
 class Prize_pools_InputDialog(QDialog):
@@ -332,7 +404,7 @@ class Prize_pools_InputDialog(QDialog):
         self.setLayout(layout)
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)و✧
+        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)ญ✧
         colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
         self.setStyleSheet(f"""
             QDialog, QDialog * {{
@@ -427,7 +499,7 @@ class PrizeInputDialog(QDialog):
         self.setLayout(layout)
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)و✧
+        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)ญ✧
         colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
         self.setStyleSheet(f"""
             QDialog, QDialog * {{
@@ -489,7 +561,7 @@ class ProbabilityInputDialog(QDialog):
                     sorted_students = sorted(data.values(), key=lambda x: x.get("id", 0))
                     for student in sorted_students:
                         if student.get("id", 0) >= 1:
-                            probability_list.append(student.get("probability", ""))
+                            probability_list.append(student.get("probability", "1.0"))
                     self.textEdit.setPlainText("\n".join(probability_list))
 
         except FileNotFoundError:
@@ -517,7 +589,7 @@ class ProbabilityInputDialog(QDialog):
         self.setLayout(layout)
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)و✧
+        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)ญ✧
         colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
         self.setStyleSheet(f"""
             QDialog, QDialog * {{

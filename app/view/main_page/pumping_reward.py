@@ -138,7 +138,7 @@ class pumping_reward(QWidget):
                         if isinstance(reward_info, dict) and 'id' in reward_info:
                             id = reward_info.get('id', '')
                             name = reward_name
-                            probability = reward_info.get('probability', '1')
+                            probability = reward_info.get('probability', '1.0')
                             cleaned_data.append((id, name, probability))
 
                     # 如果所有奖品都已抽取过，则使用全部奖品名单
@@ -561,7 +561,7 @@ class pumping_reward(QWidget):
                         if isinstance(reward_info, dict) and 'id' in reward_info:
                             id = reward_info.get('id', '')
                             name = prize_pools
-                            probability = reward_info.get('probability', '1')
+                            probability = reward_info.get('probability', '1.0')
                             cleaned_data.append((id, name, probability))
 
                     if self.draw_mode == "random":
@@ -918,7 +918,7 @@ class pumping_reward(QWidget):
                 if isinstance(reward_info, dict) and 'id' in reward_info:
                     id = reward_info.get('id', '')
                     name = reward_name
-                    probability = reward_info.get('probability', '')
+                    probability = reward_info.get('probability', 1.0)
                     cleaned_data.append((id, name, probability))
 
             return cleaned_data
