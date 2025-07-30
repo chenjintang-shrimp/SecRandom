@@ -6,11 +6,8 @@ from PyQt5.QtMultimedia import *
 
 import os
 import glob
-import sys
 import json
 import random
-import pyttsx3
-import platform
 import re
 import datetime
 import math
@@ -19,6 +16,7 @@ from random import SystemRandom
 system_random = SystemRandom()
 
 from app.common.config import get_theme_icon, load_custom_font, restore_volume
+from app.common.voice import TTSHandler
 
 class pumping_people(QWidget):
     def __init__(self, parent=None):
@@ -29,15 +27,6 @@ class pumping_people(QWidget):
         self.animation_timer = None
         # 音乐播放器初始化 ✧(◍˃̶ᗜ˂̶◍)✩ 感谢白露提供的播放器
         self.music_player = QMediaPlayer()
-        # 使用全局语音引擎单例
-        # 检查系统版本是否为Windows 10及以上且非x86架构
-        if sys.platform == 'win32' and sys.getwindowsversion().major >= 10 and platform.machine() != 'x86':
-            if not hasattr(QApplication.instance(), 'pumping_reward_voice_engine'):
-                QApplication.instance().pumping_reward_voice_engine = pyttsx3.init()
-                QApplication.instance().pumping_reward_voice_engine.startLoop(False)
-            self.voice_engine = QApplication.instance().pumping_reward_voice_engine
-        else:
-            logger.warning("语音功能仅在Windows 10及以上系统且非x86架构可用")
         self.initUI()
     
     def start_draw(self):
@@ -593,32 +582,36 @@ class pumping_people(QWidget):
     def voice_play(self):
         """语音播报部分"""
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                voice_enabled = settings['pumping_people']['voice_enabled']
-                system_volume_enabled = settings['pumping_people']['system_volume_enabled']
-                voice_volume = settings['pumping_people'].get('voice_volume', 100) / 100.0
-                voice_speed = settings['pumping_people'].get('voice_speed', 100)
-                volume_value = settings['pumping_people'].get('system_volume_value', 50)
-                
+            with open ('app/Settings/voice_engine.json', 'r', encoding='utf-8') as f:
+                voice_config = json.load(f)
+                voice_engine = voice_config['voice_engine']['voice_engine']
+                edge_tts_voice_name = voice_config['voice_engine'] ['edge_tts_voice_name']
+                voice_enabled = settings['voice_engine']['voice_enabled']
+                system_volume_enabled = settings['voice_engine']['system_volume_enabled']
+                voice_volume = settings['voice_engine'].get('voice_volume', 100) / 100.0
+                voice_speed = settings['voice_engine'].get('voice_speed', 100)
+                volume_value = settings['voice_engine'].get('system_volume_value', 50)
+
                 if voice_enabled == True:  # 开启语音
                     if system_volume_enabled == True: # 开启系统音量
-                        # 设置系统音量
                         restore_volume(volume_value)
-                    # 设置音量
-                    self.voice_engine.setProperty('volume', voice_volume)
-                    # 设置语速
-                    self.voice_engine.setProperty('rate', int(200 * (voice_speed / 100)))
-                    if hasattr(self, 'student_labels'):
-                        for label in self.student_labels:
-                            parts = label.text().split()
-                            if len(parts) >= 2 and len(parts[-1]) == 1 and len(parts[-2]) == 1:
-                                name = parts[-2] + parts[-1]
-                            else:
-                                name = parts[-1]
-                            name = name.replace(' ', '')
-                            self.voice_engine.say(f"{name}")
-                            self.voice_engine.iterate()
+                    tts_handler = TTSHandler()
+                    config = {
+                        'voice_enabled': voice_enabled,
+                        'voice_volume': voice_volume,
+                        'voice_speed': voice_speed,
+                        'system_voice_name': edge_tts_voice_name,
+                    }
+                    students_name = []
+                    for label in self.student_labels:
+                        parts = label.text().split()
+                        if len(parts) >= 2 and len(parts[-1]) == 1 and len(parts[-2]) == 1:
+                            name = parts[-2] + parts[-1]
+                        else:
+                            name = parts[-1]
+                        name = name.replace(' ', '')
+                        students_name.append(name)
+                        tts_handler.voice_play(config, students_name, voice_engine, edge_tts_voice_name)
         except Exception as e:
             logger.error(f"语音播报出错: {e}")
     
@@ -1040,6 +1033,7 @@ class pumping_people(QWidget):
                             if os.path.exists(draw_record_file):
                                 os.remove(draw_record_file)
 
+                        self.random()
                         return
 
         else:
