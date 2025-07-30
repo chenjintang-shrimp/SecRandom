@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import *
 import os
 import json
 from loguru import logger
+import pandas as pd
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 
@@ -31,6 +32,11 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         self.prize_pools_comboBox.addItems([])
         self.prize_pools_comboBox.setFont(QFont(load_custom_font(), 12))
         self.prize_pools_comboBox.currentIndexChanged.connect(lambda: self.refresh_signal.emit())
+
+        # 快速导入奖品名单
+        self.import_Button = PushButton("快速导入奖品名单")
+        self.import_Button.clicked.connect(self.import_prize_list)
+        self.import_Button.setFont(QFont(load_custom_font(), 12))
 
         self.prize_Button = PushButton("设置奖池奖品")
         self.prize_Button.clicked.connect(self.show_prize_dialog)
@@ -58,6 +64,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "设置奖池", "设置奖池名称", self.prize_pools_Button)
         self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "选择奖池", "选择一个需要设置奖品的奖池", self.prize_pools_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "快速导入奖品名单", "点击按钮快速导入奖品名单(该功能会覆盖原名单)", self.import_Button)
         self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置奖池奖品", "设置该奖池的奖品", self.prize_Button)
         self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置奖品权重", "设置奖品权重", self.probability_Button)
 
@@ -81,6 +88,26 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         self.layout().addWidget(self.table)
 
     # 🌟 小鸟游星野：奖品名单导入功能 ~ (๑•̀ㅂ•́)ญ✧
+    def import_prize_list(self):
+        # 创建导入对话框
+        dialog = ImportPrizeDialog(self)
+        if dialog.exec():
+            # 🌟 星穹铁道白露：直接获取对话框处理好的数据 ~ (◍•ᴗ•◍)
+            prize_data, prize_pools_name = dialog.get_processed_data()
+            if not prize_pools_name or not prize_data:
+                return
+
+            try:
+                # 🌟 小鸟游星野：确保目录存在并写入数据 ~ (๑•̀ㅂ•́)ญ✧
+                os.makedirs("app/resource/reward", exist_ok=True)
+                with open(f"app/resource/reward/{prize_pools_name}.json", 'w', encoding='utf-8') as f:
+                    json.dump(prize_data, f, ensure_ascii=False, indent=4)
+
+                self.refresh_signal.emit()
+                logger.info(f"奖品名单导入成功，共导入 {len(prize_data)} 条记录")
+            except Exception as e:
+                logger.error(f"导入失败: {str(e)}")
+
     def show_table(self):
         prize_pools_name = self.prize_pools_comboBox.currentText()
         # 获取是否存在奖品
@@ -349,6 +376,412 @@ class reward_SettinsCard(GroupHeaderCardWidget):
             # 如果保存失败，恢复原来的值
             original_value = prize_data[matched_key]['probability'] if col == 2 else "1.0"
             item.setText(str(original_value))
+
+
+class ImportPrizeDialog(QDialog):
+    # 🌟 小鸟游星野：学生名单导入对话框 ~ (๑•̀ㅂ•́)ญ✧
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("导入奖品名单")
+        self.setFixedSize(600, 500)
+        self.file_path = None
+        self.file_type = 'excel'
+        self.column_mapping = {'序号': -1, '奖品': -1, '权重': -1, '小组': -1}
+        self.include_columns = {'权重': True, '小组': True}
+        # 🌟 小鸟游星野：初始化处理后的数据和班级名称 ~ (๑•̀ㅂ•́)ญ✧
+        self.processed_data = None
+        self.prize_pool_name = None
+
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
+        self.init_ui()
+
+    def update_theme_style(self):
+        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)ญ✧
+        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
+        self.setStyleSheet(f"""
+            QDialog, QDialog * {{
+                color: {colors['text']};
+                background-color: {colors['bg']};
+            }}
+        """)
+
+    def init_ui(self):
+        layout = QVBoxLayout()
+
+        # 文件选择区域
+        file_layout = QHBoxLayout()
+        self.file_path_edit = LineEdit()
+        self.file_path_edit.setReadOnly(True)
+        browse_btn = PrimaryPushButton("浏览文件")
+        browse_btn.setFont(QFont(load_custom_font(), 12))
+        browse_btn.clicked.connect(self.browse_file)
+        file_layout.addWidget(self.file_path_edit)
+        file_layout.addWidget(browse_btn)
+        layout.addLayout(file_layout)
+
+        # 文件类型选择
+        type_layout = QHBoxLayout()
+        type_label = BodyLabel("文件类型：")
+        type_label.setFont(QFont(load_custom_font(), 12))
+        self.type_combo = ComboBox()
+        self.type_combo.setFont(QFont(load_custom_font(), 12))
+        self.type_combo.addItems(["Excel文件 (*.xls *.xlsx)", "CSV文件 (*.csv)"])
+        self.type_combo.currentIndexChanged.connect(self.change_file_type)
+        type_layout.addWidget(type_label)
+        type_layout.addWidget(self.type_combo)
+        layout.addLayout(type_layout)
+
+        # 列映射区域
+        mapping_group = QGroupBox("") 
+        mapping_group.setFont(QFont(load_custom_font(), 12))
+        mapping_layout = QFormLayout()
+
+        # 创建列选择控件
+        self._create_combo_row(mapping_layout, 'id_combo', '序号列：')
+        self._create_combo_row(mapping_layout, 'reward_combo', '奖品列：')
+        self._create_checkable_combo_row(mapping_layout, 'probability_combo', 'probability_check', '权重列：', '权重')
+
+        mapping_group.setLayout(mapping_layout)
+        layout.addWidget(mapping_group)
+
+        # 按钮区域
+        btn_layout = QHBoxLayout()
+        cancel_btn = PushButton("取消")
+        cancel_btn.setFont(QFont(load_custom_font(), 12))
+        ok_btn = PrimaryPushButton("导入")
+        ok_btn.setFont(QFont(load_custom_font(), 12))
+        cancel_btn.clicked.connect(self.reject)
+        ok_btn.clicked.connect(self.accept)
+        btn_layout.addStretch(1)
+        btn_layout.addWidget(cancel_btn)
+        btn_layout.addWidget(ok_btn)
+        layout.addLayout(btn_layout)
+
+        self.setLayout(layout)
+
+    def _create_combo_box(self):
+        # 🌟 小鸟游星野：创建下拉框 ~ (๑•̀ㅂ•́)ญ✧
+        combo = ComboBox()
+        combo.setFont(QFont(load_custom_font(), 12))
+        combo.addItem('请选择')
+        return combo
+
+    def _create_combo_row(self, layout, combo_attr, label_text):
+        # 🌟 星穹铁道白露：创建下拉框行 ~ (๑•̀ㅂ•́)ญ✧
+        row_layout = QHBoxLayout()
+        combo = self._create_combo_box()
+        combo.setFixedWidth(200)
+        setattr(self, combo_attr, combo)
+        row_layout.addWidget(combo)
+        layout.addRow(label_text, row_layout)
+
+    def _create_checkable_combo_row(self, layout, combo_attr, check_attr, label_text, column_name):
+        # 🌟 星穹铁道白露：创建带复选框的下拉框行 ~ (๑•̀ㅂ•́)ญ✧
+        row_layout = QHBoxLayout()
+        combo = self._create_combo_box()
+        combo.setFixedWidth(200)
+        setattr(self, combo_attr, combo)
+
+        check_box = CheckBox("包含")
+        check_box.setFont(QFont(load_custom_font(), 12))
+        check_box.setChecked(True)
+        check_box.stateChanged.connect(lambda: self.toggle_column(column_name))
+        setattr(self, check_attr, check_box)
+
+        row_layout.addWidget(combo)
+        row_layout.addWidget(check_box)
+        layout.addRow(label_text, row_layout)
+
+    def change_file_type(self, index):
+        # 🌟 星穹铁道白露：切换文件类型并更新UI状态 ~ (๑•̀ㅂ•́)ญ✧
+        types = ['excel', 'csv']
+        self.file_type = types[index]
+        
+        # 清除并重新加载列数据
+        self.file_path_edit.clear()
+        self.file_path = None
+        self.clear_columns()
+
+    def browse_file(self):
+        filters = {
+            # 🌟 星穹铁道白露：支持xls和xlsx格式的Excel文件 ~ (๑•̀ㅂ•́)ญ✧
+            'excel': "Excel Files (*.xls *.xlsx)",
+            'csv': "CSV Files (*.csv)"
+        }
+        self.file_path, _ = QFileDialog.getOpenFileName(
+            self, "选择文件", "", filters[self.file_type]
+        )
+        if self.file_path:
+            self.file_path_edit.setText(self.file_path)
+            self.load_columns()
+
+    def clear_columns(self):
+        # 🌟 小鸟游星野：清空列选择控件 ~ (๑•̀ㅂ•́)ญ✧
+        for combo in [self.id_combo, self.reward_combo, self.probability_combo]:
+            combo.clear()
+            combo.addItem('请选择')
+        self.update_mapping()
+
+    def load_columns(self):
+        # 🌟 白露：加载文件列名中~ 请稍等一下哦 (๑•̀ㅂ•́)ญ✧
+        try:
+            if self.file_type == 'excel':
+                self._load_excel_columns()
+            elif self.file_type == 'csv':
+                self._load_csv_columns()
+        except Exception as e:
+            logger.error(f"加载文件列失败: {str(e)}")
+            # 🌟 小鸟游星野：文件加载失败提示 ~ (๑•̀ㅂ•́)ญ✧
+            w = MessageBox("加载失败", f"无法读取文件: {str(e)}", self)
+            w.yesButton.setText("确定")
+            w.cancelButton.hide()
+            w.buttonLayout.insertStretch(1)
+            w.exec_()
+            self.file_path = None
+            self.file_path_edit.clear()
+
+    def _init_combo_boxes(self, columns):
+        # 🌟 小鸟游星野：初始化所有下拉框 ~ (๑•̀ㅂ•́)ญ✧
+        column_items = ['请选择'] + columns
+        for combo in [self.id_combo, self.reward_combo, self.probability_combo]:
+            combo.clear()
+            combo.addItems(column_items)
+            combo.setVisible(True)
+        self.update_mapping()
+
+    def _auto_select_columns(self, columns):
+        # 🌟 星穹铁道白露：智能列匹配 ~ (๑•̀ㅂ•́)ญ✧
+        fields = [
+            (self.id_combo, ['id', '序号', 'rewardid', 'no', 'number', 'prizeid'], True, '序号'),
+            (self.reward_combo, ['name', '奖品', 'rewardname', 'prize'], True, '奖品'),
+            (self.probability_combo, ['probability', '权重', 'weight'], False, '权重')
+        ]
+
+        for combo, keywords, is_required, field_name in fields:
+            # 自动选择匹配项
+            auto_selected = False
+            for i, col in enumerate(columns):
+                if any(key in col.lower() for key in keywords):
+                    combo.setCurrentIndex(i + 1)  # +1是因为第一个选项是"请选择"
+                    auto_selected = True
+                    break
+
+        # 必选列验证
+        self._validate_required_column(combo, is_required, field_name, columns)
+
+        # 可选列未找到匹配时取消勾选
+        if not is_required and not auto_selected:
+            if field_name == '权重':
+                self.probability_check.setChecked(False)
+
+        self.update_mapping()
+        self._validate_mandatory_columns()
+
+    def _validate_required_column(self, combo, is_required, field_name, columns):
+        # 🌟 小鸟游星野：必选列验证 ~ (๑•̀ㅂ•́)ญ✧
+        if is_required and combo.currentIndex() == 0:  # 0表示"请选择"
+            if columns:
+                combo.setCurrentIndex(1)  # 选择第一列数据
+                raise Warning(f"已自动选择第一列作为{field_name}列，请确认是否正确")
+            else:
+                raise Exception(f"必须选择{field_name}对应的列")
+
+    def _validate_mandatory_columns(self):
+        # 🌟 星穹铁道白露：验证用户选择 ~ (๑•̀ㅂ•́)ญ✧
+        if self.column_mapping['序号'] == -1:
+            raise Exception("必须选择序号对应的列")
+        if self.column_mapping['奖品'] == -1:
+            raise Exception("必须选择奖品对应的列")
+
+    def _load_excel_columns(self):
+        # 🌟 星穹铁道白露：加载Excel列并智能匹配 ~ (๑•̀ㅂ•́)ญ✧
+        df = pd.read_excel(self.file_path)
+        columns = list(df.columns)
+        self._init_combo_boxes(columns)
+        self._auto_select_columns(columns)
+
+    def _load_csv_columns(self):
+        # 🌟 星穹铁道白露：加载CSV列并智能匹配 ~ (๑•̀ㅂ•́)ญ✧
+        df = self._read_csv_file(self.file_path)
+        columns = df.columns.tolist()
+        self._init_combo_boxes(columns)
+        self._auto_select_columns(columns)
+
+    def update_mapping(self):
+        # 🌟 白露：更新列映射，确保索引正确计算~ (๑•̀ㅂ•́)ญ✧
+        self.column_mapping['序号'] = self.id_combo.currentIndex() - 1 if self.id_combo.currentIndex() > 0 else -1
+        self.column_mapping['奖品'] = self.reward_combo.currentIndex() - 1 if self.reward_combo.currentIndex() > 0 else -1
+        self.column_mapping['权重'] = self.probability_combo.currentIndex() - 1 if (self.probability_check.isChecked() and self.probability_combo.currentIndex() > 0) else -1
+
+    def toggle_column(self, column):
+        self.include_columns[column] = not self.include_columns[column]
+        self.update_mapping()
+
+    def accept(self):
+        # 🌟 小鸟游星野：检查必要条件是否满足并执行导入~ (๑•̀ㅂ•́)ญ✧
+        self.update_mapping()
+        if not self.file_path:
+            self._show_error_message("文件未选择", "请先选择导入文件！")
+            return
+
+        # 根据文件类型执行不同的验证逻辑
+        validation_methods = {
+            'excel': self._validate_excel,
+            'csv': self._validate_csv_json
+        }
+
+        validator = validation_methods.get(self.file_type)
+        if validator and not validator():
+            return
+
+        try:
+            # 获取班级名称并验证
+            if not hasattr(self.parent(), 'prize_pools_comboBox'):
+                raise Exception("无法获取班级信息，请确保主界面已正确加载")
+            self.prize_pool_name = self.parent().prize_pools_comboBox.currentText()
+            
+            # 🌟 传递最新列映射给导入方法 ~ (๑•̀ㅂ•́)ญ✧
+            self.processed_data = self._import_data()
+            self._show_success_message("导入成功", f"奖品名单导入成功！\n共导入 {len(self.processed_data)} 条记录")
+            super().accept()
+        except Exception as e:
+            logger.error(f"导入失败: {str(e)}")
+            self._show_error_message("导入失败", f"导入过程中出错: {str(e)}")
+
+    def _read_csv_file(self, file_path):
+        # 小鸟游星野: 智能读取CSV文件的专用方法 ~ (｡•̀ᴗ-)✧
+        encodings = ['gbk', 'gb2312', 'utf-8', 'latin-1', 'iso-8859-1', 'cp936']
+        found_encoding = None
+        found_sep = None
+        df = None
+        
+        # 星穹铁道白露: 尝试不同编码和分隔符组合~ (๑•̀ㅂ•́)ญ✧
+        for encoding in encodings:
+            try:
+                for sep in [',', ';', '\t']:
+                    df = pd.read_csv(file_path, encoding=encoding, sep=sep, nrows=10)
+                    if len(df.columns) > 1:
+                        found_encoding = encoding
+                        found_sep = sep
+                        break
+                if found_encoding:
+                    break
+            except:
+                continue
+        
+        # 验证是否找到合适的解析方式
+        if df is None:
+            raise Exception("无法解析CSV文件，请检查文件格式是否正确")
+        
+        # 使用找到的参数读取完整文件
+        return pd.read_csv(file_path, encoding=found_encoding, sep=found_sep)
+
+    def _import_data(self):
+        # 🌟 星穹铁道白露：执行学生数据导入并返回处理后的数据 ~ (◍•ᴗ•◍)
+        # 小鸟游星野: 根据文件类型选择合适的读取方式 ~ (｡•̀ᴗ-)✧
+        file_ext = os.path.splitext(self.file_path)[1].lower()
+        
+        # 根据扩展名选择读取方法
+        if file_ext in ['.xlsx', '.xls']:
+            df = pd.read_excel(self.file_path)
+        elif file_ext == '.csv':
+            df = self._read_csv_file(self.file_path)
+        else:
+            raise Exception(f"不支持的文件类型: {file_ext}，请使用Excel或CSV文件")
+
+        # 获取列映射
+        id_col = self.column_mapping['序号']
+        reward_col = self.column_mapping['奖品']
+        probability_col = self.column_mapping['权重']
+
+        # 处理学生数据
+        reward_data = {}
+        for index, row in df.iterrows():
+            # 获取序号和奖品（必选字段）
+            # 提取并清理序号和奖品（去除空白字符）
+            reward_id = str(row.iloc[id_col]).strip()
+            reward_name = str(row.iloc[reward_col]).strip()
+
+            # 验证必填字段（确保不为空）
+            if not reward_id or not reward_name:
+                continue
+
+            # 创建学生信息字典
+            # 处理权重字段转换（针对NamePicker格式）
+            probability_value = str(row.iloc[probability_col]) if probability_col != -1 and not pd.isna(row.iloc[probability_col]) else ""
+            
+            reward_data[reward_name] = {
+                'id': int(reward_id) if reward_id.isdigit() else index + 1,
+                'probability': probability_value,
+            }
+
+        return reward_data
+
+    def _show_error_message(self, title, message):
+        # 🌟 小鸟游星野：统一错误提示对话框 ~ (๑•̀ㅂ•́)ญ✧
+        w = MessageBox(title, message, self)
+        w.yesButton.setText("确定")
+        w.cancelButton.hide()
+        w.buttonLayout.insertStretch(1)
+        w.exec_()
+
+    def _show_success_message(self, title, message):
+        # 🌟 小鸟游星野：统一成功提示对话框 ~ (๑•̀ㅂ•́)ญ✧
+        w = MessageBox(title, message, self)
+        w.yesButton.setText("确定")
+        w.cancelButton.hide()
+        w.buttonLayout.insertStretch(1)
+        w.exec_()
+
+    def _validate_excel(self):
+        # 🌟 星穹铁道白露：Excel文件验证 ~ (๑•̀ㅂ•́)ญ✧
+        if self.id_combo.currentIndex() <= 0:
+            self._show_error_message("序号列未选择", "请选择有效的序号列！")
+            return False
+
+        if self.reward_combo.currentIndex() <= 0:
+            self._show_error_message("奖品列未选择", "请选择有效的奖品列！")
+            return False
+
+        # 可选列未选择时自动取消勾选
+        if self.probability_check.isChecked() and self.probability_combo.currentIndex() <= 0:
+            self.probability_check.setChecked(False)
+
+        # 验证列选择唯一性
+        selected_columns = []
+        if self.id_combo.currentIndex() > 0:
+            selected_columns.append(self.id_combo.currentIndex() - 1)
+        if self.reward_combo.currentIndex() > 0:
+            selected_columns.append(self.reward_combo.currentIndex() - 1)
+        if self.probability_check.isChecked() and self.probability_combo.currentIndex() > 0:
+            selected_columns.append(self.probability_combo.currentIndex() - 1)
+
+        # 检查重复选择
+        if len(selected_columns) != len(set(selected_columns)):
+            self._show_error_message("列选择错误", "不能选择重复的列！请确保所有选中的列都是唯一的。")
+            return False
+
+        return True
+
+    def _validate_csv_json(self):
+        # 🌟 星穹铁道白露：CSV/JSON文件验证 ~ (๑•̀ㅂ•́)ญ✧
+        if self.column_mapping.get('序号', -1) == -1:
+            self._show_error_message("验证失败", "文件缺少必要的序号列！")
+            return False
+
+        if self.column_mapping.get('奖品', -1) == -1:
+            self._show_error_message("验证失败", "文件缺少必要的奖品列！")
+            return False
+
+        return True
+
+    def get_processed_data(self):
+        # 🌟 星穹铁道白露：返回处理后的学生数据和班级名称 ~ (◍•ᴗ•◍)
+        return self.processed_data, self.prize_pool_name
+
+    def get_result(self):
+        return self.file_path, self.file_type, self.column_mapping
 
 
 class Prize_pools_InputDialog(QDialog):
