@@ -586,11 +586,11 @@ class pumping_people(QWidget):
                 voice_config = json.load(f)
                 voice_engine = voice_config['voice_engine']['voice_engine']
                 edge_tts_voice_name = voice_config['voice_engine'] ['edge_tts_voice_name']
-                voice_enabled = settings['voice_engine']['voice_enabled']
-                system_volume_enabled = settings['voice_engine']['system_volume_enabled']
-                voice_volume = settings['voice_engine'].get('voice_volume', 100) / 100.0
-                voice_speed = settings['voice_engine'].get('voice_speed', 100)
-                volume_value = settings['voice_engine'].get('system_volume_value', 50)
+                voice_enabled = voice_config['voice_engine']['voice_enabled']
+                system_volume_enabled = voice_config['voice_engine']['system_volume_enabled']
+                voice_volume = voice_config['voice_engine'].get('voice_volume', 100) / 100.0
+                voice_speed = voice_config['voice_engine'].get('voice_speed', 100)
+                volume_value = voice_config['voice_engine'].get('system_volume_value', 50)
 
                 if voice_enabled == True:  # 开启语音
                     if system_volume_enabled == True: # 开启系统音量
