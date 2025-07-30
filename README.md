@@ -29,7 +29,7 @@
 > GNU GPLv3具有Copyleft特性，也就是说，您可以修改SecRandom的源代码，但是**必须将修改版本同样以GNU GPLv3协议开源**
 
 ## 📄 **文档**
- - **SecRandom 官方文档正在制作中，将制作网页版**
+- 📄 **[SecRandom 官方文档](https://secrandom.netlify.app) 暂未全部完善，待后续完善**
  - [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
 
 ## 🌈 核心功能
