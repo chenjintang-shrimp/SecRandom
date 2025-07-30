@@ -668,7 +668,7 @@ class pumping_reward(QWidget):
                             _result_color = "#ffffff"
 
                         self.reward_labels = []
-                        for num, selected, probability in selected_rewards:
+                        for num, name, probability in selected_rewards:
                             reward_id_str = f"{num:02}"
                             if display_format == 1:
                                 label = BodyLabel(f"{name}")
@@ -866,8 +866,6 @@ class pumping_reward(QWidget):
         """根据选择的奖池更新总奖数显示"""
         reward_name = self.reward_combo.currentText()
 
-        self._update_count_display()
-
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
@@ -894,10 +892,8 @@ class pumping_reward(QWidget):
                         position=InfoBarPosition.TOP
                     )
                 if pumping_reward_reward_quantity == 1:
-                    self.total_label = BodyLabel('总奖数: 0')
                     self.total_label.setText(f'总奖数: {count}')
-                if pumping_reward_reward_quantity == 2:
-                    self.total_label = BodyLabel('剩余奖数: 0')
+                elif pumping_reward_reward_quantity == 2:
                     self.total_label.setText(f'剩余奖数: {_count}')
                 else:
                     self.total_label.setText(f'总奖数: {count} | 剩余奖数: {_count}')
@@ -918,7 +914,7 @@ class pumping_reward(QWidget):
                 if isinstance(reward_info, dict) and 'id' in reward_info:
                     id = reward_info.get('id', '')
                     name = reward_name
-                    probability = reward_info.get('probability', 1.0)
+                    probability = float(reward_info.get('probability', 1.0))
                     cleaned_data.append((id, name, probability))
 
             return cleaned_data
@@ -947,7 +943,7 @@ class pumping_reward(QWidget):
     def _set_default_count(self, pumping_reward_reward_quantity):
         if pumping_reward_reward_quantity == 1:
             self.total_label = BodyLabel('总奖数: 0')
-        if pumping_reward_reward_quantity == 2:
+        elif pumping_reward_reward_quantity == 2:
             self.total_label = BodyLabel('剩余奖数: 0')
         else:
             self.total_label = BodyLabel('总奖数: 0 | 剩余奖数: 0')
@@ -1020,8 +1016,8 @@ class pumping_reward(QWidget):
         """恢复初始状态"""
         self._clean_temp_files()
         self.current_count = 1
-        self.clear_layout(self.result_grid)
         self.update_total_count()
+        self.clear_layout(self.result_grid)
 
     # 清理临时文件
     def _clean_temp_files(self):
@@ -1076,6 +1072,7 @@ class pumping_reward(QWidget):
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
         self.refresh_button.clicked.connect(self._reset_to_initial_state)
+        self.refresh_button.clicked.connect(self.update_total_count)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 刷新按钮
@@ -1083,6 +1080,7 @@ class pumping_reward(QWidget):
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
         self.refresh_button.clicked.connect(self.refresh_reward_list)
+        self.refresh_button.clicked.connect(self.update_total_count)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 创建一个水平布局
@@ -1153,7 +1151,7 @@ class pumping_reward(QWidget):
         # 总奖数和剩余奖数显示
         if pumping_reward_reward_quantity == 1:
             self.total_label = BodyLabel('总奖数: 0')
-        if pumping_reward_reward_quantity == 2:
+        elif pumping_reward_reward_quantity == 2:
             self.total_label = BodyLabel('剩余奖数: 0')
         else:
             self.total_label = BodyLabel('总奖数: 0 | 剩余奖数: 0')
