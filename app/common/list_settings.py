@@ -467,7 +467,7 @@ class ImportStudentDialog(QDialog):
         type_label.setFont(QFont(load_custom_font(), 12))
         self.type_combo = ComboBox()
         self.type_combo.setFont(QFont(load_custom_font(), 12))
-        self.type_combo.addItems(["Excel文件 (*.xls *.xlsx)", "CSV文件 (.csv)", "NamePicker文件 (*.csv)"])
+        self.type_combo.addItems(["Excel文件 (*.xls *.xlsx)", "CSV文件 (*.csv)", "NamePicker文件 (*.csv)"])
         self.type_combo.currentIndexChanged.connect(self.change_file_type)
         type_layout.addWidget(type_label)
         type_layout.addWidget(self.type_combo)
