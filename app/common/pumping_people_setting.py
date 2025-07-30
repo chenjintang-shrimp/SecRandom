@@ -245,7 +245,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         # 显示格式
         self.pumping_people_display_format_comboBox = ComboBox()
         self.pumping_people_display_format_comboBox.addItems([
-            "学号 姓名",
+            "学号+姓名",
             "姓名",
             "学号"
         ])

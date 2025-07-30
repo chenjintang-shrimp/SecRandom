@@ -204,7 +204,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         # 显示格式
         self.pumping_reward_display_format_comboBox = ComboBox()
         self.pumping_reward_display_format_comboBox.addItems([
-            "学号 奖品",
+            "学号+奖品",
             "奖品",
             "学号"
         ])
