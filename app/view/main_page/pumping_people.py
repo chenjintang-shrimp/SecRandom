@@ -1551,7 +1551,6 @@ class pumping_people(QWidget):
         self._clean_temp_files()
         self.current_count = 1
         self.update_total_count()
-        self.refresh_class_list()
         self.clear_layout(self.result_grid)
 
     # 清理临时文件
