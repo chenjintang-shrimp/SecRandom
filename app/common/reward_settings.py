@@ -382,8 +382,42 @@ class ImportPrizeDialog(QDialog):
     # 🌟 小鸟游星野：学生名单导入对话框 ~ (๑•̀ㅂ•́)ญ✧
     def __init__(self, parent=None):
         super().__init__(parent)
+        # 设置无边框窗口样式
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("导入奖品名单")
-        self.setFixedSize(600, 500)
+        self.setFixedSize(600, 535)  # 增加高度以适应标题栏
+        self.saved = False
+        self.dragging = False
+        self.drag_position = None
+
+        # 确保不设置子窗口的屏幕属性
+        if parent is not None:
+            self.setParent(parent)
+
+        # 创建自定义标题栏
+        self.title_bar = QWidget()
+        self.title_bar.setObjectName("CustomTitleBar")
+        self.title_bar.setFixedHeight(35)
+
+        # 标题栏布局
+        title_layout = QHBoxLayout(self.title_bar)
+        title_layout.setContentsMargins(10, 0, 10, 0)
+
+        # 窗口标题
+        self.title_label = QLabel("导入奖品名单")
+        self.title_label.setObjectName("TitleLabel")
+        self.title_label.setFont(QFont(load_custom_font(), 12))
+
+        # 窗口控制按钮
+        self.close_btn = QPushButton("✕")
+        self.close_btn.setObjectName("CloseButton")
+        self.close_btn.setFixedSize(25, 25)
+        self.close_btn.clicked.connect(self.reject)
+
+        # 添加组件到标题栏
+        title_layout.addWidget(self.title_label)
+        title_layout.addStretch()
+        title_layout.addWidget(self.close_btn)
         self.file_path = None
         self.file_type = 'excel'
         self.column_mapping = {'序号': -1, '奖品': -1, '权重': -1, '小组': -1}
@@ -397,17 +431,67 @@ class ImportPrizeDialog(QDialog):
         self.init_ui()
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)ญ✧
-        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
+        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
         self.setStyleSheet(f"""
-            QDialog, QDialog * {{
-                color: {colors['text']};
-                background-color: {colors['bg']};
+            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
+            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
+            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            #CloseButton {{ 
+                background-color: transparent; 
+                color: {colors['text']}; 
+                border-radius: 4px; 
+                font-weight: bold; 
             }}
+            #CloseButton:hover {{ background-color: #ff4d4d; color: white; }}
+            QLabel, QPushButton, QTextEdit, QLineEdit, QComboBox, QCheckBox {{ color: {colors['text']}; }}
         """)
+        
+        # 设置标题栏颜色以匹配背景色（仅Windows系统）
+        if os.name == 'nt':
+            try:
+                import ctypes
+                # 转换为整数句柄
+                hwnd = int(self.winId())
+                
+                # 颜色格式要改成ARGB才行呢~ 添加透明度通道
+                bg_color = colors['bg'].lstrip('#')
+                # 转换为ARGB格式（添加不透明通道）
+                rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
+                
+                # 设置窗口标题栏颜色
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_int(hwnd),  # 窗口句柄（整数类型）
+                    35,  # DWMWA_CAPTION_COLOR
+                    ctypes.byref(ctypes.c_uint(rgb_color)),  # 颜色值指针
+                    ctypes.sizeof(ctypes.c_uint)  # 数据大小
+                )
+            except Exception as e:
+                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+
+    def mousePressEvent(self, event):
+        # 窗口拖动功能~ 按住标题栏就能移动啦
+        if event.button() == Qt.LeftButton and self.title_bar.underMouse():
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.dragging and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.dragging = False
 
     def init_ui(self):
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        # 添加自定义标题栏
+        layout.addWidget(self.title_bar)
+        # 添加内容区域
+        content_layout = QVBoxLayout()
 
         # 文件选择区域
         file_layout = QHBoxLayout()
@@ -418,7 +502,7 @@ class ImportPrizeDialog(QDialog):
         browse_btn.clicked.connect(self.browse_file)
         file_layout.addWidget(self.file_path_edit)
         file_layout.addWidget(browse_btn)
-        layout.addLayout(file_layout)
+        content_layout.addLayout(file_layout)
 
         # 文件类型选择
         type_layout = QHBoxLayout()
@@ -430,7 +514,7 @@ class ImportPrizeDialog(QDialog):
         self.type_combo.currentIndexChanged.connect(self.change_file_type)
         type_layout.addWidget(type_label)
         type_layout.addWidget(self.type_combo)
-        layout.addLayout(type_layout)
+        content_layout.addLayout(type_layout)
 
         # 列映射区域
         mapping_group = QGroupBox("") 
@@ -443,7 +527,7 @@ class ImportPrizeDialog(QDialog):
         self._create_checkable_combo_row(mapping_layout, 'probability_combo', 'probability_check', '权重列：', '权重')
 
         mapping_group.setLayout(mapping_layout)
-        layout.addWidget(mapping_group)
+        content_layout.addWidget(mapping_group)
 
         # 按钮区域
         btn_layout = QHBoxLayout()
@@ -456,8 +540,12 @@ class ImportPrizeDialog(QDialog):
         btn_layout.addStretch(1)
         btn_layout.addWidget(cancel_btn)
         btn_layout.addWidget(ok_btn)
-        layout.addLayout(btn_layout)
+        content_layout.addLayout(btn_layout)
 
+        # 设置内容区域边距
+        content_layout.setContentsMargins(20, 10, 20, 20)
+        # 添加内容区域到主布局
+        layout.addLayout(content_layout)
         self.setLayout(layout)
 
     def _create_combo_box(self):
@@ -788,8 +876,38 @@ class Prize_pools_InputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("输入奖池名称")
-        self.setFixedSize(400, 300)
+        # 设置无边框窗口样式
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+        self.setFixedSize(400, 335)  # 增加高度以适应标题栏
         self.saved = False
+        
+        # 创建自定义标题栏
+        self.title_bar = QWidget()
+        self.title_bar.setObjectName("CustomTitleBar")
+        self.title_bar.setFixedHeight(35)
+        title_layout = QHBoxLayout(self.title_bar)
+        title_layout.setContentsMargins(10, 0, 10, 0)
+        title_layout.setSpacing(0)
+        
+        # 标题标签
+        self.title_label = QLabel("输入奖池名称")
+        self.title_label.setObjectName("TitleLabel")
+        self.title_label.setFont(QFont(load_custom_font(), 12, QFont.Bold))
+        
+        # 关闭按钮
+        self.close_button = QPushButton("×")
+        self.close_button.setObjectName("CloseButton")
+        self.close_button.setFixedSize(25, 25)
+        self.close_button.clicked.connect(self.reject)
+        
+        # 添加到标题栏布局
+        title_layout.addWidget(self.title_label)
+        title_layout.addStretch(1)
+        title_layout.addWidget(self.close_button)
+        
+        # 窗口拖动属性
+        self.dragging = False
+        self.drag_position = QPoint()
         
         self.text_label = BodyLabel('请输入奖池名称，每行一个')
         self.text_label.setFont(QFont(load_custom_font(), 12))
@@ -824,28 +942,89 @@ class Prize_pools_InputDialog(QDialog):
         self.saveButton.setFont(QFont(load_custom_font(), 12))
         self.cancelButton.setFont(QFont(load_custom_font(), 12))
         
+        # 创建主布局
         layout = QVBoxLayout()
-        layout.addWidget(self.text_label)
-        layout.addWidget(self.textEdit)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         
+        # 添加自定义标题栏
+        layout.addWidget(self.title_bar)
+        
+        # 创建内容区域布局
+        content_layout = QVBoxLayout()
+        content_layout.addWidget(self.text_label)
+        content_layout.addWidget(self.textEdit)
+        
+        # 按钮区域
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.cancelButton)
         buttonLayout.addWidget(self.saveButton)
         
-        layout.addLayout(buttonLayout)
+        content_layout.addLayout(buttonLayout)
+        
+        # 设置内容区域边距
+        content_layout.setContentsMargins(20, 10, 20, 20)
+        
+        # 添加内容区域到主布局
+        layout.addLayout(content_layout)
+        
         self.setLayout(layout)
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)ญ✧
-        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
+        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
         self.setStyleSheet(f"""
-            QDialog, QDialog * {{
-                color: {colors['text']};
-                background-color: {colors['bg']};
+            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
+            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
+            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            #CloseButton {{ 
+                background-color: transparent; 
+                color: {colors['text']}; 
+                border-radius: 4px; 
+                font-weight: bold; 
             }}
+            #CloseButton:hover {{ background-color: #ff4d4d; color: white; }}
+            QLabel, QPushButton, QTextEdit, QLineEdit, QComboBox, QCheckBox {{ color: {colors['text']}; }}
         """)
         
+        # 设置标题栏颜色以匹配背景色（仅Windows系统）
+        if os.name == 'nt':
+            try:
+                import ctypes
+                # 转换为整数句柄
+                hwnd = int(self.winId())
+                
+                # 颜色格式要改成ARGB才行呢~ 添加透明度通道
+                bg_color = colors['bg'].lstrip('#')
+                # 转换为ARGB格式（添加不透明通道）
+                rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
+                
+                # 设置窗口标题栏颜色
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_int(hwnd),  # 窗口句柄（整数类型）
+                    35,  # DWMWA_CAPTION_COLOR
+                    ctypes.byref(ctypes.c_uint(rgb_color)),  # 颜色值指针
+                    ctypes.sizeof(ctypes.c_uint)  # 数据大小
+                )
+            except Exception as e:
+                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+        
+    def mousePressEvent(self, event):
+        # 窗口拖动功能~ 按住标题栏就能移动啦
+        if event.button() == Qt.LeftButton and self.title_bar.underMouse():
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.dragging and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.dragging = False
+
     def closeEvent(self, event):
         if not self.saved:
             w = Dialog('未保存内容', '确定要关闭吗？', self)
@@ -870,9 +1049,53 @@ class PrizeInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("输入奖品名称")
-        self.setFixedSize(400, 600)
+        # 设置无边框窗口样式
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+        self.setFixedSize(400, 635)  # 增加高度以适应标题栏
         self.saved = False
+        
+        # 创建自定义标题栏
+        self.title_bar = QWidget()
+        self.title_bar.setObjectName("CustomTitleBar")
+        self.title_bar.setFixedHeight(35)
+        title_layout = QHBoxLayout(self.title_bar)
+        title_layout.setContentsMargins(10, 0, 10, 0)
+        title_layout.setSpacing(0)
+        
+        # 标题标签
+        self.title_label = QLabel("输入奖品名称")
+        self.title_label.setObjectName("TitleLabel")
+        self.title_label.setFont(QFont(load_custom_font(), 12, QFont.Bold))
+        
+        # 关闭按钮
+        self.close_button = QPushButton("×")
+        self.close_button.setObjectName("CloseButton")
+        self.close_button.setFixedSize(25, 25)
+        self.close_button.clicked.connect(self.reject)
+        
+        # 添加到标题栏布局
+        title_layout.addWidget(self.title_label)
+        title_layout.addStretch(1)
+        title_layout.addWidget(self.close_button)
+        
+        # 窗口拖动属性
+        self.dragging = False
+        self.drag_position = QPoint()
 
+        # 创建主布局
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        
+        # 添加标题栏到主布局
+        self.main_layout.addWidget(self.title_bar)
+        
+        # 创建内容区域布局
+        self.content_layout = QVBoxLayout()
+        self.content_layout.setContentsMargins(20, 10, 20, 20)
+        self.content_layout.setSpacing(10)
+        
+        # 内容区域组件
         self.text_label = BodyLabel('请输入奖品名称，每行一个')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
@@ -919,28 +1142,77 @@ class PrizeInputDialog(QDialog):
         self.saveButton.setFont(QFont(load_custom_font(), 12))
         self.cancelButton.setFont(QFont(load_custom_font(), 12))
         
-        layout = QVBoxLayout()
-        layout.addWidget(self.text_label)
-        layout.addWidget(self.textEdit)
+        # 添加组件到内容区域布局
+        self.content_layout.addWidget(self.text_label)
+        self.content_layout.addWidget(self.textEdit)
         
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.cancelButton)
         buttonLayout.addWidget(self.saveButton)
         
-        layout.addLayout(buttonLayout)
-        self.setLayout(layout)
+        self.content_layout.addLayout(buttonLayout)
+        
+        # 添加内容区域布局到主布局
+        self.main_layout.addLayout(self.content_layout)
+        
+        # 设置主布局
+        self.setLayout(self.main_layout)
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)ญ✧
-        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
+        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
         self.setStyleSheet(f"""
-            QDialog, QDialog * {{
-                color: {colors['text']};
-                background-color: {colors['bg']};
+            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
+            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
+            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            #CloseButton {{ 
+                background-color: transparent; 
+                color: {colors['text']}; 
+                border-radius: 4px; 
+                font-weight: bold; 
             }}
+            #CloseButton:hover {{ background-color: #ff4d4d; color: white; }}
+            QLabel, QPushButton, QTextEdit, QLineEdit, QComboBox, QCheckBox {{ color: {colors['text']}; }}
         """)
         
+        # 设置标题栏颜色以匹配背景色（仅Windows系统）
+        if os.name == 'nt':
+            try:
+                import ctypes
+                # 转换为整数句柄
+                hwnd = int(self.winId())
+                
+                # 颜色格式要改成ARGB才行呢~ 添加透明度通道
+                bg_color = colors['bg'].lstrip('#')
+                # 转换为ARGB格式（添加不透明通道）
+                rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
+                
+                # 设置窗口标题栏颜色
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_int(hwnd),  # 窗口句柄（整数类型）
+                    35,  # DWMWA_CAPTION_COLOR
+                    ctypes.byref(ctypes.c_uint(rgb_color)),  # 颜色值指针
+                    ctypes.sizeof(ctypes.c_uint)  # 数据大小
+                )
+            except Exception as e:
+                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+        
+    def mousePressEvent(self, event):
+        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+        if event.button() == Qt.LeftButton and self.title_bar.underMouse():
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.dragging and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.dragging = False
+
     def closeEvent(self, event):
         if not self.saved:
             w = Dialog('未保存内容', '确定要关闭吗？', self)
@@ -965,9 +1237,53 @@ class ProbabilityInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("输入每项奖品对应的权重")
-        self.setFixedSize(400, 400)
+        # 设置无边框窗口样式
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+        self.setFixedSize(400, 435)  # 增加高度以适应标题栏
         self.saved = False
+        
+        # 创建自定义标题栏
+        self.title_bar = QWidget()
+        self.title_bar.setObjectName("CustomTitleBar")
+        self.title_bar.setFixedHeight(35)
+        title_layout = QHBoxLayout(self.title_bar)
+        title_layout.setContentsMargins(10, 0, 10, 0)
+        title_layout.setSpacing(0)
+        
+        # 标题标签
+        self.title_label = QLabel("输入每项奖品对应的权重")
+        self.title_label.setObjectName("TitleLabel")
+        self.title_label.setFont(QFont(load_custom_font(), 12, QFont.Bold))
+        
+        # 关闭按钮
+        self.close_button = QPushButton("×")
+        self.close_button.setObjectName("CloseButton")
+        self.close_button.setFixedSize(25, 25)
+        self.close_button.clicked.connect(self.reject)
+        
+        # 添加到标题栏布局
+        title_layout.addWidget(self.title_label)
+        title_layout.addStretch(1)
+        title_layout.addWidget(self.close_button)
+        
+        # 窗口拖动属性
+        self.dragging = False
+        self.drag_position = QPoint()
 
+        # 创建主布局
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        
+        # 添加标题栏到主布局
+        self.main_layout.addWidget(self.title_bar)
+        
+        # 创建内容区域布局
+        self.content_layout = QVBoxLayout()
+        self.content_layout.setContentsMargins(20, 10, 20, 20)
+        self.content_layout.setSpacing(10)
+        
+        # 内容区域组件
         self.text_label = BodyLabel('请输入每项奖品对应的权重，每行一个\n例:1 或 5\n注:尽量在表格中复制后直接粘贴')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
@@ -1009,28 +1325,77 @@ class ProbabilityInputDialog(QDialog):
         self.saveButton.setFont(QFont(load_custom_font(), 12))
         self.cancelButton.setFont(QFont(load_custom_font(), 12))
         
-        layout = QVBoxLayout()
-        layout.addWidget(self.text_label)
-        layout.addWidget(self.textEdit)
+        # 添加组件到内容区域布局
+        self.content_layout.addWidget(self.text_label)
+        self.content_layout.addWidget(self.textEdit)
         
         buttonLayout = QHBoxLayout()
         buttonLayout.addStretch(1)
         buttonLayout.addWidget(self.cancelButton)
         buttonLayout.addWidget(self.saveButton)
         
-        layout.addLayout(buttonLayout)
-        self.setLayout(layout)
+        self.content_layout.addLayout(buttonLayout)
+        
+        # 添加内容区域布局到主布局
+        self.main_layout.addLayout(self.content_layout)
+        
+        # 设置主布局
+        self.setLayout(self.main_layout)
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ (๑•̀ㅂ•́)ญ✧
-        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116'}
+        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
         self.setStyleSheet(f"""
-            QDialog, QDialog * {{
-                color: {colors['text']};
-                background-color: {colors['bg']};
+            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
+            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
+            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            #CloseButton {{ 
+                background-color: transparent; 
+                color: {colors['text']}; 
+                border-radius: 4px; 
+                font-weight: bold; 
             }}
+            #CloseButton:hover {{ background-color: #ff4d4d; color: white; }}
+            QLabel, QPushButton, QTextEdit, QLineEdit, QComboBox, QCheckBox {{ color: {colors['text']}; }}
         """)
         
+        # 设置标题栏颜色以匹配背景色（仅Windows系统）
+        if os.name == 'nt':
+            try:
+                import ctypes
+                # 转换为整数句柄
+                hwnd = int(self.winId())
+                
+                # 颜色格式要改成ARGB才行呢~ 添加透明度通道
+                bg_color = colors['bg'].lstrip('#')
+                # 转换为ARGB格式（添加不透明通道）
+                rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
+                
+                # 设置窗口标题栏颜色
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_int(hwnd),  # 窗口句柄（整数类型）
+                    35,  # DWMWA_CAPTION_COLOR
+                    ctypes.byref(ctypes.c_uint(rgb_color)),  # 颜色值指针
+                    ctypes.sizeof(ctypes.c_uint)  # 数据大小
+                )
+            except Exception as e:
+                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+        
+    def mousePressEvent(self, event):
+        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+        if event.button() == Qt.LeftButton and self.title_bar.underMouse():
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.dragging and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.dragging = False
+
     def closeEvent(self, event):
         if not self.saved:
             w = Dialog('未保存内容', '确定要关闭吗？', self)

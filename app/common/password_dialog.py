@@ -4,6 +4,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import hashlib
 import json
+import os
 import pyotp
 from loguru import logger
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
@@ -11,9 +12,38 @@ from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 class PasswordDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
+        # 🌟 星穹铁道白露：设置无边框窗口样式 ~ 
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("密码验证")
         self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
-        self.setFixedSize(400, 300)
+        self.setFixedSize(400, 335)  # 增加高度以适应标题栏
+        self.dragging = False
+        self.drag_position = None
+
+        # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
+        self.title_bar = QWidget()
+        self.title_bar.setObjectName("CustomTitleBar")
+        self.title_bar.setFixedHeight(35)
+
+        # 标题栏布局
+        title_layout = QHBoxLayout(self.title_bar)
+        title_layout.setContentsMargins(10, 0, 10, 0)
+
+        # 窗口标题
+        self.title_label = QLabel("密码验证")
+        self.title_label.setObjectName("TitleLabel")
+        self.title_label.setFont(QFont(load_custom_font(), 12))
+
+        # 窗口控制按钮
+        self.close_btn = QPushButton("✕")
+        self.close_btn.setObjectName("CloseButton")
+        self.close_btn.setFixedSize(25, 25)
+        self.close_btn.clicked.connect(self.reject)
+
+        # 添加组件到标题栏
+        title_layout.addWidget(self.title_label)
+        title_layout.addStretch()
+        title_layout.addWidget(self.close_btn)
 
         self.update_theme_style()
         qconfig.themeChanged.connect(self.update_theme_style)
@@ -23,15 +53,24 @@ class PasswordDialog(QDialog):
         w, h = desktop.width(), desktop.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
+        # 创建主布局
         layout = QVBoxLayout(self)
-        layout.setSpacing(15)
-        layout.setContentsMargins(20, 20, 20, 20)
-
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        # 添加标题栏到主布局
+        layout.addWidget(self.title_bar)
+        
+        # 创建内容区域布局
+        content_layout = QVBoxLayout()
+        content_layout.setContentsMargins(20, 20, 20, 20)
+        content_layout.setSpacing(15)
+        
         # 解锁方式选择
         self.unlock_method = ComboBox()
         self.unlock_method.addItems(["密码解锁", "密钥文件解锁", "2FA验证"])
         self.unlock_method.setFont(QFont(load_custom_font(), 14))
-        layout.addWidget(self.unlock_method)
+        content_layout.addWidget(self.unlock_method)
 
         # 密码输入框
         self.password_input = LineEdit()
@@ -40,7 +79,7 @@ class PasswordDialog(QDialog):
         self.password_input.setFont(QFont(load_custom_font(), 14))
         # 回车确认
         self.password_input.returnPressed.connect(self.verify)
-        layout.addWidget(self.password_input)
+        content_layout.addWidget(self.password_input)
 
         # 密钥文件选择
         self.key_file_input = LineEdit()
@@ -54,13 +93,13 @@ class PasswordDialog(QDialog):
         key_file_layout.addWidget(self.key_file_input)
         key_file_layout.addWidget(self.key_file_btn)
 
-        layout.addLayout(key_file_layout)
+        content_layout.addLayout(key_file_layout)
 
         # 用户名输入框（2FA验证时显示）
         self.username_input = LineEdit()
         self.username_input.setPlaceholderText("请输入用户名")
         self.username_input.setFont(QFont(load_custom_font(), 14))
-        layout.addWidget(self.username_input)
+        content_layout.addWidget(self.username_input)
 
         # 2FA验证码
         self.totp_input = LineEdit()
@@ -68,83 +107,125 @@ class PasswordDialog(QDialog):
         self.totp_input.setFont(QFont(load_custom_font(), 14))
         # 回车确认
         self.totp_input.returnPressed.connect(self.verify)
-        layout.addWidget(self.totp_input)
+        content_layout.addWidget(self.totp_input)
 
         # 按钮
         self.verify_btn = PushButton("验证")
         self.verify_btn.clicked.connect(self.verify)
         self.verify_btn.setFont(QFont(load_custom_font(), 14))
-        layout.addWidget(self.verify_btn)
+        content_layout.addWidget(self.verify_btn)
+        
+        # 将内容布局添加到主布局
+        layout.addLayout(content_layout)
 
         # 根据选择显示不同控件
         self.unlock_method.currentIndexChanged.connect(self.update_ui)
         self.update_ui()
 
     def update_theme_style(self):
-        """根据当前主题更新样式"""
+        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
         is_dark = is_dark_theme(qconfig)
-        if is_dark:
-            self.setStyleSheet("""
-                QDialog {
-                    background-color: #111116;
-                    color: #F5F5F5;
-                }
-                QLineEdit {
-                    background-color: #3c3c3c;
-                    color: #ffffff;
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 5px;
-                }
-                QPushButton {
-                    background-color: #505050;
-                    color: #ffffff;
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 5px;
-                }
-                QPushButton:hover {
-                    background-color: #606060;
-                }
-                QComboBox {
-                    background-color: #3c3c3c;
-                    color: #ffffff;
-                    border: 1px solid #555555;
-                    border-radius: 4px;
-                    padding: 5px;
-                }
-            """)
-        else:
-            self.setStyleSheet("""
-                QDialog {
-                    background-color: #111116;
-                    color: #F5F5F5;
-                }
-                QLineEdit {
-                    background-color: #ffffff;
-                    color: #000000;
-                    border: 1px solid #cccccc;
-                    border-radius: 4px;
-                    padding: 5px;
-                }
-                QPushButton {
-                    background-color: #f0f0f0;
-                    color: #000000;
-                    border: 1px solid #cccccc;
-                    border-radius: 4px;
-                    padding: 5px;
-                }
-                QPushButton:hover {
-                    background-color: #e0e0e0;
-                }
-                QComboBox {
-                    background-color: #ffffff;
-                    color: #000000;
-                    border: 1px solid #cccccc;
-                    border-radius: 4px;
-                    padding: 5px;
-                }
-            """)
+        title_bar_bg = '#2D2D30' if is_dark else '#F0F0F0'
+        title_text_color = '#FFFFFF' if is_dark else '#000000'
+        close_button_bg = '#3D3D40' if is_dark else '#E0E0E0'
+        close_button_hover = '#505050' if is_dark else '#D0D0D0'
+        dialog_bg = '#111116' if is_dark else '#F5F5F5'
+        text_color = '#F5F5F5' if is_dark else '#111116'
+        line_edit_bg = '#3c3c3c' if is_dark else '#ffffff'
+        line_edit_text = '#ffffff' if is_dark else '#000000'
+        line_edit_border = '#555555' if is_dark else '#cccccc'
+        push_button_bg = '#505050' if is_dark else '#f0f0f0'
+        push_button_text = '#ffffff' if is_dark else '#000000'
+        push_button_border = '#555555' if is_dark else '#cccccc'
+        push_button_hover = '#606060' if is_dark else '#e0e0e0'
+        combo_box_bg = '#3c3c3c' if is_dark else '#ffffff'
+        combo_box_text = '#ffffff' if is_dark else '#000000'
+        combo_box_border = '#555555' if is_dark else '#cccccc'
+
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {dialog_bg};
+                color: {text_color};
+            }}
+            #CustomTitleBar {{
+                background-color: {title_bar_bg};
+            }}
+            #TitleLabel {{
+                color: {title_text_color};
+                font-weight: bold;
+                padding: 5px;
+            }}
+            #CloseButton {{
+                background-color: {close_button_bg};
+                color: {title_text_color};
+                border-radius: 12px;
+                font-weight: bold;
+            }}
+            #CloseButton:hover {{
+                background-color: {close_button_hover};
+            }}
+            QLineEdit {{
+                background-color: {line_edit_bg};
+                color: {line_edit_text};
+                border: 1px solid {line_edit_border};
+                border-radius: 4px;
+                padding: 5px;
+            }}
+            QPushButton {{
+                background-color: {push_button_bg};
+                color: {push_button_text};
+                border: 1px solid {push_button_border};
+                border-radius: 4px;
+                padding: 5px;
+            }}
+            QPushButton:hover {{
+                background-color: {push_button_hover};
+            }}
+            QComboBox {{
+                background-color: {combo_box_bg};
+                color: {combo_box_text};
+                border: 1px solid {combo_box_border};
+                border-radius: 4px;
+                padding: 5px;
+            }}
+        """)
+
+        # 设置标题栏颜色以匹配背景色（仅Windows系统）
+        if os.name == 'nt':
+            try:
+                import ctypes
+                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
+                hwnd = int(self.winId())  # 转换为整数句柄
+                
+                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
+                bg_color = title_bar_bg.lstrip('#')
+                # 转换为ARGB格式（添加不透明通道）
+                rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
+                
+                # 设置窗口标题栏颜色
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_int(hwnd),  # 窗口句柄（整数类型）
+                    35,  # DWMWA_CAPTION_COLOR
+                    ctypes.byref(ctypes.c_uint(rgb_color)),  # 颜色值指针
+                    ctypes.sizeof(ctypes.c_uint)  # 数据大小
+                )
+            except Exception as e:
+                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+
+    def mousePressEvent(self, event):
+        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+        if event.button() == Qt.LeftButton and self.title_bar.underMouse():
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.dragging and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.dragging = False
 
     def closeEvent(self, event):
         """窗口关闭时隐藏主界面"""
