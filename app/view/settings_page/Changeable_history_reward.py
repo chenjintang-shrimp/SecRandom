@@ -59,144 +59,95 @@ class changeable_history_reward(QFrame):
 
         self.show_table()
 
-    def show_table(self):   
-        # 根据班级名称获取学生名单数据
+    def show_table(self):
+        """显示历史记录表格"""
         data = self.__getClassrewards()
-
-        # 如果data为空，则显示提示信息
-        # 获取当前时间
-        current_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
-        if not data:
-            data = [[f'{current_time}', '无', '无']]
-
-        # 获取选择的奖池和奖品名称
         prize_pools_name = self.history_setting_card.prize_pools_comboBox.currentText()
         reward_name = self.history_setting_card.reward_comboBox.currentText()
 
         if data:
             InfoBar.success(
                 title="读取历史记录文件成功",
-                content=f"读取历史记录文件成功,班级:{prize_pools_name},学生:{reward_name}",
-                duration=6000,
+                content=f"读取历史记录文件成功,奖池:{prize_pools_name},奖品:{reward_name}",
+                duration=3000,
                 orient=Qt.Horizontal,
                 parent=self,
                 isClosable=True,
                 position=InfoBarPosition.TOP
             )
-        
-        if reward_name == '全部奖品':
-            # 设置表格行数为实际学生数量
-            self.table.setRowCount(len(data))
-            self.table.setSortingEnabled(False)
-            self.table.setColumnCount(4)
-            # 填充表格数据
-            for i, row in enumerate(data):
-                for j in range(4):
-                    self.table.setItem(i, j, QTableWidgetItem(row[j]))
-                    self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
-                    self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
-            # 设置表头
-            self.table.setHorizontalHeaderLabels(['序号', '奖品', '默认权重', '总抽取次数'])
-            self.table.verticalHeader().hide() # 隐藏垂直表头
-            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
-            
-            # 添加到布局
-            self.inner_layout_personal.addWidget(self.table)
 
-            # 将内部的 QFrame 设置为 QScrollArea 的内容
-            self.scroll_area_personal.setWidget(self.inner_frame_personal)
-
-            self.table.setSortingEnabled(True) # 启用排序
-
-            # 设置主布局
-            if not self.layout():
-                main_layout = QVBoxLayout(self)
-                main_layout.addWidget(self.scroll_area_personal)
-            else:
-                # 如果已有布局，只需更新内容
-                self.layout().addWidget(self.scroll_area_personal)
-
-        elif reward_name == '奖品记录_时间排序':
-            if not data:
-                data = [['无', '0', '无', '无']]
-            # 设置表格行数为实际学生数量
-            self.table.setRowCount(len(data))
-            self.table.setSortingEnabled(False)
-            use_system_random = self.get_random_method_setting()
-            self.table.setColumnCount(4)
-            # 填充表格数据
-            for i, row in enumerate(data):
-                for j in range(4):
-                    self.table.setItem(i, j, QTableWidgetItem(row[j]))
-                    self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
-                    self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
-            # 设置表头
-            self.table.setHorizontalHeaderLabels(['时间', '序号', '奖品', '默认权重'])
-
-            self.table.verticalHeader().hide() # 隐藏垂直表头
-            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
-            
-            # 添加到布局
-            self.inner_layout_personal.addWidget(self.table)
-
-            # 将内部的 QFrame 设置为 QScrollArea 的内容
-            self.scroll_area_personal.setWidget(self.inner_frame_personal)
-
-            self.table.setSortingEnabled(True) # 启用排序
-
-            # 设置主布局
-            if not self.layout():
-                main_layout = QVBoxLayout(self)
-                main_layout.addWidget(self.scroll_area_personal)
-            else:
-                # 如果已有布局，只需更新内容
-                self.layout().addWidget(self.scroll_area_personal)
-
-        else:
-            self.table.setRowCount(len(data))
-            self.table.setSortingEnabled(False) # 禁止排序
-            self.table.setColumnCount(3)
-            
-            # 填充表格数据
-            for i, row in enumerate(data):
-                for j in range(3):
-                    self.table.setItem(i, j, QTableWidgetItem(row[j]))
-                    self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
-                    self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
-                    
-            # 设置表头
-            self.table.setHorizontalHeaderLabels(['时间', '抽取方式', '抽取时选择的奖品数'])
-            self.table.verticalHeader().hide() # 隐藏垂直表头
-            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
-            self.table.setSortingEnabled(True) # 启用排序
-            self.table.sortByColumn(0, Qt.SortOrder.DescendingOrder)
-            
-            # 添加到布局
-            self.inner_layout_personal.addWidget(self.table)
-
-            # 将内部的 QFrame 设置为 QScrollArea 的内容
-            self.scroll_area_personal.setWidget(self.inner_frame_personal)
-
-            # 设置主布局
-            if not self.layout():
-                main_layout = QVBoxLayout(self)
-                main_layout.addWidget(self.scroll_area_personal)
-            else:
-                # 如果已有布局，只需更新内容
-                self.layout().addWidget(self.scroll_area_personal)
-
+        self._setup_table_by_mode(reward_name, data)
         self.__initWidget()
 
-    def get_random_method_setting(self):
-        """获取随机抽取方法的设置"""
-        try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                random_method = settings['pumping_reward']['draw_pumping']
-                return random_method
-        except Exception as e:
-            logger.error(f"加载随机抽取方法设置时出错: {e}, 使用默认设置")
-            return 0
+    def _setup_table_by_mode(self, reward_name: str, data: list):
+        """根据模式设置表格"""
+        if reward_name == '全部奖品':
+            self._setup_reward_summary_table(data)
+        elif reward_name == '奖品记录_时间排序':
+            self._setup_reward_time_table(data)
+        else:
+            self._setup_individual_reward_table(data)
+
+    def _setup_reward_summary_table(self, data: list):
+        """设置奖品汇总表格"""
+        if not data:
+            data = [['0', '无', '无', '无']]
+
+        self._configure_table(len(data), 4)
+        self._fill_table_data(data)
+        self.table.setHorizontalHeaderLabels(['序号', '奖品', '默认权重', '总抽取次数'])
+        self.table.sortItems(0, Qt.AscendingOrder)
+
+    def _setup_reward_time_table(self, data: list):
+        """设置奖品时间排序表格"""
+        if not data:
+            data = [['无', '0', '无', '无']]
+
+        self._configure_table(len(data), 4)
+        self._fill_table_data(data)
+        self.table.setHorizontalHeaderLabels(['时间', '序号', '奖品', '默认权重'])
+
+    def _setup_individual_reward_table(self, data: list):
+        """设置单个奖品表格"""
+        current_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
+        if not data:
+            data = [[current_time, '无', '无']]
+
+        self._configure_table(len(data), 3)
+        self._fill_table_data(data)
+        self.table.setHorizontalHeaderLabels(['时间', '抽取方式', '抽取时选择的奖品数'])
+        self.table.sortByColumn(0, Qt.SortOrder.DescendingOrder)
+
+    def _configure_table(self, row_count: int, column_count: int):
+        """配置表格基本属性"""
+        self.table.setRowCount(row_count)
+        self.table.setColumnCount(column_count)
+        self.table.setSortingEnabled(False)
+        self.table.verticalHeader().hide()
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+    def _fill_table_data(self, data: list):
+        """填充表格数据"""
+        for i, row in enumerate(data):
+            for j in range(len(row)):
+                item = QTableWidgetItem(str(row[j]))
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                item.setFont(QFont(load_custom_font(), 12))
+                self.table.setItem(i, j, item)
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+        """设置布局"""
+        self.inner_layout_personal.addWidget(self.table)
+        self.scroll_area_personal.setWidget(self.inner_frame_personal)
+        self.table.setSortingEnabled(True)
+        
+        if not self.layout():
+            main_layout = QVBoxLayout(self)
+            main_layout.addWidget(self.scroll_area_personal)
+        else:
+            self.layout().addWidget(self.scroll_area_personal)
 
     def __getClassrewards(self):
         """根据班级/学生名称获取历史记录数据"""

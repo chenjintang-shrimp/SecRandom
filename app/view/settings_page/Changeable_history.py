@@ -60,15 +60,9 @@ class changeable_history(QFrame):
 
         self.show_table()
 
-    def show_table(self):   
-        # 根据班级名称获取学生名单数据
+    def show_table(self):
+        """显示历史记录表格"""
         data = self.__getClassStudents()
-
-        # 如果data为空，则显示提示信息
-        # 获取当前时间
-        current_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
-
-        # 获取班级名称和学生名称
         class_name = self.history_setting_card.class_comboBox.currentText()
         student_name = self.history_setting_card.student_comboBox.currentText()
 
@@ -76,158 +70,103 @@ class changeable_history(QFrame):
             InfoBar.success(
                 title="读取历史记录文件成功",
                 content=f"读取历史记录文件成功,班级:{class_name},学生:{student_name}",
-                duration=6000,
+                duration=3000,
                 orient=Qt.Horizontal,
                 parent=self,
                 isClosable=True,
                 position=InfoBarPosition.TOP
             )
-        
-        if student_name == '全班同学':
-            if not data:
-                data = [['0', '无', '无', '无', '无', '无']]
-            # 设置表格行数为实际学生数量
-            self.table.setRowCount(len(data))
-            self.table.setSortingEnabled(False)
-            use_system_random = self.get_random_method_setting()
-            if use_system_random in [2, 3]:
-                self.table.setColumnCount(6)
-                # 填充表格数据
-                for i, row in enumerate(data):
-                    for j in range(6):
-                        self.table.setItem(i, j, QTableWidgetItem(row[j]))
-                        self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
-                        self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
-                # 设置表头
-                probability_weight_method = self.get_probability_weight_method_setting()
-                if probability_weight_method == 1:
-                    self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组', '总抽取次数', '下次抽取概率'])
-                else:
-                    self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组', '总抽取次数', '下次抽取权重'])
-            else:
-                self.table.setColumnCount(5)
-                # 填充表格数据
-                for i, row in enumerate(data):
-                    for j in range(5):
-                        self.table.setItem(i, j, QTableWidgetItem(row[j]))
-                        self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
-                        self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
-                # 设置表头
-                self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组', '总抽取次数'])
 
-            self.table.verticalHeader().hide() # 隐藏垂直表头
-            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
-            
-            # 添加到布局
-            self.inner_layout_personal.addWidget(self.table)
-
-            # 将内部的 QFrame 设置为 QScrollArea 的内容
-            self.scroll_area_personal.setWidget(self.inner_frame_personal)
-
-            self.table.setSortingEnabled(True) # 启用排序
-
-            # 设置主布局
-            if not self.layout():
-                main_layout = QVBoxLayout(self)
-                main_layout.addWidget(self.scroll_area_personal)
-            else:
-                # 如果已有布局，只需更新内容
-                self.layout().addWidget(self.scroll_area_personal)
-
-        elif student_name == '全班同学_时间排序':
-            if not data:
-                data = [['无', '0', '无', '无', '无']]
-            # 设置表格行数为实际学生数量
-            self.table.setRowCount(len(data))
-            self.table.setSortingEnabled(False)
-            use_system_random = self.get_random_method_setting()
-            self.table.setColumnCount(5)
-            # 填充表格数据
-            for i, row in enumerate(data):
-                for j in range(5):
-                    self.table.setItem(i, j, QTableWidgetItem(row[j]))
-                    self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
-                    self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
-            # 设置表头
-            self.table.setHorizontalHeaderLabels(['时间', '学号', '姓名', '性别', '所处小组'])
-
-            self.table.verticalHeader().hide() # 隐藏垂直表头
-            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
-            
-            # 添加到布局
-            self.inner_layout_personal.addWidget(self.table)
-
-            # 将内部的 QFrame 设置为 QScrollArea 的内容
-            self.scroll_area_personal.setWidget(self.inner_frame_personal)
-
-            self.table.setSortingEnabled(True) # 启用排序
-
-            # 设置主布局
-            if not self.layout():
-                main_layout = QVBoxLayout(self)
-                main_layout.addWidget(self.scroll_area_personal)
-            else:
-                # 如果已有布局，只需更新内容
-                self.layout().addWidget(self.scroll_area_personal)   
-
-        else:
-            if not data:
-                data = [[f'{current_time}', '无', '无', '无', '无']]
-            self.table.setRowCount(len(data))
-            self.table.setSortingEnabled(False) # 禁止排序
-            self.table.setColumnCount(5)
-            
-            # 填充表格数据
-            for i, row in enumerate(data):
-                for j in range(5):
-                    self.table.setItem(i, j, QTableWidgetItem(row[j]))
-                    self.table.item(i, j).setTextAlignment(Qt.AlignmentFlag.AlignCenter) # 居中
-                    self.table.item(i, j).setFont(QFont(load_custom_font(), 12)) # 设置字体
-                    
-            # 设置表头
-            self.table.setHorizontalHeaderLabels(['时间', '抽取方式', '抽取时选择的人数', '抽取时选择的小组', '抽取时选择的性别'])
-            self.table.verticalHeader().hide() # 隐藏垂直表头
-            self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch) # 自适应
-            self.table.setSortingEnabled(True) # 启用排序
-            self.table.sortByColumn(0, Qt.SortOrder.DescendingOrder)
-            
-            # 添加到布局
-            self.inner_layout_personal.addWidget(self.table)
-
-            # 将内部的 QFrame 设置为 QScrollArea 的内容
-            self.scroll_area_personal.setWidget(self.inner_frame_personal)
-
-            # 设置主布局
-            if not self.layout():
-                main_layout = QVBoxLayout(self)
-                main_layout.addWidget(self.scroll_area_personal)
-            else:
-                # 如果已有布局，只需更新内容
-                self.layout().addWidget(self.scroll_area_personal)
-
+        self._setup_table_by_mode(student_name, data)
         self.__initWidget()
 
-    def get_random_method_setting(self):
-        """获取随机抽取方法的设置"""
-        try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                random_method = settings['pumping_people']['draw_pumping']
-                return random_method
-        except Exception as e:
-            logger.error(f"加载随机抽取方法设置时出错: {e}, 使用默认设置")
-            return 0
+    def _setup_table_by_mode(self, student_name: str, data: list):
+        """根据模式设置表格"""
+        if student_name == '全班同学':
+            self._setup_class_table(data, include_probability=True)
+        elif student_name == '全班同学_时间排序':
+            self._setup_class_table(data, include_probability=False, time_sort=True)
+        else:
+            self._setup_individual_table(data)
 
-    def get_probability_weight_method_setting(self):
+    def _setup_class_table(self, data: list, include_probability: bool = True, time_sort: bool = False):
+        """设置班级表格"""
+        if not data:
+            data = [['0', '无', '无', '无', '无', '无']] if include_probability else [['无', '0', '无', '无', '无']]
+
+        self._configure_table(len(data), 6 if include_probability else 5)
+        self._fill_table_data(data)
+        
+        if time_sort:
+            headers = ['时间', '学号', '姓名', '性别', '所处小组']
+        elif include_probability and self.get_random_method_setting() in [2, 3]:
+            probability_method = self.get_probability_weight_method_setting()
+            headers = ['学号', '姓名', '性别', '所处小组', '总抽取次数', 
+                      '下次抽取概率' if probability_method == 1 else '下次抽取权重']
+        else:
+            headers = ['学号', '姓名', '性别', '所处小组', '总抽取次数']
+            
+        self.table.setHorizontalHeaderLabels(headers)
+
+    def _setup_individual_table(self, data: list):
+        """设置个人表格"""
+        current_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
+        if not data:
+            data = [[current_time, '无', '无', '无', '无']]
+
+        self._configure_table(len(data), 5)
+        self._fill_table_data(data)
+        self.table.setHorizontalHeaderLabels(['时间', '抽取方式', '抽取时选择的人数', '抽取时选择的小组', '抽取时选择的性别'])
+        self.table.sortByColumn(0, Qt.SortOrder.DescendingOrder)
+
+    def _configure_table(self, row_count: int, column_count: int):
+        """配置表格基本属性"""
+        self.table.setRowCount(row_count)
+        self.table.setColumnCount(column_count)
+        self.table.setSortingEnabled(False)
+        self.table.verticalHeader().hide()
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+    def _fill_table_data(self, data: list):
+        """填充表格数据"""
+        for i, row in enumerate(data):
+            for j in range(len(row)):
+                item = QTableWidgetItem(str(row[j]))
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                item.setFont(QFont(load_custom_font(), 12))
+                self.table.setItem(i, j, item)
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+        """设置布局"""
+        self.inner_layout_personal.addWidget(self.table)
+        self.scroll_area_personal.setWidget(self.inner_frame_personal)
+        self.table.setSortingEnabled(True)
+        
+        if not self.layout():
+            main_layout = QVBoxLayout(self)
+            main_layout.addWidget(self.scroll_area_personal)
+        else:
+            self.layout().addWidget(self.scroll_area_personal)
+
+    def get_random_method_setting(self) -> int:
         """获取随机抽取方法的设置"""
+        return self._get_setting_value('pumping_people', 'draw_pumping', 0)
+
+    def get_probability_weight_method_setting(self) -> int:
+        """获取概率权重方法设置"""
+        return self._get_setting_value('history', 'probability_weight', 0)
+
+    def _get_setting_value(self, section: str, key: str, default: int) -> int:
+        """通用设置读取方法"""
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                probability_weight_method = settings['history']['probability_weight']
-                return probability_weight_method
+                return settings[section][key]
         except Exception as e:
-            logger.error(f"加载随机抽取方法设置时出错: {e}, 使用默认设置")
-            return 0
+            logger.error(f"加载设置时出错: {e}, 使用默认设置")
+            return default
 
     def __getClassStudents(self):
         """根据班级/学生名称获取历史记录数据"""
