@@ -133,7 +133,7 @@ class VoiceCacheManager:
         self._memory_cache = {}
         self._disk_cache_lock = threading.Lock()
     
-    @lru_cache(maxsize=50)  # 内存缓存最近50个
+    @lru_cache(maxsize=100)  # 内存缓存最近100个
     def get_voice(self, text, voice, speed):
         # 白露：获取语音数据（自动缓存）~ 🔊
         # 1. 检查内存缓存
@@ -197,22 +197,79 @@ class VoiceCacheManager:
             logger.error(f"保存缓存失败: {e}")
 
 class LoadBalancer:
-    """系统负载均衡器"""
+    """系统负载均衡器 - 星野和白露的智能负载调节系统~ 🚀"""
+    # 星野：基础队列大小设置~ 🔧
+    BASE_QUEUE_SIZE = 3  # 基础队列大小(最低3人)
+    
+    # 白露：CPU负载阈值与对应的队列大小增量~ 📊
+    CPU_THRESHOLDS = [
+        (90, 0),            # CPU > 90%: 不增加
+        (80, 2),            # 80% < CPU ≤ 90%: 增加2人
+        (70, 4),            # 70% < CPU ≤ 80%: 增加4人
+        (60, 6),            # 60% < CPU ≤ 70%: 增加6人
+        (50, 8),            # 50% < CPU ≤ 60%: 增加8人
+        (40, 10),           # 40% < CPU ≤ 50%: 增加10人
+        (30, 12),           # 30% < CPU ≤ 40%: 增加12人
+        (20, 14),           # 20% < CPU ≤ 30%: 增加14人
+        (10, 16),           # 10% < CPU ≤ 20%: 增加16人
+        (0, 20)             # CPU ≤ 10%: 增加20人
+    ]
+    
+    # 星野：内存负载阈值与对应的队列大小增量~ 📊
+    MEMORY_THRESHOLDS = [
+        (0.5, 0),           # 内存 < 0.5GB: 不增加
+        (1, 5),             # 0.5GB ≤ 内存 < 1GB: 增加5人
+        (2, 10),            # 1GB ≤ 内存 < 2GB: 增加10人
+        (4, 20),            # 2GB ≤ 内存 < 4GB: 增加20人
+        (8, 30),            # 4GB ≤ 内存 < 8GB: 增加30人
+        (16, 40),           # 8GB ≤ 内存 < 16GB: 增加40人
+        (32, 50),           # 16GB ≤ 内存 < 32GB: 增加50人
+        (64, 60),           # 32GB ≤ 内存 < 64GB: 增加60人
+        (float('inf'), 70)  # 内存 ≥ 64GB: 增加70人
+    ]
     
     def get_optimal_queue_size(self):
-        """根据系统负载动态调整队列大小"""
-        cpu_percent = psutil.cpu_percent()
-        mem_available = psutil.virtual_memory().available / (1024 ** 3)  # GB
-        
-        if cpu_percent > 80 or mem_available < 1:
-            return 5  # 低负载模式
-        elif cpu_percent > 60 or mem_available < 2:
-            return 10
-        return 20  # 正常模式
+        """根据系统负载动态调整队列大小 - 白露的聪明算法~ 🧠"""
+        try:
+            # 星野：获取系统负载情况~ 🔍
+            cpu_percent = psutil.cpu_percent()
+            mem_available = psutil.virtual_memory().available / (1024 ** 3)  # GB(可用内存)
+            
+            # 白露：参数有效性检查~ ✅
+            if not isinstance(cpu_percent, (int, float)) or cpu_percent < 0 or cpu_percent > 100:
+                logger.warning("星野：CPU使用率异常，使用基础队列大小~ ⚠️")
+                return self.BASE_QUEUE_SIZE
+            
+            if not isinstance(mem_available, (int, float)) or mem_available < 0:
+                logger.warning("白露：内存信息异常，使用基础队列大小~ ⚠️")
+                return self.BASE_QUEUE_SIZE
+            
+            # 星野：根据CPU使用率确定增量~ 📊
+            cpu_bonus = 0
+            for threshold, bonus in self.CPU_THRESHOLDS:
+                if cpu_percent >= threshold:
+                    cpu_bonus = bonus
+                    break
+            
+            # 白露：根据可用内存确定增量~ 📊
+            mem_bonus = 0
+            for threshold, bonus in self.MEMORY_THRESHOLDS:
+                if mem_available <= threshold:
+                    mem_bonus = bonus
+                    break
+            
+            # 星野和白露：计算最终队列大小~ 🔢
+            queue_size = self.BASE_QUEUE_SIZE + cpu_bonus + mem_bonus
+            
+            logger.debug(f"星野和白露：系统负载 (CPU:{cpu_percent}%, 内存:{mem_available:.2f}GB)，队列大小设为{queue_size}~ 🏃")
+            return queue_size
+        except Exception as e:
+            # 白露：异常处理，确保方法总是返回有效值~ 🛡️
+            logger.error(f"星野：获取系统负载信息失败: {e}，使用基础队列大小~ ⚠️")
+            return self.BASE_QUEUE_SIZE
 
 class TTSHandler:
     """语音处理主控制器"""
-    
     def __init__(self):
         self.playback_system = VoicePlaybackSystem()
         self.cache_manager = VoiceCacheManager()
@@ -235,11 +292,13 @@ class TTSHandler:
             # 系统TTS处理
             if engine_type == 0:
                 self._handle_system_tts(student_names, config)
+                logger.info(f"系统TTS播报")
             
             # Edge TTS处理
             elif engine_type == 1:
                 self._handle_edge_tts(student_names, config, voice_name)
-                
+                logger.info(f"Edge TTS播报")
+
         except Exception as e:
             logger.error(f"语音播报失败: {e}", exc_info=True)
     
@@ -287,7 +346,7 @@ class TTSHandler:
             while not self.playback_system.play_queue.empty() or self.playback_system._is_playing:
                 time.sleep(0.1)
 
-            time.sleep(2)
+            time.sleep(5)
             self.stop()
                 
         threading.Thread(
