@@ -17,7 +17,6 @@ system_random = SystemRandom()
 
 from app.common.config import get_theme_icon, load_custom_font, restore_volume
 from app.common.voice import TTSHandler
-
 class pumping_people(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -611,7 +610,7 @@ class pumping_people(QWidget):
                             name = parts[-1]
                         name = name.replace(' ', '')
                         students_name.append(name)
-                        tts_handler.voice_play(config, students_name, voice_engine, edge_tts_voice_name)
+                    tts_handler.voice_play(config, students_name, voice_engine, edge_tts_voice_name)
         except Exception as e:
             logger.error(f"语音播报出错: {e}")
     
@@ -1543,8 +1542,6 @@ class pumping_people(QWidget):
     def _reset_to_initial_state(self):
         """恢复初始状态"""
         self._clean_temp_files()
-        self.current_count = 1
-        self.update_total_count()
         self.clear_layout(self.result_grid)
 
     # 清理临时文件

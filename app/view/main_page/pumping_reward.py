@@ -508,7 +508,7 @@ class pumping_reward(QWidget):
                             name = parts[-1]
                         name = name.replace(' ', '')
                         students_name.append(name)
-                        tts_handler.voice_play(config, students_name, voice_engine, edge_tts_voice_name)
+                    tts_handler.voice_play(config, students_name, voice_engine, edge_tts_voice_name)
         except Exception as e:
             logger.error(f"语音播报出错: {e}")
     
