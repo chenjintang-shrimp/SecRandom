@@ -89,8 +89,8 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
         self.pumping_people_system_volume_SpinBox.valueChanged.connect(self.save_settings)
         self.pumping_people_system_volume_SpinBox.setFont(QFont(load_custom_font(), 12))
 
-        self.addGroup(get_theme_icon("ic_fluent_voice_20_filled"), "语音引擎", "选择语音引擎", self.voice_engine_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_voice_20_filled"), "Edge TTS-语音名称", "选择Edge TTS-语音名称", self.edge_tts_voiceComboBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_voice_20_filled"), "语音引擎", "选择语音引擎", self.voice_engine_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "Edge TTS-语音名称", "选择Edge TTS-语音名称", self.edge_tts_voiceComboBox)
         self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语音播放", "设置结果公布时是否播放语音", self.pumping_people_Voice_switch)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "音量大小", "调节播报音量 (0-100)", self.pumping_people_voice_volume_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_person_feedback_20_filled"), "语速调节", "调节播报语速 (1-500)", self.pumping_people_voice_speed_SpinBox)

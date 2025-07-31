@@ -91,7 +91,7 @@ class settings_Window(MSFluentWindow):
         # 使用 MSFluentWindow 的 addSubInterface 方法
         self.addSubInterface(self.pumping_handoff_settingInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽取设置', position=NavigationItemPosition.TOP)
 
-        self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_speaker_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
