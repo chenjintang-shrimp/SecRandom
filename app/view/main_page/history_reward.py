@@ -46,6 +46,10 @@ class history_reward(QFrame):
         # 检测选择的同学是否改变，如果改变则刷新表格
         self.history_setting_card.reward_comboBox.currentIndexChanged.connect(self._refresh_table)
 
+        # 创建加载状态指示器
+        self.loading_widget = self._create_loading_widget()
+        self.inner_layout_personal.addWidget(self.loading_widget)
+
         # 创建表格
         self.table = TableWidget(self.inner_frame_personal) # 创建表格
         self.table.setBorderVisible(True) # 边框
@@ -54,28 +58,87 @@ class history_reward(QFrame):
         self.table.setEditTriggers(TableWidget.NoEditTriggers) # 静止编辑
         self.table.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH) # 静止平滑滚动
         self.table.setSortingEnabled(True) # 启用排序
+        self.table.hide()  # 初始隐藏表格
 
         self.show_table()
 
+    def _create_loading_widget(self):
+        """创建加载状态组件"""
+        loading_widget = QWidget()
+        loading_layout = QVBoxLayout(loading_widget)
+        loading_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # 创建占位表格
+        self.loading_table = TableWidget()
+        self.loading_table.setBorderVisible(True)
+        self.loading_table.setBorderRadius(8)
+        self.loading_table.setRowCount(1)
+        self.loading_table.setColumnCount(1)
+        self.loading_table.setHorizontalHeaderLabels(['界面正在加载中...'])
+        self.loading_table.verticalHeader().hide()
+        self.loading_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        
+        # 填充占位数据
+        for i in range(1):
+            for j in range(1):
+                item = QTableWidgetItem("--")
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                item.setFont(QFont(load_custom_font(), 12))
+                item.setForeground(QColor(200, 200, 200))  # 灰色占位符
+                self.loading_table.setItem(i, j, item)
+        
+        loading_layout.addWidget(self.loading_table)
+        
+        return loading_widget
+
     def show_table(self):
         """显示历史记录表格"""
-        data = self.__getClassrewards()
-        prize_pools_name = self.history_setting_card.prize_pools_comboBox.currentText()
-        reward_name = self.history_setting_card.reward_comboBox.currentText()
+        # 显示加载状态
+        self.loading_widget.show()
+        self.table.hide()
+        
+        # 使用QTimer延迟加载数据，避免界面卡顿
+        QTimer.singleShot(100, self._load_data_async)
 
-        if data:
-            InfoBar.success(
-                title="读取历史记录文件成功",
-                content=f"读取历史记录文件成功,奖池:{prize_pools_name},奖品:{reward_name}",
+    def _load_data_async(self):
+        """异步加载数据"""
+        try:
+            data = self.__getClassrewards()
+            prize_pools_name = self.history_setting_card.prize_pools_comboBox.currentText()
+            reward_name = self.history_setting_card.reward_comboBox.currentText()
+
+            if data:
+                InfoBar.success(
+                    title="读取历史记录文件成功",
+                    content=f"读取历史记录文件成功,奖池:{prize_pools_name},奖品:{reward_name}",
+                    duration=3000,
+                    orient=Qt.Horizontal,
+                    parent=self,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP
+                )
+
+            # 隐藏加载状态，显示真实数据
+            self.loading_widget.hide()
+            self.table.show()
+            self._setup_table_by_mode(reward_name, data)
+            self.__initWidget()
+            
+        except Exception as e:
+            logger.error(f"加载奖品历史记录数据失败: {e}")
+            InfoBar.error(
+                title="加载失败",
+                content="加载奖品历史记录数据失败，请稍后重试",
                 duration=3000,
                 orient=Qt.Horizontal,
                 parent=self,
                 isClosable=True,
                 position=InfoBarPosition.TOP
             )
-
-        self._setup_table_by_mode(reward_name, data)
-        self.__initWidget()
+            # 隐藏加载状态，显示空表格
+            self.loading_widget.hide()
+            self.table.show()
+            self._setup_table_by_mode('', [])
 
     def _setup_table_by_mode(self, reward_name: str, data: list):
         """根据模式设置表格"""
