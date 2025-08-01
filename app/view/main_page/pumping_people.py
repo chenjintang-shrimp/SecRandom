@@ -1386,11 +1386,11 @@ class pumping_people(QWidget):
     # 设置默认总人数显示
     def _set_default_count(self, pumping_people_student_quantity):
         if pumping_people_student_quantity == 1:
-            self.total_label = BodyLabel('总人数: 0')
+            self.total_label.setText('总人数: 0')
         elif pumping_people_student_quantity == 2:
-            self.total_label = BodyLabel('剩余人数: 0')
+            self.total_label.setText('剩余人数: 0')
         else:
-            self.total_label = BodyLabel('总人数: 0 | 剩余人数: 0')
+            self.total_label.setText('总人数: 0 | 剩余人数: 0')
         self.max_count = 0
         self._update_count_display()
     

@@ -935,12 +935,13 @@ class pumping_reward(QWidget):
     # 设置默认总奖数显示
     def _set_default_count(self, pumping_reward_reward_quantity):
         if pumping_reward_reward_quantity == 1:
-            self.total_label = BodyLabel('总奖数: 0')
+            self.total_label.setText('总奖数: 0')
         elif pumping_reward_reward_quantity == 2:
-            self.total_label = BodyLabel('剩余奖数: 0')
+            self.total_label.setText('剩余奖数: 0')
         else:
-            self.total_label = BodyLabel('总奖数: 0 | 剩余奖数: 0')
+            self.total_label.setText('总奖数: 0 | 剩余奖数: 0')
         self.max_count = 0
+        self._update_count_display()
     
     # 增加抽取奖数
     def _increase_count(self):
