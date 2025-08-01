@@ -156,18 +156,19 @@ class changeable_history(QFrame):
         if not data:
             data = [['0', '无', '无', '无', '无', '无']] if include_probability else [['无', '0', '无', '无', '无']]
 
-        self._configure_table(len(data), 6 if include_probability else 5)
-        self._fill_table_data(data)
-        
         if time_sort:
             headers = ['时间', '学号', '姓名', '性别', '所处小组']
+            self._configure_table(len(data), 5)
         elif include_probability and self.get_random_method_setting() in [2, 3]:
             probability_method = self.get_probability_weight_method_setting()
             headers = ['学号', '姓名', '性别', '所处小组', '总抽取次数', 
                       '下次抽取概率' if probability_method == 1 else '下次抽取权重']
+            self._configure_table(len(data), 6)
         else:
             headers = ['学号', '姓名', '性别', '所处小组', '总抽取次数']
-            
+            self._configure_table(len(data), 5)
+
+        self._fill_table_data(data)
         self.table.setHorizontalHeaderLabels(headers)
 
     def _setup_individual_table(self, data: list):
