@@ -166,7 +166,7 @@ class Config(QConfig):
 YEAR = 2025
 MONTH = 4
 AUTHOR = "lzy98276"
-VERSION = "v1.1.2.0-beta"
+VERSION = "v0.0.0.0"
 APPLY_NAME = "SecRandom"
 GITHUB_WEB = "https://github.com/SECTL/SecRandom"
 BILIBILI_WEB = "https://space.bilibili.com/520571577"
