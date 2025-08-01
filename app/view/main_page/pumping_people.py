@@ -119,14 +119,14 @@ class pumping_people(QWidget):
                         json.dump([], f, ensure_ascii=False, indent=4)
                 
                 # 读取已抽取记录
-                drawn_students = []
+                record_data = []
                 with open(draw_record_file, 'r', encoding='utf-8') as f:
                     try:
-                        drawn_students = json.load(f)
+                        record_data = json.load(f)
                     except json.JSONDecodeError:
-                        drawn_students = []
+                        record_data = []
             else:
-                drawn_students = []
+                record_data = []
 
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
@@ -164,7 +164,9 @@ class pumping_people(QWidget):
                                 exist = student_info.get('exist', True)
                                 if group:  # 只添加非空小组
                                     groups.add((id, group, exist))
-                        cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
+                        # 星穹铁道白露：过滤掉已经抽取过的小组~❄️
+                        filtered_groups = [g for g in groups if g[1] not in record_data]
+                        cleaned_data = sorted(list(filtered_groups), key=lambda x: self.sort_key(str(x)))
                     else:
                         if genders == '抽取所有性别':
                             for student_name, student_info in data.items():
@@ -191,7 +193,7 @@ class pumping_people(QWidget):
                     cleaned_data = list(filter(lambda x: x[2], cleaned_data))
 
                     # 如果所有学生都已抽取过，则使用全部学生名单
-                    students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]] or cleaned_data
+                    students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in record_data]] or cleaned_data
 
                     if students:
                         # 从self.current_count获取抽取人数
@@ -268,7 +270,7 @@ class pumping_people(QWidget):
                                 student_id_str = f"{num:02}"
                             
                             # 处理两字姓名
-                            if student_name_format == 0 and len(selected) == 2:
+                            if (student_name_format == 0 and len(selected) == 2) and not group_name == '抽取小组组号':
                                 name = f"{selected[0]}    {selected[1]}"
                             else:
                                 name = selected
@@ -336,8 +338,13 @@ class pumping_people(QWidget):
                                     label = BodyLabel(f"{name}")
                                 elif display_format == 2:
                                     label = BodyLabel(f"{student_id_str}")
-                                elif display_format == 0:
-                                    label = BodyLabel(f"{student_id_str} {name}")
+                                else:
+                                    if draw_count == 1:
+                                        self.result_grid.setAlignment(Qt.AlignCenter)
+                                        label = BodyLabel(f"{student_id_str}\n{name}")
+                                    else:
+                                        self.result_grid.setAlignment(Qt.AlignTop)
+                                        label = BodyLabel(f"{student_id_str} {name}")
 
                             label.setAlignment(Qt.AlignCenter)
                             label.setFont(QFont(load_custom_font(), font_size))
@@ -649,14 +656,14 @@ class pumping_people(QWidget):
                         json.dump([], f, ensure_ascii=False, indent=4)
                 
                 # 读取已抽取记录
-                drawn_students = []
+                record_data = []
                 with open(draw_record_file, 'r', encoding='utf-8') as f:
                     try:
-                        drawn_students = json.load(f)
+                        record_data = json.load(f)
                     except json.JSONDecodeError:
-                        drawn_students = []
+                        record_data = []
             else:
-                drawn_students = []
+                record_data = []
             
             if os.path.exists(student_file):
                 with open(student_file, 'r', encoding='utf-8') as f:
@@ -731,7 +738,7 @@ class pumping_people(QWidget):
                     if self.draw_mode == "random":
                         available_students = cleaned_data
                     elif self.draw_mode == "until_reboot" or self.draw_mode == "until_all":
-                        available_students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in drawn_students]]
+                        available_students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in record_data]]
 
                     if available_students:
                         # 从self.current_count获取抽取人数
@@ -818,7 +825,7 @@ class pumping_people(QWidget):
                                     'gender': gender_factor * 0.8                 # 性别平衡
                                 }
 
-                                if self.draw_mode in ['until_reboot', 'until_all'] and student_name in drawn_students:
+                                if self.draw_mode in ['until_reboot', 'until_all'] and student_name in record_data:
                                     # 如果是不重复抽取模式，且该学生已被抽中，则权重为0
                                     comprehensive_weight = 0
                                 else:
@@ -905,7 +912,7 @@ class pumping_people(QWidget):
                             else:
                                 student_id_str = f"{num:02}"
                             
-                            if student_name_format == 0 and len(selected) == 2:
+                            if (student_name_format == 0 and len(selected) == 2) and not group_name == '抽取小组组号':
                                 name = f"{selected[0]}    {selected[1]}"
                             else:
                                 name = selected
@@ -973,8 +980,13 @@ class pumping_people(QWidget):
                                     label = BodyLabel(f"{name}")
                                 elif display_format == 2:
                                     label = BodyLabel(f"{student_id_str}")
-                                elif display_format == 0:
-                                    label = BodyLabel(f"{student_id_str} {name}")
+                                else:
+                                    if draw_count == 1:
+                                        self.result_grid.setAlignment(Qt.AlignCenter)
+                                        label = BodyLabel(f"{student_id_str}\n{name}")
+                                    else:
+                                        self.result_grid.setAlignment(Qt.AlignTop)
+                                        label = BodyLabel(f"{student_id_str} {name}")
 
                             label.setAlignment(Qt.AlignCenter)
                             label.setFont(QFont(load_custom_font(), font_size))
@@ -1020,9 +1032,9 @@ class pumping_people(QWidget):
                         
                         if self.draw_mode in ["until_reboot", "until_all"]:
                             # 更新抽取记录
-                            drawn_students.extend([s[1].replace(' ', '') for s in selected_students])
+                            record_data.extend([s[1].replace(' ', '') for s in selected_students])
                             with open(draw_record_file, 'w', encoding='utf-8') as f:
-                                json.dump(drawn_students, f, ensure_ascii=False, indent=4)
+                                json.dump(record_data, f, ensure_ascii=False, indent=4)
 
                         self.update_total_count()
                         return
@@ -1549,7 +1561,7 @@ class pumping_people(QWidget):
         import glob
         temp_dir = "app/resource/Temp"
         if os.path.exists(temp_dir):
-            for file in glob.glob(f"{temp_dir}/until_the_reboot_*.json"):
+            for file in glob.glob(f"{temp_dir}/until_*.json"):
                 try:
                     os.remove(file)
                     logger.info(f"已清理临时抽取记录文件: {file}")
@@ -1596,8 +1608,7 @@ class pumping_people(QWidget):
         self.refresh_button = PushButton('重置已抽取名单')
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
-        self.refresh_button.clicked.connect(self._reset_to_initial_state)
-        self.refresh_button.clicked.connect(self.update_total_count)
+        self.refresh_button.clicked.connect(lambda: self._reset_to_initial_state())
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 刷新按钮
@@ -1605,7 +1616,6 @@ class pumping_people(QWidget):
         self.refresh_button.setFixedSize(200, 50)
         self.refresh_button.setFont(QFont(load_custom_font(), 15))
         self.refresh_button.clicked.connect(self.refresh_class_list)
-        self.refresh_button.clicked.connect(self.update_total_count)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 创建一个水平布局
@@ -1765,19 +1775,19 @@ class pumping_people(QWidget):
         
         control_panel.addStretch(1)
         
+        # 初始化抽取人数
+        self.current_count = 1
+        self.max_count = 0
+
         # 结果区域布局
         self.result_grid = QGridLayout()
-        self.result_grid.setSpacing(10)
+        self.result_grid.setSpacing(1)
         self.result_grid.setAlignment(Qt.AlignTop)
 
         scroll_area_container.addLayout(self.result_grid)
         
         # 班级选择变化时更新总人数
         self.class_combo.currentTextChanged.connect(self.update_total_count)
-        
-        # 初始化抽取人数
-        self.current_count = 1
-        self.max_count = 0
         
         # 初始化总人数显示
         self.update_total_count()

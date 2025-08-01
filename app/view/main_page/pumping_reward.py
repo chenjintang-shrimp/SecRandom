@@ -258,7 +258,12 @@ class pumping_reward(QWidget):
                             elif display_format == 2:
                                 label = BodyLabel(f"{reward_id_str}")
                             else:
-                                label = BodyLabel(f"{reward_id_str} {name}")
+                                if draw_count == 1:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
+                                    label = BodyLabel(f"{reward_id_str}\n{name}")
+                                else:
+                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    label = BodyLabel(f"{reward_id_str} {name}")
 
                             label.setAlignment(Qt.AlignCenter)
                             label.setFont(QFont(load_custom_font(), font_size))
@@ -668,7 +673,12 @@ class pumping_reward(QWidget):
                             elif display_format == 2:
                                 label = BodyLabel(f"{reward_id_str}")
                             else:
-                                label = BodyLabel(f"{reward_id_str} {name}")
+                                if draw_count == 1:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
+                                    label = BodyLabel(f"{reward_id_str}\n{name}")
+                                else:
+                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    label = BodyLabel(f"{reward_id_str} {name}")
 
                             label.setAlignment(Qt.AlignCenter)
                             label.setFont(QFont(load_custom_font(), font_size))
@@ -1159,7 +1169,6 @@ class pumping_reward(QWidget):
         # 结果区域布局
         self.result_grid = QGridLayout()
         self.result_grid.setSpacing(10)
-        self.result_grid.setAlignment(Qt.AlignTop)
 
         scroll_area_container.addLayout(self.result_grid)
         
