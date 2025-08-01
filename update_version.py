@@ -3,7 +3,7 @@ import re
 
 def get_version_from_env():
     # 🌟 星野小贴士：这里获取版本号并确保它是有效的数字格式哦 ~
-    original_version = os.getenv('VERSION', 'v1.0.0.0')
+    original_version = os.getenv('VERSION', 'v0.0.0.0')
     stripped_version = re.sub(r'^v', '', original_version)
     
     # 🔍 白露检查：如果版本号包含非数字字符，提取数字部分
@@ -14,8 +14,8 @@ def get_version_from_env():
         stripped_version = '.'.join(parts)
     else:
         # 如果无法提取，使用默认版本
-        stripped_version = '1.0.0.0'
-        original_version = 'v1.0.0.0'
+        stripped_version = '0.0.0.0'
+        original_version = 'v0.0.0.0'
         
     return original_version, stripped_version
 
