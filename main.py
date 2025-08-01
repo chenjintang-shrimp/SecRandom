@@ -119,19 +119,27 @@ def check_single_instance():
     if not shared_memory.create(1):
         logger.debug('星野警报: 检测到已有 SecRandom 实例正在运行喵！')
 
-        # 尝试直接发送IPC消息唤醒已有实例
-        if send_ipc_message():
-            logger.info('星野通讯: 成功唤醒已有实例，当前实例将退出喵～')
+        # 🌟 星穹铁道白露：异步发送IPC消息，避免阻塞启动流程
+        def async_wakeup():
+            # 尝试直接发送IPC消息唤醒已有实例
+            if send_ipc_message():
+                logger.info('星野通讯: 成功唤醒已有实例，当前实例将退出喵～')
+                sys.exit()
+            else:
+                # IPC连接失败，短暂延迟后重试一次
+                QTimer.singleShot(300, lambda:
+                    retry_ipc() if not send_ipc_message() else None
+                )
+
+        def retry_ipc():
+            """(ﾟДﾟ≡ﾟдﾟ) 星野的重试魔法！再次尝试连接已有实例喵～"""
+            logger.error("星野错误: 无法连接到已有实例，程序将退出喵～")
             sys.exit()
-        else:
-            # IPC连接失败，重试连接
-            def retry_ipc():
-                """(ﾟДﾟ≡ﾟдﾟ) 星野的重试魔法！再次尝试连接已有实例喵～"""
-                if not send_ipc_message():
-                    logger.error("星野错误: 无法连接到已有实例，程序将退出喵～")
-                    sys.exit()
-            retry_ipc()
-                
+
+        # 立即异步执行唤醒操作
+        QTimer.singleShot(0, async_wakeup)
+        # 等待异步操作完成
+        QApplication.processEvents()
         sys.exit()
     logger.info('星野结界: 单实例检查通过，可以安全启动程序喵～')
     return shared_memory

@@ -6,6 +6,7 @@
 import json
 import os
 import sys
+import asyncio
 import subprocess
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
@@ -94,16 +95,41 @@ class ConfigurationManager:
             }
         }  # 📝 默认设置模板
 
+    def __init__(self):
+        """开启白露的配置魔法~ 初始化设置路径和默认值，并预加载设置"""
+        self.settings_path = 'app/Settings/Settings.json'  # 📜 普通设置文件路径
+        self.enc_settings_path = 'app/SecRandom/enc_set.json'  # 🔒 加密设置文件路径
+        self.default_settings = {
+            'foundation': {
+                'main_window_focus_mode': 0,
+                'main_window_focus_time': 0,
+                'window_width': 800,
+                'window_height': 600,
+                'pumping_floating_enabled': True,
+                'pumping_floating_side': 0,
+                'pumping_reward_side': 0,
+                'main_window_mode': 0,
+                'check_on_startup': True
+            }
+        }  # 📝 默认设置模板
+        # 🌟 星穹铁道白露：预加载设置缓存，减少启动时IO操作
+        self._settings_cache = None
+        self.load_settings()
+
     def load_settings(self):
         """(^・ω・^ ) 读取配置文件的魔法
         尝试打开设置文件，如果失败就用默认设置哦~ 不会让程序崩溃的！
-        就像找不到钥匙时，总有备用钥匙可以用呢~ ✧*｡٩(ˊᗜˋ*)و✧*｡"""
+        使用缓存避免重复IO操作，就像记忆力超群的小精灵一样~ ✧*｡٩(ˊᗜˋ*)و✧*｡"""
+        if self._settings_cache is not None:
+            return self._settings_cache
         try:
             with open(self.settings_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                self._settings_cache = json.load(f)
+                return self._settings_cache
         except Exception as e:
             logger.error(f"白露魔法出错: 加载设置文件失败了呢~ {e}")
-            return self.default_settings  # 返回默认设置作为后备方案
+            self._settings_cache = self.default_settings
+            return self._settings_cache  # 返回默认设置作为后备方案
 
     def get_foundation_setting(self, key):
         """(^・ω・^ ) 获取基础设置的小魔法
@@ -195,7 +221,6 @@ class TrayIconManager:
         self.tray_icon.setIcon(QIcon('./app/resource/icon/SecRandom.png'))  # 设置可爱的图标
         self.tray_icon.setToolTip('SecRandom')  # 鼠标放上去会显示的文字
         self._create_menu()  # 创建魔法菜单
-        self.tray_icon.show()  # 让托盘图标显示出来
         self.tray_icon.activated.connect(self._on_tray_activated)  # 连接点击事件
         logger.info("白露魔法: 托盘精灵已唤醒！")
 
@@ -293,7 +318,7 @@ class Window(MSFluentWindow):
         # 启动焦点计时器
         # ✨ 小鸟游星野：修复CPU占用过高问题，设置最低计时器间隔为200ms
         if self.focus_time == 0:
-            self.focus_timer.start(200)  # 避免0ms间隔导致的CPU满载
+            pass
         else:
             # 🌟 星穹铁道白露：确保计时器间隔不小于200ms
             interval = max(self.FOCUS_TIMEOUT_TIME[self.focus_time], 200)
@@ -303,41 +328,25 @@ class Window(MSFluentWindow):
         window_width = self.config_manager.get_foundation_setting('window_width')
         window_height = self.config_manager.get_foundation_setting('window_height')
         self.resize(window_width, window_height)
-        self.setMinimumSize(*self.MINIMUM_WINDOW_SIZE)
+        self.setMinimumSize(self.MINIMUM_WINDOW_SIZE[0], self.MINIMUM_WINDOW_SIZE[1])
         self.setWindowTitle('SecRandom')
         self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
-
-        # 初始化悬浮窗
-        self.start_cleanup()
-        self.levitation_window = LevitationWindow()
-        pumping_floating_enabled = self.config_manager.get_foundation_setting('pumping_floating_enabled')
-        if pumping_floating_enabled:
-            self.levitation_window.show()
-
-        # 初始化系统托盘
-        self.tray_manager = TrayIconManager(self)
-        """星野部署：
-        系统托盘图标已激活
-        右键可以召唤菜单喵～(ฅ´ω`ฅ)"""
-
-        # 定位窗口
-        self._position_window()
-
-        # 启动画面
-        self.splashScreen = SplashScreen(self.windowIcon(), self)
-        self.splashScreen.setIconSize(QSize(256, 256))
-
-        # 显示窗口设置
-        self._apply_window_visibility_settings()
-
-        # 创建子界面
-        self.createSubInterface()
-        self.splashScreen.finish()
 
         # 检查更新
         check_startup = self.config_manager.get_foundation_setting('check_on_startup')
         if check_startup:
-            QTimer.singleShot(1000, self.check_updates_async)
+            self.check_updates_async()
+
+        self._position_window()
+        self.createSubInterface()
+        self.tray_manager = TrayIconManager(self)
+        self.tray_manager.tray_icon.show()
+        self.start_cleanup()
+        if self.config_manager.get_foundation_setting('pumping_floating_enabled'):
+            self.levitation_window = LevitationWindow()
+            self.levitation_window.show()
+        
+        self._apply_window_visibility_settings()
 
     def _position_window(self):
         """(^・ω・^ ) 白露的窗口定位魔法！
@@ -372,19 +381,13 @@ class Window(MSFluentWindow):
         """(ﾟДﾟ≡ﾟдﾟ) 星野的太空巡逻队出发！
         正在异步执行版本侦察任务喵～ 不会阻塞主线程哦！
         发现新版本时会立刻拉响警报通知用户喵！🚀✨"""
-        self.update_checker.check_for_updates()
-        logger.info("星野指令: 更新检查任务已启动，正在扫描宇宙寻找新版本～ ")
+        asyncio.run(self.update_checker.check_for_updates())
+        logger.info("星野指令: 更新检查任务已安排，开始扫描宇宙寻找新版本～ ")
 
     def createSubInterface(self):
         """(^・ω・^ ) 白露的魔法建筑师开工啦！
         正在搭建子界面导航系统，就像建造一座功能齐全的魔法城堡～
         每个功能模块都是城堡的房间，马上就能入住使用啦！🏰✨"""
-        # 创建事件循环确保界面组件正确初始化
-        loop = QEventLoop(self)
-        QTimer.singleShot(1, loop.quit)
-        loop.exec()
-        logger.debug("白露建筑: 界面初始化事件循环已完成～ ")
-
         # 创建设置界面
         self.settingInterface = settings_Window(self)
         self.settingInterface.setObjectName("settingInterface")
