@@ -12,7 +12,7 @@ import pandas as pd
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 
-is_dark = not is_dark_theme(qconfig)
+is_dark = is_dark_theme(qconfig)
 
 class list_SettinsCard(GroupHeaderCardWidget):
     refresh_signal = pyqtSignal()
@@ -459,6 +459,40 @@ class ImportStudentDialog(QDialog):
         title_layout.addWidget(self.title_label)
         title_layout.addStretch()
         title_layout.addWidget(self.close_btn)
+
+        
+        self.dragging = False
+        self.drag_position = None
+
+        # 确保不设置子窗口的屏幕属性
+        if parent is not None:
+            self.setParent(parent)
+        
+        # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
+        self.title_bar = QWidget()
+        self.title_bar.setObjectName("CustomTitleBar")
+        self.title_bar.setFixedHeight(35)
+        
+        # 标题栏布局
+        title_layout = QHBoxLayout(self.title_bar)
+        title_layout.setContentsMargins(10, 0, 10, 0)
+        
+        # 窗口标题
+        self.title_label = QLabel("密码验证")
+        self.title_label.setObjectName("TitleLabel")
+        self.title_label.setFont(QFont(load_custom_font(), 12))
+        
+        # 窗口控制按钮
+        self.close_btn = QPushButton("✕")
+        self.close_btn.setObjectName("CloseButton")
+        self.close_btn.setFixedSize(25, 25)
+        self.close_btn.clicked.connect(self.reject)
+        
+        # 添加组件到标题栏
+        title_layout.addWidget(self.title_label)
+        title_layout.addStretch()
+        title_layout.addWidget(self.close_btn)
+
         self.file_path = None
         self.file_type = 'excel'
         self.column_mapping = {'学号': -1, '姓名': -1, '性别': -1, '小组': -1}
@@ -471,25 +505,49 @@ class ImportStudentDialog(QDialog):
         qconfig.themeChanged.connect(self.update_theme_style)
         self.init_ui()
 
+    def mousePressEvent(self, event):
+        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+        if event.button() == Qt.LeftButton and self.title_bar.underMouse():
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.dragging and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.dragging = False
+
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
-        colors = {'text': '#111116', 'bg': '#F5F5F5'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#E0E0E0'}
-        if not is_dark:
-            colors['title_bg'] = '#2D2D2D'
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
-            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
-            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
-            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            QDialog, QDialog * {{
+                color: {colors['text']};
+                background-color: {colors['bg']};
+            }}
+            #CustomTitleBar {{
+                background-color: {colors['title_bg']};
+            }}
+            #TitleLabel {{
+                color: {colors['text']};
+                font-weight: bold; padding: 5px;
+                background-color: transparent;
+            }}
             #CloseButton {{ 
                 background-color: transparent; 
                 color: {colors['text']}; 
                 border-radius: 4px; 
                 font-weight: bold; 
             }}
-            #CloseButton:hover {{ background-color: #ff4d4d; color: white; }}
-            QLabel, QPushButton, QTextEdit {{ color: {colors['text']}; }}
+            #CloseButton:hover {{
+                background-color: #ff4d4d;
+                color: white;
+            }}
         """)
-        
+
         # 设置标题栏颜色以匹配背景色（仅Windows系统）
         if os.name == 'nt':
             try:
@@ -512,29 +570,18 @@ class ImportStudentDialog(QDialog):
             except Exception as e:
                 logger.warning(f"设置标题栏颜色失败: {str(e)}")
 
-    def mousePressEvent(self, event):
-        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
-        if event.button() == Qt.LeftButton and self.title_bar.underMouse():
-            self.dragging = True
-            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
-            event.accept()
-
-    def mouseMoveEvent(self, event):
-        if self.dragging and event.buttons() == Qt.LeftButton:
-            self.move(event.globalPos() - self.drag_position)
-            event.accept()
-
-    def mouseReleaseEvent(self, event):
-        self.dragging = False
-
     def init_ui(self):
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
+
         # 添加自定义标题栏
         layout.addWidget(self.title_bar)
-        # 添加内容区域
+
+        # 创建内容区域布局
         content_layout = QVBoxLayout()
+        content_layout.setContentsMargins(10, 10, 10, 10)
+        content_layout.setSpacing(10)
 
         # 文件选择区域
         file_layout = QHBoxLayout()
@@ -1027,7 +1074,7 @@ class ClassInputDialog(QDialog):
     
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
-        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
             #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
@@ -1140,7 +1187,7 @@ class StudentInputDialog(QDialog):
         title_layout.addStretch(1)
         title_layout.addWidget(self.close_button)
 
-        self.text_label = BodyLabel('请输入学生姓名，每行一个\n在输入已经不在当前班级的学生时\n请在姓名前后加上【】')
+        self.text_label = BodyLabel('请输入学生姓名，每行一个\n在输入已经不在当前班级的学生时\n请在姓名前后加上“【】”')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
         self.update_theme_style()
@@ -1221,7 +1268,7 @@ class StudentInputDialog(QDialog):
 
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
-        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
             #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
@@ -1334,7 +1381,7 @@ class GenderInputDialog(QDialog):
         title_layout.addStretch(1)
         title_layout.addWidget(self.close_button)
 
-        self.text_label = BodyLabel('请输入每个学生对应的性别，每行一个\n例:男 或 女(其它的?自己试一试吧)\n注:尽量在表格中复制后直接粘贴')
+        self.text_label = BodyLabel('请输入每个学生对应的性别，每行一个\n例:男 或 女（其它的？自己试一试吧）\n注：尽量在表格中复制后直接粘贴')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
         self.update_theme_style()
@@ -1368,7 +1415,7 @@ class GenderInputDialog(QDialog):
         except FileNotFoundError:
             pass
         except json.JSONDecodeError:
-            logger.error(f"JSON文件解析错误: {str(e)}")
+            logger.error(f"JSON文件解析错误：{str(e)}")
         
         self.saveButton = PrimaryPushButton("保存")
         self.cancelButton = PushButton("取消")
@@ -1411,7 +1458,7 @@ class GenderInputDialog(QDialog):
 
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
-        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
             #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
@@ -1601,7 +1648,7 @@ class GroupInputDialog(QDialog):
 
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
-        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
             #CustomTitleBar {{ background-color: {colors['title_bg']}; }}

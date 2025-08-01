@@ -13,7 +13,7 @@ from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 
-is_dark = not is_dark_theme(qconfig)
+is_dark = is_dark_theme(qconfig)
 
 class foundation_settingsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -487,7 +487,7 @@ class CleanupTimeDialog(QDialog):
         # 🌟 星穹铁道白露：设置无边框窗口样式并解决屏幕设置冲突~ 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("输入定时清理记录时间")
-        self.setFixedSize(400, 300)
+        self.setFixedSize(400, 335)
         self.saved = False
         self.dragging = False
         self.drag_position = None
@@ -562,6 +562,7 @@ class CleanupTimeDialog(QDialog):
         layout.addWidget(self.title_bar)
         # 添加内容区域
         content_layout = QVBoxLayout()
+        content_layout.setSpacing(10)
         content_layout.addWidget(self.text_label)
         content_layout.addWidget(self.textEdit)
         
@@ -592,7 +593,7 @@ class CleanupTimeDialog(QDialog):
 
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
-        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
             #CustomTitleBar {{ background-color: {colors['title_bg']}; }}

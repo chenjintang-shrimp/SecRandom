@@ -12,7 +12,7 @@ import pandas as pd
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 
-is_dark = not is_dark_theme(qconfig)
+is_dark = is_dark_theme(qconfig)
 
 class reward_SettinsCard(GroupHeaderCardWidget):
     refresh_signal = pyqtSignal()
@@ -432,7 +432,7 @@ class ImportPrizeDialog(QDialog):
 
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
-        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
             #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
@@ -492,6 +492,7 @@ class ImportPrizeDialog(QDialog):
         layout.addWidget(self.title_bar)
         # 添加内容区域
         content_layout = QVBoxLayout()
+        content_layout.setSpacing(10)
 
         # 文件选择区域
         file_layout = QHBoxLayout()
@@ -952,6 +953,7 @@ class Prize_pools_InputDialog(QDialog):
         
         # 创建内容区域布局
         content_layout = QVBoxLayout()
+        content_layout.setSpacing(10)
         content_layout.addWidget(self.text_label)
         content_layout.addWidget(self.textEdit)
         
@@ -973,7 +975,7 @@ class Prize_pools_InputDialog(QDialog):
 
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
-        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
             #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
@@ -1008,7 +1010,7 @@ class Prize_pools_InputDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.warning(f"设置标题栏颜色失败：{str(e)}")
         
     def mousePressEvent(self, event):
         # 窗口拖动功能~ 按住标题栏就能移动啦
@@ -1161,7 +1163,7 @@ class PrizeInputDialog(QDialog):
 
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
-        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
             #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
@@ -1344,7 +1346,7 @@ class ProbabilityInputDialog(QDialog):
 
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
-        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
             #CustomTitleBar {{ background-color: {colors['title_bg']}; }}

@@ -6,40 +6,46 @@ import hashlib
 import json
 import os
 import pyotp
+import os
 from loguru import logger
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 
 class PasswordDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 🌟 星穹铁道白露：设置无边框窗口样式 ~ 
+        # 🌟 星穹铁道白露：设置无边框窗口样式并解决屏幕设置冲突~ 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("密码验证")
         self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
-        self.setFixedSize(400, 335)  # 增加高度以适应标题栏
+        self.setFixedSize(400, 300)
+
         self.dragging = False
         self.drag_position = None
 
+        # 确保不设置子窗口的屏幕属性
+        if parent is not None:
+            self.setParent(parent)
+        
         # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
         self.title_bar = QWidget()
         self.title_bar.setObjectName("CustomTitleBar")
         self.title_bar.setFixedHeight(35)
-
+        
         # 标题栏布局
         title_layout = QHBoxLayout(self.title_bar)
         title_layout.setContentsMargins(10, 0, 10, 0)
-
+        
         # 窗口标题
         self.title_label = QLabel("密码验证")
         self.title_label.setObjectName("TitleLabel")
         self.title_label.setFont(QFont(load_custom_font(), 12))
-
+        
         # 窗口控制按钮
         self.close_btn = QPushButton("✕")
         self.close_btn.setObjectName("CloseButton")
         self.close_btn.setFixedSize(25, 25)
         self.close_btn.clicked.connect(self.reject)
-
+        
         # 添加组件到标题栏
         title_layout.addWidget(self.title_label)
         title_layout.addStretch()
@@ -57,15 +63,15 @@ class PasswordDialog(QDialog):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        
-        # 添加标题栏到主布局
+
+        # 添加自定义标题栏
         layout.addWidget(self.title_bar)
         
-        # 创建内容区域布局
+        # 添加内容区域
         content_layout = QVBoxLayout()
-        content_layout.setContentsMargins(20, 20, 20, 20)
-        content_layout.setSpacing(15)
-        
+        content_layout.setContentsMargins(20, 10, 20, 20)
+        layout.addLayout(content_layout)
+
         # 解锁方式选择
         self.unlock_method = ComboBox()
         self.unlock_method.addItems(["密码解锁", "密钥文件解锁", "2FA验证"])
@@ -114,13 +120,25 @@ class PasswordDialog(QDialog):
         self.verify_btn.clicked.connect(self.verify)
         self.verify_btn.setFont(QFont(load_custom_font(), 14))
         content_layout.addWidget(self.verify_btn)
-        
-        # 将内容布局添加到主布局
-        layout.addLayout(content_layout)
 
         # 根据选择显示不同控件
         self.unlock_method.currentIndexChanged.connect(self.update_ui)
         self.update_ui()
+
+    def mousePressEvent(self, event):
+        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+        if event.button() == Qt.LeftButton and self.title_bar.underMouse():
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.dragging and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.dragging = False
 
     def update_theme_style(self):
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
@@ -128,7 +146,7 @@ class PasswordDialog(QDialog):
         title_bar_bg = '#2D2D30' if is_dark else '#F0F0F0'
         title_text_color = '#FFFFFF' if is_dark else '#000000'
         close_button_bg = '#3D3D40' if is_dark else '#E0E0E0'
-        close_button_hover = '#505050' if is_dark else '#D0D0D0'
+        close_button_hover = '#ff4d4d'
         dialog_bg = '#111116' if is_dark else '#F5F5F5'
         text_color = '#F5F5F5' if is_dark else '#111116'
         line_edit_bg = '#3c3c3c' if is_dark else '#ffffff'
@@ -158,7 +176,8 @@ class PasswordDialog(QDialog):
             #CloseButton {{
                 background-color: {close_button_bg};
                 color: {title_text_color};
-                border-radius: 12px;
+                border-radius: 4px;
+                border: none;
                 font-weight: bold;
             }}
             #CloseButton:hover {{
@@ -259,7 +278,7 @@ class PasswordDialog(QDialog):
                     stored_hash = hashed_set_settings.get('hashed_password', '')
 
                     if not password or not salt or not stored_hash:
-                        w = MessageBox("错误", "密码验证失败: 未设置密码", self)
+                        w = MessageBox("错误", "密码验证失败: 未输入密码", self)
                         w.setFont(QFont(load_custom_font(), 14))
                         w.yesButton.setText("知道了")
                         w.cancelButton.hide()

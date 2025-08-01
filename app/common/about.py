@@ -1,4 +1,5 @@
 from venv import logger
+import os
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtGui import *
@@ -118,10 +119,13 @@ class ContributorDialog(QDialog):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle('贡献人员')
         self.setMinimumSize(600, 600)
+        self.setSizeGripEnabled(True) #启用右下角拖动柄
+        self.update_theme_style()
+        
         self.saved = False
         self.dragging = False
         self.drag_position = None
-        
+
         # 确保不设置子窗口的屏幕属性
         if parent is not None:
             self.setParent(parent)
@@ -150,7 +154,7 @@ class ContributorDialog(QDialog):
         title_layout.addWidget(self.title_label)
         title_layout.addStretch()
         title_layout.addWidget(self.close_btn)
-        
+
         # 创建滚动区域
         scroll = SingleDirectionScrollArea()
         scroll.setWidgetResizable(True)
@@ -302,7 +306,7 @@ class ContributorDialog(QDialog):
             is_dark = qconfig.theme == Theme.DARK
         
         # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
-        colors = {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'} if not is_dark else {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'}
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if  is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
             #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
@@ -312,8 +316,13 @@ class ContributorDialog(QDialog):
                 color: {colors['text']}; 
                 border-radius: 4px; 
                 font-weight: bold; 
+                border: none;
             }}
-            #CloseButton:hover {{ background-color: #ff4d4d; color: white; }}
+            #CloseButton:hover {{ 
+                background-color: #ff4d4d; 
+                color: white; 
+                border: none;
+            }}
             QLabel, QPushButton, QTextEdit {{ color: {colors['text']}; }}
             QLineEdit {{ 
                 background-color: {colors['bg']}; 
@@ -347,7 +356,7 @@ class ContributorDialog(QDialog):
                 hwnd = int(self.winId())  # 转换为整数句柄
                 
                 # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
-                bg_color = colors['title_bg'].lstrip('#')
+                bg_color = colors['bg'].lstrip('#')
                 # 转换为ARGB格式（添加不透明通道）
                 rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
                 
@@ -386,24 +395,16 @@ class ContributorDialog(QDialog):
             is_dark = lightness <= 127
         else:
             is_dark = qconfig.theme == Theme.DARK
-        if is_dark:
-            card.setStyleSheet('''
-                QWidget#contributorCard {
-                    background: 2b2b2b;
-                    border-radius: 8px;
-                    padding: 10px;
-                    margin-bottom: 10px;
-                }
-            ''')
-        else:
-            card.setStyleSheet('''
-                QWidget#contributorCard {
-                    background: white;
-                    border-radius: 8px;
-                    padding: 10px;
-                    margin-bottom: 10px;
-                }
-            ''')
+        # 🌟 星穹铁道白露：主题样式更新 ~ 这里用不上自定义标题栏哦~
+        colors = {'bg': '#111116'} if is_dark else {'bg': '#F5F5F5'}
+        card.setStyleSheet(f'''
+            QWidget#contributorCard {{
+                background: {colors['bg']};
+                border-radius: 8px;
+                padding: 10px;
+                margin-bottom: 10px;
+            }}
+        ''')
     
     def addContributorCard(self, contributor):
         """ 添加贡献者卡片 """
