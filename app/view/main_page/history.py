@@ -265,18 +265,12 @@ class history(QFrame):
                     # 直接从JSON数据获取小组信息
                     students_group = [item[3] for item in cleaned_data]
                         
-                    # 初始化历史数据字典
-                    history_data = {}
-                    # 读取历史记录文件
-                    history_file = f'app/resource/history/{class_name}.json'
-
-                    if os.path.exists(history_file):
-                        try:
-                            with open(history_file, 'r', encoding='utf-8') as f:
-                                history_data = json.load(f)
-                        except json.JSONDecodeError:
-                            history_data = {}
-
+                    # 使用SQLite数据库读取历史记录
+                    from app.common.sqlite_utils import history_manager
+                    
+                    # 获取学生历史记录
+                    student_stats = history_manager.get_student_stats(class_name)
+                    
                     # 生成学号(从1开始)并返回学生数据，包含被点次数信息
                     student_data = []
                     # 先遍历一次计算各列最大位数
@@ -288,10 +282,11 @@ class history(QFrame):
                     for i, student in enumerate(students):
                         student_name = student if not (student.startswith('【') and student.endswith('】')) else student[1:-1]
                         max_digits['id'] = max(max_digits['id'], len(str(cleaned_data[i][0])))
-                        if 'pumping_people' in history_data and student_name in history_data['pumping_people']:
-                            count = int(history_data['pumping_people'][student_name]['total_number_of_times'])
-                            count_auxiliary = int(history_data['pumping_people'][student_name]['total_number_auxiliary'])
-                            total = count + count_auxiliary
+                        
+                        # 从数据库获取学生被抽中次数
+                        count_key = f'student_{student_name}'
+                        if count_key in student_stats:
+                            total = student_stats[count_key]
                             max_digits['pumping_people'] = max(max_digits['pumping_people'], len(str(total)))
 
                     available_students = __cleaned_data
@@ -320,36 +315,14 @@ class history(QFrame):
 
                     group_name = self.pumping_people_instance.group_combo.currentText()
                     genders = self.pumping_people_instance.gender_combo.currentText()
-
-                    if self.draw_mode == "until_reboot":
-                        if group_name == '抽取全班学生':
-                            draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
-                        elif group_name == '抽取小组组号':
-                            draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}.json"
-                        else:
-                            draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
-                    elif self.draw_mode == "until_all":
-                        if group_name == '抽取全班学生':
-                            draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
-                        elif group_name == '抽取小组组号':
-                            draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}.json"
-                        else:
-                            draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
                     
-                    if self.draw_mode in ['until_reboot', 'until_all']:
-                        # 确保文件存在
-                        if os.path.exists(draw_record_file):
-                            # 读取已抽取记录
-                            drawn_students = []
-                            with open(draw_record_file, 'r', encoding='utf-8') as f:
-                                try:
-                                    drawn_students = json.load(f)
-                                except json.JSONDecodeError:
-                                    drawn_students = []
-                        else:
-                            drawn_students = []
-                    else:
-                        drawn_students = []
+                    # 从SQLite数据库获取已抽取学生记录
+                    drawn_students = history_manager.get_drawn_students(
+                        class_name=class_name,
+                        group_name=group_name,
+                        gender=genders,
+                        draw_mode=self.draw_mode
+                    )
 
                     # 预加载设置文件
                     try:
@@ -360,9 +333,12 @@ class history(QFrame):
                         probability_weight = 1
                         logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
+                    # 从SQLite数据库获取统计信息
+                    stats = history_manager.get_student_stats(class_name)
+                    
                     # 预计算有效统计
-                    valid_groups = {group: count for group, count in history_data.get("group_stats", {}).items() if count > 0}
-                    valid_genders = {gender: count for gender, count in history_data.get("gender_stats", {}).items() if count > 0}
+                    valid_groups = {group: count for group, count in stats.get("group_stats", {}).items() if count > 0}
+                    valid_genders = {gender: count for gender, count in stats.get("gender_stats", {}).items() if count > 0}
 
                     # 创建学生信息映射表
                     student_info_map = {
@@ -381,17 +357,20 @@ class history(QFrame):
                         # 获取预存的学生信息
                         current_student_group, current_student_gender = student_info_map.get(student_name, ('', ''))
 
-                        # 快速计算权重因子
-                        student_history = history_data.get("pumping_people", {}).get(student_name, {
-                            "total_number_of_times": 0,
-                            "last_drawn_time": None,
-                            "rounds_missed": 0,
-                            "time": []
-                        })
+                        # 🌸 小鸟游星野提醒：从数据库获取学生历史记录并确保类型安全
+                        student_history = stats.get(f'student_{student_name}', {})
 
-                        # 频率因子
-                        freq = student_history["total_number_of_times"]
-                        frequency_factor = 1.0 / math.sqrt(freq * 2 + 1)
+                        # ✨ 星穹铁道白露提示：强制转换为字典并确保包含必要字段
+                        if not isinstance(student_history, dict):
+                            student_history = {"total_number_of_times": int(student_history) if isinstance(student_history, (int, float)) else 0}
+
+                        # 🌟 确保必须字段存在默认值
+                        student_history.setdefault("total_number_of_times", 0)
+                        student_history.setdefault("total_number_auxiliary", 0)
+
+                        # 💫 频率因子计算
+                        freq = int(student_history["total_number_of_times"])
+                        frequency_factor = 1.0 / math.sqrt(max(freq, 0) * 2 + 1)
 
                         # 小组因子
                         group_history = valid_groups.get(current_student_group, 0)
@@ -402,7 +381,7 @@ class history(QFrame):
                         gender_factor = 1.0 / (gender_history * 0.2 + 1) if len(valid_genders) > 3 else 1.0
 
                         # 冷启动处理
-                        current_round = history_data.get("total_rounds", 0)
+                        current_round = stats.get("total_rounds", 0)
                         if current_round < 10:
                             frequency_factor = min(0.8, frequency_factor)
 
@@ -432,16 +411,29 @@ class history(QFrame):
                         else:
                             probability_str = f"{weight_value:.2f}"
 
-                        # 获取抽取次数
-                        pumping_count = history_data.get('pumping_people', {}).get(student_name, {}).get('total_number_of_times', 0)
-                        pumping_count_auxiliary = history_data.get('pumping_people', {}).get(student_name, {}).get('total_number_auxiliary', 0)
+                        # 🌸 小鸟游星野提醒：为每个学生正确获取历史记录
+                        student_history = stats.get(f'student_{student_name}', {})
+                        
+                        # ✨ 星穹铁道白露提示：确保类型安全
+                        if not isinstance(student_history, dict):
+                            student_history = {"total_number_of_times": int(student_history) if isinstance(student_history, (int, float)) else 0}
+                        
+                        # 🌟 确保必须字段存在默认值
+                        student_history.setdefault("total_number_of_times", 0)
+                        student_history.setdefault("total_number_auxiliary", 0)
+                        
+                        # 💫 安全获取抽取次数
+                        pumping_count = int(student_history["total_number_of_times"])
+                        pumping_count_auxiliary = int(student_history["total_number_auxiliary"])
+                        total_pumping = pumping_count + pumping_count_auxiliary
 
+                        # 🌸 小鸟游星野提醒：直接显示数字，避免前导零
                         student_data.append([
                             str(cleaned[0]).zfill(max_digits['id']),
                             student_name,
                             cleaned[2],
                             cleaned[3],
-                            str(pumping_count + pumping_count_auxiliary).zfill(max_digits['pumping_people']),
+                            str(total_pumping),
                             probability_str
                         ])
 
@@ -465,7 +457,6 @@ class history(QFrame):
         elif _student_name == '全班同学_时间排序':
             if class_name:
                 student_file = f'app/resource/list/{class_name}.json'
-                history_file = f'app/resource/history/{class_name}.json'
                 
                 # 读取学生名单
                 try:
@@ -475,64 +466,40 @@ class history(QFrame):
                     return []
 
                 # 清理学生数据
-                cleaned_students = []
+                cleaned_students = {}
                 for name, info in class_data.items():
                     if isinstance(info, dict) and info.get('exist', True):
                         cleaned_name = name.replace('【', '').replace('】', '')
-                        cleaned_students.append((
-                            info.get('id', ''),
-                            cleaned_name,
-                            info.get('gender', ''),
-                            info.get('group', '')
-                        ))
+                        cleaned_students[cleaned_name] = {
+                            'id': str(info.get('id', '')),
+                            'gender': info.get('gender', ''),
+                            'group': info.get('group', '')
+                        }
 
-                # 读取历史记录
-                history_data = {}
-                if os.path.exists(history_file):
-                    try:
-                        with open(history_file, 'r', encoding='utf-8') as f:
-                            history_data = json.load(f).get('pumping_people', {})
-                    except json.JSONDecodeError:
-                        pass
-
-                # 计算学号最大位数（用于补零对齐）
-                max_id_length = max(len(str(student[0])) for student in cleaned_students) if cleaned_students else 0
-
-                # 收集所有抽取记录
+                # 🌸 小鸟游星野提醒：使用SQLite数据库获取全班时间排序记录
+                from app.common.sqlite_utils import history_manager
+                
+                # 获取全班历史记录
+                all_history = history_manager.get_student_history(class_name)
+                
+                # 转换为时间排序的格式
                 all_records = []
+                for record in all_history:
+                    student_name = record['student_name']
+                    if student_name in cleaned_students:
+                        student_info = cleaned_students[student_name]
+                        all_records.append([
+                            record['draw_time'],
+                            student_info['id'],
+                            student_name,
+                            student_info['gender'],
+                            student_info['group']
+                        ])
                 
-                # 遍历每个学生的历史记录
-                for (student_id, name, gender, group) in cleaned_students:
-                    student_history = history_data.get(name, {})
-                    time_records = student_history.get('time', [])
-                    
-                    for record in time_records:
-                        draw_time = record.get('draw_time', '')
-                        if draw_time:
-                            formatted_id = str(student_id).zfill(max_id_length)
-                            all_records.append({
-                                'time': draw_time,
-                                'id': formatted_id,
-                                'name': name,
-                                'gender': gender,
-                                'group': group
-                            })
+                # 按时间降序排序
+                all_records.sort(reverse=True, key=lambda x: x[0])
                 
-                # 降序
-                sorted_records = sorted(all_records, key=lambda x: x['time'], reverse=True)
-                
-                # 转换为列表格式返回
-                result = []
-                for record in sorted_records:
-                    result.append([
-                        record['time'],
-                        record['id'],
-                        record['name'],
-                        record['gender'],
-                        record['group']
-                    ])
-                
-                return result
+                return all_records
             else:
                 return []
         
@@ -540,44 +507,37 @@ class history(QFrame):
             if class_name:
                 _student_name = _student_name if not (_student_name.startswith('【') and _student_name.endswith('】')) else _student_name[1:-1]
                 try:
-                    # 初始化历史数据字典
-                    history_data = {}
-                    # 读取历史记录文件
-                    history_file = f'app/resource/history/{class_name}.json'
-
-                    if os.path.exists(history_file):
-                        try:
-                            with open(history_file, 'r', encoding='utf-8') as f:
-                                history_data = json.load(f)
-                        except json.JSONDecodeError:
-                            history_data = {}
+                    # 🌸 小鸟游星野提醒：使用SQLite数据库获取单个学生的历史记录
+                    from app.common.sqlite_utils import history_manager
                     
-                    # 假设历史数据中每个抽取记录有时间、抽取方式和被点次数信息
+                    # 直接从数据库获取该学生的历史记录
+                    student_history = history_manager.get_student_history(class_name, _student_name)
+                    
                     student_data = []
-                    if _student_name in history_data.get('pumping_people', {}):
-                        pumping_people_history = history_data['pumping_people'][_student_name]['time']
-                        for record in pumping_people_history:
-                            time = record.get('draw_time', '')
-                            draw_method = record.get('draw_method', '')
-                            if draw_method == 'random':
-                                draw_method_text = '重复抽取'
-                            elif draw_method == 'until_reboot':
-                                draw_method_text = '不重复抽取(直到软件重启)'
-                            elif draw_method == 'until_all':
-                                draw_method_text = '不重复抽取(直到抽完全部人)'
-                            else:
-                                draw_method_text = draw_method
-                            draw_people_numbers = record.get('draw_people_numbers', '')
-                            draw_group = record.get('draw_group', '')
-                            draw_gender = record.get('draw_gender', '')
-                            student_data.append([time, draw_method_text, f'{draw_people_numbers}', draw_group, draw_gender])
+                    for record in student_history:
+                        # 转换抽取方式文本
+                        draw_method_map = {
+                            'random': '重复抽取',
+                            'until_reboot': '不重复抽取(直到软件重启)',
+                            'until_all': '不重复抽取(直到抽完全部人)'
+                        }
+                        draw_method_text = draw_method_map.get(record['draw_method'], record['draw_method'])
+                        
+                        student_data.append([
+                            record['draw_time'],
+                            draw_method_text,
+                            str(record['draw_count']),
+                            record['draw_group'] or '',
+                            record['draw_gender'] or ''
+                        ])
+                    
                     return student_data
                     
                 except Exception as e:
-                    logger.error(f"读取学生名单文件失败: {e}")
+                    logger.error(f"读取学生历史记录失败: {e}")
                     InfoBar.error(
-                        title="读取学生名单文件失败",
-                        content=f"错误信息: （请到日志文件查看）",
+                        title="读取学生历史记录失败",
+                        content=f"错误信息: {str(e)}",
                         duration=3000,
                         orient=Qt.Horizontal,
                         parent=self,

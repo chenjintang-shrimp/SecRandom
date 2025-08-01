@@ -1105,31 +1105,6 @@ class pumping_people(QWidget):
             logger.info("历史记录功能已被禁用。")
             return
         
-        history_file = f"app/resource/history/{class_name}.json"
-        os.makedirs(os.path.dirname(history_file), exist_ok=True)
-        
-        history_data = {}
-        if os.path.exists(history_file):
-            with open(history_file, 'r', encoding='utf-8') as f:
-                try:
-                    history_data = json.load(f)
-                except json.JSONDecodeError:
-                    history_data = {}
-        
-        # 初始化数据结构
-        if "pumping_people" not in history_data:
-            history_data["pumping_people"] = {}
-        if "pumping_group" not in history_data:
-            history_data["pumping_group"] = {}
-        if "group_stats" not in history_data:
-            history_data["group_stats"] = {}
-        if "gender_stats" not in history_data:
-            history_data["gender_stats"] = {}
-        # 初始化统计数据字段
-        for field in ["total_rounds", "total_stats"]:
-            if field not in history_data:
-                history_data[field] = 0
-
         # 加载学生数据以获取小组和性别信息
         student_info_map = {}
         student_file = f"app/resource/list/{class_name}.json"
@@ -1140,102 +1115,34 @@ class pumping_people(QWidget):
                     if isinstance(info, dict) and 'id' in info:
                         student_name = name.replace('【', '').replace('】', '')
                         student_info_map[student_name] = {
+                            'id': info.get('id', ''),
                             'group': info.get('group', ''),
                             'gender': info.get('gender', '')
                         }
         
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # 使用SQLite数据库存储历史记录
+        from app.common.sqlite_utils import history_manager
         
         # 更新被选中学生的记录
         for student_id, student_name, exist in selected_students:
             # 获取学生信息
-            student_info = student_info_map.get(student_name, {'group': '', 'gender': ''})
-            student_group = student_info['group']
-            student_gender = student_info['gender']
-
-            if student_group not in history_data["group_stats"]:
-                history_data["group_stats"][student_group] = 0
-            if student_gender not in history_data["gender_stats"]:
-                history_data["gender_stats"][student_gender] = 0
-
-            history_data["total_rounds"] += 1
-
-            if (not genders or '抽取所有性别' in genders) and group_name == '抽取全班学生':
-                if "total_stats" not in history_data:
-                    history_data["total_stats"] = 0
-                history_data["total_stats"] += 1
-                history_data["gender_stats"][student_gender] += 1
-                history_data["group_stats"][student_group] += 1
-                
-            if group_name == '抽取小组组号':
-                if student_name not in history_data["pumping_group"]:
-                    history_data["pumping_group"][student_name] = {
-                        "total_number_of_times": 1,
-                        "last_drawn_time": current_time,
-                        "rounds_missed": 0,
-                        "time": [{
-                            "draw_method": self.draw_mode,
-                            "draw_time": current_time,
-                            "draw_people_numbers": self.current_count
-                        }]
-                    }
-                else:
-                    history_data["pumping_group"][student_name]["total_number_of_times"] += 1
-                    history_data["pumping_group"][student_name]["last_drawn_time"] = current_time
-                    history_data["pumping_group"][student_name]["rounds_missed"] = 0
-                    history_data["pumping_group"][student_name]["time"].append({
-                        "draw_method": self.draw_mode,
-                        "draw_time": current_time,
-                        "draw_people_numbers": self.current_count
-                    })
-            else:
-                if student_name not in history_data["pumping_people"]:
-                    if not genders or '抽取所有性别' in genders:
-                        history_data["pumping_people"][student_name] = {
-                            "total_number_of_times": 1,
-                            "total_number_auxiliary": 0,
-                            "last_drawn_time": current_time,
-                            "rounds_missed": 0,
-                            "time": [{
-                                "draw_method": self.draw_mode,
-                                "draw_time": current_time,
-                                "draw_people_numbers": self.current_count,
-                                "draw_group": group_name,
-                                "draw_gender": genders
-                            }]
-                        }
-                    else:
-                        history_data["pumping_people"][student_name] = {
-                            "total_number_of_times": 0,
-                            "total_number_auxiliary": 1,
-                            "last_drawn_time": current_time,
-                            "rounds_missed": 0,
-                            "time": [{
-                                "draw_method": self.draw_mode,
-                                "draw_time": current_time,
-                                "draw_people_numbers": self.current_count,
-                                "draw_group": group_name,
-                                "draw_gender": genders
-                            }]
-                        }
-                else:
-                    if not genders or '抽取所有性别' in genders: 
-                        history_data["pumping_people"][student_name]["total_number_of_times"] += 1
-                    else:
-                        history_data["pumping_people"][student_name]["total_number_auxiliary"] += 1
-                    history_data["pumping_people"][student_name]["last_drawn_time"] = current_time
-                    history_data["pumping_people"][student_name]["rounds_missed"] = 0
-                    history_data["pumping_people"][student_name]["time"].append({
-                        "draw_method": self.draw_mode,
-                        "draw_time": current_time,
-                        "draw_people_numbers": self.current_count,
-                        "draw_group": group_name,
-                        "draw_gender": genders
-                    })
+            student_info = student_info_map.get(student_name, {'id': '', 'group': '', 'gender': ''})
+            
+            # 添加到数据库
+            history_manager.add_student_history(
+                class_name=class_name,
+                student_name=student_name,
+                student_id=student_info['id'],
+                student_group=student_info['group'],
+                student_gender=student_info['gender'],
+                draw_method=self.draw_mode,
+                draw_count=self.current_count,
+                draw_group=group_name,
+                draw_gender=genders
+            )
         
         # 更新未被选中学生的rounds_missed
         all_students = set()
-        student_file = f"app/resource/list/{class_name}.json"
         if os.path.exists(student_file):
             with open(student_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -1245,13 +1152,13 @@ class pumping_people(QWidget):
                         all_students.add(name)
         
         selected_names = {s[1] for s in selected_students}
-        for student_name in all_students:
-            if student_name in history_data["pumping_people"] and student_name not in selected_names:
-                history_data["pumping_people"][student_name]["rounds_missed"] += 1
-        
-        # 保存历史记录
-        with open(history_file, 'w', encoding='utf-8') as f:
-            json.dump(history_data, f, ensure_ascii=False, indent=4)
+        # 更新未被选中学生的rounds_missed
+        for student_name in all_students - selected_names:
+            history_manager.increment_rounds_missed(
+                            class_name=class_name,
+                            student_names=[student_name]
+                        )
+                        # 🌟 星穹铁道白露提示：已修复参数名称错误，将student_name改为student_names并传入列表
 
     # 将小组名称转换为排序键
     def sort_key(self, group):

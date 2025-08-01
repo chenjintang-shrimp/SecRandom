@@ -798,51 +798,19 @@ class pumping_reward(QWidget):
             logger.info("历史记录功能已被禁用。")
             return
         
-        history_file = f"app/resource/reward/history/{reward_name}.json"
-        os.makedirs(os.path.dirname(history_file), exist_ok=True)
-        
-        history_data = {}
-        if os.path.exists(history_file):
-            with open(history_file, 'r', encoding='utf-8') as f:
-                try:
-                    history_data = json.load(f)
-                except json.JSONDecodeError:
-                    history_data = {}
-        
-        # 初始化数据结构
-        if "pumping_reward" not in history_data:
-            history_data["pumping_reward"] = {}
-        if "total_rounds" not in history_data:
-            history_data["total_rounds"] = 0
-        
-        # 更新总轮次
-        history_data["total_rounds"] += 1
-
-        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # 使用SQLite数据库存储历史记录
+        from app.common.sqlite_utils import history_manager
         
         # 更新被选中奖品的记录
         for reward_id, reward_name, probability in selected_rewards:
-            # 获取奖品信息
-            if reward_name not in history_data["pumping_reward"]:
-                history_data["pumping_reward"][reward_name] = {
-                    "total_number_of_times": 1,
-                    "last_drawn_time": current_time,
-                    "rounds_missed": 0,
-                    "time": [{
-                        "draw_method": self.draw_mode,
-                        "draw_time": current_time,
-                        "draw_reward_numbers": self.current_count
-                    }]
-                }
-            else:
-                history_data["pumping_reward"][reward_name]["total_number_of_times"] += 1
-                history_data["pumping_reward"][reward_name]["last_drawn_time"] = current_time
-                history_data["pumping_reward"][reward_name]["rounds_missed"] = 0
-                history_data["pumping_reward"][reward_name]["time"].append({
-                    "draw_method": self.draw_mode,
-                    "draw_time": current_time,
-                    "draw_reward_numbers": self.current_count
-                })
+            # 添加到数据库
+            history_manager.add_reward_history(
+                reward_pool=reward_name,
+                reward_name=reward_name,
+                reward_id=reward_id,
+                draw_method=self.draw_mode,
+                draw_count=self.current_count
+            )
         
         # 更新未被选中奖品的rounds_missed
         all_rewards = set()
@@ -856,13 +824,13 @@ class pumping_reward(QWidget):
                         all_rewards.add(name)
         
         selected_names = {s[1] for s in selected_rewards}
+        # 更新SQLite数据库中未选中奖品的rounds_missed
         for reward_name in all_rewards:
-            if reward_name in history_data["pumping_reward"] and reward_name not in selected_names:
-                history_data["pumping_reward"][reward_name]["rounds_missed"] += 1
-        
-        # 保存历史记录
-        with open(history_file, 'w', encoding='utf-8') as f:
-            json.dump(history_data, f, ensure_ascii=False, indent=4)
+            if reward_name not in selected_names:
+                history_manager.increment_rounds_missed(
+                    reward_pool=self.reward_combo.currentText(),
+                    reward_name=reward_name
+                )
 
     # 更新总奖数显示   
     def update_total_count(self):

@@ -244,18 +244,12 @@ class history_reward(QFrame):
                     
                     rewards = [item[1] for item in cleaned_data]
                         
-                    # 初始化历史数据字典
-                    history_data = {}
-                    # 读取历史记录文件
-                    history_file = f'app/resource/reward/history/{prize_pools_name}.json'
-
-                    if os.path.exists(history_file):
-                        try:
-                            with open(history_file, 'r', encoding='utf-8') as f:
-                                history_data = json.load(f)
-                        except json.JSONDecodeError:
-                            history_data = {}
-
+                    # 使用SQLite数据库读取历史记录
+                    from app.common.sqlite_utils import history_manager
+                    
+                    # 获取奖品历史记录
+                    reward_stats = history_manager.get_reward_stats(prize_pools_name)
+                    
                     # 生成序号(从1开始)并返回学生数据，包含被点次数信息
                     reward_data = []
                     # 先遍历一次计算各列最大位数
@@ -267,8 +261,11 @@ class history_reward(QFrame):
                     for i, reward in enumerate(rewards):
                         reward_name = reward if not reward else reward[1:-1]
                         max_digits['id'] = max(max_digits['id'], len(str(cleaned_data[i][0])))
-                        if 'pumping_reward' in history_data and reward_name in history_data['pumping_reward']:
-                            count = int(history_data['pumping_reward'][reward_name]['total_number_of_times'])
+                        
+                        # 从数据库获取奖品被抽中次数
+                        count_key = f'reward_{reward_name}'
+                        if count_key in reward_stats:
+                            count = reward_stats[count_key]
                             max_digits['pumping_reward'] = max(max_digits['pumping_reward'], len(str(count)))
 
                     # 获取当前抽取模式
@@ -288,15 +285,23 @@ class history_reward(QFrame):
                         self.draw_mode = "until_reboot"
                     elif pumping_reward_draw_mode == 2:  # 不重复抽取(直到抽完全部人)
                         self.draw_mode = "until_all"
+                        
+                    # 从SQLite数据库获取已抽取奖品记录
+                    drawn_rewards = history_manager.get_drawn_rewards(
+                        prize_pool=prize_pools_name,
+                        draw_mode=self.draw_mode
+                    )
 
-                    # 生成最终数据
+                    # 🌸 小鸟游星野提醒：生成最终数据，避免前导零
                     for i, reward in enumerate(rewards):
-                        pumping_reward_count = int(history_data['pumping_reward'].get(reward, {}).get('total_number_of_times', 0)) if 'pumping_reward' in history_data else 0
+                        reward_name = reward if not reward else reward[1:-1]
+                        count_key = f'reward_{reward_name}'
+                        pumping_reward_count = reward_stats.get(count_key, 0)
                         reward_data.append([
                             str(cleaned_data[i][0]).zfill(max_digits['id']),
                             reward,
                             cleaned_data[i][2],
-                            str(pumping_reward_count).zfill(max_digits['pumping_reward'])
+                            str(pumping_reward_count)
                         ])
 
                     return reward_data
@@ -318,123 +323,84 @@ class history_reward(QFrame):
 
         elif _reward_name == '奖品记录_时间排序':
             if prize_pools_name:
-                # 奖品数据文件路径
                 reward_file = f'app/resource/reward/{prize_pools_name}.json'
-                history_file = f'app/resource/reward/history/{prize_pools_name}.json'
                 
-                # 读取奖品配置
-                reward_data = {}
+                # 读取奖品名单
                 try:
                     with open(reward_file, 'r', encoding='utf-8') as f:
                         reward_data = json.load(f)
                 except (FileNotFoundError, json.JSONDecodeError):
-                    logger.error(f"奖品配置文件不存在或格式错误: {reward_file}")
                     return []
 
-                # 读取奖品发放历史
-                history_data = {}
-                if os.path.exists(history_file):
-                    try:
-                        with open(history_file, 'r', encoding='utf-8') as f:
-                            history_data = json.load(f).get('pumping_reward', {})
-                    except json.JSONDecodeError:
-                        logger.error(f"奖品历史记录格式错误: {history_file}")
-                        pass
+                # 清理奖品数据
+                cleaned_rewards = {}
+                for name, info in reward_data.items():
+                    if isinstance(info, dict):
+                        cleaned_rewards[name] = {
+                            'id': str(info.get('id', '')),
+                            'weight': str(info.get('probability', '1'))
+                        }
 
-                # 收集所有奖品发放记录
+                # 🌸 小鸟游野提醒：使用SQLite数据库获取全班奖品时间排序记录
+                from app.common.sqlite_utils import history_manager
+                
+                # 获取全班奖品历史记录
+                all_history = history_manager.get_reward_history(prize_pools_name)
+                
+                # 转换为时间排序的格式
                 all_records = []
-                reward_items = reward_data
-                
-                # 遍历奖品历史记录
-                for reward_id, distribution_records in history_data.items():
-                    reward_info = reward_items.get(reward_id, {})
-                    reward_name = reward_id  # 直接使用键名作为奖品名称
-                    
-                    for record in distribution_records.get('time', []):
-                        draw_time = record.get('draw_time', '')
-                        if draw_time:
-                            all_records.append({
-                                'time': draw_time,
-                                'reward_id': reward_id,
-                                'name': reward_name,
-                                'weight': reward_info.get('probability', '1')
-                            })
-                
-                # 按时间降序排序
-                sorted_records = sorted(all_records, key=lambda x: x['time'], reverse=True)
-                
-                # 转换为规范格式返回
-                result = []
-                for record in sorted_records:
-                    # 将概率字符串转换为整数权重
-                        weight = int(record['weight']) if record['weight'].isdigit() else 1
-                        result.append([
-                            record['time'],
-                            record['reward_id'],
-                            record['name'],
-                            str(weight)
+                for record in all_history:
+                    reward_name = record['reward_name']
+                    if reward_name in cleaned_rewards:
+                        reward_info = cleaned_rewards[reward_name]
+                        all_records.append([
+                            record['draw_time'],
+                            reward_info['id'],
+                            reward_name,
+                            reward_info['weight']
                         ])
                 
-                return result
+                # 按时间降序排序
+                all_records.sort(reverse=True, key=lambda x: x[0])
+                
+                return all_records
             else:
                 return []
         
         else:
             if prize_pools_name:
                 try:
-                    # 初始化历史数据字典
-                    history_data = {}
-                    # 读取历史记录文件
-                    history_file = f'app/resource/reward/history/{prize_pools_name}.json'
-
-                    if os.path.exists(history_file):
-                        try:
-                            with open(history_file, 'r', encoding='utf-8') as f:
-                                history_data = json.load(f)
-                        except json.JSONDecodeError:
-                            history_data = {}
+                    # 🌸 小鸟游星野提醒：使用SQLite数据库获取单个奖品的历史记录
+                    from app.common.sqlite_utils import history_manager
                     
-                    # 修复历史记录数据访问路径
+                    # 直接从数据库获取该奖品的历史记录
+                    reward_history = history_manager.get_reward_history(prize_pools_name, _reward_name)
+                    
                     reward_data = []
-                    pumping_reward = history_data.get('pumping_reward', {})
-                    
-                    # 添加调试日志
-                    logger.debug(f"当前选择的奖励名称: {_reward_name}")
-                    
-                    # 尝试直接访问时间记录（适配实际数据结构）
-                    if isinstance(pumping_reward, dict):
-                        # 根据用户选择的奖励名称筛选记录
-                        for reward_id, reward_info in pumping_reward.items():
-                            # 检查当前奖励ID是否与用户选择的奖励名称匹配
-                            if reward_id == _reward_name and isinstance(reward_info, dict) and 'time' in reward_info:
-                                for record in reward_info['time']:
-                                    time = record.get('draw_time', '')
-                                    draw_method = record.get('draw_method', '')
-                                    
-                                    # 统一处理抽取方式文本
-                                    draw_method_map = {
-                                        'random': '重复抽取',
-                                        'until_reboot': '不重复抽取(直到软件重启)',
-                                        'until_all': '不重复抽取(直到抽完全部人)'
-                                    }
-                                    draw_method_text = draw_method_map.get(draw_method, draw_method)
-                                    
-                                    # 获取抽取数量，支持列表或单个值
-                                    draw_reward_numbers = record.get('draw_reward_numbers', '')
-                                    if isinstance(draw_reward_numbers, list):
-                                        draw_reward_numbers = ', '.join(map(str, draw_reward_numbers))
-                                    
-                                    reward_data.append([time, draw_method_text, str(draw_reward_numbers)])
+                    for record in reward_history:
+                        # 转换抽取方式文本
+                        draw_method_map = {
+                            'random': '重复抽取',
+                            'until_reboot': '不重复抽取(直到软件重启)',
+                            'until_all': '不重复抽取(直到抽完全部人)'
+                        }
+                        draw_method_text = draw_method_map.get(record['draw_method'], record['draw_method'])
+                        
+                        reward_data.append([
+                            record['draw_time'],
+                            draw_method_text,
+                            str(record['draw_count'])
+                        ])
                     
                     # 按时间倒序排序
                     reward_data.sort(reverse=True, key=lambda x: x[0])
                     return reward_data
                     
                 except Exception as e:
-                    logger.error(f"读取奖品名单文件失败: {e}")
+                    logger.error(f"读取奖品历史记录失败: {e}")
                     InfoBar.error(
-                        title="读取奖品名单文件失败",
-                        content=f"错误信息: （请到日志文件查看）",
+                        title="读取奖品历史记录失败",
+                        content=f"错误信息: {str(e)}",
                         duration=3000,
                         orient=Qt.Horizontal,
                         parent=self,
