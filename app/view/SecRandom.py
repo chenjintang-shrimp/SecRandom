@@ -449,7 +449,11 @@ class Window(MSFluentWindow):
             self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
 
         # 添加固定位置的导航项
-        self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+        # 为历史记录导航项添加点击事件处理器
+        history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+        # 首次点击时加载数据
+        history_item.clicked.connect(lambda: self.history_handoff_settingInterface.pumping_people_card.load_data())
+
         self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
         logger.info("白露导航: 所有导航项已布置完成，导航系统可以正常使用啦～ ")
 

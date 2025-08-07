@@ -93,7 +93,9 @@ class settings_Window(MSFluentWindow):
 
         self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+        history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+        history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
+
         self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.more_settingInterface, get_theme_icon("ic_fluent_more_horizontal_20_filled"), '更多设置', position=NavigationItemPosition.BOTTOM)
 

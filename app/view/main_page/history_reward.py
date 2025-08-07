@@ -14,7 +14,7 @@ from app.common.config import load_custom_font
 from app.common.history_reward_settings import history_reward_SettinsCard
 
 class history_reward(QFrame):
-    def __init__(self, parent: QFrame = None):
+    def __init__(self, parent: QFrame = None, load_on_init: bool = True):
         super().__init__(parent=parent)
         # 创建一个 QScrollArea
         self.scroll_area_personal = SingleDirectionScrollArea(self)
@@ -60,6 +60,11 @@ class history_reward(QFrame):
         self.table.setSortingEnabled(True) # 启用排序
         self.table.hide()  # 初始隐藏表格
 
+        if load_on_init:
+            self.load_data()
+
+    def load_data(self):
+        """加载数据"""
         self.show_table()
 
     def _create_loading_widget(self):

@@ -12,6 +12,9 @@ class history_handoff_setting(QFrame):
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
         
+        # 标记是否首次加载
+        self.first_load = True
+        
         # 创建Pivot导航栏
         self.pivot = Pivot(self)
         self.stackedWidget = QStackedWidget(self)
@@ -47,8 +50,8 @@ class history_handoff_setting(QFrame):
         pumping_people_inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         pumping_people_scroll_area_personal.setWidget(pumping_people_inner_frame_personal)
         # 抽人历史记录卡片组
-        pumping_people_card = history()
-        pumping_people_inner_layout_personal.addWidget(pumping_people_card)
+        self.pumping_people_card = history(load_on_init=False)
+        pumping_people_inner_layout_personal.addWidget(self.pumping_people_card)
         # 设置抽人历史记录页面布局
         pumping_people_layout = QVBoxLayout(self.pumping_people_page)
         pumping_people_layout.addWidget(pumping_people_scroll_area_personal)
@@ -76,8 +79,8 @@ class history_handoff_setting(QFrame):
         pumping_reward_inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         pumping_reward_scroll_area_personal.setWidget(pumping_reward_inner_frame_personal)
         # 抽奖历史记录卡片组
-        personal_setting_card = history_reward()
-        pumping_reward_inner_layout_personal.addWidget(personal_setting_card)
+        self.pumping_reward_card = history_reward(load_on_init=False)
+        pumping_reward_inner_layout_personal.addWidget(self.pumping_reward_card)
         # 设置抽奖历史记录页面布局
         pumping_reward_layout = QVBoxLayout(self.pumping_reward_page)
         pumping_reward_layout.addWidget(pumping_reward_scroll_area_personal)
@@ -112,3 +115,18 @@ class history_handoff_setting(QFrame):
     def onCurrentIndexChanged(self, index):
         widget = self.stackedWidget.widget(index)
         self.pivot.setCurrentItem(widget.objectName())
+
+        # 根据页面切换加载对应数据
+        if widget.objectName() == 'pumping_People_history':
+            self.pumping_people_card.load_data()
+        elif widget.objectName() == 'pumping_Reward_history':
+            self.pumping_reward_card.load_data()
+
+        # 首次加载后设置标志
+        self.first_load = False
+        
+        # 页面切换时加载对应的数据
+        if widget.objectName() == 'pumping_People_history':
+            self.pumping_people_card.load_data()
+        elif widget.objectName() == 'pumping_Reward_history':
+            self.pumping_reward_card.load_data()

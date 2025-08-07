@@ -14,7 +14,7 @@ from app.common.Changeable_history_settings import history_SettinsCard
 from app.view.main_page.pumping_people import pumping_people
 
 class changeable_history(QFrame):
-    def __init__(self, parent: QFrame = None):
+    def __init__(self, parent: QFrame = None, load_on_init: bool = True):
         super().__init__(parent=parent)
 
         # 创建一个 QScrollArea
@@ -63,6 +63,11 @@ class changeable_history(QFrame):
         self.table.setSortingEnabled(True) # 启用排序
         self.table.hide()  # 初始隐藏表格
 
+        if load_on_init:
+            self.load_data()
+
+    def load_data(self):
+        """加载数据"""
         self.show_table()
 
     def _create_loading_widget(self):
