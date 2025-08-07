@@ -29,8 +29,8 @@
 > GNU GPLv3具有Copyleft特性，也就是说，您可以修改SecRandom的源代码，但是**必须将修改版本同样以GNU GPLv3协议开源**
 
 ## 📄 **文档**
-- 📄 **[SecRandom 官方文档](https://secrandom.netlify.app) 暂未全部完善，待后续完善**
- - [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
+- 📄 **[SecRandom 官方文档](https://secrandom.netlify.app)**
+- [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
 
 ## 🌈 核心功能
 
@@ -118,9 +118,20 @@ python main.py
 
 </details>
 
-## 📌 使用小贴士
-<!-- 白露的温馨提醒 -->
-> 悬浮窗可快速开启「闪电抽取」模式⚡
+## 插件开发
+<details>
+<summary>插件开发</summary>
+
+### 插件开发指南
+<!-- - 插件开发文档：[插件开发文档](https://secrandom.netlify.app/插件开发.html) -->
+
+- 插件开发示例：[插件开发示例](https://github.com/SECTL/SecRandom-plugin)
+
+<!-- - 插件接口文档：[插件接口文档](https://secrandom.netlify.app/插件接口.html) -->
+
+<!-- - 插件发布指南：[插件发布指南](https://secrandom.netlify.app/插件发布.html) -->
+
+</details>
 
 ## 📌 **软件截图**
 <details>
