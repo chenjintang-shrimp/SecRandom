@@ -125,7 +125,7 @@ python main.py
 ### 插件开发指南
 <!-- - 插件开发文档：[插件开发文档](https://secrandom.netlify.app/插件开发.html) -->
 
-- 插件开发示例：[插件开发示例](https://github.com/SECTL/SecRandom-plugin)
+- 插件开发示例：[插件开发示例](https://github.com/SECTL/SecRandom-plugins)
 
 <!-- - 插件接口文档：[插件接口文档](https://secrandom.netlify.app/插件接口.html) -->
 
