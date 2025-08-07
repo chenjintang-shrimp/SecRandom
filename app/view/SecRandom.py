@@ -29,6 +29,7 @@ from app.view.main_page.pumping_reward import pumping_reward
 from app.view.main_page.history_handoff_setting import history_handoff_setting
 from app.view.levitation import LevitationWindow
 from app.view.settings_page.about_setting import about
+from app.view.settings_page.plugin_setting import PluginDialog
 
 # ================================================== (^・ω・^ )
 # 白露的初始化魔法阵 ⭐
@@ -236,6 +237,7 @@ class TrayIconManager:
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_power_20_filled"), '暂时显示/隐藏主界面', triggered=self.main_window.toggle_window))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.main_window.toggle_levitation_window))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_settings_20_filled"), '打开设置界面', triggered=self.main_window.show_setting_interface))
+        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_rename_20_filled"), '打开插件管理', triggered=self.main_window.show_plugin_face))
         self.tray_menu.addSeparator()
         # 系统操作
         # self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.main_window.restart_app))
@@ -743,6 +745,41 @@ class Window(MSFluentWindow):
                 self.settingInterface.show()
                 self.settingInterface.activateWindow()
                 self.settingInterface.raise_()
+
+    def show_plugin_face(self):
+        """白露插件管理向导：
+        正在打开插件管理界面
+        可以在这里管理各种插件哦～(^・ω・^ )"""
+        try:
+            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                if settings.get('hashed_set', {}).get('start_password_enabled', False):
+                    from app.common.password_dialog import PasswordDialog
+                    dialog = PasswordDialog(self)
+                    if dialog.exec_() != QDialog.Accepted:
+                        logger.warning("用户取消打开插件管理界面操作")
+                        return
+        except Exception as e:
+            logger.error(f"密码验证失败: {e}")
+
+        try:
+            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+            settings['hashed_set']['verification_start'] = True
+            with open('app/SecRandom/enc_set.json', 'w', encoding='utf-8') as f:
+                json.dump(settings, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            logger.error(f"写入verification_start失败: {e}")
+        
+        # 切换到插件管理页面
+        self.plugin_face__()
+
+
+    def plugin_face__(self):
+        # 创建插件管理对话框实例
+        w_PluginDialog = PluginDialog(self)
+        w_PluginDialog.show()  # 使用show()显示非模态窗口
+        return w_PluginDialog
 
     def toggle_levitation_window(self):
         """星野悬浮控制：
