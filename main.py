@@ -158,16 +158,6 @@ def initialize_application():
     logger.info(f"白露启动: 软件作者: lzy98276")
     logger.info(f"白露启动: 软件Github地址: https://github.com/SECTL/SecRandom")
 
-    # 初始化插件依赖加载器
-    try:
-        from app.common.deps_loader import get_dependency_loader
-        import os
-        app_root = os.path.dirname(os.path.abspath(__file__))
-        get_dependency_loader(app_root)
-        logger.debug("白露依赖: 插件依赖加载器初始化成功～ ")
-    except Exception as e:
-        logger.error(f"白露错误: 插件依赖加载器初始化失败: {e}")
-
     # 清理过期历史记录，保持魔法空间整洁～
     from app.common.history_cleaner import clean_expired_history, clean_expired_reward_history
     clean_expired_history()
@@ -176,15 +166,6 @@ def initialize_application():
 
     # 创建主窗口实例
     sec = Window()
-    
-    # 启动自启插件
-    try:
-        from app.view.settings_page.plugin_setting import PluginDialog
-        plugin_dialog = PluginDialog()
-        plugin_dialog.start_autostart_plugins()
-        logger.info("白露插件: 自启插件启动完成～ ")
-    except Exception as e:
-        logger.error(f"白露错误: 启动自启插件失败: {e}")
     
     try:
         with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:

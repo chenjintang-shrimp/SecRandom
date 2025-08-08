@@ -1,5 +1,4 @@
 from qfluentwidgets import *
-from qfluentwidgets import FluentIcon as fIcon
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -15,6 +14,8 @@ from app.view.settings_page.password_setting import password_set
 from app.view.settings_page.about_setting import about
 from app.view.settings_page.pumping_handoff_setting import pumping_handoff_setting
 from app.view.settings_page.voice_engine_setting import voice_engine_settings
+from app.view.plugins.plugin_settings import PluginSettingsWindow
+
 
 class settings_Window(MSFluentWindow):
     def __init__(self, parent=None):
@@ -70,6 +71,9 @@ class settings_Window(MSFluentWindow):
         self.more_settingInterface = more_setting(self)
         self.more_settingInterface.setObjectName("more_settingInterface")
 
+        self.plugin_settingsInterface = PluginSettingsWindow(self)
+        self.plugin_settingsInterface.setObjectName("plugin_settingsInterface")
+
         self.pumping_handoff_settingInterface = pumping_handoff_setting(self)
         self.pumping_handoff_settingInterface.setObjectName("pumping_handoff_settingInterface")
 
@@ -91,6 +95,7 @@ class settings_Window(MSFluentWindow):
         # 使用 MSFluentWindow 的 addSubInterface 方法
         self.addSubInterface(self.pumping_handoff_settingInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽取设置', position=NavigationItemPosition.TOP)
 
+        self.addSubInterface(self.plugin_settingsInterface, get_theme_icon("ic_fluent_extensions_20_filled"), '插件广场', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
         self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
         history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)

@@ -15,8 +15,8 @@ class history_handoff_setting(QFrame):
         # 标记是否首次加载
         self.first_load = True
         
-        # 创建Pivot导航栏
-        self.pivot = Pivot(self)
+        # 创建SegmentedWidget导航栏
+        self.SegmentedWidget = SegmentedWidget(self)
         self.stackedWidget = QStackedWidget(self)
         
         # 创建内容页面
@@ -89,11 +89,11 @@ class history_handoff_setting(QFrame):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-        main_layout.addWidget(self.pivot, 0, Qt.AlignHCenter)
+        main_layout.addWidget(self.SegmentedWidget, 0, Qt.AlignHCenter)
         main_layout.addWidget(self.stackedWidget)
         
         self.stackedWidget.setCurrentWidget(self.pumping_people_page)
-        self.pivot.setCurrentItem('pumping_People_history')
+        self.SegmentedWidget.setCurrentItem('pumping_People_history')
 
         self.__connectSignalToSlot()
         
@@ -102,7 +102,7 @@ class history_handoff_setting(QFrame):
         self.stackedWidget.addWidget(widget)
         
         # 添加导航项
-        self.pivot.addItem(
+        self.SegmentedWidget.addItem(
             routeKey=objectName,
             text=text,
             onClick=lambda: self.stackedWidget.setCurrentWidget(widget)
@@ -114,7 +114,7 @@ class history_handoff_setting(QFrame):
         
     def onCurrentIndexChanged(self, index):
         widget = self.stackedWidget.widget(index)
-        self.pivot.setCurrentItem(widget.objectName())
+        self.SegmentedWidget.setCurrentItem(widget.objectName())
 
         # 根据页面切换加载对应数据
         if widget.objectName() == 'pumping_People_history':

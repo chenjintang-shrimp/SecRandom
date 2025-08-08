@@ -18,7 +18,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtNetwork import *
 from qfluentwidgets import *
-from qfluentwidgets import FluentIcon as fIcon
 
 # 🏰 应用内部魔法卷轴 🏰
 from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
@@ -29,7 +28,6 @@ from app.view.main_page.pumping_reward import pumping_reward
 from app.view.main_page.history_handoff_setting import history_handoff_setting
 from app.view.levitation import LevitationWindow
 from app.view.settings_page.about_setting import about
-from app.view.settings_page.plugin_setting import PluginDialog
 
 # ================================================== (^・ω・^ )
 # 白露的初始化魔法阵 ⭐
@@ -237,7 +235,6 @@ class TrayIconManager:
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_power_20_filled"), '暂时显示/隐藏主界面', triggered=self.main_window.toggle_window))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.main_window.toggle_levitation_window))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_settings_20_filled"), '打开设置界面', triggered=self.main_window.show_setting_interface))
-        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_rename_20_filled"), '打开插件管理', triggered=self.main_window.show_plugin_face))
         self.tray_menu.addSeparator()
         # 系统操作
         # self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.main_window.restart_app))
@@ -344,8 +341,8 @@ class Window(MSFluentWindow):
         self.tray_manager = TrayIconManager(self)
         self.tray_manager.tray_icon.show()
         self.start_cleanup()
+        self.levitation_window = LevitationWindow()
         if self.config_manager.get_foundation_setting('pumping_floating_enabled'):
-            self.levitation_window = LevitationWindow()
             self.levitation_window.show()
         
         self._apply_window_visibility_settings()
@@ -456,7 +453,9 @@ class Window(MSFluentWindow):
         # 首次点击时加载数据
         history_item.clicked.connect(lambda: self.history_handoff_settingInterface.pumping_people_card.load_data())
 
+        # 添加插件管理导航项
         self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
+        
         logger.info("白露导航: 所有导航项已布置完成，导航系统可以正常使用啦～ ")
 
     def closeEvent(self, event):
@@ -662,6 +661,13 @@ class Window(MSFluentWindow):
         if hasattr(self, 'server'):
             self.server.close()
             logger.debug("星野撤退: IPC服务器已关闭～ ")
+        # 关闭插件系统
+        if hasattr(self, 'plugin_system') and self.plugin_system:
+            try:
+                self.plugin_system.shutdown()
+                logger.debug("星野撤退: 插件系统已安全关闭～ ")
+            except Exception as e:
+                logger.error(f"星野撤退: 插件系统关闭出错喵～ {e}")
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
             self.shared_memory.detach()
@@ -700,6 +706,13 @@ class Window(MSFluentWindow):
         if hasattr(self, 'server'):
             self.server.close()
             logger.debug("星野重启: IPC服务器已关闭～ ")
+        # 关闭插件系统
+        if hasattr(self, 'plugin_system') and self.plugin_system:
+            try:
+                self.plugin_system.shutdown()
+                logger.debug("星野重启: 插件系统已安全关闭～ ")
+            except Exception as e:
+                logger.error(f"星野重启: 插件系统关闭出错喵～ {e}")
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
             self.shared_memory.detach()
@@ -709,7 +722,6 @@ class Window(MSFluentWindow):
         subprocess.Popen([sys.executable] + sys.argv, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
         # 退出当前进程
         sys.exit(0)
-
 
     def show_setting_interface(self):
         """白露设置向导：
@@ -745,41 +757,6 @@ class Window(MSFluentWindow):
                 self.settingInterface.show()
                 self.settingInterface.activateWindow()
                 self.settingInterface.raise_()
-
-    def show_plugin_face(self):
-        """白露插件管理向导：
-        正在打开插件管理界面
-        可以在这里管理各种插件哦～(^・ω・^ )"""
-        try:
-            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                if settings.get('hashed_set', {}).get('start_password_enabled', False):
-                    from app.common.password_dialog import PasswordDialog
-                    dialog = PasswordDialog(self)
-                    if dialog.exec_() != QDialog.Accepted:
-                        logger.warning("用户取消打开插件管理界面操作")
-                        return
-        except Exception as e:
-            logger.error(f"密码验证失败: {e}")
-
-        try:
-            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-            settings['hashed_set']['verification_start'] = True
-            with open('app/SecRandom/enc_set.json', 'w', encoding='utf-8') as f:
-                json.dump(settings, f, ensure_ascii=False, indent=4)
-        except Exception as e:
-            logger.error(f"写入verification_start失败: {e}")
-        
-        # 切换到插件管理页面
-        self.plugin_face__()
-
-
-    def plugin_face__(self):
-        # 创建插件管理对话框实例
-        w_PluginDialog = PluginDialog(self)
-        w_PluginDialog.show()  # 使用show()显示非模态窗口
-        return w_PluginDialog
 
     def toggle_levitation_window(self):
         """星野悬浮控制：
