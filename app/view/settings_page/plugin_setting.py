@@ -150,40 +150,104 @@ class PluginManagerThread(QThread):
                         top_level_dir = name.split('\\')[0]
                         top_level_dirs.add(top_level_dir)
                 
-                # 如果只有一个顶层目录，使用它作为插件名称
+                # 确定插件名称
                 if len(top_level_dirs) == 1:
+                    # 如果只有一个顶层目录，使用它作为插件名称
                     plugin_name = list(top_level_dirs)[0]
-                    plugin_path = os.path.join(self.plugins_dir, plugin_name)
+                else:
+                    # 如果没有顶层目录或有多个顶层目录，使用压缩包名称作为插件名称
+                    plugin_name = os.path.splitext(os.path.basename(file_path))[0]
                     
-                    # 确保目标目录不存在
-                    if os.path.exists(plugin_path):
-                        self.error_occurred.emit(f"插件 {plugin_name} 已存在")
-                        return
+                    # 清空顶层目录集合，因为我们要直接解压所有文件
+                    top_level_dirs.clear()
+                
+                # 清理插件名称，移除特殊字符和路径分隔符
+                plugin_name = plugin_name.strip('*').strip('/').strip('\\').strip()
+                
+                # 验证插件名称
+                if not plugin_name or plugin_name in ['.', '..']:
+                    self.error_occurred.emit("插件名称无效")
+                    return
+                
+                plugin_path = os.path.join(self.plugins_dir, plugin_name)
+                
+                # 如果目标目录已存在，先删除旧目录
+                if os.path.exists(plugin_path):
+                    shutil.rmtree(plugin_path)
+                
+                # 创建目标目录
+                try:
+                    os.makedirs(plugin_path, exist_ok=True)
+                except Exception as mkdir_error:
+                    self.error_occurred.emit(f"创建插件目录失败: {str(mkdir_error)}")
+                    return
+                
+                # 解压文件
+                for name in zip_ref.namelist():
+                    # 如果有顶层目录，跳过顶层目录
+                    if len(top_level_dirs) == 1 and (name.startswith(plugin_name + '/') or name.startswith(plugin_name + '\\')):
+                        # 获取相对路径
+                        rel_path = name[len(plugin_name) + 1:]
+                        
+                        # 如果相对路径为空，跳过（这是顶层目录本身）
+                        if not rel_path:
+                            continue
+                    else:
+                        # 没有顶层目录，直接使用文件名
+                        rel_path = name
                     
-                    # 创建目标目录
-                    os.makedirs(plugin_path)
+                    # 跳过系统文件和缓存目录
+                    if (rel_path.startswith('__pycache__') or 
+                        rel_path.endswith('.pyc') or
+                        rel_path.endswith('.pyo') or
+                        rel_path.endswith('.pyd') or
+                        rel_path.startswith('.') or
+                        'Thumbs.db' in rel_path or
+                        'Desktop.ini' in rel_path):
+                        logger.debug(f"跳过系统文件: {rel_path}")
+                        continue
                     
-                    # 解压文件
-                    for name in zip_ref.namelist():
-                        # 跳过顶层目录
-                        if name.startswith(plugin_name + '/') or name.startswith(plugin_name + '\\'):
-                            # 获取相对路径
-                            rel_path = name[len(plugin_name) + 1:]
-                            # 创建目标文件路径
-                            target_path = os.path.join(plugin_path, rel_path)
-                            # 确保目标目录存在
-                            os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                            # 写入文件
+                    # 创建目标文件路径
+                    target_path = os.path.join(plugin_path, rel_path)
+                    
+                    # 检查是否为目录（以/结尾或没有文件扩展名且在ZIP中是目录）
+                    is_directory = name.endswith('/') or name.endswith('\\')
+                    
+                    if is_directory:
+                        # 如果是目录，只创建目录，不写入文件
+                        try:
+                            os.makedirs(target_path, exist_ok=True)
+                            logger.debug(f"创建目录: {target_path}")
+                            continue
+                        except Exception as mkdir_error:
+                            logger.warning(f"创建目录失败: {target_path}, 错误: {str(mkdir_error)}")
+                            continue
+                    else:
+                        # 如果是文件，确保目标目录存在
+                        target_dir = os.path.dirname(target_path)
+                        if target_dir:  # 只有当目录不为空时才创建
+                            try:
+                                os.makedirs(target_dir, exist_ok=True)
+                            except Exception as mkdir_error:
+                                logger.warning(f"创建目录失败: {target_dir}, 错误: {str(mkdir_error)}")
+                                continue
+                        
+                        # 写入文件
+                        try:
                             with open(target_path, 'wb') as f:
                                 f.write(zip_ref.read(name))
-                    
-                    # 读取插件信息
-                    plugin_info = self._read_plugin_info(plugin_name, plugin_path)
-                    self.plugin_installed.emit(plugin_info)
-                else:
-                    self.error_occurred.emit("插件格式不正确: 必须包含一个顶层目录")
+                        except Exception as file_error:
+                            logger.error(f"写入文件失败: {target_path}, 错误: {str(file_error)}")
+                            # 继续处理其他文件，不中断整个安装过程
+                            continue
+                
+                # 读取插件信息
+                plugin_info = self._read_plugin_info(plugin_name, plugin_path)
+                self.plugin_installed.emit(plugin_info)
+                
         except Exception as e:
             self.error_occurred.emit(f"安装插件失败: {str(e)}")
+            logger.error(f"安装插件失败: {str(e)}")
     
     def uninstall_plugin(self, plugin_name):
         """卸载插件"""

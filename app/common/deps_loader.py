@@ -2,9 +2,9 @@ import os
 import sys
 import subprocess
 import site
+from loguru import logger
 from pathlib import Path
 from PyQt5.QtWidgets import QMessageBox
-
 
 class PluginDependencyLoader:
     """插件依赖加载器 - 负责运行时自动安装缺失的库"""
@@ -127,17 +127,17 @@ class PluginDependencyLoader:
             
             # 检查安装结果
             if result.returncode == 0:
-                print(f"插件 {plugin_name} 依赖安装成功")
+                logger.info(f"插件 {plugin_name} 依赖安装成功")
                 return True
             else:
                 error_msg = f"插件 {plugin_name} 依赖安装失败:\n{result.stderr}"
-                print(error_msg)
+                logger.error(error_msg)
                 self._show_error_dialog(error_msg, parent_widget)
                 return False
                 
         except Exception as e:
             error_msg = f"插件 {plugin_name} 依赖安装过程中发生异常: {str(e)}"
-            print(error_msg)
+            logger.error(error_msg)
             self._show_error_dialog(error_msg, parent_widget)
             return False
     
@@ -157,7 +157,7 @@ class PluginDependencyLoader:
                 QMessageBox.Ok
             )
         else:
-            print(f"依赖安装错误: {message}")
+            logger.error(f"依赖安装错误: {message}")
     
     def get_plugin_site_packages(self, plugin_dir):
         """
