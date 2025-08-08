@@ -74,6 +74,15 @@ jobs:
             --exclude-module pdb `
             --exclude-module profile `
             --exclude-module cProfile `
+            --exclude-module numpy.f2py.tests `
+            --exclude-module pandas.tests `
+            --exclude-module pandas.tests.extension.base `
+            --exclude-module PyQt5.uic `
+            --exclude-module PyQt5.uic.port_v2 `
+            --exclude-module PyQt5.uic.port_v2.as_string `
+            --exclude-module PyQt5.uic.port_v2.ascii_upper `
+            --exclude-module PyQt5.uic.port_v2.proxy_base `
+            --exclude-module PyQt5.uic.port_v2.string_io `
             --hidden-import sip `
             --hidden-import PyQt5.sip `
             --collect-all PyQt5 `
