@@ -383,7 +383,7 @@ class Window(MSFluentWindow):
         """(ﾟДﾟ≡ﾟдﾟ) 星野的太空巡逻队出发！
         正在异步执行版本侦察任务喵～ 不会阻塞主线程哦！
         发现新版本时会立刻拉响警报通知用户喵！🚀✨"""
-        asyncio.run(self.update_checker.check_for_updates())
+        self.update_checker.check_for_updates()
         logger.info("星野指令: 更新检查任务已安排，开始扫描宇宙寻找新版本～ ")
 
     def createSubInterface(self):
