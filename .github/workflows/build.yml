@@ -63,7 +63,11 @@ jobs:
             --contents-directory . `
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:. `
-            --version-file=version_info.txt
+            --version-file=version_info.txt `
+            --collect-all pip `
+            --collect-all setuptools `
+            --collect-all pkg_resources `
+            --hidden-import pip._internal.commands.install
           # 创建zip_dist/SecRandom目录
           mkdir zip_dist/SecRandom
           # 复制dist目录下的所有文件到zip_dist/SecRandom目录下
