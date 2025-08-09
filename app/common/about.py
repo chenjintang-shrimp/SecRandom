@@ -131,7 +131,7 @@ class ContributorDialog(QDialog):
         # 🌟 星穹铁道白露：设置无边框窗口样式并解决屏幕设置冲突~ 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle('贡献人员')
-        self.setMinimumSize(600, 600)
+        self.setMinimumSize(900, 600)
         self.setSizeGripEnabled(True) #启用右下角拖动柄
         self.update_theme_style()
         
@@ -203,13 +203,13 @@ class ContributorDialog(QDialog):
         # 贡献者数据
         contributors = [
             {
-                'name': '黎泽懿_Aionflux (lzy98276)',
+                'name': 'lzy98276 (黎泽懿_Aionflux)',
                 'role': '设计&创意&策划&\n维护&文档&测试',
                 'github': 'https://github.com/lzy98276',
                 'avatar': 'app\\resource\\icon\\contributor1.png'
             },
             {
-                'name': '弃稞之草 (QiKeZhiCao)',
+                'name': 'QiKeZhiCao (弃稞之草)',
                 'role': '创意&维护',
                 'github': 'https://github.com/QiKeZhiCao',
                 'avatar': 'app\\resource\\icon\\contributor2.png'
@@ -221,10 +221,22 @@ class ContributorDialog(QDialog):
                 'avatar': 'app\\resource\\icon\\contributor3.png'
             },
             {
-                'name': '本新同学 (yuanbenxin)',
+                'name': 'yuanbenxin (本新同学)',
                 'role': '响应式前端页面\n设计及维护&文档',
                 'github': 'https://github.com/yuanbenxin',
                 'avatar': 'app\\resource\\icon\\contributor4.png'
+            },
+            {
+                'name': 'zhangjianjian7 (叶背影)',
+                'role': '文档',
+                'github': 'https://github.com/zhangjianjian7',
+                'avatar': 'app\\resource\\icon\\contributor5.png'
+            },
+            {
+                'name': 'Jursin',
+                'role': '响应式前端页面\n设计及维护&文档',
+                'github': 'https://github.com/jursin',
+                'avatar': 'app\\resource\\icon\\contributor6.png'
             },
         ]
         

@@ -146,11 +146,28 @@ python main.py
 
 ## 捐献支持
 
-- 支付宝
-  ![支付宝](app/resource/assets/contribution/Alipay.png)
+- **支付宝/微信支付**
+
+  <image src="app/resource/assets/contribution/Alipay.png" height="256"/> <image src="app/resource/assets/contribution/WeChat_Pay.png" height="256"/>
   
-- 微信
-  ![微信](app/resource/assets/contribution/WeChat_Pay.png)
+## 🙏 贡献者和特别感谢
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/lzy98276"><img src="app/resource/icon/contributor1.png" width="100px;" alt="lzy98276"/><br /><sub><b>lzy98276 (黎泽懿_Aionflux)</b></sub></a><br /><a href="#content-lzy98276" title="Content">🖋</a> <a href="#design-lzy98276" title="Design">🎨</a> <a href="#ideas-lzy98276" title="Ideas, Planning, & Feedback">🤔</a> <a href="#maintenance-lzy98276" title="Maintenance">🚧</a> <a href="#doc-lzy98276" title="Documentation">📖</a> <a href="#bug-lzy98276" title="Bug reports">🐛</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/QiKeZhiCao"><img src="app/resource/icon/contributor2.png" width="100px;" alt="QiKeZhiCao"/><br /><sub><b>QiKeZhiCao (弃稞之草)</b></sub></a><br /><a href="#ideas-QiKeZhiCao" title="Ideas, Planning, & Feedback">🤔</a> <a href="#maintenance-QiKeZhiCao" title="Maintenance">🚧</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/Fox-block-offcial"><img src="app/resource/icon/contributor3.png" width="100px;" alt="Fox-block-offcial"/><br /><sub><b>Fox-block-offcial</b></sub></a><br /><a href="#bug-Fox-block-offcial" title="Bug reports">🐛</a> <a href="#testing-Fox-block-offcial" title="Testing">⚠️</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/yuanbenxin"><img src="app/resource/icon/contributor4.png" width="100px;" alt="yuanbenxin"/><br /><sub><b>yuanbenxin (本新同学)</b></sub></a><br /><a href="#code-yuanbenxin" title="Code">💻</a> <a href="#design-yuanbenxin" title="Design">🎨</a> <a href="#maintenance-yuanbenxin" title="Maintenance">🚧</a> <a href="#doc-yuanbenxin" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/zhangjianjian7"><img src="app/resource/icon/contributor5.png" width="100px;" alt="zhangjianjian7"/><br /><sub><b>zhangjianjian7 (叶背影)</b></sub></a><br /><a href="#doc-zhangjianjian7" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/jursin"><img src="app/resource/icon/contributor6.png" width="100px;" alt="Jursin"/><br /><sub><b>Jursin</b></sub></a><br /><a href="#code-jursin" title="Code">💻</a> <a href="#design-jursin" title="Design">🎨</a> <a href="#maintenance-jursin" title="Maintenance">🚧</a> <a href="#doc-jursin" title="Documentation">📖</a></td>
+    </tr>
+  </tbody>
+</table>
+
 
 
 
