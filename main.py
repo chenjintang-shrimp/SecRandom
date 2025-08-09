@@ -167,6 +167,15 @@ def initialize_application():
     # 创建主窗口实例
     sec = Window()
     
+    # 启动插件自启动功能
+    try:
+        from app.view.plugins.management import PluginManagementPage
+        plugin_manager = PluginManagementPage()
+        plugin_manager.start_autostart_plugins()
+        logger.info("白露插件: 自启动插件功能已启动～ ")
+    except Exception as e:
+        logger.error(f"白露错误: 启动插件自启动功能失败: {e}")
+    
     try:
         with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
             settings = json.load(f)
