@@ -15,7 +15,8 @@ import zipfile
 from datetime import datetime
 from loguru import logger
 
-from app.common.config import get_theme_icon, load_custom_font
+from packaging.version import Version
+from app.common.config import get_theme_icon, load_custom_font, VERSION
 
 
 class MarketPluginButtonGroup(QWidget):
@@ -49,6 +50,9 @@ class MarketPluginButtonGroup(QWidget):
         
         # 设置固定高度
         self.setFixedHeight(50)
+        
+        # 检查插件版本兼容性并设置操作按钮状态
+        self._update_action_button_state()
 
     def _get_repo_name_from_url(self, url):
         """从GitHub URL中提取仓库名称"""
@@ -88,6 +92,91 @@ class MarketPluginButtonGroup(QWidget):
                 continue
         
         return None
+    
+    def _check_plugin_version_compatibility(self):
+        """检查插件版本与应用程序的兼容性"""
+        try:
+            # 获取插件要求的最低应用版本
+            plugin_ver = self.plugin_info.get("plugin_ver")
+            if not plugin_ver:
+                # 如果没有设置插件版本要求，默认兼容
+                logger.info(f"插件 {self.plugin_info['name']} 未设置插件版本要求")
+                return True
+            
+            # 获取当前应用版本
+            current_version = VERSION.lstrip('v')  # 移除v前缀
+            required_version = plugin_ver.lstrip('v')  # 移除v前缀
+            
+            # 比较版本号
+            if Version(current_version) >= Version(required_version):
+                logger.info(f"插件 {self.plugin_info['name']} 版本兼容: 当前版本 {current_version} >= 最低要求 {required_version}")
+                return True
+            else:
+                logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容: 当前版本 {current_version} < 最低要求 {required_version}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"检查插件版本兼容性失败: {e}")
+            # 出错时默认禁用以确保安全
+            return False
+    
+    def _is_plugin_in_market(self, market_plugins=None):
+        """检查本地插件是否在插件广场中存在"""
+        try:
+            # 获取插件名称和URL
+            plugin_name = self.plugin_info.get("name")
+            plugin_url = self.plugin_info.get("url")
+            
+            if not plugin_name and not plugin_url:
+                logger.warning(f"插件缺少名称和URL信息")
+                return False
+            
+            # 如果没有传入市场插件列表，则获取（保持向后兼容）
+            if market_plugins is None:
+                plugin_list_url = "https://raw.githubusercontent.com/SECTL/SecRandom-market/master/Plugins/plugin_list.json"
+                try:
+                    with urllib.request.urlopen(plugin_list_url) as response:
+                        market_plugins = json.loads(response.read().decode('utf-8'))
+                except Exception as e:
+                    logger.error(f"获取插件广场列表失败: {e}")
+                    # 如果获取失败，默认允许显示（避免因网络问题导致所有插件都不显示）
+                    return True
+            
+            # 检查插件是否在广场中
+            for market_plugin_key, market_plugin_info in market_plugins.items():
+                # 跳过示例条目
+                if market_plugin_key in ["其他插件...", "您的插件仓库名称"]:
+                    continue
+                
+                # 通过名称或URL匹配
+                if (plugin_name and market_plugin_info.get("name") == plugin_name) or \
+                   (plugin_url and market_plugin_info.get("url") == plugin_url):
+                    logger.info(f"插件 {plugin_name} 在插件广场中存在")
+                    return True
+            
+            logger.warning(f"插件 {plugin_name} 不在插件广场中")
+            return False
+            
+        except Exception as e:
+            logger.error(f"检查插件是否在插件广场中失败: {e}")
+            # 出错时默认允许显示（避免因检查失败导致插件不显示）
+            return True
+    
+    def _update_action_button_state(self):
+        """根据版本兼容性更新操作按钮状态"""
+        try:
+            is_compatible = self._check_plugin_version_compatibility()
+            
+            if is_compatible:
+                self.actionButton.setEnabled(True)
+                logger.info(f"插件 {self.plugin_info['name']} 版本兼容，操作按钮已启用")
+            else:
+                self.actionButton.setEnabled(False)
+                logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容，操作按钮已禁用")
+                
+        except Exception as e:
+            logger.error(f"更新操作按钮状态失败: {e}")
+            self.actionButton.setEnabled(False)
     
     def _get_button_text(self):
         """根据安装状态获取按钮文本"""
@@ -187,6 +276,23 @@ class MarketPluginButtonGroup(QWidget):
         """处理操作按钮点击事件"""
         button_text = self.actionButton.text()
         plugin_name = self.plugin_info.get("name")
+        
+        # 首先检查版本兼容性（仅对安装和更新操作）
+        if button_text in ["安装", "更新"]:
+            if not self._check_plugin_version_compatibility():
+                # 如果版本不兼容，显示提示信息
+                required_version = self.plugin_info.get("plugin_ver", "未知版本")
+                
+                dialog = Dialog(
+                    "版本不兼容", 
+                    f"该插件需要应用版本 {required_version} 或更高版本才能安装。\n当前版本: {VERSION}\n请更新应用后再试。", 
+                    self
+                )
+                dialog.yesButton.setText("确定")
+                dialog.cancelButton.hide()
+                dialog.buttonLayout.insertStretch(1)
+                dialog.exec()
+                return
         
         if button_text == "安装":
             self._install_plugin()
@@ -545,25 +651,42 @@ class PluginMarketPage(GroupHeaderCardWidget):
             self.addGroup(get_theme_icon("ic_fluent_extensions_20_filled"), "暂无可用插件", "插件市场中暂无可用插件", no_plugin_label)
             return
         
+        # 一次性获取插件广场列表，避免重复请求
+        market_plugins = None
+        try:
+            plugin_list_url = "https://raw.githubusercontent.com/SECTL/SecRandom-market/master/Plugins/plugin_list.json"
+            with urllib.request.urlopen(plugin_list_url) as response:
+                market_plugins = json.loads(response.read().decode('utf-8'))
+            logger.info(f"成功获取插件广场列表，共 {len(market_plugins)} 个插件")
+        except Exception as e:
+            logger.error(f"获取插件广场列表失败: {e}")
+            # 如果获取失败，设置为None，让每个插件自己处理
+            market_plugins = None
+        
         # 为每个插件创建按钮组
         for plugin_key, plugin_info in filtered_plugins.items():
             try:
                 button_group = self.create_plugin_button_group(plugin_info)
                 
-                # 获取插件图标（使用默认图标）
-                icon = get_theme_icon("ic_fluent_extensions_20_filled")
-                
-                # 构建描述信息
-                description = plugin_info.get("description", "暂无描述")
-                version = plugin_info.get("version", "未知版本")
-                author = plugin_info.get("author", "未知作者")
-                update_date = plugin_info.get("update_date", "未知")
-                
-                subtitle = f"版本: {version} | 作者: {author} | 更新: {update_date} | 仓库: {description}"
+                # 检查插件是否在插件广场中存在（传入已获取的列表）
+                if button_group._is_plugin_in_market(market_plugins):
+                    # 获取插件图标（使用默认图标）
+                    icon = get_theme_icon("ic_fluent_extensions_20_filled")
+                    
+                    # 构建描述信息
+                    description = plugin_info.get("description", "暂无描述")
+                    version = plugin_info.get("version", "未知版本")
+                    author = plugin_info.get("author", "未知作者")
+                    update_date = plugin_info.get("update_date", "未知")
+                    
+                    subtitle = f"版本: {version} | 作者: {author} | 更新: {update_date} | 仓库: {description}"
 
-                # 添加到界面
-                self.addGroup(icon, plugin_info["name"], subtitle, button_group)
-                
+                    # 添加到界面
+                    self.addGroup(icon, plugin_info["name"], subtitle, button_group)
+                else:
+                    logger.info(f"插件 {plugin_info.get('name')} 不在插件广场中，跳过显示")
+                    button_group.deleteLater()
+                    
             except Exception as e:
                 logger.error(f"创建插件 {plugin_key} 的界面失败: {e}")
                 continue
