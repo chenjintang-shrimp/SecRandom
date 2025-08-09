@@ -1,3 +1,4 @@
+from pickle import NONE
 from qfluentwidgets import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -241,38 +242,175 @@ class pumping_reward(QWidget):
                                 display_format = settings['pumping_reward']['display_format']
                                 animation_color = settings['pumping_reward']['animation_color']
                                 _animation_color = settings['pumping_reward'].get('_animation_color', '#ffffff')
+                                show_reward_image = settings['pumping_reward']['show_reward_image']
                         except Exception as e:
                             font_size = 50
                             display_format = 0
                             animation_color = 0
                             _animation_color = "#ffffff"
+                            show_reward_image = False
 
-                        # 创建新布局
-                        vbox_layout = QGridLayout()
                         # 创建新标签列表
                         self.reward_labels = []
                         for num, name, probability in selected_rewards:
+                            # 为每个奖励单独查找对应的图片文件
+                            current_image_path = None
+                            if show_reward_image:
+                                # 支持多种图片格式：png、jpg、jpeg、svg
+                                image_extensions = ['.png', '.jpg', '.jpeg', '.svg']
+                                
+                                # 遍历所有支持的图片格式，查找存在的图片文件
+                                for ext in image_extensions:
+                                    temp_path = f'app/resource/images/rewards/{name}{ext}'
+                                    if os.path.isfile(temp_path):
+                                        current_image_path = temp_path
+                                        break
+                                    else:
+                                        current_image_path = None
+                                        continue
+                            
+                            # 为每个标签创建独立的容器和布局
+                            h_layout = QHBoxLayout()
+                            h_layout.setSpacing(8)
+                            h_layout.setContentsMargins(0, 0, 0, 0)
+                            # 创建容器widget来包含水平布局
+                            __container = QWidget()
+                            __container.setLayout(h_layout)
                             reward_id_str = f"{num:02}"
                             if display_format == 1:
-                                label = BodyLabel(f"{name}")
+                                if draw_count == 1:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size*2)
+                                        text_label = BodyLabel(f"{name}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{name}")
+                                else:
+                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size//2)
+                                        text_label = BodyLabel(f"{name}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{name}")
                             elif display_format == 2:
-                                label = BodyLabel(f"{reward_id_str}")
+                                if draw_count == 1:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size*2)
+                                        text_label = BodyLabel(f"{reward_id_str}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{reward_id_str}")
+                                else:
+                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size//2)
+                                        if current_image_path == '':
+                                            avatar.setText(name)
+                                        text_label = BodyLabel(f"{reward_id_str}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{reward_id_str}")
                             else:
                                 if draw_count == 1:
                                     self.result_grid.setAlignment(Qt.AlignCenter)
-                                    label = BodyLabel(f"{reward_id_str}\n{name}")
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size*2)
+                                        text_label = BodyLabel(f"{reward_id_str}\n{name}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{reward_id_str}\n{name}")
                                 else:
                                     self.result_grid.setAlignment(Qt.AlignTop)
-                                    label = BodyLabel(f"{reward_id_str} {name}")
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size//2)
+                                        if current_image_path == '':
+                                            avatar.setText(name)
+                                        text_label = BodyLabel(f"{reward_id_str} {name}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{reward_id_str} {name}")
 
-                            label.setAlignment(Qt.AlignCenter)
-                            label.setFont(QFont(load_custom_font(), font_size))
-                            if animation_color == 1:
-                                label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
-                            elif animation_color == 2:
-                                label.setStyleSheet(f"color: {_animation_color};")
+                            # 根据label类型应用不同的样式设置
+                            if isinstance(label, QWidget) and hasattr(label, 'layout'):
+                                # 如果是容器类型，对容器内的文本标签应用样式
+                                layout = label.layout()
+                                if layout:
+                                    for i in range(layout.count()):
+                                        item = layout.itemAt(i)
+                                        widget = item.widget()
+                                        if isinstance(widget, BodyLabel):
+                                            widget.setAlignment(Qt.AlignCenter)
+                                            widget.setFont(QFont(load_custom_font(), font_size))
+                                            if animation_color == 1:
+                                                widget.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                            elif animation_color == 2:
+                                                widget.setStyleSheet(f"color: {_animation_color};")
+                            else:
+                                # 如果是普通的BodyLabel，直接应用样式
+                                label.setAlignment(Qt.AlignCenter)
+                                label.setFont(QFont(load_custom_font(), font_size))
+                                if animation_color == 1:
+                                    label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                elif animation_color == 2:
+                                    label.setStyleSheet(f"color: {_animation_color};")
                             self.reward_labels.append(label)
-                            vbox_layout.addWidget(label)
 
                         # 计算所有标签的宽度之和，并考虑间距和边距
                         if self.reward_labels:
@@ -659,33 +797,180 @@ class pumping_reward(QWidget):
                                 display_format = settings['pumping_reward']['display_format']
                                 animation_color = settings['pumping_reward']['animation_color']
                                 _result_color = settings['pumping_reward'].get('_result_color', '#ffffff')
+                                show_reward_image = settings['pumping_reward']['show_reward_image']
                         except Exception as e:
                             font_size = 50
                             display_format = 0
                             animation_color = 0
-                            _result_color = "#ffffff"
+                            _animation_color = "#ffffff"
+                            show_reward_image = False
 
+                        # 创建新标签列表
                         self.reward_labels = []
                         for num, name, probability in selected_rewards:
+                            # 为每个奖励单独查找对应的图片文件
+                            current_image_path = None
+                            if show_reward_image:
+                                # 支持多种图片格式：png、jpg、jpeg、svg
+                                image_extensions = ['.png', '.jpg', '.jpeg', '.svg']
+                                
+                                # 遍历所有支持的图片格式，查找存在的图片文件
+                                for ext in image_extensions:
+                                    temp_path = f'app/resource/images/rewards/{name}{ext}'
+                                    if os.path.isfile(temp_path):
+                                        current_image_path = temp_path
+                                        break
+                                    else:
+                                        current_image_path = None
+                                        continue
+
+                            # 为每个标签创建独立的容器和布局
+                            h_layout = QHBoxLayout()
+                            h_layout.setSpacing(8)
+                            h_layout.setContentsMargins(0, 0, 0, 0)
+                            # 创建容器widget来包含水平布局
+                            __container = QWidget()
+                            __container.setLayout(h_layout)
                             reward_id_str = f"{num:02}"
                             if display_format == 1:
-                                label = BodyLabel(f"{name}")
+                                if draw_count == 1:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size*2)
+                                        if current_image_path == '':
+                                            avatar.setText(name)
+                                        text_label = BodyLabel(f"{name}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{name}")
+                                else:
+                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size//2)
+                                        if current_image_path == '':
+                                            avatar.setText(name)
+                                        text_label = BodyLabel(f"{name}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{name}")
                             elif display_format == 2:
-                                label = BodyLabel(f"{reward_id_str}")
+                                if draw_count == 1:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size*2)
+                                        if current_image_path == '':
+                                            avatar.setText(name)
+                                        text_label = BodyLabel(f"{reward_id_str}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{reward_id_str}")
+                                else:
+                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size//2)
+                                        if current_image_path == '':
+                                            avatar.setText(name)
+                                        text_label = BodyLabel(f"{reward_id_str}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{reward_id_str}")
                             else:
                                 if draw_count == 1:
                                     self.result_grid.setAlignment(Qt.AlignCenter)
-                                    label = BodyLabel(f"{reward_id_str}\n{name}")
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size*2)
+                                        text_label = BodyLabel(f"{reward_id_str}\n{name}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{reward_id_str}\n{name}")
                                 else:
                                     self.result_grid.setAlignment(Qt.AlignTop)
-                                    label = BodyLabel(f"{reward_id_str} {name}")
+                                    if show_reward_image:
+                                        if current_image_path != None:
+                                            avatar = AvatarWidget(current_image_path)
+                                        else:
+                                            avatar = AvatarWidget()
+                                            avatar.setText(name)
+                                        avatar.setRadius(font_size//2)
+                                        if current_image_path == '':
+                                            avatar.setText(name)
+                                        text_label = BodyLabel(f"{reward_id_str} {name}")
+                                        h_layout.addWidget(avatar)
+                                        h_layout.addWidget(text_label)
+                                        
+                                        # 使用容器作为标签
+                                        label = __container
+                                    else:
+                                        label = BodyLabel(f"{reward_id_str} {name}")
 
-                            label.setAlignment(Qt.AlignCenter)
-                            label.setFont(QFont(load_custom_font(), font_size))
-                            if animation_color == 1:
-                                label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
-                            elif animation_color == 2:
-                                label.setStyleSheet(f"color: {_result_color};")
+                            # 根据label类型应用不同的样式设置
+                            if isinstance(label, QWidget) and hasattr(label, 'layout'):
+                                # 如果是容器类型，对容器内的文本标签应用样式
+                                layout = label.layout()
+                                if layout:
+                                    for i in range(layout.count()):
+                                        item = layout.itemAt(i)
+                                        widget = item.widget()
+                                        if isinstance(widget, BodyLabel):
+                                            widget.setAlignment(Qt.AlignCenter)
+                                            widget.setFont(QFont(load_custom_font(), font_size))
+                                            if animation_color == 1:
+                                                widget.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                            elif animation_color == 2:
+                                                widget.setStyleSheet(f"color: {_result_color};")
+                            else:
+                                # 如果是普通的BodyLabel，直接应用样式
+                                label.setAlignment(Qt.AlignCenter)
+                                label.setFont(QFont(load_custom_font(), font_size))
+                                if animation_color == 1:
+                                    label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                elif animation_color == 2:
+                                    label.setStyleSheet(f"color: {_result_color};")
                             self.reward_labels.append(label)
 
                         # 计算所有标签的宽度之和，并考虑间距和边距
