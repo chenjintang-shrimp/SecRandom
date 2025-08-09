@@ -144,6 +144,16 @@ python main.py
 
 </details>
 
+## 捐献支持
+
+- 支付宝
+  ![支付宝](app/resource/assets/contribution/Alipay.png)
+  
+- 微信
+  ![微信](app/resource/assets/contribution/WeChat_Pay.png)
+
+
+
 ## ✨ **Star历程**
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark">

@@ -40,6 +40,12 @@ class aboutCard(GroupHeaderCardWidget):
         self.contributor_button.clicked.connect(self.show_contributors)
         self.contributor_button.setFont(QFont(load_custom_font(), 12))
 
+        # 创建捐赠支持按钮
+        self.donation_button = PushButton('捐赠支持')
+        self.donation_button.setIcon(get_theme_icon("ic_fluent_document_person_20_filled"))
+        self.donation_button.clicked.connect(self.show_donation)
+        self.donation_button.setFont(QFont(load_custom_font(), 12))
+
         # 检查更新按钮
         self.check_update_button = PushButton('检查更新')
         self.check_update_button.setIcon(get_theme_icon("ic_fluent_arrow_sync_20_filled"))
@@ -60,6 +66,7 @@ class aboutCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "哔哩哔哩", "黎泽懿 - bilibili", self.about_bilibili_Button)
         self.addGroup(FIF.GITHUB, "Github", "SecRandom - github", self.about_github_Button)
         self.addGroup(get_theme_icon("ic_fluent_document_person_20_filled"), "贡献人员", "点击查看详细贡献者信息", self.contributor_button)
+        self.addGroup(get_theme_icon("ic_fluent_document_person_20_filled"), "捐赠支持", "支持项目发展，感谢您的捐赠", self.donation_button)
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "版权", "SecRandom 遵循 GPL-3.0 协议", self.about_author_label)
         self.addGroup(FIF.GLOBE, "官网", "访问 SecRandom 官方网站", self.about_website_Button)
         self.addGroup(get_theme_icon("ic_fluent_info_20_filled"), "版本", "软件版本号", self.about_version_label)
@@ -107,6 +114,12 @@ class aboutCard(GroupHeaderCardWidget):
     def show_contributors(self):
         """ 显示贡献人员 """
         w = ContributorDialog(self)
+        if w.exec():
+            pass
+
+    def show_donation(self):
+        """ 显示捐赠支持 """
+        w = DonationDialog(self)
         if w.exec():
             pass
 
@@ -436,3 +449,280 @@ class ContributorDialog(QDialog):
         cardLayout.addWidget(role, 0, Qt.AlignCenter)
 
         return card
+
+
+class DonationDialog(QDialog):
+    """ 捐赠支持对话框 """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+        self.setWindowTitle('捐赠支持')
+        self.setMinimumSize(800, 500)
+        self.setSizeGripEnabled(True)
+        self.update_theme_style()
+        
+        self.saved = False
+        self.dragging = False
+        self.drag_position = None
+
+        if parent is not None:
+            self.setParent(parent)
+        
+        # 创建自定义标题栏
+        self.title_bar = QWidget()
+        self.title_bar.setObjectName("CustomTitleBar")
+        self.title_bar.setFixedHeight(35)
+        
+        # 标题栏布局
+        title_layout = QHBoxLayout(self.title_bar)
+        title_layout.setContentsMargins(10, 0, 10, 0)
+        
+        # 窗口标题
+        self.title_label = QLabel("捐赠支持")
+        self.title_label.setObjectName("TitleLabel")
+        self.title_label.setFont(QFont(load_custom_font(), 12))
+        
+        # 窗口控制按钮
+        self.close_btn = QPushButton("✕")
+        self.close_btn.setObjectName("CloseButton")
+        self.close_btn.setFixedSize(25, 25)
+        self.close_btn.clicked.connect(self.reject)
+        
+        # 添加组件到标题栏
+        title_layout.addWidget(self.title_label)
+        title_layout.addStretch()
+        title_layout.addWidget(self.close_btn)
+
+        # 创建滚动区域
+        scroll = SingleDirectionScrollArea()
+        scroll.setWidgetResizable(True)
+        content = QWidget()
+        self.main_layout = QVBoxLayout(content)
+        scroll.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        scroll.setWidget(content)
+        
+        # 主布局
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        # 添加自定义标题栏
+        self.layout.addWidget(self.title_bar)
+        # 添加内容区域
+        content_layout = QVBoxLayout()
+        content_layout.addWidget(scroll)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.addLayout(content_layout)
+        
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
+        
+        # 添加感谢文本
+        thanks_label = BodyLabel("感谢您对 SecRandom 项目的支持！您的捐赠将帮助我们持续改进和开发新功能。")
+        thanks_label.setFont(QFont(load_custom_font(), 14))
+        thanks_label.setWordWrap(True)
+        thanks_label.setAlignment(Qt.AlignCenter)
+        self.main_layout.addWidget(thanks_label)
+        
+        # 添加捐赠方式标题
+        methods_title = BodyLabel("捐赠方式")
+        methods_title.setFont(QFont(load_custom_font(), 16, QFont.Bold))
+        methods_title.setAlignment(Qt.AlignCenter)
+        self.main_layout.addWidget(methods_title)
+        
+        # 创建捐赠卡片布局
+        cards_layout = QHBoxLayout()
+        cards_layout.setSpacing(20)
+        cards_layout.setContentsMargins(20, 10, 20, 10)
+        
+        # 添加支付宝捐赠卡片
+        alipay_card = self.create_donation_card(
+            "支付宝",
+            "app\\resource\\assets\\contribution\\Alipay.png",
+            "使用支付宝扫码捐赠"
+        )
+        cards_layout.addWidget(alipay_card)
+        
+        # 添加微信支付捐赠卡片
+        wechat_card = self.create_donation_card(
+            "微信支付",
+            "app\\resource\\assets\\contribution\\WeChat_Pay.png",
+            "使用微信扫码捐赠"
+        )
+        cards_layout.addWidget(wechat_card)
+        
+        self.main_layout.addLayout(cards_layout)
+        
+        # 添加说明文本
+        note_label = BodyLabel("* 请扫描上方二维码进行捐赠，感谢您的支持！\n* 该捐献金额将会被平分给项目开发人员\n* 您的捐赠将帮助我们继续改进和发展SecRandom项目")
+        note_label.setFont(QFont(load_custom_font(), 10))
+        note_label.setAlignment(Qt.AlignCenter)
+        self.main_layout.addWidget(note_label)
+        
+        self.main_layout.addStretch()
+
+    def create_donation_card(self, title, image_path, description):
+        """ 创建捐赠卡片 """
+        card = QWidget()
+        card.setObjectName('donationCard')
+        self.update_card_theme_style(card)
+        cardLayout = QVBoxLayout(card)
+        cardLayout.setContentsMargins(15, 15, 15, 15)
+        cardLayout.setSpacing(10)
+
+        # 标题
+        title_label = BodyLabel(title)
+        title_label.setFont(QFont(load_custom_font(), 14, QFont.Bold))
+        title_label.setAlignment(Qt.AlignCenter)
+        cardLayout.addWidget(title_label, 0, Qt.AlignCenter)
+
+        # 二维码图片
+        try:
+            qr_image = QPixmap(image_path)
+            if qr_image.isNull():
+                raise FileNotFoundError(f"图片文件未找到: {image_path}")
+            
+            qr_label = QLabel()
+            qr_label.setPixmap(qr_image.scaled(200, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            qr_label.setAlignment(Qt.AlignCenter)
+            cardLayout.addWidget(qr_label, 0, Qt.AlignCenter)
+        except Exception as e:
+            error_label = BodyLabel(f"图片加载失败\n{str(e)}")
+            error_label.setAlignment(Qt.AlignCenter)
+            error_label.setStyleSheet("color: #ff4444;")
+            cardLayout.addWidget(error_label, 0, Qt.AlignCenter)
+
+        # 描述
+        desc_label = BodyLabel(description)
+        desc_label.setFont(QFont(load_custom_font(), 12))
+        desc_label.setAlignment(Qt.AlignCenter)
+        desc_label.setWordWrap(True)
+        cardLayout.addWidget(desc_label, 0, Qt.AlignCenter)
+
+        return card
+
+    def mousePressEvent(self, event):
+        """ 窗口拖动功能 """
+        if event.button() == Qt.LeftButton and self.title_bar.underMouse():
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.dragging and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.dragging = False
+
+    def update_theme_style(self):
+        """根据当前主题更新样式"""
+        if qconfig.theme == Theme.AUTO:
+            lightness = QApplication.palette().color(QPalette.Window).lightness()
+            is_dark = lightness <= 127
+        else:
+            is_dark = qconfig.theme == Theme.DARK
+        
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
+        self.setStyleSheet(f"""
+            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
+            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
+            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            #CloseButton {{ 
+                background-color: transparent; 
+                color: {colors['text']}; 
+                border-radius: 4px; 
+                font-weight: bold; 
+                border: none;
+            }}
+            #CloseButton:hover {{ 
+                background-color: #ff4d4d; 
+                color: white; 
+                border: none;
+            }}
+            QLabel, QPushButton, QTextEdit {{ color: {colors['text']}; }}
+            QLineEdit {{ 
+                background-color: {colors['bg']}; 
+                color: {colors['text']}; 
+                border: 1px solid #555555; 
+                border-radius: 4px; 
+                padding: 5px; 
+            }}
+            QPushButton {{ 
+                background-color: {colors['bg']}; 
+                color: {colors['text']}; 
+                border: 1px solid #555555; 
+                border-radius: 4px; 
+                padding: 5px; 
+            }}
+            QPushButton:hover {{ background-color: #606060; }}
+            QComboBox {{ 
+                background-color: {colors['bg']}; 
+                color: {colors['text']}; 
+                border: 1px solid #555555; 
+                border-radius: 4px; 
+                padding: 5px; 
+            }}
+        """)
+        
+        # 设置标题栏颜色以匹配背景色（仅Windows系统）
+        if os.name == 'nt':
+            try:
+                import ctypes
+                hwnd = int(self.winId())
+                
+                bg_color = colors['bg'].lstrip('#')
+                rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
+                
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_int(hwnd),
+                    35,
+                    ctypes.byref(ctypes.c_uint(rgb_color)),
+                    ctypes.sizeof(ctypes.c_uint)
+                )
+            except Exception as e:
+                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+
+    def update_card_theme_style(self, card):
+        """根据当前主题更新卡片样式"""
+        if qconfig.theme == Theme.AUTO:
+            lightness = QApplication.palette().color(QPalette.Window).lightness()
+            is_dark = lightness <= 127
+        else:
+            is_dark = qconfig.theme == Theme.DARK
+        
+        colors = {'bg': '#111116'} if is_dark else {'bg': '#F5F5F5'}
+        card.setStyleSheet(f'''
+            QWidget#donationCard {{
+                background: {colors['bg']};
+                border-radius: 8px;
+                padding: 10px;
+                margin-bottom: 10px;
+            }}
+        ''')
+
+    def closeEvent(self, event):
+        if not self.saved:
+            w = Dialog('关闭确认', '确定要关闭捐赠窗口吗？', self)
+            w.setFont(QFont(load_custom_font(), 12))
+            w.yesButton.setText("确定")
+            w.cancelButton.setText("取消")
+            w.yesButton = PrimaryPushButton('确定')
+            w.cancelButton = PushButton('取消')
+            
+            if w.exec():
+                self.reject()
+                return
+            else:
+                event.ignore()
+                return
+        event.accept()
