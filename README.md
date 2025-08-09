@@ -8,7 +8,7 @@
 
 </div>
 
-<!-- 星穹列车·白露的医疗舱公告 -->
+<!-- 项目状态徽章 -->
 <div align="center">
 
 [![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=问题)](https://github.com/SECTL/SecRandom/issues)
@@ -18,7 +18,7 @@
 [![下载统计](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=for-the-badge&color=00b4ab&label=累计下载)](https://github.com/SECTL/SecRandom/releases)
 [![QQ群](https://img.shields.io/badge/-QQ%E7%BE%A4%EF%BD%9C833875216-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/iWcfaPHn7W)
 [![bilibili](https://img.shields.io/badge/-UP%E4%B8%BB%EF%BD%9C黎泽懿-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
-
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://opensource.org/licenses/GPL-3.0)
 
 </div>
 
@@ -28,9 +28,15 @@
 > 
 > GNU GPLv3具有Copyleft特性，也就是说，您可以修改SecRandom的源代码，但是**必须将修改版本同样以GNU GPLv3协议开源**
 
-## 📄 **文档**
-- 📄 **[SecRandom 官方文档](https://secrandom.netlify.app)**
-- [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
+## 📖 目录
+- [🌈 核心功能](#-核心功能)
+- [📸 软件截图](#-软件截图)
+- [📖 公平抽取](#-公平抽取)
+- [🔌 插件开发](#-插件开发)
+- [🙏 贡献者](#-贡献者和特别感谢)
+- [💝 捐献支持](#-捐献支持)
+- [📞 联系方式](#-联系方式)
+- [📄 官方文档](#-文档)
 
 ## 🌈 核心功能
 
@@ -39,8 +45,6 @@
 - **架构适配**：原生支持 x64 架构
 
 ### 🎯 核心能力
-<details>
-<summary>📦 点击展开完整功能列表</summary>
 
 ## 💻 **适配系统**
 - ✅ Windows 7 及以上版本操作系统
@@ -61,16 +65,18 @@
 - ✅ **开机自启动支持**
 - ✅ **现代化UI设计**
 
+## 📸 软件截图(v1.1.0.1)
+<details>
+<summary>📸 软件截图展示 ✨</summary>
+
+![抽人界面](ScreenSots/主界面_抽人_浅色.png)
+![抽奖界面](ScreenSots/主界面_抽奖_浅色.png)
+![历史记录](ScreenSots/主界面_抽人历史记录_浅色.png)
+![设置界面](ScreenSots/设置_抽人设置_浅色.png)
+
 </details>
 
-## 📮 **联系方式**
-* 📧 [邮箱](mailto:lzy.12@foxmail.com)
-* 👥 [QQ群 833875216](https://qm.qq.com/q/iWcfaPHn7W)
-* 🎥 [B站主页](https://space.bilibili.com/520571577)
-
-## 📖 **公平抽取**
-<details>
-<summary>📖 公平抽取</summary>
+## 📖 公平抽取
 
 > [!note]
 >
@@ -90,66 +96,21 @@
 > 4. 基础权重
 > 5. 冷启动(防止新学生权重过低)
 
-</details>
-
-## 🚀 快速开始
+## 🔌 插件开发
 
 <details>
-<summary>📋 安装指南 🛠️</summary>
+<summary>🔌 插件开发指南</summary>
 
-### 📥 环境准备
-```bash
-# 请先确保已安装 Python 3.8+ 和 pip
-python -m venv .venv
-.venv\Scripts\activate
-```
-
-### ⚙️ 安装步骤
-```bash
-# 星野前辈的安装指南
-pip install -r requirements.txt
-```
-
-### 🎮 启动命令
-```bash
-# 启动主程序 (带调试模式)
-python main.py
-```
-
-</details>
-
-## 插件开发
-<details>
-<summary>插件开发</summary>
-
-### 插件开发指南
-<!-- - 插件开发文档：[插件开发文档](https://secrandom.netlify.app/插件开发.html) -->
-
+### 插件开发资源
 - 插件开发示例：[插件开发示例](https://github.com/SECTL/SecRandom-plugins)
 - 插件广场：[插件广场](https://github.com/SECTL/SecRandom-market)
 
-
-<!-- - 插件接口文档：[插件接口文档](https://secrandom.netlify.app/插件接口.html) -->
-
-<!-- - 插件发布指南：[插件发布指南](https://secrandom.netlify.app/插件发布.html) -->
-
-</details>
-
-## 📌 **软件截图**
-<details>
-<summary>📸 软件截图展示 ✨</summary>
-
-![抽人](ScreenSots/主界面_抽人_浅色.png)
-![抽奖](ScreenSots/主界面_抽奖_浅色.png)
+### 开发支持
+- 技术交流：[QQ群 833875216](https://qm.qq.com/q/iWcfaPHn7W)
+- 问题反馈：[GitHub Issues](https://github.com/SECTL/SecRandom/issues)
 
 </details>
 
-## 捐献支持
-
-- **支付宝/微信支付**
-
-  <image src="app/resource/assets/contribution/Alipay.png" height="256"/> <image src="app/resource/assets/contribution/WeChat_Pay.png" height="256"/>
-  
 ## 🙏 贡献者和特别感谢
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
@@ -168,13 +129,39 @@ python main.py
   </tbody>
 </table>
 
+## 💝 捐献支持
 
+如果您觉得 SecRandom 对您有帮助，欢迎支持我们的开发工作！
 
+- **支付宝/微信支付**
 
-## ✨ **Star历程**
+  <image src="app/resource/assets/contribution/Alipay.png" height="256"/> <image src="app/resource/assets/contribution/WeChat_Pay.png" height="256"/>
+
+## 📞 联系方式
+
+* 📧 [邮箱](mailto:lzy.12@foxmail.com)
+* 👥 [QQ群 833875216](https://qm.qq.com/q/iWcfaPHn7W)
+* 🎥 [B站主页](https://space.bilibili.com/520571577)
+* 🐛 [问题反馈](https://github.com/SECTL/SecRandom/issues)
+
+## 📄 文档
+
+- 📄 **[SecRandom 官方文档](https://secrandom.netlify.app)**
+- [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
+
+## ✨ Star历程
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark">
   <img alt="Star History" src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date">
 </picture>
 
+---
+
+<div align="center">
+
 **Copyright © 2025 SECTL**
+
+[![返回顶部](https://img.shields.io/badge/%E8%BF%94%E5%9B%9E%E9%A1%B6%E9%83%A8-%E2%86%91-blue?style=for-the-badge)](#readme)
+
+</div>
