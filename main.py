@@ -150,6 +150,37 @@ def check_single_instance():
     return shared_memory
 
 
+def check_settings_directory():
+    """(^・ω・^ ) 白露的设置目录检查魔法！
+    检查Settings文件夹是否存在以及是否为空～
+    如果为空则需要显示引导界面哦～ ✨"""
+    settings_dir = 'app/Settings'
+    
+    # 检查文件夹是否存在
+    if not os.path.exists(settings_dir):
+        logger.info("白露检查: Settings文件夹不存在，需要显示引导界面～ ")
+        return False
+    
+    # 检查文件夹是否为空
+    try:
+        files = os.listdir(settings_dir)
+        if not files:
+            logger.info("白露检查: Settings文件夹为空，需要显示引导界面～ ")
+            return False
+        
+        # 检查是否有有效的设置文件
+        valid_files = [f for f in files if f.endswith('.json') and os.path.getsize(os.path.join(settings_dir, f)) > 0]
+        if not valid_files:
+            logger.info("白露检查: Settings文件夹中没有有效的设置文件，需要显示引导界面～ ")
+            return False
+            
+        logger.info("白露检查: Settings文件夹正常，可以跳过引导界面～ ")
+        return True
+    except Exception as e:
+        logger.error(f"白露检查: 检查Settings文件夹时出错: {e}")
+        return False
+
+
 def initialize_application():
     """(^・ω・^ ) 白露的应用初始化仪式！
     正在唤醒应用程序的核心组件，就像唤醒沉睡的魔法生物一样～
@@ -158,42 +189,102 @@ def initialize_application():
     logger.info(f"白露启动: 软件作者: lzy98276")
     logger.info(f"白露启动: 软件Github地址: https://github.com/SECTL/SecRandom")
 
-    # 清理过期历史记录，保持魔法空间整洁～
-    from app.common.history_cleaner import clean_expired_history, clean_expired_reward_history
-    clean_expired_history()
-    clean_expired_reward_history()
-    logger.debug("白露清理: 已清理过期历史记录～ ")
-
-    # 创建主窗口实例
-    sec = Window()
+    # 检查是否需要显示引导界面
+    need_guide = not check_settings_directory()
     
-    # 启动插件自启动功能
-    try:
-        from app.view.plugins.management import PluginManagementPage
-        plugin_manager = PluginManagementPage()
-        plugin_manager.start_autostart_plugins()
-        logger.info("白露插件: 自启动插件功能已启动～ ")
-    except Exception as e:
-        logger.error(f"白露错误: 启动插件自启动功能失败: {e}")
-    
-    try:
-        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-            settings = json.load(f)
-            foundation_settings = settings.get('foundation', {})
-            self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
-            if not self_starting_enabled:
+    if need_guide:
+        # 显示引导界面，跳过历史记录清理和插件自启动
+        logger.info("白露引导: 首次使用，显示引导界面～ ")
+        from app.view.guide_window import GuideWindow
+        guide_window = GuideWindow()
+        
+        # 创建主窗口但不显示
+        sec = Window()
+        
+        # 连接引导窗口的开始使用信号
+        def show_main_window():
+            # 用户完成引导后，执行正常的初始化流程
+            logger.info("白露引导: 用户完成引导，开始正常初始化～ ")
+            
+            # 清理过期历史记录
+            from app.common.history_cleaner import clean_expired_history, clean_expired_reward_history
+            clean_expired_history()
+            clean_expired_reward_history()
+            logger.debug("白露清理: 已清理过期历史记录～ ")
+            
+            # 启动插件自启动功能
+            try:
+                from app.view.plugins.management import PluginManagementPage
+                plugin_manager = PluginManagementPage()
+                plugin_manager.start_autostart_plugins()
+                logger.info("白露插件: 自启动插件功能已启动～ ")
+            except Exception as e:
+                logger.error(f"白露错误: 启动插件自启动功能失败: {e}")
+            
+            # 显示主窗口
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    foundation_settings = settings.get('foundation', {})
+                    self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
+                    if not self_starting_enabled:
+                        sec.show()
+                        logger.info("白露展示: 根据设置显示主窗口～ ")
+            except FileNotFoundError:
+                logger.error("白露错误: 加载设置时出错 - 文件不存在, 使用默认显示主窗口")
                 sec.show()
-                logger.info("白露展示: 根据设置显示主窗口～ ")
-    except FileNotFoundError:
-        logger.error("白露错误: 加载设置时出错 - 文件不存在, 使用默认显示主窗口")
-        sec.show()
-    except KeyError:
-        logger.error("白露错误: 设置文件中缺少foundation键, 使用默认显示主窗口")
-        sec.show()
-    except Exception as e:
-        logger.error(f"白露错误: 加载设置时出错: {e}, 使用默认显示主窗口")
-        sec.show()
-    return sec
+            except KeyError:
+                logger.error("白露错误: 设置文件中缺少foundation键, 使用默认显示主窗口")
+                sec.show()
+            except Exception as e:
+                logger.error(f"白露错误: 加载设置时出错: {e}, 使用默认显示主窗口")
+                sec.show()
+        
+        # 连接引导窗口的开始使用信号
+        guide_window.start_signal.connect(show_main_window)
+        
+        # 显示引导窗口
+        guide_window.show()
+        
+        return sec
+    else:
+        # 正常启动流程
+        # 清理过期历史记录，保持魔法空间整洁～
+        from app.common.history_cleaner import clean_expired_history, clean_expired_reward_history
+        clean_expired_history()
+        clean_expired_reward_history()
+        logger.debug("白露清理: 已清理过期历史记录～ ")
+
+        # 创建主窗口实例
+        sec = Window()
+        
+        # 启动插件自启动功能
+        try:
+            from app.view.plugins.management import PluginManagementPage
+            plugin_manager = PluginManagementPage()
+            plugin_manager.start_autostart_plugins()
+            logger.info("白露插件: 自启动插件功能已启动～ ")
+        except Exception as e:
+            logger.error(f"白露错误: 启动插件自启动功能失败: {e}")
+        
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
+                if not self_starting_enabled:
+                    sec.show()
+                    logger.info("白露展示: 根据设置显示主窗口～ ")
+        except FileNotFoundError:
+            logger.error("白露错误: 加载设置时出错 - 文件不存在, 使用默认显示主窗口")
+            sec.show()
+        except KeyError:
+            logger.error("白露错误: 设置文件中缺少foundation键, 使用默认显示主窗口")
+            sec.show()
+        except Exception as e:
+            logger.error(f"白露错误: 加载设置时出错: {e}, 使用默认显示主窗口")
+            sec.show()
+        return sec
 
 
 # ==================================================
