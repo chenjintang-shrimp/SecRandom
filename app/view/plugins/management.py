@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
+from packaging.version import Version
 import os
 import json
 import shutil
@@ -11,9 +12,10 @@ import importlib
 import importlib.util
 import subprocess
 import sys
+import tempfile
 from loguru import logger
 
-from app.common.config import get_theme_icon, load_custom_font
+from app.common.config import get_theme_icon, load_custom_font, VERSION
 
 
 class ReadmeDialog(QDialog):
@@ -322,7 +324,7 @@ class PluginButtonGroup(QWidget):
         
         # 启用按钮
         self.enableButton = ToggleButton("启用", self)
-        self.enableButton.setChecked(plugin_info.get("enabled", False))  # 根据plugin.json中的enabled字段设置初始状态
+        self.enableButton.setChecked(plugin_info.get("enabled", False)) 
         self.enableButton.clicked.connect(lambda: self.on_enable_clicked())
         
         # 查看说明按钮
@@ -335,10 +337,38 @@ class PluginButtonGroup(QWidget):
         self.deleteButton.setIcon(FIF.DELETE)
         self.deleteButton.clicked.connect(lambda: self.on_delete_clicked())
         
+        # 自启动按钮
+        self.autostartButton = ToggleButton("自启动", self)
+        self.autostartButton.setChecked(plugin_info.get("autostart", False))
+        self.autostartButton.clicked.connect(lambda: self.on_autostart_clicked())
+        
+        # 检查是否有后台运行文件，如果没有则禁用自启动按钮
+        self._check_background_service_file()
+        
+        # 检查应用版本兼容性并设置启用按钮状态
+        self._update_enable_button_state()
+        
+        # 如果插件已设置为自启动但版本不兼容，自动禁用自启动
+        if self.autostartButton.isChecked() and not self._check_app_version_compatibility():
+            logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容，自动禁用自启动")
+            self.autostartButton.setChecked(False)
+            # 更新plugin.json文件
+            plugin_json_path = os.path.join(self.plugin_info["path"], "plugin.json")
+            try:
+                with open(plugin_json_path, 'r', encoding='utf-8') as f:
+                    plugin_config = json.load(f)
+                plugin_config["autostart"] = False
+                with open(plugin_json_path, 'w', encoding='utf-8') as f:
+                    json.dump(plugin_config, f, ensure_ascii=False, indent=2)
+                logger.info(f"已更新插件 {self.plugin_info['name']} 的自启动状态为: False")
+            except Exception as e:
+                logger.error(f"更新插件 {self.plugin_info['name']} 自启动状态失败: {e}")
+        
         # 添加到布局
         self.hBoxLayout.addWidget(self.settingsButton)
         self.hBoxLayout.addWidget(self.enableButton)
         self.hBoxLayout.addWidget(self.readmeButton)
+        self.hBoxLayout.addWidget(self.autostartButton)
         self.hBoxLayout.addWidget(self.deleteButton)
         self.hBoxLayout.addStretch(1)
         
@@ -527,6 +557,26 @@ class PluginButtonGroup(QWidget):
     def on_enable_clicked(self):
         """处理启用按钮点击事件"""
         is_enabled = self.enableButton.isChecked()
+        
+        # 如果是启用操作，检查版本兼容性
+        if is_enabled:
+            if not self._check_app_version_compatibility():
+                # 如果版本不兼容，显示提示信息
+                min_version = self.plugin_info.get("min_app_version", "未知版本")
+                
+                dialog = Dialog(
+                    "版本不兼容", 
+                    f"该插件需要应用版本 {min_version} 或更高版本才能启用。\n当前版本: {VERSION}\n请更新应用后再试。", 
+                    self
+                )
+                dialog.yesButton.setText("确定")
+                dialog.cancelButton.hide()
+                dialog.buttonLayout.insertStretch(1)
+                dialog.exec()
+                # 恢复按钮状态
+                self.enableButton.setChecked(False)
+                return
+        
         status = "启用" if is_enabled else "禁用"
         logger.info(f"{status}插件: {self.plugin_info['name']}")
         
@@ -589,6 +639,129 @@ class PluginButtonGroup(QWidget):
             no_readme_dialog.buttonLayout.insertStretch(1)
             no_readme_dialog.exec()
     
+    def on_autostart_clicked(self):
+        """处理自启动按钮点击事件"""
+        is_autostart = self.autostartButton.isChecked()
+        status = "启用" if is_autostart else "禁用"
+        logger.info(f"{status}插件自启动: {self.plugin_info['name']}")
+        
+        # 如果启用自启动，先检查版本兼容性
+        if is_autostart:
+            if not self._check_app_version_compatibility():
+                # 版本不兼容，不允许启用自启动
+                logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容，不允许启用自启动")
+                # 显示提示对话框
+                incompatible_dialog = Dialog("版本不兼容", f"插件 {self.plugin_info['name']} 与当前应用版本不兼容，无法启用自启动", self)
+                incompatible_dialog.yesButton.setText("确定")
+                incompatible_dialog.cancelButton.hide()
+                incompatible_dialog.buttonLayout.insertStretch(1)
+                incompatible_dialog.exec()
+                # 恢复按钮状态
+                self.autostartButton.setChecked(False)
+                return
+        
+        # 获取plugin.json文件路径
+        plugin_json_path = os.path.join(self.plugin_info["path"], "plugin.json")
+        
+        try:
+            # 读取现有的plugin.json文件
+            with open(plugin_json_path, 'r', encoding='utf-8') as f:
+                plugin_config = json.load(f)
+            
+            # 更新autostart字段
+            plugin_config["autostart"] = is_autostart
+            
+            # 写回plugin.json文件
+            with open(plugin_json_path, 'w', encoding='utf-8') as f:
+                json.dump(plugin_config, f, ensure_ascii=False, indent=2)
+            
+            logger.info(f"成功更新插件 {self.plugin_info['name']} 的自启动状态为: {is_autostart}")
+            
+            # 如果启用自启动，检查是否有后台运行服务文件,没有就弹窗提醒
+            if is_autostart:
+                background_service_path = os.path.join(self.plugin_info["path"], self.plugin_info["background_service"])
+                # 如果没有后台服务文件，弹窗提醒
+                if not os.path.exists(background_service_path):
+                    # 显示提示对话框
+                    no_background_service_dialog = Dialog("提示", f"插件 {self.plugin_info['name']} 没有后台服务文件，无法启用自启动", self)
+                    no_background_service_dialog.yesButton.setText("确定")
+                    no_background_service_dialog.cancelButton.hide()
+                    no_background_service_dialog.buttonLayout.insertStretch(1)
+                    no_background_service_dialog.exec()
+                    # 恢复按钮状态
+                    self.autostartButton.setChecked(not is_autostart)
+                    return
+            
+        except Exception as e:
+            logger.error(f"更新插件 {self.plugin_info['name']} 自启动状态失败: {e}")
+            # 如果更新失败，恢复按钮状态
+            self.autostartButton.setChecked(not is_autostart)
+            
+            # 显示错误对话框
+            error_dialog = Dialog("操作失败", f"更新插件自启动状态失败: {str(e)}", self)
+            error_dialog.yesButton.setText("确定")
+            error_dialog.cancelButton.hide()
+            error_dialog.buttonLayout.insertStretch(1)
+            error_dialog.exec()
+    
+    def _check_background_service_file(self):
+        """检查是否有后台运行服务文件，如果没有则禁用自启动按钮"""
+        # 检查background_service.py文件是否存在
+        background_service_path = os.path.join(self.plugin_info["path"], self.plugin_info["background_service"])
+        
+        if not os.path.exists(background_service_path):
+            # 如果没有后台服务文件，禁用自启动按钮
+            self.autostartButton.setEnabled(False)
+            logger.info(f"插件 {self.plugin_info['name']} 没有后台服务文件，已禁用自启动按钮")
+        else:
+            # 如果有后台服务文件，启用自启动按钮
+            self.autostartButton.setEnabled(True)
+            logger.info(f"插件 {self.plugin_info['name']} 有后台服务文件，已启用自启动按钮")
+    
+    def _check_app_version_compatibility(self):
+        """检查插件与应用程序的版本兼容性"""
+        try:
+            # 获取最低应用版本要求
+            min_app_version = self.plugin_info.get("min_app_version")
+            if not min_app_version:
+                # 如果没有设置最低版本要求，默认兼容
+                logger.info(f"插件 {self.plugin_info['name']} 未设置最低应用版本要求")
+                return True
+            
+            # 获取当前应用版本
+            current_version = VERSION.lstrip('v')  # 移除v前缀
+            min_version = min_app_version.lstrip('v')  # 移除v前缀
+            
+            # 比较版本号
+            if Version(current_version) >= Version(min_version):
+                logger.info(f"插件 {self.plugin_info['name']} 版本兼容: 当前版本 {current_version} >= 最低要求 {min_version}")
+                return True
+            else:
+                logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容: 当前版本 {current_version} < 最低要求 {min_version}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"检查应用版本兼容性失败: {e}")
+            # 出错时默认禁用以确保安全
+            return False
+    
+    def _update_enable_button_state(self):
+        """根据版本兼容性更新启用按钮状态"""
+        try:
+            is_compatible = self._check_app_version_compatibility()
+            
+            if is_compatible:
+                self.enableButton.setEnabled(True)
+                logger.info(f"插件 {self.plugin_info['name']} 版本兼容，启用按钮已启用")
+            else:
+                self.enableButton.setEnabled(False)
+                logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容，启用按钮已禁用")
+                
+        except Exception as e:
+            logger.error(f"更新启用按钮状态失败: {e}")
+            self.enableButton.setEnabled(False)
+
+    
     def on_delete_clicked(self):
         """处理删除按钮点击事件"""
         # 创建确认对话框
@@ -606,6 +779,7 @@ class PluginButtonGroup(QWidget):
                     self.settingsButton.setEnabled(False)
                     self.enableButton.setEnabled(False)
                     self.readmeButton.setEnabled(False)
+                    self.autostartButton.setEnabled(False)
                     self.deleteButton.setEnabled(False)
                     
                 except Exception as e:
@@ -682,7 +856,8 @@ class PluginManagementPage(GroupHeaderCardWidget):
                     "dependencies": plugin_config["dependencies"],
                     "path": item_path,
                     "folder_name": item,
-                    "enabled": plugin_config.get("enabled", False)  # 如果没有enabled字段，默认为false
+                    "enabled": plugin_config.get("enabled", False), 
+                    "autostart": plugin_config.get("autostart", False) 
                 }
                 plugins.append(plugin_info)
                 
@@ -744,4 +919,109 @@ class PluginManagementPage(GroupHeaderCardWidget):
                 self.addGroup(icon, plugin["name"], f"版本: {plugin['version']}_作者: {plugin['author']}_描述: {plugin['description']}", button_group)
 
         logger.info(f"加载完成，共找到 {len(plugins)} 个插件")
+    
+    def start_autostart_plugins(self):
+        """启动所有设置了自启动的插件"""
+        logger.info("开始启动自启动插件")
+        
+        # 扫描所有插件
+        plugins = self.scan_plugins()
+        
+        autostart_count = 0
+        for plugin in plugins:
+            if plugin.get("autostart", False):
+                # 检查版本兼容性
+                if not self._check_plugin_version_compatibility(plugin):
+                    logger.warning(f"插件 {plugin['name']} 版本不兼容，跳过自启动")
+                    continue
+                
+                try:
+                    # 启动插件后台服务
+                    self._start_plugin_background_service(plugin)
+                    autostart_count += 1
+                    logger.info(f"成功启动插件 {plugin['name']} 的后台服务")
+                except Exception as e:
+                    logger.error(f"启动插件 {plugin['name']} 后台服务失败: {e}")
+        
+        logger.info(f"自启动插件启动完成，共启动 {autostart_count} 个插件")
+    
+    def _check_plugin_version_compatibility(self, plugin_info):
+        """检查插件与应用程序的版本兼容性"""
+        try:
+            # 获取最低应用版本要求
+            min_app_version = plugin_info.get("min_app_version")
+            if not min_app_version:
+                # 如果没有设置最低版本要求，默认兼容
+                logger.info(f"插件 {plugin_info['name']} 未设置最低应用版本要求")
+                return True
+            
+            # 获取当前应用版本
+            current_version = VERSION.lstrip('v')  # 移除v前缀
+            min_version = min_app_version.lstrip('v')  # 移除v前缀
+            
+            # 比较版本号
+            if Version(current_version) >= Version(min_version):
+                logger.info(f"插件 {plugin_info['name']} 版本兼容: 当前版本 {current_version} >= 最低要求 {min_version}")
+                return True
+            else:
+                logger.warning(f"插件 {plugin_info['name']} 版本不兼容: 当前版本 {current_version} < 最低要求 {min_version}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"检查应用版本兼容性失败: {e}")
+            # 出错时默认禁用以确保安全
+            return False
+    
+    def _start_plugin_background_service(self, plugin_info):
+        """启动插件的后台服务"""
+        background_service_path = os.path.join(plugin_info["path"], "background_service.py")
+        
+        if not os.path.exists(background_service_path):
+            logger.warning(f"插件 {plugin_info['name']} 没有后台服务文件")
+            return
+        
+        try:
+            # 获取Python可执行文件
+            python_executable = self._get_python_executable()
+            if not python_executable:
+                raise Exception("找不到Python可执行文件")
+            
+            # 启动后台服务进程
+            subprocess.Popen([
+                python_executable,
+                background_service_path
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+            
+            logger.info(f"已启动插件 {plugin_info['name']} 的后台服务进程")
+            
+        except Exception as e:
+            logger.error(f"启动插件 {plugin_info['name']} 后台服务进程失败: {e}")
+            raise
+    
+    def _get_python_executable(self):
+        """获取可用的Python可执行文件，包括嵌入式Python"""
+        import shutil
+        import tempfile
+        
+        # 首先尝试系统Python
+        if shutil.which("python"):
+            return "python"
+        if shutil.which("python3"):
+            return "python3"
+        if sys.executable and os.path.exists(sys.executable):
+            return sys.executable
+            
+        # 尝试查找嵌入式Python
+        app_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        embedded_python_paths = [
+            os.path.join(app_dir, "python", "python.exe"),
+            os.path.join(os.getcwd(), "python", "python.exe"),
+            os.path.join(tempfile.gettempdir(), "secrandom_python", "python.exe")
+        ]
+        
+        for path in embedded_python_paths:
+            if os.path.exists(path):
+                return path
+        
+        return None
 
