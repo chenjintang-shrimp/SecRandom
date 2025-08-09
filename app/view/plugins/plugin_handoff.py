@@ -6,7 +6,7 @@ from app.common.config import cfg, load_custom_font
 
 from app.view.plugins.management import PluginManagementPage
 from app.view.plugins.market import PluginMarketPage
-from app.view.plugins.settings import PluginSettingsPage
+# from app.view.plugins.settings import PluginSettingsPage
 
 class PluginHandoffWindow(QFrame):
     def __init__(self, parent: QFrame = None):
@@ -19,12 +19,12 @@ class PluginHandoffWindow(QFrame):
         # 创建内容页面
         self.plugin_management_page = QWidget()
         self.plugin_market_page = QWidget()
-        self.plugin_settings_page = QWidget()
+        # self.plugin_settings_page = QWidget()
         
         # 添加子页面
         self.addSubInterface(self.plugin_management_page, 'plugin_management', '插件管理')
         self.addSubInterface(self.plugin_market_page, 'plugin_market', '插件广场')
-        self.addSubInterface(self.plugin_settings_page, 'plugin_settings', '插件设置')
+        # self.addSubInterface(self.plugin_settings_page, 'plugin_settings', '插件设置')
 
         # 插件管理页面
         # 创建滚动区域
@@ -84,34 +84,34 @@ class PluginHandoffWindow(QFrame):
         plugin_market_layout = QVBoxLayout(self.plugin_market_page)
         plugin_market_layout.addWidget(plugin_market_scroll_area)
 
-        # 插件设置页面
-        # 创建滚动区域
-        plugin_settings_scroll_area = SingleDirectionScrollArea(self.plugin_settings_page)
-        plugin_settings_scroll_area.setWidgetResizable(True)
-        # 设置样式表
-        plugin_settings_scroll_area.setStyleSheet("""
-            QScrollArea {
-                border: none;
-                background-color: transparent;
-            }
-            QScrollArea QWidget {
-                border: none;
-                background-color: transparent;
-            }
-        """)
-        # 启用鼠标滚轮
-        QScroller.grabGesture(plugin_settings_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
-        # 创建内部框架
-        plugin_settings_inner_frame = QWidget(plugin_settings_scroll_area)
-        plugin_settings_inner_layout = QVBoxLayout(plugin_settings_inner_frame)
-        plugin_settings_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
-        plugin_settings_scroll_area.setWidget(plugin_settings_inner_frame)
-        # 插件设置内容标签
-        plugin_settings_label = PluginSettingsPage()
-        plugin_settings_inner_layout.addWidget(plugin_settings_label)
-        # 设置插件设置页面布局
-        plugin_settings_layout = QVBoxLayout(self.plugin_settings_page)
-        plugin_settings_layout.addWidget(plugin_settings_scroll_area)
+        # # 插件设置页面
+        # # 创建滚动区域
+        # plugin_settings_scroll_area = SingleDirectionScrollArea(self.plugin_settings_page)
+        # plugin_settings_scroll_area.setWidgetResizable(True)
+        # # 设置样式表
+        # plugin_settings_scroll_area.setStyleSheet("""
+        #     QScrollArea {
+        #         border: none;
+        #         background-color: transparent;
+        #     }
+        #     QScrollArea QWidget {
+        #         border: none;
+        #         background-color: transparent;
+        #     }
+        # """)
+        # # 启用鼠标滚轮
+        # QScroller.grabGesture(plugin_settings_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # # 创建内部框架
+        # plugin_settings_inner_frame = QWidget(plugin_settings_scroll_area)
+        # plugin_settings_inner_layout = QVBoxLayout(plugin_settings_inner_frame)
+        # plugin_settings_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        # plugin_settings_scroll_area.setWidget(plugin_settings_inner_frame)
+        # # 插件设置内容标签
+        # plugin_settings_label = PluginSettingsPage()
+        # plugin_settings_inner_layout.addWidget(plugin_settings_label)
+        # # 设置插件设置页面布局
+        # plugin_settings_layout = QVBoxLayout(self.plugin_settings_page)
+        # plugin_settings_layout.addWidget(plugin_settings_scroll_area)
         
         # 设置主布局
         main_layout = QVBoxLayout(self)
@@ -149,5 +149,5 @@ class PluginHandoffWindow(QFrame):
             pass  # 插件管理页面逻辑
         elif widget.objectName() == 'plugin_market':
             pass  # 插件广场页面逻辑
-        elif widget.objectName() == 'plugin_settings':
-            pass  # 插件设置页面逻辑
+        # elif widget.objectName() == 'plugin_settings':
+        #     pass  # 插件设置页面逻辑
