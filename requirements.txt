@@ -8,7 +8,7 @@ PyQt-Fluent-Widgets~=1.7.7
 PyQt5~=5.15.9
 PyQt5-Frameless-Window==0.6.0
 PyQt5-Qt5~=5.15.2
-PyQt5_sip==12.15.0
+PyQt5_sip~=12.15.0
 pyotp==2.9.0
 sip~=6.8.6
 pywin32==310; platform_system == "Windows"
