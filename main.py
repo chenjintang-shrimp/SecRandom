@@ -4,7 +4,6 @@
 import os
 import sys
 import json
-import time
 
 # 添加项目根目录到Python路径
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -162,9 +161,24 @@ def check_settings_directory():
         logger.info("白露检查: Settings文件夹不存在，需要显示引导界面～ ")
         return False
     
-          
-    logger.info("白露检查: Settings文件夹正常，可以跳过引导界面～ ")
-    return True
+    # 检查文件夹是否为空
+    try:
+        files = os.listdir(settings_dir)
+        if not files:
+            logger.info("白露检查: Settings文件夹为空，需要显示引导界面～ ")
+            return False
+        
+        # 检查是否有有效的设置文件
+        valid_files = [f for f in files if f.endswith('.json') and os.path.getsize(os.path.join(settings_dir, f)) > 0]
+        if not valid_files:
+            logger.info("白露检查: Settings文件夹中没有有效的设置文件，需要显示引导界面～ ")
+            return False
+            
+        logger.info("白露检查: Settings文件夹正常，可以跳过引导界面～ ")
+        return True
+    except Exception as e:
+        logger.error(f"白露检查: 检查Settings文件夹时出错: {e}")
+        return False
 
 
 def initialize_application():
@@ -315,17 +329,6 @@ if __name__ == "__main__":
         logger.info("星野通知: 应用程序事件循环启动喵～")
         app.exec_()
     finally:
-        # 完全释放共享内存资源
-        try:
-            if shared_memory.isAttached():
-                shared_memory.detach()
-            # 尝试多次释放确保完全清理
-            for i in range(3):
-                if shared_memory.isAttached():
-                    shared_memory.detach()
-                    time.sleep(0.1)  # 给系统一点时间处理
-            logger.info("星野通知: 共享内存已完全释放，程序安全退出喵～")
-        except Exception as e:
-            logger.error(f"星野错误: 共享内存释放时出现异常喵～ {e}")
-        finally:
-            sys.exit()
+        shared_memory.detach()
+        logger.info("星野通知: 共享内存已释放，程序完全退出喵～")
+        sys.exit()
