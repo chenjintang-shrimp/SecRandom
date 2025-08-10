@@ -4,6 +4,7 @@
 
 # ✨ 系统自带魔法道具 ✨
 import os
+import json
 import webbrowser
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -12,7 +13,7 @@ from qfluentwidgets import *
 from loguru import logger
 
 # 🏰 应用内部魔法卷轴 🏰
-from app.common.config import get_theme_icon, load_custom_font
+from app.common.config import get_theme_icon, load_custom_font, VERSION
 
 
 class GuideWindow(MSFluentWindow):
@@ -88,6 +89,12 @@ class GuideWindow(MSFluentWindow):
         subtitle_label.setFont(QFont(load_custom_font(), 13))
         subtitle_label.setAlignment(Qt.AlignCenter)
         welcome_layout.addWidget(subtitle_label)
+
+        # 当前版本
+        version_label = BodyLabel(f'当前版本：{VERSION}')
+        version_label.setFont(QFont(load_custom_font(), 13))
+        version_label.setAlignment(Qt.AlignCenter)
+        welcome_layout.addWidget(version_label)
         
         # 功能特点介绍
         features_layout = QVBoxLayout()
@@ -565,10 +572,38 @@ class GuideWindow(MSFluentWindow):
         """(^・ω・^ ) 白露的开始使用魔法！
         用户点击开始使用后，关闭引导窗口并显示主界面～ ✨"""
         logger.info("白露引导: 用户点击开始使用，准备显示主界面～ ")
+        
+        # 创建引导完成标志文件
+        settings_dir = 'app/Settings'
+        if not os.path.exists(settings_dir):
+            os.makedirs(settings_dir)
+            logger.info("白露魔法: 创建了设置目录哦～ ✧*｡٩(ˊᗜˋ*)و✧*｡")
+        
+        # 创建引导完成标志文件
+        guide_complete_file = 'app/Settings/guide_complete.json'
+        guide_complete_data = {
+            'guide_completed': True,
+            'completion_time': self.get_current_time_string(),
+            'version': VERSION
+        }
+        
+        try:
+            with open(guide_complete_file, 'w', encoding='utf-8') as f:
+                json.dump(guide_complete_data, f, ensure_ascii=False, indent=4)
+            logger.info("白露魔法: 创建了引导完成标志文件哦～ ✧*｡٩(ˊᗜˋ*)و✧*｡")
+        except Exception as e:
+            logger.error(f"白露错误: 创建引导完成标志文件失败: {e}")
+        
         self.close()
         
         # 发射信号通知主程序显示主界面
         self.start_signal.emit()
+    
+    def get_current_time_string(self):
+        """(^・ω・^ ) 白露的时间获取魔法！
+        获取当前时间的字符串表示～ ✨"""
+        from datetime import datetime
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     def add_bottom_buttons(self):
         """(^・ω・^ ) 白露的底部按钮添加魔法！

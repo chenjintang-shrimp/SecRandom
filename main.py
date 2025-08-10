@@ -22,7 +22,7 @@ from loguru import logger
 # ==================================================
 # 📜 内部魔法卷轴 (Internal Magic Scrolls)
 # ==================================================
-from app.common.config import cfg
+from app.common.config import cfg, VERSION
 from app.view.SecRandom import Window
 
 def send_ipc_message():
@@ -152,32 +152,54 @@ def check_single_instance():
 
 def check_settings_directory():
     """(^・ω・^ ) 白露的设置目录检查魔法！
-    检查Settings文件夹是否存在以及是否为空～
-    如果为空则需要显示引导界面哦～ ✨"""
-    settings_dir = 'app/Settings'
+    检查引导完成标志文件是否存在以及版本是否匹配～
+    如果引导完成标志文件不存在或版本不匹配则需要显示引导界面哦～ ✨"""
+    guide_complete_file = 'app/Settings/guide_complete.json'
     
-    # 检查文件夹是否存在
-    if not os.path.exists(settings_dir):
-        logger.info("白露检查: Settings文件夹不存在，需要显示引导界面～ ")
+    # 检查引导完成标志文件是否存在
+    if not os.path.exists(guide_complete_file):
+        logger.info("白露检查: 引导完成标志文件不存在，需要显示引导界面～ ")
         return False
     
-    # 检查文件夹是否为空
+    # 检查引导完成标志文件内容是否有效
     try:
-        files = os.listdir(settings_dir)
-        if not files:
-            logger.info("白露检查: Settings文件夹为空，需要显示引导界面～ ")
-            return False
-        
-        # 检查是否有有效的设置文件
-        valid_files = [f for f in files if f.endswith('.json') and os.path.getsize(os.path.join(settings_dir, f)) > 0]
-        if not valid_files:
-            logger.info("白露检查: Settings文件夹中没有有效的设置文件，需要显示引导界面～ ")
+        with open(guide_complete_file, 'r', encoding='utf-8') as f:
+            guide_data = json.load(f)
+            
+        # 检查是否包含必要的字段
+        if not isinstance(guide_data, dict):
+            logger.info("白露检查: 引导完成标志文件格式错误，需要显示引导界面～ ")
             return False
             
-        logger.info("白露检查: Settings文件夹正常，可以跳过引导界面～ ")
+        guide_completed = guide_data.get('guide_completed', False)
+        if not guide_completed:
+            logger.info("白露检查: 引导未完成，需要显示引导界面～ ")
+            return False
+        
+        # 检查版本是否匹配
+        guide_version = guide_data.get('version', '')
+        if not guide_version:
+            logger.info("白露检查: 引导完成标志文件中缺少版本信息，需要显示引导界面～ ")
+            return False
+            
+        # 导入版本比较模块
+        from packaging.version import Version
+        
+        # 移除版本前缀并比较
+        current_version = VERSION.lstrip('v')
+        guide_version_clean = guide_version.lstrip('v')
+        
+        if Version(guide_version_clean) != Version(current_version):
+            logger.info(f"白露检查: 版本不匹配，当前版本 {VERSION}，引导文件版本 {guide_version}，需要显示引导界面～ ")
+            return False
+            
+        logger.info(f"白露检查: 引导已完成且版本匹配 {VERSION}，可以跳过引导界面～ ")
         return True
+    except json.JSONDecodeError:
+        logger.info("白露检查: 引导完成标志文件JSON格式错误，需要显示引导界面～ ")
+        return False
     except Exception as e:
-        logger.error(f"白露检查: 检查Settings文件夹时出错: {e}")
+        logger.error(f"白露检查: 检查引导完成标志文件时出错: {e}")
         return False
 
 
