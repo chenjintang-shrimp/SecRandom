@@ -15,6 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [ x86, x64 ]
+        pack_mode: [ dir, onefile ]
         os: [ windows-2022 ]
     runs-on: ${{ matrix.os }}
     steps:
@@ -54,22 +55,42 @@ jobs:
           uv pip install -r requirements.txt
           # 安装 pyinstaller
           uv pip install pyinstaller
-          # 使用 pyinstaller 打包应用程序
-          pyinstaller main.py `
-            -w `
-            -F `
-            -i ./resources/SecRandom.ico `
-            -n SecRandom `
-            --onefile `
-            --contents-directory . `
-            --add-data ./app/resource:app/resource `
-            --add-data LICENSE:. `
-            --version-file=version_info.txt `
-            --hidden-import=psutil._psutil_windows
-          # 创建zip_dist/SecRandom目录
-          mkdir zip_dist/SecRandom
-          # 复制dist目录下的所有文件到zip_dist/SecRandom目录下
-          Copy-Item -Recurse -Force dist/* zip_dist/SecRandom
+          # 清理之前的构建文件
+          Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force zip_dist -ErrorAction SilentlyContinue
+          # 根据打包模式选择不同的PyInstaller参数
+          if ('${{ matrix.pack_mode }}' -eq 'dir') {
+            # 目录模式打包
+            pyinstaller main.py `
+              -w `
+              -D `
+              -i ./resources/SecRandom.ico `
+              -n SecRandom `
+              --add-data ./app/resource:app/resource `
+              --add-data LICENSE:. `
+              --version-file=version_info.txt
+            # 创建zip_dist/SecRandom目录
+            mkdir zip_dist/SecRandom
+            # 复制dist/SecRandom目录下的所有文件到zip_dist/SecRandom目录下（目录模式）
+            Copy-Item -Recurse -Force dist/SecRandom/* zip_dist/SecRandom
+          } else {
+            # 单文件模式打包
+            pyinstaller main.py `
+              -w `
+              -F `
+              -i ./resources/SecRandom.ico `
+              -n SecRandom `
+              --onefile `
+              --contents-directory . `
+              --add-data ./app/resource:app/resource `
+              --add-data LICENSE:. `
+              --version-file=version_info.txt
+            # 创建zip_dist/SecRandom目录
+            mkdir zip_dist/SecRandom
+            # 复制dist目录下的所有文件到zip_dist/SecRandom目录下（单文件模式）
+            Copy-Item -Recurse -Force dist/* zip_dist/SecRandom
+          }
           # 创建app目录
           mkdir zip_dist/SecRandom/app
           # 复制app/resource文件夹到zip_dist/SecRandom目录下
@@ -77,14 +98,15 @@ jobs:
           # 复制 LICENSE 文件到zip_dist/SecRandom目录下
           Copy-Item LICENSE zip_dist/SecRandom
           # 使用系统自带的 Compress-Archive 压缩文件
-          Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}.zip" -Force
+          $packModeName = if ('${{ matrix.pack_mode }}' -eq 'dir') { 'dir' } else { 'onefile' }
+          Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-$packModeName.zip" -Force
 
 
       - name: 上传应用程序
         if: ${{ matrix.os == 'windows-2022' && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4.4.2
         with:
-          name: windows-2022-${{ matrix.arch }}
+          name: windows-2022-${{ matrix.arch }}-${{ matrix.pack_mode }}
           path: ./zip
 
   release:
