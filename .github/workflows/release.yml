@@ -45,10 +45,10 @@ jobs:
 
       - name: 准备 artifacts 
         run: |
-          mv artifacts/windows-latest-x64-dir/* release/
-          mv artifacts/windows-latest-x86-dir/* release/
-          mv artifacts/windows-latest-x64-onefile/* release/
-          mv artifacts/windows-latest-x86-onefile/* release/
+          mv artifacts/windows-2022-x64-dir/* release/
+          mv artifacts/windows-2022-x86-dir/* release/
+          mv artifacts/windows-2022-x64-onefile/* release/
+          mv artifacts/windows-2022-x86-onefile/* release/
 
       - name: 计算 SHA256 值
         run: |
