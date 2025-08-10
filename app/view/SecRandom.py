@@ -6,12 +6,13 @@
 import json
 import os
 import sys
-import asyncio
+import time
 import subprocess
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
 
 # 🧙‍♀️ 第三方魔法典籍 🧙‍♂️
+import loguru
 from loguru import logger
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -239,7 +240,7 @@ class TrayIconManager:
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_settings_20_filled"), '打开设置界面', triggered=self.main_window.show_setting_interface))
         self.tray_menu.addSeparator()
         # 系统操作
-        # self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.main_window.restart_app))
+        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.main_window.restart_app))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_exit_20_filled"), '退出', triggered=self.main_window.close_window_secrandom))
         logger.info("白露魔法: 托盘菜单已准备就绪！")
 
@@ -673,13 +674,6 @@ class Window(MSFluentWindow):
         if hasattr(self, 'server'):
             self.server.close()
             logger.debug("星野撤退: IPC服务器已关闭～ ")
-        # 关闭插件系统
-        if hasattr(self, 'plugin_system') and self.plugin_system:
-            try:
-                self.plugin_system.shutdown()
-                logger.debug("星野撤退: 插件系统已安全关闭～ ")
-            except Exception as e:
-                logger.error(f"星野撤退: 插件系统关闭出错喵～ {e}")
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
             self.shared_memory.detach()
@@ -708,31 +702,66 @@ class Window(MSFluentWindow):
             return
 
         logger.info("星野重启: 安全验证通过，开始执行完全重启程序流程～ ")
+        
+        # 隐藏所有窗口
         self.hide()
         if hasattr(self, 'levitation_window'):
             self.levitation_window.hide()
             logger.debug("星野重启: 悬浮窗已隐藏～ ")
+        
+        # 停止所有计时器
         if hasattr(self, 'focus_timer'):
             self.stop_focus_timer()
             logger.debug("星野重启: 焦点计时器已停止～ ")
+        
+        # 关闭IPC服务器
         if hasattr(self, 'server'):
             self.server.close()
             logger.debug("星野重启: IPC服务器已关闭～ ")
-        # 关闭插件系统
-        if hasattr(self, 'plugin_system') and self.plugin_system:
-            try:
-                self.plugin_system.shutdown()
-                logger.debug("星野重启: 插件系统已安全关闭～ ")
-            except Exception as e:
-                logger.error(f"星野重启: 插件系统关闭出错喵～ {e}")
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
-            self.shared_memory.detach()
-            logger.info("星野重启: 共享内存已安全关闭～ ")
-        logger.remove()
-        # 使用新进程组启动，避免被当前进程退出影响
-        subprocess.Popen([sys.executable] + sys.argv, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
-        # 退出当前进程
+            try:
+                self.shared_memory.detach()
+                if self.shared_memory.isAttached():
+                    self.shared_memory.detach()
+                logger.info("星野重启: 共享内存已完全释放～ ")
+            except Exception as e:
+                logger.error(f"星野重启: 共享内存释放出错喵～ {e}")
+        
+        # 正确关闭日志系统
+        try:
+            # 移除所有日志处理器
+            loguru.logger.remove()
+            logger.info("星野重启: 日志系统已安全关闭～ ")
+        except Exception as e:
+            logger.error(f"星野重启: 日志系统关闭出错喵～ {e}")
+        
+        # 给系统一点时间清理资源
+        time.sleep(0.5)
+        
+        # 启动新进程
+        try:
+            # 获取当前工作目录
+            working_dir = os.getcwd()
+            
+            # 使用更安全的启动方式
+            startup_info = subprocess.STARTUPINFO()
+            startup_info.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            
+            # 启动新进程
+            subprocess.Popen(
+                [sys.executable] + sys.argv,
+                cwd=working_dir,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
+                startupinfo=startup_info
+            )
+            logger.info("星野重启: 新进程已成功启动～ ")
+        except Exception as e:
+            logger.error(f"星野重启: 启动新进程失败喵～ {e}")
+            return
+        
+        # 完全退出当前应用程序
+        QApplication.quit()
         sys.exit(0)
 
     def show_setting_interface(self):

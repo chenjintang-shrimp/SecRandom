@@ -4,6 +4,7 @@
 import os
 import sys
 import json
+import time
 
 # 添加项目根目录到Python路径
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -329,6 +330,17 @@ if __name__ == "__main__":
         logger.info("星野通知: 应用程序事件循环启动喵～")
         app.exec_()
     finally:
-        shared_memory.detach()
-        logger.info("星野通知: 共享内存已释放，程序完全退出喵～")
-        sys.exit()
+        # 完全释放共享内存资源
+        try:
+            if shared_memory.isAttached():
+                shared_memory.detach()
+            # 尝试多次释放确保完全清理
+            for i in range(3):
+                if shared_memory.isAttached():
+                    shared_memory.detach()
+                    time.sleep(0.1)  # 给系统一点时间处理
+            logger.info("星野通知: 共享内存已完全释放，程序安全退出喵～")
+        except Exception as e:
+            logger.error(f"星野错误: 共享内存释放时出现异常喵～ {e}")
+        finally:
+            sys.exit()
