@@ -17,7 +17,7 @@
 - [Jursin](https://github.com/Jursin)
 
 ## 下载SecRandom怎么选择文件
-
+ 
 ### 第一步：选择系统架构
 - **x64**：适用于64位Windows系统（推荐）
 - **x86**：适用于32位Windows系统
