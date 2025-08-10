@@ -7,10 +7,9 @@
 - 新增 插件广场(预览版)
 - 新增 插件设置(预览版)
 
-
 ### 功能优化
 - 优化 历史记录加载方式
 
-### 贡献者
+### 新增贡献者
 - [zhangjianjian7](https://github.com/zhangjianjian7)
 - [Jursin](https://github.com/Jursin)

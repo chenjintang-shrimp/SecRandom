@@ -706,6 +706,13 @@ class PluginButtonGroup(QWidget):
     
     def _check_background_service_file(self):
         """检查是否有后台运行服务文件，如果没有则禁用自启动按钮"""
+        # 检查插件是否有后台服务配置
+        if "background_service" not in self.plugin_info:
+            # 如果没有后台服务配置，禁用自启动按钮
+            self.autostartButton.setEnabled(False)
+            logger.info(f"插件 {self.plugin_info['name']} 没有后台服务配置，已禁用自启动按钮")
+            return
+        
         # 检查background_service.py文件是否存在
         background_service_path = os.path.join(self.plugin_info["path"], self.plugin_info["background_service"])
         
