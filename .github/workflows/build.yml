@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         arch: [ x86, x64 ]
-        os: [ windows-latest ]
+        os: [ windows-2022 ]
     runs-on: ${{ matrix.os }}
     steps:
       - name: 检出仓库
@@ -43,7 +43,7 @@ jobs:
           VERSION: ${{ github.ref_name }}
 
       - name: 运行 Windows 构建
-        if: ${{ matrix.os == 'windows-latest' }}
+        if: ${{ matrix.os == 'windows-2022' }}
         run: |
           # 创建虚拟环境
           uv venv
@@ -79,10 +79,10 @@ jobs:
 
 
       - name: 上传应用程序
-        if: ${{ matrix.os == 'windows-latest' && github.event_name != 'pull_request' }}
+        if: ${{ matrix.os == 'windows-2022' && github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v4.4.2
         with:
-          name: windows-latest-${{ matrix.arch }}
+          name: windows-2022-${{ matrix.arch }}
           path: ./zip
 
   release:
