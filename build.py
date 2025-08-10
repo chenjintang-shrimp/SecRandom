@@ -194,7 +194,9 @@ def build_application(pack_mode='onefile'):
         '-i', './resources/SecRandom.ico',  # 图标
         '-n', 'SecRandom',  # 应用程序名称
         '--add-data', './app/resource:app/resource',
-        '--add-data', 'LICENSE:.'
+        '--add-data', 'LICENSE:.',
+        '--hidden-import=psutil._psutil_windows',
+        '--hidden-import=pandas._libs.interval'
     ]
     
     # 根据打包模式添加不同参数

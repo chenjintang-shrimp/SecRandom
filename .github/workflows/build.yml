@@ -69,7 +69,9 @@ jobs:
               -n SecRandom `
               --add-data ./app/resource:app/resource `
               --add-data LICENSE:. `
-              --version-file=version_info.txt
+              --version-file=version_info.txt `
+              --hidden-import=psutil._psutil_windows `
+              --hidden-import=pandas._libs.interval
             # 创建zip_dist/SecRandom目录
             mkdir zip_dist/SecRandom
             # 复制dist/SecRandom目录下的所有文件到zip_dist/SecRandom目录下（目录模式）
@@ -85,7 +87,9 @@ jobs:
               --contents-directory . `
               --add-data ./app/resource:app/resource `
               --add-data LICENSE:. `
-              --version-file=version_info.txt
+              --version-file=version_info.txt `
+              --hidden-import=psutil._psutil_windows `
+              --hidden-import=pandas._libs.interval
             # 创建zip_dist/SecRandom目录
             mkdir zip_dist/SecRandom
             # 复制dist目录下的所有文件到zip_dist/SecRandom目录下（单文件模式）
