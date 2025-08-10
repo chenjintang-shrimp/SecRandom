@@ -1,7 +1,7 @@
 ---
 name: bug反馈
 about: 提交bug报告以帮助我们改进软件
-title: "[BUG] 简洁描述问题"
+title: "[BUG] (简洁描述问题)"
 labels: Bug, 未读
 assignees: LZY98276
 
