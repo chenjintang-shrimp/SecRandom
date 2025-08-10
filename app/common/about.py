@@ -570,6 +570,15 @@ class DonationDialog(QDialog):
             "使用微信扫码捐赠"
         )
         cards_layout.addWidget(wechat_card)
+
+        # 添加数字人民币捐赠卡片
+        digital_rmb_card = self.create_donation_card(
+            "数字人民币",
+            "app\\resource\\assets\\contribution\\E-CNY.png",
+            "使用数字人民币捐赠"
+        )
+        cards_layout.addWidget(digital_rmb_card)
+
         
         self.main_layout.addLayout(cards_layout)
         
@@ -582,7 +591,7 @@ class DonationDialog(QDialog):
         self.main_layout.addStretch()
 
     def create_donation_card(self, title, image_path, description):
-        """ 创建捐赠卡片 """
+        """ 🌟 小鸟游星野 - 创建捐赠卡片 """
         card = QWidget()
         card.setObjectName('donationCard')
         self.update_card_theme_style(card)
@@ -705,7 +714,7 @@ class DonationDialog(QDialog):
                 logger.warning(f"设置标题栏颜色失败: {str(e)}")
 
     def update_card_theme_style(self, card):
-        """根据当前主题更新卡片样式"""
+        """ 🌟 小鸟游星野 - 根据当前主题更新卡片样式 """
         if qconfig.theme == Theme.AUTO:
             lightness = QApplication.palette().color(QPalette.Window).lightness()
             is_dark = lightness <= 127
@@ -716,8 +725,9 @@ class DonationDialog(QDialog):
         card.setStyleSheet(f'''
             QWidget#donationCard {{
                 background: {colors['bg']};
-                border-radius: 8px;
-                padding: 10px;
+                border-radius: 12px;
+                border: 1px solid {'#333333' if is_dark else '#DDDDDD'};
+                padding: 15px;
                 margin-bottom: 10px;
             }}
         ''')
