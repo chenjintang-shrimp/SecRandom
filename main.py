@@ -212,14 +212,26 @@ def initialize_application():
             clean_expired_reward_history()
             logger.debug("白露清理: 已清理过期历史记录～ ")
             
-            # 启动插件自启动功能
+            # 🌟 小鸟游星野：检查插件自启动设置 ~ (๑•̀ㅂ•́)ญ✧
             try:
-                from app.view.plugins.management import PluginManagementPage
-                plugin_manager = PluginManagementPage()
-                plugin_manager.start_autostart_plugins()
-                logger.info("白露插件: 自启动插件功能已启动～ ")
+                # 读取插件设置文件
+                plugin_settings_file = 'app/Settings/plugin_settings.json'
+                if os.path.exists(plugin_settings_file):
+                    with open(plugin_settings_file, 'r', encoding='utf-8') as f:
+                        plugin_settings = json.load(f)
+                        run_plugins_on_startup = plugin_settings.get('plugin_settings', {}).get('run_plugins_on_startup', False)
+                        
+                        if run_plugins_on_startup:
+                            from app.view.plugins.management import PluginManagementPage
+                            plugin_manager = PluginManagementPage()
+                            plugin_manager.start_autostart_plugins()
+                            logger.info("白露插件: 自启动插件功能已启动～ ")
+                        else:
+                            logger.info("白露插件: 插件自启动功能已禁用～ ")
+                else:
+                    logger.warning("白露警告: 插件设置文件不存在，跳过插件自启动～ ")
             except Exception as e:
-                logger.error(f"白露错误: 启动插件自启动功能失败: {e}")
+                logger.error(f"白露错误: 检查插件自启动设置失败: {e}")
             
             # 显示主窗口
             try:
@@ -258,14 +270,26 @@ def initialize_application():
         # 创建主窗口实例
         sec = Window()
         
-        # 启动插件自启动功能
+        # 🌟 小鸟游星野：检查插件自启动设置 ~ (๑•̀ㅂ•́)ญ✧
         try:
-            from app.view.plugins.management import PluginManagementPage
-            plugin_manager = PluginManagementPage()
-            plugin_manager.start_autostart_plugins()
-            logger.info("白露插件: 自启动插件功能已启动～ ")
+            # 读取插件设置文件
+            plugin_settings_file = 'app/Settings/plugin_settings.json'
+            if os.path.exists(plugin_settings_file):
+                with open(plugin_settings_file, 'r', encoding='utf-8') as f:
+                    plugin_settings = json.load(f)
+                    run_plugins_on_startup = plugin_settings.get('plugin_settings', {}).get('run_plugins_on_startup', False)
+                    
+                    if run_plugins_on_startup:
+                        from app.view.plugins.management import PluginManagementPage
+                        plugin_manager = PluginManagementPage()
+                        plugin_manager.start_autostart_plugins()
+                        logger.info("白露插件: 自启动插件功能已启动～ ")
+                    else:
+                        logger.info("白露插件: 插件自启动功能已禁用～ ")
+            else:
+                logger.warning("白露警告: 插件设置文件不存在，跳过插件自启动～ ")
         except Exception as e:
-            logger.error(f"白露错误: 启动插件自启动功能失败: {e}")
+            logger.error(f"白露错误: 检查插件自启动设置失败: {e}")
         
         try:
             with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:

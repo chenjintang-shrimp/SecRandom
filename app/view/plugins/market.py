@@ -596,6 +596,19 @@ class PluginMarketPage(GroupHeaderCardWidget):
         # 初始化时加载插件列表
         self.load_market_plugins()
     
+    def load_plugin_settings(self):
+        """🌟 小鸟游星野 - 加载插件设置"""
+        try:
+            if os.path.exists(self.settings_file):
+                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    return settings.get("plugin_settings", {})
+            else:
+                return {"run_plugins_on_startup": False, "fetch_plugin_list_on_startup": True}
+        except Exception as e:
+            logger.error(f"🌟 小鸟游星野 - 加载插件设置失败: {str(e)}")
+            return {"run_plugins_on_startup": False, "fetch_plugin_list_on_startup": True}
+    
     def fetch_plugin_list(self):
         """从远程仓库获取插件列表"""
         try:
@@ -619,7 +632,17 @@ class PluginMarketPage(GroupHeaderCardWidget):
         return button_group
     
     def load_market_plugins(self):
-        """加载插件市场中的插件列表"""
+        """🌟 小鸟游星野 - 加载插件市场中的插件列表"""
+        # 🌟 小鸟游星野 - 检查是否需要在启动时获取插件列表
+        plugin_settings = self.load_plugin_settings()
+        if not plugin_settings.get("fetch_plugin_list_on_startup", True):
+            logger.info("🌟 小鸟游星野 - 根据设置，跳过获取插件列表")
+            # 显示跳过获取插件列表的提示
+            no_plugin_label = BodyLabel("根据设置，跳过获取插件列表", self)
+            no_plugin_label.setAlignment(Qt.AlignCenter)
+            self.addGroup(get_theme_icon("ic_fluent_cloud_off_20_filled"), "跳过获取插件列表", "可在插件设置中启用此功能", no_plugin_label)
+            return
+        
         # 获取插件列表
         plugin_list = self.fetch_plugin_list()
         
@@ -694,6 +717,17 @@ class PluginMarketPage(GroupHeaderCardWidget):
         logger.info(f"插件市场加载完成，共显示 {len(filtered_plugins)} 个插件")
     
     def refresh_plugin_list(self):
-        """刷新插件列表"""
-        logger.info("刷新插件列表")
+        """🌟 小鸟游星野 - 刷新插件列表"""
+        # 🌟 小鸟游星野 - 检查是否允许获取插件列表
+        plugin_settings = self.load_plugin_settings()
+        if not plugin_settings.get("fetch_plugin_list_on_startup", True):
+            logger.info("🌟 小鸟游星野 - 根据设置，不允许获取插件列表")
+            info_dialog = Dialog("设置限制", "当前设置禁止获取插件列表，请先在插件设置中启用此功能", self)
+            info_dialog.yesButton.setText("确定")
+            info_dialog.cancelButton.hide()
+            info_dialog.buttonLayout.insertStretch(1)
+            info_dialog.exec()
+            return
+            
+        logger.info("🌟 小鸟游星野 - 刷新插件列表")
         self.load_market_plugins()
