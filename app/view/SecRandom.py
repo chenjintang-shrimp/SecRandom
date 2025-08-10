@@ -90,7 +90,8 @@ class ConfigurationManager:
                 'pumping_floating_side': 0,
                 'pumping_reward_side': 0,
                 'main_window_mode': 0,
-                'check_on_startup': True
+                'check_on_startup': True,
+                'topmost_switch': False
             }
         }  # 📝 默认设置模板
 
@@ -108,7 +109,8 @@ class ConfigurationManager:
                 'pumping_floating_side': 0,
                 'pumping_reward_side': 0,
                 'main_window_mode': 0,
-                'check_on_startup': True
+                'check_on_startup': True,
+                'topmost_switch': False
             }
         }  # 📝 默认设置模板
         # 🌟 星穹铁道白露：预加载设置缓存，减少启动时IO操作
@@ -119,8 +121,8 @@ class ConfigurationManager:
         """(^・ω・^ ) 读取配置文件的魔法
         尝试打开设置文件，如果失败就用默认设置哦~ 不会让程序崩溃的！
         使用缓存避免重复IO操作，就像记忆力超群的小精灵一样~ ✧*｡٩(ˊᗜˋ*)و✧*｡"""
-        if self._settings_cache is not None:
-            return self._settings_cache
+        # if self._settings_cache is not None:
+        #     return self._settings_cache
         try:
             with open(self.settings_path, 'r', encoding='utf-8') as f:
                 self._settings_cache = json.load(f)
@@ -344,7 +346,12 @@ class Window(MSFluentWindow):
         self.levitation_window = LevitationWindow()
         if self.config_manager.get_foundation_setting('pumping_floating_enabled'):
             self.levitation_window.show()
-        
+
+        if self.config_manager.get_foundation_setting('topmost_switch'):
+            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint) # 置顶
+        else:
+            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint) # 取消置顶
+
         self._apply_window_visibility_settings()
 
     def _position_window(self):
@@ -596,6 +603,11 @@ class Window(MSFluentWindow):
         """(ﾟДﾟ≡ﾟдﾟ) 星野的窗口切换魔法！
         显示→隐藏→显示，像捉迷藏一样好玩喵～
         切换时会自动激活抽人界面，方便用户继续操作！"""  
+        if self.config_manager.get_foundation_setting('topmost_switch'):
+            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+        else:
+            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
+
         if self.isVisible():
             self.hide()
             logger.info("星野魔法: 主窗口已隐藏～ ")
