@@ -64,13 +64,7 @@ jobs:
             --contents-directory . `
             --add-data ./app/resource:app/resource `
             --add-data LICENSE:. `
-            --version-file=version_info.txt `
-            --hidden-import PyQt5.QtMultimedia `
-            --collect-all PyQt5.QtMultimedia `
-            --hidden-import psutil `
-            --collect-all psutil `
-            --hidden-import comtypes `
-            --collect-all comtypes `
+            --version-file=version_info.txt
           # 创建zip_dist/SecRandom目录
           mkdir zip_dist/SecRandom
           # 复制dist目录下的所有文件到zip_dist/SecRandom目录下

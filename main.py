@@ -162,6 +162,7 @@ def check_settings_directory():
         logger.info("白露检查: Settings文件夹不存在，需要显示引导界面～ ")
         return False
     
+          
     logger.info("白露检查: Settings文件夹正常，可以跳过引导界面～ ")
     return True
 
@@ -190,6 +191,52 @@ def initialize_application():
         def show_main_window():
             # 用户完成引导后，执行正常的初始化流程
             logger.info("白露引导: 用户完成引导，开始正常初始化～ ")
+            
+            # 清理过期历史记录
+            from app.common.history_cleaner import clean_expired_history, clean_expired_reward_history
+            clean_expired_history()
+            clean_expired_reward_history()
+            logger.debug("白露清理: 已清理过期历史记录～ ")
+            
+            # 🌟 小鸟游星野：检查插件自启动设置 ~ (๑•̀ㅂ•́)ญ✧
+            try:
+                # 读取插件设置文件
+                plugin_settings_file = 'app/Settings/plugin_settings.json'
+                if os.path.exists(plugin_settings_file):
+                    with open(plugin_settings_file, 'r', encoding='utf-8') as f:
+                        plugin_settings = json.load(f)
+                        run_plugins_on_startup = plugin_settings.get('plugin_settings', {}).get('run_plugins_on_startup', False)
+                        
+                        if run_plugins_on_startup:
+                            from app.view.plugins.management import PluginManagementPage
+                            plugin_manager = PluginManagementPage()
+                            plugin_manager.start_autostart_plugins()
+                            logger.info("白露插件: 自启动插件功能已启动～ ")
+                        else:
+                            logger.info("白露插件: 插件自启动功能已禁用～ ")
+                else:
+                    logger.warning("白露警告: 插件设置文件不存在，跳过插件自启动～ ")
+            except Exception as e:
+                logger.error(f"白露错误: 检查插件自启动设置失败: {e}")
+            
+            # 显示主窗口
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    foundation_settings = settings.get('foundation', {})
+                    self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
+                    if not self_starting_enabled:
+                        sec.show()
+                        logger.info("白露展示: 根据设置显示主窗口～ ")
+            except FileNotFoundError:
+                logger.error("白露错误: 加载设置时出错 - 文件不存在, 使用默认显示主窗口")
+                sec.show()
+            except KeyError:
+                logger.error("白露错误: 设置文件中缺少foundation键, 使用默认显示主窗口")
+                sec.show()
+            except Exception as e:
+                logger.error(f"白露错误: 加载设置时出错: {e}, 使用默认显示主窗口")
+                sec.show()
         
         # 连接引导窗口的开始使用信号
         guide_window.start_signal.connect(show_main_window)
