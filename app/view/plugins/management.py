@@ -713,7 +713,7 @@ class PluginButtonGroup(QWidget):
             logger.info(f"插件 {self.plugin_info['name']} 没有后台服务配置，已禁用自启动按钮")
             return
         
-        # 检查background_service.py文件是否存在
+        # 检查background_service是否存在
         background_service_path = os.path.join(self.plugin_info["path"], self.plugin_info["background_service"])
         
         if not os.path.exists(background_service_path):
@@ -859,6 +859,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
                     "description": plugin_config["description"],
                     "author": plugin_config["author"],
                     "entry_point": plugin_config["entry_point"],
+                    "background_service": plugin_config.get("background_service"),  # 添加后台服务配置
                     "min_app_version": plugin_config["min_app_version"],
                     "dependencies": plugin_config["dependencies"],
                     "path": item_path,
@@ -876,13 +877,9 @@ class PluginManagementPage(GroupHeaderCardWidget):
     
     def get_plugin_icon(self, plugin_path):
         """获取插件图标文件路径"""
-        # 支持的图标格式
-        icon_formats = ['icon.png', 'icon.svg', 'icon.jpg']
-        
-        for icon_name in icon_formats:
-            icon_path = os.path.join(plugin_path, icon_name)
-            if os.path.exists(icon_path):
-                return icon_path
+        icon_path = os.path.join(plugin_path, "icon.png")
+        if os.path.exists(icon_path):
+            return icon_path
         
         # 如果没有找到图标文件，返回None
         return None
@@ -923,7 +920,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
                 else:
                     icon = get_theme_icon("ic_fluent_extensions_20_filled")
 
-                self.addGroup(icon, plugin["name"], f"版本: {plugin['version']}_作者: {plugin['author']}_描述: {plugin['description']}", button_group)
+                self.addGroup(icon, plugin["name"], f"版本: {plugin['version']}_作者: {plugin['author']}", button_group)
 
         logger.info(f"加载完成，共找到 {len(plugins)} 个插件")
     
@@ -981,7 +978,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
     
     def _start_plugin_background_service(self, plugin_info):
         """启动插件的后台服务"""
-        background_service_path = os.path.join(plugin_info["path"], "background_service.py")
+        background_service_path = os.path.join(plugin_info["path"], plugin_info["background_service"])
         
         if not os.path.exists(background_service_path):
             logger.warning(f"插件 {plugin_info['name']} 没有后台服务文件")
@@ -997,7 +994,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
             subprocess.Popen([
                 python_executable,
                 background_service_path
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+            ], creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
             
             logger.info(f"已启动插件 {plugin_info['name']} 的后台服务进程")
             
