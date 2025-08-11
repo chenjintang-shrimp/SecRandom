@@ -69,9 +69,10 @@ jobs:
 
       - name: 生成 需发布 的表格信息
         run: |
-          # 手动设置上一个版本号
-          PREVIOUS_TAG=v1.1.2.0-beta
+          # 自动获取上一个版本号
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "v1.0.0.0")
           echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
+          echo "上一个版本号: $PREVIOUS_TAG"
           cd release
           echo "" >> ../CHANGELOG.md
           echo "Full Changelog: [${{ env.PREVIOUS_TAG }}...${{ github.ref_name }}](https://github.com/SECTL/SecRandom/compare/${{ env.PREVIOUS_TAG }}...${{ github.ref_name }})" >> ../CHANGELOG.md
