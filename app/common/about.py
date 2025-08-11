@@ -1,5 +1,7 @@
 from venv import logger
 import os
+import hashlib
+import requests
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtGui import *
@@ -465,6 +467,17 @@ class ContributorDialog(QDialog):
 
 class DonationDialog(QDialog):
     """ 捐赠支持对话框 """
+    
+    # 正确的MD5值
+    CORRECT_MD5 = {
+        'Alipay.png': '7faccb136ac70aa9c193bf7a4f68d131',  # 支付宝收款码
+        'WeChat_Pay.png': 'ab01b5ff2c5bbdcfb5007873e9730e96',  # 微信支付收款码
+        'E-CNY.png': '19923ccdff3db77ee43a21f8598659ef'  # 数字人民币收款码
+    }
+    
+    # GitHub下载链接
+    GITHUB_BASE_URL = 'https://github.com/SECTL/SecRandom/raw/main/app/resource/assets/contribution/'
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
@@ -589,6 +602,79 @@ class DonationDialog(QDialog):
         self.main_layout.addWidget(note_label)
         
         self.main_layout.addStretch()
+        
+        # 检查并更新收款码图片
+        self.check_and_update_qr_codes()
+    
+    def calculate_file_md5(self, file_path):
+        """计算文件的MD5值"""
+        try:
+            if not os.path.exists(file_path):
+                return None
+            
+            hash_md5 = hashlib.md5()
+            with open(file_path, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    hash_md5.update(chunk)
+            return hash_md5.hexdigest()
+        except Exception as e:
+            logger.error(f"计算MD5失败 {file_path}: {str(e)}")
+            return None
+    
+    def download_file_from_github(self, filename, local_path):
+        """从GitHub下载文件"""
+        try:
+            url = self.GITHUB_BASE_URL + filename
+            logger.info(f"正在从GitHub下载: {url}")
+            
+            response = requests.get(url, stream=True, timeout=30)
+            response.raise_for_status()
+            
+            # 确保目录存在
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+            
+            with open(local_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            
+            logger.info(f"成功下载文件: {local_path}")
+            return True
+        except Exception as e:
+            logger.error(f"下载文件失败 {filename}: {str(e)}")
+            return False
+    
+    def check_and_update_qr_codes(self):
+        """检查并更新收款码图片"""
+        base_path = "app\\resource\\assets\\contribution\\"
+        files_to_check = ['Alipay.png', 'WeChat_Pay.png', 'E-CNY.png']
+        
+        for filename in files_to_check:
+            local_path = base_path + filename
+            
+            # 计算当前文件的MD5
+            current_md5 = self.calculate_file_md5(local_path)
+            
+            if current_md5 is None:
+                logger.warning(f"文件不存在: {local_path}")
+                # 文件不存在，直接下载
+                if self.download_file_from_github(filename, local_path):
+                    logger.info(f"成功下载缺失的文件: {filename}")
+                else:
+                    logger.error(f"下载失败: {filename}")
+            elif current_md5 != self.CORRECT_MD5.get(filename):
+                logger.warning(f"MD5不匹配: {filename} (当前: {current_md5}, 期望: {self.CORRECT_MD5.get(filename)})")
+                # MD5不匹配，重新下载
+                if self.download_file_from_github(filename, local_path):
+                    # 验证下载后的文件MD5
+                    new_md5 = self.calculate_file_md5(local_path)
+                    if new_md5 == self.CORRECT_MD5.get(filename):
+                        logger.info(f"成功更新文件: {filename}")
+                    else:
+                        logger.error(f"下载后MD5仍不匹配: {filename} (当前: {new_md5}, 期望: {self.CORRECT_MD5.get(filename)})")
+                else:
+                    logger.error(f"更新文件失败: {filename}")
+            else:
+                logger.info(f"文件MD5验证通过: {filename}")
 
     def create_donation_card(self, title, image_path, description):
         """ 🌟 小鸟游星野 - 创建捐赠卡片 """
