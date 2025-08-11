@@ -1,378 +1,262 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-更新日志窗口模块
-(^・ω・^ ) 白露的更新日志窗口魔法！
-显示新版本的更新内容和版本信息～ ✨
-"""
+# ================================================== ✧*｡٩(ˊᗜˋ*)و✧*｡
+# 魔法导入水晶球 🔮
+# ================================================== ✧*｡٩(ˊᗜˋ*)و✧*｡
 
+# ✨ 系统自带魔法道具 ✨
 import os
 import json
-from loguru import logger
-from datetime import datetime
-from PyQt5.QtWidgets import *
+import webbrowser
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 from qfluentwidgets import *
+from loguru import logger
 
 # 🏰 应用内部魔法卷轴 🏰
 from app.common.config import get_theme_icon, load_custom_font, VERSION
 
-class UpdateLogWindow(QWidget):
-    """(^・ω・^ ) 白露的更新日志窗口类！
-    专门用于显示新版本更新内容的窗口～ ✨"""
+
+class UpdateLogWindow(MSFluentWindow):
+    """(^・ω・^ ) 白露的更新日志精灵！
+    为SecRandom用户提供更新日志查看功能～
+    让用户了解每个版本的更新内容和新功能！✨"""
     
-    # 信号定义
-    close_signal = pyqtSignal()  # 关闭窗口信号
+    # 定义信号
+    start_signal_update = pyqtSignal()
     
+    # 更新内容数据结构
+    UPDATE_CONTENTS = {
+        "major_updates": [
+            '• 新增 更新日志界面,方便用户了解版本更新内容',
+            '• 新增 MD5校验功能,检验捐献支持二维码是否被篡改'
+        ],
+        "feature_optimizations": [
+            '• 优化 引导流程,区分首次使用和版本更新情况'
+        ],
+        "bug_fixes": [
+            '• 修复 不开图片模式,字体显示异常的问题',
+            '• 修复 不开图片模式,控件不居中的问题',
+            '• 修复 插件管理界面自启动按钮问题',
+            '• 修复 插件广场界面卸载插件时定位错误导致误卸载其他插件的问题',
+            '• 修复 引导窗口关闭时,主窗口不启动的问题',
+            '• 修复 引导窗口字体太大,导致内容看不全的问题'
+        ]
+    }
+
     def __init__(self, parent=None):
-        """(^・ω・^ ) 白露的初始化魔法！
-        初始化更新日志窗口～ ✨"""
         super().__init__(parent)
+        self.setWindowTitle('SecRandom 更新日志')
+        self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
+        self.resize(800, 600)
         
-        # 窗口基本设置
-        self.setWindowTitle(f'更新日志 - v{VERSION}')
-        self.setFixedSize(900, 600)
-        self.setWindowFlags(Qt.Dialog | Qt.WindowCloseButtonHint)
+        # 设置窗口居中
+        self.center_window()
         
-        # 当前页面索引和总页数
+        # 创建更新日志界面
+        self.setup_ui()
+        
+        logger.info("白露更新日志: 更新日志窗口已创建～ ")
+    
+    def center_window(self):
+        """(^・ω・^ ) 白露的窗口居中魔法！
+        让更新日志窗口出现在屏幕正中央，视觉效果最佳哦～ ✨"""
+        screen = QApplication.primaryScreen().geometry()
+        x = (screen.width() - self.width()) // 2
+        y = (screen.height() - self.height()) // 2
+        self.move(x, y)
+    
+    def setup_ui(self):
+        """(^・ω・^ ) 白露的界面布置魔法！
+        精心设计更新日志界面的布局和内容～ 让用户一目了然！(๑•̀ㅂ•́)و✧)"""
+        
+        # 创建更新日志页面
+        self.create_update_log_pages()
+        
+        # 初始化导航系统
+        self.initNavigation()
+        
+        # 显示第一个更新日志页面
+        self.switchTo(self.currentVersionInterface)
+        
+        # 当前页面索引
         self.current_page_index = 0
-        self.total_pages = 3  # 更新内容、版本信息、完成页面
+        self.total_pages = 2
         
-        # 初始化UI
-        self.init_ui()
-        
-        logger.info("白露更新日志: 更新日志窗口初始化完成～ ✧*｡٩(ˊᗜˋ*)و✧*｡")
+        # 将底部按钮容器添加到窗口主布局
+        self.add_bottom_buttons()
     
-    def init_ui(self):
-        """(^・ω・^ ) 白露的UI初始化魔法！
-        创建更新日志窗口的所有UI组件～ ✨"""
+    def create_update_log_pages(self):
+        """(^・ω・^ ) 白露的更新日志页面创建魔法！
+        创建简洁的更新日志页面，展示当前版本的更新内容～ ✨"""
         
-        # 主布局
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        # 1. 当前版本页面
+        self.currentVersionInterface = QWidget()
+        self.currentVersionInterface.setObjectName("currentVersionInterface")
+        current_layout = QVBoxLayout(self.currentVersionInterface)
+        current_layout.setSpacing(15)
+        current_layout.setContentsMargins(30, 30, 30, 30)
+        current_layout.setAlignment(Qt.AlignTop)
         
-        # 创建导航栏
-        self.navigation_interface = NavigationInterface(self, showReturnButton=False)
-        self.navigation_interface.setFixedWidth(150)
+        # 版本标题
+        version_title = TitleLabel(f'🎉 当前版本：{VERSION}')
+        version_title.setFont(QFont(load_custom_font(), 20))
+        version_title.setAlignment(Qt.AlignCenter)
+        current_layout.addWidget(version_title)
         
-        # 创建内容区域
-        self.content_widget = QWidget()
-        self.content_widget.setObjectName("contentWidget")
-        content_layout = QVBoxLayout(self.content_widget)
-        content_layout.setContentsMargins(20, 20, 20, 20)
-        content_layout.setSpacing(20)
+        # 主要更新
+        major_widget = QWidget()
+        major_layout = QVBoxLayout(major_widget)
         
-        # 创建各个页面
-        self.create_update_content_page()
-        self.create_version_info_page()
-        self.create_complete_page()
+        major_title = SubtitleLabel('🚀 主要更新')
+        major_title.setFont(QFont(load_custom_font(), 16))
+        major_layout.addWidget(major_title)
         
-        # 初始化导航
-        self.init_navigation()
+        major_updates = self.UPDATE_CONTENTS["major_updates"]
         
-        # 创建底部按钮区域
-        self.create_bottom_buttons()
+        for update in major_updates:
+            update_label = BodyLabel(update)
+            update_label.setFont(QFont(load_custom_font(), 12))
+            update_label.setWordWrap(True)
+            major_layout.addWidget(update_label)
         
-        # 添加到主布局
-        content_wrapper = QWidget()
-        content_wrapper_layout = QHBoxLayout(content_wrapper)
-        content_wrapper_layout.setContentsMargins(0, 0, 0, 0)
-        content_wrapper_layout.addWidget(self.navigation_interface)
-        content_wrapper_layout.addWidget(self.content_widget)
-        content_wrapper_layout.setStretch(1, 1)
+        current_layout.addWidget(major_widget)
         
-        main_layout.addWidget(content_wrapper)
+        # 功能优化
+        opt_widget = QWidget()
+        opt_layout = QVBoxLayout(opt_widget)
         
-        # 设置样式
-        self.setStyleSheet("""
-            QWidget#contentWidget {
-                background: #f8f9fa;
-            }
-        """)
+        opt_title = SubtitleLabel('💡 功能优化')
+        opt_title.setFont(QFont(load_custom_font(), 16))
+        opt_layout.addWidget(opt_title)
         
-        # 显示第一个页面
-        self.switch_to_current_page()
-        self.update_navigation_buttons()
-    
-    def create_update_content_page(self):
-        """(^・ω・^ ) 白露的更新内容页面魔法！
-        创建显示更新内容的页面～ ✨"""
+        opt_updates = self.UPDATE_CONTENTS["feature_optimizations"]
         
-        self.update_content_interface = QWidget()
-        layout = QVBoxLayout(self.update_content_interface)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(20)
+        for update in opt_updates:
+            update_label = BodyLabel(update)
+            update_label.setFont(QFont(load_custom_font(), 12))
+            update_label.setWordWrap(True)
+            opt_layout.addWidget(update_label)
         
-        # 标题
-        title = TitleLabel(f'🎉 新版本 v{VERSION} 更新内容')
-        title.setFont(QFont(load_custom_font(), 24, QFont.Bold))
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title)
+        current_layout.addWidget(opt_widget)
         
-        # 更新时间
-        update_time = BodyLabel(f'更新时间：{self.get_current_time_string()}')
-        update_time.setFont(QFont(load_custom_font(), 12))
-        update_time.setAlignment(Qt.AlignCenter)
-        update_time.setStyleSheet('color: #666666;')
-        layout.addWidget(update_time)
+        # 问题修复
+        fix_widget = QWidget()
+        fix_layout = QVBoxLayout(fix_widget)
         
-        # 分隔线
-        separator = QFrame()
-        separator.setFrameShape(QFrame.HLine)
-        separator.setFrameShadow(QFrame.Sunken)
-        separator.setStyleSheet('background: #dddddd;')
-        layout.addWidget(separator)
+        fix_title = SubtitleLabel('🐛 修复问题')
+        fix_title.setFont(QFont(load_custom_font(), 16))
+        fix_layout.addWidget(fix_title)
         
-        # 更新内容区域
-        content_scroll = QScrollArea()
-        content_scroll.setWidgetResizable(True)
-        content_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        content_widget = QWidget()
-        content_layout = QVBoxLayout(content_widget)
-        content_layout.setSpacing(15)
+        fix_updates = self.UPDATE_CONTENTS["bug_fixes"]
         
-        # 获取更新内容
-        update_items = self.get_update_content()
+        for update in fix_updates:
+            update_label = BodyLabel(update)
+            update_label.setFont(QFont(load_custom_font(), 12))
+            update_label.setWordWrap(True)
+            fix_layout.addWidget(update_label)
         
-        for category, items in update_items.items():
-            # 分类标题
-            category_label = SubtitleLabel(category)
-            category_label.setFont(QFont(load_custom_font(), 18, QFont.Bold))
-            content_layout.addWidget(category_label)
-            
-            # 更新项列表
-            for item in items:
-                item_widget = QWidget()
-                item_layout = QHBoxLayout(item_widget)
-                item_layout.setContentsMargins(10, 8, 10, 8)
-                
-                # 项目符号
-                bullet = BodyLabel('•')
-                bullet.setFont(QFont(load_custom_font(), 16, QFont.Bold))
-                bullet.setStyleSheet('color: #007bff; margin-right: 10px;')
-                item_layout.addWidget(bullet)
-                
-                # 项目内容
-                item_text = BodyLabel(item)
-                item_text.setFont(QFont(load_custom_font(), 14))
-                item_text.setStyleSheet('color: #333333;')
-                item_text.setWordWrap(True)
-                item_layout.addWidget(item_text)
-                
-                content_layout.addWidget(item_widget)
-            
-            # 添加间距
-            content_layout.addSpacing(10)
+        current_layout.addWidget(fix_widget)
+        current_layout.addStretch()
         
-        content_layout.addStretch()
-        content_scroll.setWidget(content_widget)
-        layout.addWidget(content_scroll)
-    
-    def create_version_info_page(self):
-        """(^・ω・^ ) 白露的版本信息页面魔法！
-        创建显示版本详细信息的页面～ ✨"""
+        # 2. 关于页面
+        self.aboutInterface = QWidget()
+        self.aboutInterface.setObjectName("aboutInterface")
+        about_layout = QVBoxLayout(self.aboutInterface)
+        about_layout.setSpacing(15)
+        about_layout.setContentsMargins(30, 30, 30, 30)
+        about_layout.setAlignment(Qt.AlignTop)
         
-        self.version_info_interface = QWidget()
-        layout = QVBoxLayout(self.version_info_interface)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(20)
+        # 关于标题
+        about_title = TitleLabel('ℹ️ 关于')
+        about_title.setFont(QFont(load_custom_font(), 20))
+        about_title.setAlignment(Qt.AlignCenter)
+        about_layout.addWidget(about_title)
         
-        # 标题
-        title = TitleLabel('📋 版本信息')
-        title.setFont(QFont(load_custom_font(), 24, QFont.Bold))
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title)
+        # 版本信息
+        version_info = BodyLabel(f'SecRandom {VERSION}')
+        version_info.setFont(QFont(load_custom_font(), 16))
+        version_info.setAlignment(Qt.AlignCenter)
+        about_layout.addWidget(version_info)
         
-        # 版本信息卡片
-        info_card = QWidget()
-        info_card.setStyleSheet('background: white; border-radius: 8px; padding: 20px;')
-        info_layout = QVBoxLayout(info_card)
-        info_layout.setSpacing(15)
+        # 说明
+        desc_widget = QWidget()
+        desc_layout = QVBoxLayout(desc_widget)
         
-        # 版本号
-        version_row = QWidget()
-        version_row_layout = QHBoxLayout(version_row)
-        version_row_layout.setContentsMargins(0, 0, 0, 0)
-        
-        version_label = StrongBodyLabel('当前版本：')
-        version_label.setFont(QFont(load_custom_font(), 14))
-        version_label.setStyleSheet('color: #666666;')
-        version_row_layout.addWidget(version_label)
-        
-        version_value = StrongBodyLabel(f'v{VERSION}')
-        version_value.setFont(QFont(load_custom_font(), 14, QFont.Bold))
-        version_value.setStyleSheet('color: #007bff;')
-        version_row_layout.addWidget(version_value)
-        
-        version_row_layout.addStretch()
-        info_layout.addWidget(version_row)
-        
-        # 构建信息
-        build_info = self.get_build_info()
-        for key, value in build_info.items():
-            info_row = QWidget()
-            info_row_layout = QHBoxLayout(info_row)
-            info_row_layout.setContentsMargins(0, 0, 0, 0)
-            
-            info_label = StrongBodyLabel(f'{key}：')
-            info_label.setFont(QFont(load_custom_font(), 14))
-            info_label.setStyleSheet('color: #666666;')
-            info_row_layout.addWidget(info_label)
-            
-            info_value = BodyLabel(value)
-            info_value.setFont(QFont(load_custom_font(), 14))
-            info_value.setStyleSheet('color: #333333;')
-            info_row_layout.addWidget(info_value)
-            
-            info_row_layout.addStretch()
-            info_layout.addWidget(info_row)
-        
-        layout.addWidget(info_card)
-        
-        # 更新说明
-        note_card = QWidget()
-        note_card.setStyleSheet('background: #e3f2fd; border-radius: 8px; padding: 15px;')
-        note_layout = QVBoxLayout(note_card)
-        
-        note_title = StrongBodyLabel('💡 温馨提示')
-        note_title.setFont(QFont(load_custom_font(), 16, QFont.Bold))
-        note_title.setStyleSheet('color: #1976d2;')
-        note_layout.addWidget(note_title)
-        
-        note_text = BodyLabel('本次更新包含重要的功能改进和错误修复，建议您仔细阅读更新内容。如遇到问题，请通过官方渠道反馈。')
-        note_text.setFont(QFont(load_custom_font(), 14))
-        note_text.setStyleSheet('color: #333333;')
-        note_text.setWordWrap(True)
-        note_layout.addWidget(note_text)
-        
-        layout.addWidget(note_card)
-        layout.addStretch()
-    
-    def create_complete_page(self):
-        """(^・ω・^ ) 白露的完成页面魔法！
-        创建更新日志完成页面～ ✨"""
-        
-        self.complete_interface = QWidget()
-        layout = QVBoxLayout(self.complete_interface)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(20)
-        
-        # 标题
-        title = TitleLabel('🎊 更新完成')
-        title.setFont(QFont(load_custom_font(), 24, QFont.Bold))
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title)
-        
-        # 完成图标
-        icon_label = QLabel()
-        icon_label.setAlignment(Qt.AlignCenter)
-        icon_label.setStyleSheet('font-size: 80px;')
-        icon_label.setText('✨')
-        layout.addWidget(icon_label)
-        
-        # 完成信息
-        complete_text = BodyLabel('您已了解本次更新的所有内容')
-        complete_text.setFont(QFont(load_custom_font(), 16))
-        complete_text.setAlignment(Qt.AlignCenter)
-        complete_text.setStyleSheet('color: #333333;')
-        layout.addWidget(complete_text)
-        
-        # 感谢信息
-        thanks_text = BodyLabel('感谢您的支持与使用！')
-        thanks_text.setFont(QFont(load_custom_font(), 14))
-        thanks_text.setAlignment(Qt.AlignCenter)
-        thanks_text.setStyleSheet('color: #666666;')
-        layout.addWidget(thanks_text)
-        
-        layout.addStretch()
-    
-    def init_navigation(self):
-        """(^・ω・^ ) 白露的导航初始化魔法！
-        创建导航栏和连接信号～ ✨"""
-        
-        # 添加页面到导航
-        update_item = self.navigation_interface.addSubInterface(
-            self.update_content_interface, FluentIcon.UPDATE, '更新内容', 
-            position=NavigationItemPosition.TOP
+        desc_content = BodyLabel(
+            'SecRandom 是一个简洁易用的随机抽取工具，\n'
+            '支持抽人和抽奖功能，为您的活动提供便利。\n\n'
+            '感谢您的使用和支持！'
         )
-        version_item = self.navigation_interface.addSubInterface(
-            self.version_info_interface, FluentIcon.INFO, '版本信息', 
-            position=NavigationItemPosition.TOP
-        )
-        complete_item = self.navigation_interface.addSubInterface(
-            self.complete_interface, FluentIcon.CHECK_MARK, '完成', 
-            position=NavigationItemPosition.TOP
-        )
+        desc_content.setFont(QFont(load_custom_font(), 12))
+        desc_content.setWordWrap(True)
+        desc_content.setAlignment(Qt.AlignCenter)
+        desc_layout.addWidget(desc_content)
         
-        # 连接导航信号
-        update_item.clicked.connect(lambda: self.on_navigation_changed(self.update_content_interface))
-        version_item.clicked.connect(lambda: self.on_navigation_changed(self.version_info_interface))
-        complete_item.clicked.connect(lambda: self.on_navigation_changed(self.complete_interface))
+        about_layout.addWidget(desc_widget)
+        about_layout.addStretch()
     
-    def create_bottom_buttons(self):
-        """(^・ω・^ ) 白露的底部按钮魔法！
-        创建底部导航按钮区域～ ✨"""
+    def initNavigation(self):
+        """(^・ω・^ ) 白露的导航系统初始化魔法！
+        创建顶部导航栏和底部按钮区域～ ✨"""
         
-        # 按钮容器
-        self.button_container = QWidget()
-        self.button_container.setFixedHeight(60)
-        self.button_container.setStyleSheet('background: white; border-top: 1px solid #dddddd;')
+        # 添加更新日志页面到导航并获取导航项
+        current_item = self.addSubInterface(self.currentVersionInterface, '📋', '更新日志', position=NavigationItemPosition.TOP)
+        about_item = self.addSubInterface(self.aboutInterface, 'ℹ️', '关于', position=NavigationItemPosition.TOP)
         
-        button_layout = QHBoxLayout(self.button_container)
-        button_layout.setContentsMargins(20, 10, 20, 10)
+        # 创建底部导航按钮区域
+        self.nav_button_container = QWidget()
+        self.nav_button_container.setObjectName("navButtonContainer")
+        self.nav_button_container.setFixedHeight(60)
+        nav_button_layout = QHBoxLayout(self.nav_button_container)
+        nav_button_layout.setContentsMargins(90, 10, 20, 10)
         
         # 上一个按钮
         self.prev_button = PushButton('← 上一个')
-        self.prev_button.setFont(QFont(load_custom_font(), 14))
+        self.prev_button.setFont(QFont(load_custom_font(), 12))
         self.prev_button.clicked.connect(self.show_previous_page)
-        self.prev_button.setEnabled(False)
+        self.prev_button.setEnabled(False)  # 第一页时禁用
         
         # 页面指示器
-        self.page_label = BodyLabel('1 / 3')
-        self.page_label.setFont(QFont(load_custom_font(), 14))
+        self.page_label = BodyLabel('1 / 2')
+        self.page_label.setFont(QFont(load_custom_font(), 12))
         self.page_label.setAlignment(Qt.AlignCenter)
         
         # 下一个按钮
         self.next_button = PushButton('下一个 →')
-        self.next_button.setFont(QFont(load_custom_font(), 14))
+        self.next_button.setFont(QFont(load_custom_font(), 12))
         self.next_button.clicked.connect(self.show_next_page)
         
-        # 完成按钮（最后一页显示）
-        self.complete_button = PrimaryPushButton('✨ 完成')
-        self.complete_button.setFont(QFont(load_custom_font(), 14))
-        self.complete_button.clicked.connect(self.complete_update)
-        self.complete_button.hide()
+        # 关闭按钮
+        self.close_button = PrimaryPushButton('❌ 关闭')
+        self.close_button.setFont(QFont(load_custom_font(), 12))
+        self.close_button.clicked.connect(self.close_window)
         
-        button_layout.addWidget(self.prev_button)
-        button_layout.addStretch()
-        button_layout.addWidget(self.page_label)
-        button_layout.addStretch()
-        button_layout.addWidget(self.next_button)
-        button_layout.addWidget(self.complete_button)
+        nav_button_layout.addWidget(self.prev_button)
+        nav_button_layout.addStretch()
+        nav_button_layout.addWidget(self.page_label)
+        nav_button_layout.addStretch()
+        nav_button_layout.addWidget(self.next_button)
+        nav_button_layout.addWidget(self.close_button)
         
-        # 添加到主布局
-        main_layout = self.layout()
-        if main_layout:
-            main_layout.addWidget(self.button_container)
+        # 连接导航切换信号
+        current_item.clicked.connect(lambda: self.on_navigation_changed(self.currentVersionInterface))
+        about_item.clicked.connect(lambda: self.on_navigation_changed(self.aboutInterface))
     
     def on_navigation_changed(self, interface):
         """(^・ω・^ ) 白露的导航切换魔法！
-        处理导航项点击事件～ ✨"""
+        当用户点击导航项时更新页面状态～ ✨"""
         
-        if interface == self.update_content_interface:
+        # 更新当前页面索引
+        if interface == self.currentVersionInterface:
             self.current_page_index = 0
-        elif interface == self.version_info_interface:
+        elif interface == self.aboutInterface:
             self.current_page_index = 1
-        elif interface == self.complete_interface:
-            self.current_page_index = 2
         
         self.update_navigation_buttons()
     
     def show_previous_page(self):
         """(^・ω・^ ) 白露的上一页魔法！
-        切换到上一页～ ✨"""
+        切换到上一个更新日志页面～ ✨"""
         if self.current_page_index > 0:
             self.current_page_index -= 1
             self.switch_to_current_page()
@@ -380,7 +264,7 @@ class UpdateLogWindow(QWidget):
     
     def show_next_page(self):
         """(^・ω・^ ) 白露的下一页魔法！
-        切换到下一页～ ✨"""
+        切换到下一个更新日志页面～ ✨"""
         if self.current_page_index < self.total_pages - 1:
             self.current_page_index += 1
             self.switch_to_current_page()
@@ -388,17 +272,15 @@ class UpdateLogWindow(QWidget):
     
     def switch_to_current_page(self):
         """(^・ω・^ ) 白露的页面切换魔法！
-        切换到当前页面～ ✨"""
+        根据当前索引切换到对应的更新日志页面～ ✨"""
         if self.current_page_index == 0:
-            self.navigation_interface.switchTo(self.update_content_interface)
+            self.switchTo(self.currentVersionInterface)
         elif self.current_page_index == 1:
-            self.navigation_interface.switchTo(self.version_info_interface)
-        elif self.current_page_index == 2:
-            self.navigation_interface.switchTo(self.complete_interface)
+            self.switchTo(self.aboutInterface)
     
     def update_navigation_buttons(self):
-        """(^・ω・^ ) 白露的按钮更新魔法！
-        更新按钮状态和显示～ ✨"""
+        """(^・ω・^ ) 白露的按钮状态更新魔法！
+        根据当前页面更新按钮状态和显示～ ✨"""
         
         # 更新页面指示器
         self.page_label.setText(f'{self.current_page_index + 1} / {self.total_pages}')
@@ -406,100 +288,50 @@ class UpdateLogWindow(QWidget):
         # 更新上一个按钮状态
         self.prev_button.setEnabled(self.current_page_index > 0)
         
-        # 更新下一个/完成按钮显示
-        if self.current_page_index < self.total_pages - 1:
-            self.next_button.show()
-            self.complete_button.hide()
-        else:
-            self.next_button.hide()
-            self.complete_button.show()
+        # 更新下一个按钮状态
+        self.next_button.setEnabled(self.current_page_index < self.total_pages - 1)
     
-    def complete_update(self):
-        """(^・ω・^ ) 白露的完成更新魔法！
-        用户完成查看更新日志～ ✨"""
-        logger.info("白露更新日志: 用户完成查看更新日志～ ")
-        
-        # 更新版本信息文件
-        self.update_version_file()
-        
-        # 关闭窗口
+    def close_window(self):
+        """(^・ω・^ ) 白露的窗口关闭魔法！
+        关闭更新日志窗口并发送打开主界面信号～ ✨"""
+        logger.info("白露更新日志: 用户关闭更新日志窗口，准备打开主界面～ ")
+        # 发射信号通知主程序打开主界面
+        self.start_signal_update.emit()
         self.close()
-        
-        # 发射关闭信号
-        self.close_signal.emit()
     
-    def update_version_file(self):
-        """(^・ω・^ ) 白露的版本文件更新魔法！
-        更新引导完成文件中的版本信息～ ✨"""
+    def add_bottom_buttons(self):
+        """(^・ω・^ ) 白露的底部按钮添加魔法！
+        将按钮容器添加到窗口底部～ ✨"""
+        # 设置按钮容器的父对象为窗口
+        self.nav_button_container.setParent(self)
         
-        guide_complete_file = 'app/Settings/guide_complete.json'
+        # 将按钮容器移动到窗口底部
+        self.nav_button_container.move(0, self.height() - 60)
         
-        try:
-            if os.path.exists(guide_complete_file):
-                with open(guide_complete_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                
-                # 更新版本号
-                data['version'] = VERSION
-                data['last_update_time'] = self.get_current_time_string()
-                
-                with open(guide_complete_file, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, ensure_ascii=False, indent=4)
-                
-                logger.info("白露更新日志: 版本信息文件更新成功～ ✧*｡٩(ˊᗜˋ*)و✧*｡")
-        except Exception as e:
-            logger.error(f"白露错误: 更新版本信息文件失败: {e}")
-    
-    def get_update_content(self):
-        """(^・ω・^ ) 白露的更新内容获取魔法！
-        获取当前版本的更新内容～ ✨"""
-        return {
-            '🚀 新功能': [
-                '新增更新日志界面,方便用户了解版本更新内容',
-                '新增MD5校验功能,检验捐献支持二维码是否被篡改',
-                '新增'
-            ],
-            '🐛 问题修复': [
-                '优化引导流程,区分首次使用和版本更新情况',
-                '解决引导界面在版本更新时错误显示的问题',
-                '优化文件路径处理，提高跨平台兼容性'
-            ],
-            '💡 体验优化': [
-                '优化界面布局，提升视觉体验',
-                '改进字体加载机制，确保字体显示正常',
-                '增强日志记录，便于问题排查'
-            ]
-        }
-    
-    def get_build_info(self):
-        """(^・ω・^ ) 白露的构建信息获取魔法！
-        获取构建相关信息～ ✨"""
+        # 设置按钮容器宽度与窗口相同
+        self.nav_button_container.setFixedWidth(self.width())
         
-        return {
-            '构建时间': self.get_current_time_string(),
-            '构建环境': 'Windows',
-            'Python版本': '3.8+',
-            'Qt版本': '5.15+'
-        }
+        # 显示按钮容器
+        self.nav_button_container.show()
+        
+        # 连接窗口大小改变事件，以调整按钮容器位置
+        self.resizeEvent = self.on_window_resized
     
-    def get_current_time_string(self):
-        """(^・ω・^ ) 白露的时间获取魔法！
-        获取当前时间字符串～ ✨"""
-        return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    def on_window_resized(self, event):
+        """(^・ω・^ ) 白露的窗口大小调整魔法！
+        当窗口大小改变时调整按钮容器的位置和大小～ ✨"""
+        # 调用父类的resizeEvent
+        super().resizeEvent(event)
+        
+        # 调整按钮容器的位置和大小
+        if hasattr(self, 'nav_button_container'):
+            self.nav_button_container.move(0, self.height() - 60)
+            self.nav_button_container.setFixedWidth(self.width())
     
     def closeEvent(self, event):
         """(^・ω・^ ) 白露的窗口关闭魔法！
-        处理窗口关闭事件～ ✨"""
-        logger.debug("白露更新日志: 更新日志窗口已关闭～ ")
+        确保更新日志窗口关闭时正确清理资源并发送打开主界面信号～ ✨"""
+        logger.debug("白露更新日志: 更新日志窗口已关闭，准备打开主界面～ ")
+        # 发射信号通知主程序打开主界面
+        self.start_signal_update.emit()
         super().closeEvent(event)
-
-
-# 测试代码
-if __name__ == '__main__':
-    import sys
-    from PyQt5.QtWidgets import QApplication
-    
-    app = QApplication(sys.argv)
-    window = UpdateLogWindow()
-    window.show()
-    sys.exit(app.exec_())
