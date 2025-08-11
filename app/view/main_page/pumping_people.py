@@ -356,8 +356,8 @@ class pumping_people(QWidget):
                                 label = BodyLabel(display_text)
                             else:
                                 if display_format == 1:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
                                     if draw_count == 1:
-                                        self.result_grid.setAlignment(Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -374,7 +374,7 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{name}")
                                     else:
-                                        self.result_grid.setAlignment(Qt.AlignTop)
+                                        self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -382,7 +382,7 @@ class pumping_people(QWidget):
                                                 avatar = AvatarWidget()
                                                 avatar.setText(name)
                                             avatar.setRadius(font_size//2)
-                                            if current_image_path == '':
+                                            if current_image_path == None:
                                                 avatar.setText(name)
                                             text_label = BodyLabel(f"{name}")
                                             h_layout.addWidget(avatar)
@@ -393,8 +393,8 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{name}")
                                 elif display_format == 2:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
                                     if draw_count == 1:
-                                        self.result_grid.setAlignment(Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -411,7 +411,7 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{student_id_str}")
                                     else:
-                                        self.result_grid.setAlignment(Qt.AlignTop)
+                                        self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -419,7 +419,7 @@ class pumping_people(QWidget):
                                                 avatar = AvatarWidget()
                                                 avatar.setText(name)
                                             avatar.setRadius(font_size//2)
-                                            if current_image_path == '':
+                                            if current_image_path == None:
                                                 avatar.setText(name)
                                             text_label = BodyLabel(f"{student_id_str}")
                                             h_layout.addWidget(avatar)
@@ -430,8 +430,8 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{student_id_str}")
                                 else:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
                                     if draw_count == 1:
-                                        self.result_grid.setAlignment(Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -448,7 +448,7 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{student_id_str}\n{name}")
                                     else:
-                                        self.result_grid.setAlignment(Qt.AlignTop)
+                                        self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -456,7 +456,7 @@ class pumping_people(QWidget):
                                                 avatar = AvatarWidget()
                                                 avatar.setText(name)
                                             avatar.setRadius(font_size//2)
-                                            if current_image_path == '':
+                                            if current_image_path == None:
                                                 avatar.setText(name)
                                             text_label = BodyLabel(f"{student_id_str} {name}")
                                             h_layout.addWidget(avatar)
@@ -467,6 +467,7 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{student_id_str} {name}")
 
+                            widget = None  # 初始化widget变量
                             # 根据label类型应用不同的样式设置
                             if isinstance(label, QWidget) and hasattr(label, 'layout'):
                                 # 如果是容器类型，对容器内的文本标签应用样式
@@ -477,7 +478,6 @@ class pumping_people(QWidget):
                                         widget = item.widget()
                                         if isinstance(widget, BodyLabel):
                                             widget.setAlignment(Qt.AlignCenter)
-                                            widget.setFont(QFont(load_custom_font(), font_size))
                                             if animation_color == 1:
                                                 widget.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
                                             elif animation_color == 2:
@@ -485,11 +485,16 @@ class pumping_people(QWidget):
                             else:
                                 # 如果是普通的BodyLabel，直接应用样式
                                 label.setAlignment(Qt.AlignCenter)
-                                label.setFont(QFont(load_custom_font(), font_size))
                                 if animation_color == 1:
                                     label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
                                 elif animation_color == 2:
                                     label.setStyleSheet(f"color: {_animation_color};")
+                            
+                            # 为widget设置字体（如果widget存在）
+                            if widget is not None:
+                                widget.setFont(QFont(load_custom_font(), font_size))
+                            # 为label设置字体
+                            label.setFont(QFont(load_custom_font(), font_size))
                             vbox_layout.addWidget(label)
                             self.student_labels.append(label)
 
@@ -1139,8 +1144,8 @@ class pumping_people(QWidget):
                                 label = BodyLabel(display_text)
                             else:
                                 if display_format == 1:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
                                     if draw_count == 1:
-                                        self.result_grid.setAlignment(Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -1148,7 +1153,7 @@ class pumping_people(QWidget):
                                                 avatar = AvatarWidget()
                                                 avatar.setText(name)
                                             avatar.setRadius(font_size*2)
-                                            if current_image_path == '':
+                                            if current_image_path == None:
                                                 avatar.setText(name)
                                             text_label = BodyLabel(f"{name}")
                                             h_layout.addWidget(avatar)
@@ -1159,7 +1164,7 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{name}")
                                     else:
-                                        self.result_grid.setAlignment(Qt.AlignTop)
+                                        self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -1167,7 +1172,7 @@ class pumping_people(QWidget):
                                                 avatar = AvatarWidget()
                                                 avatar.setText(name)
                                             avatar.setRadius(font_size//2)
-                                            if current_image_path == '':
+                                            if current_image_path == None:
                                                 avatar.setText(name)
                                             text_label = BodyLabel(f"{name}")
                                             h_layout.addWidget(avatar)
@@ -1178,8 +1183,8 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{name}")
                                 elif display_format == 2:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
                                     if draw_count == 1:
-                                        self.result_grid.setAlignment(Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -1196,7 +1201,7 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{student_id_str}")
                                     else:
-                                        self.result_grid.setAlignment(Qt.AlignTop)
+                                        self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -1204,7 +1209,7 @@ class pumping_people(QWidget):
                                                 avatar = AvatarWidget()
                                                 avatar.setText(name)
                                             avatar.setRadius(font_size//2)
-                                            if current_image_path == '':
+                                            if current_image_path == None:
                                                 avatar.setText(name)
                                             text_label = BodyLabel(f"{student_id_str}")
                                             h_layout.addWidget(avatar)
@@ -1215,8 +1220,8 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{student_id_str}")
                                 else:
+                                    self.result_grid.setAlignment(Qt.AlignCenter)
                                     if draw_count == 1:
-                                        self.result_grid.setAlignment(Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -1233,7 +1238,7 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{student_id_str}\n{name}")
                                     else:
-                                        self.result_grid.setAlignment(Qt.AlignTop)
+                                        self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                         if show_student_image:
                                             if current_image_path != None:
                                                 avatar = AvatarWidget(current_image_path)
@@ -1241,7 +1246,7 @@ class pumping_people(QWidget):
                                                 avatar = AvatarWidget()
                                                 avatar.setText(name)
                                             avatar.setRadius(font_size//2)
-                                            if current_image_path == '':
+                                            if current_image_path == None:
                                                 avatar.setText(name)
                                             text_label = BodyLabel(f"{student_id_str} {name}")
                                             h_layout.addWidget(avatar)
@@ -1252,6 +1257,7 @@ class pumping_people(QWidget):
                                         else:
                                             label = BodyLabel(f"{student_id_str} {name}")
 
+                            widget = None  # 初始化widget变量
                             # 根据label类型应用不同的样式设置
                             if isinstance(label, QWidget) and hasattr(label, 'layout'):
                                 # 如果是容器类型，对容器内的文本标签应用样式
@@ -1261,20 +1267,23 @@ class pumping_people(QWidget):
                                         item = layout.itemAt(i)
                                         widget = item.widget()
                                         if isinstance(widget, BodyLabel):
-                                            widget.setAlignment(Qt.AlignCenter)
-                                            widget.setFont(QFont(load_custom_font(), font_size))
                                             if animation_color == 1:
                                                 widget.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
                                             elif animation_color == 2:
                                                 widget.setStyleSheet(f"color: {_result_color};")
                             else:
                                 # 如果是普通的BodyLabel，直接应用样式
-                                label.setAlignment(Qt.AlignCenter)
-                                label.setFont(QFont(load_custom_font(), font_size))
                                 if animation_color == 1:
                                     label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
                                 elif animation_color == 2:
                                     label.setStyleSheet(f"color: {_result_color};")
+
+                            # 为widget设置字体（如果widget存在）
+                            if widget is not None:
+                                widget.setFont(QFont(load_custom_font(), font_size))
+                                widget.setAlignment(Qt.AlignCenter)
+                            # 为label设置字体
+                            label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
 
                         # 计算所有标签的宽度之和，并考虑间距和边距
@@ -2063,7 +2072,7 @@ class pumping_people(QWidget):
         # 结果区域布局
         self.result_grid = QGridLayout()
         self.result_grid.setSpacing(1)
-        self.result_grid.setAlignment(Qt.AlignTop)
+        self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
 
         scroll_area_container.addLayout(self.result_grid)
         

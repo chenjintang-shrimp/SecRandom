@@ -278,8 +278,8 @@ class pumping_reward(QWidget):
                             __container.setLayout(h_layout)
                             reward_id_str = f"{num:02}"
                             if display_format == 1:
+                                self.result_grid.setAlignment(Qt.AlignCenter)
                                 if draw_count == 1:
-                                    self.result_grid.setAlignment(Qt.AlignCenter)
                                     if show_reward_image:
                                         if current_image_path != None:
                                             avatar = AvatarWidget(current_image_path)
@@ -296,7 +296,7 @@ class pumping_reward(QWidget):
                                     else:
                                         label = BodyLabel(f"{name}")
                                 else:
-                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                     if show_reward_image:
                                         if current_image_path != None:
                                             avatar = AvatarWidget(current_image_path)
@@ -313,8 +313,8 @@ class pumping_reward(QWidget):
                                     else:
                                         label = BodyLabel(f"{name}")
                             elif display_format == 2:
+                                self.result_grid.setAlignment(Qt.AlignCenter)
                                 if draw_count == 1:
-                                    self.result_grid.setAlignment(Qt.AlignCenter)
                                     if show_reward_image:
                                         if current_image_path != None:
                                             avatar = AvatarWidget(current_image_path)
@@ -331,7 +331,7 @@ class pumping_reward(QWidget):
                                     else:
                                         label = BodyLabel(f"{reward_id_str}")
                                 else:
-                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                     if show_reward_image:
                                         if current_image_path != None:
                                             avatar = AvatarWidget(current_image_path)
@@ -339,7 +339,7 @@ class pumping_reward(QWidget):
                                             avatar = AvatarWidget()
                                             avatar.setText(name)
                                         avatar.setRadius(font_size//2)
-                                        if current_image_path == '':
+                                        if current_image_path == None:
                                             avatar.setText(name)
                                         text_label = BodyLabel(f"{reward_id_str}")
                                         h_layout.addWidget(avatar)
@@ -368,7 +368,7 @@ class pumping_reward(QWidget):
                                     else:
                                         label = BodyLabel(f"{reward_id_str}\n{name}")
                                 else:
-                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                     if show_reward_image:
                                         if current_image_path != None:
                                             avatar = AvatarWidget(current_image_path)
@@ -376,7 +376,7 @@ class pumping_reward(QWidget):
                                             avatar = AvatarWidget()
                                             avatar.setText(name)
                                         avatar.setRadius(font_size//2)
-                                        if current_image_path == '':
+                                        if current_image_path == None:
                                             avatar.setText(name)
                                         text_label = BodyLabel(f"{reward_id_str} {name}")
                                         h_layout.addWidget(avatar)
@@ -388,6 +388,7 @@ class pumping_reward(QWidget):
                                         label = BodyLabel(f"{reward_id_str} {name}")
 
                             # 根据label类型应用不同的样式设置
+                            widget = None  # 初始化widget变量
                             if isinstance(label, QWidget) and hasattr(label, 'layout'):
                                 # 如果是容器类型，对容器内的文本标签应用样式
                                 layout = label.layout()
@@ -397,7 +398,6 @@ class pumping_reward(QWidget):
                                         widget = item.widget()
                                         if isinstance(widget, BodyLabel):
                                             widget.setAlignment(Qt.AlignCenter)
-                                            widget.setFont(QFont(load_custom_font(), font_size))
                                             if animation_color == 1:
                                                 widget.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
                                             elif animation_color == 2:
@@ -405,11 +405,16 @@ class pumping_reward(QWidget):
                             else:
                                 # 如果是普通的BodyLabel，直接应用样式
                                 label.setAlignment(Qt.AlignCenter)
-                                label.setFont(QFont(load_custom_font(), font_size))
                                 if animation_color == 1:
                                     label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
                                 elif animation_color == 2:
                                     label.setStyleSheet(f"color: {_animation_color};")
+
+                            # 为widget设置字体（如果widget存在）
+                            if widget is not None:
+                                widget.setFont(QFont(load_custom_font(), font_size))
+                            # 为label设置字体
+                            label.setFont(QFont(load_custom_font(), font_size))
                             self.reward_labels.append(label)
 
                         # 计算所有标签的宽度之和，并考虑间距和边距
@@ -833,8 +838,8 @@ class pumping_reward(QWidget):
                             __container.setLayout(h_layout)
                             reward_id_str = f"{num:02}"
                             if display_format == 1:
+                                self.result_grid.setAlignment(Qt.AlignCenter)
                                 if draw_count == 1:
-                                    self.result_grid.setAlignment(Qt.AlignCenter)
                                     if show_reward_image:
                                         if current_image_path != None:
                                             avatar = AvatarWidget(current_image_path)
@@ -842,7 +847,7 @@ class pumping_reward(QWidget):
                                             avatar = AvatarWidget()
                                             avatar.setText(name)
                                         avatar.setRadius(font_size*2)
-                                        if current_image_path == '':
+                                        if current_image_path == None:
                                             avatar.setText(name)
                                         text_label = BodyLabel(f"{name}")
                                         h_layout.addWidget(avatar)
@@ -853,7 +858,7 @@ class pumping_reward(QWidget):
                                     else:
                                         label = BodyLabel(f"{name}")
                                 else:
-                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                     if show_reward_image:
                                         if current_image_path != None:
                                             avatar = AvatarWidget(current_image_path)
@@ -861,7 +866,7 @@ class pumping_reward(QWidget):
                                             avatar = AvatarWidget()
                                             avatar.setText(name)
                                         avatar.setRadius(font_size//2)
-                                        if current_image_path == '':
+                                        if current_image_path == None:
                                             avatar.setText(name)
                                         text_label = BodyLabel(f"{name}")
                                         h_layout.addWidget(avatar)
@@ -872,8 +877,8 @@ class pumping_reward(QWidget):
                                     else:
                                         label = BodyLabel(f"{name}")
                             elif display_format == 2:
+                                self.result_grid.setAlignment(Qt.AlignCenter)
                                 if draw_count == 1:
-                                    self.result_grid.setAlignment(Qt.AlignCenter)
                                     if show_reward_image:
                                         if current_image_path != None:
                                             avatar = AvatarWidget(current_image_path)
@@ -881,7 +886,7 @@ class pumping_reward(QWidget):
                                             avatar = AvatarWidget()
                                             avatar.setText(name)
                                         avatar.setRadius(font_size*2)
-                                        if current_image_path == '':
+                                        if current_image_path == None:
                                             avatar.setText(name)
                                         text_label = BodyLabel(f"{reward_id_str}")
                                         h_layout.addWidget(avatar)
@@ -892,7 +897,7 @@ class pumping_reward(QWidget):
                                     else:
                                         label = BodyLabel(f"{reward_id_str}")
                                 else:
-                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                     if show_reward_image:
                                         if current_image_path != None:
                                             avatar = AvatarWidget(current_image_path)
@@ -900,7 +905,7 @@ class pumping_reward(QWidget):
                                             avatar = AvatarWidget()
                                             avatar.setText(name)
                                         avatar.setRadius(font_size//2)
-                                        if current_image_path == '':
+                                        if current_image_path == None:
                                             avatar.setText(name)
                                         text_label = BodyLabel(f"{reward_id_str}")
                                         h_layout.addWidget(avatar)
@@ -911,8 +916,8 @@ class pumping_reward(QWidget):
                                     else:
                                         label = BodyLabel(f"{reward_id_str}")
                             else:
+                                self.result_grid.setAlignment(Qt.AlignCenter)
                                 if draw_count == 1:
-                                    self.result_grid.setAlignment(Qt.AlignCenter)
                                     if show_reward_image:
                                         if current_image_path != None:
                                             avatar = AvatarWidget(current_image_path)
@@ -929,7 +934,7 @@ class pumping_reward(QWidget):
                                     else:
                                         label = BodyLabel(f"{reward_id_str}\n{name}")
                                 else:
-                                    self.result_grid.setAlignment(Qt.AlignTop)
+                                    self.result_grid.setAlignment(Qt.AlignTop | Qt.AlignCenter)
                                     if show_reward_image:
                                         if current_image_path != None:
                                             avatar = AvatarWidget(current_image_path)
@@ -937,7 +942,7 @@ class pumping_reward(QWidget):
                                             avatar = AvatarWidget()
                                             avatar.setText(name)
                                         avatar.setRadius(font_size//2)
-                                        if current_image_path == '':
+                                        if current_image_path == None:
                                             avatar.setText(name)
                                         text_label = BodyLabel(f"{reward_id_str} {name}")
                                         h_layout.addWidget(avatar)
@@ -948,6 +953,7 @@ class pumping_reward(QWidget):
                                     else:
                                         label = BodyLabel(f"{reward_id_str} {name}")
 
+                            widget = None  # 初始化widget变量
                             # 根据label类型应用不同的样式设置
                             if isinstance(label, QWidget) and hasattr(label, 'layout'):
                                 # 如果是容器类型，对容器内的文本标签应用样式
@@ -957,20 +963,22 @@ class pumping_reward(QWidget):
                                         item = layout.itemAt(i)
                                         widget = item.widget()
                                         if isinstance(widget, BodyLabel):
-                                            widget.setAlignment(Qt.AlignCenter)
-                                            widget.setFont(QFont(load_custom_font(), font_size))
                                             if animation_color == 1:
                                                 widget.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
                                             elif animation_color == 2:
                                                 widget.setStyleSheet(f"color: {_result_color};")
                             else:
-                                # 如果是普通的BodyLabel，直接应用样式
-                                label.setAlignment(Qt.AlignCenter)
-                                label.setFont(QFont(load_custom_font(), font_size))
                                 if animation_color == 1:
                                     label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
                                 elif animation_color == 2:
                                     label.setStyleSheet(f"color: {_result_color};")
+
+                            # 为widget设置字体（如果widget存在）
+                            if widget is not None:
+                                widget.setFont(QFont(load_custom_font(), font_size))
+                                widget.setAlignment(Qt.AlignCenter)
+                            # 为label设置字体
+                            label.setFont(QFont(load_custom_font(), font_size))
                             self.reward_labels.append(label)
 
                         # 计算所有标签的宽度之和，并考虑间距和边距
