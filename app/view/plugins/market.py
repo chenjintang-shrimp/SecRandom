@@ -66,7 +66,11 @@ class MarketPluginButtonGroup(QWidget):
         """检查插件是否已安装及版本"""
         plugin_dir = "app/plugin"
         if not os.path.exists(plugin_dir):
+            logger.debug(f"插件目录不存在: {plugin_dir}")
             return None
+        
+        market_plugin_name = self.plugin_info.get("name")
+        logger.debug(f"开始检查插件 '{market_plugin_name}' 的安装状态")
         
         # 查找已安装的插件
         for item in os.listdir(plugin_dir):
@@ -82,16 +86,54 @@ class MarketPluginButtonGroup(QWidget):
                 with open(plugin_json_path, 'r', encoding='utf-8') as f:
                     plugin_config = json.load(f)
                 
-                # 检查是否是同一个插件（通过名称或URL匹配）
-                if (plugin_config.get("name") == self.plugin_info.get("name") or 
-                    plugin_config.get("url") == self.plugin_info.get("url")):
-                    return plugin_config.get("version")
+                # 获取已安装插件的信息用于日志记录
+                installed_plugin_name = plugin_config.get("name", "未知")
+                
+                # 检查是否是同一个插件
+                if self._is_same_plugin(plugin_config):
+                    version = plugin_config.get("version")
+                    # 如果版本为空或None，返回None而不是空字符串
+                    if not version or version.strip() == "":
+                        logger.debug(f"插件匹配成功但版本信息为空: 已安装插件='{installed_plugin_name}'")
+                        return None
+                    logger.info(f"找到匹配的已安装插件: '{installed_plugin_name}'，版本: {version}")
+                    return version
+                else:
+                    logger.debug(f"插件不匹配，跳过: 已安装='{installed_plugin_name}' vs 市场='{market_plugin_name}'")
                     
             except Exception as e:
                 logger.error(f"检查已安装插件版本失败: {e}")
                 continue
         
+        logger.debug(f"未找到已安装的插件 '{market_plugin_name}'")
         return None
+    
+    def _is_same_plugin(self, plugin_config):
+        """检查已安装插件是否与市场插件是同一个插件"""
+        installed_plugin_url = plugin_config.get("url")
+        market_plugin_url = self.plugin_info.get("url")
+        
+        # 只使用URL匹配插件
+        if installed_plugin_url and market_plugin_url:
+            return self._match_by_url(installed_plugin_url, market_plugin_url)
+        
+        # 如果没有URL信息，则无法匹配
+        logger.debug(f"插件缺少URL信息，无法进行匹配")
+        return False
+    
+    def _match_by_url(self, installed_url, market_url):
+        """通过URL匹配插件"""
+        if installed_url == market_url:
+            logger.info(f"插件匹配成功 - URL匹配: {installed_url}")
+            return True
+        else:
+            logger.debug(f"插件URL不匹配: 已安装={installed_url}, 市场={market_url}")
+            return False
+    
+    def _match_by_name_and_author(self, installed_name, market_name, installed_author, market_author):
+        """已弃用：此方法不再使用，仅保留URL匹配"""
+        logger.debug(f"名称和作者匹配方法已弃用，仅使用URL匹配")
+        return False
     
     def _check_plugin_version_compatibility(self):
         """检查插件版本与应用程序的兼容性"""
@@ -135,8 +177,29 @@ class MarketPluginButtonGroup(QWidget):
             if market_plugins is None:
                 plugin_list_url = "https://raw.githubusercontent.com/SECTL/SecRandom-market/master/Plugins/plugin_list.json"
                 try:
-                    with urllib.request.urlopen(plugin_list_url) as response:
+                    # 设置请求头，模拟浏览器请求
+                    req = urllib.request.Request(
+                        plugin_list_url,
+                        headers={
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                        }
+                    )
+                    
+                    with urllib.request.urlopen(req, timeout=10) as response:
                         market_plugins = json.loads(response.read().decode('utf-8'))
+                except urllib.error.HTTPError as e:
+                    if e.code == 502:
+                        logger.error(f"获取插件广场列表失败: 502 BadGateway")
+                    else:
+                        logger.error(f"获取插件广场列表失败: HTTP {e.code} {e.reason}")
+                    # 如果获取失败，默认允许显示（避免因网络问题导致所有插件都不显示）
+                    return True
+                except urllib.error.URLError as e:
+                    logger.error(f"获取插件广场列表失败: 网络错误 {e.reason}")
+                    return True
+                except json.JSONDecodeError as e:
+                    logger.error(f"获取插件广场列表失败: JSON解析错误 {e}")
+                    return True
                 except Exception as e:
                     logger.error(f"获取插件广场列表失败: {e}")
                     # 如果获取失败，默认允许显示（避免因网络问题导致所有插件都不显示）
@@ -148,9 +211,8 @@ class MarketPluginButtonGroup(QWidget):
                 if market_plugin_key in ["其他插件...", "您的插件仓库名称"]:
                     continue
                 
-                # 通过名称或URL匹配
-                if (plugin_name and market_plugin_info.get("name") == plugin_name) or \
-                   (plugin_url and market_plugin_info.get("url") == plugin_url):
+                # 仅通过URL匹配
+                if plugin_url and market_plugin_info.get("url") == plugin_url:
                     logger.info(f"插件 {plugin_name} 在插件广场中存在")
                     return True
             
@@ -224,12 +286,51 @@ class MarketPluginButtonGroup(QWidget):
                     logger.info(f"正在获取发布信息: {releases_url}")
                     
                     # 获取发布信息
-                    try:
-                        with urllib.request.urlopen(releases_url) as response:
-                            release_info = json.loads(response.read().decode('utf-8'))
-                    except Exception as e:
-                        logger.error(f"获取发布信息失败: {e}")
-                        release_info = None
+                    max_retries = 3
+                    retry_count = 0
+                    release_info = None
+                    
+                    while retry_count < max_retries:
+                        try:
+                            # 创建请求对象并添加User-Agent头
+                            request = urllib.request.Request(releases_url)
+                            request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+                            
+                            with urllib.request.urlopen(request, timeout=10) as response:
+                                release_info = json.loads(response.read().decode('utf-8'))
+                                break  # 成功获取，退出重试循环
+                        except urllib.error.HTTPError as e:
+                            if e.code == 502 and retry_count < max_retries - 1:
+                                # 502错误，等待后重试
+                                retry_delay = 2 * (retry_count + 1)  # 指数退避：2秒、4秒
+                                logger.warning(f"GitHub API返回502错误，{retry_delay}秒后重试 (第{retry_count + 1}次重试): {e}")
+                                time.sleep(retry_delay)
+                                retry_count += 1
+                                continue
+                            else:
+                                logger.error(f"获取发布信息HTTP错误 (状态码: {e.code}): {e}")
+                                break
+                        except urllib.error.URLError as e:
+                            if retry_count < max_retries - 1:
+                                retry_delay = 2 * (retry_count + 1)
+                                logger.warning(f"获取发布信息URL错误，{retry_delay}秒后重试 (第{retry_count + 1}次重试): {e}")
+                                time.sleep(retry_delay)
+                                retry_count += 1
+                                continue
+                            else:
+                                logger.error(f"获取发布信息URL错误: {e}")
+                                break
+                        except json.JSONDecodeError as e:
+                            logger.error(f"解析发布信息JSON失败: {e}")
+                            break
+                        except Exception as e:
+                            logger.error(f"获取发布信息未知错误: {e}")
+                            break
+                        
+                        retry_count += 1
+                    
+                    if retry_count >= max_retries:
+                        logger.error(f"获取发布信息失败：已达到最大重试次数 ({max_retries}次)")
                     
                     # 只有在成功获取发布信息时才处理assets
                     if release_info:
@@ -255,7 +356,55 @@ class MarketPluginButtonGroup(QWidget):
 
             logger.info(f"正在下载插件: {download_url}")
             
-            urllib.request.urlretrieve(download_url, zip_path)
+            # 改进的下载方法，添加重试机制和错误处理
+            max_retries = 3
+            retry_count = 0
+            download_success = False
+            
+            while retry_count < max_retries and not download_success:
+                try:
+                    # 创建请求对象并添加User-Agent头
+                    request = urllib.request.Request(download_url)
+                    request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+                    
+                    # 使用urlopen获取响应，设置超时
+                    with urllib.request.urlopen(request, timeout=30) as response:
+                        # 读取数据并写入文件
+                        with open(zip_path, 'wb') as f:
+                            f.write(response.read())
+                        download_success = True
+                        logger.info(f"插件下载成功 (第{retry_count + 1}次尝试)")
+                        
+                except urllib.error.HTTPError as e:
+                    if e.code == 502 and retry_count < max_retries - 1:
+                        # 502错误，等待后重试
+                        retry_delay = 3 * (retry_count + 1)  # 指数退避：3秒、6秒、9秒
+                        logger.warning(f"下载插件时返回502错误，{retry_delay}秒后重试 (第{retry_count + 1}次重试): {e}")
+                        time.sleep(retry_delay)
+                        retry_count += 1
+                    else:
+                        logger.error(f"下载插件HTTP错误 (状态码: {e.code}): {e}")
+                        break
+                        
+                except urllib.error.URLError as e:
+                    if retry_count < max_retries - 1:
+                        retry_delay = 3 * (retry_count + 1)
+                        logger.warning(f"下载插件URL错误，{retry_delay}秒后重试 (第{retry_count + 1}次重试): {e}")
+                        time.sleep(retry_delay)
+                        retry_count += 1
+                    else:
+                        logger.error(f"下载插件URL错误: {e}")
+                        break
+                        
+                except Exception as e:
+                    logger.error(f"下载插件未知错误: {e}")
+                    break
+                
+                retry_count += 1
+            
+            if not download_success:
+                logger.error(f"下载插件失败：已达到最大重试次数 ({max_retries}次)")
+                return False
             
             # 解压文件
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -276,6 +425,8 @@ class MarketPluginButtonGroup(QWidget):
         """处理操作按钮点击事件"""
         button_text = self.actionButton.text()
         plugin_name = self.plugin_info.get("name")
+        
+        logger.info(f"插件 {plugin_name} 的操作按钮被点击，按钮文本: {button_text}")
         
         # 首先检查版本兼容性（仅对安装和更新操作）
         if button_text in ["安装", "更新"]:
@@ -337,7 +488,9 @@ class MarketPluginButtonGroup(QWidget):
                             plugin_config = json.load(f)
                         # 更新按钮状态
                         self.installed_version = plugin_config.get("version")
-                        self.actionButton.setText(self._get_button_text())
+                        new_button_text = self._get_button_text()
+                        logger.info(f"安装成功，更新按钮状态: {new_button_text}")
+                        self.actionButton.setText(new_button_text)
                         self.actionButton.setIcon(self._get_button_icon())
                         
                         success_dialog = Dialog("安装成功", f"插件 {plugin_name} 安装成功！", self)
@@ -411,15 +564,38 @@ class MarketPluginButtonGroup(QWidget):
                     with open(plugin_json_path, 'r', encoding='utf-8') as f:
                         plugin_config = json.load(f)
                     
-                    # 检查是否是同一个插件
-                    if plugin_config.get("name") == plugin_name:
+                    # 获取已安装插件的信息用于日志记录
+                    installed_plugin_name = plugin_config.get("name", "未知")
+                    installed_plugin_url = plugin_config.get("url", "无")
+                    market_plugin_name = plugin_name
+                    market_plugin_url = self.plugin_info.get("url", "无")
+
+                    # 检查是否是同一个插件（仅使用URL匹配）
+                    if installed_plugin_url and market_plugin_url:
+                        # 如果两个插件都有URL，则必须URL匹配
+                        if installed_plugin_url == market_plugin_url:
+                            match_reason = "URL匹配"
+                            should_uninstall = True
+                        else:
+                            match_reason = "URL不匹配"
+                            should_uninstall = False
+                    else:
+                        # 如果没有URL，则无法匹配（根据新的匹配逻辑）
+                        match_reason = "缺少URL信息，无法匹配"
+                        should_uninstall = False
+                    
+                    logger.info(f"匹配结果: {match_reason}, 是否卸载: {should_uninstall}")
+                    
+                    if should_uninstall:
                         # 删除插件文件夹
                         shutil.rmtree(item_path)
-                        logger.info(f"成功卸载插件: {item_path}")
+                        logger.info(f"成功卸载插件: {item_path} (匹配条件: 名称={installed_plugin_name == market_plugin_name}, URL={installed_plugin_url == market_plugin_url})")
                         
                         # 更新按钮状态
                         self.installed_version = None
-                        self.actionButton.setText(self._get_button_text())
+                        new_button_text = self._get_button_text()
+                        logger.info(f"卸载成功，更新按钮状态: {new_button_text}")
+                        self.actionButton.setText(new_button_text)
                         self.actionButton.setIcon(self._get_button_icon())
                         
                         success_dialog = Dialog("卸载成功", f"插件 {plugin_name} 卸载成功！", self)
@@ -482,7 +658,9 @@ class MarketPluginButtonGroup(QWidget):
                         
                         # 更新按钮状态
                         self.installed_version = plugin_config.get("version")
-                        self.actionButton.setText(self._get_button_text())
+                        new_button_text = self._get_button_text()
+                        logger.info(f"更新成功，更新按钮状态: {new_button_text}")
+                        self.actionButton.setText(new_button_text)
                         self.actionButton.setIcon(self._get_button_icon())
                         
                         success_dialog = Dialog("更新成功", f"插件 {plugin_name} 更新成功！", self)
@@ -542,11 +720,44 @@ class MarketPluginButtonGroup(QWidget):
                 with open(plugin_json_path, 'r', encoding='utf-8') as f:
                     plugin_config = json.load(f)
                 
-                # 检查是否是同一个插件
-                if plugin_config.get("name") == plugin_name:
+                # 检查是否是同一个插件（通过名称或URL匹配，与_check_installed_version保持一致）
+                installed_plugin_name = plugin_config.get("name")
+                installed_plugin_url = plugin_config.get("url")
+                market_plugin_name = plugin_name
+                market_plugin_url = self.plugin_info.get("url")
+                
+                # 优先使用URL匹配，避免同名插件误卸载
+                if installed_plugin_url and market_plugin_url:
+                    # 如果两个插件都有URL，则必须URL匹配
+                    if installed_plugin_url == market_plugin_url:
+                        match_reason = "URL匹配"
+                        should_uninstall = True
+                    else:
+                        match_reason = "URL不匹配"
+                        should_uninstall = False
+                else:
+                    # 如果没有URL，则使用名称匹配，但要更严格
+                    if installed_plugin_name == market_plugin_name:
+                        # 额外检查作者信息，避免同名插件误匹配
+                        installed_author = plugin_config.get("author")
+                        market_author = self.plugin_info.get("author")
+                        if installed_author and market_author and installed_author == market_author:
+                            match_reason = "名称和作者匹配"
+                            should_uninstall = True
+                        else:
+                            # 如果没有作者信息或作者不匹配，则不认为是同一个插件
+                            match_reason = "名称匹配但作者不匹配"
+                            should_uninstall = False
+                    else:
+                        match_reason = "名称不匹配"
+                        should_uninstall = False
+                
+                logger.info(f"内部卸载匹配结果: {match_reason}, 是否卸载: {should_uninstall}")
+                
+                if should_uninstall:
                     # 删除插件文件夹
                     shutil.rmtree(item_path)
-                    logger.info(f"成功卸载插件: {item_path}")
+                    logger.info(f"成功卸载插件: {item_path} (匹配条件: 名称={installed_plugin_name == market_plugin_name}, URL={installed_plugin_url == market_plugin_url})")
                     return True
                     
             except Exception as e:
@@ -611,20 +822,128 @@ class PluginMarketPage(GroupHeaderCardWidget):
     
     def fetch_plugin_list(self):
         """从远程仓库获取插件列表"""
+        import time
+        
+        max_retries = 3
+        retry_delay = 2  # 秒
+        
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"正在获取插件列表: {self.plugin_list_url} (尝试 {attempt + 1}/{max_retries})")
+                
+                # 设置请求头，模拟浏览器请求
+                req = urllib.request.Request(
+                    self.plugin_list_url,
+                    headers={
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    }
+                )
+                
+                # 发送HTTP请求获取插件列表
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    data = response.read().decode('utf-8')
+                    plugin_list = json.loads(data)
+                
+                logger.info(f"成功获取插件列表，共 {len(plugin_list)} 个插件")
+                return plugin_list
+                
+            except urllib.error.HTTPError as e:
+                if e.code == 502:
+                    logger.warning(f"遇到502 BadGateway错误，第{attempt + 1}次重试")
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay)
+                        retry_delay *= 2  # 指数退避
+                        continue
+                    else:
+                        logger.error(f"获取插件列表失败: 502 BadGateway (已重试{max_retries}次)")
+                        return {}
+                else:
+                    logger.error(f"获取插件列表失败: HTTP {e.code} {e.reason}")
+                    return {}
+                    
+            except urllib.error.URLError as e:
+                logger.error(f"获取插件列表失败: 网络错误 {e.reason}")
+                return {}
+                
+            except json.JSONDecodeError as e:
+                logger.error(f"获取插件列表失败: JSON解析错误 {e}")
+                return {}
+                
+            except Exception as e:
+                logger.error(f"获取插件列表失败: {e}")
+                return {}
+        
+        return {}
+    
+    def get_plugin_repo_icon(self, repo_url, branch="main"):
+        """获取插件仓库图标"""
         try:
-            logger.info(f"正在获取插件列表: {self.plugin_list_url}")
+            # 从GitHub URL中提取owner和repo
+            if "github.com/" in repo_url:
+                # 处理GitHub URL
+                if repo_url.endswith(".git"):
+                    repo_url = repo_url[:-4]  # 移除.git后缀
+                
+                parts = repo_url.split("github.com/")[-1].split("/")
+                if len(parts) >= 2:
+                    owner = parts[0]
+                    repo = parts[1]
+                    
+                    # 添加调试日志
+                    logger.debug(f"解析仓库信息 - owner: {owner}, repo: {repo}, branch: {branch}")
+                    
+                    # 构建图标文件URL：插件仓库名称\icon.png
+                    raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{repo}/icon.png"
+                    
+                    # 添加调试日志
+                    logger.debug(f"尝试获取图标: {raw_url}")
+                    
+                    try:
+                        # 设置请求头，模拟浏览器请求
+                        req = urllib.request.Request(
+                            raw_url,
+                            headers={
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                            }
+                        )
+                        
+                        # 尝试访问图标文件
+                        with urllib.request.urlopen(req, timeout=5) as response:
+                            if response.status == 200:
+                                # 下载图标数据
+                                icon_data = response.read()
+                                
+                                # 直接从内存数据创建QIcon
+                                pixmap = QPixmap()
+                                pixmap.loadFromData(icon_data)
+                                
+                                if not pixmap.isNull():
+                                    logger.info(f"成功获取插件图标: {raw_url}")
+                                    return QIcon(pixmap)
+                                else:
+                                    logger.debug(f"图标数据无效，无法创建QPixmap")
+                            else:
+                                logger.debug(f"图标文件访问失败，状态码: {response.status}")
+                    except urllib.error.HTTPError as e:
+                        if e.code == 502:
+                            logger.debug(f"获取图标文件遇到502 BadGateway错误: {raw_url}")
+                        else:
+                            logger.debug(f"获取图标文件HTTP错误 {e.code}: {raw_url}")
+                    except urllib.error.URLError as e:
+                        logger.debug(f"获取图标文件网络错误: {e.reason} - {raw_url}")
+                    except Exception as e:
+                        logger.debug(f"访问图标文件异常: {e}")
+                else:
+                    logger.warning(f"无法解析GitHub URL: {repo_url}, parts: {parts}")
+            else:
+                logger.warning(f"非GitHub URL: {repo_url}")
             
-            # 发送HTTP请求获取插件列表
-            with urllib.request.urlopen(self.plugin_list_url) as response:
-                data = response.read().decode('utf-8')
-                plugin_list = json.loads(data)
-            
-            logger.info(f"成功获取插件列表，共 {len(plugin_list)} 个插件")
-            return plugin_list
+            logger.warning(f"无法获取插件仓库图标: {repo_url}")
+            return None
             
         except Exception as e:
-            logger.error(f"获取插件列表失败: {e}")
-            return {}
+            logger.error(f"获取插件仓库图标失败: {e}")
+            return None
     
     def create_plugin_button_group(self, plugin_info):
         """创建插件按钮组"""
@@ -678,9 +997,31 @@ class PluginMarketPage(GroupHeaderCardWidget):
         market_plugins = None
         try:
             plugin_list_url = "https://raw.githubusercontent.com/SECTL/SecRandom-market/master/Plugins/plugin_list.json"
-            with urllib.request.urlopen(plugin_list_url) as response:
+            
+            # 设置请求头，模拟浏览器请求
+            req = urllib.request.Request(
+                plugin_list_url,
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+            )
+            
+            with urllib.request.urlopen(req, timeout=10) as response:
                 market_plugins = json.loads(response.read().decode('utf-8'))
             logger.info(f"成功获取插件广场列表，共 {len(market_plugins)} 个插件")
+        except urllib.error.HTTPError as e:
+            if e.code == 502:
+                logger.error(f"获取插件广场列表失败: 502 BadGateway")
+            else:
+                logger.error(f"获取插件广场列表失败: HTTP {e.code} {e.reason}")
+            # 如果获取失败，设置为None，让每个插件自己处理
+            market_plugins = None
+        except urllib.error.URLError as e:
+            logger.error(f"获取插件广场列表失败: 网络错误 {e.reason}")
+            market_plugins = None
+        except json.JSONDecodeError as e:
+            logger.error(f"获取插件广场列表失败: JSON解析错误 {e}")
+            market_plugins = None
         except Exception as e:
             logger.error(f"获取插件广场列表失败: {e}")
             # 如果获取失败，设置为None，让每个插件自己处理
@@ -693,8 +1034,15 @@ class PluginMarketPage(GroupHeaderCardWidget):
                 
                 # 检查插件是否在插件广场中存在（传入已获取的列表）
                 if button_group._is_plugin_in_market(market_plugins):
-                    # 获取插件图标（使用默认图标）
-                    icon = get_theme_icon("ic_fluent_extensions_20_filled")
+                    # 获取插件仓库图标
+                    repo_url = plugin_info.get("url", "")
+                    branch = plugin_info.get("branch", "main")
+                    
+                    icon = self.get_plugin_repo_icon(repo_url, branch)
+                    
+                    # 如果获取仓库图标失败，使用默认图标
+                    if icon is None:
+                        icon = get_theme_icon("ic_fluent_branch_fork_link_20_filled")
                     
                     # 构建描述信息
                     description = plugin_info.get("description", "暂无描述")
