@@ -348,9 +348,9 @@ def initialize_application():
                 logger.error(f"白露错误: 加载设置时出错: {e}, 使用默认显示主窗口")
                 sec.show()
         
-        # 连接更新日志窗口的关闭信号
-        update_log_window.close_signal.connect(show_main_window_after_update)
-        
+        # 连接更新日志窗口的开始信号
+        update_log_window.start_signal_update.connect(show_main_window_after_update)
+
         # 显示更新日志窗口
         update_log_window.show()
         
