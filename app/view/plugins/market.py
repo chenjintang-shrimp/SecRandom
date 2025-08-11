@@ -177,29 +177,15 @@ class MarketPluginButtonGroup(QWidget):
             if market_plugins is None:
                 plugin_list_url = "https://raw.githubusercontent.com/SECTL/SecRandom-market/master/Plugins/plugin_list.json"
                 try:
-                    # 设置请求头，模拟浏览器请求
-                    req = urllib.request.Request(
-                        plugin_list_url,
-                        headers={
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                        }
-                    )
+                    # 创建请求对象并添加请求头
+                    request = urllib.request.Request(plugin_list_url)
+                    request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+                    request.add_header('Accept', 'application/json')
+                    request.add_header('Accept-Language', 'zh-CN,zh;q=0.9,en;q=0.8')
+                    request.add_header('Connection', 'keep-alive')
                     
-                    with urllib.request.urlopen(req, timeout=10) as response:
+                    with urllib.request.urlopen(request) as response:
                         market_plugins = json.loads(response.read().decode('utf-8'))
-                except urllib.error.HTTPError as e:
-                    if e.code == 502:
-                        logger.error(f"获取插件广场列表失败: 502 BadGateway")
-                    else:
-                        logger.error(f"获取插件广场列表失败: HTTP {e.code} {e.reason}")
-                    # 如果获取失败，默认允许显示（避免因网络问题导致所有插件都不显示）
-                    return True
-                except urllib.error.URLError as e:
-                    logger.error(f"获取插件广场列表失败: 网络错误 {e.reason}")
-                    return True
-                except json.JSONDecodeError as e:
-                    logger.error(f"获取插件广场列表失败: JSON解析错误 {e}")
-                    return True
                 except Exception as e:
                     logger.error(f"获取插件广场列表失败: {e}")
                     # 如果获取失败，默认允许显示（避免因网络问题导致所有插件都不显示）
@@ -286,51 +272,19 @@ class MarketPluginButtonGroup(QWidget):
                     logger.info(f"正在获取发布信息: {releases_url}")
                     
                     # 获取发布信息
-                    max_retries = 3
-                    retry_count = 0
-                    release_info = None
-                    
-                    while retry_count < max_retries:
-                        try:
-                            # 创建请求对象并添加User-Agent头
-                            request = urllib.request.Request(releases_url)
-                            request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-                            
-                            with urllib.request.urlopen(request, timeout=10) as response:
-                                release_info = json.loads(response.read().decode('utf-8'))
-                                break  # 成功获取，退出重试循环
-                        except urllib.error.HTTPError as e:
-                            if e.code == 502 and retry_count < max_retries - 1:
-                                # 502错误，等待后重试
-                                retry_delay = 2 * (retry_count + 1)  # 指数退避：2秒、4秒
-                                logger.warning(f"GitHub API返回502错误，{retry_delay}秒后重试 (第{retry_count + 1}次重试): {e}")
-                                time.sleep(retry_delay)
-                                retry_count += 1
-                                continue
-                            else:
-                                logger.error(f"获取发布信息HTTP错误 (状态码: {e.code}): {e}")
-                                break
-                        except urllib.error.URLError as e:
-                            if retry_count < max_retries - 1:
-                                retry_delay = 2 * (retry_count + 1)
-                                logger.warning(f"获取发布信息URL错误，{retry_delay}秒后重试 (第{retry_count + 1}次重试): {e}")
-                                time.sleep(retry_delay)
-                                retry_count += 1
-                                continue
-                            else:
-                                logger.error(f"获取发布信息URL错误: {e}")
-                                break
-                        except json.JSONDecodeError as e:
-                            logger.error(f"解析发布信息JSON失败: {e}")
-                            break
-                        except Exception as e:
-                            logger.error(f"获取发布信息未知错误: {e}")
-                            break
+                    try:
+                        # 创建请求对象并添加请求头
+                        release_request = urllib.request.Request(releases_url)
+                        release_request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+                        release_request.add_header('Accept', 'application/vnd.github.v3+json')
+                        release_request.add_header('Accept-Language', 'zh-CN,zh;q=0.9,en;q=0.8')
+                        release_request.add_header('Connection', 'keep-alive')
                         
-                        retry_count += 1
-                    
-                    if retry_count >= max_retries:
-                        logger.error(f"获取发布信息失败：已达到最大重试次数 ({max_retries}次)")
+                        with urllib.request.urlopen(release_request) as response:
+                            release_info = json.loads(response.read().decode('utf-8'))
+                    except Exception as e:
+                        logger.error(f"获取发布信息失败: {e}")
+                        release_info = None
                     
                     # 只有在成功获取发布信息时才处理assets
                     if release_info:
@@ -352,59 +306,26 @@ class MarketPluginButtonGroup(QWidget):
                     else:
                         logger.error(f"获取插件发布信息失败: {release_info}")
                         return False
-
+                else:
+                    logger.error(f"无法解析GitHub URL: {url}")
+                    return False
+            else:
+                logger.error(f"非GitHub URL: {url}")
+                return False
 
             logger.info(f"正在下载插件: {download_url}")
             
-            # 改进的下载方法，添加重试机制和错误处理
-            max_retries = 3
-            retry_count = 0
-            download_success = False
+            # 创建请求对象并添加请求头
+            download_request = urllib.request.Request(download_url)
+            download_request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+            download_request.add_header('Accept', 'application/octet-stream')
+            download_request.add_header('Accept-Language', 'zh-CN,zh;q=0.9,en;q=0.8')
+            download_request.add_header('Connection', 'keep-alive')
             
-            while retry_count < max_retries and not download_success:
-                try:
-                    # 创建请求对象并添加User-Agent头
-                    request = urllib.request.Request(download_url)
-                    request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-                    
-                    # 使用urlopen获取响应，设置超时
-                    with urllib.request.urlopen(request, timeout=30) as response:
-                        # 读取数据并写入文件
-                        with open(zip_path, 'wb') as f:
-                            f.write(response.read())
-                        download_success = True
-                        logger.info(f"插件下载成功 (第{retry_count + 1}次尝试)")
-                        
-                except urllib.error.HTTPError as e:
-                    if e.code == 502 and retry_count < max_retries - 1:
-                        # 502错误，等待后重试
-                        retry_delay = 3 * (retry_count + 1)  # 指数退避：3秒、6秒、9秒
-                        logger.warning(f"下载插件时返回502错误，{retry_delay}秒后重试 (第{retry_count + 1}次重试): {e}")
-                        time.sleep(retry_delay)
-                        retry_count += 1
-                    else:
-                        logger.error(f"下载插件HTTP错误 (状态码: {e.code}): {e}")
-                        break
-                        
-                except urllib.error.URLError as e:
-                    if retry_count < max_retries - 1:
-                        retry_delay = 3 * (retry_count + 1)
-                        logger.warning(f"下载插件URL错误，{retry_delay}秒后重试 (第{retry_count + 1}次重试): {e}")
-                        time.sleep(retry_delay)
-                        retry_count += 1
-                    else:
-                        logger.error(f"下载插件URL错误: {e}")
-                        break
-                        
-                except Exception as e:
-                    logger.error(f"下载插件未知错误: {e}")
-                    break
-                
-                retry_count += 1
-            
-            if not download_success:
-                logger.error(f"下载插件失败：已达到最大重试次数 ({max_retries}次)")
-                return False
+            # 下载文件
+            with urllib.request.urlopen(download_request) as response:
+                with open(zip_path, 'wb') as f:
+                    f.write(response.read())
             
             # 解压文件
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -822,58 +743,27 @@ class PluginMarketPage(GroupHeaderCardWidget):
     
     def fetch_plugin_list(self):
         """从远程仓库获取插件列表"""
-        import time
-        
-        max_retries = 3
-        retry_delay = 2  # 秒
-        
-        for attempt in range(max_retries):
-            try:
-                logger.info(f"正在获取插件列表: {self.plugin_list_url} (尝试 {attempt + 1}/{max_retries})")
-                
-                # 设置请求头，模拟浏览器请求
-                req = urllib.request.Request(
-                    self.plugin_list_url,
-                    headers={
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                    }
-                )
-                
-                # 发送HTTP请求获取插件列表
-                with urllib.request.urlopen(req, timeout=10) as response:
-                    data = response.read().decode('utf-8')
-                    plugin_list = json.loads(data)
-                
-                logger.info(f"成功获取插件列表，共 {len(plugin_list)} 个插件")
-                return plugin_list
-                
-            except urllib.error.HTTPError as e:
-                if e.code == 502:
-                    logger.warning(f"遇到502 BadGateway错误，第{attempt + 1}次重试")
-                    if attempt < max_retries - 1:
-                        time.sleep(retry_delay)
-                        retry_delay *= 2  # 指数退避
-                        continue
-                    else:
-                        logger.error(f"获取插件列表失败: 502 BadGateway (已重试{max_retries}次)")
-                        return {}
-                else:
-                    logger.error(f"获取插件列表失败: HTTP {e.code} {e.reason}")
-                    return {}
-                    
-            except urllib.error.URLError as e:
-                logger.error(f"获取插件列表失败: 网络错误 {e.reason}")
-                return {}
-                
-            except json.JSONDecodeError as e:
-                logger.error(f"获取插件列表失败: JSON解析错误 {e}")
-                return {}
-                
-            except Exception as e:
-                logger.error(f"获取插件列表失败: {e}")
-                return {}
-        
-        return {}
+        try:
+            logger.info(f"正在获取插件列表: {self.plugin_list_url}")
+            
+            # 创建请求对象并添加请求头
+            request = urllib.request.Request(self.plugin_list_url)
+            request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+            request.add_header('Accept', 'application/json')
+            request.add_header('Accept-Language', 'zh-CN,zh;q=0.9,en;q=0.8')
+            request.add_header('Connection', 'keep-alive')
+            
+            # 发送HTTP请求获取插件列表
+            with urllib.request.urlopen(request) as response:
+                data = response.read().decode('utf-8')
+                plugin_list = json.loads(data)
+            
+            logger.info(f"成功获取插件列表，共 {len(plugin_list)} 个插件")
+            return plugin_list
+            
+        except Exception as e:
+            logger.error(f"获取插件列表失败: {e}")
+            return {}
     
     def get_plugin_repo_icon(self, repo_url, branch="main"):
         """获取插件仓库图标"""
@@ -899,16 +789,15 @@ class PluginMarketPage(GroupHeaderCardWidget):
                     logger.debug(f"尝试获取图标: {raw_url}")
                     
                     try:
-                        # 设置请求头，模拟浏览器请求
-                        req = urllib.request.Request(
-                            raw_url,
-                            headers={
-                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                            }
-                        )
+                        # 创建请求对象并添加请求头
+                        icon_request = urllib.request.Request(raw_url)
+                        icon_request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+                        icon_request.add_header('Accept', 'image/png,image/*')
+                        icon_request.add_header('Accept-Language', 'zh-CN,zh;q=0.9,en;q=0.8')
+                        icon_request.add_header('Connection', 'keep-alive')
                         
                         # 尝试访问图标文件
-                        with urllib.request.urlopen(req, timeout=5) as response:
+                        with urllib.request.urlopen(icon_request) as response:
                             if response.status == 200:
                                 # 下载图标数据
                                 icon_data = response.read()
@@ -924,13 +813,6 @@ class PluginMarketPage(GroupHeaderCardWidget):
                                     logger.debug(f"图标数据无效，无法创建QPixmap")
                             else:
                                 logger.debug(f"图标文件访问失败，状态码: {response.status}")
-                    except urllib.error.HTTPError as e:
-                        if e.code == 502:
-                            logger.debug(f"获取图标文件遇到502 BadGateway错误: {raw_url}")
-                        else:
-                            logger.debug(f"获取图标文件HTTP错误 {e.code}: {raw_url}")
-                    except urllib.error.URLError as e:
-                        logger.debug(f"获取图标文件网络错误: {e.reason} - {raw_url}")
                     except Exception as e:
                         logger.debug(f"访问图标文件异常: {e}")
                 else:
@@ -998,30 +880,16 @@ class PluginMarketPage(GroupHeaderCardWidget):
         try:
             plugin_list_url = "https://raw.githubusercontent.com/SECTL/SecRandom-market/master/Plugins/plugin_list.json"
             
-            # 设置请求头，模拟浏览器请求
-            req = urllib.request.Request(
-                plugin_list_url,
-                headers={
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
-            )
+            # 创建请求对象并添加请求头
+            request = urllib.request.Request(plugin_list_url)
+            request.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
+            request.add_header('Accept', 'application/json')
+            request.add_header('Accept-Language', 'zh-CN,zh;q=0.9,en;q=0.8')
+            request.add_header('Connection', 'keep-alive')
             
-            with urllib.request.urlopen(req, timeout=10) as response:
+            with urllib.request.urlopen(request) as response:
                 market_plugins = json.loads(response.read().decode('utf-8'))
             logger.info(f"成功获取插件广场列表，共 {len(market_plugins)} 个插件")
-        except urllib.error.HTTPError as e:
-            if e.code == 502:
-                logger.error(f"获取插件广场列表失败: 502 BadGateway")
-            else:
-                logger.error(f"获取插件广场列表失败: HTTP {e.code} {e.reason}")
-            # 如果获取失败，设置为None，让每个插件自己处理
-            market_plugins = None
-        except urllib.error.URLError as e:
-            logger.error(f"获取插件广场列表失败: 网络错误 {e.reason}")
-            market_plugins = None
-        except json.JSONDecodeError as e:
-            logger.error(f"获取插件广场列表失败: JSON解析错误 {e}")
-            market_plugins = None
         except Exception as e:
             logger.error(f"获取插件广场列表失败: {e}")
             # 如果获取失败，设置为None，让每个插件自己处理
