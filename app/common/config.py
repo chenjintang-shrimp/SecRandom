@@ -126,7 +126,7 @@ def load_custom_font():
     font_path = './app/resource/font/HarmonyOS_Sans_SC_Bold.ttf'
     font_id = QFontDatabase.addApplicationFont(font_path)
     if font_id < 0:
-        print("Failed to load font")
+        logger.error(f"加载自定义字体失败: {font_path}")
         return None
     font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
     return font_family
