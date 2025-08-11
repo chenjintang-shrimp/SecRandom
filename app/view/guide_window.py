@@ -114,7 +114,7 @@ class GuideWindow(MSFluentWindow):
             '⚙️ 灵活配置：支持多种名单管理，满足不同使用场景\n'
             '🔒 安全可靠：本地数据存储，保护用户隐私安全'
         )
-        features_content.setFont(QFont(load_custom_font(), 14))
+        features_content.setFont(QFont(load_custom_font(), 12))
         features_content.setWordWrap(True)
         features_content.setAlignment(Qt.AlignLeft)
         features_layout.addWidget(features_content)
@@ -146,7 +146,7 @@ class GuideWindow(MSFluentWindow):
             '6. 设置抽取规则：是否允许重复抽取、抽取权重等\n'
             '7. 保存设置后即可开始使用随机抽取功能'
         )
-        steps_content.setFont(QFont(load_custom_font(), 14))
+        steps_content.setFont(QFont(load_custom_font(), 12))
         steps_content.setWordWrap(True)
         steps_content.setAlignment(Qt.AlignLeft)
         setup_people_layout.addWidget(steps_content)
@@ -160,7 +160,7 @@ class GuideWindow(MSFluentWindow):
             '• 批量导入：支持从Excel/CSV文件批量导入名单\n'
             '• 历史记录：完整记录抽取历史，方便查看和统计'
         )
-        features_content.setFont(QFont(load_custom_font(), 14))
+        features_content.setFont(QFont(load_custom_font(), 12))
         features_content.setWordWrap(True)
         features_content.setAlignment(Qt.AlignLeft)
         setup_people_layout.addWidget(features_content)
@@ -190,7 +190,7 @@ class GuideWindow(MSFluentWindow):
             '4️. 设置抽奖规则：每人可抽奖次数、中奖概率等\n'
             '5️. 保存设置后即可开始使用抽奖功能'
         )
-        reward_steps.setFont(QFont(load_custom_font(), 14))
+        reward_steps.setFont(QFont(load_custom_font(), 12))
         reward_steps.setWordWrap(True)
         reward_steps.setAlignment(Qt.AlignLeft)
         setup_reward_layout.addWidget(reward_steps)
@@ -202,7 +202,7 @@ class GuideWindow(MSFluentWindow):
             '• 概率控制：精确控制每个奖品的中奖概率\n'
             '• 公平公正：采用随机算法确保抽奖公平性'
         )
-        reward_features.setFont(QFont(load_custom_font(), 14))
+        reward_features.setFont(QFont(load_custom_font(), 12))
         reward_features.setWordWrap(True)
         reward_features.setAlignment(Qt.AlignLeft)
         setup_reward_layout.addWidget(reward_features)
@@ -239,7 +239,7 @@ class GuideWindow(MSFluentWindow):
             '• 支持批量编辑人员信息和权重\n'
             '• 可以导出名单为Excel或CSV格式'
         )
-        batch_content.setFont(QFont(load_custom_font(), 14))
+        batch_content.setFont(QFont(load_custom_font(), 12))
         batch_content.setWordWrap(True)
         batch_content.setAlignment(Qt.AlignLeft)
         batch_section.addWidget(batch_content)
@@ -260,7 +260,7 @@ class GuideWindow(MSFluentWindow):
             '• 随机抽取：完全随机，每个人概率均等\n'
             '• 公平抽取：确保每个人被抽中的次数尽量均等'
         )
-        mode_content.setFont(QFont(load_custom_font(), 14))
+        mode_content.setFont(QFont(load_custom_font(), 12))
         mode_content.setWordWrap(True)
         mode_content.setAlignment(Qt.AlignLeft)
         mode_section.addWidget(mode_content)
@@ -283,7 +283,7 @@ class GuideWindow(MSFluentWindow):
             '• 支持自定义抽取动画效果\n'
             '• 可以设置抽取间隔时间和音效'
         )
-        advanced_content.setFont(QFont(load_custom_font(), 14))
+        advanced_content.setFont(QFont(load_custom_font(), 12))
         advanced_content.setWordWrap(True)
         advanced_content.setAlignment(Qt.AlignLeft)
         advanced_section.addWidget(advanced_content)
@@ -322,7 +322,7 @@ class GuideWindow(MSFluentWindow):
             '✅ 自由分发：可以自由复制和分发软件\n'
             '✅ 自由改进：可以改进软件并分享改进版本'
         )
-        license_content.setFont(QFont(load_custom_font(), 14))
+        license_content.setFont(QFont(load_custom_font(), 12))
         license_content.setWordWrap(True)
         license_content.setAlignment(Qt.AlignLeft)
         license_section.addWidget(license_content)
@@ -348,7 +348,7 @@ class GuideWindow(MSFluentWindow):
             '🌍 国际化：帮助翻译到其他语言\n\n'
             '让我们一起让SecRandom变得更好！'
         )
-        contribute_content.setFont(QFont(load_custom_font(), 14))
+        contribute_content.setFont(QFont(load_custom_font(), 12))
         contribute_content.setWordWrap(True)
         contribute_content.setAlignment(Qt.AlignLeft)
         contribute_section.addWidget(contribute_content)
@@ -397,7 +397,7 @@ class GuideWindow(MSFluentWindow):
             col = i % 3
             
             button = PushButton(text)
-            button.setFont(QFont(load_custom_font(), 14))
+            button.setFont(QFont(load_custom_font(), 12))
             button.setStyleSheet(f'QPushButton {{ background: {color}; color: white; border: none; border-radius: 3px; padding: 4px 6px; min-height: 25px; }} QPushButton:hover {{ background: {color}99; }}')
             button.clicked.connect(lambda checked, u=url: webbrowser.open(u))
             quick_links_layout.addWidget(button, row, col)
@@ -412,19 +412,19 @@ class GuideWindow(MSFluentWindow):
         
         # 反馈信息
         feedback_text = BodyLabel('📝 反馈：GitHub Issue 或 QQ群')
-        feedback_text.setFont(QFont(load_custom_font(), 14))
+        feedback_text.setFont(QFont(load_custom_font(), 12))
         feedback_text.setStyleSheet('color: #333333;')
         details_layout.addWidget(feedback_text)
         
         # 联系信息
         contact_text = BodyLabel('📧 邮箱：lzy.12@foxmail.com')
-        contact_text.setFont(QFont(load_custom_font(), 14))
+        contact_text.setFont(QFont(load_custom_font(), 12))
         contact_text.setStyleSheet('color: #333333;')
         details_layout.addWidget(contact_text)
         
         # 工作时间
         work_time = BodyLabel('🕒 工作时间：周六至周日 12:00-24:00')
-        work_time.setFont(QFont(load_custom_font(), 14))
+        work_time.setFont(QFont(load_custom_font(), 12))
         work_time.setStyleSheet('color: #333333;')
         details_layout.addWidget(work_time)
         
@@ -460,23 +460,23 @@ class GuideWindow(MSFluentWindow):
         
         # 上一个按钮
         self.prev_button = PushButton('← 上一个')
-        self.prev_button.setFont(QFont(load_custom_font(), 14))
+        self.prev_button.setFont(QFont(load_custom_font(), 12))
         self.prev_button.clicked.connect(self.show_previous_page)
         self.prev_button.setEnabled(False)  # 第一页时禁用
         
         # 页面指示器
         self.page_label = BodyLabel('1 / 6')
-        self.page_label.setFont(QFont(load_custom_font(), 14))
+        self.page_label.setFont(QFont(load_custom_font(), 12))
         self.page_label.setAlignment(Qt.AlignCenter)
         
         # 下一个按钮
         self.next_button = PushButton('下一个 →')
-        self.next_button.setFont(QFont(load_custom_font(), 14))
+        self.next_button.setFont(QFont(load_custom_font(), 12))
         self.next_button.clicked.connect(self.show_next_page)
         
         # 开始使用按钮（最后一页显示）
         self.start_button = PrimaryPushButton('🚀 开始使用')
-        self.start_button.setFont(QFont(load_custom_font(), 14))
+        self.start_button.setFont(QFont(load_custom_font(), 12))
         self.start_button.clicked.connect(self.start_using)
         self.start_button.hide()  # 初始隐藏
         
@@ -638,4 +638,6 @@ class GuideWindow(MSFluentWindow):
         """(^・ω・^ ) 白露的窗口关闭魔法！
         确保引导窗口关闭时正确清理资源～ ✨"""
         logger.debug("白露引导: 引导窗口已关闭～ ")
+        self.start_using()
+        self.start_signal.emit()
         super().closeEvent(event)
