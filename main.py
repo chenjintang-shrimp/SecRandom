@@ -153,13 +153,17 @@ def check_single_instance():
 def check_settings_directory():
     """(^・ω・^ ) 白露的设置目录检查魔法！
     检查引导完成标志文件是否存在以及版本是否匹配～
-    如果引导完成标志文件不存在或版本不匹配则需要显示引导界面哦～ ✨"""
+    返回值说明：
+    - 'ok': 引导已完成且版本匹配，正常启动
+    - 'guide': 没有文件或引导未完成，需要显示引导界面
+    - 'update': 版本过低，需要显示新版本更新内容
+    ✨"""
     guide_complete_file = 'app/Settings/guide_complete.json'
     
     # 检查引导完成标志文件是否存在
     if not os.path.exists(guide_complete_file):
         logger.info("白露检查: 引导完成标志文件不存在，需要显示引导界面～ ")
-        return False
+        return 'guide'
     
     # 检查引导完成标志文件内容是否有效
     try:
@@ -169,18 +173,18 @@ def check_settings_directory():
         # 检查是否包含必要的字段
         if not isinstance(guide_data, dict):
             logger.info("白露检查: 引导完成标志文件格式错误，需要显示引导界面～ ")
-            return False
+            return 'guide'
             
         guide_completed = guide_data.get('guide_completed', False)
         if not guide_completed:
             logger.info("白露检查: 引导未完成，需要显示引导界面～ ")
-            return False
+            return 'guide'
         
         # 检查版本是否匹配
         guide_version = guide_data.get('version', '')
         if not guide_version:
             logger.info("白露检查: 引导完成标志文件中缺少版本信息，需要显示引导界面～ ")
-            return False
+            return 'guide'
             
         # 导入版本比较模块
         from packaging.version import Version
@@ -190,17 +194,17 @@ def check_settings_directory():
         guide_version_clean = guide_version.lstrip('v')
         
         if Version(guide_version_clean) != Version(current_version):
-            logger.info(f"白露检查: 版本不匹配，当前版本 {VERSION}，引导文件版本 {guide_version}，需要显示引导界面～ ")
-            return False
+            logger.info(f"白露检查: 版本不匹配，当前版本 {VERSION}，引导文件版本 {guide_version}，需要显示新版本更新内容～ ")
+            return 'update'
             
         logger.info(f"白露检查: 引导已完成且版本匹配 {VERSION}，可以跳过引导界面～ ")
-        return True
+        return 'ok'
     except json.JSONDecodeError:
         logger.info("白露检查: 引导完成标志文件JSON格式错误，需要显示引导界面～ ")
-        return False
+        return 'guide'
     except Exception as e:
         logger.error(f"白露检查: 检查引导完成标志文件时出错: {e}")
-        return False
+        return 'guide'
 
 
 def initialize_application():
@@ -211,10 +215,10 @@ def initialize_application():
     logger.info(f"白露启动: 软件作者: lzy98276")
     logger.info(f"白露启动: 软件Github地址: https://github.com/SECTL/SecRandom")
 
-    # 检查是否需要显示引导界面
-    need_guide = not check_settings_directory()
+    # 检查设置状态
+    settings_status = check_settings_directory()
     
-    if need_guide:
+    if settings_status == 'guide':
         # 显示引导界面，跳过历史记录清理和插件自启动
         logger.info("白露引导: 首次使用，显示引导界面～ ")
         from app.view.guide_window import GuideWindow
@@ -279,6 +283,76 @@ def initialize_application():
         
         # 显示引导窗口
         guide_window.show()
+        
+        return sec
+    elif settings_status == 'update':
+        # (^・ω・^ ) 白露的版本更新处理魔法！
+        # 检测到版本更新，显示更新日志界面～ ✨
+        logger.info("白露主程序: 检测到版本更新，准备显示更新日志界面～ ")
+        
+        # 创建主窗口但不显示
+        sec = Window()
+        
+        # 显示更新日志窗口
+        from app.view.update_log_window import UpdateLogWindow
+        update_log_window = UpdateLogWindow()
+        
+        # 定义更新日志关闭后的处理函数
+        def show_main_window_after_update():
+            # 用户查看更新内容后，执行正常的初始化流程
+            logger.info("白露更新: 用户查看更新内容完成，开始正常初始化～ ")
+            
+            # 清理过期历史记录
+            from app.common.history_cleaner import clean_expired_history, clean_expired_reward_history
+            clean_expired_history()
+            clean_expired_reward_history()
+            logger.debug("白露清理: 已清理过期历史记录～ ")
+            
+            # 🌟 小鸟游星野：检查插件自启动设置 ~ (๑•̀ㅂ•́)ญ✧
+            try:
+                # 读取插件设置文件
+                plugin_settings_file = 'app/Settings/plugin_settings.json'
+                if os.path.exists(plugin_settings_file):
+                    with open(plugin_settings_file, 'r', encoding='utf-8') as f:
+                        plugin_settings = json.load(f)
+                        run_plugins_on_startup = plugin_settings.get('plugin_settings', {}).get('run_plugins_on_startup', False)
+                        
+                        if run_plugins_on_startup:
+                            from app.view.plugins.management import PluginManagementPage
+                            plugin_manager = PluginManagementPage()
+                            plugin_manager.start_autostart_plugins()
+                            logger.info("白露插件: 自启动插件功能已启动～ ")
+                        else:
+                            logger.info("白露插件: 插件自启动功能已禁用～ ")
+                else:
+                    logger.warning("白露警告: 插件设置文件不存在，跳过插件自启动～ ")
+            except Exception as e:
+                logger.error(f"白露错误: 检查插件自启动设置失败: {e}")
+            
+            # 显示主窗口
+            try:
+                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    foundation_settings = settings.get('foundation', {})
+                    self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
+                    if not self_starting_enabled:
+                        sec.show()
+                        logger.info("白露展示: 根据设置显示主窗口～ ")
+            except FileNotFoundError:
+                logger.error("白露错误: 加载设置时出错 - 文件不存在, 使用默认显示主窗口")
+                sec.show()
+            except KeyError:
+                logger.error("白露错误: 设置文件中缺少foundation键, 使用默认显示主窗口")
+                sec.show()
+            except Exception as e:
+                logger.error(f"白露错误: 加载设置时出错: {e}, 使用默认显示主窗口")
+                sec.show()
+        
+        # 连接更新日志窗口的关闭信号
+        update_log_window.close_signal.connect(show_main_window_after_update)
+        
+        # 显示更新日志窗口
+        update_log_window.show()
         
         return sec
     else:

@@ -373,7 +373,7 @@ class GuideWindow(MSFluentWindow):
         links_subtitle = BodyLabel('获取帮助、参与社区')
         links_subtitle.setFont(QFont(load_custom_font(), 16))
         links_subtitle.setAlignment(Qt.AlignCenter)
-        links_subtitle.setStyleSheet('color: #666; margin-bottom: 3px;')
+        links_subtitle.setStyleSheet('color: #666666; margin-bottom: 3px;')
         links_layout.addWidget(links_subtitle)
         
         # 快速链接区域 - 使用网格布局
@@ -384,7 +384,7 @@ class GuideWindow(MSFluentWindow):
         # 定义快速链接
         quick_links = [
             ('📖 文档', 'https://secrandom.netlify.app/', '#3498db'),
-            ('💻 GitHub', 'https://github.com/SECTL/SecRandom', '#333'),
+            ('💻 GitHub', 'https://github.com/SECTL/SecRandom', '#333333'),
             ('🎬 视频', 'https://www.bilibili.com/video/BV1kt81zdEoR/', '#e74c3c'),
             ('💬 QQ群', 'https://qm.qq.com/q/aySxtzOSvS', '#27ae60'),
             ('📥 下载', 'https://github.com/SECTL/SecRandom/releases', '#f39c12'),
@@ -413,19 +413,19 @@ class GuideWindow(MSFluentWindow):
         # 反馈信息
         feedback_text = BodyLabel('📝 反馈：GitHub Issue 或 QQ群')
         feedback_text.setFont(QFont(load_custom_font(), 14))
-        feedback_text.setStyleSheet('color: #333;')
+        feedback_text.setStyleSheet('color: #333333;')
         details_layout.addWidget(feedback_text)
         
         # 联系信息
         contact_text = BodyLabel('📧 邮箱：lzy.12@foxmail.com')
         contact_text.setFont(QFont(load_custom_font(), 14))
-        contact_text.setStyleSheet('color: #333;')
+        contact_text.setStyleSheet('color: #333333;')
         details_layout.addWidget(contact_text)
         
         # 工作时间
         work_time = BodyLabel('🕒 工作时间：周六至周日 12:00-24:00')
         work_time.setFont(QFont(load_custom_font(), 14))
-        work_time.setStyleSheet('color: #333;')
+        work_time.setStyleSheet('color: #333333;')
         details_layout.addWidget(work_time)
         
         links_layout.addWidget(details_widget)
