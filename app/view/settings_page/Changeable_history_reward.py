@@ -4,6 +4,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 import os
+import json
 import math
 from loguru import logger
 
@@ -11,6 +12,124 @@ from app.common.config import cfg, AUTHOR, VERSION, YEAR
 from app.common.config import load_custom_font
 
 from app.common.Changeable_history_reward_settings import history_reward_SettinsCard
+
+
+class RewardDataLoader(QThread):
+    """奖品历史记录数据加载线程"""
+    data_loaded = pyqtSignal(list, str, str)  # 数据, 奖池名称, 奖品名称
+    error_occurred = pyqtSignal(str)  # 错误信息
+    
+    def __init__(self, history_setting_card):
+        super().__init__()
+        self.history_setting_card = history_setting_card
+        self._is_running = True
+    
+    def run(self):
+        """线程运行函数"""
+        try:
+            if not self._is_running:
+                return
+                
+            # 获取数据的方法
+            data = self._get_class_rewards()
+            prize_pools_name = self.history_setting_card.prize_pools_comboBox.currentText()
+            reward_name = self.history_setting_card.reward_comboBox.currentText()
+            
+            if self._is_running:
+                self.data_loaded.emit(data, prize_pools_name, reward_name)
+                
+        except Exception as e:
+            if self._is_running:
+                self.error_occurred.emit(str(e))
+    
+    def stop(self):
+        """停止线程"""
+        self._is_running = False
+        self.wait()
+    
+    def _get_class_rewards(self):
+        """获取班级奖品数据（在线程中运行）"""
+        # 获取奖池名称
+        prize_pools_name = self.history_setting_card.prize_pools_comboBox.currentText()
+        reward_name = self.history_setting_card.reward_comboBox.currentText()
+        
+        if prize_pools_name and prize_pools_name != '无':
+            # 读取配置文件
+            prize_file = f'app/resource/reward/{prize_pools_name}.json'
+
+            try:
+                with open(prize_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    
+                    if reward_name == '全部奖品':
+                        # 汇总模式
+                        result_data = []
+                        for idx, (prize_name, prize_info) in enumerate(data.items()):
+                            if isinstance(prize_info, dict):
+                                weight = prize_info.get('weight', 1)
+                                count = prize_info.get('count', 0)
+                                result_data.append([str(idx + 1), prize_name, str(weight), str(count)])
+                        return result_data
+                        
+                    elif reward_name == '奖品记录_时间排序':
+                        # 时间排序模式
+                        history_file = f'app/resource/reward/history/{prize_pools_name}.json'
+                        history_data = []
+                        
+                        if os.path.exists(history_file):
+                            try:
+                                with open(history_file, 'r', encoding='utf-8') as f:
+                                    history_data = json.load(f)
+                            except Exception as e:
+                                logger.error(f"读取奖品历史记录文件失败: {e}")
+                                history_data = []
+                        
+                        result_data = []
+                        for record in history_data:
+                            if isinstance(record, dict) and 'time' in record and 'selected_prizes' in record:
+                                time_str = record.get('time', '')
+                                selected_prizes = record.get('selected_prizes', [])
+                                
+                                if isinstance(selected_prizes, list):
+                                    for prize in selected_prizes:
+                                        if prize in data:
+                                            prize_info = data[prize]
+                                            if isinstance(prize_info, dict):
+                                                idx = list(data.keys()).index(prize) + 1
+                                                weight = prize_info.get('weight', 1)
+                                                result_data.append([time_str, str(idx), prize, str(weight)])
+                        return result_data
+                        
+                    else:
+                        # 单个奖品模式
+                        history_file = f'app/resource/reward/history/{prize_pools_name}.json'
+                        history_data = []
+                        
+                        if os.path.exists(history_file):
+                            try:
+                                with open(history_file, 'r', encoding='utf-8') as f:
+                                    history_data = json.load(f)
+                            except Exception as e:
+                                logger.error(f"读取奖品历史记录文件失败: {e}")
+                                history_data = []
+                        
+                        result_data = []
+                        for record in history_data:
+                            if isinstance(record, dict) and 'time' in record and 'selected_prizes' in record:
+                                time_str = record.get('time', '')
+                                selected_prizes = record.get('selected_prizes', [])
+                                method = record.get('method', '未知')
+                                
+                                if isinstance(selected_prizes, list) and reward_name in selected_prizes:
+                                    count = selected_prizes.count(reward_name)
+                                    result_data.append([time_str, method, str(count)])
+                        return result_data
+                        
+            except Exception as e:
+                logger.error(f"读取奖品文件失败: {e}")
+                return []
+        
+        return []
 
 class changeable_history_reward(QFrame):
     def __init__(self, parent: QFrame = None, load_on_init: bool = True):
@@ -66,8 +185,65 @@ class changeable_history_reward(QFrame):
             self.load_data()
 
     def load_data(self):
-        """加载数据"""
-        self.show_table()
+        """加载奖品历史记录数据（使用单独线程）"""
+        if hasattr(self, 'data_loader') and self.data_loader and self.data_loader.isRunning():
+            self.data_loader.stop()
+            
+        # 显示加载状态
+        self.show_loading_state()
+        
+        # 创建并启动数据加载线程
+        self.data_loader = RewardDataLoader(self.history_setting_card)
+        self.data_loader.data_loaded.connect(self._on_data_loaded)
+        self.data_loader.error_occurred.connect(self._on_load_error)
+        self.data_loader.start()
+    
+    def _on_data_loaded(self, data, prize_pools_name, reward_name):
+        """数据加载完成回调"""
+        self.hide_loading_state()
+        self._setup_table_by_mode(reward_name, data)
+        
+        if data:
+            InfoBar.success(
+                title="读取历史记录文件成功",
+                content=f"读取历史记录文件成功,奖池:{prize_pools_name},奖品:{reward_name}",
+                duration=3000,
+                orient=Qt.Horizontal,
+                parent=self,
+                isClosable=True,
+                position=InfoBarPosition.TOP
+            )
+        
+        self.__initWidget()
+    
+    def _on_load_error(self, error_msg):
+        """数据加载错误回调"""
+        self.hide_loading_state()
+        logger.error(f"奖品历史记录数据加载失败: {error_msg}")
+        InfoBar.error(
+            title="加载失败",
+            content="加载可修改奖品历史记录数据失败，请稍后重试",
+            duration=3000,
+            orient=Qt.Horizontal,
+            parent=self,
+            isClosable=True,
+            position=InfoBarPosition.TOP
+        )
+        # 显示空表格
+        self._setup_table_by_mode('', [])
+        self.__initWidget()
+    
+    def show_loading_state(self):
+        """显示加载状态"""
+        if hasattr(self, 'loading_widget') and self.loading_widget:
+            self.loading_widget.show()
+            self.table.hide()
+    
+    def hide_loading_state(self):
+        """隐藏加载状态"""
+        if hasattr(self, 'loading_widget') and self.loading_widget:
+            self.loading_widget.hide()
+            self.table.show()
 
     def _create_loading_widget(self):
         """创建加载状态组件"""
@@ -96,55 +272,6 @@ class changeable_history_reward(QFrame):
         loading_layout.addWidget(self.loading_table)
         
         return loading_widget
-
-    def show_table(self):
-        """显示历史记录表格"""
-        # 显示加载状态
-        self.loading_widget.show()
-        self.table.hide()
-        
-        # 使用QTimer延迟加载数据，避免界面卡顿
-        QTimer.singleShot(100, self._load_data_async)
-
-    def _load_data_async(self):
-        """异步加载数据"""
-        try:
-            data = self.__getClassrewards()
-            prize_pools_name = self.history_setting_card.prize_pools_comboBox.currentText()
-            reward_name = self.history_setting_card.reward_comboBox.currentText()
-
-            if data:
-                InfoBar.success(
-                    title="读取历史记录文件成功",
-                    content=f"读取历史记录文件成功,奖池:{prize_pools_name},奖品:{reward_name}",
-                    duration=3000,
-                    orient=Qt.Horizontal,
-                    parent=self,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP
-                )
-
-            # 隐藏加载状态，显示真实数据
-            self.loading_widget.hide()
-            self.table.show()
-            self._setup_table_by_mode(reward_name, data)
-            self.__initWidget()
-            
-        except Exception as e:
-            logger.error(f"加载可修改奖品历史记录数据失败: {e}")
-            InfoBar.error(
-                title="加载失败",
-                content="加载可修改奖品历史记录数据失败，请稍后重试",
-                duration=3000,
-                orient=Qt.Horizontal,
-                parent=self,
-                isClosable=True,
-                position=InfoBarPosition.TOP
-            )
-            # 隐藏加载状态，显示空表格
-            self.loading_widget.hide()
-            self.table.show()
-            self._setup_table_by_mode('', [])
 
     def _setup_table_by_mode(self, reward_name: str, data: list):
         """根据模式设置表格"""

@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import *
 import os
 from datetime import datetime
 import math
+import json
 from loguru import logger
 
 from app.common.config import cfg, AUTHOR, VERSION, YEAR
@@ -15,229 +16,35 @@ from app.common.config import get_theme_icon, load_custom_font
 from app.common.history_settings import history_SettinsCard
 from app.view.main_page.pumping_people import pumping_people
 
-class history(QFrame):
-    def __init__(self, parent: QFrame = None, load_on_init: bool = True):
-        super().__init__(parent=parent)
-
-        # 创建一个 QScrollArea
-        self.scroll_area_personal = SingleDirectionScrollArea(self)
-        self.scroll_area_personal.setWidgetResizable(True)
-        # 设置滚动条样式
-        self.scroll_area_personal.setStyleSheet("""
-            QScrollArea {
-                border: none;
-                background-color: transparent;
-            }
-            QScrollArea QWidget {
-                border: none;
-                background-color: transparent;
-            }
-        """)
-        # 启用触屏滚动
-        QScroller.grabGesture(self.scroll_area_personal.viewport(), QScroller.LeftMouseButtonGesture)
-
-        # 创建一个内部的 QFrame 用于放置内容
-        self.inner_frame_personal = QWidget(self.scroll_area_personal)
-        self.inner_layout_personal = QVBoxLayout(self.inner_frame_personal)
-        self.inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
-
-        # 历史记录设置卡片组
-        self.history_setting_card = history_SettinsCard()
-        self.inner_layout_personal.addWidget(self.history_setting_card)
-        # 检测选择的班级是否改变，如果改变则刷新表格
-        self.history_setting_card.class_comboBox.currentIndexChanged.connect(self._refresh_table)
-        # 检测选择的同学是否改变，如果改变则刷新表格
-        self.history_setting_card.student_comboBox.currentIndexChanged.connect(self._refresh_table)
-
-        # 创建加载状态指示器
-        self.loading_widget = self._create_loading_widget()
-        self.inner_layout_personal.addWidget(self.loading_widget)
-
-        # 创建表格
-        self.table = TableWidget(self.inner_frame_personal) # 创建表格
-        self.table.setBorderVisible(True) # 边框
-        self.table.setBorderRadius(8) # 圆角
-        self.table.setWordWrap(False) # 不换行
-        self.table.setEditTriggers(TableWidget.NoEditTriggers) # 静止编辑
-        self.table.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH) # 静止平滑滚动
-        self.table.setSortingEnabled(True) # 启用排序
-        self.table.hide()  # 初始隐藏表格
-
-        if load_on_init:
-            self.load_data()
-
-    def load_data(self):
-        """加载数据"""
-        self.show_table()
-
-    def _create_loading_widget(self):
-        """创建加载状态组件"""
-        loading_widget = QWidget()
-        loading_layout = QVBoxLayout(loading_widget)
-        loading_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        # 创建占位表格
-        self.loading_table = TableWidget()
-        self.loading_table.setBorderVisible(True)
-        self.loading_table.setBorderRadius(8)
-        self.loading_table.setRowCount(1)
-        self.loading_table.setColumnCount(1)
-        self.loading_table.setHorizontalHeaderLabels(['界面正在加载中...'])
-        self.loading_table.verticalHeader().hide()
-        self.loading_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        
-        # 填充占位数据
-        for i in range(1):
-            for j in range(1):
-                item = QTableWidgetItem("--")
-                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                item.setFont(QFont(load_custom_font(), 12))
-                item.setForeground(QColor(200, 200, 200))  # 灰色占位符
-                self.loading_table.setItem(i, j, item)
-        
-        loading_layout.addWidget(self.loading_table)
-        
-        return loading_widget
-
-    def show_table(self):
-        """显示历史记录表格"""
-        # 显示加载状态
-        self.loading_widget.show()
-        self.table.hide()
-        
-        # 使用QTimer延迟加载数据，避免界面卡顿
-        QTimer.singleShot(100, self._load_data_async)
-
-    def _load_data_async(self):
-        """异步加载数据"""
+class HistoryDataLoader(QThread):
+    """历史记录数据加载线程"""
+    data_loaded = pyqtSignal(str, str, list)  # class_name, student_name, data
+    error_occurred = pyqtSignal(str)  # error_message
+    
+    def __init__(self, history_setting_card):
+        super().__init__()
+        self.history_setting_card = history_setting_card
+        self._is_running = True
+    
+    def run(self):
+        """执行数据加载"""
         try:
-            data = self.__getClassStudents()
             class_name = self.history_setting_card.class_comboBox.currentText()
             student_name = self.history_setting_card.student_comboBox.currentText()
-
-            if data:
-                InfoBar.success(
-                    title="读取历史记录文件成功",
-                    content=f"读取历史记录文件成功,班级:{class_name},学生:{student_name}",
-                    duration=3000,
-                    orient=Qt.Horizontal,
-                    parent=self,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP
-                )
-
-            # 隐藏加载状态，显示真实数据
-            self.loading_widget.hide()
-            self.table.show()
-            self._setup_table_by_mode(student_name, data)
-            self.__initWidget()
+            data = self._get_class_students()
             
+            if self._is_running:
+                self.data_loaded.emit(class_name, student_name, data)
         except Exception as e:
-            logger.error(f"加载历史记录数据失败: {e}")
-            InfoBar.error(
-                title="加载失败",
-                content="加载历史记录数据失败，请稍后重试",
-                duration=3000,
-                orient=Qt.Horizontal,
-                parent=self,
-                isClosable=True,
-                position=InfoBarPosition.TOP
-            )
-            # 隐藏加载状态，显示空表格
-            self.loading_widget.hide()
-            self.table.show()
-            self._setup_table_by_mode('', [])
-
-    def _setup_table_by_mode(self, student_name: str, data: list):
-        """根据模式设置表格"""
-        if student_name == '全班同学':
-            self._setup_class_table(data, include_probability=True)
-        elif student_name == '全班同学_时间排序':
-            self._setup_class_table(data, include_probability=False, time_sort=True)
-        else:
-            self._setup_individual_table(data)
-
-    def _setup_class_table(self, data: list, include_probability: bool = True, time_sort: bool = False):
-        """设置班级表格"""
-        if not data:
-            data = [['0', '无', '无', '无', '无', '无']] if include_probability else [['无', '0', '无', '无', '无']]
-        
-        if time_sort:
-            headers = ['时间', '学号', '姓名', '性别', '所处小组']
-            self._configure_table(len(data), 5)
-        elif include_probability and self.get_random_method_setting() in [2, 3]:
-            probability_method = self.get_probability_weight_method_setting()
-            headers = ['学号', '姓名', '性别', '所处小组', '总抽取次数', 
-                      '下次抽取概率' if probability_method == 1 else '下次抽取权重']
-            self._configure_table(len(data), 6)
-        else:
-            headers = ['学号', '姓名', '性别', '所处小组', '总抽取次数']
-            self._configure_table(len(data), 5)
-            
-        self._fill_table_data(data)
-        self.table.setHorizontalHeaderLabels(headers)
-
-    def _setup_individual_table(self, data: list):
-        """设置个人表格"""
-        current_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
-        if not data:
-            data = [[current_time, '无', '无', '无', '无']]
-
-        self._configure_table(len(data), 5)
-        self._fill_table_data(data)
-        self.table.setHorizontalHeaderLabels(['时间', '抽取方式', '抽取时选择的人数', '抽取时选择的小组', '抽取时选择的性别'])
-        self.table.sortByColumn(0, Qt.SortOrder.DescendingOrder)
-
-    def _configure_table(self, row_count: int, column_count: int):
-        """配置表格基本属性"""
-        self.table.setRowCount(row_count)
-        self.table.setColumnCount(column_count)
-        self.table.setSortingEnabled(False)
-        self.table.verticalHeader().hide()
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
-    def _fill_table_data(self, data: list):
-        """填充表格数据"""
-        for i, row in enumerate(data):
-            for j in range(len(row)):
-                item = QTableWidgetItem(str(row[j]))
-                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                item.setFont(QFont(load_custom_font(), 12))
-                self.table.setItem(i, j, item)
-
-        self._setup_layout()
-
-    def _setup_layout(self):
-        """设置布局"""
-        self.inner_layout_personal.addWidget(self.table)
-        self.scroll_area_personal.setWidget(self.inner_frame_personal)
-        self.table.setSortingEnabled(True)
-        
-        if not self.layout():
-            main_layout = QVBoxLayout(self)
-            main_layout.addWidget(self.scroll_area_personal)
-        else:
-            self.layout().addWidget(self.scroll_area_personal)
-
-    def get_random_method_setting(self) -> int:
-        """获取随机抽取方法的设置"""
-        return self._get_setting_value('pumping_people', 'draw_pumping', 0)
-
-    def get_probability_weight_method_setting(self) -> int:
-        """获取概率权重方法设置"""
-        return self._get_setting_value('history', 'probability_weight', 0)
-
-    def _get_setting_value(self, section: str, key: str, default: int) -> int:
-        """通用设置读取方法"""
-        try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                return settings[section][key]
-        except Exception as e:
-            logger.error(f"加载设置时出错: {e}, 使用默认设置")
-            return default
-
-    def __getClassStudents(self):
+            if self._is_running:
+                self.error_occurred.emit(str(e))
+    
+    def stop(self):
+        """停止线程"""
+        self._is_running = False
+        self.wait()
+    
+    def _get_class_students(self):
         """根据班级/学生名称获取历史记录数据"""
         # 获取班级名称
         class_name = self.history_setting_card.class_comboBox.currentText()
@@ -426,124 +233,63 @@ class history(QFrame):
 
                     # 批量生成结果数据
                     student_data = []
-                    for i, (student, cleaned) in enumerate(zip(students, cleaned_data)):
-                        student_name = student[1:-1] if student.startswith('【') and student.endswith('】') else student
+                    for i, (student, cleaned_student_info) in enumerate(zip(students, cleaned_data)):
+                        student_name = student if not (student.startswith('【') and student.endswith('】')) else student[1:-1]
                         
-                        # 计算概率/权重值
-                        weight_value = available_students_weights.get(student_name, 0)
-                        if probability_weight == 1:
-                            prob = (weight_value / total_weight) * 100 if total_weight > 0 else 0
-                            probability_str = f"{prob:.2f}%"
+                        pumping_people_count = int(history_data['pumping_people'].get(student_name, {}).get('total_number_of_times', 0)) if 'pumping_people' in history_data else 0
+                        pumping_people_count_auxiliary = int(history_data['pumping_people'].get(student_name, {}).get('total_number_auxiliary', 0)) if 'pumping_people' in history_data else 0
+                        total_pumping_count = pumping_people_count + pumping_people_count_auxiliary
+                        
+                        if _student_name == '全班同学_时间排序':
+                            # 时间排序模式，需要从历史记录中提取时间信息
+                            time_records = []
+                            if 'pumping_people' in history_data and student_name in history_data['pumping_people']:
+                                for record in history_data['pumping_people'][student_name].get('time', []):
+                                    time_records.append(record.get('draw_time', ''))
+                            
+                            # 按时间倒序排序
+                            time_records.sort(reverse=True)
+                            
+                            # 为每个时间记录创建一行数据
+                            for time_record in time_records:
+                                student_data.append([
+                                    time_record,
+                                    str(cleaned_student_info[0]).zfill(max_digits['id']),
+                                    student_name,
+                                    cleaned_student_info[2],
+                                    cleaned_student_info[3]
+                                ])
                         else:
-                            probability_str = f"{weight_value:.2f}"
-
-                        # 获取抽取次数
-                        pumping_count = history_data.get('pumping_people', {}).get(student_name, {}).get('total_number_of_times', 0)
-                        pumping_count_auxiliary = history_data.get('pumping_people', {}).get(student_name, {}).get('total_number_auxiliary', 0)
-
-                        student_data.append([
-                            str(cleaned[0]).zfill(max_digits['id']),
-                            student_name,
-                            cleaned[2],
-                            cleaned[3],
-                            str(pumping_count + pumping_count_auxiliary).zfill(max_digits['pumping_people']),
-                            probability_str
-                        ])
+                            # 普通模式，只显示一行学生信息
+                            row_data = [
+                                str(cleaned_student_info[0]).zfill(max_digits['id']),
+                                student_name,
+                                cleaned_student_info[2],
+                                cleaned_student_info[3],
+                                str(total_pumping_count).zfill(max_digits['pumping_people'])
+                            ]
+                            
+                            # 如果需要显示概率/权重
+                            if self.get_random_method_setting() in [2, 3]:
+                                probability_method = self.get_probability_weight_method_setting()
+                                weight = available_students_weights.get(student_name, 1.0)
+                                if probability_method == 1:  # 概率
+                                    probability = (weight / total_weight * 100) if total_weight > 0 else 0
+                                    row_data.append(f"{probability:.2f}%")
+                                else:  # 权重
+                                    row_data.append(f"{weight:.2f}")
+                            
+                            student_data.append(row_data)
 
                     return student_data
 
                 except Exception as e:
                     logger.error(f"读取学生名单文件失败: {e}")
-                    InfoBar.error(
-                        title="读取学生名单文件失败",
-                        content=f"错误信息: （请到日志文件查看）",
-                        duration=3000,
-                        orient=Qt.Horizontal,
-                        parent=self,
-                        isClosable=True,
-                        position=InfoBarPosition.TOP
-                    )
-                    return []
+                    raise Exception(f"读取学生名单文件失败: {e}")
             else:
                 return []
-
-        elif _student_name == '全班同学_时间排序':
-            if class_name:
-                student_file = f'app/resource/list/{class_name}.json'
-                history_file = f'app/resource/history/{class_name}.json'
-                
-                # 读取学生名单
-                try:
-                    with open(student_file, 'r', encoding='utf-8') as f:
-                        class_data = json.load(f)
-                except (FileNotFoundError, json.JSONDecodeError):
-                    return []
-
-                # 清理学生数据
-                cleaned_students = []
-                for name, info in class_data.items():
-                    if isinstance(info, dict) and info.get('exist', True):
-                        cleaned_name = name.replace('【', '').replace('】', '')
-                        cleaned_students.append((
-                            info.get('id', ''),
-                            cleaned_name,
-                            info.get('gender', ''),
-                            info.get('group', '')
-                        ))
-
-                # 读取历史记录
-                history_data = {}
-                if os.path.exists(history_file):
-                    try:
-                        with open(history_file, 'r', encoding='utf-8') as f:
-                            history_data = json.load(f).get('pumping_people', {})
-                    except json.JSONDecodeError:
-                        pass
-
-                # 计算学号最大位数（用于补零对齐）
-                max_id_length = max(len(str(student[0])) for student in cleaned_students) if cleaned_students else 0
-
-                # 收集所有抽取记录
-                all_records = []
-                
-                # 遍历每个学生的历史记录
-                for (student_id, name, gender, group) in cleaned_students:
-                    student_history = history_data.get(name, {})
-                    time_records = student_history.get('time', [])
-                    
-                    for record in time_records:
-                        draw_time = record.get('draw_time', '')
-                        if draw_time:
-                            formatted_id = str(student_id).zfill(max_id_length)
-                            all_records.append({
-                                'time': draw_time,
-                                'id': formatted_id,
-                                'name': name,
-                                'gender': gender,
-                                'group': group
-                            })
-                
-                # 降序
-                sorted_records = sorted(all_records, key=lambda x: x['time'], reverse=True)
-                
-                # 转换为列表格式返回
-                result = []
-                for record in sorted_records:
-                    result.append([
-                        record['time'],
-                        record['id'],
-                        record['name'],
-                        record['gender'],
-                        record['group']
-                    ])
-                
-                return result
-            else:
-                return []
-        
         else:
             if class_name:
-                _student_name = _student_name if not (_student_name.startswith('【') and _student_name.endswith('】')) else _student_name[1:-1]
                 try:
                     # 初始化历史数据字典
                     history_data = {}
@@ -557,41 +303,298 @@ class history(QFrame):
                         except json.JSONDecodeError:
                             history_data = {}
                     
-                    # 假设历史数据中每个抽取记录有时间、抽取方式和被点次数信息
+                    # 获取个人历史记录
                     student_data = []
-                    if _student_name in history_data.get('pumping_people', {}):
-                        pumping_people_history = history_data['pumping_people'][_student_name]['time']
-                        for record in pumping_people_history:
+                    if 'pumping_people' in history_data and _student_name in history_data['pumping_people']:
+                        student_history = history_data['pumping_people'][_student_name]
+                        
+                        # 处理抽取记录
+                        for record in student_history.get('time', []):
                             time = record.get('draw_time', '')
                             draw_method = record.get('draw_method', '')
-                            if draw_method == 'random':
-                                draw_method_text = '重复抽取'
-                            elif draw_method == 'until_reboot':
-                                draw_method_text = '不重复抽取(直到软件重启)'
-                            elif draw_method == 'until_all':
-                                draw_method_text = '不重复抽取(直到抽完全部人)'
-                            else:
-                                draw_method_text = draw_method
-                            draw_people_numbers = record.get('draw_people_numbers', '')
+                            
+                            # 统一处理抽取方式文本
+                            draw_method_map = {
+                                'random': '重复抽取',
+                                'until_reboot': '不重复抽取(直到软件重启)',
+                                'until_all': '不重复抽取(直到抽完全部人)'
+                            }
+                            draw_method_text = draw_method_map.get(draw_method, draw_method)
+                            
+                            # 获取抽取时的选择信息
+                            draw_numbers = record.get('draw_numbers', '')
+                            if isinstance(draw_numbers, list):
+                                draw_numbers = ', '.join(map(str, draw_numbers))
+                            
                             draw_group = record.get('draw_group', '')
                             draw_gender = record.get('draw_gender', '')
-                            student_data.append([time, draw_method_text, f'{draw_people_numbers}', draw_group, draw_gender])
+                            
+                            student_data.append([
+                                time,
+                                draw_method_text,
+                                str(draw_numbers),
+                                draw_group,
+                                draw_gender
+                            ])
+                    
+                    # 按时间倒序排序
+                    student_data.sort(reverse=True, key=lambda x: x[0])
                     return student_data
                     
                 except Exception as e:
-                    logger.error(f"读取学生名单文件失败: {e}")
-                    InfoBar.error(
-                        title="读取学生名单文件失败",
-                        content=f"错误信息: （请到日志文件查看）",
-                        duration=3000,
-                        orient=Qt.Horizontal,
-                        parent=self,
-                        isClosable=True,
-                        position=InfoBarPosition.TOP
-                    )
-                    return []
+                    logger.error(f"读取学生历史记录失败: {e}")
+                    raise Exception(f"读取学生历史记录失败: {e}")
             else:
                 return []
+    
+    def get_random_method_setting(self) -> int:
+        """获取随机抽取方法的设置"""
+        return self._get_setting_value('pumping_people', 'draw_pumping', 0)
+    
+    def get_probability_weight_method_setting(self) -> int:
+        """获取概率权重方法设置"""
+        return self._get_setting_value('history', 'probability_weight', 0)
+    
+    def _get_setting_value(self, section: str, key: str, default: int) -> int:
+        """通用设置读取方法"""
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                return settings[section][key]
+        except Exception as e:
+            logger.error(f"加载设置时出错: {e}, 使用默认设置")
+            return default
+
+class history(QFrame):
+    def __init__(self, parent: QFrame = None, load_on_init: bool = True):
+        super().__init__(parent=parent)
+
+        # 创建一个 QScrollArea
+        self.scroll_area_personal = SingleDirectionScrollArea(self)
+        self.scroll_area_personal.setWidgetResizable(True)
+        # 设置滚动条样式
+        self.scroll_area_personal.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用触屏滚动
+        QScroller.grabGesture(self.scroll_area_personal.viewport(), QScroller.LeftMouseButtonGesture)
+
+        # 创建一个内部的 QFrame 用于放置内容
+        self.inner_frame_personal = QWidget(self.scroll_area_personal)
+        self.inner_layout_personal = QVBoxLayout(self.inner_frame_personal)
+        self.inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+
+        # 历史记录设置卡片组
+        self.history_setting_card = history_SettinsCard()
+        self.inner_layout_personal.addWidget(self.history_setting_card)
+        # 检测选择的班级是否改变，如果改变则刷新表格
+        self.history_setting_card.class_comboBox.currentIndexChanged.connect(self._refresh_table)
+        # 检测选择的同学是否改变，如果改变则刷新表格
+        self.history_setting_card.student_comboBox.currentIndexChanged.connect(self._refresh_table)
+
+        # 创建加载状态指示器
+        self.loading_widget = self._create_loading_widget()
+        self.inner_layout_personal.addWidget(self.loading_widget)
+
+        # 创建表格
+        self.table = TableWidget(self.inner_frame_personal) # 创建表格
+        self.table.setBorderVisible(True) # 边框
+        self.table.setBorderRadius(8) # 圆角
+        self.table.setWordWrap(False) # 不换行
+        self.table.setEditTriggers(TableWidget.NoEditTriggers) # 静止编辑
+        self.table.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH) # 静止平滑滚动
+        self.table.setSortingEnabled(True) # 启用排序
+        self.table.hide()  # 初始隐藏表格
+
+        if load_on_init:
+            self.load_data()
+
+    def load_data(self):
+        """加载数据"""
+        # 检查是否有正在运行的线程
+        if hasattr(self, '_data_loader') and self._data_loader and self._data_loader.isRunning():
+            self._data_loader.stop()
+        
+        # 显示加载状态
+        self._show_loading_state()
+        
+        # 创建并启动数据加载线程
+        self._data_loader = HistoryDataLoader(self.history_setting_card)
+        self._data_loader.data_loaded.connect(self._on_data_loaded)
+        self._data_loader.error_occurred.connect(self._on_load_error)
+        self._data_loader.start()
+
+    def _on_data_loaded(self, class_name, student_name, data):
+        """数据加载完成回调"""
+        self._hide_loading_state()
+        
+        # 显示数据
+        self._setup_table_by_mode(student_name, data)
+        
+        # 显示成功消息
+        InfoBar.success(
+            title="数据加载成功",
+            content=f"成功加载 {class_name} - {student_name} 的历史记录",
+            parent=self,
+            duration=2000
+        )
+    
+    def _on_load_error(self, error_message):
+        """数据加载错误回调"""
+        self._hide_loading_state()
+        
+        # 记录错误
+        logger.error(f"数据加载失败: {error_message}")
+        
+        # 显示错误消息
+        InfoBar.error(
+            title="数据加载失败",
+            content=error_message,
+            parent=self,
+            duration=3000
+        )
+        
+        # 显示空表格
+        self._setup_table_by_mode('', [])
+    
+    def _show_loading_state(self):
+        """显示加载状态"""
+        self.loading_widget.show()
+        self.table.hide()
+    
+    def _hide_loading_state(self):
+        """隐藏加载状态"""
+        self.loading_widget.hide()
+        self.table.show()
+    
+    def _create_loading_widget(self):
+        """创建加载状态组件"""
+        loading_widget = QWidget()
+        loading_layout = QVBoxLayout(loading_widget)
+        loading_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # 创建占位表格
+        self.loading_table = TableWidget()
+        self.loading_table.setBorderVisible(True)
+        self.loading_table.setBorderRadius(8)
+        self.loading_table.setRowCount(1)
+        self.loading_table.setColumnCount(1)
+        self.loading_table.setHorizontalHeaderLabels(['界面正在加载中...'])
+        self.loading_table.verticalHeader().hide()
+        self.loading_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        
+        # 填充占位数据
+        for i in range(1):
+            for j in range(1):
+                item = QTableWidgetItem("--")
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                item.setFont(QFont(load_custom_font(), 12))
+                item.setForeground(QColor(200, 200, 200))  # 灰色占位符
+                self.loading_table.setItem(i, j, item)
+        
+        loading_layout.addWidget(self.loading_table)
+        
+        return loading_widget
+
+
+
+    def _setup_table_by_mode(self, student_name: str, data: list):
+        """根据模式设置表格"""
+        if student_name == '全班同学':
+            self._setup_class_table(data, include_probability=True)
+        elif student_name == '全班同学_时间排序':
+            self._setup_class_table(data, include_probability=False, time_sort=True)
+        else:
+            self._setup_individual_table(data)
+
+    def _setup_class_table(self, data: list, include_probability: bool = True, time_sort: bool = False):
+        """设置班级表格"""
+        if not data:
+            data = [['0', '无', '无', '无', '无', '无']] if include_probability else [['无', '0', '无', '无', '无']]
+        
+        if time_sort:
+            headers = ['时间', '学号', '姓名', '性别', '所处小组']
+            self._configure_table(len(data), 5)
+        elif include_probability and self.get_random_method_setting() in [2, 3]:
+            probability_method = self.get_probability_weight_method_setting()
+            headers = ['学号', '姓名', '性别', '所处小组', '总抽取次数', 
+                      '下次抽取概率' if probability_method == 1 else '下次抽取权重']
+            self._configure_table(len(data), 6)
+        else:
+            headers = ['学号', '姓名', '性别', '所处小组', '总抽取次数']
+            self._configure_table(len(data), 5)
+            
+        self._fill_table_data(data)
+        self.table.setHorizontalHeaderLabels(headers)
+
+    def _setup_individual_table(self, data: list):
+        """设置个人表格"""
+        current_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
+        if not data:
+            data = [[current_time, '无', '无', '无', '无']]
+
+        self._configure_table(len(data), 5)
+        self._fill_table_data(data)
+        self.table.setHorizontalHeaderLabels(['时间', '抽取方式', '抽取时选择的人数', '抽取时选择的小组', '抽取时选择的性别'])
+        self.table.sortByColumn(0, Qt.SortOrder.DescendingOrder)
+
+    def _configure_table(self, row_count: int, column_count: int):
+        """配置表格基本属性"""
+        self.table.setRowCount(row_count)
+        self.table.setColumnCount(column_count)
+        self.table.setSortingEnabled(False)
+        self.table.verticalHeader().hide()
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
+    def _fill_table_data(self, data: list):
+        """填充表格数据"""
+        for i, row in enumerate(data):
+            for j in range(len(row)):
+                item = QTableWidgetItem(str(row[j]))
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                item.setFont(QFont(load_custom_font(), 12))
+                self.table.setItem(i, j, item)
+
+        self._setup_layout()
+
+    def _setup_layout(self):
+        """设置布局"""
+        self.inner_layout_personal.addWidget(self.table)
+        self.scroll_area_personal.setWidget(self.inner_frame_personal)
+        self.table.setSortingEnabled(True)
+        
+        if not self.layout():
+            main_layout = QVBoxLayout(self)
+            main_layout.addWidget(self.scroll_area_personal)
+        else:
+            self.layout().addWidget(self.scroll_area_personal)
+
+    def get_random_method_setting(self) -> int:
+        """获取随机抽取方法的设置"""
+        return self._get_setting_value('pumping_people', 'draw_pumping', 0)
+
+    def get_probability_weight_method_setting(self) -> int:
+        """获取概率权重方法设置"""
+        return self._get_setting_value('history', 'probability_weight', 0)
+
+    def _get_setting_value(self, section: str, key: str, default: int) -> int:
+        """通用设置读取方法"""
+        try:
+            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                return settings[section][key]
+        except Exception as e:
+            logger.error(f"加载设置时出错: {e}, 使用默认设置")
+            return default
+
+
 
     def _refresh_table(self):
         """刷新表格"""

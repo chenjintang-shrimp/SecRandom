@@ -4,6 +4,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 import os
+import json
 import math
 from loguru import logger
 
@@ -12,6 +13,118 @@ from app.common.config import get_theme_icon, load_custom_font
 
 from app.common.Changeable_history_settings import history_SettinsCard
 from app.view.main_page.pumping_people import pumping_people
+
+
+class HistoryDataLoader(QThread):
+    """历史记录数据加载线程"""
+    data_loaded = pyqtSignal(list, str, str)  # 数据, 班级名称, 学生名称
+    error_occurred = pyqtSignal(str)  # 错误信息
+    
+    def __init__(self, history_setting_card):
+        super().__init__()
+        self.history_setting_card = history_setting_card
+        self._is_running = True
+    
+    def run(self):
+        """线程运行函数"""
+        try:
+            if not self._is_running:
+                return
+                
+            # 模拟获取数据的方法
+            data = self._get_class_students()
+            class_name = self.history_setting_card.class_comboBox.currentText()
+            student_name = self.history_setting_card.student_comboBox.currentText()
+            
+            if self._is_running:
+                self.data_loaded.emit(data, class_name, student_name)
+                
+        except Exception as e:
+            if self._is_running:
+                self.error_occurred.emit(str(e))
+    
+    def stop(self):
+        """停止线程"""
+        self._is_running = False
+        self.wait()
+    
+    def _get_class_students(self):
+        """获取班级学生数据（在线程中运行）"""
+        # 获取班级名称
+        class_name = self.history_setting_card.class_comboBox.currentText()
+        _student_name = self.history_setting_card.student_comboBox.currentText()
+        if _student_name == '全班同学':
+            if class_name:
+                # 读取配置文件
+                student_file = f'app/resource/list/{class_name}.json'
+
+                try:
+                    with open(student_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        cleaned_data = []
+                        __cleaned_data = []
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                exist = student_info.get('exist', True)
+                                cleaned_data.append((id, name, gender, group, exist))
+                                __cleaned_data.append((id, name, exist))
+
+                        cleaned_data = list(filter(lambda x: x[4], cleaned_data))
+                        __cleaned_data = list(filter(lambda x: x[2], __cleaned_data))
+                        
+                        students = [item[1] for item in cleaned_data]
+                        
+                        # 直接从JSON数据获取小组信息
+                        students_group = [item[3] for item in cleaned_data]
+                            
+                        # 初始化历史数据字典
+                        history_data = {}
+                        # 读取历史记录文件
+                        history_file = f'app/resource/history/{class_name}.json'
+
+                        if os.path.exists(history_file):
+                            try:
+                                with open(history_file, 'r', encoding='utf-8') as f:
+                                    history_data = json.load(f)
+                            except Exception as e:
+                                logger.error(f"读取历史记录文件失败: {e}")
+                                history_data = {}
+
+                        # 统计每个学生的抽取次数
+                        student_counts = {}
+                        for student in students:
+                            student_counts[student] = 0
+                            
+                        if history_data:
+                            for record in history_data:
+                                if 'selected_students' in record:
+                                    selected = record['selected_students']
+                                    if isinstance(selected, list):
+                                        for student in selected:
+                                            if student in student_counts:
+                                                student_counts[student] += 1
+
+                        # 构建返回数据
+                        result_data = []
+                        for i, student in enumerate(students):
+                            count = student_counts.get(student, 0)
+                            group = students_group[i] if i < len(students_group) else ''
+                            student_id = cleaned_data[i][0] if i < len(cleaned_data) else ''
+                            gender = cleaned_data[i][2] if i < len(cleaned_data) else ''
+                            
+                            result_data.append([student_id, student, gender, group, str(count)])
+
+                        return result_data
+                        
+                except Exception as e:
+                    logger.error(f"读取学生文件失败: {e}")
+                    return []
+        
+        return []
 
 class changeable_history(QFrame):
     def __init__(self, parent: QFrame = None, load_on_init: bool = True):
@@ -67,8 +180,65 @@ class changeable_history(QFrame):
             self.load_data()
 
     def load_data(self):
-        """加载数据"""
-        self.show_table()
+        """加载历史记录数据（使用单独线程）"""
+        if hasattr(self, 'data_loader') and self.data_loader and self.data_loader.isRunning():
+            self.data_loader.stop()
+            
+        # 显示加载状态
+        self.show_loading_state()
+        
+        # 创建并启动数据加载线程
+        self.data_loader = HistoryDataLoader(self.history_setting_card)
+        self.data_loader.data_loaded.connect(self._on_data_loaded)
+        self.data_loader.error_occurred.connect(self._on_load_error)
+        self.data_loader.start()
+    
+    def _on_data_loaded(self, data, class_name, student_name):
+        """数据加载完成回调"""
+        self.hide_loading_state()
+        self._setup_table_by_mode(student_name, data)
+        
+        if data:
+            InfoBar.success(
+                title="读取历史记录文件成功",
+                content=f"读取历史记录文件成功,班级:{class_name},学生:{student_name}",
+                duration=3000,
+                orient=Qt.Horizontal,
+                parent=self,
+                isClosable=True,
+                position=InfoBarPosition.TOP
+            )
+        
+        self.__initWidget()
+    
+    def _on_load_error(self, error_msg):
+        """数据加载错误回调"""
+        self.hide_loading_state()
+        logger.error(f"历史记录数据加载失败: {error_msg}")
+        InfoBar.error(
+            title="加载失败",
+            content="加载可修改历史记录数据失败，请稍后重试",
+            duration=3000,
+            orient=Qt.Horizontal,
+            parent=self,
+            isClosable=True,
+            position=InfoBarPosition.TOP
+        )
+        # 显示空表格
+        self._setup_table_by_mode('', [])
+        self.__initWidget()
+    
+    def show_loading_state(self):
+        """显示加载状态"""
+        if hasattr(self, 'loading_widget') and self.loading_widget:
+            self.loading_widget.show()
+            self.table.hide()
+    
+    def hide_loading_state(self):
+        """隐藏加载状态"""
+        if hasattr(self, 'loading_widget') and self.loading_widget:
+            self.loading_widget.hide()
+            self.table.show()
 
     def _create_loading_widget(self):
         """创建加载状态组件"""
@@ -97,55 +267,6 @@ class changeable_history(QFrame):
         loading_layout.addWidget(self.loading_table)
         
         return loading_widget
-
-    def show_table(self):
-        """显示历史记录表格"""
-        # 显示加载状态
-        self.loading_widget.show()
-        self.table.hide()
-        
-        # 使用QTimer延迟加载数据，避免界面卡顿
-        QTimer.singleShot(100, self._load_data_async)
-
-    def _load_data_async(self):
-        """异步加载数据"""
-        try:
-            data = self.__getClassStudents()
-            class_name = self.history_setting_card.class_comboBox.currentText()
-            student_name = self.history_setting_card.student_comboBox.currentText()
-
-            if data:
-                InfoBar.success(
-                    title="读取历史记录文件成功",
-                    content=f"读取历史记录文件成功,班级:{class_name},学生:{student_name}",
-                    duration=3000,
-                    orient=Qt.Horizontal,
-                    parent=self,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP
-                )
-
-            # 隐藏加载状态，显示真实数据
-            self.loading_widget.hide()
-            self.table.show()
-            self._setup_table_by_mode(student_name, data)
-            self.__initWidget()
-            
-        except Exception as e:
-            logger.error(f"加载可修改历史记录数据失败: {e}")
-            InfoBar.error(
-                title="加载失败",
-                content="加载可修改历史记录数据失败，请稍后重试",
-                duration=3000,
-                orient=Qt.Horizontal,
-                parent=self,
-                isClosable=True,
-                position=InfoBarPosition.TOP
-            )
-            # 隐藏加载状态，显示空表格
-            self.loading_widget.hide()
-            self.table.show()
-            self._setup_table_by_mode('', [])
 
     def _setup_table_by_mode(self, student_name: str, data: list):
         """根据模式设置表格"""
