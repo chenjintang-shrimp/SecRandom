@@ -73,7 +73,33 @@ class GuideWindow(MSFluentWindow):
         # 1. 欢迎页面
         self.welcomeInterface = QWidget()
         self.welcomeInterface.setObjectName("welcomeInterface")
-        welcome_layout = QVBoxLayout(self.welcomeInterface)
+        
+        # 创建滚动区域
+        welcome_scroll_area = SingleDirectionScrollArea(self.welcomeInterface)
+        welcome_scroll_area.setWidgetResizable(True)
+        # 设置样式表
+        welcome_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(welcome_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        welcome_inner_frame = QWidget(welcome_scroll_area)
+        welcome_layout = QVBoxLayout(welcome_inner_frame)
+        welcome_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        welcome_scroll_area.setWidget(welcome_inner_frame)
+        
+        # 设置欢迎页面布局
+        welcome_main_layout = QVBoxLayout(self.welcomeInterface)
+        welcome_main_layout.addWidget(welcome_scroll_area)
+        
         welcome_layout.setSpacing(12)
         welcome_layout.setContentsMargins(25, 25, 25, 25)
         welcome_layout.setAlignment(Qt.AlignCenter)
@@ -125,7 +151,33 @@ class GuideWindow(MSFluentWindow):
         # 2. 抽人名单设置页面
         self.setupPeopleInterface = QWidget()
         self.setupPeopleInterface.setObjectName("setupPeopleInterface")
-        setup_people_layout = QVBoxLayout(self.setupPeopleInterface)
+        
+        # 创建滚动区域
+        setup_people_scroll_area = SingleDirectionScrollArea(self.setupPeopleInterface)
+        setup_people_scroll_area.setWidgetResizable(True)
+        # 设置样式表
+        setup_people_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(setup_people_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        setup_people_inner_frame = QWidget(setup_people_scroll_area)
+        setup_people_layout = QVBoxLayout(setup_people_inner_frame)
+        setup_people_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        setup_people_scroll_area.setWidget(setup_people_inner_frame)
+        
+        # 设置抽人名单设置页面布局
+        setup_people_main_layout = QVBoxLayout(self.setupPeopleInterface)
+        setup_people_main_layout.addWidget(setup_people_scroll_area)
+        
         setup_people_layout.setSpacing(12)
         setup_people_layout.setContentsMargins(25, 25, 25, 25)
         setup_people_layout.setAlignment(Qt.AlignCenter)
@@ -170,7 +222,33 @@ class GuideWindow(MSFluentWindow):
         # 3. 抽奖名单设置页面
         self.setupRewardInterface = QWidget()
         self.setupRewardInterface.setObjectName("setupRewardInterface")
-        setup_reward_layout = QVBoxLayout(self.setupRewardInterface)
+        
+        # 创建滚动区域
+        setup_reward_scroll_area = SingleDirectionScrollArea(self.setupRewardInterface)
+        setup_reward_scroll_area.setWidgetResizable(True)
+        # 设置样式表
+        setup_reward_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(setup_reward_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        setup_reward_inner_frame = QWidget(setup_reward_scroll_area)
+        setup_reward_layout = QVBoxLayout(setup_reward_inner_frame)
+        setup_reward_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        setup_reward_scroll_area.setWidget(setup_reward_inner_frame)
+        
+        # 设置抽奖名单设置页面布局
+        setup_reward_main_layout = QVBoxLayout(self.setupRewardInterface)
+        setup_reward_main_layout.addWidget(setup_reward_scroll_area)
+        
         setup_reward_layout.setSpacing(12)
         setup_reward_layout.setContentsMargins(25, 25, 25, 25)
         setup_reward_layout.setAlignment(Qt.AlignCenter)
@@ -212,8 +290,34 @@ class GuideWindow(MSFluentWindow):
         # 4. 使用技巧页面
         self.tipsInterface = QWidget()
         self.tipsInterface.setObjectName("tipsInterface")
-        tips_layout = QVBoxLayout(self.tipsInterface)
-        tips_layout.setSpacing(10)
+        
+        # 创建滚动区域
+        tips_scroll_area = SingleDirectionScrollArea(self.tipsInterface)
+        tips_scroll_area.setWidgetResizable(True)
+        # 设置样式表
+        tips_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(tips_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        tips_inner_frame = QWidget(tips_scroll_area)
+        tips_layout = QVBoxLayout(tips_inner_frame)
+        tips_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        tips_scroll_area.setWidget(tips_inner_frame)
+        
+        # 设置使用技巧页面布局
+        tips_main_layout = QVBoxLayout(self.tipsInterface)
+        tips_main_layout.addWidget(tips_scroll_area)
+        
+        tips_layout.setSpacing(12)
         tips_layout.setContentsMargins(25, 25, 25, 25)
         tips_layout.setAlignment(Qt.AlignCenter)
 
@@ -294,7 +398,33 @@ class GuideWindow(MSFluentWindow):
         # 5. 开源说明页面
         self.openSourceInterface = QWidget()
         self.openSourceInterface.setObjectName("openSourceInterface")
-        open_source_layout = QVBoxLayout(self.openSourceInterface)
+        
+        # 创建滚动区域
+        opensource_scroll_area = SingleDirectionScrollArea(self.openSourceInterface)
+        opensource_scroll_area.setWidgetResizable(True)
+        # 设置样式表
+        opensource_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(opensource_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        opensource_inner_frame = QWidget(opensource_scroll_area)
+        open_source_layout = QVBoxLayout(opensource_inner_frame)
+        open_source_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        opensource_scroll_area.setWidget(opensource_inner_frame)
+        
+        # 设置开源说明页面布局
+        opensource_main_layout = QVBoxLayout(self.openSourceInterface)
+        opensource_main_layout.addWidget(opensource_scroll_area)
+        
         open_source_layout.setSpacing(10)
         open_source_layout.setContentsMargins(25, 25, 25, 25)
         
@@ -359,7 +489,33 @@ class GuideWindow(MSFluentWindow):
         # 6. 官方链接页面
         self.linksInterface = QWidget()
         self.linksInterface.setObjectName("linksInterface")
-        links_layout = QVBoxLayout(self.linksInterface)
+        
+        # 创建滚动区域
+        official_link_scroll_area = SingleDirectionScrollArea(self.linksInterface)
+        official_link_scroll_area.setWidgetResizable(True)
+        # 设置样式表
+        official_link_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(official_link_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        official_link_inner_frame = QWidget(official_link_scroll_area)
+        links_layout = QVBoxLayout(official_link_inner_frame)
+        links_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        official_link_scroll_area.setWidget(official_link_inner_frame)
+        
+        # 设置官方链接页面布局
+        official_link_main_layout = QVBoxLayout(self.linksInterface)
+        official_link_main_layout.addWidget(official_link_scroll_area)
+        
         links_layout.setSpacing(10)
         links_layout.setContentsMargins(20, 20, 20, 20)
         
