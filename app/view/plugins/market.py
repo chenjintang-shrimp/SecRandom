@@ -696,6 +696,7 @@ class MarketPluginButtonGroup(QWidget):
         author = self.plugin_info.get("author", "未知作者")
         url = self.plugin_info.get("url", "")
         
+        # 构建Markdown格式的插件信息
         info_text = f"**插件名称**: {plugin_name}\n\n"
         info_text += f"**版本**: {version}\n\n"
         info_text += f"**作者**: {author}\n\n"
@@ -706,12 +707,134 @@ class MarketPluginButtonGroup(QWidget):
         if self.installed_version:
             info_text += f"**已安装版本**: {self.installed_version}\n\n"
         
-        # 创建信息对话框
-        info_dialog = Dialog(f"插件信息 - {plugin_name}", info_text, self)
-        info_dialog.yesButton.setText("确定")
-        info_dialog.cancelButton.hide()
-        info_dialog.buttonLayout.insertStretch(1)
-        info_dialog.exec()
+        # 创建使用TextBrowser的对话框
+        info_dialog = QDialog(self)
+        info_dialog.setWindowTitle(f"插件信息 - {plugin_name}")
+        info_dialog.setMinimumSize(600, 400)
+        
+        # 设置无边框窗口样式
+        info_dialog.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+        info_dialog.setSizeGripEnabled(True)
+        
+        # 创建主布局
+        main_layout = QVBoxLayout(info_dialog)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        
+        # 创建自定义标题栏
+        title_bar = QWidget()
+        title_bar.setObjectName("CustomTitleBar")
+        title_bar.setFixedHeight(35)
+        
+        # 标题栏布局
+        title_layout = QHBoxLayout(title_bar)
+        title_layout.setContentsMargins(10, 0, 10, 0)
+        
+        # 窗口标题
+        title_label = QLabel(f"插件信息 - {plugin_name}")
+        title_label.setObjectName("TitleLabel")
+        title_label.setFont(QFont(load_custom_font(), 12))
+        
+        # 关闭按钮
+        close_btn = QPushButton("✕")
+        close_btn.setObjectName("CloseButton")
+        close_btn.setFixedSize(25, 25)
+        close_btn.clicked.connect(info_dialog.reject)
+        
+        # 添加到标题栏布局
+        title_layout.addWidget(title_label)
+        title_layout.addStretch()
+        title_layout.addWidget(close_btn)
+        
+        # 添加标题栏到主布局
+        main_layout.addWidget(title_bar)
+        
+        # 创建内容区域
+        content_widget = QWidget()
+        content_layout = QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(20, 20, 20, 20)
+        
+        # 创建TextBrowser显示插件信息
+        text_browser = TextBrowser()
+        text_browser.setReadOnly(True)
+        text_browser.setOpenLinks(True)
+        text_browser.setOpenExternalLinks(True)
+        text_browser.setMarkdown(info_text)
+        text_browser.setFont(QFont(load_custom_font()))
+        
+        # 添加TextBrowser到内容布局
+        content_layout.addWidget(text_browser)
+        
+        # 添加内容区域到主布局
+        main_layout.addWidget(content_widget)
+        
+        # 设置布局
+        info_dialog.setLayout(main_layout)
+        
+        # 应用主题样式
+        self._apply_info_dialog_theme(info_dialog)
+        
+        # 显示对话框
+        info_dialog.exec_()
+    
+    def _apply_info_dialog_theme(self, dialog):
+        """为信息对话框应用主题样式"""
+        if qconfig.theme == Theme.AUTO:
+            # 获取系统当前主题
+            lightness = QApplication.palette().color(QPalette.Window).lightness()
+            is_dark = lightness <= 127
+        else:
+            is_dark = qconfig.theme == Theme.DARK
+        
+        # 主题样式更新
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
+        dialog.setStyleSheet(f"""
+            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
+            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
+            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            #CloseButton {{ 
+                background-color: transparent; 
+                color: {colors['text']}; 
+                border-radius: 4px; 
+                font-weight: bold; 
+                border: none;
+            }}
+            #CloseButton:hover {{ 
+                background-color: #ff4d4d; 
+                color: white; 
+                border: none;
+            }}
+            QTextBrowser {{ 
+                background-color: {colors['bg']}; 
+                color: {colors['text']}; 
+                border: 1px solid #555555; 
+                border-radius: 4px; 
+                padding: 10px; 
+                font-family: 'Consolas', 'Monaco', monospace;
+            }}
+        """)
+        
+        # 添加窗口拖动功能
+        dialog.dragging = False
+        dialog.drag_position = None
+        
+        def mousePressEvent(event):
+            if event.button() == Qt.LeftButton and dialog.title_bar.underMouse():
+                dialog.dragging = True
+                dialog.drag_position = event.globalPos() - dialog.frameGeometry().topLeft()
+                event.accept()
+        
+        def mouseMoveEvent(event):
+            if dialog.dragging and event.buttons() == Qt.LeftButton:
+                dialog.move(event.globalPos() - dialog.drag_position)
+                event.accept()
+        
+        def mouseReleaseEvent(event):
+            dialog.dragging = False
+        
+        dialog.mousePressEvent = mousePressEvent
+        dialog.mouseMoveEvent = mouseMoveEvent
+        dialog.mouseReleaseEvent = mouseReleaseEvent
 
 
 class PluginMarketPage(GroupHeaderCardWidget):
@@ -918,7 +1041,7 @@ class PluginMarketPage(GroupHeaderCardWidget):
                     author = plugin_info.get("author", "未知作者")
                     update_date = plugin_info.get("update_date", "未知")
                     
-                    subtitle = f"版本: {version} | 作者: {author} | 更新: {update_date} | 仓库: {description}"
+                    subtitle = f"版本: {version} | 作者: {author}"
 
                     # 添加到界面
                     self.addGroup(icon, plugin_info["name"], subtitle, button_group)
