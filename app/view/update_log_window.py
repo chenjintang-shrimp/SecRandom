@@ -27,21 +27,21 @@ class UpdateLogWindow(MSFluentWindow):
     # 更新内容数据结构
     UPDATE_CONTENTS = {
         "major_updates": [
-            '• 新增 更新日志界面,方便用户了解版本更新内容',
-            '• 新增 MD5校验功能,检验捐献支持二维码是否被篡改'
+            '• 新增 更新日志界面，方便用户了解版本更新内容',
+            '• 新增 MD5校验功能，检验捐献支持二维码是否被篡改'
         ],
         "feature_optimizations": [
-            '• 优化 引导流程,区分首次使用和版本更新情况'
+            '• 优化 引导流程，区分首次使用和版本更新情况'
         ],
         "bug_fixes": [
-            '• 修复 不开图片模式,字体显示异常的问题',
-            '• 修复 不开图片模式,控件不居中的问题',
+            '• 修复 不开图片模式，字体显示异常的问题',
+            '• 修复 不开图片模式，控件不居中的问题',
             '• 修复 插件管理界面自启动按钮问题',
             '• 修复 插件广场界面卸载插件时定位错误导致误卸载其他插件的问题',
-            '• 修复 引导窗口关闭时,主窗口不启动的问题',
-            '• 修复 引导窗口字体太大,导致内容看不全的问题',
+            '• 修复 引导窗口关闭时，主窗口不启动的问题',
+            '• 修复 引导窗口字体太大，导致内容看不全的问题',
             '• 修复 缩减插件广场的插件信息',
-            '• 修复 历史记录界面,加载数据时,界面通知飞了一下的问题'
+            '• 修复 历史记录界面，加载数据时，界面通知飞了一下的问题'
         ]
     }
 
@@ -94,7 +94,33 @@ class UpdateLogWindow(MSFluentWindow):
         # 1. 当前版本页面
         self.currentVersionInterface = QWidget()
         self.currentVersionInterface.setObjectName("currentVersionInterface")
-        current_layout = QVBoxLayout(self.currentVersionInterface)
+        
+        # 创建滚动区域
+        current_scroll_area = SingleDirectionScrollArea(self.currentVersionInterface)
+        current_scroll_area.setWidgetResizable(True)
+        # 设置样式表
+        current_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(current_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        current_inner_frame = QWidget(current_scroll_area)
+        current_layout = QVBoxLayout(current_inner_frame)
+        current_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        current_scroll_area.setWidget(current_inner_frame)
+        
+        # 设置当前版本页面布局
+        current_main_layout = QVBoxLayout(self.currentVersionInterface)
+        current_main_layout.addWidget(current_scroll_area)
+        
         current_layout.setSpacing(15)
         current_layout.setContentsMargins(30, 30, 30, 30)
         current_layout.setAlignment(Qt.AlignTop)
@@ -163,7 +189,33 @@ class UpdateLogWindow(MSFluentWindow):
         # 2. 关于页面
         self.aboutInterface = QWidget()
         self.aboutInterface.setObjectName("aboutInterface")
-        about_layout = QVBoxLayout(self.aboutInterface)
+        
+        # 创建滚动区域
+        about_scroll_area = SingleDirectionScrollArea(self.aboutInterface)
+        about_scroll_area.setWidgetResizable(True)
+        # 设置样式表
+        about_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(about_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        about_inner_frame = QWidget(about_scroll_area)
+        about_layout = QVBoxLayout(about_inner_frame)
+        about_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        about_scroll_area.setWidget(about_inner_frame)
+        
+        # 设置关于页面布局
+        about_main_layout = QVBoxLayout(self.aboutInterface)
+        about_main_layout.addWidget(about_scroll_area)
+        
         about_layout.setSpacing(15)
         about_layout.setContentsMargins(30, 30, 30, 30)
         about_layout.setAlignment(Qt.AlignTop)
