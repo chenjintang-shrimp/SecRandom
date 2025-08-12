@@ -920,7 +920,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
                 else:
                     icon = get_theme_icon("ic_fluent_extensions_20_filled")
 
-                self.addGroup(icon, plugin["name"], f"版本: {plugin['version']}_作者: {plugin['author']}", button_group)
+                self.addGroup(icon, plugin["name"], f"版本: {plugin['version']} | 作者: {plugin['author']}", button_group)
 
         logger.info(f"加载完成，共找到 {len(plugins)} 个插件")
     
