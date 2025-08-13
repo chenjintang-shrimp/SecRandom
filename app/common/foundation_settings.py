@@ -9,6 +9,7 @@ import os
 import sys
 import platform
 import winreg
+from datetime import datetime
 from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
@@ -81,6 +82,16 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.export_diagnostic_button.clicked.connect(self.export_diagnostic_data)
         self.export_diagnostic_button.setFont(QFont(load_custom_font(), 12))
 
+        # 导入设置按钮
+        self.import_settings_button = PushButton("导入设置")
+        self.import_settings_button.clicked.connect(self.import_settings)
+        self.import_settings_button.setFont(QFont(load_custom_font(), 12))
+
+        # 导出设置按钮
+        self.export_settings_button = PushButton("导出设置")
+        self.export_settings_button.clicked.connect(self.export_settings)
+        self.export_settings_button.setFont(QFont(load_custom_font(), 12))
+
         # 浮窗透明度设置下拉框
         self.pumping_floating_transparency_comboBox.setFixedWidth(200)
         self.pumping_floating_transparency_comboBox.addItems(["100%", "90%", "80%", "70%", "60%", "50%", "40%", "30%", "20%", "10%"])
@@ -145,7 +156,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "定时清理", "设置定时清理抽取记录的时间", self.cleanup_button)
-        self.addGroup(get_theme_icon("ic_fluent_save_20_filled"), "导出诊断数据", "导出软件诊断数据用于问题排查", self.export_diagnostic_button)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗样式", "设置便捷抽人的浮窗样式", self.left_pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "主窗口置顶", "设置主窗口是否置顶(需重新打开主窗口生效-不是重启软件)", self.topmost_switch)
@@ -153,7 +163,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "检测主窗口焦点时间", "设置检测主窗口焦点时间", self.main_window_focus_time_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "主窗口位置", "设置主窗口的显示位置", self.main_window_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "设置窗口位置", "设置设置窗口的显示位置", self.settings_window_comboBox)
-
+        self.addGroup(get_theme_icon("ic_fluent_save_20_filled"), "导出诊断数据", "导出软件诊断数据用于问题排查", self.export_diagnostic_button)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_import_20_filled"), "导入设置", "从文件导入软件设置", self.import_settings_button)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_export_20_filled"), "导出设置", "导出软件设置到文件", self.export_settings_button)
+        
         # 定时检查清理
         self.cleanup_timer = QTimer(self)
         self.cleanup_timer.timeout.connect(self.check_cleanup_time)
@@ -699,13 +712,700 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         with open(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)
 
+    def import_settings(self):
+        """导入设置"""
+        try:
+            # 打开文件选择对话框
+            file_path, _ = QFileDialog.getOpenFileName(
+                self,
+                "选择要导入的设置文件",
+                "",
+                "设置文件 (*.json);;所有文件 (*.*)"
+            )
+            
+            if not file_path:
+                return
+            
+            # 读取导入的设置文件
+            with open(file_path, 'r', encoding='utf-8') as f:
+                imported_settings = json.load(f)
+            
+            # 显示设置选择对话框
+            dialog = SettingsSelectionDialog(mode="import", parent=self)
+            if dialog.exec_() == QDialog.Accepted:
+                selected_settings = dialog.get_selected_settings()
+                
+                # 获取设置目录路径
+                settings_dir = "./app/Settings"
+                
+                # 应用选中的设置
+                for file_name, subcategories in selected_settings.items():
+                    # 特殊处理：所有设置项实际上都在Settings.json文件中
+                    if file_name in ["foundation", "pumping_people", "pumping_reward", "history", "channel", "position"]:
+                        file_path = os.path.join(settings_dir, "Settings.json")
+                    else:
+                        file_path = os.path.join(settings_dir, f"{file_name}.json")
+                    
+                    if os.path.exists(file_path):
+                        # 读取现有设置
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            current_settings = json.load(f)
+                        
+                        # 更新选中的设置项
+                        for subcategory_name, settings in subcategories.items():
+                            if settings:  # 如果有选中的设置项
+                                if file_name in ["foundation", "pumping_people", "pumping_reward", "history", "channel", "position"]:
+                                    # 这些分类都在Settings.json文件中
+                                    if file_name == "channel":
+                                        # channel是根级别的字符串，不是嵌套对象
+                                        if "channel" in imported_settings:
+                                            current_settings["channel"] = imported_settings["channel"]
+                                    elif file_name == "position":
+                                        # position是根级别的对象
+                                        if "position" in imported_settings:
+                                            current_settings["position"] = imported_settings["position"]
+                                    else:
+                                        # foundation、pumping_people、pumping_reward、history等分类
+                                        if file_name not in current_settings:
+                                            current_settings[file_name] = {}
+                                        
+                                        for setting_name in settings:
+                                            if file_name in imported_settings and setting_name in imported_settings[file_name]:
+                                                current_settings[file_name][setting_name] = imported_settings[file_name][setting_name]
+                                elif file_name == "voice_engine":
+                                    # voice_engine文件中的设置在voice_engine分类下
+                                    if "voice_engine" not in current_settings:
+                                        current_settings["voice_engine"] = {}
+                                    
+                                    for setting_name in settings:
+                                        if "voice_engine" in imported_settings and setting_name in imported_settings["voice_engine"]:
+                                            current_settings["voice_engine"][setting_name] = imported_settings["voice_engine"][setting_name]
+                                elif file_name == "plugin_settings":
+                                    # plugin_settings文件中的设置在plugin_settings分类下
+                                    if "plugin_settings" not in current_settings:
+                                        current_settings["plugin_settings"] = {}
+                                    
+                                    for setting_name in settings:
+                                        if "plugin_settings" in imported_settings and setting_name in imported_settings["plugin_settings"]:
+                                            current_settings["plugin_settings"][setting_name] = imported_settings["plugin_settings"][setting_name]
+                                elif file_name == "config":
+                                    # config文件中的设置项分布在不同的分类下
+                                    for setting_name in settings:
+                                        if setting_name == "DpiScale":
+                                            target_section = "Window"
+                                        elif setting_name in ["ThemeColor", "ThemeMode"]:
+                                            target_section = "QFluentWidgets"
+                                        else:
+                                            target_section = "config"
+                                        
+                                        if target_section not in current_settings:
+                                            current_settings[target_section] = {}
+                                        
+                                        if target_section in imported_settings and setting_name in imported_settings[target_section]:
+                                            current_settings[target_section][setting_name] = imported_settings[target_section][setting_name]
+                                
+                        # 保存更新后的设置
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            json.dump(current_settings, f, indent=4, ensure_ascii=False)
+                
+                # 显示成功消息
+                w = Dialog("导入成功", "设置已成功导入，现在需要重启应用才能生效。", None)
+                w.yesButton.setText("确定")
+                w.cancelButton.hide()
+                w.buttonLayout.insertStretch(1)
+                w.exec_()
+        except Exception as e:
+            logger.error(f"导入设置失败: {str(e)}")
+            w = Dialog("导入失败", f"导入设置时发生错误: {str(e)}", None)
+            w.yesButton.setText("确定")
+            w.cancelButton.hide()
+            w.buttonLayout.insertStretch(1)
+            w.exec_()
+    
+    def export_settings(self):
+        """导出设置"""
+        try:
+            # 显示设置选择对话框
+            dialog = SettingsSelectionDialog(mode="export", parent=self)
+            if dialog.exec_() == QDialog.Accepted:
+                selected_settings = dialog.get_selected_settings()
+                
+                # 获取设置目录路径
+                settings_dir = "./app/Settings"
+                
+                # 收集选中的设置
+                exported_settings = {}
+                
+                # 遍历选中的设置项，现在category_name直接就是文件名
+                for file_name, subcategories in selected_settings.items():
+                    for subcategory_name, settings in subcategories.items():
+                        if settings:  # 如果有选中的设置项
+                                
+                                # 特殊处理：所有设置项实际上都在Settings.json文件中
+                                if file_name in ["foundation", "pumping_people", "pumping_reward", "history", "channel", "position"]:
+                                    file_path = os.path.join(settings_dir, "Settings.json")
+                                else:
+                                    file_path = os.path.join(settings_dir, f"{file_name}.json")
+                                
+                                if os.path.exists(file_path):
+                                    # 读取设置文件
+                                    with open(file_path, 'r', encoding='utf-8') as f:
+                                        current_settings = json.load(f)
+                                    
+                                    # 添加选中的设置项到导出数据
+                                    if file_name not in exported_settings:
+                                        exported_settings[file_name] = {}
+                                    
+                                    # 确定在文件中的分类名
+                                    section_name = file_name  # 默认分类名与文件名相同
+                                    
+                                    # 特殊处理Settings.json文件中的多个分类
+                                    if file_name in ["foundation", "pumping_people", "pumping_reward", "history", "channel", "position"]:
+                                        # 这些分类都在Settings.json文件中
+                                        if file_name == "channel":
+                                            # channel是根级别的字符串，不是嵌套对象
+                                            if "channel" in current_settings:
+                                                exported_settings[file_name] = current_settings["channel"]
+                                        elif file_name == "position":
+                                            # position是根级别的对象
+                                            if "position" in current_settings:
+                                                exported_settings[file_name] = current_settings["position"]
+                                        else:
+                                            # foundation、pumping_people、pumping_reward、history等分类直接导出
+                                            if file_name in current_settings:
+                                                # 如果该分类还没有在导出设置中，则创建
+                                                if file_name not in exported_settings:
+                                                    exported_settings[file_name] = {}
+                                                
+                                                # 导出该分类下的所有选中的设置项
+                                                for setting_name in settings:
+                                                    if setting_name in current_settings[file_name]:
+                                                        exported_settings[file_name][setting_name] = current_settings[file_name][setting_name]
+                                    elif file_name == "channel":
+                                        # channel文件中的设置直接在根级别
+                                        for setting_name in settings:
+                                            if setting_name in current_settings:
+                                                if section_name not in exported_settings[file_name]:
+                                                    exported_settings[file_name][section_name] = {}
+                                                exported_settings[file_name][section_name][setting_name] = current_settings[setting_name]
+                                        continue
+                                    elif file_name == "voice_engine":
+                                        section_name = "voice_engine"
+                                        if section_name not in exported_settings[file_name]:
+                                            exported_settings[file_name][section_name] = {}
+                                        
+                                        for setting_name in settings:
+                                            if section_name in current_settings and setting_name in current_settings[section_name]:
+                                                exported_settings[file_name][section_name][setting_name] = current_settings[section_name][setting_name]
+                                    elif file_name == "plugin_settings":
+                                        section_name = "plugin_settings"
+                                        if section_name not in exported_settings[file_name]:
+                                            exported_settings[file_name][section_name] = {}
+                                        
+                                        for setting_name in settings:
+                                            if section_name in current_settings and setting_name in current_settings[section_name]:
+                                                exported_settings[file_name][section_name][setting_name] = current_settings[section_name][setting_name]
+                                    elif file_name in ["pumping_people", "pumping_reward"]:
+                                        # 特殊处理pumping_people和pumping_reward，需要包含音效设置
+                                        section_name = file_name
+                                        # 由于这些分类已经在Settings.json处理分支中处理过，这里不需要重复处理
+                                        # 确保分类存在
+                                        if section_name not in exported_settings:
+                                            exported_settings[section_name] = {}
+                                        
+                                        for setting_name in settings:
+                                            # 从Settings.json中对应的分类中获取设置值
+                                            if section_name in current_settings and setting_name in current_settings[section_name]:
+                                                exported_settings[section_name][setting_name] = current_settings[section_name][setting_name]
+                                        
+                                        # 如果当前处理的是pumping_reward，并且有音效设置被选中，需要添加音效设置
+                                        if file_name == "pumping_reward":
+                                            # 检查是否有音效设置被选中
+                                            sound_settings = ["animation_music_enabled", "result_music_enabled", 
+                                                           "animation_music_volume", "result_music_volume",
+                                                           "music_fade_in", "music_fade_out"]
+                                            
+                                            # 获取选中的音效设置
+                                            selected_sound_settings = []
+                                            for category_name, subcategories in selected_settings.items():
+                                                for subcategory_name, settings_list in subcategories.items():
+                                                    if subcategory_name == "音效设置":
+                                                        selected_sound_settings = settings_list
+                                                        break
+                                            
+                                            # 如果有音效设置被选中，添加到pumping_reward分类中
+                                            if selected_sound_settings:
+                                                for sound_setting in selected_sound_settings:
+                                                    if sound_setting in sound_settings and sound_setting in current_settings.get("pumping_reward", {}):
+                                                        exported_settings[section_name][sound_setting] = current_settings["pumping_reward"][sound_setting]
+                                    elif file_name == "config":
+                                        # config文件中的设置项分布在不同的分类下
+                                        for setting_name in settings:
+                                            if setting_name == "DpiScale":
+                                                target_section = "Window"
+                                            elif setting_name in ["ThemeColor", "ThemeMode"]:
+                                                target_section = "QFluentWidgets"
+                                            else:
+                                                target_section = "config"
+                                            
+                                            if target_section not in exported_settings[file_name]:
+                                                exported_settings[file_name][target_section] = {}
+                                            
+                                            if target_section in current_settings and setting_name in current_settings[target_section]:
+                                                exported_settings[file_name][target_section][setting_name] = current_settings[target_section][setting_name]
+                                        continue
+                                    else:
+                                        # 其他文件的处理
+                                        if section_name not in exported_settings[file_name]:
+                                            exported_settings[file_name][section_name] = {}
+                                        
+                                        for setting_name in settings:
+                                            if setting_name in current_settings.get(section_name, {}):
+                                                exported_settings[file_name][section_name][setting_name] = current_settings[section_name][setting_name]
+                                            elif setting_name in current_settings:
+                                                # 处理根级别的设置项
+                                                exported_settings[file_name][section_name][setting_name] = current_settings[setting_name]
+                
+                # 打开保存文件对话框
+                file_path, _ = QFileDialog.getSaveFileName(
+                    self,
+                    "保存设置文件",
+                    f"settings_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    "设置文件 (*.json)"
+                )
+                
+                if file_path:
+                    # 确保文件扩展名是.json
+                    if not file_path.endswith('.json'):
+                        file_path += '.json'
+                    
+                    # 保存导出的设置
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        json.dump(exported_settings, f, indent=4, ensure_ascii=False)
+                    
+                    # 显示成功消息
+                    w = Dialog("导出成功", f"设置已成功导出到:\n{file_path}", None)
+                    w.yesButton.setText("确定")
+                    w.cancelButton.hide()
+                    w.buttonLayout.insertStretch(1)
+                    w.exec_()
+        except Exception as e:
+            logger.error(f"导出设置失败: {str(e)}")
+            w = Dialog("导出失败", f"导出设置时发生错误: {str(e)}", None)
+            w.yesButton.setText("确定")
+            w.cancelButton.hide()
+            w.buttonLayout.insertStretch(1)
+            w.exec_()
+        
+    def closeEvent(self, event):
+        if not self.saved:
+            w = Dialog('未保存内容', '确定要关闭吗？', self)
+            w.setFont(QFont(load_custom_font(), 12))
+            w.yesButton.setText("确定")
+            w.cancelButton.setText("取消")
+            w.yesButton = PrimaryPushButton('确定')
+            w.cancelButton = PushButton('取消')
+            
+            if w.exec():
+                self.reject
+                return
+            else:
+                event.ignore()
+                return
+        event.accept()
+    
+    def getText(self):
+        return self.textEdit.toPlainText()
+
+
+class SettingsSelectionDialog(QDialog):
+    """设置选择对话框，用于选择要导入导出的设置项"""
+    def __init__(self, mode="export", parent=None):
+        super().__init__(parent)
+        self.mode = mode  # "export" 或 "import"
+        self.setWindowTitle("选择设置项" if mode == "export" else "导入设置")
+        self.setMinimumSize(600, 500)  # 设置最小大小而不是固定大小
+        self.dragging = False
+        self.drag_position = None
+        
+        # 设置无边框但可调整大小的窗口
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+        
+        # 创建自定义标题栏
+        self.title_bar = QWidget()
+        self.title_bar.setObjectName("CustomTitleBar")
+        self.title_bar.setFixedHeight(35)
+        
+        title_layout = QHBoxLayout(self.title_bar)
+        title_layout.setContentsMargins(10, 0, 10, 0)
+        
+        # 创建包含图标的标题布局
+        title_content_layout = QHBoxLayout()
+        title_content_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 添加设置图标
+        settings_icon = BodyLabel()
+        icon_path = "./app/resource/icon/SecRandom.png"
+        if os.path.exists(icon_path):
+            settings_icon.setPixmap(QIcon(icon_path).pixmap(20, 20))
+        else:
+            # 如果图标文件不存在，使用备用图标
+            settings_icon.setPixmap(QIcon.fromTheme("document-properties", QIcon()).pixmap(20, 20))
+        title_content_layout.addWidget(settings_icon)
+        
+        # 添加功能描述标题
+        title_text = "导出设置 - 选择要导出的设置项" if mode == "export" else "导入设置 - 选择要导入的设置项"
+        self.title_label = BodyLabel(title_text)
+        self.title_label.setObjectName("TitleLabel")
+        self.title_label.setFont(QFont(load_custom_font(), 12))
+        title_content_layout.addWidget(self.title_label)
+        title_content_layout.addStretch()
+        
+        self.close_btn = QPushButton("✕")
+        self.close_btn.setObjectName("CloseButton")
+        self.close_btn.setFixedSize(25, 25)
+        self.close_btn.clicked.connect(self.reject)
+        
+        # 将标题内容布局添加到主标题布局中
+        title_layout.addLayout(title_content_layout)
+        title_layout.addWidget(self.close_btn)
+        
+        # 创建滚动区域
+        self.scroll_area = ScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        
+        # 创建内容容器
+        self.content_widget = QWidget()
+        self.content_layout = QVBoxLayout(self.content_widget)
+        self.content_layout.setAlignment(Qt.AlignLeft)
+        
+        # 创建设置项选择区域
+        self.settings_groups = {}
+        self.create_setting_selections()
+        
+        self.scroll_area.setWidget(self.content_widget)
+        
+        # 创建按钮
+        self.select_all_button = PushButton("全选")
+        self.deselect_all_button = PushButton("取消全选")
+        self.ok_button = PrimaryPushButton("确定")
+        self.cancel_button = PushButton("取消")
+        
+        self.select_all_button.clicked.connect(self.select_all)
+        self.deselect_all_button.clicked.connect(self.deselect_all)
+        self.ok_button.clicked.connect(self.accept)
+        self.cancel_button.clicked.connect(self.reject)
+        
+        # 设置字体
+        for widget in [self.select_all_button, self.deselect_all_button, self.ok_button, self.cancel_button]:
+            widget.setFont(QFont(load_custom_font(), 12))
+        
+        # 布局
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.select_all_button)
+        button_layout.addWidget(self.deselect_all_button)
+        button_layout.addStretch()
+        button_layout.addWidget(self.cancel_button)
+        button_layout.addWidget(self.ok_button)
+        
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(self.title_bar)
+        main_layout.addWidget(self.scroll_area)
+        main_layout.addLayout(button_layout)
+        
+        self.setLayout(main_layout)
+        
+        # 更新主题样式
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
+    
+    def create_setting_selections(self):
+        """创建设置项选择界面"""
+        # 定义按文件分类的设置项结构
+        self.settings_structure = {
+            "foundation": {
+                "主窗口设置": [
+                    "main_window_mode", "main_window_focus_mode", "main_window_focus_time",
+                    "topmost_switch", "window_width", "window_height"
+                ],
+                "设置窗口设置": [
+                    "settings_window_mode", "settings_window_width", "settings_window_height"
+                ],
+                "浮窗设置": [
+                    "pumping_floating_enabled", "pumping_floating_side", "pumping_reward_side",
+                    "pumping_floating_transparency_mode", "pumping_floating_visible"
+                ],
+                "启动设置": [
+                    "check_on_startup", "self_starting_enabled"
+                ]
+            },
+            "pumping_people": {
+                "基础设置": [
+                    "draw_mode", "draw_pumping", "student_id", "student_name", "people_theme"
+                ],
+                "显示设置": [
+                    "display_format", "font_size", "animation_color", "show_student_image",
+                    "show_random_member", "random_member_format"
+                ],
+                "动画设置": [
+                    "animation_mode", "animation_interval", "animation_auto_play"
+                ],
+                "音效设置": [
+                    "animation_music_enabled", "result_music_enabled",
+                    "animation_music_volume", "result_music_volume",
+                    "music_fade_in", "music_fade_out"
+                ]
+            },
+            "pumping_reward": {
+                "基础设置": [
+                    "draw_mode", "draw_pumping", "reward_theme"
+                ],
+                "显示设置": [
+                    "display_format", "font_size", "animation_color", "show_reward_image"
+                ],
+                "动画设置": [
+                    "animation_mode", "animation_interval", "animation_auto_play"
+                ],
+                "音效设置": [
+                    "animation_music_enabled", "result_music_enabled",
+                    "animation_music_volume", "result_music_volume",
+                    "music_fade_in", "music_fade_out"
+                ]
+            },
+            "history": {
+                "抽人历史": [
+                    "history_enabled", "probability_weight", "history_days"
+                ],
+                "抽奖历史": [
+                    "reward_history_enabled", "history_reward_days"
+                ]
+            },
+            "channel": {
+                "更新设置": [
+                    "channel"
+                ]
+            },
+            "position": {
+                "位置设置": [
+                    "x", "y"
+                ]
+            },
+            "config": {
+                "主题与显示": [
+                    "ThemeColor", "ThemeMode", "DpiScale"
+                ]
+            },
+            "voice_engine": {
+                "语音引擎设置": [
+                    "voice_engine", "edge_tts_voice_name", "voice_enabled", "voice_volume",
+                    "voice_speed", "system_volume_enabled", "system_volume_value"
+                ]
+            },
+            "plugin_settings": {
+                "插件设置": [
+                    "run_plugins_on_startup", "fetch_plugin_list_on_startup", "selected_plugin"
+                ]
+            }
+        }
+        
+        # 为每个功能分类创建选择区域
+        for category_name, subcategories in self.settings_structure.items():
+            file_group = GroupHeaderCardWidget()
+            file_group.setTitle(category_name)
+            file_group.setBorderRadius(8)
+            
+            self.settings_groups[category_name] = {}
+            
+            # 遍历每个子分类和设置项，为每个设置项创建独立的分组
+            for subcategory_name, settings in subcategories.items():
+                self.settings_groups[category_name][subcategory_name] = {}
+                
+                # 为每个设置项创建独立的分组
+                for setting in settings:
+                    # 创建独立的设置项容器
+                    setting_widget = QWidget()
+                    setting_layout = QVBoxLayout(setting_widget)
+                    setting_layout.setAlignment(Qt.AlignLeft)
+                    setting_layout.setSpacing(4)
+                    
+                    # 创建复选框
+                    checkbox = CheckBox(self.get_setting_display_name(setting))
+                    checkbox.setFont(QFont(load_custom_font(), 10))
+                    checkbox.setChecked(True)
+                    self.settings_groups[category_name][subcategory_name][setting] = checkbox
+                    
+                    # 创建水平布局让复选框靠左
+                    checkbox_layout = QHBoxLayout()
+                    checkbox_layout.addWidget(checkbox)
+                    checkbox_layout.setAlignment(Qt.AlignLeft)
+                    checkbox_layout.addStretch()
+                    
+                    # 将复选框布局添加到设置布局中
+                    checkbox_widget = QWidget()
+                    checkbox_widget.setLayout(checkbox_layout)
+                    setting_layout.addWidget(checkbox_widget)
+                    
+                    # 简化分类逻辑，直接使用子分类名称和设置项显示名称
+                    display_name = self.get_setting_display_name(setting)
+                    file_group.addGroup(None, subcategory_name, f"{display_name}设置项", setting_widget)
+            
+            self.content_layout.addWidget(file_group)
+
+    def get_setting_display_name(self, setting_name):
+        """获取设置项的显示名称"""
+        display_names = {
+            # foundation设置
+            "check_on_startup": "启动时检查更新", # 有
+            "self_starting_enabled": "开机自启动", # 有
+            "pumping_floating_enabled": "浮窗启用", # 有
+            "pumping_floating_side": "抽人侧边栏位置", # 有
+            "pumping_reward_side": "抽奖侧边栏位置", # 有
+            "pumping_floating_transparency_mode": "浮窗透明度", # 有
+            "main_window_focus_mode": "主窗口焦点模式", # 有
+            "main_window_focus_time": "焦点检测时间", # 有
+            "main_window_mode": "主窗口位置", # 有
+            "settings_window_mode": "设置窗口位置", # 有
+            "pumping_floating_visible": "浮窗样式", # 有
+            "topmost_switch": "主窗口置顶", # 有
+            "window_width": "主窗口宽度", # 有
+            "window_height": "主窗口高度", # 有
+            "settings_window_width": "设置窗口宽度", # 有
+            "settings_window_height": "设置窗口高度", # 有
+            # pumping_people设置（跟pumping_reward设置有重复的不计入）
+            "student_id": "显示学号", # 有
+            "student_name": "显示姓名", # 有
+            "people_theme": "主题", # 有
+            "show_random_member": "显示随机成员", # 有
+            "random_member_format": "随机成员格式", # 有
+            "show_student_image": "显示学生图片", # 有
+            # pumping_reward设置（跟pumping_people设置有重复的不计入）
+            "reward_theme": "主题", # 有
+            "show_reward_image": "显示奖品图片", # 有
+            # pumping_people设置和pumping_reward设置 重复设置项
+            "draw_mode": "抽取模式", # 有
+            "draw_pumping": "抽取方式", # 有
+            "animation_mode": "动画模式", # 有
+            "animation_interval": "动画间隔", # 有
+            "animation_auto_play": "自动播放", # 有
+            "animation_music_enabled": "动画音乐", # 有
+            "result_music_enabled": "结果音乐", # 有
+            "animation_music_volume": "动画音量", # 有
+            "result_music_volume": "结果音量", # 有
+            "music_fade_in": "音乐淡入", # 有
+            "music_fade_out": "音乐淡出", # 有
+            "display_format": "显示格式", # 有
+            "animation_color": "动画颜色", # 有
+            "font_size": "字体大小", # 有
+            # history设置
+            "history_enabled": "历史记录启用", # 有
+            "probability_weight": "概率权重", # 有
+            "history_days": "历史记录天数", # 有
+            "reward_history_enabled": "奖品历史启用", # 有
+            "history_reward_days": "奖品历史天数", # 有
+            # position设置
+            "x": "浮窗X坐标", # 有
+            "y": "浮窗Y坐标", # 有
+            # channel设置
+            "channel": "更新通道", # 有
+            # config设置
+            "DpiScale": "DPI缩放", # 有
+            "ThemeColor": "主题颜色", # 有
+            "ThemeMode": "主题模式", # 有
+            # plugin_settings设置
+            "run_plugins_on_startup": "启动时运行插件", # 有
+            "fetch_plugin_list_on_startup": "启动时获取插件列表", # 有
+            "selected_plugin": "选中插件", # 有
+            # voice_engine设置
+            "voice_engine": "语音引擎", # 有
+            "edge_tts_voice_name": "Edge TTS语音", # 有
+            "voice_enabled": "语音启用", # 有
+            "voice_volume": "语音音量", # 有
+            "voice_speed": "语音速度", # 有
+            "system_volume_enabled": "系统音量控制", # 有
+            "system_volume_value": "系统音量值" # 有
+        }
+        return display_names.get(setting_name, setting_name)
+    
+    def select_all(self):
+        """全选所有设置项"""
+        for category_name in self.settings_groups:
+            for subcategory_name in self.settings_groups[category_name]:
+                for setting_name in self.settings_groups[category_name][subcategory_name]:
+                    self.settings_groups[category_name][subcategory_name][setting_name].setChecked(True)
+    
+    def deselect_all(self):
+        """取消全选所有设置项"""
+        for category_name in self.settings_groups:
+            for subcategory_name in self.settings_groups[category_name]:
+                for setting_name in self.settings_groups[category_name][subcategory_name]:
+                    self.settings_groups[category_name][subcategory_name][setting_name].setChecked(False)
+    
+    def get_selected_settings(self):
+        """获取选中的设置项"""
+        selected = {}
+        for file_name in self.settings_groups:
+            selected[file_name] = {}
+            for subcategory_name in self.settings_groups[file_name]:
+                selected[file_name][subcategory_name] = []
+                for setting_name in self.settings_groups[file_name][subcategory_name]:
+                    if self.settings_groups[file_name][subcategory_name][setting_name].isChecked():
+                        selected[file_name][subcategory_name].append(setting_name)
+        return selected
+    
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton and self.title_bar.underMouse():
+            self.dragging = True
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+    
+    def mouseMoveEvent(self, event):
+        if self.dragging and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_position)
+            event.accept()
+    
+    def mouseReleaseEvent(self, event):
+        self.dragging = False
+    
+    def update_theme_style(self):
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
+        self.setStyleSheet(f"""
+            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
+            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
+            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            #CloseButton {{ 
+                background-color: transparent; 
+                color: {colors['text']}; 
+                border-radius: 4px; 
+                font-weight: bold; 
+            }}
+            #CloseButton:hover {{ background-color: #ff4d4d; color: white; }}
+            QLabel, QPushButton, QCheckBox {{ color: {colors['text']}; }}
+        """)
+        
+        # 设置标题栏颜色（仅Windows系统）
+        if os.name == 'nt':
+            try:
+                import ctypes
+                hwnd = int(self.winId())
+                bg_color = colors['bg'].lstrip('#')
+                rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
+                
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_int(hwnd), 35,
+                    ctypes.byref(ctypes.c_uint(rgb_color)),
+                    ctypes.sizeof(ctypes.c_uint)
+                )
+            except Exception as e:
+                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+
 class CleanupTimeDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 🌟 星穹铁道白露：设置无边框窗口样式并解决屏幕设置冲突~ 
+        # 🌟 星穹铁道白露：设置无边框但可调整大小的窗口样式并解决屏幕设置冲突~ 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("输入定时清理记录时间")
-        self.setFixedSize(400, 335)
+        self.setMinimumSize(400, 335)  # 设置最小大小而不是固定大小
         self.saved = False
         self.dragging = False
         self.drag_position = None
@@ -847,23 +1547,3 @@ class CleanupTimeDialog(QDialog):
                 )
             except Exception as e:
                 logger.warning(f"设置标题栏颜色失败: {str(e)}")
-        
-    def closeEvent(self, event):
-        if not self.saved:
-            w = Dialog('未保存内容', '确定要关闭吗？', self)
-            w.setFont(QFont(load_custom_font(), 12))
-            w.yesButton.setText("确定")
-            w.cancelButton.setText("取消")
-            w.yesButton = PrimaryPushButton('确定')
-            w.cancelButton = PushButton('取消')
-            
-            if w.exec():
-                self.reject
-                return
-            else:
-                event.ignore()
-                return
-        event.accept()
-    
-    def getText(self):
-        return self.textEdit.toPlainText()
