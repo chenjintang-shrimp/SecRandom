@@ -11,7 +11,7 @@ import platform
 import winreg
 from loguru import logger
 
-from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
+from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 
 is_dark = is_dark_theme(qconfig)
 
@@ -75,6 +75,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.cleanup_button = PushButton("设置定时清理")
         self.cleanup_button.clicked.connect(self.show_cleanup_dialog)
         self.cleanup_button.setFont(QFont(load_custom_font(), 12))
+
+        # 导出诊断数据按钮
+        self.export_diagnostic_button = PushButton("导出诊断数据")
+        self.export_diagnostic_button.clicked.connect(self.export_diagnostic_data)
+        self.export_diagnostic_button.setFont(QFont(load_custom_font(), 12))
 
         # 浮窗透明度设置下拉框
         self.pumping_floating_transparency_comboBox.setFixedWidth(200)
@@ -140,6 +145,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "定时清理", "设置定时清理抽取记录的时间", self.cleanup_button)
+        self.addGroup(get_theme_icon("ic_fluent_save_20_filled"), "导出诊断数据", "导出软件诊断数据用于问题排查", self.export_diagnostic_button)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗样式", "设置便捷抽人的浮窗样式", self.left_pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "主窗口置顶", "设置主窗口是否置顶(需重新打开主窗口生效-不是重启软件)", self.topmost_switch)
@@ -464,6 +470,201 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         except Exception as e:
             logger.error(f"清理TEMP文件夹时出错: {str(e)}")
 
+    def export_diagnostic_data(self):
+        """导出诊断数据到压缩文件"""
+        # 首先显示安全确认对话框，告知用户将要导出敏感数据
+        try:
+            # 创建安全确认对话框
+            confirm_box = Dialog(
+                title='⚠️ 敏感数据导出确认',
+                content=(
+                    '您即将导出诊断数据，这些数据可能包含敏感信息：\n\n'
+                    '📋 包含的数据类型：\n'
+                    '• 抽人名单数据、抽奖设置文件、历史记录文件\n'
+                    '• 软件设置文件、插件配置文件、系统日志文件\n\n'
+                    '⚠️ 注意事项：\n'
+                    '• 这些数据可能包含个人信息和使用记录\n'
+                    '• 请妥善保管导出的压缩包文件\n'
+                    '• 不要将导出文件分享给不可信的第三方\n'
+                    '• 如不再需要，请及时删除导出的文件\n\n'
+                    '确认要继续导出诊断数据吗？'
+                ),
+                parent=self
+            )
+            confirm_box.yesButton.setText('确认导出')
+            confirm_box.cancelButton.setText('取消')
+            confirm_box.setFont(QFont(load_custom_font(), 12))
+            
+            # 如果用户取消导出，则直接返回
+            if not confirm_box.exec():
+                logger.info("用户取消了诊断数据导出")
+                InfoBar.info(
+                    title='导出已取消',
+                    content='诊断数据导出操作已取消',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return
+                
+        except Exception as e:
+            logger.error(f"创建安全确认对话框失败: {str(e)}")
+            pass
+
+        try:
+            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                logger.debug("正在读取安全设置，准备执行导出诊断数据验证～ ")
+
+                if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                    from app.common.password_dialog import PasswordDialog
+                    dialog = PasswordDialog(self)
+                    if dialog.exec_() != QDialog.Accepted:
+                        logger.warning("用户取消导出诊断数据操作，安全防御已解除～ ")
+                        return
+        except Exception as e:
+            logger.error(f"密码验证系统出错喵～ {e}")
+            return
+            
+        try:
+            import zipfile
+            from datetime import datetime
+            
+            # 获取桌面路径
+            desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+            if not os.path.exists(desktop_path):
+                desktop_path = os.path.join(os.path.expanduser("~"), "桌面")
+            
+            # 创建诊断文件名
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            zip_filename = f"SecRandom_诊断数据_{timestamp}.zip"
+            zip_path = os.path.join(desktop_path, zip_filename)
+            
+            # 需要导出的文件夹列表
+            export_folders = [
+                "app/resource/list", 
+                "app/resource/reward",
+                "app/resource/history",
+                "app/resource/settings",
+                "app/plugin",
+                "logs"
+            ]
+            
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                exported_count = 0
+                
+                for folder_path in export_folders:
+                    full_path = os.path.join(os.getcwd(), folder_path)
+                    if os.path.exists(full_path):
+                        for root, dirs, files in os.walk(full_path):
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                arcname = os.path.relpath(file_path, os.getcwd())
+                                zipf.write(file_path, arcname)
+                                exported_count += 1
+                    else:
+                        # 如果文件夹不存在，创建一个结构化的缺失记录
+                        missing_info = {
+                            "folder": folder_path,
+                            "status": "missing",
+                            "note": "该文件夹在导出时不存在"
+                        }
+                        zipf.writestr(f"_missing_{folder_path.replace('/', '_')}.json", 
+                                    json.dumps(missing_info, ensure_ascii=False, indent=2))
+                
+                # 创建结构化的系统信息报告 - 使用JSON格式便于程序解析
+                system_info = {
+                    # 【导出元数据】基础信息记录
+                    "export_metadata": {
+                        "software": "SecRandom",                                                # 软件名称
+                        "export_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),            # 人类可读时间
+                        "export_timestamp": datetime.now().isoformat(),                         # ISO标准时间戳
+                        "version": VERSION,                                                     # 当前软件版本
+                        "export_type": "diagnostic",                                            # 导出类型（诊断数据）
+                    },
+                    # 【系统环境信息】详细的运行环境数据
+                    "system_info": {
+                        "software_path": os.getcwd(),                                           # 软件安装路径
+                        "operating_system": f"{platform.system()} {platform.release()}",        # 操作系统版本
+                        "platform_details": {                                                   # 平台详细信息
+                            "system": platform.system(),                                        # 系统类型 (Windows/Linux/Darwin)
+                            "release": platform.release(),                                      # 系统发行版本
+                            "version": platform.version(),                                      # 完整系统版本
+                            "machine": platform.machine(),                                      # 机器架构 (AMD64/x86_64)
+                            "processor": platform.processor()                                   # 处理器信息
+                        },
+                        "python_version": sys.version,                                          # Python完整版本信息
+                        "python_executable": sys.executable                                     # Python可执行文件路径
+                    },
+                    # 【导出摘要】统计信息和导出详情
+                    "export_summary": {
+                        "total_files_exported": exported_count,                                 # 成功导出的文件总数
+                        "export_folders": export_folders,                                       # 导出的文件夹列表
+                        "export_location": zip_path                                             # 导出压缩包的完整路径
+                    }
+                }
+                # 将系统信息写入JSON文件，使用中文编码确保兼容性
+                diagnostic_filename = f"SecRandom_诊断报告_{VERSION}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                zipf.writestr(diagnostic_filename, json.dumps(system_info, ensure_ascii=False, indent=2))
+            
+            # 显示成功提示
+            InfoBar.success(
+                title='导出成功',
+                content=f'诊断数据已导出到: {zip_path}',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self
+            )
+            
+            logger.success(f"诊断数据导出成功: {zip_path}")
+            
+            # 打开导出文件所在的文件夹 - 提供用户友好的选择提示
+            try:
+                # 创建消息框询问用户是否打开导出目录
+                msg_box = Dialog(
+                    title='诊断数据导出完成',
+                    content=f'诊断数据已成功导出到桌面！\n\n文件位置: {zip_path}\n\n是否立即打开导出文件夹查看文件？',
+                    parent=self
+                )
+                msg_box.yesButton.setText('打开文件夹')
+                msg_box.cancelButton.setText('稍后再说')
+                msg_box.setFont(QFont(load_custom_font(), 12))
+                
+                if msg_box.exec():
+                    # 用户选择打开文件夹
+                    os.startfile(os.path.dirname(zip_path))
+                    logger.info("用户选择打开诊断数据导出文件夹")
+                else:
+                    # 用户选择不打开
+                    logger.info("用户选择不打开诊断数据导出文件夹")
+                    
+            except Exception as e:
+                # 如果消息框创建失败，回退到简单的提示
+                logger.error(f"创建消息框失败: {str(e)}")
+                try:
+                    os.startfile(os.path.dirname(zip_path))
+                except:
+                    logger.error("无法打开诊断数据导出文件夹")
+                    os.startfile(desktop_path)
+            except:
+                pass
+                
+        except Exception as e:
+            logger.error(f"导出诊断数据时出错: {str(e)}")
+            InfoBar.error(
+                title='导出失败',
+                content=f'导出诊断数据时出错: {str(e)}',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self
+            )
+    
     def save_settings(self):
         # 先读取现有设置
         existing_settings = {}

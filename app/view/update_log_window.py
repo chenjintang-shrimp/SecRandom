@@ -28,7 +28,8 @@ class UpdateLogWindow(MSFluentWindow):
     UPDATE_CONTENTS = {
         "major_updates": [
             '• 新增 更新日志界面，方便用户了解版本更新内容',
-            '• 新增 MD5校验功能，检验捐献支持二维码是否被篡改'
+            '• 新增 MD5校验功能，检验捐献支持二维码是否被篡改',
+            '• 新增 导出诊断数据功能，方便用户导出软件运行数据'
         ],
         "feature_optimizations": [
             '• 优化 引导流程，区分首次使用和版本更新情况',
