@@ -160,6 +160,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新设置", "启动时自动检查软件更新", self.check_on_startup)
         self.addGroup(get_theme_icon("ic_fluent_branch_compare_20_filled"), "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
+        self.addGroup(get_theme_icon("ic_fluent_link_20_filled"), "URL协议注册", "注册SecRandom URL协议，允许其他程序通过URL启动SecRandom并打开特定界面", self.url_protocol_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
@@ -167,7 +168,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗样式", "设置便捷抽人的浮窗样式", self.left_pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "主窗口置顶", "设置主窗口是否置顶(需重新打开主窗口生效-不是重启软件)", self.topmost_switch)
-        self.addGroup(get_theme_icon("ic_fluent_link_20_filled"), "URL协议注册", "注册SecRandom URL协议，允许其他程序通过URL启动SecRandom并打开特定界面", self.url_protocol_switch)
         self.addGroup(get_theme_icon("ic_fluent_layout_row_two_focus_top_settings_20_filled"), "主窗口焦点", "设置主窗口不是焦点时关闭延迟", self.main_window_focus_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "检测主窗口焦点时间", "设置检测主窗口焦点时间", self.main_window_focus_time_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "主窗口位置", "设置主窗口的显示位置", self.main_window_comboBox)
@@ -323,6 +323,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     pumping_floating_visible = foundation_settings.get("pumping_floating_visible", self.default_settings["pumping_floating_visible"])
 
                     topmost_switch = foundation_settings.get("topmost_switch", self.default_settings["topmost_switch"])
+
                     url_protocol_enabled = foundation_settings.get("url_protocol_enabled", self.default_settings["url_protocol_enabled"])
 
                     self.self_starting_switch.setChecked(self_starting_enabled)
@@ -1028,6 +1029,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         duration=3000,
                         parent=self
                     )
+                    self.save_settings()
                 else:
                     self.url_protocol_switch.setChecked(False)
                     logger.error("URL协议注册失败")
@@ -1040,6 +1042,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         duration=3000,
                         parent=self
                     )
+                    self.url_protocol_switch.setChecked(False)
+                    self.save_settings()
             else:
                 success = self.unregister_url_protocol()
                 if success:
