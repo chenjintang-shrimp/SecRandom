@@ -864,3 +864,140 @@ class Window(MSFluentWindow):
         if hasattr(self, 'levitation_window') and self.levitation_window:
             self.levitation_window.raise_()
             self.levitation_window.activateWindow()
+    
+    # ==================================================
+    # URL协议支持方法
+    # ==================================================
+    def show_main_window(self):
+        """(^・ω・^ ) 白露的主界面召唤魔法！
+        通过URL协议打开主界面，让用户开始他们的随机选择冒险～
+        会自动显示并激活窗口，确保用户能立即看到界面！✨"""
+        logger.info("白露URL: 正在打开主界面～")
+        self.toggle_window()
+        logger.info("白露URL: 主界面已成功打开～")
+    
+    def show_settings_window(self):
+        """(^・ω・^ ) 白露的设置界面召唤魔法！
+        通过URL协议打开设置界面，让用户可以调整各种设置～
+        会进行安全验证，确保只有授权用户才能访问设置！🔒✨"""
+        logger.info("白露URL: 正在打开设置界面～")
+        self.show_setting_interface()
+        logger.info("白露URL: 设置界面已成功打开～")
+    
+    def show_pumping_window(self):
+        """(^・ω・^ ) 白露的抽人界面召唤魔法！
+        通过URL协议打开抽人界面，让用户可以开始随机选择～
+        会自动切换到抽人界面，方便用户立即开始使用！🎲✨"""
+        logger.info("白露URL: 正在打开抽人界面～")
+        if not self.isVisible():
+            self.show()
+            self.activateWindow()
+            self.raise_()
+        self.switchTo(self.pumping_peopleInterface)
+        logger.info("白露URL: 抽人界面已成功打开～")
+    
+    def show_reward_window(self):
+        """(^・ω・^ ) 白露的抽奖界面召唤魔法！
+        通过URL协议打开抽奖界面，让用户可以开始抽奖活动～
+        会自动切换到抽奖界面，让用户立即开始抽奖！🎁✨"""
+        logger.info("白露URL: 正在打开抽奖界面～")
+        if not self.isVisible():
+            self.show()
+            self.activateWindow()
+            self.raise_()
+        self.switchTo(self.pumping_rewardInterface)
+        logger.info("白露URL: 抽奖界面已成功打开～")
+    
+    def show_history_window(self):
+        """(^・ω・^ ) 白露的历史记录界面召唤魔法！
+        通过URL协议打开历史记录界面，让用户查看过往记录～
+        会自动切换到历史记录界面，方便用户查看历史数据！📊✨"""
+        logger.info("白露URL: 正在打开历史记录界面～")
+        if not self.isVisible():
+            self.show()
+            self.activateWindow()
+            self.raise_()
+        self.switchTo(self.history_handoff_settingInterface)
+        # 触发历史记录数据加载
+        self.history_handoff_settingInterface.pumping_people_card.load_data()
+        logger.info("白露URL: 历史记录界面已成功打开～")
+    
+    def show_floating_window(self):
+        """(^・ω・^ ) 白露的浮窗界面召唤魔法！
+        通过URL协议打开浮窗界面，让用户使用便捷的悬浮功能～
+        会切换浮窗的显示状态，让用户可以立即使用浮窗功能！🪟✨"""
+        logger.info("白露URL: 正在打开浮窗界面～")
+        self.toggle_levitation_window()
+        logger.info("白露URL: 浮窗界面已成功打开～")
+    
+    def start_random_selection(self):
+        """(^・ω・^ ) 白露的随机选择启动魔法！
+        通过URL参数启动随机选择功能，让程序自动开始抽人～
+        会检查当前界面并调用相应的开始方法！🎯✨"""
+        logger.info("白露URL: 正在启动随机选择功能～")
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到抽人界面
+            self.switchTo(self.pumping_peopleInterface)
+            
+            # 尝试调用抽人界面的开始方法
+            if hasattr(self.pumping_peopleInterface, 'start_random_selection'):
+                self.pumping_peopleInterface.start_random_selection()
+                logger.info("白露URL: 随机选择功能已成功启动～")
+            else:
+                logger.warning("白露URL: 抽人界面缺少start_random_selection方法～")
+        except Exception as e:
+            logger.error(f"白露URL: 启动随机选择功能失败: {e}")
+    
+    def stop_random_selection(self):
+        """(^・ω・^ ) 白露的随机选择停止魔法！
+        通过URL参数停止随机选择功能，让程序停止当前的抽人操作～
+        会检查当前界面并调用相应的停止方法！🛑✨"""
+        logger.info("白露URL: 正在停止随机选择功能～")
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到抽人界面
+            self.switchTo(self.pumping_peopleInterface)
+            
+            # 尝试调用抽人界面的停止方法
+            if hasattr(self.pumping_peopleInterface, 'stop_random_selection'):
+                self.pumping_peopleInterface.stop_random_selection()
+                logger.info("白露URL: 随机选择功能已成功停止～")
+            else:
+                logger.warning("白露URL: 抽人界面缺少stop_random_selection方法～")
+        except Exception as e:
+            logger.error(f"白露URL: 停止随机选择功能失败: {e}")
+    
+    def reset_selection(self):
+        """(^・ω・^ ) 白露的选择重置魔法！
+        通过URL参数重置选择状态，让程序清空当前的选择结果～
+        会检查当前界面并调用相应的重置方法！🔄✨"""
+        logger.info("白露URL: 正在重置选择状态～")
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到抽人界面
+            self.switchTo(self.pumping_peopleInterface)
+            
+            # 尝试调用抽人界面的重置方法
+            if hasattr(self.pumping_peopleInterface, 'reset_selection'):
+                self.pumping_peopleInterface.reset_selection()
+                logger.info("白露URL: 选择状态已成功重置～")
+            else:
+                logger.warning("白露URL: 抽人界面缺少reset_selection方法～")
+        except Exception as e:
+            logger.error(f"白露URL: 重置选择状态失败: {e}")

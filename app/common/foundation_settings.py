@@ -35,6 +35,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "main_window_mode": 0,
             "settings_window_mode": 0,
             "topmost_switch": False,
+            "url_protocol_enabled": False,
         }
 
         self.self_starting_switch = SwitchButton()
@@ -148,6 +149,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.topmost_switch.setOffText("取消置顶")
         self.topmost_switch.setFont(QFont(load_custom_font(), 12))
         self.topmost_switch.checkedChanged.connect(self.save_settings)
+        
+        # URL协议注册功能
+        self.url_protocol_switch = SwitchButton()
+        self.url_protocol_switch.setOnText("已注册")
+        self.url_protocol_switch.setOffText("未注册")
+        self.url_protocol_switch.setFont(QFont(load_custom_font(), 12))
+        self.url_protocol_switch.checkedChanged.connect(self.toggle_url_protocol)
 
 
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新设置", "启动时自动检查软件更新", self.check_on_startup)
@@ -159,6 +167,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗样式", "设置便捷抽人的浮窗样式", self.left_pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "主窗口置顶", "设置主窗口是否置顶(需重新打开主窗口生效-不是重启软件)", self.topmost_switch)
+        self.addGroup(get_theme_icon("ic_fluent_link_20_filled"), "URL协议注册", "注册SecRandom URL协议，允许其他程序通过URL启动SecRandom并打开特定界面", self.url_protocol_switch)
         self.addGroup(get_theme_icon("ic_fluent_layout_row_two_focus_top_settings_20_filled"), "主窗口焦点", "设置主窗口不是焦点时关闭延迟", self.main_window_focus_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "检测主窗口焦点时间", "设置检测主窗口焦点时间", self.main_window_focus_time_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "主窗口位置", "设置主窗口的显示位置", self.main_window_comboBox)
@@ -314,6 +323,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     pumping_floating_visible = foundation_settings.get("pumping_floating_visible", self.default_settings["pumping_floating_visible"])
 
                     topmost_switch = foundation_settings.get("topmost_switch", self.default_settings["topmost_switch"])
+                    url_protocol_enabled = foundation_settings.get("url_protocol_enabled", self.default_settings["url_protocol_enabled"])
 
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
@@ -327,6 +337,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.check_on_startup.setChecked(check_on_startup)
                     self.left_pumping_floating_switch.setChecked(pumping_floating_visible)
                     self.topmost_switch.setChecked(topmost_switch)
+                    self.url_protocol_switch.setChecked(url_protocol_enabled)
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
@@ -706,6 +717,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings["check_on_startup"] = self.check_on_startup.isChecked()
         foundation_settings["pumping_floating_visible"] = self.left_pumping_floating_switch.isChecked()
         foundation_settings["topmost_switch"] = self.topmost_switch.isChecked()
+        foundation_settings["url_protocol_enabled"] = self.url_protocol_switch.isChecked()
 
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
@@ -997,6 +1009,195 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             w.buttonLayout.insertStretch(1)
             w.exec_()
         
+    def toggle_url_protocol(self, enabled):
+        """切换URL协议注册状态"""
+        try:
+            if enabled:
+                success = self.register_url_protocol()
+                if success:
+                    logger.success("URL协议注册成功")
+                    InfoBar.success(
+                        title='注册成功',
+                        content='SecRandom URL协议已成功注册，现在可以通过secrandom://链接启动程序',
+                        orient=Qt.Horizontal,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP,
+                        duration=3000,
+                        parent=self
+                    )
+                else:
+                    self.url_protocol_switch.setChecked(False)
+                    logger.error("URL协议注册失败")
+                    InfoBar.error(
+                        title='注册失败',
+                        content='URL协议注册失败，请检查权限设置',
+                        orient=Qt.Horizontal,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP,
+                        duration=3000,
+                        parent=self
+                    )
+            else:
+                success = self.unregister_url_protocol()
+                if success:
+                    logger.success("URL协议注销成功")
+                    InfoBar.success(
+                        title='注销成功',
+                        content='SecRandom URL协议已成功注销',
+                        orient=Qt.Horizontal,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP,
+                        duration=3000,
+                        parent=self
+                    )
+                else:
+                    self.url_protocol_switch.setChecked(True)
+                    logger.error("URL协议注销失败")
+                    InfoBar.error(
+                        title='注销失败',
+                        content='URL协议注销失败，请检查权限设置',
+                        orient=Qt.Horizontal,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP,
+                        duration=3000,
+                        parent=self
+                    )
+        except Exception as e:
+            logger.error(f"URL协议操作失败: {str(e)}")
+            InfoBar.error(
+                title='操作失败',
+                content=f'URL协议操作失败: {str(e)}',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+    
+    def register_url_protocol(self):
+        """注册SecRandom URL协议"""
+        try:
+            import sys
+            import os
+            
+            # 获取当前程序路径
+            executable = sys.executable
+            if not executable:
+                logger.error("无法获取可执行文件路径")
+                return False
+            
+            # 构建命令行参数，包含URL处理
+            command = f'"{executable}" --url="%1"'
+            
+            # 注册URL协议到注册表
+            protocol_key = "secrandom"
+            
+            # 创建协议主键
+            with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
+                winreg.SetValue(key, None, winreg.REG_SZ, "URL:SecRandom Protocol")
+                winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
+            
+            # 创建默认图标
+            with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon") as key:
+                winreg.SetValue(key, None, winreg.REG_SZ, executable)
+            
+            # 创建shell\open\command
+            with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command") as key:
+                winreg.SetValue(key, None, winreg.REG_SZ, command)
+            
+            logger.info(f"URL协议注册成功: {protocol_key}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"注册URL协议失败: {str(e)}")
+            return False
+    
+    def unregister_url_protocol(self):
+        """注销SecRandom URL协议"""
+        try:
+            protocol_key = "secrandom"
+            
+            # 删除注册表项
+            try:
+                winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command")
+                winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open")
+                winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell")
+                winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon")
+                winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, protocol_key)
+            except WindowsError:
+                # 如果键不存在，忽略错误
+                pass
+            
+            logger.info(f"URL协议注销成功: {protocol_key}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"注销URL协议失败: {str(e)}")
+            return False
+    
+    def is_url_protocol_registered(self):
+        """检查URL协议是否已注册"""
+        try:
+            protocol_key = "secrandom"
+            with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
+                return True
+        except WindowsError:
+            return False
+    
+    def handle_url_command(self, url):
+        """处理URL命令，打开指定界面"""
+        try:
+            if not url.startswith("secrandom://"):
+                logger.error(f"无效的SecRandom URL: {url}")
+                return False
+            
+            # 解析URL
+            from urllib.parse import urlparse, parse_qs
+            parsed_url = urlparse(url)
+            path = parsed_url.path.strip('/')
+            query_params = parse_qs(parsed_url.query)
+            
+            # 界面映射字典
+            interface_map = {
+                "main": "open_main_window",
+                "settings": "open_settings_window",
+                "pumping": "open_pumping_window",
+                "reward": "open_reward_window",
+                "history": "open_history_window",
+                "floating": "open_floating_window"
+            }
+            
+            # 根据路径打开对应界面
+            if path in interface_map:
+                method_name = interface_map[path]
+                main_window = self.get_main_window()
+                if main_window and hasattr(main_window, method_name):
+                    method = getattr(main_window, method_name)
+                    method()
+                    logger.info(f"通过URL打开界面: {path}")
+                    return True
+                else:
+                    logger.error(f"找不到对应的方法: {method_name}")
+            else:
+                logger.error(f"未知的界面路径: {path}")
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"处理URL命令失败: {str(e)}")
+            return False
+    
+    def get_main_window(self):
+        """获取主窗口实例"""
+        try:
+            for widget in QApplication.topLevelWidgets():
+                if hasattr(widget, 'update_focus_mode'):  # 通过特征识别主窗口
+                    return widget
+            return None
+        except Exception as e:
+            logger.error(f"获取主窗口失败: {str(e)}")
+            return None
+    
     def closeEvent(self, event):
         if not self.saved:
             w = Dialog('未保存内容', '确定要关闭吗？', self)
@@ -1137,7 +1338,7 @@ class SettingsSelectionDialog(QDialog):
                     "pumping_floating_transparency_mode", "pumping_floating_visible"
                 ],
                 "启动设置": [
-                    "check_on_startup", "self_starting_enabled"
+                    "check_on_startup", "self_starting_enabled", "url_protocol_enabled"
                 ]
             },
             "pumping_people": {
@@ -1272,6 +1473,7 @@ class SettingsSelectionDialog(QDialog):
             "window_height": "主窗口高度", # 有
             "settings_window_width": "设置窗口宽度", # 有
             "settings_window_height": "设置窗口高度", # 有
+            "url_protocol_enabled": "URL协议注册", # 有
             # pumping_people设置（跟pumping_reward设置有重复的不计入）
             "student_id": "显示学号", # 有
             "student_name": "显示姓名", # 有

@@ -24,6 +24,7 @@ from loguru import logger
 # ==================================================
 from app.common.config import cfg, VERSION
 from app.view.SecRandom import Window
+from app.common.url_handler import process_url_if_exists
 
 def send_ipc_message():
     """(^・ω・^ ) 白露的IPC信使魔法！
@@ -419,6 +420,16 @@ if __name__ == "__main__":
     
     # 初始化应用程序并创建主窗口
     sec = initialize_application()
+
+    # 处理URL命令（如果存在）
+    try:
+        logger.info("白露URL: 检查是否有URL命令需要处理～")
+        if process_url_if_exists(sec):
+            logger.info("白露URL: URL命令处理成功～")
+        else:
+            logger.info("白露URL: 没有URL命令需要处理～")
+    except Exception as e:
+        logger.error(f"白露URL: 处理URL命令失败: {e}")
 
     # 启动应用程序事件循环
     try:
