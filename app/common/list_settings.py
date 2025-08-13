@@ -38,6 +38,11 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.import_Button.clicked.connect(self.import_student_list)
         self.import_Button.setFont(QFont(load_custom_font(), 12))
 
+        # 导出学生名单
+        self.export_Button = PushButton("导出学生名单")
+        self.export_Button.clicked.connect(self.export_student_list)
+        self.export_Button.setFont(QFont(load_custom_font(), 12))
+
         self.student_Button = PushButton("设置学生名单")
         self.student_Button.clicked.connect(self.show_student_dialog)
         self.student_Button.setFont(QFont(load_custom_font(), 12))
@@ -72,6 +77,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置学生名单", "点击按钮设置学生姓名", self.student_Button)
         self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置学生性别", "点击按钮设置学生性别", self.gender_Button)
         self.addGroup(get_theme_icon("ic_fluent_group_20_filled"), "设置小组", "点击按钮设置小组名单", self.group_Button)
+        self.addGroup(get_theme_icon("ic_fluent_document_export_20_filled"), "导出学生名单", "点击按钮导出当前班级学生名单文件", self.export_Button)
 
         # 创建表格
         self.table = TableWidget(self)
@@ -111,6 +117,121 @@ class list_SettinsCard(GroupHeaderCardWidget):
                 logger.info(f"学生名单导入成功，共导入 {len(student_data)} 条记录")
             except Exception as e:
                 logger.error(f"导入失败: {str(e)}")
+
+    # 🌟 小鸟游星野：学生名单导出功能 ~ (๑•̀ㅂ•́)ญ✧
+    def export_student_list(self):
+        class_name = self.class_comboBox.currentText()
+        if not class_name:
+            InfoBar.warning(
+                title='导出失败',
+                content='请先选择要导出的班级',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+            return
+
+        try:
+            # 读取学生数据
+            with open(f"app/resource/list/{class_name}.json", 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            if not data:
+                InfoBar.warning(
+                    title='导出失败',
+                    content='当前班级没有学生数据',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return
+
+            # 转换为DataFrame
+            export_data = []
+            for name, info in data.items():
+                export_data.append({
+                    '学号': info['id'],
+                    '姓名': name.replace('【', '').replace('】', ''),
+                    '性别': info['gender'],
+                    '所处小组': info['group']
+                })
+            
+            df = pd.DataFrame(export_data)
+            
+            # 打开文件保存对话框
+            file_path, selected_filter = QFileDialog.getSaveFileName(
+                self,
+                "保存学生名单",
+                f"{class_name}_学生名单",
+                "Excel文件 (*.xlsx);;Excel 97-2003文件 (*.xls);;CSV文件 (*.csv)"
+            )
+            
+            if file_path:
+                # 根据选择的格式处理文件扩展名和保存方式
+                if "Excel文件 (*.xlsx)" in selected_filter:
+                    if not file_path.endswith('.xlsx'):
+                        file_path += '.xlsx'
+                    # 保存为xlsx文件
+                    df.to_excel(file_path, index=False, engine='openpyxl')
+                elif "Excel 97-2003文件 (*.xls)" in selected_filter:
+                    if not file_path.endswith('.xls'):
+                        file_path += '.xls'
+                    # 保存为xls文件
+                    df.to_excel(file_path, index=False, engine='xlwt')
+                else:  # CSV格式
+                    if not file_path.endswith('.csv'):
+                        file_path += '.csv'
+                    # 保存为CSV文件
+                    df.to_csv(file_path, index=False, encoding='utf-8-sig')
+                
+                InfoBar.success(
+                    title='导出成功',
+                    content=f'学生名单已导出到: {file_path}',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=5000,
+                    parent=self
+                )
+                logger.info(f"学生名单导出成功: {file_path}")
+                
+        except FileNotFoundError:
+            logger.error(f"班级文件 '{class_name}.json' 不存在")
+            InfoBar.error(
+                title='导出失败',
+                content='班级文件不存在',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except json.JSONDecodeError:
+            logger.error(f"班级文件 '{class_name}.json' 格式错误")
+            InfoBar.error(
+                title='导出失败',
+                content='班级文件格式错误',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except Exception as e:
+            logger.error(f"导出学生名单时出错: {str(e)}")
+            InfoBar.error(
+                title='导出失败',
+                content=f'导出时出错: {str(e)}',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
 
     def show_table(self):
         class_name = self.class_comboBox.currentText()
@@ -423,10 +544,10 @@ class ImportStudentDialog(QDialog):
     # 🌟 小鸟游星野：学生名单导入对话框 ~ (๑•̀ㅂ•́)ญ✧
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 🌟 星穹铁道白露：设置无边框窗口样式并解决屏幕设置冲突~ 
+        # 🌟 星穹铁道白露：设置无边框但可调整大小的窗口样式并解决屏幕设置冲突~ 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("导入学生名单")
-        self.setFixedSize(600, 535)  # 增加高度以适应标题栏
+        self.setMinimumSize(600, 535)  # 设置最小大小而不是固定大小
         self.saved = False
         self.dragging = False
         self.drag_position = None
@@ -980,7 +1101,7 @@ class ClassInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("输入班级名称")
-        self.setFixedSize(400, 335)  # 增加高度以适应标题栏
+        self.setMinimumSize(400, 335)  # 设置最小大小而不是固定大小
         self.saved = False
         self.dragging = False
         
@@ -1160,7 +1281,7 @@ class StudentInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("输入学生姓名")
-        self.setFixedSize(400, 635)  # 增加高度以适应标题栏
+        self.setMinimumSize(400, 635)  # 设置最小大小而不是固定大小
         self.saved = False
         self.dragging = False
         
@@ -1354,7 +1475,7 @@ class GenderInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("输入每个学生对应的性别")
-        self.setFixedSize(400, 435)  # 增加高度以适应标题栏
+        self.setMinimumSize(400, 435)  # 设置最小大小而不是固定大小
         self.saved = False
         self.dragging = False
         
@@ -1544,7 +1665,7 @@ class GroupInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("输入每个学生对应的小组名称")
-        self.setFixedSize(400, 435)  # 增加高度以适应标题栏
+        self.setMinimumSize(400, 435)  # 增加高度以适应标题栏
         self.saved = False
         self.dragging = False
         

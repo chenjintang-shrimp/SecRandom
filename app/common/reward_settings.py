@@ -38,6 +38,11 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         self.import_Button.clicked.connect(self.import_prize_list)
         self.import_Button.setFont(QFont(load_custom_font(), 12))
 
+        # 导出奖品名单
+        self.export_Button = PushButton("导出奖品名单")
+        self.export_Button.clicked.connect(self.export_prize_list)
+        self.export_Button.setFont(QFont(load_custom_font(), 12))
+
         self.prize_Button = PushButton("设置奖池奖品")
         self.prize_Button.clicked.connect(self.show_prize_dialog)
         self.prize_Button.setFont(QFont(load_custom_font(), 12))
@@ -67,6 +72,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "快速导入奖品名单", "点击按钮快速导入奖品名单(该功能会覆盖原名单)", self.import_Button)
         self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置奖池奖品", "设置该奖池的奖品", self.prize_Button)
         self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置奖品权重", "设置奖品权重", self.probability_Button)
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导出奖品名单", "点击按钮导出当前奖池奖品名单文件", self.export_Button)
 
         # 创建表格
         self.table = TableWidget(self)
@@ -107,6 +113,117 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                 logger.info(f"奖品名单导入成功，共导入 {len(prize_data)} 条记录")
             except Exception as e:
                 logger.error(f"导入失败: {str(e)}")
+
+    # 🌟 小鸟游星野：奖品名单导出功能 ~ (๑•̀ㅂ•́)ญ✧
+    def export_prize_list(self):
+        prize_pools_name = self.prize_pools_comboBox.currentText()
+        if not prize_pools_name:
+            InfoBar.warning(
+                title='导出失败',
+                content='请先选择要导出的奖池',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+            return
+
+        try:
+            # 读取奖品数据
+            with open(f"app/resource/reward/{prize_pools_name}.json", 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            if not data:
+                InfoBar.warning(
+                    title='导出失败',
+                    content='当前奖池没有奖品数据',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return
+
+            # 转换为DataFrame
+            export_data = []
+            for name, info in data.items():
+                export_data.append({
+                    '序号': info['id'],
+                    '奖品名称': name,
+                    '权重': info['probability']
+                })
+            
+            df = pd.DataFrame(export_data)
+            
+            # 打开文件保存对话框
+            file_path, selected_filter = QFileDialog.getSaveFileName(
+                self,
+                "保存奖品名单",
+                f"{prize_pools_name}_奖品名单",
+                "Excel文件 (*.xlsx);;Excel 97-2003文件 (*.xls);;CSV文件 (*.csv)"
+            )
+            
+            if file_path:
+                # 根据选择的文件类型确定扩展名和保存格式
+                if selected_filter == "Excel文件 (*.xlsx)":
+                    if not file_path.endswith('.xlsx'):
+                        file_path += '.xlsx'
+                    df.to_excel(file_path, index=False, engine='openpyxl')
+                elif selected_filter == "Excel 97-2003文件 (*.xls)":
+                    if not file_path.endswith('.xls'):
+                        file_path += '.xls'
+                    df.to_excel(file_path, index=False, engine='xlwt')
+                else:  # CSV文件
+                    if not file_path.endswith('.csv'):
+                        file_path += '.csv'
+                    df.to_csv(file_path, index=False, encoding='utf-8-sig')
+                
+                InfoBar.success(
+                    title='导出成功',
+                    content=f'奖品名单已导出到: {file_path}',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=5000,
+                    parent=self
+                )
+                logger.info(f"奖品名单导出成功: {file_path}")
+                
+        except FileNotFoundError:
+            logger.error(f"奖池文件 '{prize_pools_name}.json' 不存在")
+            InfoBar.error(
+                title='导出失败',
+                content='奖池文件不存在',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except json.JSONDecodeError:
+            logger.error(f"奖池文件 '{prize_pools_name}.json' 格式错误")
+            InfoBar.error(
+                title='导出失败',
+                content='奖池文件格式错误',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except Exception as e:
+            logger.error(f"导出奖品名单时出错: {str(e)}")
+            InfoBar.error(
+                title='导出失败',
+                content=f'导出时出错: {str(e)}',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
 
     def show_table(self):
         prize_pools_name = self.prize_pools_comboBox.currentText()
@@ -382,10 +499,10 @@ class ImportPrizeDialog(QDialog):
     # 🌟 小鸟游星野：学生名单导入对话框 ~ (๑•̀ㅂ•́)ญ✧
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 设置无边框窗口样式
+        # 设置无边框但可调整大小的窗口样式
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("导入奖品名单")
-        self.setFixedSize(600, 535)  # 增加高度以适应标题栏
+        self.setMinimumSize(600, 535)  # 设置最小大小而不是固定大小
         self.saved = False
         self.dragging = False
         self.drag_position = None
@@ -877,9 +994,9 @@ class Prize_pools_InputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("输入奖池名称")
-        # 设置无边框窗口样式
+        # 设置无边框但可调整大小的窗口样式
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
-        self.setFixedSize(400, 335)  # 增加高度以适应标题栏
+        self.setMinimumSize(400, 335)  # 设置最小大小而不是固定大小
         self.saved = False
         
         # 创建自定义标题栏
@@ -1051,9 +1168,9 @@ class PrizeInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("输入奖品名称")
-        # 设置无边框窗口样式
+        # 设置无边框但可调整大小的窗口样式
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
-        self.setFixedSize(400, 635)  # 增加高度以适应标题栏
+        self.setMinimumSize(400, 635)  # 设置最小大小而不是固定大小
         self.saved = False
         
         # 创建自定义标题栏
@@ -1239,9 +1356,9 @@ class ProbabilityInputDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("输入每项奖品对应的权重")
-        # 设置无边框窗口样式
+        # 设置无边框但可调整大小的窗口样式
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
-        self.setFixedSize(400, 435)  # 增加高度以适应标题栏
+        self.setMinimumSize(400, 435)  # 设置最小大小而不是固定大小
         self.saved = False
         
         # 创建自定义标题栏
