@@ -29,6 +29,7 @@ from app.view.main_page.pumping_reward import pumping_reward
 from app.view.main_page.history_handoff_setting import history_handoff_setting
 from app.view.levitation import LevitationWindow
 from app.view.settings_page.about_setting import about
+from app.common.about import ContributorDialog, DonationDialog
 
 # ================================================== (^・ω・^ )
 # 白露的初始化魔法阵 ⭐
@@ -300,7 +301,15 @@ class Window(MSFluentWindow):
         # 初始化IPC服务器
         self.server = QLocalServer(self)
         self.server.newConnection.connect(self.handle_new_connection)
-        self.server.listen("SecRandomIPC")
+        
+        # 清理可能存在的旧服务器实例
+        QLocalServer.removeServer("SecRandomIPC")
+        
+        # 尝试监听，如果失败则输出错误日志
+        if not self.server.listen("SecRandomIPC"):
+            logger.error(f"IPC服务器监听失败: {self.server.errorString()}")
+        else:
+            logger.info("IPC服务器监听成功: SecRandomIPC")
 
         # 初始化定时器
         self.focus_timer = QTimer(self)
@@ -834,30 +843,152 @@ class Window(MSFluentWindow):
             return
 
         client_connection.readyRead.connect(lambda: self.read_client_data(client_connection))
-        client_connection.disconnected.connect(client_connection.deleteLater)
+        client_connection.disconnected.connect(lambda: self.cleanup_connection(client_connection))
+        
+    def cleanup_connection(self, client_connection):
+        """清理IPC连接资源"""
+        client_connection.disconnectFromServer()
+        client_connection.deleteLater()
 
     def read_client_data(self, client_connection):
-        data = client_connection.readAll().data().decode().strip()
-        if data == 'show':
-            self.toggle_window()
-        client_connection.disconnectFromServer()
-        client_connection.readyRead.connect(lambda: self.read_client_data(client_connection))
-        client_connection.disconnected.connect(client_connection.deleteLater)
+        try:
+            # 检查连接状态和是否可读
+            if not client_connection or not client_connection.isOpen() or not client_connection.isReadable():
+                logger.warning("IPC连接未打开或不可读，跳过处理")
+                return
+                
+            data = client_connection.readAll().data().decode().strip()
+            if not data:
+                logger.warning("接收到空的IPC消息，跳过处理")
+                return
+                
+            logger.info(f"接收到IPC消息: {data}")
+            
+            if data == 'show':
+                self.toggle_window()
+            elif data.startswith('url:'):
+                # 处理URL命令
+                url_command = data[4:].strip()  # 移除'url:'前缀
+                logger.info(f"处理URL命令: {url_command}")
+                
+                # 解析URL命令并调用相应方法
+                if '://' in url_command:
+                    # 移除协议部分，如 'secrandom://settings' -> 'settings'
+                    path_part = url_command.split('://', 1)[1]
+                else:
+                    path_part = url_command
+                    
+                if '?' in path_part:
+                    # 有参数的情况，如 'settings?action=start'
+                    path, params_str = path_part.split('?', 1)
+                    params = {}
+                    for param in params_str.split('&'):
+                        if '=' in param:
+                            key, value = param.split('=', 1)
+                            params[key] = value
+                else:
+                    # 无参数的情况
+                    path = path_part
+                    params = {}
+                
+                # 根据路径调用对应的方法
+                method_map = {
+                    'main': 'show_main_window',
+                    'settings': 'show_settings_window',
+                    'pumping': 'show_pumping_window',
+                    'reward': 'show_reward_window',
+                    'history': 'show_history_window',
+                    'floating': 'show_floating_window',
+                    'about': 'show_about_window'
+                }
+                
+                if path in method_map:
+                    method_name = method_map[path]
+                    if hasattr(self, method_name):
+                        method = getattr(self, method_name)
+                        method()
+                        
+                        # 处理额外的action参数
+                        if 'action' in params:
+                            action = params['action']
+                            if action == 'start' and path == 'pumping':
+                                self.start_pumping_selection()
+                            elif action == 'stop' and path == 'pumping':
+                                self.stop_pumping_selection()
+                            elif action == 'reset' and path == 'pumping':
+                                self.reset_pumping_selection()
+                            elif action == 'start' and path == 'reward':
+                                self.start_reward_selection()
+                            elif action == 'stop' and path == 'reward':
+                                self.stop_reward_selection()
+                            elif action == 'reset' and path == 'reward':
+                                self.reset_reward_selection()
+                            elif action == 'donation' and path == 'about':
+                                self.show_donation_dialog()
+                            elif action == 'contributor' and path == 'about':
+                                self.show_contributor_dialog()
+                    else:
+                        logger.warning(f"找不到方法: {method_name}")
+                else:
+                    logger.warning(f"未知的URL路径: {path}")
+            else:
+                logger.warning(f"未知的IPC消息: {data}")
+        except Exception as e:
+            logger.error(f"处理IPC消息时发生错误: {e}")
+        finally:
+            # 安全地清理连接
+            try:
+                # 使用更安全的方式检查对象是否有效
+                if client_connection and hasattr(client_connection, 'disconnectFromServer'):
+                    try:
+                        client_connection.disconnectFromServer()
+                    except RuntimeError:
+                        # 对象已被删除，忽略错误
+                        pass
+                    try:
+                        client_connection.deleteLater()
+                    except RuntimeError:
+                        # 对象已被删除，忽略错误
+                        pass
+            except Exception as e:
+                logger.error(f"清理IPC连接时发生错误: {e}")
 
     def show_window_from_ipc(self, socket):
         """从IPC接收显示窗口请求并激活窗口"""
-        data = socket.readAll().data().decode().strip()
-        logger.info(f"接收到IPC窗口显示请求: {data}")
-        
-        # 确保主窗口资源正确加载并显示
-        self.show()
-        self.activateWindow()
-        self.raise_()
-        
-        # 处理悬浮窗口
-        self._handle_levitation_window()
-        
-        socket.disconnectFromServer()
+        try:
+            # 检查连接状态和是否可读
+            if not socket or not socket.isOpen() or not socket.isReadable():
+                logger.warning("IPC连接未打开或不可读，跳过处理")
+                return
+                
+            data = socket.readAll().data().decode().strip()
+            if not data:
+                logger.warning("接收到空的IPC窗口显示请求，跳过处理")
+                return
+                
+            logger.info(f"接收到IPC窗口显示请求: {data}")
+            
+            # 确保主窗口资源正确加载并显示
+            self.show()
+            self.activateWindow()
+            self.raise_()
+            
+            # 处理悬浮窗口
+            self._handle_levitation_window()
+        except Exception as e:
+            logger.error(f"处理IPC窗口显示请求时发生错误: {e}")
+        finally:
+            # 安全地清理连接
+            try:
+                # 使用更安全的方式检查对象是否有效
+                if socket and hasattr(socket, 'disconnectFromServer'):
+                    try:
+                        socket.disconnectFromServer()
+                    except RuntimeError:
+                        # 对象已被删除，忽略错误
+                        pass
+            except Exception as e:
+                logger.error(f"清理IPC连接时发生错误: {e}")
 
     def _handle_levitation_window(self):
         """处理悬浮窗口激活"""
@@ -930,11 +1061,11 @@ class Window(MSFluentWindow):
         self.toggle_levitation_window()
         logger.info("白露URL: 浮窗界面已成功打开～")
     
-    def start_random_selection(self):
-        """(^・ω・^ ) 白露的随机选择启动魔法！
-        通过URL参数启动随机选择功能，让程序自动开始抽人～
+    def start_pumping_selection(self):
+        """(^・ω・^ ) 白露的抽选启动魔法！
+        通过URL参数启动抽选功能，让程序自动开始抽人～
         会检查当前界面并调用相应的开始方法！🎯✨"""
-        logger.info("白露URL: 正在启动随机选择功能～")
+        logger.info("白露URL: 正在启动抽选功能～")
         try:
             # 确保主窗口可见
             if not self.isVisible():
@@ -946,19 +1077,19 @@ class Window(MSFluentWindow):
             self.switchTo(self.pumping_peopleInterface)
             
             # 尝试调用抽人界面的开始方法
-            if hasattr(self.pumping_peopleInterface, 'start_random_selection'):
-                self.pumping_peopleInterface.start_random_selection()
-                logger.info("白露URL: 随机选择功能已成功启动～")
+            if hasattr(self.pumping_peopleInterface, 'start_draw'):
+                self.pumping_peopleInterface.start_draw()
+                logger.info("白露URL: 抽选功能已成功启动～")
             else:
-                logger.warning("白露URL: 抽人界面缺少start_random_selection方法～")
+                logger.warning("白露URL: 抽人界面缺少start_draw方法～")
         except Exception as e:
-            logger.error(f"白露URL: 启动随机选择功能失败: {e}")
+            logger.error(f"白露URL: 启动抽选功能失败: {e}")
     
-    def stop_random_selection(self):
-        """(^・ω・^ ) 白露的随机选择停止魔法！
-        通过URL参数停止随机选择功能，让程序停止当前的抽人操作～
+    def stop_pumping_selection(self):
+        """(^・ω・^ ) 白露的抽选停止魔法！
+        通过URL参数停止抽选功能，让程序停止当前的抽人操作～
         会检查当前界面并调用相应的停止方法！🛑✨"""
-        logger.info("白露URL: 正在停止随机选择功能～")
+        logger.info("白露URL: 正在停止抽选功能～")
         try:
             # 确保主窗口可见
             if not self.isVisible():
@@ -970,19 +1101,19 @@ class Window(MSFluentWindow):
             self.switchTo(self.pumping_peopleInterface)
             
             # 尝试调用抽人界面的停止方法
-            if hasattr(self.pumping_peopleInterface, 'stop_random_selection'):
-                self.pumping_peopleInterface.stop_random_selection()
-                logger.info("白露URL: 随机选择功能已成功停止～")
+            if hasattr(self.pumping_peopleInterface, '_stop_animation') and self.pumping_peopleInterface.is_animating:
+                self.pumping_peopleInterface._stop_animation()
+                logger.info("白露URL: 抽选功能已成功停止～")
             else:
-                logger.warning("白露URL: 抽人界面缺少stop_random_selection方法～")
+                logger.warning("白露URL: 抽人界面未在动画中或缺少_stop_animation方法～")
         except Exception as e:
-            logger.error(f"白露URL: 停止随机选择功能失败: {e}")
+            logger.error(f"白露URL: 停止抽选功能失败: {e}")
     
-    def reset_selection(self):
-        """(^・ω・^ ) 白露的选择重置魔法！
-        通过URL参数重置选择状态，让程序清空当前的选择结果～
+    def reset_pumping_selection(self):
+        """(^・ω・^ ) 白露的抽选重置魔法！
+        通过URL参数重置抽选状态，让程序清空当前的抽选结果～
         会检查当前界面并调用相应的重置方法！🔄✨"""
-        logger.info("白露URL: 正在重置选择状态～")
+        logger.info("白露URL: 正在重置抽选状态～")
         try:
             # 确保主窗口可见
             if not self.isVisible():
@@ -994,10 +1125,138 @@ class Window(MSFluentWindow):
             self.switchTo(self.pumping_peopleInterface)
             
             # 尝试调用抽人界面的重置方法
-            if hasattr(self.pumping_peopleInterface, 'reset_selection'):
-                self.pumping_peopleInterface.reset_selection()
-                logger.info("白露URL: 选择状态已成功重置～")
+            if hasattr(self.pumping_peopleInterface, '_reset_to_initial_state'):
+                self.pumping_peopleInterface._reset_to_initial_state()
+                logger.info("白露URL: 抽选状态已成功重置～")
             else:
-                logger.warning("白露URL: 抽人界面缺少reset_selection方法～")
+                logger.warning("白露URL: 抽人界面缺少_reset_to_initial_state方法～")
         except Exception as e:
-            logger.error(f"白露URL: 重置选择状态失败: {e}")
+            logger.error(f"白露URL: 重置抽选状态失败: {e}")
+    
+    def start_reward_selection(self):
+        """(^・ω・^ ) 白露的抽奖启动魔法！
+        通过URL参数启动抽奖功能，让程序自动开始抽奖～
+        会检查当前界面并调用相应的开始方法！🎁✨"""
+        logger.info("白露URL: 正在启动抽奖功能～")
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到抽奖界面
+            self.switchTo(self.pumping_rewardInterface)
+            
+            # 尝试调用抽奖界面的开始方法
+            if hasattr(self.pumping_rewardInterface, 'start_draw'):
+                self.pumping_rewardInterface.start_draw()
+                logger.info("白露URL: 抽奖功能已成功启动～")
+            else:
+                logger.warning("白露URL: 抽奖界面缺少start_draw方法～")
+        except Exception as e:
+            logger.error(f"白露URL: 启动抽奖功能失败: {e}")
+    
+    def stop_reward_selection(self):
+        """(^・ω・^ ) 白露的抽奖停止魔法！
+        通过URL参数停止抽奖功能，让程序停止当前的抽奖操作～
+        会检查当前界面并调用相应的停止方法！🛑✨"""
+        logger.info("白露URL: 正在停止抽奖功能～")
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到抽奖界面
+            self.switchTo(self.pumping_rewardInterface)
+            
+            # 尝试调用抽奖界面的停止方法
+            if hasattr(self.pumping_rewardInterface, '_stop_animation') and self.pumping_rewardInterface.is_animating:
+                self.pumping_rewardInterface._stop_animation()
+                logger.info("白露URL: 抽奖功能已成功停止～")
+            else:
+                logger.warning("白露URL: 抽奖界面未在动画中或缺少_stop_animation方法～")
+        except Exception as e:
+            logger.error(f"白露URL: 停止抽奖功能失败: {e}")
+    
+    def reset_reward_selection(self):
+        """(^・ω・^ ) 白露的抽奖重置魔法！
+        通过URL参数重置抽奖状态，让程序清空当前的抽奖结果～
+        会检查当前界面并调用相应的重置方法！🔄✨"""
+        logger.info("白露URL: 正在重置抽奖状态～")
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到抽奖界面
+            self.switchTo(self.pumping_rewardInterface)
+            
+            # 尝试调用抽奖界面的重置方法
+            if hasattr(self.pumping_rewardInterface, '_reset_to_initial_state'):
+                self.pumping_rewardInterface._reset_to_initial_state()
+                logger.info("白露URL: 抽奖状态已成功重置～")
+            else:
+                logger.warning("白露URL: 抽奖界面缺少_reset_to_initial_state方法～")
+        except Exception as e:
+            logger.error(f"白露URL: 重置抽奖状态失败: {e}")
+    
+    def show_about_window(self):
+        """(^・ω・^ ) 白露的关于界面召唤魔法！
+        通过URL协议打开关于界面，让用户查看软件信息～
+        会自动切换到关于界面，方便用户查看版本和作者信息！ℹ️✨"""
+        logger.info("白露URL: 正在打开关于界面～")
+        if not self.isVisible():
+            self.show()
+            self.activateWindow()
+            self.raise_()
+        self.switchTo(self.about_settingInterface)
+        logger.info("白露URL: 关于界面已成功打开～")
+    
+    def show_donation_dialog(self):
+        """(^・ω・^ ) 白露的捐赠支持召唤魔法！
+        通过URL参数打开捐赠支持对话框，让用户可以支持项目发展～
+        会显示捐赠支持对话框，方便用户查看捐赠方式！💝✨"""
+        logger.info("白露URL: 正在打开捐赠支持对话框～")
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到关于界面
+            self.switchTo(self.about_settingInterface)
+            
+            # 打开捐赠支持对话框
+            donation_dialog = DonationDialog(self)
+            donation_dialog.exec_()
+            logger.info("白露URL: 捐赠支持对话框已成功打开～")
+        except Exception as e:
+            logger.error(f"白露URL: 打开捐赠支持对话框失败: {e}")
+    
+    def show_contributor_dialog(self):
+        """(^・ω・^ ) 白露的贡献者召唤魔法！
+        通过URL参数打开贡献者对话框，让用户查看项目贡献者信息～
+        会显示贡献者对话框，方便用户了解项目贡献者！👥✨"""
+        logger.info("白露URL: 正在打开贡献者对话框～")
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到关于界面
+            self.switchTo(self.about_settingInterface)
+            
+            # 打开贡献者对话框
+            contributor_dialog = ContributorDialog(self)
+            contributor_dialog.exec_()
+            logger.info("白露URL: 贡献者对话框已成功打开～")
+        except Exception as e:
+            logger.error(f"白露URL: 打开贡献者对话框失败: {e}")

@@ -352,6 +352,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.check_on_startup.setChecked(self.default_settings["check_on_startup"])
                 self.left_pumping_floating_switch.setChecked(self.default_settings["pumping_floating_visible"])
                 self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
+                self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
+
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -367,6 +369,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.check_on_startup.setChecked(self.default_settings["check_on_startup"])
             self.left_pumping_floating_switch.setChecked(self.default_settings["pumping_floating_visible"])
             self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
+            self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
             self.save_settings()
     
     def show_cleanup_dialog(self):

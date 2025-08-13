@@ -26,19 +26,26 @@ from app.common.config import cfg, VERSION
 from app.view.SecRandom import Window
 from app.common.url_handler import process_url_if_exists
 
-def send_ipc_message():
+def send_ipc_message(url_command=None):
     """(^・ω・^ ) 白露的IPC信使魔法！
     正在向已运行的实例发送唤醒消息～ 就像传递小纸条一样神奇！
-    如果成功连接，会发送'show'指令让窗口重新出现哦～ ✨"""
+    如果成功连接，会发送'show'指令或URL命令让窗口重新出现哦～ ✨"""
     socket = QLocalSocket()
     socket.connectToServer(IPC_SERVER_NAME)
 
     if socket.waitForConnected(1000):
-        socket.write(b"show")
+        if url_command:
+            # 发送URL命令
+            message = f"url:{url_command}"
+            socket.write(message.encode('utf-8'))
+            logger.debug(f"白露信使: IPC URL消息发送成功～ {message}")
+        else:
+            # 发送普通的show指令
+            socket.write(b"show")
+            logger.debug("白露信使: IPC show消息发送成功～ ")
         socket.flush()
         socket.waitForBytesWritten(1000)
         socket.disconnectFromServer()
-        logger.debug("白露信使: IPC消息发送成功～ ")
         return True
     logger.warning("白露信使: IPC连接失败，目标实例可能未响应～ ")
     return False
@@ -125,16 +132,27 @@ def check_single_instance():
     if not shared_memory.create(1):
         logger.debug('星野警报: 检测到已有 SecRandom 实例正在运行喵！')
 
+        # 获取URL命令（如果存在）
+        url_command = None
+        try:
+            from app.common.url_handler import get_url_handler
+            url_handler = get_url_handler()
+            if url_handler.has_url_command():
+                url_command = url_handler.get_url_command()
+                logger.info(f'星野通讯: 检测到URL命令，将传递给已有实例喵～ {url_command}')
+        except Exception as e:
+            logger.error(f'星野错误: 获取URL命令失败喵～ {e}')
+
         # 🌟 星穹铁道白露：异步发送IPC消息，避免阻塞启动流程
         def async_wakeup():
             # 尝试直接发送IPC消息唤醒已有实例
-            if send_ipc_message():
+            if send_ipc_message(url_command):
                 logger.info('星野通讯: 成功唤醒已有实例，当前实例将退出喵～')
                 sys.exit()
             else:
                 # IPC连接失败，短暂延迟后重试一次
                 QTimer.singleShot(300, lambda:
-                    retry_ipc() if not send_ipc_message() else None
+                    retry_ipc() if not send_ipc_message(url_command) else None
                 )
 
         def retry_ipc():
@@ -421,15 +439,19 @@ if __name__ == "__main__":
     # 初始化应用程序并创建主窗口
     sec = initialize_application()
 
-    # 处理URL命令（如果存在）
-    try:
-        logger.info("白露URL: 检查是否有URL命令需要处理～")
-        if process_url_if_exists(sec):
-            logger.info("白露URL: URL命令处理成功～")
-        else:
-            logger.info("白露URL: 没有URL命令需要处理～")
-    except Exception as e:
-        logger.error(f"白露URL: 处理URL命令失败: {e}")
+    # 延迟处理URL命令，确保主窗口完全初始化
+    def delayed_url_processing():
+        """延迟处理URL命令，确保主窗口完全初始化"""
+        try:
+            logger.info("白露URL: 延迟检查是否有URL命令需要处理～")
+            if process_url_if_exists(sec):
+                logger.info("白露URL: URL命令处理成功～")
+            else:
+                logger.info("白露URL: 没有URL命令需要处理～")
+        except Exception as e:
+            logger.error(f"白露URL: 处理URL命令失败: {e}")
+    
+    QTimer.singleShot(1000, delayed_url_processing)  # 延迟1秒处理URL
 
     # 启动应用程序事件循环
     try:
