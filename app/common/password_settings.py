@@ -338,7 +338,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
         self.encrypt_setting_switch = SwitchButton()
         self.encrypt_setting_switch.setOnText("开启")
         self.encrypt_setting_switch.setOffText("关闭")
-        self.encrypt_setting_switch.checkedChanged.connect(self.save_settings)
+        self.encrypt_setting_switch.checkedChanged.connect(lambda: self.verify_password_for_action('加密设置', 'encrypt'))
         self.encrypt_setting_switch.setFont(QFont(load_custom_font(), 12))
 
         # 设置2FA开关
@@ -385,7 +385,8 @@ class password_SettingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_document_key_20_filled"), '密钥导出', '导出密钥文件', self.export_key_button)
         self.addGroup(get_theme_icon("ic_fluent_certificate_20_filled"), "双重认证", "启用2FA验证", self.two_factor_switch)
         # self.addGroup(FIF.VPN, "数据加密", "加密设置和名单文件", self.encrypt_setting_switch)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_reset_20_filled"), "重启软件验证", "重启软件时需要验证密码", self.restart_verification_switch)
+        if os.path.exists('_internal'):
+            self.addGroup(get_theme_icon("ic_fluent_arrow_reset_20_filled"), "重启软件验证", "重启软件时需要验证密码", self.restart_verification_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_exit_20_filled"), "退出软件验证", "退出软件时需要验证密码", self.exit_verification_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "暂时显示/隐藏悬浮窗验证", "暂时显示/隐藏悬浮窗时需要验证密码", self.show_hide_verification_switch)
 
@@ -441,78 +442,107 @@ class password_SettingsCard(GroupHeaderCardWidget):
             with open(self.settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 hashed_set = settings.get("hashed_set", {})
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    hashed_set = settings.get("hashed_set", {})
-                    if hashed_set.get("verification_start") == True:
-                        if not hashed_set.get("hashed_password") or not hashed_set.get("password_salt"):
-                            self.show_info_bar('error', '错误', '请先设置密码', 3000, self)
-                            if type == 'exit':
-                                self.exit_verification_switch.setChecked(False)
-                            elif type == 'restart':
-                                self.restart_verification_switch.setChecked(False)
-                            elif type == 'show_hide':
-                                self.show_hide_verification_switch.setChecked(False)
-                            return False
+                if hashed_set.get("verification_start") == True:
+                    if not hashed_set.get("hashed_password") or not hashed_set.get("password_salt"):
+                        self.show_info_bar('error', '错误', '请先设置密码', 3000, self)
+                        # 阻止开关状态改变，恢复到原始状态
+                        if type == 'exit':
+                            self.exit_verification_switch.blockSignals(True)
+                            self.exit_verification_switch.setChecked(False)
+                            self.exit_verification_switch.blockSignals(False)
+                        elif type == 'restart':
+                            self.restart_verification_switch.blockSignals(True)
+                            self.restart_verification_switch.setChecked(False)
+                            self.restart_verification_switch.blockSignals(False)
+                        elif type == 'show_hide':
+                            self.show_hide_verification_switch.blockSignals(True)
+                            self.show_hide_verification_switch.setChecked(False)
+                            self.show_hide_verification_switch.blockSignals(False)
+                        elif type == 'encrypt':
+                            self.encrypt_setting_switch.blockSignals(True)
+                            self.encrypt_setting_switch.setChecked(False)
+                            self.encrypt_setting_switch.blockSignals(False)
+                        return False
 
-                        dialog = PasswordDialog(self)
+                    dialog = PasswordDialog(self)
+                    dialog.yesButton.setText("确认")
+                    dialog.cancelButton.setText("取消")
+                    if dialog.exec_() != QDialog.Accepted:
+                        # 用户取消密码验证，恢复到原始状态
+                        if type == 'exit':
+                            original_state = hashed_set.get("exit_verification_enabled", False)
+                            self.exit_verification_switch.blockSignals(True)
+                            self.exit_verification_switch.setChecked(original_state)
+                            self.exit_verification_switch.blockSignals(False)
+                            self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                        elif type == 'restart':
+                            original_state = hashed_set.get("restart_verification_enabled", False)
+                            self.restart_verification_switch.blockSignals(True)
+                            self.restart_verification_switch.setChecked(original_state)
+                            self.restart_verification_switch.blockSignals(False)
+                            self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                        elif type == 'show_hide':
+                            original_state = hashed_set.get("show_hide_verification_enabled", False)
+                            self.show_hide_verification_switch.blockSignals(True)
+                            self.show_hide_verification_switch.setChecked(original_state)
+                            self.show_hide_verification_switch.blockSignals(False)
+                            self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                        elif type == 'encrypt':
+                            original_state = hashed_set.get("encrypt_setting_enabled", False)
+                            self.encrypt_setting_switch.blockSignals(True)
+                            self.encrypt_setting_switch.setChecked(original_state)
+                            self.encrypt_setting_switch.blockSignals(False)
+                            self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                        return False
+
+                    if hashed_set.get("two_factor_auth", False):
+                        dialog = SimpleTwoFactorAuthDialog(self)
                         dialog.yesButton.setText("确认")
                         dialog.cancelButton.setText("取消")
                         if dialog.exec_() != QDialog.Accepted:
+                            # 用户取消2FA验证，恢复到原始状态
                             if type == 'exit':
-                                if hashed_set.get("exit_verification_enabled") == True:
-                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                    self.exit_verification_switch.setChecked(True)
-                                else:
-                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                    self.exit_verification_switch.setChecked(False)
-                            elif type =='restart':
-                                if hashed_set.get("restart_verification_enabled") == True:
-                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                    self.restart_verification_switch.setChecked(True)
-                                else:
-                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                    self.restart_verification_switch.setChecked(False)
-                            elif type =='show_hide':
-                                if hashed_set.get("show_hide_verification_enabled") == True:
-                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                    self.show_hide_verification_switch.setChecked(True)
-                                else:
-                                    self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                    self.show_hide_verification_switch.setChecked(False)
+                                original_state = hashed_set.get("exit_verification_enabled", False)
+                                self.exit_verification_switch.blockSignals(True)
+                                self.exit_verification_switch.setChecked(original_state)
+                                self.exit_verification_switch.blockSignals(False)
+                                self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                            elif type == 'restart':
+                                original_state = hashed_set.get("restart_verification_enabled", False)
+                                self.restart_verification_switch.blockSignals(True)
+                                self.restart_verification_switch.setChecked(original_state)
+                                self.restart_verification_switch.blockSignals(False)
+                                self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                            elif type == 'show_hide':
+                                original_state = hashed_set.get("show_hide_verification_enabled", False)
+                                self.show_hide_verification_switch.blockSignals(True)
+                                self.show_hide_verification_switch.setChecked(original_state)
+                                self.show_hide_verification_switch.blockSignals(False)
+                                self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
+                            elif type == 'encrypt':
+                                original_state = hashed_set.get("encrypt_setting_enabled", False)
+                                self.encrypt_setting_switch.blockSignals(True)
+                                self.encrypt_setting_switch.setChecked(original_state)
+                                self.encrypt_setting_switch.blockSignals(False)
+                                self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
                             return False
 
-                        if hashed_set.get("two_factor_auth", False):
-                            dialog = SimpleTwoFactorAuthDialog(self)
-                            dialog.yesButton.setText("确认")
-                            dialog.cancelButton.setText("取消")
-                            if dialog.exec_() != QDialog.Accepted:
-                                if type == 'exit':
-                                    if hashed_set.get("exit_verification_enabled") == True:
-                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                        self.exit_verification_switch.setChecked(True)
-                                    else:
-                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                        self.exit_verification_switch.setChecked(False)
-                                elif type == 'restart':
-                                    if hashed_set.get("restart_verification_enabled") == True:
-                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                        self.restart_verification_switch.setChecked(True)
-                                    else:
-                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                        self.restart_verification_switch.setChecked(False)
-                                elif type == 'show_hide':
-                                    if hashed_set.get("show_hide_verification_enabled") == True:
-                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                        self.show_hide_verification_switch.setChecked(True)
-                                    else:
-                                        self.show_info_bar('warning', '警告', f'{action_type}功能设置已取消', 3000, self)
-                                        self.show_hide_verification_switch.setChecked(False)
-                                return False
-
-                        self.show_info_bar('success', '功能设置成功', f'{action_type}功能设置成功', 3000, self)
-                        self.save_settings()
-                        return True
+                    # 验证成功，更新对应的开关状态
+                    if type == 'exit':
+                        hashed_set['exit_verification_enabled'] = True
+                    elif type == 'restart':
+                        hashed_set['restart_verification_enabled'] = True
+                    elif type == 'show_hide':
+                        hashed_set['show_hide_verification_enabled'] = True
+                    elif type == 'encrypt':
+                        hashed_set['encrypt_setting_enabled'] = True
+                    
+                    # 保存更新后的设置
+                    with open(self.settings_file, 'w', encoding='utf-8') as f:
+                        json.dump(settings, f, indent=4)
+                    
+                    self.show_info_bar('success', '功能设置成功', f'{action_type}功能设置成功', 3000, self)
+                    return True
 
         except Exception as e:
             logger.error(f"验证失败: {e}")
@@ -634,27 +664,23 @@ class password_SettingsCard(GroupHeaderCardWidget):
                                         self.save_settings()
                                         return
                                     else:
-                                        if hashed_set.get("start_password_enabled") == True:
-                                            self.show_info_bar('warning', '警告', '启动设置需密码已取消', 3000, self)
-                                            self.start_password_switch.setChecked(True)
-                                            self.save_settings()
-                                        else:
-                                            self.show_info_bar('warning', '警告', '启动设置需密码已取消', 3000, self)
-                                            self.start_password_switch.setChecked(False)
-                                            self.save_settings()
+                                        # 用户取消2FA验证，恢复开关状态
+                                        original_state = hashed_set.get("start_password_enabled", False)
+                                        self.start_password_switch.blockSignals(True)
+                                        self.start_password_switch.setChecked(original_state)
+                                        self.start_password_switch.blockSignals(False)
+                                        self.show_info_bar('warning', '警告', '启动设置需密码已取消', 3000, self)
                                         return
                                 else:
                                     self.save_settings()
                                     return
                             else:
-                                if hashed_set.get("start_password_enabled") == True:
-                                    self.show_info_bar('warning', '警告', '启动设置需密码已取消', 3000, self)
-                                    self.start_password_switch.setChecked(True)
-                                    self.save_settings()
-                                else:
-                                    self.show_info_bar('warning', '警告', '启动设置需密码已取消', 3000, self)
-                                    self.start_password_switch.setChecked(False)
-                                    self.save_settings()
+                                # 用户取消密码验证，恢复开关状态
+                                original_state = hashed_set.get("start_password_enabled", False)
+                                self.start_password_switch.blockSignals(True)
+                                self.start_password_switch.setChecked(original_state)
+                                self.start_password_switch.blockSignals(False)
+                                self.show_info_bar('warning', '警告', '启动设置需密码已取消', 3000, self)
                                 return
         except json.JSONDecodeError as e:
             self.show_info_bar('error', '错误', '设置文件损坏', 3000, self)
@@ -664,7 +690,9 @@ class password_SettingsCard(GroupHeaderCardWidget):
     def on_2fa_changed(self):
         if not os.path.exists(self.settings_file):
             self.show_info_bar('error', '错误', '设置文件不存在', 3000, self)
+            self.two_factor_switch.blockSignals(True)
             self.two_factor_switch.setChecked(False)
+            self.two_factor_switch.blockSignals(False)
             return
 
         try:
@@ -672,74 +700,77 @@ class password_SettingsCard(GroupHeaderCardWidget):
                 settings = json.load(f)
                 hashed_set = settings.get("hashed_set", {})
                 if hashed_set.get("verification_start") == True:
-                    with open(self.settings_file, 'r', encoding='utf-8') as f:
-                        settings = json.load(f)
-                        hashed_set = settings.get("hashed_set", {})
-                        if not hashed_set.get("hashed_password") or not hashed_set.get("password_salt"):
-                            self.show_info_bar('warning', '警告', '请先设置密码', 3000, self)
-                            self.two_factor_switch.setChecked(False)
-                            self.save_settings()
-                            return
-                        elif hashed_set.get("hashed_password") and hashed_set.get("password_salt"):
-                            dialog = PasswordDialog(self)
-                            dialog.yesButton.setText("确认")
-                            dialog.cancelButton.setText("取消")
-                            if dialog.exec_() == QDialog.Accepted:
-                                if hashed_set.get("two_factor_auth") == True:
-                                    dialog = SimpleTwoFactorAuthDialog(self)
-                                    dialog.yesButton.setText("确认")
-                                    dialog.cancelButton.setText("取消")
-                                    if dialog.exec_() == QDialog.Accepted:
-                                        existing_settings = {}
-                                        try:
-                                            with open(self.settings_file, 'r', encoding='utf-8') as f:
-                                                existing_settings = json.load(f)
-                                        except json.JSONDecodeError:
-                                            existing_settings = {}
-                                        if "hashed_set" not in existing_settings or "2fa_secret" not in existing_settings["hashed_set"]:
-                                            self.save_settings()
-                                        else:
-                                            existing_settings["hashed_set"].pop("encrypted_username", None)
-                                            existing_settings["hashed_set"].pop("2fa_secret", None)
-                                            with open(self.settings_file, 'w', encoding='utf-8') as f:
-                                                json.dump(existing_settings, f, indent=4)
-                                            self.save_settings()
-                                    else:
-                                        if hashed_set.get("two_factor_auth") == True:
-                                            self.show_info_bar('warning', '警告', '2FA验证已取消', 3000, self)
-                                            self.two_factor_switch.setChecked(True)
-                                            self.save_settings()
-                                        else:
-                                            self.show_info_bar('warning', '警告', '2FA验证已取消', 3000, self)
-                                            self.two_factor_switch.setChecked(False)
-                                            self.save_settings()
-                                        return
-                                else:
+                    if not hashed_set.get("hashed_password") or not hashed_set.get("password_salt"):
+                        self.show_info_bar('warning', '警告', '请先设置密码', 3000, self)
+                        self.two_factor_switch.blockSignals(True)
+                        self.two_factor_switch.setChecked(False)
+                        self.two_factor_switch.blockSignals(False)
+                        self.save_settings()
+                        return
+                    elif hashed_set.get("hashed_password") and hashed_set.get("password_salt"):
+                        dialog = PasswordDialog(self)
+                        dialog.yesButton.setText("确认")
+                        dialog.cancelButton.setText("取消")
+                        if dialog.exec_() == QDialog.Accepted:
+                            if hashed_set.get("two_factor_auth") == True:
+                                # 关闭2FA
+                                dialog = SimpleTwoFactorAuthDialog(self)
+                                dialog.yesButton.setText("确认")
+                                dialog.cancelButton.setText("取消")
+                                if dialog.exec_() == QDialog.Accepted:
+                                    # 验证成功，删除2FA相关设置
                                     existing_settings = {}
                                     try:
                                         with open(self.settings_file, 'r', encoding='utf-8') as f:
                                             existing_settings = json.load(f)
                                     except json.JSONDecodeError:
                                         existing_settings = {}
-                                    if "hashed_set" not in existing_settings or "2fa_secret" not in existing_settings["hashed_set"]:
-                                        self.setup_2fa()
-                                        self.save_settings()
-                                    else:
-                                        self.save_settings()
+                                    
+                                    if "hashed_set" in existing_settings:
+                                        existing_settings["hashed_set"].pop("encrypted_username", None)
+                                        existing_settings["hashed_set"].pop("2fa_secret", None)
+                                    
+                                    with open(self.settings_file, 'w', encoding='utf-8') as f:
+                                        json.dump(existing_settings, f, indent=4)
+                                    
+                                    self.save_settings()
+                                    self.show_info_bar('success', '成功', '2FA已关闭', 3000, self)
+                                else:
+                                    # 用户取消验证，恢复开关状态
+                                    original_state = hashed_set.get("two_factor_auth", False)
+                                    self.two_factor_switch.blockSignals(True)
+                                    self.two_factor_switch.setChecked(original_state)
+                                    self.two_factor_switch.blockSignals(False)
+                                    self.show_info_bar('warning', '警告', '2FA关闭已取消', 3000, self)
                                     return
                             else:
-                                if hashed_set.get("two_factor_auth") == True:
-                                    self.show_info_bar('warning', '警告', '2FA验证已取消', 3000, self)
-                                    self.two_factor_switch.setChecked(True)
-                                    self.save_settings()
+                                # 开启2FA
+                                existing_settings = {}
+                                try:
+                                    with open(self.settings_file, 'r', encoding='utf-8') as f:
+                                        existing_settings = json.load(f)
+                                except json.JSONDecodeError:
+                                    existing_settings = {}
+                                
+                                if "hashed_set" not in existing_settings or "2fa_secret" not in existing_settings["hashed_set"]:
+                                    self.setup_2fa()
+                                    # setup_2fa方法中已经处理了保存和状态设置
                                 else:
-                                    self.show_info_bar('warning', '警告', '2FA验证已取消', 3000, self)
-                                    self.two_factor_switch.setChecked(False)
                                     self.save_settings()
                                 return
+                        else:
+                            # 用户取消密码验证，恢复开关状态
+                            original_state = hashed_set.get("two_factor_auth", False)
+                            self.two_factor_switch.blockSignals(True)
+                            self.two_factor_switch.setChecked(original_state)
+                            self.two_factor_switch.blockSignals(False)
+                            self.show_info_bar('warning', '警告', '2FA设置已取消', 3000, self)
+                            return
         except json.JSONDecodeError as e:
             self.show_info_bar('error', '错误', '设置文件损坏', 3000, self)
+            self.two_factor_switch.blockSignals(True)
             self.two_factor_switch.setChecked(False)
+            self.two_factor_switch.blockSignals(False)
             return
 
     def setup_2fa(self):
@@ -773,30 +804,49 @@ class password_SettingsCard(GroupHeaderCardWidget):
             with open(self.settings_file, 'w', encoding='utf-8') as f:
                 json.dump(existing_settings, f, indent=4)
 
-            if "hashed_set" not in existing_settings or "2fa_secret" not in existing_settings["hashed_set"]:
-                self.secret = pyotp.random_base32()
-                if "hashed_set" not in existing_settings:
-                    existing_settings["hashed_set"] = {}
-                existing_settings["hashed_set"]["2fa_secret"] = self.secret
-
-                with open(self.settings_file, 'w', encoding='utf-8') as f:
-                    json.dump(existing_settings, f, indent=4)
-            else:
-                self.secret = existing_settings["hashed_set"]["2fa_secret"]
-
+            # 生成密钥但暂不保存，等待用户验证成功后再保存
+            self.secret = pyotp.random_base32()
             pixmap = generate_qr_code(self.secret, username)
+            
             if pixmap:
                 # 创建自定义2FA对话框
                 dialog = TwoFactorAuthDialog(self, pixmap, self.secret)
                 dialog.yesButton.setText("确认")
                 dialog.cancelButton.setText("取消")
-                if not dialog.exec():
+                if dialog.exec():
+                    # 用户验证成功，才保存密钥到设置文件
+                    try:
+                        with open(self.settings_file, 'r', encoding='utf-8') as f:
+                            existing_settings = json.load(f)
+                        
+                        if "hashed_set" not in existing_settings:
+                            existing_settings["hashed_set"] = {}
+                        existing_settings["hashed_set"]["2fa_secret"] = self.secret
+
+                        with open(self.settings_file, 'w', encoding='utf-8') as f:
+                            json.dump(existing_settings, f, indent=4)
+                            
+                        self.show_info_bar('success', '成功', '2FA设置成功', 3000, self)
+                    except Exception as e:
+                        logger.error(f"保存2FA密钥失败: {e}")
+                        self.show_info_bar('error', '错误', '2FA密钥保存失败', 3000, self)
+                        self.two_factor_switch.setChecked(False)
+                else:
+                    # 用户取消验证，不保存密钥，重置开关状态
+                    self.show_info_bar('warning', '警告', '2FA设置已取消', 3000, self)
+                    self.two_factor_switch.blockSignals(True)
                     self.two_factor_switch.setChecked(False)
+                    self.two_factor_switch.blockSignals(False)
             else:
                 self.show_info_bar('error', '错误', "2FA设置失败", 3000, self)
+                self.two_factor_switch.blockSignals(True)
                 self.two_factor_switch.setChecked(False)
+                self.two_factor_switch.blockSignals(False)
         except Exception as e:
             self.show_info_bar('error', '错误', f"2FA设置失败: {str(e)}", 3000, self)
+            self.two_factor_switch.blockSignals(True)
+            self.two_factor_switch.setChecked(False)
+            self.two_factor_switch.blockSignals(False)
             return
 
     def export_key_file(self):
@@ -910,13 +960,8 @@ class password_SettingsCard(GroupHeaderCardWidget):
         if "hashed_set" not in _existing_settings:
             _existing_settings["hashed_set"] = {}
 
-        if "hashed_set" in _existing_settings and "2fa_secret" not in _existing_settings["hashed_set"]:
-            self.two_factor_switch.setChecked(False)
-        if "hashed_set" in _existing_settings and ("hashed_password" not in _existing_settings["hashed_set"] or "password_salt" not in _existing_settings["hashed_set"]):
-            self.start_password_switch.setChecked(False)
-        if _existing_settings["hashed_set"].get("two_factor_auth") == True:
-            if "hashed_set" in _existing_settings and "2fa_secret" not in _existing_settings["hashed_set"]:
-                self.two_factor_switch.setChecked(False)
+        # 移除自动重置开关状态的逻辑，让各个方法自行管理开关状态
+        # 这样可以避免与已经正确实现的blockSignals机制产生冲突
 
         _existing_settings["hashed_set"].update({
             "start_password_enabled": self.start_password_switch.isChecked(),
