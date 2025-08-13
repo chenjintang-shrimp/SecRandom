@@ -1,10 +1,9 @@
 name: 构建
 
 on: 
-  workflow_dispatch:
   push:
-    tags:
-      - 'v*'
+  pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: build-${{ github.ref }}
