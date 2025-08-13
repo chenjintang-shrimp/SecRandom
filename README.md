@@ -170,24 +170,31 @@
 * 🎥 [B站主页](https://space.bilibili.com/520571577)
 * 🐛 [问题反馈](https://github.com/SECTL/SecRandom/issues)
 
+### 🏆 贡献值排行榜
+
+> 📊 **贡献值计算公式**：贡献值 = （合并PR×8分） + （提出PR×2分） + （Commits×3分） + （文档×6分） + （创建Issue×3分） + （处理Issue×4分） + （Code Review×3分） + （代码质量×5分） + （社区贡献×1分）
+> 
+> 📅 **统计时间范围**：2025.08.01 - 2026.01.31
+> 
+> 🏗️ **统计仓库**：SECTL/SecRandom, SECTL/SecRandom-docs
+> 
+> ⚠️ **注意**：已排除README文件相关贡献统计，最多显示前10名贡献者
+
+#### 📋 总体排行榜（前10名）
+
+| 排名   | 👤 用户名   | 🔀 合并PR   | 📝 提出PR   | 💻 Commits   | 📚 文档   | 🐛 创建Issue   | 🔧 处理Issue   | 👀 Review   | ⭐ 贡献值   |
+|------|---------|----------|----------|-------------|--------|-------------|-------------|------------|---------|
+
+---
+
+#### 📊 各贡献者详细统计（可折叠）
+
+*📅 最后更新时间：2025-08-13 20:12:57*
+
+
 ## 📄 文档
 
 - 📄 **[SecRandom 官方文档](https://secrandom.netlify.app)**
 - [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
 
-## ✨ Star历程
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark">
-  <img alt="Star History" src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date">
-</picture>
-
----
-
-<div align="center">
-
-**Copyright © 2025 SECTL**
-
-[![返回顶部](https://img.shields.io/badge/%E8%BF%94%E5%9B%9E%E9%A1%B6%E9%83%A8-%E2%86%91-blue?style=for-the-badge)](#readme)
-
-</div>
+>
