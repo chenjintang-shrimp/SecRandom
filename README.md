@@ -170,6 +170,12 @@
 * 🎥 [B站主页](https://space.bilibili.com/520571577)
 * 🐛 [问题反馈](https://github.com/SECTL/SecRandom/issues)
 
+## 📄 文档
+
+- 📄 **[SecRandom 官方文档](https://secrandom.netlify.app)**
+- [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
+
+
 ### 🏆 贡献值排行榜
 
 > 📊 **贡献值计算公式**：贡献值 = （合并PR×8分） + （提出PR×2分） + （Commits×3分） + （文档×6分） + （创建Issue×3分） + （处理Issue×4分） + （Code Review×3分） + （代码质量×5分） + （社区贡献×1分）
@@ -189,12 +195,14 @@
 
 #### 📊 各贡献者详细统计（可折叠）
 
-*📅 最后更新时间：2025-08-13 20:12:57*
+*📅 最后更新时间：2025-08-13 20:30:10*
 
 
-## 📄 文档
+## ✨ Star历程
 
-- 📄 **[SecRandom 官方文档](https://secrandom.netlify.app)**
-- [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark">
+  <img alt="Star History" src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date">
+</picture>
 
->
+**Copyright © 2025 SECTL**

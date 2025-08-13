@@ -517,18 +517,36 @@ class ContributionCalculator:
             # 生成新的贡献值排行榜
             leaderboard_md = self.generate_leaderboard_md()
             
-            # 查找插入位置（在文档章节之前）
-            insert_marker = "## 📄 文档"
+            # 查找插入位置（在Star历程章节之前）
+            insert_marker = "## ✨ Star历程"
             if insert_marker in content:
                 # 替换旧的贡献值排行榜（如果存在）
                 old_leaderboard_start = "### 🏆 贡献值排行榜"
-                old_leaderboard_end = "### 星标历史 ✨"
+                old_leaderboard_end = "## ✨ Star历程"
                 
                 if old_leaderboard_start in content:
-                    # 删除旧的贡献值排行榜
+                    # 删除旧的贡献值排行榜，但保留其他章节
                     start_idx = content.find(old_leaderboard_start)
                     end_idx = content.find(old_leaderboard_end)
-                    content = content[:start_idx] + content[end_idx:]
+                    # 检查中间是否有其他章节标题（## 开头的行）
+                    middle_content = content[start_idx:end_idx]
+                    lines = middle_content.split('\n')
+                    other_sections = []
+                    in_leaderboard = True
+                    
+                    for line in lines:
+                        if line.startswith('## ') and line != old_leaderboard_start:
+                            in_leaderboard = False
+                        if not in_leaderboard:
+                            other_sections.append(line)
+                    
+                    if other_sections:
+                        # 如果有其他章节，只删除贡献值排行榜部分
+                        leaderboard_end_idx = start_idx + len('\n'.join(lines[:len(lines) - len(other_sections)]))
+                        content = content[:start_idx] + '\n'.join(other_sections) + content[end_idx:]
+                    else:
+                        # 如果没有其他章节，正常删除
+                        content = content[:start_idx] + content[end_idx:]
                 
                 # 插入新的贡献值排行榜
                 content = content.replace(insert_marker, leaderboard_md + "\n\n" + insert_marker)
