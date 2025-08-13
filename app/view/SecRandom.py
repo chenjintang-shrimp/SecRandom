@@ -902,6 +902,9 @@ class Window(MSFluentWindow):
                     'about': 'show_about_window'
                 }
                 
+                # 去除路径末尾的斜杠，确保匹配正确
+                path = path.rstrip('/')
+                
                 if path in method_map:
                     method_name = method_map[path]
                     if hasattr(self, method_name):
