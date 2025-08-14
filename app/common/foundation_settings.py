@@ -160,7 +160,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新设置", "启动时自动检查软件更新", self.check_on_startup)
         self.addGroup(get_theme_icon("ic_fluent_branch_compare_20_filled"), "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
-        self.addGroup(get_theme_icon("ic_fluent_link_20_filled"), "URL协议注册", "注册SecRandom URL协议，允许其他程序通过URL启动SecRandom并打开特定界面", self.url_protocol_switch)
+        self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "URL协议注册", "注册SecRandom URL协议，允许其他程序通过URL启动SecRandom并打开特定界面", self.url_protocol_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
@@ -172,9 +172,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "检测主窗口焦点时间", "设置检测主窗口焦点时间", self.main_window_focus_time_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "主窗口位置", "设置主窗口的显示位置", self.main_window_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "设置窗口位置", "设置设置窗口的显示位置", self.settings_window_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_save_20_filled"), "导出诊断数据", "导出软件诊断数据用于问题排查", self.export_diagnostic_button)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_import_20_filled"), "导入设置", "从文件导入软件设置", self.import_settings_button)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_export_20_filled"), "导出设置", "导出软件设置到文件", self.export_settings_button)
+        self.addGroup(get_theme_icon("ic_fluent_group_20_filled"), "导出诊断数据", "导出软件诊断数据用于问题排查", self.export_diagnostic_button)
+        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "导入设置", "从文件导入软件设置", self.import_settings_button)
+        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "导出设置", "导出软件设置到文件", self.export_settings_button)
         
         # 定时检查清理
         self.cleanup_timer = QTimer(self)

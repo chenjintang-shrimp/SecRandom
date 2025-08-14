@@ -77,7 +77,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置学生名单", "点击按钮设置学生姓名", self.student_Button)
         self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置学生性别", "点击按钮设置学生性别", self.gender_Button)
         self.addGroup(get_theme_icon("ic_fluent_group_20_filled"), "设置小组", "点击按钮设置小组名单", self.group_Button)
-        self.addGroup(get_theme_icon("ic_fluent_document_export_20_filled"), "导出学生名单", "点击按钮导出当前班级学生名单文件", self.export_Button)
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导出学生名单", "点击按钮导出当前班级学生名单文件", self.export_Button)
 
         # 创建表格
         self.table = TableWidget(self)
