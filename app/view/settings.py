@@ -138,3 +138,24 @@ class settings_Window(MSFluentWindow):
                     json.dump(settings, f, ensure_ascii=False, indent=4)
             except Exception as e:
                 logger.error(f"保存窗口大小设置失败: {e}")
+    
+    def show_plugin_settings_interface(self):
+        """(^・ω・^ ) 白露的插件设置界面召唤魔法！
+        通过URL协议打开插件设置界面，让用户可以管理插件相关设置～
+        会自动切换到插件设置界面，方便用户进行插件管理！🔌✨
+        """
+        logger.info(f"白露URL: 正在打开插件设置界面～")
+        
+        # 确保设置窗口可见
+        if not self.isVisible():
+            self.show()
+            self.activateWindow()
+            self.raise_()
+        
+        # 如果窗口最小化，则恢复
+        if self.isMinimized():
+            self.showNormal()
+        
+        # 切换到插件设置界面
+        self.stackedWidget.setCurrentWidget(self.plugin_settingsInterface)
+        logger.info(f"白露URL: 插件设置界面已成功打开～")

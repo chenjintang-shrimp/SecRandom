@@ -77,7 +77,8 @@ class URLHandler:
                 "pumping": "show_pumping_window",
                 "reward": "show_reward_window",
                 "history": "show_history_window",
-                "floating": "show_floating_window"
+                "floating": "show_floating_window",
+                "plugin_settings": "show_plugin_settings_window"
             }
             
             # 根据路径打开对应界面
@@ -122,6 +123,8 @@ class URLHandler:
                     main_window.stop_random_selection()
                 elif action == 'reset' and hasattr(main_window, 'reset_selection'):
                     main_window.reset_selection()
+                elif action == 'open' and hasattr(main_window, 'show_plugin_settings_window'):
+                    main_window.show_plugin_settings_window()
             
         except Exception as e:
             logger.error(f"处理额外参数失败: {str(e)}")
@@ -146,7 +149,8 @@ class URLHandler:
             "pumping": "抽人界面",
             "reward": "抽奖界面",
             "history": "历史记录界面",
-            "floating": "浮窗界面"
+            "floating": "浮窗界面",
+            "plugin_settings": "插件设置界面"
         }
     
     def generate_url_examples(self):
@@ -160,7 +164,12 @@ class URLHandler:
         # 添加带参数的示例
         examples.extend([
             "secrandom://pumping?action=start - 开始抽人",
-            "secrandom://reward?action=stop - 停止抽奖"
+            "secrandom://pumping?action=stop - 停止抽人",
+            "secrandom://pumping?action=reset - 重置抽人",
+            "secrandom://reward?action=start - 开始抽奖",
+            "secrandom://reward?action=stop - 停止抽奖",
+            "secrandom://reward?action=reset - 重置抽奖",
+            "secrandom://plugin_settings?action=open - 打开插件页面"
         ])
         
         return examples

@@ -899,7 +899,8 @@ class Window(MSFluentWindow):
                     'reward': 'show_reward_window',
                     'history': 'show_history_window',
                     'floating': 'show_floating_window',
-                    'about': 'show_about_window'
+                    'about': 'show_about_window',
+                    'plugin_settings': 'show_plugin_settings_window'
                 }
                 
                 # 去除路径末尾的斜杠，确保匹配正确
@@ -909,7 +910,6 @@ class Window(MSFluentWindow):
                     method_name = method_map[path]
                     if hasattr(self, method_name):
                         method = getattr(self, method_name)
-                        method()
                         
                         # 处理额外的action参数
                         if 'action' in params:
@@ -930,6 +930,8 @@ class Window(MSFluentWindow):
                                 self.show_donation_dialog()
                             elif action == 'contributor' and path == 'about':
                                 self.show_contributor_dialog()
+                            elif action == 'open' and path == 'plugin_settings':
+                                self.show_plugin_settings_window()
                     else:
                         logger.warning(f"找不到方法: {method_name}")
                 else:
@@ -1063,6 +1065,22 @@ class Window(MSFluentWindow):
         logger.info("白露URL: 正在打开浮窗界面～")
         self.toggle_levitation_window()
         logger.info("白露URL: 浮窗界面已成功打开～")
+    
+    def show_plugin_settings_window(self):
+        """(^・ω・^ ) 白露的插件设置界面召唤魔法！
+        通过URL协议打开插件设置界面，让用户可以管理插件相关设置～
+        会自动打开设置窗口并切换到插件设置界面！⚙️✨
+        """
+        logger.info(f"白露URL: 正在打开插件设置界面～")
+        
+        # 确保设置窗口存在
+        if not hasattr(self, 'settingInterface') or not self.settingInterface:
+            from app.view.settings import settings_Window
+            self.settingInterface = settings_Window(self)
+        
+        # 调用设置窗口的插件设置界面方法
+        self.settingInterface.show_plugin_settings_interface()
+        logger.info(f"白露URL: 插件设置界面已成功打开～")
     
     def start_pumping_selection(self):
         """(^・ω・^ ) 白露的抽选启动魔法！
