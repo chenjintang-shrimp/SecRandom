@@ -49,6 +49,9 @@ class UpdateLogWindow(MSFluentWindow):
             '• 修复 历史记录界面，加载数据时，界面通知飞了一下的问题',
             '• 修复 退出验证密码开关取消后状态异常',
             '• 修复 2FA设置未验证即写入密钥的问题'
+        ],
+        "other_changes": [
+            '• 去除 数字人民币捐赠功能'
         ]
     }
 
@@ -191,6 +194,25 @@ class UpdateLogWindow(MSFluentWindow):
             fix_layout.addWidget(update_label)
         
         current_layout.addWidget(fix_widget)
+
+        # 其它变更
+        other_widget = QWidget()
+        other_layout = QVBoxLayout(other_widget)
+        
+        other_title = SubtitleLabel('🔧 其它变更')
+        other_title.setFont(QFont(load_custom_font(), 16))
+        other_layout.addWidget(other_title)
+        
+        other_updates = self.UPDATE_CONTENTS["other_changes"]
+        
+        for update in other_updates:
+            update_label = BodyLabel(update)
+            update_label.setFont(QFont(load_custom_font(), 12))
+            update_label.setWordWrap(True)
+            other_layout.addWidget(update_label)
+        
+        current_layout.addWidget(other_widget)
+
         current_layout.addStretch()
         
         # 2. 关于页面

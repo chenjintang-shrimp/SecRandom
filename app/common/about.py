@@ -471,8 +471,7 @@ class DonationDialog(QDialog):
     # 正确的MD5值
     CORRECT_MD5 = {
         'Alipay.png': '7faccb136ac70aa9c193bf7a4f68d131',  # 支付宝收款码
-        'WeChat_Pay.png': 'ab01b5ff2c5bbdcfb5007873e9730e96',  # 微信支付收款码
-        'E-CNY.png': '19923ccdff3db77ee43a21f8598659ef'  # 数字人民币收款码
+        'WeChat_Pay.png': 'ab01b5ff2c5bbdcfb5007873e9730e96'  # 微信支付收款码
     }
     
     # GitHub下载链接
@@ -583,15 +582,6 @@ class DonationDialog(QDialog):
             "使用微信扫码捐赠"
         )
         cards_layout.addWidget(wechat_card)
-
-        # 添加数字人民币捐赠卡片
-        digital_rmb_card = self.create_donation_card(
-            "数字人民币",
-            "app\\resource\\assets\\contribution\\E-CNY.png",
-            "使用数字人民币捐赠"
-        )
-        cards_layout.addWidget(digital_rmb_card)
-
         
         self.main_layout.addLayout(cards_layout)
         
