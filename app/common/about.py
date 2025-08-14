@@ -477,6 +477,9 @@ class DonationDialog(QDialog):
     # GitHub下载链接
     GITHUB_BASE_URL = 'https://github.com/SECTL/SecRandom/raw/main/app/resource/assets/contribution/'
     
+    # 图片下载完成信号
+    image_download_complete = pyqtSignal(str, bool)  # 文件名, 是否成功
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
@@ -563,9 +566,9 @@ class DonationDialog(QDialog):
         self.main_layout.addWidget(methods_title)
         
         # 创建捐赠卡片布局
-        cards_layout = QHBoxLayout()
-        cards_layout.setSpacing(20)
-        cards_layout.setContentsMargins(20, 10, 20, 10)
+        self.cards_layout = QHBoxLayout()
+        self.cards_layout.setSpacing(20)
+        self.cards_layout.setContentsMargins(20, 10, 20, 10)
         
         # 添加支付宝捐赠卡片
         alipay_card = self.create_donation_card(
@@ -573,7 +576,7 @@ class DonationDialog(QDialog):
             "app\\resource\\assets\\contribution\\Alipay.png",
             "使用支付宝扫码捐赠"
         )
-        cards_layout.addWidget(alipay_card)
+        self.cards_layout.addWidget(alipay_card)
         
         # 添加微信支付捐赠卡片
         wechat_card = self.create_donation_card(
@@ -581,9 +584,9 @@ class DonationDialog(QDialog):
             "app\\resource\\assets\\contribution\\WeChat_Pay.png",
             "使用微信扫码捐赠"
         )
-        cards_layout.addWidget(wechat_card)
+        self.cards_layout.addWidget(wechat_card)
         
-        self.main_layout.addLayout(cards_layout)
+        self.main_layout.addLayout(self.cards_layout)
         
         # 添加说明文本
         note_label = BodyLabel("* 请扫描上方二维码进行捐赠，感谢您的支持！\n* 该捐献金额将会被平分给项目开发人员\n* 您的捐赠将帮助我们继续改进和发展SecRandom项目")
@@ -593,78 +596,177 @@ class DonationDialog(QDialog):
         
         self.main_layout.addStretch()
         
-        # 检查并更新收款码图片
-        self.check_and_update_qr_codes()
-    
-    def calculate_file_md5(self, file_path):
-        """计算文件的MD5值"""
-        try:
-            if not os.path.exists(file_path):
-                return None
-            
-            hash_md5 = hashlib.md5()
-            with open(file_path, "rb") as f:
-                for chunk in iter(lambda: f.read(4096), b""):
-                    hash_md5.update(chunk)
-            return hash_md5.hexdigest()
-        except Exception as e:
-            logger.error(f"计算MD5失败 {file_path}: {str(e)}")
-            return None
-    
-    def download_file_from_github(self, filename, local_path):
-        """从GitHub下载文件"""
-        try:
-            url = self.GITHUB_BASE_URL + filename
-            logger.info(f"正在从GitHub下载: {url}")
-            
-            response = requests.get(url, stream=True, timeout=30)
-            response.raise_for_status()
-            
-            # 确保目录存在
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            
-            with open(local_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            
-            logger.info(f"成功下载文件: {local_path}")
-            return True
-        except Exception as e:
-            logger.error(f"下载文件失败 {filename}: {str(e)}")
-            return False
-    
-    def check_and_update_qr_codes(self):
-        """检查并更新收款码图片"""
-        base_path = "app\\resource\\assets\\contribution\\"
-        files_to_check = ['Alipay.png', 'WeChat_Pay.png', 'E-CNY.png']
+        # 连接图片下载完成信号
+        self.image_download_complete.connect(self.on_image_download_complete)
         
-        for filename in files_to_check:
-            local_path = base_path + filename
+        # 使用独立线程检查并更新收款码图片
+        self.download_worker = self.DownloadWorker(self)
+        self.download_worker.finished.connect(self.download_worker.deleteLater)
+        self.download_worker.start()
+    
+    def on_image_download_complete(self, filename, success):
+        """ 🌟 小鸟游星野 - 图片下载完成后的回调函数 """
+        if success:
+            logger.info(f"图片下载完成: {filename}")
+            # 下载成功后刷新界面
+            self.refresh_donation_cards()
+        else:
+            logger.error(f"图片下载失败: {filename}")
+    
+    def refresh_donation_cards(self):
+        """ 🌟 小鸟游星野 - 刷新捐赠卡片以重新加载图片 """
+        # 清除现有的捐赠卡片
+        if hasattr(self, 'cards_layout'):
+            # 清除布局中的所有组件
+            while self.cards_layout.count():
+                item = self.cards_layout.takeAt(0)
+                widget = item.widget()
+                if widget:
+                    widget.deleteLater()
             
-            # 计算当前文件的MD5
-            current_md5 = self.calculate_file_md5(local_path)
+            # 重新创建捐赠卡片
+            alipay_card = self.create_donation_card(
+                "支付宝",
+                "app\\resource\\assets\\contribution\\Alipay.png",
+                "使用支付宝扫码捐赠"
+            )
+            self.cards_layout.addWidget(alipay_card)
             
-            if current_md5 is None:
-                logger.warning(f"文件不存在: {local_path}")
-                # 文件不存在，直接下载
-                if self.download_file_from_github(filename, local_path):
-                    logger.info(f"成功下载缺失的文件: {filename}")
-                else:
-                    logger.error(f"下载失败: {filename}")
-            elif current_md5 != self.CORRECT_MD5.get(filename):
-                logger.warning(f"MD5不匹配: {filename} (当前: {current_md5}, 期望: {self.CORRECT_MD5.get(filename)})")
-                # MD5不匹配，重新下载
-                if self.download_file_from_github(filename, local_path):
-                    # 验证下载后的文件MD5
-                    new_md5 = self.calculate_file_md5(local_path)
-                    if new_md5 == self.CORRECT_MD5.get(filename):
-                        logger.info(f"成功更新文件: {filename}")
+            wechat_card = self.create_donation_card(
+                "微信支付",
+                "app\\resource\\assets\\contribution\\WeChat_Pay.png",
+                "使用微信扫码捐赠"
+            )
+            self.cards_layout.addWidget(wechat_card)
+            
+            # 强制更新界面
+            self.update()
+            logger.info("捐赠卡片已刷新，图片重新加载")
+    
+    class DownloadWorker(QThread):
+        """ 🌟 小鸟游星野 - 图片下载工作线程 """
+        finished = pyqtSignal()
+        
+        def __init__(self, dialog):
+            super().__init__()
+            self.dialog = dialog
+        
+        def run(self):
+            """ 在独立线程中执行图片下载 """
+            self.check_and_update_qr_codes()
+            self.finished.emit()
+        
+        def check_and_update_qr_codes(self):
+            """检查并更新收款码图片"""
+            base_path = "app\\resource\\assets\\contribution\\"
+            files_to_check = ['Alipay.png', 'WeChat_Pay.png']
+            
+            for filename in files_to_check:
+                local_path = base_path + filename
+                
+                # 计算当前文件的MD5
+                current_md5 = self.calculate_file_md5(local_path)
+                
+                if current_md5 is None:
+                    logger.warning(f"文件不存在: {local_path}")
+                    # 文件不存在，直接下载
+                    if self.download_file_from_github(filename, local_path):
+                        logger.info(f"成功下载缺失的文件: {filename}")
+                        # 发送下载完成信号
+                        self.dialog.image_download_complete.emit(filename, True)
                     else:
-                        logger.error(f"下载后MD5仍不匹配: {filename} (当前: {new_md5}, 期望: {self.CORRECT_MD5.get(filename)})")
+                        logger.error(f"下载失败: {filename}")
+                        self.dialog.image_download_complete.emit(filename, False)
+                elif current_md5 != self.dialog.CORRECT_MD5.get(filename):
+                    logger.warning(f"MD5不匹配: {filename} (当前: {current_md5}, 期望: {self.dialog.CORRECT_MD5.get(filename)})")
+                    # MD5不匹配，重新下载
+                    if self.download_file_from_github(filename, local_path):
+                        # 验证下载后的文件MD5
+                        new_md5 = self.calculate_file_md5(local_path)
+                        if new_md5 == self.dialog.CORRECT_MD5.get(filename):
+                            logger.info(f"成功更新文件: {filename}")
+                            # 发送下载完成信号
+                            self.dialog.image_download_complete.emit(filename, True)
+                        else:
+                            logger.error(f"下载后MD5仍不匹配: {filename} (当前: {new_md5}, 期望: {self.dialog.CORRECT_MD5.get(filename)})")
+                            self.dialog.image_download_complete.emit(filename, False)
+                    else:
+                        logger.error(f"更新文件失败: {filename}")
+                        self.dialog.image_download_complete.emit(filename, False)
                 else:
-                    logger.error(f"更新文件失败: {filename}")
-            else:
-                logger.info(f"文件MD5验证通过: {filename}")
+                    logger.info(f"文件MD5验证通过: {filename}")
+        
+        def calculate_file_md5(self, file_path):
+            """计算文件的MD5值"""
+            try:
+                with open(file_path, 'rb') as f:
+                    file_hash = hashlib.md5()
+                    while chunk := f.read(8192):
+                        file_hash.update(chunk)
+                return file_hash.hexdigest()
+            except FileNotFoundError:
+                return None
+            except Exception as e:
+                logger.error(f"计算MD5失败 {file_path}: {str(e)}")
+                return None
+        
+        def download_file_from_github(self, filename, local_path):
+            """从GitHub下载文件"""
+            try:
+                url = self.dialog.GITHUB_BASE_URL + filename
+                logger.info(f"正在下载文件: {url}")
+                
+                # 尝试正常下载（启用SSL验证）
+                response = requests.get(url, timeout=30)
+                response.raise_for_status()
+                
+                # 确保目录存在
+                os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                
+                # 写入文件
+                with open(local_path, 'wb') as f:
+                    f.write(response.content)
+                
+                logger.info(f"成功下载文件: {filename}")
+                return True
+                
+            except requests.exceptions.SSLError as e:
+                logger.warning(f"SSL证书验证失败 {filename}: {str(e)}")
+                logger.info("尝试禁用SSL验证重新下载...")
+                
+                try:
+                    # 禁用SSL验证重试
+                    response = requests.get(url, timeout=30, verify=False)
+                    response.raise_for_status()
+                    
+                    # 确保目录存在
+                    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                    
+                    # 写入文件
+                    with open(local_path, 'wb') as f:
+                        f.write(response.content)
+                    
+                    logger.info(f"成功下载文件(禁用SSL验证): {filename}")
+                    return True
+                    
+                except Exception as e2:
+                    logger.error(f"禁用SSL验证后下载仍失败 {filename}: {str(e2)}")
+                    logger.error("建议检查网络环境或防火墙设置")
+                    return False
+                    
+            except requests.exceptions.ConnectionError as e:
+                logger.error(f"网络连接错误 {filename}: {str(e)}")
+                logger.error("建议检查网络连接和代理设置")
+                return False
+                
+            except requests.exceptions.Timeout as e:
+                logger.error(f"下载超时 {filename}: {str(e)}")
+                logger.error("建议检查网络连接或稍后重试")
+                return False
+                
+            except Exception as e:
+                logger.error(f"下载文件失败 {filename}: {str(e)}")
+                return False
 
     def create_donation_card(self, title, image_path, description):
         """ 🌟 小鸟游星野 - 创建捐赠卡片 """
