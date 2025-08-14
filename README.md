@@ -158,9 +158,9 @@
 
 如果您觉得 SecRandom 对您有帮助，欢迎支持我们的开发工作！
 
-- **支付宝/微信支付/数字人民币**
+- **支付宝/微信支付**
 
-  <image src="app/resource/assets/contribution/Alipay.png" height="196"/> <image src="app/resource/assets/contribution/WeChat_Pay.png" height="196"/> <image src="app/resource/assets/contribution/E-CNY.png" height="196"/>
+  <image src="app/resource/assets/contribution/Alipay.png" height="196"/> <image src="app/resource/assets/contribution/WeChat_Pay.png" height="196"/>
 
 
 ## 📞 联系方式
