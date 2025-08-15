@@ -25,6 +25,7 @@
 
 ### 🔧 其它变更
 - 去除 数字人民币捐赠功能
+- 修改 更新弹窗链接换为SecRandom官网
 
 ## 下载SecRandom怎么选择文件
 - 可前往[SecRandom README 查看](https://github.com/SECTL/SecRandom?tab=readme-ov-file#%E4%B8%8B%E8%BD%BDsecrandom%E6%80%8E%E4%B9%88%E9%80%89%E6%8B%A9%E6%96%87%E4%BB%B6)

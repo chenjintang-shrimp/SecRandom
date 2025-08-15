@@ -52,7 +52,8 @@ class UpdateLogWindow(MSFluentWindow):
             '• 修复 因为SSL的原因无法正确下载捐献支持二维码的问题'
         ],
         "other_changes": [
-            '• 去除 数字人民币捐赠功能'
+            '• 去除 数字人民币捐赠功能',
+            '• 修改 更新弹窗链接换为SecRandom官网'
         ]
     }
 
