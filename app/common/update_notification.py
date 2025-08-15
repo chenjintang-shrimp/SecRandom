@@ -106,31 +106,19 @@ class UpdateNotification(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(10)
 
-        # GitHub下载按钮
-        github_btn = PushButton("     GitHub 更新")
-        github_btn.setIcon(FluentIcon.GITHUB)
-        github_btn.setStyleSheet(""
+        # 官网
+        manual_update_btn = PushButton("     官网 下载更新")
+        manual_update_btn.setIcon(QIcon('./app/resource/icon/SecRandom.png'))
+        manual_update_btn.setStyleSheet(""
             "QPushButton {background-color: #4a6cf7; color: white; border-radius: 8px; padding: 8px 16px; font-weight: 500; border: none;}"
             "QPushButton:hover {background-color: #3a5bdb;}"
 
         )
-        github_btn.setFont(QFont(load_custom_font(), 12))
-        github_btn.clicked.connect(self.on_github_clicked)
-
-        # 云盘下载按钮
-        cloud_btn = PushButton("     123云盘 更新")
-        cloud_btn.setIcon(FluentIcon.CLOUD)
-        cloud_btn.setStyleSheet(""
-            "QPushButton {background-color: #36b37e; color: white; border-radius: 8px; padding: 8px 16px; font-weight: 500; border: none;}"
-            "QPushButton:hover {background-color: #2d8f68;}"
-
-        )
-        cloud_btn.setFont(QFont(load_custom_font(), 12))
-        cloud_btn.clicked.connect(self.on_cloud_clicked)
+        manual_update_btn.setFont(QFont(load_custom_font(), 12))
+        manual_update_btn.clicked.connect(self.on_manual_update_clicked)
 
         # 添加到按钮布局
-        btn_layout.addWidget(github_btn)
-        btn_layout.addWidget(cloud_btn)
+        btn_layout.addWidget(manual_update_btn)
 
         # 添加所有组件到主布局
         main_layout.addLayout(title_layout)
@@ -186,24 +174,9 @@ class UpdateNotification(QDialog):
         y = max(0, screen_geometry.height() - self.height() - 20)
         self.move(x, y)
 
-    def on_github_clicked(self):
-        """GitHub下载按钮点击事件"""
-        if self.is_installer_package():
-            # 如果是安装包版本，提供自动更新选项
-            self.show_auto_update_dialog()
-        else:
-            # 压缩包版本，直接打开浏览器下载
-            webbrowser.open("https://github.com/SECTL/SecRandom/releases/latest")
-        self.close_with_animation()
-
-    def on_cloud_clicked(self):
-        """123云盘下载按钮点击事件"""
-        if self.is_installer_package():
-            # 如果是安装包版本，提供自动更新选项
-            self.show_auto_update_dialog()
-        else:
-            # 压缩包版本，直接打开浏览器下载
-            webbrowser.open("https://www.123684.com/s/9529jv-U4Fxh")
+    def on_manual_update_clicked(self):
+        """官网手动更新按钮点击事件"""
+        webbrowser.open("https://secrandom.netlify.app//download")
         self.close_with_animation()
 
     def is_installer_package(self):

@@ -263,67 +263,8 @@ jobs:
           name: windows-2022-${{ matrix.arch }}-${{ matrix.pack_mode }}
           path: ./zip
 
-  # 新增：Inno Setup 安装包构建任务
-  installer:
-    name: 构建安装包
-    runs-on: windows-2022
-    needs: [builder_matrix]
-    if: ${{ github.event_name != 'pull_request' }}
-    steps:
-      - name: 检出仓库
-        uses: actions/checkout@v4.2.2
-
-      - name: 下载 x64 目录模式构建结果
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-2022-x64-dir
-          path: ./dist_download
-
-      - name: 设置 Inno Setup
-        run: |
-          # 下载并安装 Inno Setup
-          curl -L -o is.exe "https://jrsoftware.org/download.php/is.exe"
-          cmd /c "is.exe /VERYSILENT /NORESTART"
-          echo "C:\Program Files (x86)\Inno Setup 6" >> $GITHUB_PATH
-
-      - name: 准备安装文件
-        run: |
-          # 解压构建结果
-          Expand-Archive -Path "./dist_download/SecRandom-Windows-${{ github.ref_name }}-x64-dir.zip" -DestinationPath "./dist" -Force
-          
-          # 确保目录结构正确
-          if (Test-Path "./dist/SecRandom") {
-            Move-Item "./dist/SecRandom/*" "./dist/" -Force
-            Remove-Item "./dist/SecRandom" -Force
-          }
-
-      - name: 更新版本信息
-        if: startsWith(github.ref_name, 'v')
-        run: |
-          python update_version.py
-        env:
-          VERSION: ${{ github.ref_name }}
-
-      - name: 更新 Inno Setup 脚本版本
-        if: startsWith(github.ref_name, 'v')
-        run: |
-          $issContent = Get-Content "installer.iss" -Raw
-          $issContent = $issContent -replace '#define MyAppVersion "[\d\.]+"', "#define MyAppVersion \"${{ github.ref_name }}\""
-          Set-Content "installer.iss" -Value $issContent -NoNewline
-
-      - name: 构建安装包
-        run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
-
-      - name: 上传安装包
-        if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/upload-artifact@v4.4.2
-        with:
-          name: windows-installer
-          path: release/SecRandom-Setup-*.exe
-
   release:
-    needs: [builder_matrix, installer]
+    needs: [builder_matrix]
     if: ${{ startsWith(github.ref, 'refs/tags/') }}
     uses: ./.github/workflows/release.yml
     with:
