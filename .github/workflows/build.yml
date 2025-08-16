@@ -11,6 +11,11 @@ concurrency:
 
 jobs:
   builder_matrix:
+    # 仅在push或pull_request事件包含'进行打包'时执行，workflow_dispatch无条件执行
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      contains(github.event.head_commit.message, '进行打包') ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.title, '进行打包'))
     strategy:
       fail-fast: false
       matrix:
