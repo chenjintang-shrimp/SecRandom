@@ -31,7 +31,7 @@ class RewardDataLoader(QThread):
                 return
                 
             # 获取数据的方法
-            data = self._get_class_rewards()
+            data = self.__getClassrewards()
             prize_pools_name = self.history_setting_card.prize_pools_comboBox.currentText()
             reward_name = self.history_setting_card.reward_comboBox.currentText()
             
@@ -47,89 +47,217 @@ class RewardDataLoader(QThread):
         self._is_running = False
         self.wait()
     
-    def _get_class_rewards(self):
-        """获取班级奖品数据（在线程中运行）"""
-        # 获取奖池名称
+    def __getClassrewards(self):
+        """根据班级/学生名称获取历史记录数据"""
+        # 获取班级名称
         prize_pools_name = self.history_setting_card.prize_pools_comboBox.currentText()
-        reward_name = self.history_setting_card.reward_comboBox.currentText()
-        
-        if prize_pools_name and prize_pools_name != '无':
-            # 读取配置文件
-            prize_file = f'app/resource/reward/{prize_pools_name}.json'
+        _reward_name = self.history_setting_card.reward_comboBox.currentText()
+        if _reward_name == '全部奖品':
+            if prize_pools_name:
+                # 读取配置文件
+                reward_file = f'app/resource/reward/{prize_pools_name}.json'
 
-            try:
-                with open(prize_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
+                try:
+                    with open(reward_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        cleaned_data = []
+                        for reward_name, reward_info in data.items():
+                            if isinstance(reward_info, dict) and 'id' in reward_info:
+                                id = reward_info.get('id', '')
+                                name = reward_name
+                                probability = reward_info.get('probability', '')
+                                cleaned_data.append((id, name, probability))
                     
-                    if reward_name == '全部奖品':
-                        # 汇总模式
-                        result_data = []
-                        for idx, (prize_name, prize_info) in enumerate(data.items()):
-                            if isinstance(prize_info, dict):
-                                weight = prize_info.get('weight', 1)
-                                count = prize_info.get('count', 0)
-                                result_data.append([str(idx + 1), prize_name, str(weight), str(count)])
-                        return result_data
+                    rewards = [item[1] for item in cleaned_data]
                         
-                    elif reward_name == '奖品记录_时间排序':
-                        # 时间排序模式
-                        history_file = f'app/resource/reward/history/{prize_pools_name}.json'
-                        history_data = []
-                        
-                        if os.path.exists(history_file):
-                            try:
-                                with open(history_file, 'r', encoding='utf-8') as f:
-                                    history_data = json.load(f)
-                            except Exception as e:
-                                logger.error(f"读取奖品历史记录文件失败: {e}")
-                                history_data = []
-                        
-                        result_data = []
-                        for record in history_data:
-                            if isinstance(record, dict) and 'time' in record and 'selected_prizes' in record:
-                                time_str = record.get('time', '')
-                                selected_prizes = record.get('selected_prizes', [])
-                                
-                                if isinstance(selected_prizes, list):
-                                    for prize in selected_prizes:
-                                        if prize in data:
-                                            prize_info = data[prize]
-                                            if isinstance(prize_info, dict):
-                                                idx = list(data.keys()).index(prize) + 1
-                                                weight = prize_info.get('weight', 1)
-                                                result_data.append([time_str, str(idx), prize, str(weight)])
-                        return result_data
-                        
-                    else:
-                        # 单个奖品模式
-                        history_file = f'app/resource/reward/history/{prize_pools_name}.json'
-                        history_data = []
-                        
-                        if os.path.exists(history_file):
-                            try:
-                                with open(history_file, 'r', encoding='utf-8') as f:
-                                    history_data = json.load(f)
-                            except Exception as e:
-                                logger.error(f"读取奖品历史记录文件失败: {e}")
-                                history_data = []
-                        
-                        result_data = []
-                        for record in history_data:
-                            if isinstance(record, dict) and 'time' in record and 'selected_prizes' in record:
-                                time_str = record.get('time', '')
-                                selected_prizes = record.get('selected_prizes', [])
-                                method = record.get('method', '未知')
-                                
-                                if isinstance(selected_prizes, list) and reward_name in selected_prizes:
-                                    count = selected_prizes.count(reward_name)
-                                    result_data.append([time_str, method, str(count)])
-                        return result_data
-                        
-            except Exception as e:
-                logger.error(f"读取奖品文件失败: {e}")
+                    # 初始化历史数据字典
+                    history_data = {}
+                    # 读取历史记录文件
+                    history_file = f'app/resource/reward/history/{prize_pools_name}.json'
+
+                    if os.path.exists(history_file):
+                        try:
+                            with open(history_file, 'r', encoding='utf-8') as f:
+                                history_data = json.load(f)
+                        except json.JSONDecodeError:
+                            history_data = {}
+
+                    # 生成序号(从1开始)并返回学生数据，包含被点次数信息
+                    reward_data = []
+                    # 先遍历一次计算各列最大位数
+                    max_digits = {
+                        'id': 0,
+                        'pumping_reward': 0
+                    }
+
+                    for i, reward in enumerate(rewards):
+                        reward_name = reward if not reward else reward[1:-1]
+                        max_digits['id'] = max(max_digits['id'], len(str(cleaned_data[i][0])))
+                        if 'pumping_reward' in history_data and reward_name in history_data['pumping_reward']:
+                            count = int(history_data['pumping_reward'][reward_name]['total_number_of_times'])
+                            max_digits['pumping_reward'] = max(max_digits['pumping_reward'], len(str(count)))
+
+                    # 获取当前抽取模式
+                    try:
+                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                            settings = json.load(f)
+                            pumping_reward_draw_mode = settings['pumping_reward']['draw_mode']
+                    except Exception as e:
+                        pumping_reward_draw_mode = 0
+                        logger.error(f"加载设置时出错: {e}, 使用默认设置")
+
+                    # 根据抽选模式执行不同逻辑
+                    # 跟随全局设置
+                    if pumping_reward_draw_mode == 0:  # 重复随机
+                        self.draw_mode = "random"
+                    elif pumping_reward_draw_mode == 1:  # 不重复抽取(直到软件重启)
+                        self.draw_mode = "until_reboot"
+                    elif pumping_reward_draw_mode == 2:  # 不重复抽取(直到抽完全部人)
+                        self.draw_mode = "until_all"
+
+                    # 生成最终数据
+                    for i, reward in enumerate(rewards):
+                        for i, reward in enumerate(rewards):
+
+                            pumping_reward_count = int(history_data['pumping_reward'].get(reward, {}).get('total_number_of_times', 0)) if 'pumping_reward' in history_data else 0
+
+                            reward_data.append([
+                                str(cleaned_data[i][0]).zfill(max_digits['id']),
+                                reward,
+                                cleaned_data[i][2],
+                                str(pumping_reward_count).zfill(max_digits['pumping_reward'])
+                            ])
+
+                        return reward_data
+
+                except Exception as e:
+                    logger.error(f"读取奖池名单文件失败: {e}")
+                    InfoBar.error(
+                        title="读取奖池名单文件失败",
+                        content=f"错误信息: （请到日志文件查看）",
+                        duration=3000,
+                        orient=Qt.Horizontal,
+                        parent=self,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP
+                    )
+                    return []
+            else:
+                return []
+
+        elif _reward_name == '奖品记录_时间排序':
+            if prize_pools_name:
+                # 奖品数据文件路径
+                reward_file = f'app/resource/reward/{prize_pools_name}.json'
+                history_file = f'app/resource/reward/history/{prize_pools_name}.json'
+                
+                # 读取奖品配置
+                reward_data = {}
+                try:
+                    with open(reward_file, 'r', encoding='utf-8') as f:
+                        reward_data = json.load(f)
+                except (FileNotFoundError, json.JSONDecodeError):
+                    logger.error(f"奖品配置文件不存在或格式错误: {reward_file}")
+                    return []
+
+                # 读取奖品发放历史
+                history_data = {}
+                if os.path.exists(history_file):
+                    try:
+                        with open(history_file, 'r', encoding='utf-8') as f:
+                            history_data = json.load(f).get('pumping_reward', {})
+                    except json.JSONDecodeError:
+                        logger.error(f"奖品历史记录格式错误: {history_file}")
+                        pass
+
+                # 收集所有奖品发放记录
+                all_records = []
+                reward_items = reward_data
+                
+                # 遍历奖品历史记录
+                for reward_id, distribution_records in history_data.items():
+                    reward_info = reward_items.get(reward_id, {})
+                    reward_name = reward_id  # 直接使用键名作为奖品名称
+                    
+                    for record in distribution_records.get('time', []):
+                        draw_time = record.get('draw_time', '')
+                        if draw_time:
+                            all_records.append({
+                                'time': draw_time,
+                                'reward_id': reward_id,
+                                'name': reward_name,
+                                'weight': reward_info.get('probability', '1')
+                            })
+                
+                # 按时间降序排序
+                sorted_records = sorted(all_records, key=lambda x: x['time'], reverse=True)
+                
+                # 转换为规范格式返回
+                result = []
+                for record in sorted_records:
+                    # 将概率字符串转换为整数权重
+                        weight = int(record['weight']) if record['weight'].isdigit() else 1
+                        result.append([
+                            record['time'],
+                            record['reward_id'],
+                            record['name'],
+                            str(weight)
+                        ])
+                
+                return result
+            else:
                 return []
         
-        return []
+        
+        else:
+            if prize_pools_name:
+                try:
+                    # 初始化历史数据字典
+                    history_data = {}
+                    # 读取历史记录文件
+                    history_file = f'app/resource/reward/history/{prize_pools_name}.json'
+
+                    if os.path.exists(history_file):
+                        try:
+                            with open(history_file, 'r', encoding='utf-8') as f:
+                                history_data = json.load(f)
+                        except json.JSONDecodeError:
+                            history_data = {}
+                    
+                    # 假设历史数据中每个抽取记录有时间、抽取方式和被点次数信息
+                    reward_data = []
+                    if _reward_name in history_data.get('pumping_reward', {}):
+                        pumping_reward_history = history_data['pumping_reward'][_reward_name]['time']
+                        for record in pumping_reward_history:
+                            time = record.get('draw_time', '')
+                            draw_method = record.get('draw_method', '')
+                            if draw_method == 'random':
+                                draw_method_text = '重复抽取'
+                            elif draw_method == 'until_reboot':
+                                draw_method_text = '不重复抽取(直到软件重启)'
+                            elif draw_method == 'until_all':
+                                draw_method_text = '不重复抽取(直到抽完全部奖)'
+                            else:
+                                draw_method_text = draw_method
+                            draw_reward_numbers = record.get('draw_reward_numbers', '')
+                            reward_data.append([time, draw_method_text, f'{draw_reward_numbers}'])
+                    print(reward_data)
+                    return reward_data
+                    
+                except Exception as e:
+                    logger.error(f"读取奖池名单文件失败: {e}")
+                    InfoBar.error(
+                        title="读取奖池名单文件失败",
+                        content=f"错误信息: （请到日志文件查看）",
+                        duration=3000,
+                        orient=Qt.Horizontal,
+                        parent=self,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP
+                    )
+                    return []
+            else:
+                return []
 
 class changeable_history_reward(QFrame):
     def __init__(self, parent: QFrame = None, load_on_init: bool = True):
@@ -343,224 +471,12 @@ class changeable_history_reward(QFrame):
         else:
             self.layout().addWidget(self.scroll_area_personal)
 
-    def __getClassrewards(self):
-        """根据班级/学生名称获取历史记录数据"""
-        # 获取班级名称
-        prize_pools_name = self.history_setting_card.prize_pools_comboBox.currentText()
-        _reward_name = self.history_setting_card.reward_comboBox.currentText()
-        if _reward_name == '全部奖品':
-            if prize_pools_name:
-                # 读取配置文件
-                reward_file = f'app/resource/reward/{prize_pools_name}.json'
-
-                try:
-                    with open(reward_file, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                        cleaned_data = []
-                        for reward_name, reward_info in data.items():
-                            if isinstance(reward_info, dict) and 'id' in reward_info:
-                                id = reward_info.get('id', '')
-                                name = reward_name
-                                probability = reward_info.get('probability', '')
-                                cleaned_data.append((id, name, probability))
-                    
-                    rewards = [item[1] for item in cleaned_data]
-                        
-                    # 初始化历史数据字典
-                    history_data = {}
-                    # 读取历史记录文件
-                    history_file = f'app/resource/reward/history/{prize_pools_name}.json'
-
-                    if os.path.exists(history_file):
-                        try:
-                            with open(history_file, 'r', encoding='utf-8') as f:
-                                history_data = json.load(f)
-                        except json.JSONDecodeError:
-                            history_data = {}
-
-                    # 生成序号(从1开始)并返回学生数据，包含被点次数信息
-                    reward_data = []
-                    # 先遍历一次计算各列最大位数
-                    max_digits = {
-                        'id': 0,
-                        'pumping_reward': 0
-                    }
-
-                    for i, reward in enumerate(rewards):
-                        reward_name = reward if not reward else reward[1:-1]
-                        max_digits['id'] = max(max_digits['id'], len(str(cleaned_data[i][0])))
-                        if 'pumping_reward' in history_data and reward_name in history_data['pumping_reward']:
-                            count = int(history_data['pumping_reward'][reward_name]['total_number_of_times'])
-                            max_digits['pumping_reward'] = max(max_digits['pumping_reward'], len(str(count)))
-
-                    # 获取当前抽取模式
-                    try:
-                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
-                            settings = json.load(f)
-                            pumping_reward_draw_mode = settings['pumping_reward']['draw_mode']
-                    except Exception as e:
-                        pumping_reward_draw_mode = 0
-                        logger.error(f"加载设置时出错: {e}, 使用默认设置")
-
-                    # 根据抽选模式执行不同逻辑
-                    # 跟随全局设置
-                    if pumping_reward_draw_mode == 0:  # 重复随机
-                        self.draw_mode = "random"
-                    elif pumping_reward_draw_mode == 1:  # 不重复抽取(直到软件重启)
-                        self.draw_mode = "until_reboot"
-                    elif pumping_reward_draw_mode == 2:  # 不重复抽取(直到抽完全部人)
-                        self.draw_mode = "until_all"
-
-                    # 生成最终数据
-                    for i, reward in enumerate(rewards):
-                        for i, reward in enumerate(rewards):
-
-                            pumping_reward_count = int(history_data['pumping_reward'].get(reward, {}).get('total_number_of_times', 0)) if 'pumping_reward' in history_data else 0
-
-                            reward_data.append([
-                                str(cleaned_data[i][0]).zfill(max_digits['id']),
-                                reward,
-                                cleaned_data[i][2],
-                                str(pumping_reward_count).zfill(max_digits['pumping_reward'])
-                            ])
-
-                        return reward_data
-
-                except Exception as e:
-                    logger.error(f"读取奖池名单文件失败: {e}")
-                    InfoBar.error(
-                        title="读取奖池名单文件失败",
-                        content=f"错误信息: （请到日志文件查看）",
-                        duration=3000,
-                        orient=Qt.Horizontal,
-                        parent=self,
-                        isClosable=True,
-                        position=InfoBarPosition.TOP
-                    )
-                    return []
-            else:
-                return []
-
-        elif _reward_name == '奖品记录_时间排序':
-            if prize_pools_name:
-                # 奖品数据文件路径
-                reward_file = f'app/resource/reward/{prize_pools_name}.json'
-                history_file = f'app/resource/reward/history/{prize_pools_name}.json'
-                
-                # 读取奖品配置
-                reward_data = {}
-                try:
-                    with open(reward_file, 'r', encoding='utf-8') as f:
-                        reward_data = json.load(f)
-                except (FileNotFoundError, json.JSONDecodeError):
-                    logger.error(f"奖品配置文件不存在或格式错误: {reward_file}")
-                    return []
-
-                # 读取奖品发放历史
-                history_data = {}
-                if os.path.exists(history_file):
-                    try:
-                        with open(history_file, 'r', encoding='utf-8') as f:
-                            history_data = json.load(f).get('pumping_reward', {})
-                    except json.JSONDecodeError:
-                        logger.error(f"奖品历史记录格式错误: {history_file}")
-                        pass
-
-                # 收集所有奖品发放记录
-                all_records = []
-                reward_items = reward_data
-                
-                # 遍历奖品历史记录
-                for reward_id, distribution_records in history_data.items():
-                    reward_info = reward_items.get(reward_id, {})
-                    reward_name = reward_id  # 直接使用键名作为奖品名称
-                    
-                    for record in distribution_records.get('time', []):
-                        draw_time = record.get('draw_time', '')
-                        if draw_time:
-                            all_records.append({
-                                'time': draw_time,
-                                'reward_id': reward_id,
-                                'name': reward_name,
-                                'weight': reward_info.get('probability', '1')
-                            })
-                
-                # 按时间降序排序
-                sorted_records = sorted(all_records, key=lambda x: x['time'], reverse=True)
-                
-                # 转换为规范格式返回
-                result = []
-                for record in sorted_records:
-                    # 将概率字符串转换为整数权重
-                        weight = int(record['weight']) if record['weight'].isdigit() else 1
-                        result.append([
-                            record['time'],
-                            record['reward_id'],
-                            record['name'],
-                            str(weight)
-                        ])
-                
-                return result
-            else:
-                return []
-        
-        
-        else:
-            if prize_pools_name:
-                try:
-                    # 初始化历史数据字典
-                    history_data = {}
-                    # 读取历史记录文件
-                    history_file = f'app/resource/reward/history/{prize_pools_name}.json'
-
-                    if os.path.exists(history_file):
-                        try:
-                            with open(history_file, 'r', encoding='utf-8') as f:
-                                history_data = json.load(f)
-                        except json.JSONDecodeError:
-                            history_data = {}
-                    
-                    # 假设历史数据中每个抽取记录有时间、抽取方式和被点次数信息
-                    reward_data = []
-                    if _reward_name in history_data.get('pumping_reward', {}):
-                        pumping_reward_history = history_data['pumping_reward'][_reward_name]['time']
-                        for record in pumping_reward_history:
-                            time = record.get('draw_time', '')
-                            draw_method = record.get('draw_method', '')
-                            if draw_method == 'random':
-                                draw_method_text = '重复抽取'
-                            elif draw_method == 'until_reboot':
-                                draw_method_text = '不重复抽取(直到软件重启)'
-                            elif draw_method == 'until_all':
-                                draw_method_text = '不重复抽取(直到抽完全部奖)'
-                            else:
-                                draw_method_text = draw_method
-                            draw_reward_numbers = record.get('draw_reward_numbers', '')
-                            reward_data.append([time, draw_method_text, f'{draw_reward_numbers}'])
-                    print(reward_data)
-                    return reward_data
-                    
-                except Exception as e:
-                    logger.error(f"读取奖池名单文件失败: {e}")
-                    InfoBar.error(
-                        title="读取奖池名单文件失败",
-                        content=f"错误信息: （请到日志文件查看）",
-                        duration=3000,
-                        orient=Qt.Horizontal,
-                        parent=self,
-                        isClosable=True,
-                        position=InfoBarPosition.TOP
-                    )
-                    return []
-            else:
-                return []
-
     def _refresh_table(self):
         """刷新表格"""
         # 清空表格
         self.table.setRowCount(0)
         # 重新加载表格数据
-        self.show_table()
+        self.load_data()
 
     def __initWidget(self):
         self.__connectSignalToSlot()

@@ -594,14 +594,12 @@ class history(QFrame):
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             return default
 
-
-
     def _refresh_table(self):
         """刷新表格"""
         # 清空表格
         self.table.setRowCount(0)
         # 重新加载表格数据
-        self.show_table()
+        self.load_data()
 
     def __initWidget(self):
         self.__connectSignalToSlot()
