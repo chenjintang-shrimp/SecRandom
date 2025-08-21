@@ -34,23 +34,23 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         self.prize_pools_comboBox.currentIndexChanged.connect(lambda: self.refresh_signal.emit())
 
         # 快速导入奖品名单
-        self.import_Button = PushButton("快速导入奖品名单")
+        self.import_Button = PushButton("导入奖品名单")
         self.import_Button.clicked.connect(self.import_prize_list)
         self.import_Button.setFont(QFont(load_custom_font(), 12))
 
-        # 导出奖品名单
-        self.export_Button = PushButton("导出奖品名单")
-        self.export_Button.clicked.connect(self.export_prize_list)
-        self.export_Button.setFont(QFont(load_custom_font(), 12))
-
-        self.prize_Button = PushButton("设置奖池奖品")
+        self.prize_Button = PushButton("奖品设置")
         self.prize_Button.clicked.connect(self.show_prize_dialog)
         self.prize_Button.setFont(QFont(load_custom_font(), 12))
 
-        self.probability_Button = PushButton("设置奖品权重")
+        self.probability_Button = PushButton("权重设置")
         self.probability_Button.clicked.connect(self.show_probability_dialog)
         self.probability_Button.setFont(QFont(load_custom_font(), 12))
         
+        # 导出奖品名单
+        self.export_Button = PushButton("名单导出")
+        self.export_Button.clicked.connect(self.export_prize_list)
+        self.export_Button.setFont(QFont(load_custom_font(), 12))
+
         try:
             list_folder = "app/resource/reward"
             if os.path.exists(list_folder) and os.path.isdir(list_folder):
@@ -69,8 +69,8 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "设置奖池", "设置奖池名称", self.prize_pools_Button)
         self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "选择奖池", "选择一个需要设置奖品的奖池", self.prize_pools_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "快速导入奖品名单", "点击按钮快速导入奖品名单(该功能会覆盖原名单)", self.import_Button)
-        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置奖池奖品", "设置该奖池的奖品", self.prize_Button)
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导入奖品名单", "点击按钮快速导入奖品名单(该功能会覆盖原名单)", self.import_Button)
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置奖品名称", "设置该奖池的奖品", self.prize_Button)
         self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置奖品权重", "设置奖品权重", self.probability_Button)
         self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导出奖品名单", "点击按钮导出当前奖池奖品名单文件", self.export_Button)
 

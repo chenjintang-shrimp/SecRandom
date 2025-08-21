@@ -34,26 +34,26 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.class_comboBox.currentIndexChanged.connect(lambda: self.refresh_signal.emit())
 
         # 快速导入学生名单
-        self.import_Button = PushButton("快速导入学生名单")
+        self.import_Button = PushButton("导入学生名单")
         self.import_Button.clicked.connect(self.import_student_list)
         self.import_Button.setFont(QFont(load_custom_font(), 12))
+
+        self.student_Button = PushButton("姓名设置")
+        self.student_Button.clicked.connect(self.show_student_dialog)
+        self.student_Button.setFont(QFont(load_custom_font(), 12))
+
+        self.gender_Button = PushButton("性别设置")
+        self.gender_Button.clicked.connect(self.show_gender_dialog)
+        self.gender_Button.setFont(QFont(load_custom_font(), 12))
+
+        self.group_Button = PushButton("小组设置")
+        self.group_Button.clicked.connect(self.show_group_dialog)
+        self.group_Button.setFont(QFont(load_custom_font(), 12))
 
         # 导出学生名单
         self.export_Button = PushButton("导出学生名单")
         self.export_Button.clicked.connect(self.export_student_list)
         self.export_Button.setFont(QFont(load_custom_font(), 12))
-
-        self.student_Button = PushButton("设置学生名单")
-        self.student_Button.clicked.connect(self.show_student_dialog)
-        self.student_Button.setFont(QFont(load_custom_font(), 12))
-
-        self.gender_Button = PushButton("设置学生性别")
-        self.gender_Button.clicked.connect(self.show_gender_dialog)
-        self.gender_Button.setFont(QFont(load_custom_font(), 12))
-
-        self.group_Button = PushButton("设置学生小组")
-        self.group_Button.clicked.connect(self.show_group_dialog)
-        self.group_Button.setFont(QFont(load_custom_font(), 12))
         
         try:
             list_folder = "app/resource/list"
@@ -73,8 +73,8 @@ class list_SettinsCard(GroupHeaderCardWidget):
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "设置班级", "点击按钮设置班级名称", self.class_Button)
         self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "选择班级", "选择一个需要设置学生姓名的班级", self.class_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "快速导入学生名单", "点击按钮快速导入学生名单(该功能会覆盖原名单)", self.import_Button)
-        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置学生名单", "点击按钮设置学生姓名", self.student_Button)
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导入学生名单", "点击按钮快速导入学生名单(该功能会覆盖原名单)", self.import_Button)
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置学生姓名", "点击按钮设置学生姓名", self.student_Button)
         self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置学生性别", "点击按钮设置学生性别", self.gender_Button)
         self.addGroup(get_theme_icon("ic_fluent_group_20_filled"), "设置小组", "点击按钮设置小组名单", self.group_Button)
         self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导出学生名单", "点击按钮导出当前班级学生名单文件", self.export_Button)
