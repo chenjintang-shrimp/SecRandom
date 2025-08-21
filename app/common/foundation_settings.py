@@ -26,7 +26,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "check_on_startup": True,
             "self_starting_enabled": False,
             "pumping_floating_enabled": True,
-            "pumping_floating_visible": True,
+            "pumping_floating_visible": 0,
+            "show_settings_icon": True,
             "pumping_floating_side": 0,
             "pumping_reward_side": 0,
             "pumping_floating_transparency_mode": 6,
@@ -72,6 +73,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.pumping_reward_side_comboBox.addItems(["顶部", "底部"])
         self.pumping_reward_side_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_reward_side_comboBox.setFont(QFont(load_custom_font(), 12))
+
+        # 设置主界面侧边栏是否显示设置图标
+        self.show_settings_icon_switch = SwitchButton()
+        self.show_settings_icon_switch.setOnText("显示")
+        self.show_settings_icon_switch.setOffText("隐藏")
+        self.show_settings_icon_switch.setFont(QFont(load_custom_font(), 12))
+        self.show_settings_icon_switch.checkedChanged.connect(self.save_settings)
 
         # 定时清理按钮
         self.cleanup_button = PushButton("设置定时清理")
@@ -136,12 +144,12 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.check_on_startup.setFont(QFont(load_custom_font(), 12))
         self.check_on_startup.checkedChanged.connect(self.save_settings)
         
-        # 是否显示浮窗左侧控件
-        self.left_pumping_floating_switch = SwitchButton()
-        self.left_pumping_floating_switch.setOnText("经典版")
-        self.left_pumping_floating_switch.setOffText("简洁版")
+        # 浮窗
+        self.left_pumping_floating_switch = ComboBox()
+        self.left_pumping_floating_switch.setFixedWidth(200)
+        self.left_pumping_floating_switch.addItems(["显示 拖动+主界面", "显示 主界面", "显示 直接抽取+便捷小窗", "显示 直接抽取"])
         self.left_pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
-        self.left_pumping_floating_switch.checkedChanged.connect(self.save_settings)
+        self.left_pumping_floating_switch.currentIndexChanged.connect(self.save_settings)
 
         # 主界面置顶功能
         self.topmost_switch = SwitchButton()
@@ -164,8 +172,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "主界面侧边栏是否显示设置图标", "设置主界面侧边栏是否显示设置图标", self.show_settings_icon_switch)
         self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "定时清理", "设置定时清理抽取记录的时间", self.cleanup_button)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗样式", "设置便捷抽人的浮窗样式", self.left_pumping_floating_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗", "设置浮窗功能按钮数量", self.left_pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "主窗口置顶", "设置主窗口是否置顶(需重新打开主窗口生效-不是重启软件)", self.topmost_switch)
         self.addGroup(get_theme_icon("ic_fluent_layout_row_two_focus_top_settings_20_filled"), "主窗口焦点", "设置主窗口不是焦点时关闭延迟", self.main_window_focus_comboBox)
@@ -326,6 +335,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
                     url_protocol_enabled = foundation_settings.get("url_protocol_enabled", self.default_settings["url_protocol_enabled"])
 
+                    show_settings_icon = foundation_settings.get("show_settings_icon", self.default_settings["show_settings_icon"])
+
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
                     self.pumping_floating_side_comboBox.setCurrentIndex(pumping_floating_side)
@@ -339,6 +350,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.left_pumping_floating_switch.setChecked(pumping_floating_visible)
                     self.topmost_switch.setChecked(topmost_switch)
                     self.url_protocol_switch.setChecked(url_protocol_enabled)
+                    self.show_settings_icon_switch.setChecked(show_settings_icon)
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
@@ -354,7 +366,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.left_pumping_floating_switch.setChecked(self.default_settings["pumping_floating_visible"])
                 self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
                 self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
-
+                self.show_settings_icon_switch.setChecked(self.default_settings["show_settings_icon"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -371,7 +383,43 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.left_pumping_floating_switch.setChecked(self.default_settings["pumping_floating_visible"])
             self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
             self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
+            self.show_settings_icon_switch.setChecked(self.default_settings["show_settings_icon"])
             self.save_settings()
+
+    def save_settings(self):
+        # 先读取现有设置
+        existing_settings = {}
+        if os.path.exists(self.settings_file):
+            with open(self.settings_file, 'r', encoding='utf-8') as f:
+                try:
+                    existing_settings = json.load(f)
+                except json.JSONDecodeError:
+                    existing_settings = {}
+        
+        # 更新foundation部分的所有设置
+        if "foundation" not in existing_settings:
+            existing_settings["foundation"] = {}
+            
+        foundation_settings = existing_settings["foundation"]
+        # 删除保存文字选项的代码
+        foundation_settings["self_starting_enabled"] = self.self_starting_switch.isChecked()
+        foundation_settings["pumping_floating_enabled"] = self.pumping_floating_switch.isChecked()
+        foundation_settings["pumping_floating_side"] = self.pumping_floating_side_comboBox.currentIndex()
+        foundation_settings["pumping_reward_side"] = self.pumping_reward_side_comboBox.currentIndex()
+        foundation_settings["pumping_floating_transparency_mode"] = self.pumping_floating_transparency_comboBox.currentIndex()
+        foundation_settings["main_window_focus_mode"] = self.main_window_focus_comboBox.currentIndex()
+        foundation_settings["main_window_focus_time"] = self.main_window_focus_time_comboBox.currentIndex()
+        foundation_settings["main_window_mode"] = self.main_window_comboBox.currentIndex()
+        foundation_settings["settings_window_mode"] = self.settings_window_comboBox.currentIndex()
+        foundation_settings["check_on_startup"] = self.check_on_startup.isChecked()
+        foundation_settings["pumping_floating_visible"] = self.left_pumping_floating_switch.isChecked()
+        foundation_settings["topmost_switch"] = self.topmost_switch.isChecked()
+        foundation_settings["url_protocol_enabled"] = self.url_protocol_switch.isChecked()
+        foundation_settings["show_settings_icon"] = self.show_settings_icon_switch.isChecked()
+        
+        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
+        with open(self.settings_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_settings, f, indent=4)
     
     def show_cleanup_dialog(self):
         dialog = CleanupTimeDialog(self)
@@ -692,41 +740,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 duration=5000,
                 parent=self
             )
-    
-    def save_settings(self):
-        # 先读取现有设置
-        existing_settings = {}
-        if os.path.exists(self.settings_file):
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
-        
-        # 更新foundation部分的所有设置
-        if "foundation" not in existing_settings:
-            existing_settings["foundation"] = {}
-            
-        foundation_settings = existing_settings["foundation"]
-        # 删除保存文字选项的代码
-        foundation_settings["self_starting_enabled"] = self.self_starting_switch.isChecked()
-        foundation_settings["pumping_floating_enabled"] = self.pumping_floating_switch.isChecked()
-        foundation_settings["pumping_floating_side"] = self.pumping_floating_side_comboBox.currentIndex()
-        foundation_settings["pumping_reward_side"] = self.pumping_reward_side_comboBox.currentIndex()
-        foundation_settings["pumping_floating_transparency_mode"] = self.pumping_floating_transparency_comboBox.currentIndex()
-        foundation_settings["main_window_focus_mode"] = self.main_window_focus_comboBox.currentIndex()
-        foundation_settings["main_window_focus_time"] = self.main_window_focus_time_comboBox.currentIndex()
-        foundation_settings["main_window_mode"] = self.main_window_comboBox.currentIndex()
-        foundation_settings["settings_window_mode"] = self.settings_window_comboBox.currentIndex()
-        foundation_settings["check_on_startup"] = self.check_on_startup.isChecked()
-        foundation_settings["pumping_floating_visible"] = self.left_pumping_floating_switch.isChecked()
-        foundation_settings["topmost_switch"] = self.topmost_switch.isChecked()
-        foundation_settings["url_protocol_enabled"] = self.url_protocol_switch.isChecked()
-
-        
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
 
     def import_settings(self):
         """导入设置"""
@@ -1335,14 +1348,14 @@ class SettingsSelectionDialog(QDialog):
             "foundation": {
                 "主窗口设置": [
                     "main_window_mode", "main_window_focus_mode", "main_window_focus_time",
-                    "topmost_switch", "window_width", "window_height"
+                    "topmost_switch", "window_width", "window_height", "pumping_floating_side",
+                    "pumping_reward_side", "show_settings_icon"
                 ],
                 "设置窗口设置": [
                     "settings_window_mode", "settings_window_width", "settings_window_height"
                 ],
                 "浮窗设置": [
-                    "pumping_floating_enabled", "pumping_floating_side", "pumping_reward_side",
-                    "pumping_floating_transparency_mode", "pumping_floating_visible"
+                    "pumping_floating_enabled", "pumping_floating_transparency_mode", "pumping_floating_visible"
                 ],
                 "启动设置": [
                     "check_on_startup", "self_starting_enabled", "url_protocol_enabled"
@@ -1469,6 +1482,7 @@ class SettingsSelectionDialog(QDialog):
             "pumping_floating_enabled": "浮窗启用", # 有
             "pumping_floating_side": "抽人侧边栏位置", # 有
             "pumping_reward_side": "抽奖侧边栏位置", # 有
+            "show_settings_icon": "显示设置图标", # 有
             "pumping_floating_transparency_mode": "浮窗透明度", # 有
             "main_window_focus_mode": "主窗口焦点模式", # 有
             "main_window_focus_time": "焦点检测时间", # 有

@@ -472,8 +472,26 @@ class Window(MSFluentWindow):
         # 首次点击时加载数据
         history_item.clicked.connect(lambda: self.history_handoff_settingInterface.pumping_people_card.load_data())
 
-        # 添加插件管理导航项
         self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
+
+        try:
+            if foundation_settings.get('show_settings_icon', True):
+                # 创建一个空的设置界面占位符，用于导航栏
+                self.settings_placeholder = QWidget()
+                self.settings_placeholder.setObjectName("settings_placeholder")
+                settings_item = self.addSubInterface(self.settings_placeholder, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.BOTTOM)
+                # 为导航项添加点击事件处理器，调用show_setting_interface方法
+                settings_item.clicked.connect(self.show_setting_interface)
+                settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
+        except Exception as e:
+            logger.error(f"白露导航出错: 加载设置图标失败了呢～ {e}")
+            # 创建一个空的设置界面占位符，用于导航栏
+            self.settings_placeholder = QWidget()
+            self.settings_placeholder.setObjectName("settings_placeholder")
+            settings_item = self.addSubInterface(self.settings_placeholder, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.BOTTOM)
+            # 为导航项添加点击事件处理器，调用show_setting_interface方法
+            settings_item.clicked.connect(self.show_setting_interface)
+            settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
         
         logger.info("白露导航: 所有导航项已布置完成，导航系统可以正常使用啦～ ")
 
@@ -509,20 +527,20 @@ class Window(MSFluentWindow):
         self.last_focus_time = QDateTime.currentDateTime()
         logger.debug(f"白露调节: 焦点模式已切换到{mode}档～ ")
 
-        if mode < len(self.focus_timeout_map):
-            self.focus_timeout = self.focus_timeout_map[mode]
+        if mode < len(self.FOCUS_TIMEOUT_MAP):
+            self.focus_timeout = self.FOCUS_TIMEOUT_MAP[mode]
             logger.debug(f"白露调节: 自动隐藏阈值已设置为{self.focus_timeout}毫秒～ ")
 
     def update_focus_time(self, time):
         """(^・ω・^ ) 白露的时间魔法更新！
         焦点检查时间间隔已调整为{time}档～ 就像给闹钟设置新的提醒周期！
-        现在每{self.focus_timeout_time[time] if time < len(self.focus_timeout_time) else 0}毫秒检查一次窗口焦点哦～ ⏰"""
+        现在每{self.FOCUS_TIMEOUT_TIME[time] if time < len(self.FOCUS_TIMEOUT_TIME) else 0}毫秒检查一次窗口焦点哦～ ⏰"""
         self.focus_time = time
         self.last_focus_time = QDateTime.currentDateTime()
         logger.debug(f"白露计时: 焦点检查时间已更新到{time}档～ ")
 
-        if time < len(self.focus_timeout_time):
-            self.focus_timeout = self.focus_timeout_time[time]
+        if time < len(self.FOCUS_TIMEOUT_TIME):
+            self.focus_timeout = self.FOCUS_TIMEOUT_TIME[time]
             self.focus_timer.start(self.focus_timeout)
             logger.debug(f"白露计时: 检查间隔已设置为{self.focus_timeout}毫秒～ ")
         else:
@@ -538,7 +556,7 @@ class Window(MSFluentWindow):
 
         if not self.isActiveWindow() and not self.isMinimized():
             elapsed = self.last_focus_time.msecsTo(QDateTime.currentDateTime())
-            timeout = self.focus_timeout_map[self.focus_mode]
+            timeout = self.FOCUS_TIMEOUT_MAP[self.focus_mode]
             logger.debug(f"星野监视: 窗口已闲置{elapsed}毫秒，阈值为{timeout}毫秒～ ")
 
             if self.focus_mode == 1:  # 直接关闭模式
@@ -625,9 +643,13 @@ class Window(MSFluentWindow):
             logger.info("星野魔法: 主窗口已隐藏～ ")
             if self.isMinimized():
                 self.showNormal()
+                self.activateWindow()
+                self.raise_()
         else:
             if self.isMinimized():
                 self.showNormal()
+                self.activateWindow()
+                self.raise_()
             else:
                 self.show()
                 self.activateWindow()
@@ -695,9 +717,6 @@ class Window(MSFluentWindow):
         sys.exit(0)
 
     def restart_app(self):
-        """星野重启指令：
-        正在执行程序重启流程！
-        多数设置将在重启后生效喵～(ﾟДﾟ≡ﾟдﾟ)"""
         try:
             with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
                 settings = json.load(f)
@@ -802,9 +821,16 @@ class Window(MSFluentWindow):
 
         if not hasattr(self, 'settingInterface') or not self.settingInterface:
             self.settingInterface = settings_Window(self)
-        if not self.settingInterface.isVisible():
+
+        if self.settingInterface.isVisible() and not self.settingInterface.isMinimized():
+            self.settingInterface.showNormal() 
+            self.settingInterface.activateWindow()
+            self.settingInterface.raise_()
+        else:
             if self.settingInterface.isMinimized():
                 self.settingInterface.showNormal()
+                self.settingInterface.activateWindow()
+                self.settingInterface.raise_()
             else:
                 self.settingInterface.show()
                 self.settingInterface.activateWindow()
