@@ -27,34 +27,18 @@ class UpdateLogWindow(MSFluentWindow):
     # 更新内容数据结构
     UPDATE_CONTENTS = {
         "major_updates": [
-            '• 新增 更新日志界面，方便用户了解版本更新内容',
-            '• 新增 MD5校验功能，检验捐献支持二维码是否被篡改',
-            '• 新增 导出诊断数据功能，方便用户导出软件运行数据',
-            '• 新增 导出抽人抽奖名单功能，方便用户导出抽人抽奖名单',
-            '• 新增 导入导出设置功能，不能导出密码等安全性设置',
-            '• 新增 URL功能，方便其它软件调用SecRandom的功能'
+            '• 新增 可设置主界面是否显示设置图标(默认打开)'
         ],
         "feature_optimizations": [
-            '• 优化 引导流程，区分首次使用和版本更新情况',
-            '• 优化 引导窗口、更新日志窗口中加入滚动区域'
+            '• 优化 抽人、抽奖名单的按钮文字内容问题',
+            '- 优化 当更新日志界面中某个部分的更新日志为空时，不显示该部分的标题'
         ],
         "bug_fixes": [
-            '• 修复 不开图片模式，字体显示异常的问题',
-            '• 修复 不开图片模式，控件不居中的问题',
-            '• 修复 插件管理界面自启动按钮问题',
-            '• 修复 插件广场界面卸载插件时定位错误导致误卸载其他插件的问题',
-            '• 修复 引导窗口关闭时，主窗口不启动的问题',
-            '• 修复 引导窗口字体太大，导致内容看不全的问题',
-            '• 修复 缩减插件广场的插件信息',
-            '• 修复 历史记录界面，加载数据时，界面通知飞了一下的问题',
-            '• 修复 退出验证密码开关取消后状态异常',
-            '• 修复 2FA设置未验证即写入密钥的问题',
-            '• 修复 因为SSL的原因无法正确下载捐献支持二维码的问题'
+            '• 修复 点击刷新按钮后，导致软件卡退',
+            '• 修复 历史记录没有做完的问题',
+            '- 修复 当修改主窗口检测焦点的相关设置之后导致程序无法打开的问题'
         ],
-        "other_changes": [
-            '• 去除 数字人民币捐赠功能',
-            '• 修改 更新弹窗链接换为SecRandom官网'
-        ]
+        "other_changes": []
     }
 
     def __init__(self, parent=None):
@@ -159,7 +143,8 @@ class UpdateLogWindow(MSFluentWindow):
             update_label.setWordWrap(True)
             major_layout.addWidget(update_label)
         
-        current_layout.addWidget(major_widget)
+        if major_updates != []:
+            current_layout.addWidget(major_widget)
         
         # 功能优化
         opt_widget = QWidget()
@@ -177,7 +162,8 @@ class UpdateLogWindow(MSFluentWindow):
             update_label.setWordWrap(True)
             opt_layout.addWidget(update_label)
         
-        current_layout.addWidget(opt_widget)
+        if opt_updates != []:
+            current_layout.addWidget(opt_widget)    
         
         # 问题修复
         fix_widget = QWidget()
@@ -195,7 +181,8 @@ class UpdateLogWindow(MSFluentWindow):
             update_label.setWordWrap(True)
             fix_layout.addWidget(update_label)
         
-        current_layout.addWidget(fix_widget)
+        if fix_updates != []:
+            current_layout.addWidget(fix_widget)
 
         # 其它变更
         other_widget = QWidget()
@@ -213,7 +200,8 @@ class UpdateLogWindow(MSFluentWindow):
             update_label.setWordWrap(True)
             other_layout.addWidget(update_label)
         
-        current_layout.addWidget(other_widget)
+        if other_updates != []:
+            current_layout.addWidget(other_widget)
 
         current_layout.addStretch()
         
