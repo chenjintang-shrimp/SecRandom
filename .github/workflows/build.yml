@@ -319,7 +319,7 @@ jobs:
           # 安装系统依赖
           echo "安装系统依赖..."
           sudo apt-get update
-          sudo apt-get install -y libxcb-cursor0 libxcb-cursor-dev libxkbcommon-x11-0 libxkbcommon-x11-0-dev
+          sudo apt-get install -y libxcb-cursor0 libxcb-cursor-dev libxkbcommon-x11-0 libxkbcommon-dev
           
           # 创建虚拟环境
           echo "创建虚拟环境..."

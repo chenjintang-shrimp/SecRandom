@@ -356,18 +356,88 @@ class Window(MSFluentWindow):
         """(^・ω・^ ) 白露的窗口定位魔法！
         根据屏幕尺寸和用户设置自动计算最佳位置～
         确保窗口出现在最舒服的视觉位置，不会让眼睛疲劳哦！(๑•̀ㅂ•́)ow✧"""
+        import platform
+        
         screen = QApplication.primaryScreen()
         desktop = screen.availableGeometry()
         w, h = desktop.width(), desktop.height()
         main_window_mode = self.config_manager.get_foundation_setting('main_window_mode')
         
+        # 计算目标位置
         if main_window_mode == 0:
             # 模式0：屏幕正中央定位
-            self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
+            target_x = w // 2 - self.width() // 2
+            target_y = h // 2 - self.height() // 2
         elif main_window_mode == 1:
             # 模式1：屏幕偏下定位（更符合视觉习惯）
-            self.move(w // 2 - self.width() // 2, h * 3 // 5 - self.height() // 2)
+            target_x = w // 2 - self.width() // 2
+            target_y = h * 3 // 5 - self.height() // 2
+        
+        # Linux兼容性处理
+        if platform.system().lower() == 'linux':
+            self._position_window_linux(target_x, target_y)
+        else:
+            # Windows和其他系统使用标准方法
+            self.move(target_x, target_y)
+            
         logger.debug(f"白露魔法: 窗口已定位到({self.x()}, {self.y()})位置～ ")
+    
+    def _position_window_linux(self, target_x, target_y):
+        """(^・ω・^ ) 白露的Linux窗口定位魔法！
+        专门为Linux系统优化的窗口定位方法，处理各种窗口管理器兼容性问题～
+        确保在GNOME、KDE、XFCE等桌面环境下都能正常工作哦！(๑•̀ㅂ•́)ow✧"""
+        try:
+            # 确保窗口已经显示
+            if not self.isVisible():
+                self.show()
+            
+            # 先移动到目标位置
+            self.move(target_x, target_y)
+            
+            # 如果move没有生效，尝试使用setGeometry
+            current_x, current_y = self.x(), self.y()
+            if abs(current_x - target_x) > 10 or abs(current_y - target_y) > 10:
+                # move方法可能没有生效，使用setGeometry
+                window_width = self.width()
+                window_height = self.height()
+                self.setGeometry(target_x, target_y, window_width, window_height)
+            
+            # 再次检查位置，如果仍然不正确，尝试延迟重定位
+            current_x, current_y = self.x(), self.y()
+            if abs(current_x - target_x) > 10 or abs(current_y - target_y) > 10:
+                # 使用QTimer延迟重定位，给窗口管理器一些时间
+                QTimer.singleShot(100, lambda: self._delayed_position_linux(target_x, target_y))
+                
+        except Exception as e:
+            logger.error(f"白露魔法出错: Linux窗口定位失败了呢～ {e}")
+            # 最后的备用方案：强制设置几何形状
+            try:
+                window_width = self.width() if self.width() > 0 else 800
+                window_height = self.height() if self.height() > 0 else 600
+                self.setGeometry(target_x, target_y, window_width, window_height)
+            except Exception as e2:
+                logger.error(f"白露魔法出错: Linux窗口定位备用方案也失败了呢～ {e2}")
+    
+    def _delayed_position_linux(self, target_x, target_y):
+        """(^・ω・^ ) 白露的Linux延迟定位魔法！
+        给窗口管理器一些时间处理后，再次尝试定位窗口～
+        这是Linux环境下的最后保障哦！(๑•̀ㅂ•́)ow✧"""
+        try:
+            # 再次尝试move
+            self.move(target_x, target_y)
+            
+            # 检查是否成功
+            current_x, current_y = self.x(), self.y()
+            if abs(current_x - target_x) > 10 or abs(current_y - target_y) > 10:
+                # 仍然失败，使用setGeometry
+                window_width = self.width() if self.width() > 0 else 800
+                window_height = self.height() if self.height() > 0 else 600
+                self.setGeometry(target_x, target_y, window_width, window_height)
+                
+            logger.debug(f"白露魔法: Linux延迟定位完成，当前位置({self.x()}, {self.y()})～ ")
+            
+        except Exception as e:
+            logger.error(f"白露魔法出错: Linux延迟定位失败了呢～ {e}")
 
     def _apply_window_visibility_settings(self):
         """(^・ω・^ ) 白露的窗口显示魔法！
