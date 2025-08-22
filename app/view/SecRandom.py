@@ -42,7 +42,7 @@ from app.common.about import ContributorDialog, DonationDialog
 warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
 # 星野导航：使用跨平台路径定位设置目录 ✧*｡٩(ˊᗜˋ*)ow✧*｡
-settings_dir = path_manager.get_settings_path('').parent
+settings_dir = path_manager.get_settings_path().parent
 ensure_dir(settings_dir)
 logger.info("白露魔法: 创建了设置目录哦~ ✧*｡٩(ˊᗜˋ*)ow✧*｡")
 
@@ -228,7 +228,7 @@ class TrayIconManager:
         self.tray_menu.addSeparator()
         # 系统操作
         # 检查是否为目录模式（存在_internal目录）
-        if os.path.exists('_internal'):
+        if path_manager.file_exists(os.path.join(os.getcwd(), '_internal')):
             self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.main_window.restart_app))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_exit_20_filled"), '退出', triggered=self.main_window.close_window_secrandom))
         logger.info("白露魔法: 托盘菜单已准备就绪！")
@@ -512,11 +512,11 @@ class Window(MSFluentWindow):
         不同档位会触发不同的自动隐藏魔法，数值越大隐藏速度越快哦～ ✨"""
         self.focus_mode = mode
         self.last_focus_time = QDateTime.currentDateTime()
-        logger.debug(f"白露调节: 焦点模式已切换到{mode}档～ ")
+        # logger.debug(f"白露调节: 焦点模式已切换到{mode}档～ ")
 
         if mode < len(self.FOCUS_TIMEOUT_MAP):
             self.focus_timeout = self.FOCUS_TIMEOUT_MAP[mode]
-            logger.debug(f"白露调节: 自动隐藏阈值已设置为{self.focus_timeout}毫秒～ ")
+            # logger.debug(f"白露调节: 自动隐藏阈值已设置为{self.focus_timeout}毫秒～ ")
 
     def update_focus_time(self, time):
         """(^・ω・^ ) 白露的时间魔法更新！
@@ -524,15 +524,15 @@ class Window(MSFluentWindow):
         现在每{self.FOCUS_TIMEOUT_TIME[time] if time < len(self.FOCUS_TIMEOUT_TIME) else 0}毫秒检查一次窗口焦点哦～ ⏰"""
         self.focus_time = time
         self.last_focus_time = QDateTime.currentDateTime()
-        logger.debug(f"白露计时: 焦点检查时间已更新到{time}档～ ")
+        # logger.debug(f"白露计时: 焦点检查时间已更新到{time}档～ ")
 
         if time < len(self.FOCUS_TIMEOUT_TIME):
             self.focus_timeout = self.FOCUS_TIMEOUT_TIME[time]
             self.focus_timer.start(self.focus_timeout)
-            logger.debug(f"白露计时: 检查间隔已设置为{self.focus_timeout}毫秒～ ")
+            # logger.debug(f"白露计时: 检查间隔已设置为{self.focus_timeout}毫秒～ ")
         else:
             self.focus_timer.start(0)
-            logger.debug(f"白露计时: 检查间隔已设置为连续模式～ ")
+            # logger.debug(f"白露计时: 检查间隔已设置为连续模式～ ")
 
     def check_focus_timeout(self):
         """(ﾟДﾟ≡ﾟдﾟ) 星野的焦点监视器启动！
@@ -544,17 +544,17 @@ class Window(MSFluentWindow):
         if not self.isActiveWindow() and not self.isMinimized():
             elapsed = self.last_focus_time.msecsTo(QDateTime.currentDateTime())
             timeout = self.FOCUS_TIMEOUT_MAP[self.focus_mode]
-            logger.debug(f"星野监视: 窗口已闲置{elapsed}毫秒，阈值为{timeout}毫秒～ ")
+            # logger.debug(f"星野监视: 窗口已闲置{elapsed}毫秒，阈值为{timeout}毫秒～ ")
 
             if self.focus_mode == 1:  # 直接关闭模式
                 self.hide()
-                logger.info("星野行动: 焦点模式1触发，窗口已自动隐藏～ ")
+                # logger.info("星野行动: 焦点模式1触发，窗口已自动隐藏～ ")
             elif elapsed >= timeout:
                 self.hide()
-                logger.info(f"星野行动: 窗口闲置超过{timeout}毫秒，已自动隐藏～ ")
+                # logger.info(f"星野行动: 窗口闲置超过{timeout}毫秒，已自动隐藏～ ")
         else:
             self.last_focus_time = QDateTime.currentDateTime()
-            logger.debug("星野监视: 检测到用户活动，重置闲置计时器～ ")
+            # logger.debug("星野监视: 检测到用户活动，重置闲置计时器～ ")
 
     def stop_focus_timer(self):
         """星野守卫：
@@ -608,7 +608,7 @@ class Window(MSFluentWindow):
         ensure_dir(temp_dir)
 
         if pumping_people_draw_mode == 1:  # 不重复抽取(直到软件重启)
-            if os.path.exists(temp_dir):
+            if path_manager.file_exists(temp_dir):
                 for file in glob.glob(f"{temp_dir}/until_the_reboot_*.json"):
                     try:
                         os.remove(file)
@@ -670,7 +670,7 @@ class Window(MSFluentWindow):
         检测到退出请求！需要通过密码验证才能离开基地喵！
         这是最高级别的安全防御，不能让坏人随便入侵喵！🔒✨"""
         try:
-            enc_settings_path = path_manager.get_plugin_path('SecRandom/enc_set.json')
+            enc_settings_path = path_manager.get_enc_set_path()
             with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 logger.debug("星野安检: 正在读取安全设置，准备执行退出验证～ ")
@@ -708,7 +708,7 @@ class Window(MSFluentWindow):
 
     def restart_app(self):
         try:
-            enc_settings_path = path_manager.get_plugin_path('SecRandom', 'enc_set.json')
+            enc_settings_path = path_manager.get_enc_set_path()
             with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
@@ -790,7 +790,8 @@ class Window(MSFluentWindow):
         正在打开设置界面
         小心不要乱动高级选项哦～(^・ω・^ )"""
         try:
-            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+            enc_settings_path = path_manager.get_enc_set_path()
+            with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 if settings.get('hashed_set', {}).get('start_password_enabled', False):
                     from app.common.password_dialog import PasswordDialog
@@ -802,7 +803,7 @@ class Window(MSFluentWindow):
             logger.error(f"密码验证失败: {e}")
 
         try:
-            enc_settings_path = path_manager.get_plugin_path('SecRandom', 'enc_set.json')
+            enc_settings_path = path_manager.get_enc_set_path()
             with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
             settings['hashed_set']['verification_start'] = True
@@ -833,7 +834,7 @@ class Window(MSFluentWindow):
         浮窗显示状态切换中！
         注意不要让它挡住重要内容喵～(ฅ´ω`ฅ)"""
         try:
-            enc_settings_path = path_manager.get_plugin_path('SecRandom', 'enc_set.json')
+            enc_settings_path = path_manager.get_enc_set_path()
             with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:

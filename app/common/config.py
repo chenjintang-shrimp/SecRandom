@@ -28,18 +28,10 @@ if platform.system() == 'Windows':
 else:
     WINDOWS_AUDIO_AVAILABLE = False
 
-# 默认更新通道配置文件路径
-def get_settings_file_path():
-    """获取设置文件的绝对路径"""
-    app_dir = path_manager._app_root
-    return app_dir / 'app' / 'Settings' / 'Settings.json'
-
-CHANNEL_CONFIG_PATH = get_settings_file_path()
-
 def get_update_channel():
     """获取当前选择的更新通道，默认为稳定通道"""
     try:
-        settings_file = path_manager.get_settings_path('Settings.json')
+        settings_file = path_manager.get_settings_path()
         if settings_file.exists():
             with open_file(settings_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
@@ -53,7 +45,7 @@ def get_update_channel():
 def set_update_channel(channel):
     """保存更新通道配置，保留其他配置信息"""
     try:
-        settings_file = path_manager.get_settings_path('Settings.json')
+        settings_file = path_manager.get_settings_path()
         # 读取现有配置
         config = {}
         if settings_file.exists():
@@ -73,7 +65,7 @@ def set_update_channel(channel):
     except json.JSONDecodeError:
         logger.error("配置文件格式错误，将创建新的配置文件")
         # 创建新的配置文件
-        settings_file = path_manager.get_settings_path('Settings.json')
+        settings_file = path_manager.get_settings_path()
         ensure_dir(settings_file.parent)
         with open_file(settings_file, 'w', encoding='utf-8') as f:
             json.dump({'channel': channel}, f, ensure_ascii=False, indent=2)

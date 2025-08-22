@@ -29,7 +29,7 @@ class GuideWindow(MSFluentWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('欢迎使用 SecRandom')
-        self.setWindowIcon(QIcon(path_manager.get_resource_path('icon/SecRandom.png')))
+        self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png'))))
         self.resize(800, 600)
         
         # 设置窗口居中

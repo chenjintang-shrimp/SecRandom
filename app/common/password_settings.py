@@ -22,7 +22,7 @@ from app.common.path_utils import path_manager, open_file
 def create_hidden_folder(path):
     """创建隐藏文件夹"""
     try:
-        if not os.path.exists(path):
+        if not path_manager.file_exists(path):
             os.makedirs(path)
             if os.name == 'nt':
                 ctypes.windll.kernel32.SetFileAttributesW(path, 2)
@@ -33,8 +33,7 @@ def create_hidden_folder(path):
         return
 
 # 获取应用根目录并构建SecRandom文件夹路径
-app_dir = path_manager._app_root
-secrandom_dir = app_dir / 'app' / 'SecRandom'
+secrandom_dir = path_manager._get_app_root()
 create_hidden_folder(secrandom_dir)
 
 def generate_qr_code(secret, username):
@@ -209,9 +208,9 @@ class SimpleTwoFactorAuthDialog(MessageBoxBase):
         code = self.codeLineEdit.text()
         
         # 从设置文件中获取2FA密钥
-        settings_file = secrandom_dir / "enc_set.json"
-        if os.path.exists(settings_file):
-            with open(settings_file, 'r', encoding='utf-8') as f:
+        settings_file = path_manager.get_enc_set_path()
+        if settings_file.exists():
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
                 try:
                     settings = json.load(f)
                     secret = settings.get("hashed_set", {}).get("2fa_secret")
@@ -298,9 +297,9 @@ class PasswordDialog(MessageBoxBase):
     def validate(self):
         """ 验证密码 """
         # 从设置文件中获取密码
-        settings_file = secrandom_dir / "enc_set.json"
-        if os.path.exists(settings_file):
-            with open(settings_file, 'r', encoding='utf-8') as f:
+        settings_file = path_manager.get_enc_set_path()
+        if path_manager.file_exists(settings_file):
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
                 try:
                     settings = json.load(f)
                     hashed_password = settings.get("hashed_set", {}).get("hashed_password")
@@ -321,7 +320,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("密码设置")
         self.setBorderRadius(8)
-        self.settings_file = secrandom_dir / "enc_set.json"
+        self.settings_file = path_manager.get_enc_set_path()
         self.secret_dir = secrandom_dir
         self.default_settings = {
             "start_password_enabled": False,
@@ -390,7 +389,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_document_key_20_filled"), '密钥导出', '导出密钥文件', self.export_key_button)
         self.addGroup(get_theme_icon("ic_fluent_certificate_20_filled"), "双重认证", "启用2FA验证", self.two_factor_switch)
         # self.addGroup(FIF.VPN, "数据加密", "加密设置和名单文件", self.encrypt_setting_switch)
-        if os.path.exists('_internal'):
+        if path_manager.file_exists('_internal'):
             self.addGroup(get_theme_icon("ic_fluent_arrow_reset_20_filled"), "重启软件验证", "重启软件时需要验证密码", self.restart_verification_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_exit_20_filled"), "退出软件验证", "退出软件时需要验证密码", self.exit_verification_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "暂时显示/隐藏悬浮窗验证", "暂时显示/隐藏悬浮窗时需要验证密码", self.show_hide_verification_switch)
@@ -440,7 +439,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
 
     def verify_password_for_action(self, action_type, type):
         """验证密码和2FA"""
-        if not os.path.exists(self.settings_file):
+        if not path_manager.file_exists(self.settings_file):
             return False
 
         try:
@@ -543,7 +542,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
                         hashed_set['encrypt_setting_enabled'] = True
                     
                     # 保存更新后的设置
-                    with open(self.settings_file, 'w', encoding='utf-8') as f:
+                    with open_file(self.settings_file, 'w', encoding='utf-8') as f:
                         json.dump(settings, f, indent=4)
                     
                     self.show_info_bar('success', '功能设置成功', f'{action_type}功能设置成功', 3000, self)
@@ -554,7 +553,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
             return False
 
     def show_password_dialog(self):
-        if not os.path.exists(self.settings_file):
+        if not path_manager.file_exists(self.settings_file):
             self.show_info_bar('error', '错误', '设置文件不存在', 3000, self)
             return
 
@@ -563,7 +562,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
                 settings = json.load(f)
                 hashed_set = settings.get("hashed_set", {})
                 if hashed_set.get("verification_start") == True:
-                    with open(self.settings_file, 'r', encoding='utf-8') as f:
+                    with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                         settings = json.load(f)
                         hashed_set = settings.get("hashed_set", {})
                         if not hashed_set.get("hashed_password") or not hashed_set.get("password_salt"):
@@ -619,7 +618,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
 
         # 保存密码和盐值到设置文件
         existing_settings = {}
-        if os.path.exists(self.settings_file):
+        if path_manager.file_exists(self.settings_file):
             try:
                 with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     existing_settings = json.load(f)
@@ -631,7 +630,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
         existing_settings["hashed_set"]["hashed_password"] = hashed_password
         existing_settings["hashed_set"]["password_salt"] = salt
 
-        with open(self.settings_file, 'w', encoding='utf-8') as f:
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)
 
         logger.info("密码设置成功")
@@ -639,17 +638,17 @@ class password_SettingsCard(GroupHeaderCardWidget):
         dialog.accept()
 
     def start_password_switch_checked(self):
-        if not os.path.exists(self.settings_file):
+        if not path_manager.file_exists(self.settings_file):
             self.show_info_bar('error', '错误', '设置文件不存在', 3000, self)
             self.start_password_switch.setChecked(False)
             return
 
         try:
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 hashed_set = settings.get("hashed_set", {})
                 if hashed_set.get("verification_start") == True:
-                    with open(self.settings_file, 'r', encoding='utf-8') as f:
+                    with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                         settings = json.load(f)
                         hashed_set = settings.get("hashed_set", {})
                         if not hashed_set.get("hashed_password") or not hashed_set.get("password_salt"):
@@ -693,7 +692,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
             return
 
     def on_2fa_changed(self):
-        if not os.path.exists(self.settings_file):
+        if not path_manager.file_exists(self.settings_file):
             self.show_info_bar('error', '错误', '设置文件不存在', 3000, self)
             self.two_factor_switch.blockSignals(True)
             self.two_factor_switch.setChecked(False)
@@ -701,7 +700,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
             return
 
         try:
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 hashed_set = settings.get("hashed_set", {})
                 if hashed_set.get("verification_start") == True:
@@ -726,7 +725,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
                                     # 验证成功，删除2FA相关设置
                                     existing_settings = {}
                                     try:
-                                        with open(self.settings_file, 'r', encoding='utf-8') as f:
+                                        with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                                             existing_settings = json.load(f)
                                     except json.JSONDecodeError:
                                         existing_settings = {}
@@ -735,7 +734,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
                                         existing_settings["hashed_set"].pop("encrypted_username", None)
                                         existing_settings["hashed_set"].pop("2fa_secret", None)
                                     
-                                    with open(self.settings_file, 'w', encoding='utf-8') as f:
+                                    with open_file(self.settings_file, 'w', encoding='utf-8') as f:
                                         json.dump(existing_settings, f, indent=4)
                                     
                                     self.save_settings()
@@ -752,7 +751,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
                                 # 开启2FA
                                 existing_settings = {}
                                 try:
-                                    with open(self.settings_file, 'r', encoding='utf-8') as f:
+                                    with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                                         existing_settings = json.load(f)
                                 except json.JSONDecodeError:
                                     existing_settings = {}
@@ -797,7 +796,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
 
             existing_settings = {}
             try:
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     existing_settings = json.load(f)
             except json.JSONDecodeError:
                 existing_settings = {}
@@ -855,12 +854,12 @@ class password_SettingsCard(GroupHeaderCardWidget):
             return
 
     def export_key_file(self):
-        if not os.path.exists(self.settings_file):
+        if not path_manager.file_exists(self.settings_file):
             self.show_info_bar('error', '错误', '设置文件不存在', 3000, self)
             return
 
         try:
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 hashed_set = settings.get("hashed_set", {})
                 if not hashed_set.get("hashed_password") or not hashed_set.get("password_salt"):
@@ -910,7 +909,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if os.path.exists(self.settings_file):
+            if path_manager.file_exists(self.settings_file):
                 with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     hashed_set_settings = settings.get("hashed_set", {})
@@ -955,7 +954,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
         # 先读取现有设置
         _existing_settings = {}
         try:
-            if os.path.exists(self.settings_file):
+            if path_manager.file_exists(self.settings_file):
                 with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     _existing_settings = json.load(f)
         except json.JSONDecodeError:

@@ -17,8 +17,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.setTitle("历史记录")
         self.setBorderRadius(8)
         # 获取应用根目录并构建设置文件路径
-        app_dir = path_manager._app_root
-        self.settings_file = app_dir / 'app' / 'settings' / 'settings.json'
+        self.settings_file = path_manager.get_settings_path()
 
         # 刷新按钮
         self.refresh_button = PrimaryPushButton('刷新列表/记录')
@@ -55,9 +54,8 @@ class history_SettinsCard(GroupHeaderCardWidget):
     def refresh_class_list(self):
         try:
             # 获取应用根目录并构建列表文件夹路径
-            app_dir = path_manager._app_root
-            list_folder = app_dir / 'app' / 'resource' / 'list'
-            if os.path.exists(list_folder) and os.path.isdir(list_folder):
+            list_folder = path_manager.get_resource_path("list")    
+            if path_manager.file_exists(list_folder) and os.path.isdir(list_folder):
                 files = os.listdir(list_folder)
                 classes = []
                 for file in files:
@@ -75,9 +73,9 @@ class history_SettinsCard(GroupHeaderCardWidget):
         try:
             # 获取应用根目录并构建学生文件路径
             app_dir = path_manager._app_root
-            student_file = app_dir / 'app' / 'resource' / 'list' / f'{class_name}.json'
+            student_file = path_manager.get_resource_path("list", f'{class_name}.json')
 
-            if os.path.exists(student_file):
+            if path_manager.file_exists(student_file):
                 with open_file(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []

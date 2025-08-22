@@ -1,8 +1,3 @@
-"""
-URL处理器模块
-用于处理通过URL协议启动SecRandom时的命令行参数
-"""
-
 import sys
 import argparse
 from loguru import logger

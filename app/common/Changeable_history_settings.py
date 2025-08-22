@@ -16,7 +16,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("历史记录")
         self.setBorderRadius(8)
-        self.settings_file = "app/Settings/Settings.json"
+        self.settings_file = path_manager.get_settings_path()
         self.default_settings = {
             "probability_weight": 0,
             "history_enabled": True,
@@ -95,13 +95,13 @@ class history_SettinsCard(GroupHeaderCardWidget):
 
     def refresh_class_list(self):
         try:
-            list_folder = "app/resource/list"
-            if os.path.exists(list_folder) and os.path.isdir(list_folder):
-                files = os.listdir(list_folder)
+            list_folder = path_manager.get_resource_path('list')
+            if list_folder.exists() and list_folder.is_dir():
+                files = list_folder.iterdir()
                 classes = []
                 for file in files:
-                    if file.endswith('.json'):
-                        class_name = os.path.splitext(file)[0]
+                    if file.suffix == '.json':
+                        class_name = file.stem
                         classes.append(class_name)
                 
                 self.class_comboBox.clear()
@@ -114,9 +114,9 @@ class history_SettinsCard(GroupHeaderCardWidget):
     def load_students(self):
         class_name = self.class_comboBox.currentText()
         try:
-            student_file = f"app/resource/list/{class_name}.json"
+            student_file = path_manager.get_resource_path('list', f'{class_name}.json')
 
-            if os.path.exists(student_file):
+            if student_file.exists():
                 with open_file(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
@@ -140,12 +140,12 @@ class history_SettinsCard(GroupHeaderCardWidget):
     def clear_history(self):
         class_name = self.class_comboBox.currentText()
         try:
-            if os.path.exists(f"app/resource/history/{class_name}.json"):
-                os.remove(f"app/resource/history/{class_name}.json")
-                logger.info("历史记录已清除！")
+            if path_manager.get_resource_path('history', f'{class_name}.json').exists():
+                os.remove(path_manager.get_resource_path('history', f'{class_name}.json'))
+                logger.info(f"{class_name}的历史记录已清除！")
                 InfoBar.success(
                     title='清除成功',
-                    content="历史记录已清除！",
+                    content=f"{class_name}的历史记录已清除！",
                     orient=Qt.Horizontal,
                     isClosable=True,
                     duration=3000,
@@ -177,7 +177,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if os.path.exists(self.settings_file):
+            if path_manager.file_exists(self.settings_file):
                 with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     history_settings = settings.get("history", {})
@@ -213,7 +213,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
     def save_settings(self):
         # 先读取现有设置
         existing_settings = {}
-        if os.path.exists(self.settings_file):
+        if path_manager.file_exists(self.settings_file):
             with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)

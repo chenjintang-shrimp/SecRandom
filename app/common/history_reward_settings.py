@@ -16,8 +16,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("历史记录")
         self.setBorderRadius(8)
-        app_dir = path_manager._app_root
-        self.settings_file = str(app_dir / "app" / "Settings" / "Settings.json")
+        self.settings_file = path_manager.get_settings_path()
 
         # 刷新按钮
         self.refresh_button = PrimaryPushButton('刷新列表/记录')
@@ -53,8 +52,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
 
     def refresh_reward_list(self):
         try:
-            app_dir = path_manager._app_root
-            list_folder = app_dir / "app" / "resource" / "reward"
+            list_folder = path_manager.get_resource_path("reward")
             if list_folder.exists() and list_folder.is_dir():
                 files = list_folder.iterdir()
                 classes = []
@@ -71,8 +69,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
     def load_students(self):
         reward_name = self.prize_pools_comboBox.currentText()
         try:
-            app_dir = path_manager._app_root
-            student_file = app_dir / "app" / "resource" / "reward" / f"{reward_name}.json"
+            student_file = path_manager.get_resource_path("reward", f"{reward_name}.json")
 
             if student_file.exists():
                 with open_file(student_file, 'r', encoding='utf-8') as f:

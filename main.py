@@ -57,7 +57,7 @@ def configure_logging():
     正在设置魔法日志卷轴，让程序运行轨迹变得清晰可见～
     日志会自动按大小(1MB)和时间切割，保存30天并压缩归档哦～ 📜✨"""
     log_dir = "logs"
-    if not os.path.exists(log_dir):
+    if not path_manager.file_exists(log_dir):
         os.makedirs(log_dir)
         logger.info("白露魔法: 日志文件夹创建成功～ ")
 

@@ -29,7 +29,7 @@ class LevitationWindow(QWidget):
 
     def _load_settings(self):
         # 小鸟游星野：加载基础设置和透明度配置
-        settings_path = self.app_dir / 'app' / 'Settings' / 'Settings.json'
+        settings_path = path_manager.get_settings_path()
         try:
             ensure_dir(settings_path.parent)
             with open_file(settings_path, 'r', encoding='utf-8') as f:
@@ -46,7 +46,7 @@ class LevitationWindow(QWidget):
 
     def _load_plugin_settings(self):
         # 小鸟游星野：加载插件设置
-        settings_path = self.app_dir / 'app' / 'Settings' / 'plugin_settings.json'
+        settings_path = path_manager.get_settings_path('plugin_settings.json')
         try:
             ensure_dir(settings_path.parent)
             with open_file(settings_path, 'r', encoding='utf-8') as f:
@@ -82,10 +82,10 @@ class LevitationWindow(QWidget):
 
     def _init_menu_label(self):
         # 白露：初始化菜单标签
-        MENU_DEFAULT_ICON_PATH = self.app_dir / "resource" / "icon" / "SecRandom_menu_30%.png"
+        MENU_DEFAULT_ICON_PATH = path_manager.get_resource_path("icon", "SecRandom_menu_30%.png")
         self.menu_label = QLabel(self.container_button)
         try:
-            icon_path = self.app_dir / "resource" / "icon" / f"SecRandom_menu_{(10 - self.transparency_mode) * 10}%.png"
+            icon_path = path_manager.get_resource_path("icon", f"SecRandom_menu_{(10 - self.transparency_mode) * 10}%.png")
             if not icon_path.exists():
                 icon_path = MENU_DEFAULT_ICON_PATH
             pixmap = QPixmap(str(icon_path))
@@ -103,10 +103,10 @@ class LevitationWindow(QWidget):
 
     def _init_people_label(self):
         # 小鸟游星野：初始化人物标签
-        FLOATING_DEFAULT_ICON_PATH = self.app_dir / "resource" / "icon" / "SecRandom_floating_30%.png"
+        FLOATING_DEFAULT_ICON_PATH = path_manager.get_resource_path("icon", "SecRandom_floating_30%.png")
         self.people_label = QLabel(self.container_button)
         try:
-            icon_path = self.app_dir / "resource" / "icon" / f"SecRandom_floating_{(10 - self.transparency_mode) * 10}%.png"
+            icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_{(10 - self.transparency_mode) * 10}%.png")
             if not icon_path.exists():
                 icon_path = FLOATING_DEFAULT_ICON_PATH
             pixmap = QPixmap(str(icon_path))
@@ -209,12 +209,12 @@ class LevitationWindow(QWidget):
         plugin_path = None
         
         # 遍历插件目录，查找匹配的插件
-        if os.path.exists(plugin_dir):
+        if path_manager.file_exists(plugin_dir):
             for folder in os.listdir(plugin_dir):
                 folder_path = os.path.join(plugin_dir, folder)
                 if os.path.isdir(folder_path):
                     info_file = os.path.join(folder_path, "plugin.json")
-                    if os.path.exists(info_file):
+                    if path_manager.file_exists(info_file):
                         try:
                             with open_file(info_file, "r", encoding="utf-8") as f:
                                 info = json.load(f)
@@ -239,7 +239,7 @@ class LevitationWindow(QWidget):
         entry_point = plugin_info.get("entry_point", "main.py")
         plugin_file_path = path_manager.get_plugin_path(f"plugin/{os.path.basename(plugin_path)}/{entry_point}")
             
-        if not os.path.exists(plugin_file_path):
+        if not path_manager.file_exists(plugin_file_path):
             logger.warning(f"插件 {plugin_name} 的入口文件 {entry_point} 不存在")
             error_dialog = Dialog("文件不存在", f"插件 {plugin_name} 的入口文件 {entry_point} 不存在", self)
             error_dialog.yesButton.setText("确定")
@@ -264,7 +264,7 @@ class LevitationWindow(QWidget):
             
             # 添加插件专属site-packages目录到sys.path，以便插件可以使用安装的依赖
             plugin_site_packages = path_manager.get_plugin_path(f"plugin/{os.path.basename(plugin_path)}/site-packages")
-            if os.path.exists(plugin_site_packages) and plugin_site_packages not in sys.path:
+            if path_manager.file_exists(plugin_site_packages) and plugin_site_packages not in sys.path:
                 sys.path.insert(0, plugin_site_packages)
                 logger.info(f"已添加插件专属site-packages到Python路径: {plugin_site_packages}")
             

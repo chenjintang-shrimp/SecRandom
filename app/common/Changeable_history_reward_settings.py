@@ -17,11 +17,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("历史记录")
         self.setBorderRadius(8)
-        
-        # 获取应用根目录并构建设置文件路径
-        app_dir = path_manager._app_root
-        self.settings_file = app_dir / 'app' / 'Settings' / 'Settings.json'
-        
+        self.settings_file = path_manager.get_settings_path()
         self.default_settings = {
             "reward_history_enabled": True,
             "history_reward_days": 0
@@ -90,8 +86,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
     def refresh_reward_list(self):
         try:
             # 获取应用根目录并构建奖池文件夹路径
-            app_dir = path_manager._app_root
-            list_folder = app_dir / 'app' / 'resource' / 'reward'
+            list_folder = path_manager.get_resource_path('reward')
             
             if list_folder.exists() and list_folder.is_dir():
                 files = list(list_folder.iterdir())
@@ -111,9 +106,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
     def load_students(self):
         reward_name = self.prize_pools_comboBox.currentText()
         try:
-            # 获取应用根目录并构建学生文件路径
-            app_dir = path_manager._app_root
-            student_file = app_dir / 'app' / 'resource' / 'reward' / f'{reward_name}.json'
+            student_file = path_manager.get_resource_path('reward', f'{reward_name}.json')
 
             if student_file.exists():
                 with open_file(student_file, 'r', encoding='utf-8') as f:
@@ -138,9 +131,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
     def clear_history(self):
         reward_name = self.prize_pools_comboBox.currentText()
         try:
-            # 获取应用根目录并构建历史记录文件路径
-            app_dir = path_manager._app_root
-            history_file = app_dir / 'app' / 'resource' / 'reward' / 'history' / f'{reward_name}.json'
+            history_file = path_manager.get_resource_path('reward/history', f'{reward_name}.json')
             
             if history_file.exists():
                 history_file.unlink()

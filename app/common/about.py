@@ -156,7 +156,7 @@ class ContributorDialog(QDialog):
         title_layout.setContentsMargins(10, 0, 10, 0)
         
         # 窗口标题
-        self.title_label = QLabel("贡献人员")
+        self.title_label = BodyLabel("贡献人员")
         self.title_label.setObjectName("TitleLabel")
         self.title_label.setFont(QFont(load_custom_font(), 12))
         
@@ -210,37 +210,38 @@ class ContributorDialog(QDialog):
                 'name': 'lzy98276 (黎泽懿_Aionflux)',
                 'role': '设计 & 创意 & 策划 &\n维护 & 文档& 测试',
                 'github': 'https://github.com/lzy98276',
-                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor1.png')
+                'avatar': str(path_manager.get_resource_path('icon', 'contributor1.png'))
+
             },
             {
                 'name': 'QiKeZhiCao (弃稞之草)',
                 'role': '创意 & 维护',
                 'github': 'https://github.com/QiKeZhiCao',
-                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor2.png')
+                'avatar': str(path_manager.get_resource_path('icon', 'contributor2.png'))
             },
             {
                 'name': 'Fox-block-offcial',
                 'role': '应用测试',
                 'github': 'https://github.com/Fox-block-offcial',
-                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor3.png')
+                'avatar': str(path_manager.get_resource_path('icon', 'contributor3.png'))
             },
             {
                 'name': 'yuanbenxin (本新同学)',
                 'role': '响应式前端页面\n设计及维护 & 文档',
                 'github': 'https://github.com/yuanbenxin',
-                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor4.png')
+                'avatar': str(path_manager.get_resource_path('icon', 'contributor4.png'))
             },
             {
                 'name': 'zhangjianjian7 (叶背影)',
                 'role': '文档',
                 'github': 'https://github.com/zhangjianjian7',
-                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor5.png')
+                'avatar': str(path_manager.get_resource_path('icon', 'contributor5.png'))
             },
             {
                 'name': 'Jursin',
                 'role': '响应式前端页面\n设计及维护 & 文档',
                 'github': 'https://github.com/jursin',
-                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor6.png')
+                'avatar': str(path_manager.get_resource_path('icon', 'contributor6.png'))
             },
         ]
         
@@ -285,7 +286,7 @@ class ContributorDialog(QDialog):
         
         # 响应式布局配置
         CARD_MIN_WIDTH = 250  # 卡片最小宽度
-        MAX_COLUMNS = 6       # 最大列数限制
+        MAX_COLUMNS = 12       # 最大列数限制
 
         def calculate_columns(width):
             """根据窗口宽度和卡片尺寸动态计算列数"""
@@ -507,7 +508,7 @@ class DonationDialog(QDialog):
         title_layout.setContentsMargins(10, 0, 10, 0)
         
         # 窗口标题
-        self.title_label = QLabel("捐赠支持")
+        self.title_label = BodyLabel("捐赠支持")
         self.title_label.setObjectName("TitleLabel")
         self.title_label.setFont(QFont(load_custom_font(), 12))
         
@@ -575,7 +576,7 @@ class DonationDialog(QDialog):
         # 添加支付宝捐赠卡片
         alipay_card = self.create_donation_card(
             "支付宝",
-            "app\\resource\\assets\\contribution\\Alipay.png",
+            f"{path_manager.get_resource_path('assets/contribution', 'Alipay.png')}",
             "使用支付宝扫码捐赠"
         )
         self.cards_layout.addWidget(alipay_card)
@@ -583,7 +584,7 @@ class DonationDialog(QDialog):
         # 添加微信支付捐赠卡片
         wechat_card = self.create_donation_card(
             "微信支付",
-            "app\\resource\\assets\\contribution\\WeChat_Pay.png",
+            f"{path_manager.get_resource_path('assets/contribution', 'WeChat_Pay.png')}",
             "使用微信扫码捐赠"
         )
         self.cards_layout.addWidget(wechat_card)
@@ -629,14 +630,14 @@ class DonationDialog(QDialog):
             # 重新创建捐赠卡片
             alipay_card = self.create_donation_card(
                 "支付宝",
-                "app\\resource\\assets\\contribution\\Alipay.png",
+                f"{path_manager.get_resource_path('assets/contribution', 'Alipay.png')}",
                 "使用支付宝扫码捐赠"
             )
             self.cards_layout.addWidget(alipay_card)
             
             wechat_card = self.create_donation_card(
                 "微信支付",
-                "app\\resource\\assets\\contribution\\WeChat_Pay.png",
+                f"{path_manager.get_resource_path('assets/contribution', 'WeChat_Pay.png')}",
                 "使用微信扫码捐赠"
             )
             self.cards_layout.addWidget(wechat_card)
@@ -660,7 +661,7 @@ class DonationDialog(QDialog):
         
         def check_and_update_qr_codes(self):
             """检查并更新收款码图片"""
-            base_path = "app\\resource\\assets\\contribution\\"
+            base_path = f"{path_manager.get_resource_path('assets/contribution')}\\"
             files_to_check = ['Alipay.png', 'WeChat_Pay.png']
             
             for filename in files_to_check:
@@ -701,7 +702,7 @@ class DonationDialog(QDialog):
         def calculate_file_md5(self, file_path):
             """计算文件的MD5值"""
             try:
-                with open(file_path, 'rb') as f:
+                with open_file(file_path, 'rb') as f:
                     file_hash = hashlib.md5()
                     while chunk := f.read(8192):
                         file_hash.update(chunk)
@@ -726,7 +727,7 @@ class DonationDialog(QDialog):
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
                 
                 # 写入文件
-                with open(local_path, 'wb') as f:
+                with open_file(local_path, 'wb') as f:
                     f.write(response.content)
                 
                 logger.info(f"成功下载文件: {filename}")
@@ -745,7 +746,7 @@ class DonationDialog(QDialog):
                     os.makedirs(os.path.dirname(local_path), exist_ok=True)
                     
                     # 写入文件
-                    with open(local_path, 'wb') as f:
+                    with open_file(local_path, 'wb') as f:
                         f.write(response.content)
                     
                     logger.info(f"成功下载文件(禁用SSL验证): {filename}")

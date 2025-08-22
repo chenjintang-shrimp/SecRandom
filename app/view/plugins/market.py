@@ -67,7 +67,7 @@ class MarketPluginButtonGroup(QWidget):
     def _check_installed_version(self):
         """检查插件是否已安装及版本"""
         plugin_dir = path_manager.get_plugin_path("plugin")
-        if not os.path.exists(plugin_dir):
+        if not path_manager.file_exists(plugin_dir):
             logger.debug(f"插件目录不存在: {plugin_dir}")
             return None
         
@@ -81,7 +81,7 @@ class MarketPluginButtonGroup(QWidget):
                 continue
             
             plugin_json_path = os.path.join(item_path, "plugin.json")
-            if not os.path.exists(plugin_json_path):
+            if not path_manager.file_exists(plugin_json_path):
                 continue
             
             try:
@@ -326,7 +326,7 @@ class MarketPluginButtonGroup(QWidget):
             
             # 下载文件
             with urllib.request.urlopen(download_request) as response:
-                with open(zip_path, 'wb') as f:
+                with open_file(zip_path, 'wb') as f:
                     f.write(response.read())
             
             # 解压文件
@@ -334,7 +334,7 @@ class MarketPluginButtonGroup(QWidget):
                 zip_ref.extractall(target_dir)
             
             # 清理临时文件
-            if os.path.exists(zip_path):
+            if path_manager.file_exists(zip_path):
                 os.remove(zip_path)
             
             logger.info(f"插件下载成功: {target_dir}")
@@ -405,7 +405,7 @@ class MarketPluginButtonGroup(QWidget):
             if self._download_plugin(url, branch, target_dir):
                 # 检查是否有plugin.json文件
                 plugin_json_path = os.path.join(target_dir, "plugin.json")
-                if os.path.exists(plugin_json_path):
+                if path_manager.file_exists(plugin_json_path):
                     try:
                         with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                             plugin_config = json.load(f)
@@ -425,7 +425,7 @@ class MarketPluginButtonGroup(QWidget):
                     except Exception as e:
                         logger.error(f"安装插件配置失败: {e}")
                         # 清理失败的安装
-                        if os.path.exists(target_dir):
+                        if path_manager.file_exists(target_dir):
                             shutil.rmtree(target_dir)
                         
                         error_dialog = Dialog("安装失败", f"插件 {plugin_name} 安装失败: {str(e)}", self)
@@ -436,7 +436,7 @@ class MarketPluginButtonGroup(QWidget):
                 else:
                     logger.error("未找到plugin.json文件")
                     # 清理失败的安装
-                    if os.path.exists(target_dir):
+                    if path_manager.file_exists(target_dir):
                         shutil.rmtree(target_dir)
                     
                     error_dialog = Dialog("安装失败", f"插件 {plugin_name} 缺少plugin.json文件", self)
@@ -465,7 +465,7 @@ class MarketPluginButtonGroup(QWidget):
             
             # 查找插件目录
             plugin_dir = path_manager.get_plugin_path("plugin")
-            if not os.path.exists(plugin_dir):
+            if not path_manager.file_exists(plugin_dir):
                 error_dialog = Dialog("卸载失败", f"插件目录不存在", self)
                 error_dialog.yesButton.setText("确定")
                 error_dialog.cancelButton.hide()
@@ -480,7 +480,7 @@ class MarketPluginButtonGroup(QWidget):
                     continue
                 
                 plugin_json_path = os.path.join(item_path, "plugin.json")
-                if not os.path.exists(plugin_json_path):
+                if not path_manager.file_exists(plugin_json_path):
                     continue
                 
                 try:
@@ -573,7 +573,7 @@ class MarketPluginButtonGroup(QWidget):
             if self._download_plugin(url, branch, target_dir):
                 # 检查是否有plugin.json文件
                 plugin_json_path = os.path.join(target_dir, "plugin.json")
-                if os.path.exists(plugin_json_path):
+                if path_manager.file_exists(plugin_json_path):
                     try:
                         with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                             plugin_config = json.load(f)
@@ -595,7 +595,7 @@ class MarketPluginButtonGroup(QWidget):
                     except Exception as e:
                         logger.error(f"更新插件配置失败: {e}")
                         # 清理失败的安装
-                        if os.path.exists(target_dir):
+                        if path_manager.file_exists(target_dir):
                             shutil.rmtree(target_dir)
                         
                         error_dialog = Dialog("更新失败", f"插件 {plugin_name} 更新失败: {str(e)}", self)
@@ -606,7 +606,7 @@ class MarketPluginButtonGroup(QWidget):
                 else:
                     logger.error("未找到plugin.json文件")
                     # 清理失败的安装
-                    if os.path.exists(target_dir):
+                    if path_manager.file_exists(target_dir):
                         shutil.rmtree(target_dir)
                     
                     error_dialog = Dialog("更新失败", f"插件 {plugin_name} 缺少plugin.json文件", self)
@@ -626,7 +626,7 @@ class MarketPluginButtonGroup(QWidget):
         plugin_name = self.plugin_info.get("name")
         plugin_dir = path_manager.get_plugin_path("plugin")
         
-        if not os.path.exists(plugin_dir):
+        if not path_manager.file_exists(plugin_dir):
             return False
         
         # 查找已安装的插件
@@ -636,7 +636,7 @@ class MarketPluginButtonGroup(QWidget):
                 continue
             
             plugin_json_path = os.path.join(item_path, "plugin.json")
-            if not os.path.exists(plugin_json_path):
+            if not path_manager.file_exists(plugin_json_path):
                 continue
             
             try:
@@ -856,7 +856,7 @@ class PluginMarketPage(GroupHeaderCardWidget):
     def load_plugin_settings(self):
         """🌟 小鸟游星野 - 加载插件设置"""
         try:
-            if os.path.exists(self.settings_file):
+            if path_manager.file_exists(self.settings_file):
                 with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     return settings.get("plugin_settings", {})
@@ -966,7 +966,7 @@ class PluginMarketPage(GroupHeaderCardWidget):
             # 显示跳过获取插件列表的提示
             no_plugin_label = BodyLabel("根据设置，跳过获取插件列表", self)
             no_plugin_label.setAlignment(Qt.AlignCenter)
-            self.addGroup(get_theme_icon("ic_fluent_cloud_off_20_filled"), "跳过获取插件列表", "可在插件设置中启用此功能", no_plugin_label)
+            self.addGroup(get_theme_icon("ic_fluent_info_20_filled"), "跳过获取插件列表", "可在插件设置中启用此功能", no_plugin_label)
             return
         
         # 获取插件列表
@@ -976,7 +976,7 @@ class PluginMarketPage(GroupHeaderCardWidget):
             # 显示无插件提示
             no_plugin_label = BodyLabel("无法获取插件列表，请检查网络连接", self)
             no_plugin_label.setAlignment(Qt.AlignCenter)
-            self.addGroup(get_theme_icon("ic_fluent_cloud_download_20_filled"), "无法获取插件列表", "请检查网络连接后重试", no_plugin_label)
+            self.addGroup(get_theme_icon("ic_fluent_info_20_filled"), "无法获取插件列表", "请检查网络连接后重试", no_plugin_label)
             return
         
         # 过滤掉示例条目

@@ -3,14 +3,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from qfluentwidgets import *
 import webbrowser
-import os
-import json
-import requests
-import subprocess
-import sys
-import tempfile
-import threading
-from pathlib import Path
 
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, VERSION
 from app.common.path_utils import path_manager, open_file
@@ -78,7 +70,7 @@ class UpdateNotification(QDialog):
         # 更新图标
         icon_label = QLabel()
         icon_path = path_manager.get_resource_path('icon', 'SecRandom.png')
-        icon_label.setPixmap(QIcon(icon_path).pixmap(55, 55))
+        icon_label.setPixmap(QIcon(str(icon_path)).pixmap(55, 55))
         icon_label.setStyleSheet("background: transparent; border: none;")
 
         # 标题文本
@@ -94,8 +86,8 @@ class UpdateNotification(QDialog):
 
         # 关闭按钮
         close_btn = PushButton("")
-        close_icon_path = path_manager.get_asset_path('dark', 'ic_fluent_arrow_exit_20_filled_dark', '.svg')
-        close_btn.setIcon(QIcon(close_icon_path))
+        close_icon_path = path_manager.get_resource_path('dark', 'ic_fluent_arrow_exit_20_filled_dark', '.svg')
+        close_btn.setIcon(QIcon(str(close_icon_path)))
         close_btn.setStyleSheet("background: transparent; border: none;")
         close_btn.clicked.connect(self.close_with_animation)
 
@@ -182,18 +174,6 @@ class UpdateNotification(QDialog):
         webbrowser.open("https://secrandom.netlify.app//download")
         self.close_with_animation()
 
-    def is_installer_package(self):
-        """检查是否为安装包版本"""
-        marker_path = path_manager.get_guide_complete_path('installer_marker.json')
-        if marker_path.exists():
-            try:
-                with open_file(marker_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    return data.get('installer_package', False)
-            except:
-                pass
-        return False
-
     def show_auto_update_dialog(self):
         """显示自动更新对话框"""
         dialog = AutoUpdateDialog(self.latest_version)
@@ -240,150 +220,3 @@ class UpdateNotification(QDialog):
         if hasattr(QApplication.instance(), 'update_notification_window'):
             del QApplication.instance().update_notification_window
         super().closeEvent(event)
-
-
-class AutoUpdateDialog(QDialog):
-    """自动更新对话框"""
-    def __init__(self, latest_version):
-        super().__init__()
-        self.latest_version = latest_version
-        self.download_thread = None
-        self.init_ui()
-        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint)
-        self.setWindowTitle("自动更新")
-        self.setFixedSize(400, 300)
-
-    def init_ui(self):
-        """初始化UI"""
-        layout = QVBoxLayout(self)
-        layout.setSpacing(20)
-
-        # 标题
-        title = QLabel("发现新版本")
-        title.setFont(QFont(load_custom_font(), 16, QFont.Bold))
-        title.setAlignment(Qt.AlignCenter)
-        layout.addWidget(title)
-
-        # 版本信息
-        version_info = QLabel(f"当前版本: {VERSION}\n新版本: {self.latest_version}")
-        version_info.setFont(QFont(load_custom_font(), 12))
-        version_info.setAlignment(Qt.AlignCenter)
-        layout.addWidget(version_info)
-
-        # 进度条
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
-        layout.addWidget(self.progress_bar)
-
-        # 状态标签
-        self.status_label = QLabel("准备下载...")
-        self.status_label.setFont(QFont(load_custom_font(), 11))
-        self.status_label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.status_label)
-
-        # 按钮布局
-        button_layout = QHBoxLayout()
-        
-        self.update_button = PushButton("自动更新")
-        self.update_button.clicked.connect(self.start_auto_update)
-        
-        self.cancel_button = PushButton("取消")
-        self.cancel_button.clicked.connect(self.reject)
-        
-        button_layout.addWidget(self.update_button)
-        button_layout.addWidget(self.cancel_button)
-        
-        layout.addLayout(button_layout)
-
-    def start_auto_update(self):
-        """开始自动更新"""
-        self.update_button.setEnabled(False)
-        self.progress_bar.setVisible(True)
-        self.status_label.setText("正在检查更新...")
-        
-        self.download_thread = DownloadThread(self.latest_version)
-        self.download_thread.progress_updated.connect(self.update_progress)
-        self.download_thread.status_updated.connect(self.update_status)
-        self.download_thread.download_finished.connect(self.on_download_finished)
-        self.download_thread.download_error.connect(self.on_download_error)
-        self.download_thread.start()
-
-    def update_progress(self, value):
-        """更新进度条"""
-        self.progress_bar.setValue(value)
-
-    def update_status(self, message):
-        """更新状态文本"""
-        self.status_label.setText(message)
-
-    def on_download_finished(self, file_path):
-        """下载完成"""
-        self.status_label.setText("下载完成，正在安装...")
-        self.install_update(file_path)
-
-    def on_download_error(self, error_message):
-        """下载错误"""
-        QMessageBox.warning(self, "下载错误", f"下载失败: {error_message}")
-        self.update_button.setEnabled(True)
-        self.progress_bar.setVisible(False)
-
-    def install_update(self, file_path):
-        """安装更新"""
-        try:
-            # 启动安装程序
-            subprocess.Popen([file_path, '/silent'])
-            
-            # 关闭当前应用
-            QApplication.quit()
-            
-        except Exception as e:
-            QMessageBox.warning(self, "安装错误", f"启动安装程序失败: {str(e)}")
-
-
-class DownloadThread(QThread):
-    """下载线程"""
-    progress_updated = pyqtSignal(int)
-    status_updated = pyqtSignal(str)
-    download_finished = pyqtSignal(str)
-    download_error = pyqtSignal(str)
-
-    def __init__(self, version):
-        super().__init__()
-        self.version = version
-
-    def run(self):
-        """执行下载"""
-        try:
-            # 构建下载URL
-            download_url = f"https://github.com/SECTL/SecRandom/releases/download/{self.version}/SecRandom-Setup-{self.version}.exe"
-            
-            # 创建临时文件
-            temp_dir = tempfile.gettempdir()
-            file_name = f"SecRandom-Setup-{self.version}.exe"
-            file_path = os.path.join(temp_dir, file_name)
-            
-            self.status_updated.emit("正在连接服务器...")
-            
-            # 下载文件
-            response = requests.get(download_url, stream=True)
-            response.raise_for_status()
-            
-            total_size = int(response.headers.get('content-length', 0))
-            downloaded = 0
-            
-            with open(file_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
-                        downloaded += len(chunk)
-                        if total_size > 0:
-                            progress = int((downloaded / total_size) * 100)
-                            self.progress_updated.emit(progress)
-                            self.status_updated.emit(f"已下载 {progress}%")
-            
-            self.download_finished.emit(file_path)
-            
-        except requests.exceptions.RequestException as e:
-            self.download_error.emit(f"网络错误: {str(e)}")
-        except Exception as e:
-            self.download_error.emit(str(e))

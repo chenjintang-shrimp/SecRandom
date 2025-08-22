@@ -16,6 +16,7 @@ import tempfile
 from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font, VERSION
+from app.common.path_utils import path_manager, open_file, remove_file
 
 
 class ReadmeDialog(QDialog):
@@ -93,7 +94,7 @@ class ReadmeDialog(QDialog):
     def _load_readme_content(self):
         """加载readme文件内容"""
         try:
-            with open(self.readme_path, 'r', encoding='utf-8') as f:
+            with open_file(self.readme_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
             self.text_browser.setMarkdown(content)
@@ -101,7 +102,7 @@ class ReadmeDialog(QDialog):
         except UnicodeDecodeError:
             # 如果UTF-8解码失败，尝试其他编码
             try:
-                with open(self.readme_path, 'r', encoding='gbk') as f:
+                with open_file(self.readme_path, 'r', encoding='gbk') as f:
                     content = f.read()
                 self.text_browser.setMarkdown(content)
                 self.text_browser.setFont(QFont(load_custom_font()))
@@ -179,7 +180,7 @@ class PluginButtonGroup(QWidget):
             return "python"
         if shutil.which("python3"):
             return "python3"
-        if sys.executable and os.path.exists(sys.executable):
+        if sys.executable and path_manager.file_exists(sys.executable):
             return sys.executable
             
         # 尝试查找嵌入式Python
@@ -192,7 +193,7 @@ class PluginButtonGroup(QWidget):
         ]
         
         for path in embedded_python_paths:
-            if os.path.exists(path):
+            if path_manager.file_exists(path):
                 return path
                 
         # 如果没有找到Python，尝试下载嵌入式Python
@@ -216,7 +217,7 @@ class PluginButtonGroup(QWidget):
         python_exe = os.path.join(temp_dir, "python.exe")
         
         # 如果已经下载过，直接返回
-        if os.path.exists(python_exe):
+        if path_manager.file_exists(python_exe):
             return python_exe
             
         # 检测系统架构
@@ -262,7 +263,7 @@ class PluginButtonGroup(QWidget):
             
             # 创建pip配置文件，允许安装到目标目录
             pip_conf_path = os.path.join(temp_dir, "pip.ini")
-            with open(pip_conf_path, 'w') as f:
+            with open_file(pip_conf_path, 'w') as f:
                 f.write("""[global]
                             target = 
                             break-system-packages = true
@@ -289,7 +290,7 @@ class PluginButtonGroup(QWidget):
         app_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         wheels_dir = os.path.join(app_dir, "wheels")
         
-        if os.path.exists(wheels_dir):
+        if path_manager.file_exists(wheels_dir):
             # 查找匹配的wheel文件
             for file in os.listdir(wheels_dir):
                 if dependency_name.lower() in file.lower() and file.endswith(".whl"):
@@ -355,10 +356,10 @@ class PluginButtonGroup(QWidget):
             # 更新plugin.json文件
             plugin_json_path = os.path.join(self.plugin_info["path"], "plugin.json")
             try:
-                with open(plugin_json_path, 'r', encoding='utf-8') as f:
+                with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                     plugin_config = json.load(f)
                 plugin_config["autostart"] = False
-                with open(plugin_json_path, 'w', encoding='utf-8') as f:
+                with open_file(plugin_json_path, 'w', encoding='utf-8') as f:
                     json.dump(plugin_config, f, ensure_ascii=False, indent=2)
                 logger.info(f"已更新插件 {self.plugin_info['name']} 的自启动状态为: False")
             except Exception as e:
@@ -381,7 +382,7 @@ class PluginButtonGroup(QWidget):
         entry_point = self.plugin_info.get("entry_point", "main.py")
         plugin_file_path = os.path.join(self.plugin_info["path"], entry_point)
         
-        if not os.path.exists(plugin_file_path):
+        if not path_manager.file_exists(plugin_file_path):
             logger.warning(f"插件 {self.plugin_info['name']} 的入口文件 {entry_point} 不存在")
             error_dialog = Dialog("文件不存在", f"插件 {self.plugin_info['name']} 的入口文件 {entry_point} 不存在", self)
             error_dialog.yesButton.setText("确定")
@@ -407,7 +408,7 @@ class PluginButtonGroup(QWidget):
             
             # 添加插件专属site-packages目录到sys.path，以便插件可以使用安装的依赖
             plugin_site_packages = os.path.join(self.plugin_info["path"], "site-packages")
-            if os.path.exists(plugin_site_packages) and plugin_site_packages not in sys.path:
+            if path_manager.file_exists(plugin_site_packages) and plugin_site_packages not in sys.path:
                 sys.path.insert(0, plugin_site_packages)
                 logger.info(f"已添加插件专属site-packages到Python路径: {plugin_site_packages}")
             
@@ -496,7 +497,7 @@ class PluginButtonGroup(QWidget):
                         try:
                             # 将插件专属site-packages目录添加到sys.path
                             plugin_site_packages = os.path.join(self.plugin_info["path"], "site-packages")
-                            if os.path.exists(plugin_site_packages) and plugin_site_packages not in sys.path:
+                            if path_manager.file_exists(plugin_site_packages) and plugin_site_packages not in sys.path:
                                 sys.path.insert(0, plugin_site_packages)
                                 logger.info(f"已添加插件专属site-packages到Python路径: {plugin_site_packages}")
                             
@@ -585,14 +586,14 @@ class PluginButtonGroup(QWidget):
         
         try:
             # 读取现有的plugin.json文件
-            with open(plugin_json_path, 'r', encoding='utf-8') as f:
+            with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                 plugin_config = json.load(f)
             
             # 更新enabled字段
             plugin_config["enabled"] = is_enabled
             
             # 写回plugin.json文件
-            with open(plugin_json_path, 'w', encoding='utf-8') as f:
+            with open_file(plugin_json_path, 'w', encoding='utf-8') as f:
                 json.dump(plugin_config, f, ensure_ascii=False, indent=2)
             
             logger.info(f"成功更新插件 {self.plugin_info['name']} 的启用状态为: {is_enabled}")
@@ -616,7 +617,7 @@ class PluginButtonGroup(QWidget):
         
         for readme_file in readme_files:
             potential_path = os.path.join(self.plugin_info["path"], readme_file)
-            if os.path.exists(potential_path):
+            if path_manager.file_exists(potential_path):
                 readme_path = potential_path
                 break
         
@@ -665,14 +666,14 @@ class PluginButtonGroup(QWidget):
         
         try:
             # 读取现有的plugin.json文件
-            with open(plugin_json_path, 'r', encoding='utf-8') as f:
+            with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                 plugin_config = json.load(f)
             
             # 更新autostart字段
             plugin_config["autostart"] = is_autostart
             
             # 写回plugin.json文件
-            with open(plugin_json_path, 'w', encoding='utf-8') as f:
+            with open_file(plugin_json_path, 'w', encoding='utf-8') as f:
                 json.dump(plugin_config, f, ensure_ascii=False, indent=2)
             
             logger.info(f"成功更新插件 {self.plugin_info['name']} 的自启动状态为: {is_autostart}")
@@ -681,7 +682,7 @@ class PluginButtonGroup(QWidget):
             if is_autostart:
                 background_service_path = os.path.join(self.plugin_info["path"], self.plugin_info["background_service"])
                 # 如果没有后台服务文件，弹窗提醒
-                if not os.path.exists(background_service_path):
+                if not path_manager.file_exists(background_service_path):
                     # 显示提示对话框
                     no_background_service_dialog = Dialog("提示", f"插件 {self.plugin_info['name']} 没有后台服务文件，无法启用自启动", self)
                     no_background_service_dialog.yesButton.setText("确定")
@@ -716,7 +717,7 @@ class PluginButtonGroup(QWidget):
         # 检查background_service是否存在
         background_service_path = os.path.join(self.plugin_info["path"], self.plugin_info["background_service"])
         
-        if not os.path.exists(background_service_path):
+        if not path_manager.file_exists(background_service_path):
             # 如果没有后台服务文件，禁用自启动按钮
             self.autostartButton.setEnabled(False)
             logger.info(f"插件 {self.plugin_info['name']} 没有后台服务文件，已禁用自启动按钮")
@@ -803,10 +804,9 @@ class PluginManagementPage(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("插件管理")
         self.setBorderRadius(8)
-        self.settings_file = "app/Settings/plugin_settings.json"
-        
+        self.settings_file = path_manager.get_settings_path("plugin_settings.json")
         # 插件目录路径
-        self.plugin_dir = "app/plugin"
+        self.plugin_dir = path_manager.get_plugin_path()
         
         # 必需的插件配置字段
         self.required_fields = [
@@ -821,7 +821,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
         """扫描插件目录，返回有效的插件列表"""
         plugins = []
         
-        if not os.path.exists(self.plugin_dir):
+        if not path_manager.file_exists(self.plugin_dir):
             logger.warning(f"插件目录不存在: {self.plugin_dir}")
             return plugins
         
@@ -834,12 +834,12 @@ class PluginManagementPage(GroupHeaderCardWidget):
             
             # 检查是否有plugin.json文件
             plugin_json_path = os.path.join(item_path, "plugin.json")
-            if not os.path.exists(plugin_json_path):
+            if not path_manager.file_exists(plugin_json_path):
                 continue
             
             try:
                 # 读取plugin.json文件
-                with open(plugin_json_path, 'r', encoding='utf-8') as f:
+                with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                     plugin_config = json.load(f)
                 
                 # 验证必需字段
@@ -878,7 +878,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
     def get_plugin_icon(self, plugin_path):
         """获取插件图标文件路径"""
         icon_path = os.path.join(plugin_path, "icon.png")
-        if os.path.exists(icon_path):
+        if path_manager.file_exists(icon_path):
             return icon_path
         
         # 如果没有找到图标文件，返回None
@@ -980,7 +980,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
         """启动插件的后台服务"""
         background_service_path = os.path.join(plugin_info["path"], plugin_info["background_service"])
         
-        if not os.path.exists(background_service_path):
+        if not path_manager.file_exists(background_service_path):
             logger.warning(f"插件 {plugin_info['name']} 没有后台服务文件")
             return
         
@@ -1012,7 +1012,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
             return "python"
         if shutil.which("python3"):
             return "python3"
-        if sys.executable and os.path.exists(sys.executable):
+        if sys.executable and path_manager.file_exists(sys.executable):
             return sys.executable
             
         # 尝试查找嵌入式Python
@@ -1023,7 +1023,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
         ]
         
         for path in embedded_python_paths:
-            if os.path.exists(path):
+            if path_manager.file_exists(path):
                 return path
         
         return None

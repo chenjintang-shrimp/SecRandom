@@ -12,6 +12,7 @@ from loguru import logger
 
 from app.common.config import cfg, AUTHOR, VERSION, YEAR
 from app.common.config import get_theme_icon, load_custom_font
+from app.common.path_utils import path_manager, open_file, remove_file
 
 from app.common.history_settings import history_SettinsCard
 from app.view.main_page.pumping_people import pumping_people
@@ -52,10 +53,10 @@ class HistoryDataLoader(QThread):
         if _student_name == '全班同学':
             if class_name:
                 # 读取配置文件
-                student_file = f'app/resource/list/{class_name}.json'
+                student_file = path_manager.get_resource_path('list', f'{class_name}.json')
 
                 try:
-                    with open(student_file, 'r', encoding='utf-8') as f:
+                    with open_file(student_file, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                         cleaned_data = []
                         __cleaned_data = []
@@ -80,11 +81,11 @@ class HistoryDataLoader(QThread):
                     # 初始化历史数据字典
                     history_data = {}
                     # 读取历史记录文件
-                    history_file = f'app/resource/history/{class_name}.json'
+                    history_file = path_manager.get_resource_path('history', f'{class_name}.json')
 
-                    if os.path.exists(history_file):
+                    if path_manager.file_exists(history_file):
                         try:
-                            with open(history_file, 'r', encoding='utf-8') as f:
+                            with open_file(history_file, 'r', encoding='utf-8') as f:
                                 history_data = json.load(f)
                         except json.JSONDecodeError:
                             history_data = {}
@@ -109,8 +110,9 @@ class HistoryDataLoader(QThread):
                     available_students = __cleaned_data
 
                     # 获取当前抽取模式
+                    settings_file = path_manager.get_settings_path()
                     try:
-                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                        with open_file(settings_file, 'r', encoding='utf-8') as f:
                             settings = json.load(f)
                             pumping_people_draw_mode = settings['pumping_people']['draw_mode']
                     except Exception as e:
@@ -150,10 +152,10 @@ class HistoryDataLoader(QThread):
                     
                     if self.draw_mode in ['until_reboot', 'until_all']:
                         # 确保文件存在
-                        if os.path.exists(draw_record_file):
+                        if path_manager.file_exists(draw_record_file):
                             # 读取已抽取记录
                             drawn_students = []
-                            with open(draw_record_file, 'r', encoding='utf-8') as f:
+                            with open_file(draw_record_file, 'r', encoding='utf-8') as f:
                                 try:
                                     drawn_students = json.load(f)
                                 except json.JSONDecodeError:
@@ -165,7 +167,7 @@ class HistoryDataLoader(QThread):
 
                     # 预加载设置文件
                     try:
-                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                        with open_file(settings_file, 'r', encoding='utf-8') as f:
                             settings = json.load(f)
                             probability_weight = settings['history']['probability_weight']
                     except Exception as e:
@@ -294,11 +296,11 @@ class HistoryDataLoader(QThread):
                     # 初始化历史数据字典
                     history_data = {}
                     # 读取历史记录文件
-                    history_file = f'app/resource/history/{class_name}.json'
+                    history_file = path_manager.get_resource_path('history', f'{class_name}.json')
 
-                    if os.path.exists(history_file):
+                    if path_manager.file_exists(history_file):
                         try:
-                            with open(history_file, 'r', encoding='utf-8') as f:
+                            with open_file(history_file, 'r', encoding='utf-8') as f:
                                 history_data = json.load(f)
                         except json.JSONDecodeError:
                             history_data = {}
@@ -357,8 +359,9 @@ class HistoryDataLoader(QThread):
     
     def _get_setting_value(self, section: str, key: str, default: int) -> int:
         """通用设置读取方法"""
+        settings_file = path_manager.get_settings_path()
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 return settings[section][key]
         except Exception as e:
@@ -586,8 +589,9 @@ class history(QFrame):
 
     def _get_setting_value(self, section: str, key: str, default: int) -> int:
         """通用设置读取方法"""
+        settings_file = path_manager.get_settings_path()
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 return settings[section][key]
         except Exception as e:

@@ -58,6 +58,9 @@ class PathManager:
             绝对路径
         """
         absolute_path = self.get_absolute_path(path)
+        # 检查路径是否已存在且为文件，如果是文件则抛出错误
+        if absolute_path.exists() and absolute_path.is_file():
+            raise FileExistsError(f"路径已存在且为文件: {absolute_path}")
         absolute_path.mkdir(parents=True, exist_ok=True)
         return absolute_path
     
@@ -72,7 +75,7 @@ class PathManager:
         """
         return self.get_absolute_path(f"app/Settings/{filename}")
     
-    def get_resource_path(self, resource_type: str, filename: str) -> Path:
+    def get_resource_path(self, resource_type: str, filename: str = "") -> Path:
         """获取资源文件路径
         
         Args:
@@ -82,9 +85,12 @@ class PathManager:
         Returns:
             资源文件的绝对路径
         """
-        return self.get_absolute_path(f"app/resource/{resource_type}/{filename}")
+        if filename:
+            return self.get_absolute_path(f"app/resource/{resource_type}/{filename}")
+        else:
+            return self.get_absolute_path(f"app/resource/{resource_type}")
     
-    def get_temp_path(self, filename: str) -> Path:
+    def get_temp_path(self, filename: str = "") -> Path:
         """获取临时文件路径
         
         Args:
@@ -93,7 +99,10 @@ class PathManager:
         Returns:
             临时文件的绝对路径
         """
-        return self.get_absolute_path(f"app/resource/Temp/{filename}")
+        if filename:
+            return self.get_absolute_path(f"app/resource/Temp/{filename}")
+        else:
+            return self.get_absolute_path("app/resource/Temp")
     
     def get_plugin_path(self, filename: str = "") -> Path:
         """获取插件相关路径

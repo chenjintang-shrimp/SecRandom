@@ -129,7 +129,7 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if os.path.exists(self.settings_file):
+            if path_manager.file_exists(self.settings_file):
                 with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     voice_engine_settings = settings.get("voice_engine", {})
@@ -172,7 +172,7 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
     def save_settings(self):
         # 先读取现有设置
         existing_settings = {}
-        if os.path.exists(self.settings_file):
+        if path_manager.file_exists(self.settings_file):
             with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)

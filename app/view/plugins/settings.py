@@ -20,7 +20,7 @@ class PluginSettingsPage(GroupHeaderCardWidget):
         self.setTitle("插件设置")
         self.setBorderRadius(8)
         self.settings_file = path_manager.get_settings_path("plugin_settings.json")
-        self.plugin_dir = path_manager.get_plugin_path("plugin")
+        self.plugin_dir = path_manager.get_plugin_path()
         self.default_settings = {
             "run_plugins_on_startup": True,
             "fetch_plugin_list_on_startup": True,
@@ -61,7 +61,7 @@ class PluginSettingsPage(GroupHeaderCardWidget):
         self.plugin_combo_box.clear()
         self.plugin_combo_box.addItem("主窗口")
         
-        if not os.path.exists(self.plugin_dir):
+        if not path_manager.file_exists(self.plugin_dir):
             logger.warning(f"插件目录不存在: {self.plugin_dir}")
             return
         
@@ -75,12 +75,12 @@ class PluginSettingsPage(GroupHeaderCardWidget):
                 
                 # 检查是否有main.py入口文件
                 main_py_path = os.path.join(item_path, "main.py")
-                if not os.path.exists(main_py_path):
+                if not path_manager.file_exists(main_py_path):
                     continue
                 
                 # 检查是否有plugin.json配置文件
                 plugin_json_path = os.path.join(item_path, "plugin.json")
-                if os.path.exists(plugin_json_path):
+                if path_manager.file_exists(plugin_json_path):
                     try:
                         with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                             plugin_config = json.load(f)
@@ -100,7 +100,7 @@ class PluginSettingsPage(GroupHeaderCardWidget):
     
     def load_settings(self):
         try:
-            if os.path.exists(self.settings_file):
+            if path_manager.file_exists(self.settings_file):
                 with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     plugin_settings_settings = settings.get("plugin_settings", {})
@@ -132,7 +132,7 @@ class PluginSettingsPage(GroupHeaderCardWidget):
     def save_settings(self):
         # 先读取现有设置
         existing_settings = {}
-        if os.path.exists(self.settings_file):
+        if path_manager.file_exists(self.settings_file):
             with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)

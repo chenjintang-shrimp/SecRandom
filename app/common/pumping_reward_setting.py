@@ -19,8 +19,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("抽奖设置")
         self.setBorderRadius(8)
-        app_dir = path_manager._app_root
-        self.settings_file = app_dir / 'app' / 'Settings' / 'Settings.json'
+        self.settings_file = path_manager.get_settings_path()
         self.default_settings = {
             "font_size": 50,
             "draw_mode": 0,
@@ -251,9 +250,8 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         pumping_reward_result_color_fixed_dialog.show()
 
     def open_music_path(self, button):
-        app_dir = path_manager._app_root
-        bgm_animation_path = app_dir / 'app' / 'resource' / 'music' / 'pumping_reward' / 'Animation_music'
-        bgm_result_path = app_dir / 'app' / 'resource' / 'music' / 'pumping_reward' / 'result_music'
+        bgm_animation_path = path_manager.get_resource_path('music/pumping_people', 'Animation_music')
+        bgm_result_path = path_manager.get_resource_path('music/pumping_people', 'result_music')
         ensure_dir(bgm_animation_path)
         ensure_dir(bgm_result_path)
         # 星野引导：根据按钮选择打开对应的音乐文件夹 (๑•̀ㅂ•́)و✧
@@ -265,8 +263,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             self.open_folder(str(bgm_result_path))
 
     def open_image_path(self):
-        app_dir = path_manager._app_root
-        image_path = app_dir / 'app' / 'resource' / 'images' / 'rewards'
+        image_path = path_manager.get_resource_path('images/pumping_people', 'rewards')
         ensure_dir(image_path)
         # 星野守护：使用跨平台方式打开文件夹～
         self.open_folder(str(image_path))
@@ -334,7 +331,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         
     def load_settings(self):
         try:
-            if os.path.exists(self.settings_file):
+            if path_manager.file_exists(self.settings_file):
                 with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     pumping_reward_settings = settings.get("pumping_reward", {})
@@ -447,7 +444,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
     def save_settings(self):
         # 先读取现有设置
         existing_settings = {}
-        if os.path.exists(self.settings_file):
+        if path_manager.file_exists(self.settings_file):
             with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)
@@ -494,7 +491,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
     # 读取颜色设置
     def load_color_settings(self):
         existing_settings = {}
-        if os.path.exists(self.settings_file):
+        if path_manager.file_exists(self.settings_file):
             with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)
@@ -507,7 +504,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
     def save_color_settings(self, color_name, color_type):
         # 先读取现有设置
         existing_settings = {}
-        if os.path.exists(self.settings_file):
+        if path_manager.file_exists(self.settings_file):
             with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)

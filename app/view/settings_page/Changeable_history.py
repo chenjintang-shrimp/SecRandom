@@ -13,8 +13,7 @@ from app.common.config import get_theme_icon, load_custom_font
 
 from app.common.Changeable_history_settings import history_SettinsCard
 from app.view.main_page.pumping_people import pumping_people
-from app.common.path_utils import path_manager
-from app.common.path_utils import open_file, ensure_dir
+from app.common.path_utils import path_manager, open_file, ensure_dir
 
 
 class HistoryDataLoader(QThread):
@@ -88,7 +87,7 @@ class HistoryDataLoader(QThread):
                     # 读取历史记录文件
                     history_file = path_manager.get_resource_path('history', f'{class_name}.json')
 
-                    if os.path.exists(history_file):
+                    if path_manager.file_exists(history_file):
                         try:
                             with open_file(history_file, 'r', encoding='utf-8') as f:
                                 history_data = json.load(f)
@@ -157,7 +156,7 @@ class HistoryDataLoader(QThread):
                     
                     if self.draw_mode in ['until_reboot', 'until_all']:
                         # 确保文件存在
-                        if os.path.exists(draw_record_file):
+                        if path_manager.file_exists(draw_record_file):
                             # 读取已抽取记录
                             drawn_students = []
                             with open_file(draw_record_file, 'r', encoding='utf-8') as f:
@@ -284,8 +283,8 @@ class HistoryDataLoader(QThread):
 
         elif _student_name == '全班同学_时间排序':
             if class_name:
-                student_file = path_manager.get_resource_path(f'list/{class_name}.json')
-                history_file = path_manager.get_resource_path(f'history/{class_name}.json')
+                student_file = path_manager.get_resource_path('list', f'{class_name}.json')
+                history_file = path_manager.get_resource_path('history', f'{class_name}.json')
                 
                 # 读取学生名单
                 try:
@@ -308,7 +307,7 @@ class HistoryDataLoader(QThread):
 
                 # 读取历史记录
                 history_data = {}
-                if os.path.exists(history_file):
+                if path_manager.file_exists(history_file):
                     try:
                         with open_file(history_file, 'r', encoding='utf-8') as f:
                             history_data = json.load(f).get('pumping_people', {})
@@ -363,9 +362,9 @@ class HistoryDataLoader(QThread):
                     # 初始化历史数据字典
                     history_data = {}
                     # 读取历史记录文件
-                    history_file = path_manager.get_resource_path(f'history/{class_name}.json')
+                    history_file = path_manager.get_resource_path('history', f'{class_name}.json')
 
-                    if os.path.exists(history_file):
+                    if path_manager.file_exists(history_file):
                         try:
                             with open_file(history_file, 'r', encoding='utf-8') as f:
                                 history_data = json.load(f)

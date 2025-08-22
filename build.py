@@ -52,7 +52,7 @@ def safe_remove_directory(path, max_retries=5, retry_delay=2):
     
     for attempt in range(max_retries):
         try:
-            if os.path.exists(path):
+            if path_manager.file_exists(path):
                 # 使用错误回调函数处理权限问题
                 shutil.rmtree(path, onerror=on_rm_error)
                 print(f"成功删除目录: {path}")
@@ -105,7 +105,7 @@ def check_uv_installed():
 def create_virtual_environment():
     """创建虚拟环境"""
     print("创建虚拟环境...")
-    if os.path.exists('.venv'):
+    if path_manager.file_exists('.venv'):
         print("虚拟环境已存在，删除旧环境...")
         if not safe_remove_directory('.venv'):
             print("警告: 无法删除旧虚拟环境")
@@ -184,17 +184,17 @@ def build_application(pack_mode='onefile'):
     elif system == 'Linux':
         # Linux可以使用PNG图标或没有图标
         icon_file = 'resources/SecRandom.png'
-        if os.path.exists(icon_file):
+        if path_manager.file_exists(icon_file):
             required_files.append(icon_file)
     
     for file in required_files:
-        if not os.path.exists(file):
+        if not path_manager.file_exists(file):
             print(f"错误: 缺少必要文件 {file}")
             sys.exit(1)
     
     # 检查version_info.txt文件
     version_file = path_manager.get_project_path('version_info.txt')
-    if not os.path.exists(version_file):
+    if not path_manager.file_exists(version_file):
         print(f"警告: version_info.txt 不存在，将跳过版本信息")
         version_option = ''
     else:
@@ -217,7 +217,7 @@ def build_application(pack_mode='onefile'):
         cmd.extend(['--hidden-import=psutil._psutil_linux'])
         # 如果有PNG图标，添加图标参数
         icon_path = path_manager.get_project_path('resources/SecRandom.png')
-        if os.path.exists(icon_path):
+        if path_manager.file_exists(icon_path):
             cmd.extend(['-i', icon_path])
         else:
             print("警告: 未找到Linux图标文件，将使用默认图标")
@@ -349,7 +349,7 @@ def prepare_distribution(pack_mode='onefile'):
     
     # 创建zip_dist目录
     zip_dist_dir = 'zip_dist/SecRandom'
-    if os.path.exists('zip_dist'):
+    if path_manager.file_exists('zip_dist'):
         shutil.rmtree('zip_dist')
     
     os.makedirs(zip_dist_dir, exist_ok=True)
@@ -366,7 +366,7 @@ def prepare_distribution(pack_mode='onefile'):
     if pack_mode == 'onefile':
         # 单文件模式：复制可执行文件
         executable_path = os.path.join('dist', executable_name)
-        if os.path.exists(executable_path):
+        if path_manager.file_exists(executable_path):
             shutil.copy2(executable_path, os.path.join(zip_dist_dir, executable_name))
             print(f"复制可执行文件: {executable_path}")
         else:
@@ -375,7 +375,7 @@ def prepare_distribution(pack_mode='onefile'):
     elif pack_mode == 'dir':
         # 目录模式：复制SecRandom文件夹内容
         app_dir = 'dist/SecRandom'
-        if os.path.exists(app_dir):
+        if path_manager.file_exists(app_dir):
             for item in os.listdir(app_dir):
                 src = os.path.join(app_dir, item)
                 dst = os.path.join(zip_dist_dir, item)
@@ -394,14 +394,14 @@ def prepare_distribution(pack_mode='onefile'):
     # 复制app/resource文件夹
     app_dir = os.path.dirname(os.path.abspath(__file__))
     resource_src = os.path.join(app_dir, 'app', 'resource')
-    if os.path.exists(resource_src):
+    if path_manager.file_exists(resource_src):
         resource_dst = os.path.join(zip_dist_dir, 'app', 'resource')
         os.makedirs(os.path.dirname(resource_dst), exist_ok=True)
         shutil.copytree(resource_src, resource_dst)
     
     # 复制LICENSE文件
     license_path = path_manager.get_project_path('LICENSE')
-    if os.path.exists(license_path):
+    if path_manager.file_exists(license_path):
         shutil.copy2(license_path, os.path.join(zip_dist_dir, 'LICENSE'))
     
     print(f"分发文件准备完成（{pack_mode}模式）")
@@ -421,7 +421,7 @@ def create_zip_archive(pack_mode='onefile'):
     # 获取版本信息
     version = "latest"
     version_file = path_manager.get_project_path('version_info.txt')
-    if os.path.exists(version_file):
+    if path_manager.file_exists(version_file):
         try:
             with open_file(version_file, 'r', encoding='utf-8') as f:
                 for line in f:
@@ -481,7 +481,7 @@ def cleanup_build_files():
     # 清理PyInstaller生成的文件（不包括zip目录）
     cleanup_items = ['build', 'dist', 'zip_dist', 'SecRandom.spec']
     for item in cleanup_items:
-        if os.path.exists(item):
+        if path_manager.file_exists(item):
             if os.path.isdir(item):
                 safe_remove_directory(item)
             else:
@@ -501,7 +501,7 @@ def cleanup():
     # 清理PyInstaller生成的文件
     cleanup_items = ['build', 'dist', 'zip_dist', 'zip', 'SecRandom.spec']
     for item in cleanup_items:
-        if os.path.exists(item):
+        if path_manager.file_exists(item):
             if os.path.isdir(item):
                 safe_remove_directory(item)
             else:

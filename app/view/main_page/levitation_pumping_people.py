@@ -16,6 +16,7 @@ from random import SystemRandom
 system_random = SystemRandom()
 
 from app.common.config import get_theme_icon, load_custom_font, restore_volume
+from app.common.path_utils import path_manager, open_file, remove_file
 from app.common.voice import TTSHandler
 class pumping_people(QWidget):
     def __init__(self, parent=None):
@@ -32,7 +33,7 @@ class pumping_people(QWidget):
         """开始抽选学生"""
         # 获取抽选模式和动画模式设置
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 pumping_people_draw_mode = settings['pumping_people']['draw_mode']
                 pumping_people_animation_mode = settings['pumping_people']['animation_mode']
@@ -80,35 +81,35 @@ class pumping_people(QWidget):
         genders = self.gender_combo.currentText()
 
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
-            student_file = f"app/resource/list/{class_name}.json"
+            student_file = path_manager.get_resource_path('list', f'{class_name}.json')
 
             if self.draw_mode == "until_reboot":
                 if group_name == '抽取全班学生':
-                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
+                    draw_record_file = path_manager.get_temp_path(f'until_the_reboot_{class_name}_{group_name}_{genders}.json')
                 elif group_name == '抽取小组组号':
-                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}.json"
+                    draw_record_file = path_manager.get_temp_path(f'until_the_reboot_{class_name}_{group_name}.json')
                 else:
-                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
+                    draw_record_file = path_manager.get_temp_path(f'until_the_reboot_{class_name}_{group_name}_{genders}.json')
             elif self.draw_mode == "until_all":
                 if group_name == '抽取全班学生':
-                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
+                    draw_record_file = path_manager.get_temp_path(f'until_all_draw_{class_name}_{group_name}_{genders}.json')
                 elif group_name == '抽取小组组号':
-                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}.json"
+                    draw_record_file = path_manager.get_temp_path(f'until_all_draw_{class_name}_{group_name}.json')
                 else:
-                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
+                    draw_record_file = path_manager.get_temp_path(f'until_all_draw_{class_name}_{group_name}_{genders}.json')
             
             if self.draw_mode in ["until_reboot", "until_all"]:
                 # 创建Temp目录如果不存在
                 os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
                 
                 # 初始化抽取记录文件
-                if not os.path.exists(draw_record_file):
-                    with open(draw_record_file, 'w', encoding='utf-8') as f:
+                if not path_manager.file_exists(draw_record_file):
+                    with open_file(draw_record_file, 'w', encoding='utf-8') as f:
                         json.dump([], f, ensure_ascii=False, indent=4)
                 
                 # 读取已抽取记录
                 record_data = []
-                with open(draw_record_file, 'r', encoding='utf-8') as f:
+                with open_file(draw_record_file, 'r', encoding='utf-8') as f:
                     try:
                         record_data = json.load(f)
                     except json.JSONDecodeError:
@@ -116,8 +117,8 @@ class pumping_people(QWidget):
             else:
                 record_data = []
 
-            if os.path.exists(student_file):
-                with open(student_file, 'r', encoding='utf-8') as f:
+            if path_manager.file_exists(student_file):
+                with open_file(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
                     # 获取学生列表
@@ -223,8 +224,9 @@ class pumping_people(QWidget):
                                     pass
                         
                         # 根据设置格式化学号显示
+                        settings_file = path_manager.get_settings_path('Settings.json')
                         try:
-                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                            with open_file(settings_file, 'r', encoding='utf-8') as f:
                                 settings = json.load(f)
                                 pumping_people_student_id = settings['pumping_people']['student_id']
                                 pumping_people_student_name = settings['pumping_people']['student_name']
@@ -257,7 +259,7 @@ class pumping_people(QWidget):
                                 
                                 # 遍历所有支持的图片格式，查找存在的图片文件
                                 for ext in image_extensions:
-                                    temp_path = f'app/resource/images/students/{selected}{ext}'
+                                    temp_path = path_manager.get_resource_path("images/students", f"{selected}{ext}")
                                     if os.path.isfile(temp_path):
                                         current_image_path = temp_path
                                         break
@@ -302,13 +304,13 @@ class pumping_people(QWidget):
                                 }
 
                                 # 构建学生数据文件路径
-                                student_file = os.path.join("app", "resource", "list", f"{self.class_combo.currentText()}.json")
+                                student_file = path_manager.get_resource_path("list", f"{self.class_combo.currentText()}.json")
                                 members = []
 
                                 # 加载学生数据和筛选组成员
-                                if os.path.exists(student_file):
+                                if path_manager.file_exists(student_file):
                                     try:
-                                        with open(student_file, 'r', encoding='utf-8') as f:
+                                        with open_file(student_file, 'r', encoding='utf-8') as f:
                                             data = json.load(f)
                                             members = [
                                                 name.replace('【', '').replace('】', '') 
@@ -325,7 +327,7 @@ class pumping_people(QWidget):
 
                                 # 加载显示设置
                                 try:
-                                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    with open_file(settings_file, 'r', encoding='utf-8') as f:
                                         settings = json.load(f)
                                         show_random = settings['pumping_people'].get('show_random_member', False)
                                         format_str = settings['pumping_people'].get('random_member_format', FORMAT_GROUP_SIMPLE)
@@ -538,8 +540,9 @@ class pumping_people(QWidget):
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
             
+            settings_file = path_manager.get_settings_path()
             try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                with open_file(settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     font_size = settings['pumping_people']['font_size']
             except Exception as e:
@@ -605,9 +608,9 @@ class pumping_people(QWidget):
         星野：恭喜你抽中啦！🎉 来听听胜利的音乐吧~
         白露：结果音乐和动画音乐是分开的呢~ 真有趣！"""
         try:
-            BGM_RESULT_PATH = os.path.abspath('./app/resource/music/pumping_people/result_music')
+            BGM_RESULT_PATH = path_manager.get_resource_path("music/pumping_people/result_music")
             # 检查音乐目录是否存在
-            if not os.path.exists(BGM_RESULT_PATH):
+            if not path_manager.file_exists(BGM_RESULT_PATH):
                 logger.warning(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
                 return
 
@@ -615,7 +618,7 @@ class pumping_people(QWidget):
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
-                music_files.extend(glob.glob(os.path.join(BGM_RESULT_PATH, ext)))
+                music_files.extend(glob.glob(BGM_RESULT_PATH, ext))
 
             if not music_files:
                 logger.warning(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
@@ -665,9 +668,9 @@ class pumping_people(QWidget):
     def _play_animation_music(self):
         """播放动画背景音乐 ～(￣▽￣)～* 星野和白露的音乐时间"""
         try:
-            BGM_ANIMATION_PATH = os.path.abspath('./app/resource/music/pumping_people/Animation_music')
+            BGM_ANIMATION_PATH = path_manager.get_resource_path("music/pumping_people/Animation_music")
             # 检查音乐目录是否存在
-            if not os.path.exists(BGM_ANIMATION_PATH):
+            if not path_manager.file_exists(BGM_ANIMATION_PATH):
                 logger.warning(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
                 return
 
@@ -675,7 +678,7 @@ class pumping_people(QWidget):
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
-                music_files.extend(glob.glob(os.path.join(BGM_ANIMATION_PATH, ext)))
+                music_files.extend(glob.glob(BGM_ANIMATION_PATH, ext))
 
             if not music_files:
                 logger.warning(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
@@ -714,7 +717,7 @@ class pumping_people(QWidget):
     def voice_play(self):
         """语音播报部分"""
         try:
-            with open ('app/Settings/voice_engine.json', 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_voice_engine_path(), 'r', encoding='utf-8') as f:
                 voice_config = json.load(f)
                 voice_engine = voice_config['voice_engine']['voice_engine']
                 edge_tts_voice_name = voice_config['voice_engine'] ['edge_tts_voice_name']
@@ -755,35 +758,35 @@ class pumping_people(QWidget):
         genders = self.gender_combo.currentText()
         
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
-            student_file = f"app/resource/list/{class_name}.json"
+            student_file = path_manager.get_resource_path("list", f"{class_name}.json")
 
             if self.draw_mode == "until_reboot":
                 if group_name == '抽取全班学生':
-                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
+                    draw_record_file = path_manager.get_temp_path(f"until_the_reboot_{class_name}_{group_name}_{genders}.json")
                 elif group_name == '抽取小组组号':
-                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}.json"
+                    draw_record_file = path_manager.get_temp_path(f"until_the_reboot_{class_name}_{group_name}.json")
                 else:
-                    draw_record_file = f"app/resource/Temp/until_the_reboot_{class_name}_{group_name}_{genders}.json"
+                    draw_record_file = path_manager.get_temp_path(f"until_the_reboot_{class_name}_{group_name}_{genders}.json")
             elif self.draw_mode == "until_all":
                 if group_name == '抽取全班学生':
-                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
+                    draw_record_file = path_manager.get_temp_path(f"until_all_draw_{class_name}_{group_name}_{genders}.json")
                 elif group_name == '抽取小组组号':
-                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}.json"
+                    draw_record_file = path_manager.get_temp_path(f"until_all_draw_{class_name}_{group_name}.json")
                 else:
-                    draw_record_file = f"app/resource/Temp/until_all_draw_{class_name}_{group_name}_{genders}.json"
+                    draw_record_file = path_manager.get_temp_path(f"until_all_draw_{class_name}_{group_name}_{genders}.json")
             
             if self.draw_mode in ["until_reboot", "until_all"]:
                 # 创建Temp目录如果不存在
-                os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
+                path_manager.ensure_directory_exists(os.path.dirname(draw_record_file))
                 
                 # 初始化抽取记录文件
-                if not os.path.exists(draw_record_file):
-                    with open(draw_record_file, 'w', encoding='utf-8') as f:
+                if not path_manager.file_exists(draw_record_file):
+                    with open_file(draw_record_file, 'w', encoding='utf-8') as f:
                         json.dump([], f, ensure_ascii=False, indent=4)
                 
                 # 读取已抽取记录
                 record_data = []
-                with open(draw_record_file, 'r', encoding='utf-8') as f:
+                with open_file(draw_record_file, 'r', encoding='utf-8') as f:
                     try:
                         record_data = json.load(f)
                     except json.JSONDecodeError:
@@ -791,8 +794,8 @@ class pumping_people(QWidget):
             else:
                 record_data = []
             
-            if os.path.exists(student_file):
-                with open(student_file, 'r', encoding='utf-8') as f:
+            if path_manager.file_exists(student_file):
+                with open_file(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
                     __cleaned_data = []
@@ -881,10 +884,10 @@ class pumping_people(QWidget):
 
                         elif use_system_random == 2 or use_system_random == 3:  # 动态权重调整抽取系统
                             # 加载历史记录
-                            history_file = f"app/resource/history/{class_name}.json"
+                            history_file = path_manager.get_history_path(f"{class_name}.json")
                             history_data = {}
-                            if os.path.exists(history_file):
-                                with open(history_file, 'r', encoding='utf-8') as f:
+                            if path_manager.file_exists(history_file):
+                                with open_file(history_file, 'r', encoding='utf-8') as f:
                                     try:
                                         history_data = json.load(f)
                                     except json.JSONDecodeError:
@@ -1009,8 +1012,9 @@ class pumping_people(QWidget):
                             if widget:
                                 widget.deleteLater()
                         
+                        settings = path_manager.get_settings_path()
                         try:
-                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                            with open_file(settings, 'r', encoding='utf-8') as f:
                                 settings = json.load(f)
                                 pumping_people_student_id = settings['pumping_people']['student_id']
                                 pumping_people_student_name = settings['pumping_people']['student_name']
@@ -1040,7 +1044,7 @@ class pumping_people(QWidget):
                                 
                                 # 遍历所有支持的图片格式，查找存在的图片文件
                                 for ext in image_extensions:
-                                    temp_path = f'app/resource/images/students/{selected}{ext}'
+                                    temp_path = path_manager.get_resource_path("images/students", f"{selected}{ext}")
                                     if os.path.isfile(temp_path):
                                         current_image_path = temp_path
                                         break
@@ -1085,13 +1089,13 @@ class pumping_people(QWidget):
                                 }
 
                                 # 构建学生数据文件路径
-                                student_file = os.path.join("app", "resource", "list", f"{self.class_combo.currentText()}.json")
+                                student_file = path_manager.get_resource_path("list", f"{self.class_combo.currentText()}.json")
                                 members = []
 
                                 # 加载学生数据和筛选组成员
-                                if os.path.exists(student_file):
+                                if path_manager.file_exists(student_file):
                                     try:
-                                        with open(student_file, 'r', encoding='utf-8') as f:
+                                        with open_file(student_file, 'r', encoding='utf-8') as f:
                                             data = json.load(f)
                                             members = [
                                                 name.replace('【', '').replace('】', '') 
@@ -1108,7 +1112,7 @@ class pumping_people(QWidget):
 
                                 # 加载显示设置
                                 try:
-                                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                                    with open_file(settings, 'r', encoding='utf-8') as f:
                                         settings = json.load(f)
                                         show_random = settings['pumping_people'].get('show_random_member', False)
                                         format_str = settings['pumping_people'].get('random_member_format', FORMAT_GROUP_SIMPLE)
@@ -1306,14 +1310,14 @@ class pumping_people(QWidget):
                         if self.draw_mode in ["until_reboot", "until_all"]:
                             # 更新抽取记录
                             record_data.extend([s[1].replace(' ', '') for s in selected_students])
-                            with open(draw_record_file, 'w', encoding='utf-8') as f:
+                            with open_file(draw_record_file, 'w', encoding='utf-8') as f:
                                 json.dump(record_data, f, ensure_ascii=False, indent=4)
 
                         return
                     else:
                         if self.draw_mode in ["until_reboot", "until_all"]:
                             # 删除临时文件
-                            if os.path.exists(draw_record_file):
+                            if path_manager.file_exists(draw_record_file):
                                 os.remove(draw_record_file)
 
                         self.random()
@@ -1332,8 +1336,10 @@ class pumping_people(QWidget):
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
             
+            settings = path_manager.get_settings_path()
+
             try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                with open_file(settings, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     font_size = settings['pumping_people']['font_size']
             except Exception as e:
@@ -1353,8 +1359,9 @@ class pumping_people(QWidget):
     # 获取随机抽取方法的设置
     def get_random_method_setting(self):
         """获取随机抽取方法的设置"""
+        settings = path_manager.get_settings_path()
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(settings, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 random_method = settings['pumping_people']['draw_pumping']
                 return random_method
@@ -1365,8 +1372,9 @@ class pumping_people(QWidget):
     # 更新历史记录
     def _update_history(self, class_name, group_name, genders, selected_students):
         """更新历史记录"""
+        settings = path_manager.get_settings_path()
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(settings, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 history_enabled = settings['history']['history_enabled']
         except Exception as e:
@@ -1377,12 +1385,11 @@ class pumping_people(QWidget):
             logger.info("历史记录功能已被禁用。")
             return
         
-        history_file = f"app/resource/history/{class_name}.json"
-        os.makedirs(os.path.dirname(history_file), exist_ok=True)
-        
+        history_file = path_manager.get_resource_path("history", f"{class_name}.json")
+        path_manager.ensure_directory_exists(history_file)
         history_data = {}
-        if os.path.exists(history_file):
-            with open(history_file, 'r', encoding='utf-8') as f:
+        if path_manager.file_exists(history_file):
+            with open_file(history_file, 'r', encoding='utf-8') as f:
                 try:
                     history_data = json.load(f)
                 except json.JSONDecodeError:
@@ -1404,9 +1411,9 @@ class pumping_people(QWidget):
 
         # 加载学生数据以获取小组和性别信息
         student_info_map = {}
-        student_file = f"app/resource/list/{class_name}.json"
-        if os.path.exists(student_file):
-            with open(student_file, 'r', encoding='utf-8') as f:
+        student_file = path_manager.get_resource_path("list", f"{class_name}.json")
+        if path_manager.file_exists(student_file):
+            with open_file(student_file, 'r', encoding='utf-8') as f:
                 student_data = json.load(f)
                 for name, info in student_data.items():
                     if isinstance(info, dict) and 'id' in info:
@@ -1507,9 +1514,9 @@ class pumping_people(QWidget):
         
         # 更新未被选中学生的rounds_missed
         all_students = set()
-        student_file = f"app/resource/list/{class_name}.json"
-        if os.path.exists(student_file):
-            with open(student_file, 'r', encoding='utf-8') as f:
+        student_file = path_manager.get_resource_path("list", f"{class_name}.json")
+        if path_manager.file_exists(student_file):
+            with open_file(student_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 for student_name, student_info in data.items():
                     if isinstance(student_info, dict) and 'id' in student_info:
@@ -1522,7 +1529,7 @@ class pumping_people(QWidget):
                 history_data["pumping_people"][student_name]["rounds_missed"] += 1
         
         # 保存历史记录
-        with open(history_file, 'w', encoding='utf-8') as f:
+        with open_file(history_file, 'w', encoding='utf-8') as f:
             json.dump(history_data, f, ensure_ascii=False, indent=4)
 
     # 将小组名称转换为排序键
@@ -1555,11 +1562,11 @@ class pumping_people(QWidget):
     # 清理临时文件
     def _clean_temp_files(self):
         import glob
-        temp_dir = "app/resource/Temp"
-        if os.path.exists(temp_dir):
+        temp_dir = path_manager.get_temp_path()
+        if path_manager.file_exists(temp_dir):
             for file in glob.glob(f"{temp_dir}/until_*.json"):
                 try:
-                    os.remove(file)
+                    path_manager.remove_file(file)
                     logger.info(f"已清理临时抽取记录文件: {file}")
                 except Exception as e:
                     logger.error(f"清理临时抽取记录文件失败: {e}")
@@ -1594,8 +1601,8 @@ class pumping_people(QWidget):
         
         # 加载班级列表
         try:
-            list_folder = "app/resource/list"
-            if os.path.exists(list_folder) and os.path.isdir(list_folder):
+            list_folder = path_manager.get_resource_path("list")
+            if path_manager.file_exists(list_folder) and os.path.isdir(list_folder):
                 files = os.listdir(list_folder)
                 classes = []
                 for file in files:
@@ -1623,10 +1630,10 @@ class pumping_people(QWidget):
         self.group_combo.addItem('抽取全班学生')
 
         class_name = self.class_combo.currentText()
-        pumping_people_file = f'app/resource/list/{class_name}.json'
+        pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
         try:
-            if os.path.exists(pumping_people_file):
-                with open(pumping_people_file, 'r', encoding='utf-8') as f:
+            if path_manager.file_exists(pumping_people_file):
+                with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     groups = set()
                     for student_name, student_info in data.items():
@@ -1658,10 +1665,10 @@ class pumping_people(QWidget):
         self.gender_combo.addItem('抽取所有性别')
 
         class_name = self.class_combo.currentText()
-        pumping_people_file = f'app/resource/list/{class_name}.json'
+        pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
         try:
-            if os.path.exists(pumping_people_file):
-                with open(pumping_people_file, 'r', encoding='utf-8') as f:
+            if path_manager.file_exists(pumping_people_file):
+                with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     genders = set()
                     for student_name, student_info in data.items():

@@ -28,9 +28,8 @@ class settings_Window(MSFluentWindow):
         self.resize_timer.setSingleShot(True)
         self.resize_timer.timeout.connect(self.save_settings_window_size)
 
-        settings_path = self.app_dir / 'app' / 'Settings' / 'Settings.json'
+        settings_path = path_manager.get_settings_path()
         try:
-            ensure_dir(settings_path.parent)
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
@@ -47,7 +46,7 @@ class settings_Window(MSFluentWindow):
 
         self.setMinimumSize(600, 400)
         self.setWindowTitle('SecRandom - 设置')
-        self.setWindowIcon(QIcon(str(self.app_dir / 'resource' / 'icon' / 'SecRandom.png')))
+        self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png'))))
 
         # 获取主屏幕
         screen = QApplication.primaryScreen()
@@ -124,7 +123,7 @@ class settings_Window(MSFluentWindow):
     def save_settings_window_size(self):
         if not self.isMaximized():
             try:
-                settings_path = self.app_dir / 'Settings' / 'Settings.json'
+                settings_path = path_manager.get_settings_path()
                 # 读取现有设置
                 try:
                     with open_file(settings_path, 'r', encoding='utf-8') as f:

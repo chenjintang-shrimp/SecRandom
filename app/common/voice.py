@@ -144,7 +144,7 @@ class VoiceCacheManager:
         
         # 2. 检查磁盘缓存
         file_path = self._get_cache_file_path(text, voice, speed)
-        if os.path.exists(file_path):
+        if path_manager.file_exists(file_path):
             try:
                 data, fs = sf.read(file_path)
                 self._memory_cache[cache_key] = (data, fs)

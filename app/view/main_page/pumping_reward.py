@@ -13,10 +13,12 @@ import datetime
 from loguru import logger
 from random import SystemRandom
 system_random = SystemRandom()
+from app.common.path_utils import path_manager, open_file, remove_file
+
 
 # 音乐文件路径定义 ~(≧▽≦)/~ 星野最喜欢的动画BGM存放地
-BGM_ANIMATION_PATH = os.path.abspath('./app/resource/music/pumping_reward/Animation_music')
-BGM_RESULT_PATH = os.path.abspath('./app/resource/music/pumping_reward/result_music')
+BGM_ANIMATION_PATH = path_manager.get_resource_path("music/pumping_reward/Animation_music")
+BGM_RESULT_PATH = path_manager.get_resource_path("music/pumping_reward/result_music")
 
 from app.common.config import load_custom_font, restore_volume
 from app.common.voice import TTSHandler
@@ -36,7 +38,7 @@ class pumping_reward(QWidget):
         """开始抽选奖品"""
         # 获取抽选模式和动画模式设置
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_voice_engine_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 pumping_reward_draw_mode = settings['pumping_reward']['draw_mode']
                 pumping_reward_animation_mode = settings['pumping_reward']['animation_mode']
@@ -93,25 +95,25 @@ class pumping_reward(QWidget):
         reward_name = self.reward_combo.currentText()
 
         if reward_name and reward_name not in ["你暂未添加奖池", "加载奖池列表失败"]:
-            reward_file = f"app/resource/reward/{reward_name}.json"
+            reward_file = path_manager.get_resource_path("reward", f"{reward_name}.json")
 
             if self.draw_mode == "until_reboot":
-                draw_record_file = f"app/resource/Temp/until_the_reboot_{reward_name}.json"
+                draw_record_file = path_manager.get_temp_path(f"until_the_reboot_{reward_name}.json")
             elif self.draw_mode == "until_all":
-                draw_record_file = f"app/resource/Temp/until_all_draw_{reward_name}.json"
+                draw_record_file = path_manager.get_temp_path(f"until_all_draw_{reward_name}.json")
             
             if self.draw_mode in ["until_reboot", "until_all"]:
                 # 创建Temp目录如果不存在
                 os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
                 
                 # 初始化抽取记录文件
-                if not os.path.exists(draw_record_file):
-                    with open(draw_record_file, 'w', encoding='utf-8') as f:
+                if not path_manager.file_exists(draw_record_file):
+                    with open_file(draw_record_file, 'w', encoding='utf-8') as f:
                         json.dump([], f, ensure_ascii=False, indent=4)
                 
                 # 读取已抽取记录
                 drawn_rewards = []
-                with open(draw_record_file, 'r', encoding='utf-8') as f:
+                with open_file(draw_record_file, 'r', encoding='utf-8') as f:
                     try:
                         drawn_rewards = json.load(f)
                     except json.JSONDecodeError:
@@ -119,8 +121,8 @@ class pumping_reward(QWidget):
             else:
                 drawn_rewards = []
 
-            if os.path.exists(reward_file):
-                with open(reward_file, 'r', encoding='utf-8') as f:
+            if path_manager.file_exists(reward_file):
+                with open_file(reward_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
                     # 获取奖品列表
@@ -236,7 +238,7 @@ class pumping_reward(QWidget):
                                     pass
 
                         try:
-                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                                 settings = json.load(f)
                                 font_size = settings['pumping_reward']['font_size']
                                 display_format = settings['pumping_reward']['display_format']
@@ -261,8 +263,8 @@ class pumping_reward(QWidget):
                                 
                                 # 遍历所有支持的图片格式，查找存在的图片文件
                                 for ext in image_extensions:
-                                    temp_path = f'app/resource/images/rewards/{name}{ext}'
-                                    if os.path.isfile(temp_path):
+                                    temp_path = path_manager.get_resource_path("images", f"rewards/{name}{ext}")
+                                    if path_manager.file_exists(temp_path):
                                         current_image_path = temp_path
                                         break
                                     else:
@@ -466,7 +468,7 @@ class pumping_reward(QWidget):
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
             try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     font_size = settings['pumping_reward']['font_size']
             except Exception as e:
@@ -537,7 +539,7 @@ class pumping_reward(QWidget):
         白露：结果音乐和动画音乐是分开的呢~ 真有趣！"""
         try:
             # 检查音乐目录是否存在
-            if not os.path.exists(BGM_RESULT_PATH):
+            if not path_manager.file_exists(BGM_RESULT_PATH):
                 logger.warning(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
                 return
 
@@ -545,7 +547,7 @@ class pumping_reward(QWidget):
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
-                music_files.extend(glob.glob(os.path.join(BGM_RESULT_PATH, ext)))
+                music_files.extend(glob.glob(BGM_RESULT_PATH, ext))
 
             if not music_files:
                 logger.warning(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
@@ -591,7 +593,7 @@ class pumping_reward(QWidget):
         """播放动画背景音乐 ～(￣▽￣)～* 星野和白露的音乐时间"""
         try:
             # 检查音乐目录是否存在
-            if not os.path.exists(BGM_ANIMATION_PATH):
+            if not path_manager.file_exists(BGM_ANIMATION_PATH):
                 logger.warning(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
                 return
 
@@ -599,7 +601,7 @@ class pumping_reward(QWidget):
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
-                music_files.extend(glob.glob(os.path.join(BGM_ANIMATION_PATH, ext)))
+                music_files.extend(glob.glob(BGM_ANIMATION_PATH, ext))
 
             if not music_files:
                 logger.warning(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
@@ -627,7 +629,7 @@ class pumping_reward(QWidget):
     def voice_play(self):
         """语音播报部分"""
         try:
-            with open ('app/Settings/voice_engine.json', 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_voice_engine_path(), 'r', encoding='utf-8') as f:
                 voice_config = json.load(f)
                 voice_engine = voice_config['voice_engine']['voice_engine']
                 edge_tts_voice_name = voice_config['voice_engine'] ['edge_tts_voice_name']
@@ -666,25 +668,25 @@ class pumping_reward(QWidget):
         reward_name = self.reward_combo.currentText()
         
         if reward_name and reward_name not in ["你暂未添加奖池", "加载奖池列表失败"]:
-            reward_file = f"app/resource/reward/{reward_name}.json"
+            reward_file = path_manager.get_resource_path("reward", f"{reward_name}.json")
 
             if self.draw_mode == "until_reboot":
-                draw_record_file = f"app/resource/Temp/until_the_reboot_{reward_name}.json"
+                draw_record_file = path_manager.get_temp_path(f"until_the_reboot_{reward_name}.json")
             elif self.draw_mode == "until_all":
-                draw_record_file = f"app/resource/Temp/until_all_draw_{reward_name}.json"
+                draw_record_file = path_manager.get_temp_path(f"until_all_draw_{reward_name}.json")
             
             if self.draw_mode in ["until_reboot", "until_all"]:
                 # 创建Temp目录如果不存在
                 os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
                 
                 # 初始化抽取记录文件
-                if not os.path.exists(draw_record_file):
-                    with open(draw_record_file, 'w', encoding='utf-8') as f:
+                if not path_manager.file_exists(draw_record_file):
+                    with open_file(draw_record_file, 'w', encoding='utf-8') as f:
                         json.dump([], f, ensure_ascii=False, indent=4)
                 
                 # 读取已抽取记录
                 drawn_rewards = []
-                with open(draw_record_file, 'r', encoding='utf-8') as f:
+                with open_file(draw_record_file, 'r', encoding='utf-8') as f:
                     try:
                         drawn_rewards = json.load(f)
                     except json.JSONDecodeError:
@@ -692,8 +694,8 @@ class pumping_reward(QWidget):
             else:
                 drawn_rewards = []
             
-            if os.path.exists(reward_file):
-                with open(reward_file, 'r', encoding='utf-8') as f:
+            if path_manager.file_exists(reward_file):
+                with open_file(reward_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
                     
@@ -796,7 +798,7 @@ class pumping_reward(QWidget):
                             if widget:
                                 widget.deleteLater()
                         try:
-                            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                                 settings = json.load(f)
                                 font_size = settings['pumping_reward']['font_size']
                                 display_format = settings['pumping_reward']['display_format']
@@ -821,7 +823,7 @@ class pumping_reward(QWidget):
                                 
                                 # 遍历所有支持的图片格式，查找存在的图片文件
                                 for ext in image_extensions:
-                                    temp_path = f'app/resource/images/rewards/{name}{ext}'
+                                    temp_path = path_manager.get_resource_path("images/rewards", f"{name}{ext}")
                                     if os.path.isfile(temp_path):
                                         current_image_path = temp_path
                                         break
@@ -1018,7 +1020,7 @@ class pumping_reward(QWidget):
                         if self.draw_mode in ["until_reboot", "until_all"]:
                             # 更新抽取记录
                             drawn_rewards.extend([s[1].replace(' ', '') for s in selected_rewards])
-                            with open(draw_record_file, 'w', encoding='utf-8') as f:
+                            with open_file(draw_record_file, 'w', encoding='utf-8') as f:
                                 json.dump(drawn_rewards, f, ensure_ascii=False, indent=4)
 
                         self.update_total_count()
@@ -1026,7 +1028,7 @@ class pumping_reward(QWidget):
                     else:
                         if self.draw_mode in ["until_reboot", "until_all"]:
                             # 删除临时文件
-                            if os.path.exists(draw_record_file):
+                            if path_manager.file_exists(draw_record_file):
                                 os.remove(draw_record_file)
 
                         self.random()
@@ -1047,7 +1049,7 @@ class pumping_reward(QWidget):
             
             # 获取字体大小设置
             try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     font_size = settings['pumping_reward']['font_size']
             except Exception as e:
@@ -1068,7 +1070,7 @@ class pumping_reward(QWidget):
     def get_random_method_setting(self):
         """获取随机抽取方法的设置"""
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 random_method = settings['pumping_reward']['draw_pumping']
                 return random_method
@@ -1080,7 +1082,7 @@ class pumping_reward(QWidget):
     def _update_history(self, reward_name, selected_rewards):
         """更新历史记录"""
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 reward_history_enabled = settings['history']['reward_history_enabled']
         except Exception as e:
@@ -1091,12 +1093,12 @@ class pumping_reward(QWidget):
             logger.info("历史记录功能已被禁用。")
             return
         
-        history_file = f"app/resource/reward/history/{reward_name}.json"
+        history_file = path_manager.get_resource_path("reward/history", f"{reward_name}.json")
         os.makedirs(os.path.dirname(history_file), exist_ok=True)
         
         history_data = {}
-        if os.path.exists(history_file):
-            with open(history_file, 'r', encoding='utf-8') as f:
+        if path_manager.file_exists(history_file):
+            with open_file(history_file, 'r', encoding='utf-8') as f:
                 try:
                     history_data = json.load(f)
                 except json.JSONDecodeError:
@@ -1139,9 +1141,9 @@ class pumping_reward(QWidget):
         
         # 更新未被选中奖品的rounds_missed
         all_rewards = set()
-        reward_file = f"app/resource/reward/{reward_name}.json"
-        if os.path.exists(reward_file):
-            with open(reward_file, 'r', encoding='utf-8') as f:
+        reward_file = path_manager.get_resource_path("reward", f"{reward_name}.json")
+        if path_manager.file_exists(reward_file):
+            with open_file(reward_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 for reward_name, reward_info in data.items():
                     if isinstance(reward_info, dict) and 'id' in reward_info:
@@ -1154,7 +1156,7 @@ class pumping_reward(QWidget):
                 history_data["pumping_reward"][reward_name]["rounds_missed"] += 1
         
         # 保存历史记录
-        with open(history_file, 'w', encoding='utf-8') as f:
+        with open_file(history_file, 'w', encoding='utf-8') as f:
             json.dump(history_data, f, ensure_ascii=False, indent=4)
 
     # 更新总奖数显示   
@@ -1163,15 +1165,15 @@ class pumping_reward(QWidget):
         reward_name = self.reward_combo.currentText()
 
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 pumping_reward_reward_quantity = settings['pumping_reward']['reward_theme']
         except Exception:
             pumping_reward_reward_quantity = 0
 
         if reward_name and reward_name not in ["你暂未添加奖池", "加载奖池列表失败"]:
-            reward_file = f"app/resource/reward/{reward_name}.json"
-            if os.path.exists(reward_file):
+            reward_file = path_manager.get_resource_path("reward", f"{reward_name}.json")
+            if path_manager.file_exists(reward_file):
                 cleaned_data = self._get_cleaned_data(reward_file)
                 drawn_count = self._get_drawn_count(reward_name)
                 _count = len(cleaned_data) - drawn_count
@@ -1202,7 +1204,7 @@ class pumping_reward(QWidget):
 
     # 对用户的选择进行返回奖品数量数量
     def _get_cleaned_data(self, reward_file):
-        with open(reward_file, 'r', encoding='utf-8') as f:
+        with open_file(reward_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
             # 初始化不同情况的列表
             cleaned_data = []
@@ -1219,12 +1221,12 @@ class pumping_reward(QWidget):
     def _get_drawn_count(self, reward_name):
         if self.draw_mode in ["until_reboot", "until_all"]:
             if self.draw_mode == "until_reboot":
-                draw_record_file = f"app/resource/Temp/until_the_reboot_{reward_name}.json"
+                draw_record_file = path_manager.get_temp_path(f"until_the_reboot_{reward_name}.json")
             elif self.draw_mode == "until_all":
-                draw_record_file = f"app/resource/Temp/until_all_draw_{reward_name}.json"
-            if os.path.exists(draw_record_file):
+                draw_record_file = path_manager.get_temp_path(f"until_all_draw_{reward_name}.json")
+            if path_manager.file_exists(draw_record_file):
                 try:
-                    with open(draw_record_file, 'r', encoding='utf-8') as f:
+                    with open_file(draw_record_file, 'r', encoding='utf-8') as f:
                         return len(json.load(f))
                 except Exception as e:
                     # 处理加载文件出错的情况，返回 0
@@ -1275,8 +1277,8 @@ class pumping_reward(QWidget):
         """刷新奖池下拉框选项"""
         self.reward_combo.clear()
         try:
-            list_folder = "app/resource/reward"
-            if os.path.exists(list_folder) and os.path.isdir(list_folder):
+            list_folder = path_manager.get_resource_path("reward")
+            if path_manager.file_exists(list_folder) and os.path.isdir(list_folder):
                 files = os.listdir(list_folder)
                 classes = []
                 for file in files:
@@ -1319,8 +1321,8 @@ class pumping_reward(QWidget):
     # 清理临时文件
     def _clean_temp_files(self):
         import glob
-        temp_dir = "app/resource/Temp"
-        if os.path.exists(temp_dir):
+        temp_dir = path_manager.get_temp_path()
+        if path_manager.file_exists(temp_dir):
             for file in glob.glob(f"{temp_dir}/until_the_reboot_*.json"):
                 try:
                     os.remove(file)
@@ -1332,7 +1334,7 @@ class pumping_reward(QWidget):
     def initUI(self):
         # 加载设置
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 pumping_reward_reward_quantity = settings['pumping_reward']['reward_theme']
         except Exception as e:
@@ -1421,8 +1423,8 @@ class pumping_reward(QWidget):
         
         # 加载奖池列表
         try:
-            list_folder = "app/resource/reward"
-            if os.path.exists(list_folder) and os.path.isdir(list_folder):
+            list_folder = path_manager.get_resource_path("reward")
+            if path_manager.file_exists(list_folder) and os.path.isdir(list_folder):
                 files = os.listdir(list_folder)
                 classes = []
                 for file in files:

@@ -15,10 +15,8 @@ def _parse_time(time_str):
 
 def _clean_history(history_type, settings_key, retention_days_key, history_dir, record_keys, enabled_key):
     try:
-        # 获取应用根目录并构建文件路径
-        app_dir = path_manager._app_root
-        settings_file = app_dir / 'app' / 'Settings' / 'Settings.json'
-        if not os.path.exists(settings_file):
+        settings_file = path_manager.get_settings_path()
+        if not path_manager.file_exists(settings_file):
             logger.warning("设置文件不存在，无法清理历史记录")
             return
 
@@ -33,8 +31,8 @@ def _clean_history(history_type, settings_key, retention_days_key, history_dir, 
         cutoff_date = datetime.datetime.now() - datetime.timedelta(days=retention_days)
 
         # 构建历史记录目录的绝对路径
-        history_dir_abs = app_dir / history_dir
-        if not os.path.exists(history_dir_abs):
+        history_dir_abs = path_manager.get_absolute_path(history_dir)
+        if not path_manager.file_exists(history_dir_abs):
             return
 
         for filename in os.listdir(history_dir_abs):

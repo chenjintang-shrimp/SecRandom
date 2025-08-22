@@ -32,7 +32,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("基础设置")
         self.setBorderRadius(8)
-        self.settings_file = path_manager.get_settings_path('Settings.json')
+        self.settings_file = path_manager.get_settings_path()
         self.default_settings = {
             "check_on_startup": True,
             "self_starting_enabled": False,
@@ -158,7 +158,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         # 浮窗
         self.left_pumping_floating_switch = ComboBox()
         self.left_pumping_floating_switch.setFixedWidth(200)
-        self.left_pumping_floating_switch.addItems(["显示 拖动+主界面", "显示 主界面", "显示 直接抽取+便捷小窗", "显示 直接抽取"])
+        self.left_pumping_floating_switch.addItems(["显示 拖动+主界面", "显示 主界面", "显示 主界面+直接抽取+便捷小窗", "显示 直接抽取+便捷小窗", "显示 直接抽取"])
         self.left_pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
         self.left_pumping_floating_switch.currentIndexChanged.connect(self.save_settings)
 
@@ -179,7 +179,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新设置", "启动时自动检查软件更新", self.check_on_startup)
         self.addGroup(get_theme_icon("ic_fluent_branch_compare_20_filled"), "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
-        self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "URL协议注册", "注册SecRandom URL协议，允许其他程序通过URL启动SecRandom并打开特定界面", self.url_protocol_switch)
+        if path_manager.file_exists(os.path.join(os.getcwd(), '_internal')):
+            self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "URL协议注册", "注册SecRandom URL协议，允许其他程序通过URL启动SecRandom并打开特定界面", self.url_protocol_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
@@ -263,7 +264,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             # 读取设置文件
             from app.common.path_utils import path_manager
             settings_file = path_manager.get_settings_path('Settings.json')
-            with open(settings_file, 'r', encoding='utf-8') as f:
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
                 self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
@@ -293,7 +294,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                             logger.error(f"创建快捷方式失败: {e}")
                     else:
                         try:
-                            if os.path.exists(shortcut_path):
+                            if path_manager.file_exists(shortcut_path):
                                 os.remove(shortcut_path)
                                 logger.success("开机自启动取消成功")
                             else:
@@ -325,7 +326,7 @@ StartupNotify=true
 """
                             
                             # 写入.desktop文件
-                            with open(desktop_file_path, 'w', encoding='utf-8') as f:
+                            with open_file(desktop_file_path, 'w', encoding='utf-8') as f:
                                 f.write(desktop_content)
                             
                             # 设置文件权限为可执行
@@ -335,7 +336,7 @@ StartupNotify=true
                             logger.error(f"创建.desktop文件失败: {e}")
                     else:
                         try:
-                            if os.path.exists(desktop_file_path):
+                            if path_manager.file_exists(desktop_file_path):
                                 os.remove(desktop_file_path)
                                 logger.success("Linux开机自启动取消成功")
                             else:
@@ -355,8 +356,8 @@ StartupNotify=true
 
     def load_settings(self):
         try:
-            if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+            if path_manager.file_exists(self.settings_file):
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     foundation_settings = settings.get("foundation", {})
                     
@@ -462,8 +463,8 @@ StartupNotify=true
     def save_settings(self):
         # 先读取现有设置
         existing_settings = {}
-        if os.path.exists(self.settings_file):
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+        if path_manager.file_exists(self.settings_file):
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)
                 except json.JSONDecodeError:
@@ -491,7 +492,7 @@ StartupNotify=true
         foundation_settings["show_settings_icon"] = self.show_settings_icon_switch.isChecked()
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open(self.settings_file, 'w', encoding='utf-8') as f:
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)
     
     def show_cleanup_dialog(self):
@@ -505,8 +506,8 @@ StartupNotify=true
                 os.makedirs(os.path.dirname(cleanup_times_file), exist_ok=True)
                 
                 settings = {}
-                if os.path.exists(cleanup_times_file):
-                    with open(cleanup_times_file, 'r', encoding='utf-8') as f:
+                if path_manager.file_exists(cleanup_times_file):
+                    with open_file(cleanup_times_file, 'r', encoding='utf-8') as f:
                         settings = json.load(f)
                 
                 # 处理多个时间输入
@@ -561,7 +562,7 @@ StartupNotify=true
                 for idx, time_str in enumerate(valid_times, 1):
                     settings.setdefault('foundation', {})[str(idx)] = time_str
                 
-                with open(cleanup_times_file, 'w', encoding='utf-8') as f:
+                with open_file(cleanup_times_file, 'w', encoding='utf-8') as f:
                     json.dump(settings, f, ensure_ascii=False, indent=4)
                     logger.info(f"成功保存{len(time_list)}个定时清理时间设置")
                     InfoBar.success(
@@ -590,8 +591,8 @@ StartupNotify=true
             current_time = QTime.currentTime().toString("HH:mm:ss")
             from app.common.path_utils import path_manager
             cleanup_times_file = path_manager.get_settings_path('CleanupTimes.json')
-            if os.path.exists(cleanup_times_file):
-                with open(cleanup_times_file, 'r', encoding='utf-8') as f:
+            if path_manager.file_exists(cleanup_times_file):
+                with open_file(cleanup_times_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     # 检查所有设置的时间
                     foundation_times = settings.get('foundation', {})
@@ -613,7 +614,7 @@ StartupNotify=true
     
     def cleanup_temp_files(self):
         try:
-            temp_dir = path_manager.get_resource_path('Temp')
+            temp_dir = path_manager.get_resource_path('Temp', '')
             if temp_dir.exists():
                 for filename in temp_dir.iterdir():
                     if filename.suffix == ".json":
@@ -667,8 +668,8 @@ StartupNotify=true
 
         try:
             from app.common.path_utils import path_manager
-            enc_set_file = path_manager.get_plugin_path('SecRandom', 'enc_set.json')
-            with open(enc_set_file, 'r', encoding='utf-8') as f:
+            enc_set_file = path_manager.get_enc_set_path()
+            with open_file(enc_set_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 logger.debug("正在读取安全设置，准备执行导出诊断数据验证～ ")
 
@@ -688,7 +689,7 @@ StartupNotify=true
             
             # 获取桌面路径
             desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-            if not os.path.exists(desktop_path):
+            if not path_manager.file_exists(desktop_path):
                 desktop_path = os.path.join(os.path.expanduser("~"), "桌面")
             
             # 创建诊断文件名
@@ -698,10 +699,10 @@ StartupNotify=true
             
             # 需要导出的文件夹列表
             export_folders = [
-                path_manager.get_resource_path('list'), 
-                path_manager.get_resource_path('reward'),
-                path_manager.get_resource_path('history'),
-                path_manager.get_resource_path('settings'),
+                path_manager.get_resource_path('list', ''), 
+                path_manager.get_resource_path('reward', ''),
+                path_manager.get_resource_path('history', ''),
+                path_manager.get_resource_path('settings', ''),
                 path_manager.get_plugin_path('plugin'),
                 path_manager.get_plugin_path('logs')
             ]
@@ -834,7 +835,7 @@ StartupNotify=true
                 return
             
             # 读取导入的设置文件
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open_file(file_path, 'r', encoding='utf-8') as f:
                 imported_settings = json.load(f)
             
             # 显示设置选择对话框
@@ -854,9 +855,9 @@ StartupNotify=true
                     else:
                         file_path = os.path.join(settings_dir, f"{file_name}.json")
                     
-                    if os.path.exists(file_path):
+                    if path_manager.file_exists(file_path):
                         # 读取现有设置
-                        with open(file_path, 'r', encoding='utf-8') as f:
+                        with open_file(file_path, 'r', encoding='utf-8') as f:
                             current_settings = json.load(f)
                         
                         # 更新选中的设置项
@@ -913,7 +914,7 @@ StartupNotify=true
                                             current_settings[target_section][setting_name] = imported_settings[target_section][setting_name]
                                 
                         # 保存更新后的设置
-                        with open(file_path, 'w', encoding='utf-8') as f:
+                        with open_file(file_path, 'w', encoding='utf-8') as f:
                             json.dump(current_settings, f, indent=4, ensure_ascii=False)
                 
                 # 显示成功消息
@@ -956,9 +957,9 @@ StartupNotify=true
                                 else:
                                     file_path = os.path.join(settings_dir, f"{file_name}.json")
                                 
-                                if os.path.exists(file_path):
+                                if path_manager.file_exists(file_path):
                                     # 读取设置文件
-                                    with open(file_path, 'r', encoding='utf-8') as f:
+                                    with open_file(file_path, 'r', encoding='utf-8') as f:
                                         current_settings = json.load(f)
                                     
                                     # 添加选中的设置项到导出数据
@@ -1089,7 +1090,7 @@ StartupNotify=true
                         file_path += '.json'
                     
                     # 保存导出的设置
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open_file(file_path, 'w', encoding='utf-8') as f:
                         json.dump(exported_settings, f, indent=4, ensure_ascii=False)
                     
                     # 显示成功消息
@@ -1249,7 +1250,7 @@ MimeType=x-scheme-handler/secrandom;
 StartupNotify=true
 """
             
-            with open(desktop_file, 'w', encoding='utf-8') as f:
+            with open_file(desktop_file, 'w', encoding='utf-8') as f:
                 f.write(desktop_content)
             
             # 设置.desktop文件权限
@@ -1269,7 +1270,7 @@ StartupNotify=true
 </mime-info>
 """
             
-            with open(mime_file, 'w', encoding='utf-8') as f:
+            with open_file(mime_file, 'w', encoding='utf-8') as f:
                 f.write(mime_content)
             
             # 更新桌面数据库
@@ -1332,13 +1333,13 @@ StartupNotify=true
             
             # 删除.desktop文件
             desktop_file = os.path.join(desktop_dir, "secrandom.desktop")
-            if os.path.exists(desktop_file):
+            if path_manager.file_exists(desktop_file):
                 os.remove(desktop_file)
                 logger.info("已删除 .desktop 文件")
             
             # 删除MIME类型定义
             mime_file = os.path.join(mime_dir, "packages", "secrandom.xml")
-            if os.path.exists(mime_file):
+            if path_manager.file_exists(mime_file):
                 os.remove(mime_file)
                 logger.info("已删除 MIME 类型定义文件")
             
@@ -1386,16 +1387,16 @@ StartupNotify=true
             
             # 检查.desktop文件是否存在
             desktop_file = os.path.join(desktop_dir, "secrandom.desktop")
-            if not os.path.exists(desktop_file):
+            if not path_manager.file_exists(desktop_file):
                 return False
             
             # 检查MIME类型定义是否存在
             mime_file = os.path.join(mime_dir, "packages", "secrandom.xml")
-            if not os.path.exists(mime_file):
+            if not path_manager.file_exists(mime_file):
                 return False
             
             # 检查.desktop文件内容是否正确
-            with open(desktop_file, 'r', encoding='utf-8') as f:
+            with open_file(desktop_file, 'r', encoding='utf-8') as f:
                 content = f.read()
                 if "MimeType=x-scheme-handler/secrandom" not in content:
                     return False
@@ -1509,7 +1510,7 @@ class SettingsSelectionDialog(QDialog):
         # 添加设置图标
         settings_icon = BodyLabel()
         icon_path = path_manager.get_resource_path('icon', 'SecRandom.png')
-        if os.path.exists(icon_path):
+        if path_manager.file_exists(icon_path):
             settings_icon.setPixmap(QIcon(icon_path).pixmap(20, 20))
         else:
             # 如果图标文件不存在，使用备用图标
@@ -1918,7 +1919,7 @@ class CleanupTimeDialog(QDialog):
 
         try:
             cleanup_file = path_manager.get_settings_path('CleanupTimes.json')
-            if os.path.exists(cleanup_file):
+            if path_manager.file_exists(cleanup_file):
                 with open_file(cleanup_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     

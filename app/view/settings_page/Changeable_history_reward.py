@@ -12,8 +12,7 @@ from app.common.config import cfg, AUTHOR, VERSION, YEAR
 from app.common.config import load_custom_font
 
 from app.common.Changeable_history_reward_settings import history_reward_SettinsCard
-from app.common.path_utils import path_manager
-from app.common.path_utils import open_file, ensure_dir
+from app.common.path_utils import path_manager, open_file, ensure_dir
 
 
 class RewardDataLoader(QThread):
@@ -77,7 +76,7 @@ class RewardDataLoader(QThread):
                     # 读取历史记录文件
                     history_file = path_manager.get_resource_path('reward', f'history/{prize_pools_name}.json')
 
-                    if os.path.exists(history_file):
+                    if path_manager.file_exists(history_file):
                         try:
                             with open_file(history_file, 'r', encoding='utf-8') as f:
                                 history_data = json.load(f)
@@ -165,7 +164,7 @@ class RewardDataLoader(QThread):
 
                 # 读取奖品发放历史
                 history_data = {}
-                if os.path.exists(history_file):
+                if path_manager.file_exists(history_file):
                     try:
                         with open_file(history_file, 'r', encoding='utf-8') as f:
                             history_data = json.load(f).get('pumping_reward', {})
@@ -220,7 +219,7 @@ class RewardDataLoader(QThread):
                     # 读取历史记录文件
                     history_file = path_manager.get_resource_path('reward/history', f'{prize_pools_name}.json')
 
-                    if os.path.exists(history_file):
+                    if path_manager.file_exists(history_file):
                         try:
                             with open_file(history_file, 'r', encoding='utf-8') as f:
                                 history_data = json.load(f)

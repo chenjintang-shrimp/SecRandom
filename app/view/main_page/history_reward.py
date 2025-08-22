@@ -11,6 +11,7 @@ from loguru import logger
 
 from app.common.config import cfg, AUTHOR, VERSION, YEAR
 from app.common.config import load_custom_font
+from app.common.path_utils import path_manager, open_file, remove_file
 
 from app.common.history_reward_settings import history_reward_SettinsCard
 
@@ -50,10 +51,10 @@ class RewardDataLoader(QThread):
         if _reward_name == '全部奖品':
             if prize_pools_name:
                 # 读取配置文件
-                reward_file = f'app/resource/reward/{prize_pools_name}.json'
+                reward_file = path_manager.get_resource_path('reward', f'{prize_pools_name}.json')
 
                 try:
-                    with open(reward_file, 'r', encoding='utf-8') as f:
+                    with open_file(reward_file, 'r', encoding='utf-8') as f:
                         data = json.load(f)
                         cleaned_data = []
                         for reward_name, reward_info in data.items():
@@ -68,11 +69,10 @@ class RewardDataLoader(QThread):
                     # 初始化历史数据字典
                     history_data = {}
                     # 读取历史记录文件
-                    history_file = f'app/resource/reward/history/{prize_pools_name}.json'
-
-                    if os.path.exists(history_file):
+                    history_file = path_manager.get_resource_path('reward', f'history/{prize_pools_name}.json')
+                    if remove_file(history_file):
                         try:
-                            with open(history_file, 'r', encoding='utf-8') as f:
+                            with open_file(history_file, 'r', encoding='utf-8') as f:
                                 history_data = json.load(f)
                         except json.JSONDecodeError:
                             history_data = {}
@@ -93,8 +93,9 @@ class RewardDataLoader(QThread):
                             max_digits['pumping_reward'] = max(max_digits['pumping_reward'], len(str(count)))
 
                     # 获取当前抽取模式
+                    settings_file = path_manager.get_settings_path()
                     try:
-                        with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                        with open_file(settings_file, 'r', encoding='utf-8') as f:
                             settings = json.load(f)
                             pumping_reward_draw_mode = settings['pumping_reward']['draw_mode']
                     except Exception as e:
@@ -131,13 +132,13 @@ class RewardDataLoader(QThread):
         elif _reward_name == '奖品记录_时间排序':
             if prize_pools_name:
                 # 奖品数据文件路径
-                reward_file = f'app/resource/reward/{prize_pools_name}.json'
-                history_file = f'app/resource/reward/history/{prize_pools_name}.json'
+                reward_file = path_manager.get_resource_path('reward', f'{prize_pools_name}.json')
+                history_file = path_manager.get_resource_path('reward', f'history/{prize_pools_name}.json')
                 
                 # 读取奖品配置
                 reward_data = {}
                 try:
-                    with open(reward_file, 'r', encoding='utf-8') as f:
+                    with open_file(reward_file, 'r', encoding='utf-8') as f:
                         reward_data = json.load(f)
                 except (FileNotFoundError, json.JSONDecodeError):
                     logger.error(f"奖品配置文件不存在或格式错误: {reward_file}")
@@ -145,9 +146,9 @@ class RewardDataLoader(QThread):
 
                 # 读取奖品发放历史
                 history_data = {}
-                if os.path.exists(history_file):
+                if remove_file(history_file):
                     try:
-                        with open(history_file, 'r', encoding='utf-8') as f:
+                        with open_file(history_file, 'r', encoding='utf-8') as f:
                             history_data = json.load(f).get('pumping_reward', {})
                     except json.JSONDecodeError:
                         logger.error(f"奖品历史记录格式错误: {history_file}")
@@ -197,11 +198,11 @@ class RewardDataLoader(QThread):
                     # 初始化历史数据字典
                     history_data = {}
                     # 读取历史记录文件
-                    history_file = f'app/resource/reward/history/{prize_pools_name}.json'
+                    history_file = path_manager.get_resource_path('reward', f'history/{prize_pools_name}.json')
 
-                    if os.path.exists(history_file):
+                    if remove_file(history_file):
                         try:
-                            with open(history_file, 'r', encoding='utf-8') as f:
+                            with open_file(history_file, 'r', encoding='utf-8') as f:
                                 history_data = json.load(f)
                         except json.JSONDecodeError:
                             history_data = {}
@@ -460,8 +461,9 @@ class history_reward(QFrame):
 
     def get_random_method_setting(self):
         """获取随机抽取方法的设置"""
+        settings_file = path_manager.get_settings_path()
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 random_method = settings['pumping_reward']['draw_pumping']
                 return random_method
