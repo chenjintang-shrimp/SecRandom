@@ -13,6 +13,7 @@ import threading
 from pathlib import Path
 
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, VERSION
+from app.common.path_utils import path_manager, open_file
 
 def show_update_notification(latest_version):
     """显示更新通知窗口"""
@@ -76,7 +77,8 @@ class UpdateNotification(QDialog):
 
         # 更新图标
         icon_label = QLabel()
-        icon_label.setPixmap(QIcon('./app/resource/icon/SecRandom.png').pixmap(55, 55))
+        icon_path = path_manager.get_resource_path('icon', 'SecRandom.png')
+        icon_label.setPixmap(QIcon(icon_path).pixmap(55, 55))
         icon_label.setStyleSheet("background: transparent; border: none;")
 
         # 标题文本
@@ -92,7 +94,8 @@ class UpdateNotification(QDialog):
 
         # 关闭按钮
         close_btn = PushButton("")
-        close_btn.setIcon(QIcon('./app/resource/assets/dark/ic_fluent_arrow_exit_20_filled_dark.svg'))
+        close_icon_path = path_manager.get_asset_path('dark', 'ic_fluent_arrow_exit_20_filled_dark', '.svg')
+        close_btn.setIcon(QIcon(close_icon_path))
         close_btn.setStyleSheet("background: transparent; border: none;")
         close_btn.clicked.connect(self.close_with_animation)
 
@@ -108,7 +111,7 @@ class UpdateNotification(QDialog):
 
         # 官网
         manual_update_btn = PushButton("     官网 下载更新")
-        manual_update_btn.setIcon(QIcon('./app/resource/icon/SecRandom.png'))
+        manual_update_btn.setIcon(QIcon(icon_path))
         manual_update_btn.setStyleSheet(""
             "QPushButton {background-color: #4a6cf7; color: white; border-radius: 8px; padding: 8px 16px; font-weight: 500; border: none;}"
             "QPushButton:hover {background-color: #3a5bdb;}"
@@ -181,10 +184,10 @@ class UpdateNotification(QDialog):
 
     def is_installer_package(self):
         """检查是否为安装包版本"""
-        marker_path = Path("app/Settings/installer_marker.json")
+        marker_path = path_manager.get_guide_complete_path('installer_marker.json')
         if marker_path.exists():
             try:
-                with open(marker_path, 'r', encoding='utf-8') as f:
+                with open_file(marker_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     return data.get('installer_package', False)
             except:

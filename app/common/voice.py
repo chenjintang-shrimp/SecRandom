@@ -18,6 +18,7 @@ import queue
 from loguru import logger
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
+from app.common.path_utils import path_manager, ensure_dir
 
 class VoicePlaybackSystem:
     """语音播报核心引擎"""
@@ -127,9 +128,9 @@ class VoicePlaybackSystem:
 class VoiceCacheManager:
     # 星野：智能语音缓存系统登场~ 💾
     
-    def __init__(self, cache_dir="app/cache/voices"):
-        self.cache_dir = cache_dir
-        os.makedirs(cache_dir, exist_ok=True)
+    def __init__(self, cache_dir=None):
+        self.cache_dir = cache_dir if cache_dir else path_manager.get_cache_path('voices')
+        ensure_dir(self.cache_dir)
         self._memory_cache = {}
         self._disk_cache_lock = threading.Lock()
     
@@ -274,14 +275,51 @@ class TTSHandler:
         self.playback_system = VoicePlaybackSystem()
         self.cache_manager = VoiceCacheManager()
         self.playback_system.start()
-        if sys.platform == 'win32' and sys.getwindowsversion().major >= 10 and platform.machine() != 'x86':
-            if not hasattr(QApplication.instance(), 'pumping_reward_voice_engine'):
-                QApplication.instance().pumping_reward_voice_engine = pyttsx3.init()
-                QApplication.instance().pumping_reward_voice_engine.startLoop(False)
-            self.voice_engine = QApplication.instance().pumping_reward_voice_engine
-        else:
-            logger.warning("语音功能仅在Windows 10及以上系统且非x86架构可用")
+        self.voice_engine = None
         self.system_tts_lock = threading.Lock()  # 星野：系统TTS线程锁，防止冲突~ 🔒
+        
+        # 跨平台TTS引擎初始化
+        self._init_tts_engine()
+    
+    def _init_tts_engine(self):
+        """跨平台TTS引擎初始化"""
+        try:
+            system = platform.system()
+            
+            if system == 'Windows':
+                # Windows平台支持检查
+                if sys.platform == 'win32' and sys.getwindowsversion().major >= 10 and platform.machine() != 'x86':
+                    if not hasattr(QApplication.instance(), 'pumping_reward_voice_engine'):
+                        QApplication.instance().pumping_reward_voice_engine = pyttsx3.init()
+                        QApplication.instance().pumping_reward_voice_engine.startLoop(False)
+                    self.voice_engine = QApplication.instance().pumping_reward_voice_engine
+                    logger.info("Windows系统TTS引擎初始化成功")
+                else:
+                    logger.warning("Windows系统TTS引擎需要Windows 10及以上系统且非x86架构")
+            
+            elif system == 'Linux':
+                # Linux平台TTS引擎初始化
+                try:
+                    # 检查espeak是否可用
+                    import subprocess
+                    result = subprocess.run(['which', 'espeak'], capture_output=True, text=True)
+                    if result.returncode == 0:
+                        if not hasattr(QApplication.instance(), 'pumping_reward_voice_engine'):
+                            QApplication.instance().pumping_reward_voice_engine = pyttsx3.init()
+                            QApplication.instance().pumping_reward_voice_engine.startLoop(False)
+                        self.voice_engine = QApplication.instance().pumping_reward_voice_engine
+                        logger.info("Linux系统TTS引擎初始化成功 (使用espeak)")
+                    else:
+                        logger.warning("Linux系统TTS引擎需要安装espeak: sudo apt-get install espeak")
+                except Exception as e:
+                    logger.error(f"Linux系统TTS引擎初始化失败: {e}")
+            
+            else:
+                logger.warning(f"不支持的操作系统: {system}，系统TTS功能不可用")
+                
+        except Exception as e:
+            logger.error(f"TTS引擎初始化失败: {e}")
+            self.voice_engine = None
     
     def voice_play(self, config, student_names, engine_type, voice_name):
         """主入口函数"""
@@ -304,24 +342,64 @@ class TTSHandler:
     
     def _handle_system_tts(self, student_names, config):
         """系统TTS处理"""
+        if self.voice_engine is None:
+            logger.warning("系统TTS引擎未初始化，跳过语音播报")
+            return
+            
         with self.system_tts_lock:
-            for name in student_names:
-                self.voice_engine.say(f"{name}")
-                self.voice_engine.iterate()
+            try:
+                # 配置TTS引擎参数
+                self.voice_engine.setProperty('volume', config['voice_volume'] / 100.0)
+                self.voice_engine.setProperty('rate', int(200 * (config['voice_speed'] / 100)))
+                
+                # 设置语音（Linux和Windows可能有不同的可用语音）
+                voices = self.voice_engine.getProperty('voices')
+                voice_found = False
+                for voice in voices:
+                    if config['system_voice_name'] in voice.id:
+                        self.voice_engine.setProperty('voice', voice.id)
+                        voice_found = True
+                        break
+                
+                if not voice_found and voices:
+                    # 如果找不到指定语音，使用第一个可用语音
+                    self.voice_engine.setProperty('voice', voices[0].id)
+                    logger.info(f"未找到语音'{config['system_voice_name']}'，使用默认语音")
+                
+                # 执行语音播报
+                for name in student_names:
+                    self.voice_engine.say(f"{name}")
+                    self.voice_engine.iterate()
+                    
+            except Exception as e:
+                logger.error(f"系统TTS处理失败: {e}")
     
     def _init_system_tts(self, config):
-        """初始化系统TTS引擎"""
-        engine = pyttsx3.init()
-        engine.setProperty('volume', config['voice_volume'] / 100.0)
-        engine.setProperty('rate', int(200 * (config['voice_speed'] / 100)))
-        
-        # 星野：语音模型设置时间~ 🔊
-        voices = engine.getProperty('voices')
-        for voice in voices:
-            if config['system_voice_name'] in voice.id:
-                engine.setProperty('voice', voice.id)
-                break
-        return engine
+        """初始化系统TTS引擎（跨平台支持）"""
+        try:
+            engine = pyttsx3.init()
+            engine.setProperty('volume', config['voice_volume'] / 100.0)
+            engine.setProperty('rate', int(200 * (config['voice_speed'] / 100)))
+            
+            # 星野：语音模型设置时间~ 🔊
+            voices = engine.getProperty('voices')
+            voice_found = False
+            for voice in voices:
+                if config['system_voice_name'] in voice.id:
+                    engine.setProperty('voice', voice.id)
+                    voice_found = True
+                    break
+            
+            if not voice_found and voices:
+                # 如果找不到指定语音，使用第一个可用语音
+                engine.setProperty('voice', voices[0].id)
+                logger.info(f"未找到语音'{config['system_voice_name']}'，使用默认语音")
+            
+            return engine
+            
+        except Exception as e:
+            logger.error(f"初始化系统TTS引擎失败: {e}")
+            return None
     
     def _handle_edge_tts(self, student_names, config, voice_name):
         # 白露：Edge TTS处理模块启动~ 🚀

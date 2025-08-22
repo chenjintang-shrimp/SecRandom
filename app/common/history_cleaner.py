@@ -1,8 +1,10 @@
 import os
 import json
 import datetime
+from pathlib import Path
 from loguru import logger
 from functools import lru_cache
+from app.common.path_utils import path_manager, open_file
 
 @lru_cache(maxsize=None)
 def _parse_time(time_str):
@@ -13,12 +15,14 @@ def _parse_time(time_str):
 
 def _clean_history(history_type, settings_key, retention_days_key, history_dir, record_keys, enabled_key):
     try:
-        settings_file = "app/Settings/Settings.json"
+        # 获取应用根目录并构建文件路径
+        app_dir = path_manager._app_root
+        settings_file = app_dir / 'app' / 'Settings' / 'Settings.json'
         if not os.path.exists(settings_file):
             logger.warning("设置文件不存在，无法清理历史记录")
             return
 
-        with open(settings_file, 'r', encoding='utf-8') as f:
+        with open_file(settings_file, 'r', encoding='utf-8') as f:
             settings = json.load(f)
             retention_days = settings.get(settings_key, {}).get(retention_days_key, 0)
             history_enabled = settings.get(settings_key, {}).get(enabled_key, True)
@@ -28,14 +32,16 @@ def _clean_history(history_type, settings_key, retention_days_key, history_dir, 
 
         cutoff_date = datetime.datetime.now() - datetime.timedelta(days=retention_days)
 
-        if not os.path.exists(history_dir):
+        # 构建历史记录目录的绝对路径
+        history_dir_abs = app_dir / history_dir
+        if not os.path.exists(history_dir_abs):
             return
 
-        for filename in os.listdir(history_dir):
+        for filename in os.listdir(history_dir_abs):
             if filename.endswith('.json'):
-                history_file = os.path.join(history_dir, filename)
+                history_file = history_dir_abs / filename
                 try:
-                    with open(history_file, 'r', encoding='utf-8') as f:
+                    with open_file(history_file, 'r', encoding='utf-8') as f:
                         history_data = json.load(f)
 
                     for record_key in record_keys:
@@ -59,7 +65,7 @@ def _clean_history(history_type, settings_key, retention_days_key, history_dir, 
                                 if not valid_records:
                                     del history_data[record_key][entry]
 
-                    with open(history_file, 'w', encoding='utf-8') as f:
+                    with open_file(history_file, 'w', encoding='utf-8') as f:
                         json.dump(history_data, f, ensure_ascii=False, indent=4)
 
                     logger.info(f"已清理{history_type}过期历史记录: {filename}")

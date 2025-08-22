@@ -4,16 +4,21 @@ from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtGui import *
 
 import os
+import json
+from pathlib import Path
 from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font
+from app.common.path_utils import path_manager, open_file
 
 class history_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTitle("历史记录")
         self.setBorderRadius(8)
-        self.settings_file = "app/Settings/Settings.json"
+        # 获取应用根目录并构建设置文件路径
+        app_dir = path_manager._app_root
+        self.settings_file = app_dir / 'app' / 'settings' / 'settings.json'
 
         # 刷新按钮
         self.refresh_button = PrimaryPushButton('刷新列表/记录')
@@ -49,7 +54,9 @@ class history_SettinsCard(GroupHeaderCardWidget):
 
     def refresh_class_list(self):
         try:
-            list_folder = "app/resource/list"
+            # 获取应用根目录并构建列表文件夹路径
+            app_dir = path_manager._app_root
+            list_folder = app_dir / 'app' / 'resource' / 'list'
             if os.path.exists(list_folder) and os.path.isdir(list_folder):
                 files = os.listdir(list_folder)
                 classes = []
@@ -66,10 +73,12 @@ class history_SettinsCard(GroupHeaderCardWidget):
     def load_students(self):
         class_name = self.class_comboBox.currentText()
         try:
-            student_file = f"app/resource/list/{class_name}.json"
+            # 获取应用根目录并构建学生文件路径
+            app_dir = path_manager._app_root
+            student_file = app_dir / 'app' / 'resource' / 'list' / f'{class_name}.json'
 
             if os.path.exists(student_file):
-                with open(student_file, 'r', encoding='utf-8') as f:
+                with open_file(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
                     for student_name, student_info in data.items():

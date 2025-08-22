@@ -1019,7 +1019,6 @@ class PluginManagementPage(GroupHeaderCardWidget):
         app_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         embedded_python_paths = [
             os.path.join(app_dir, "python", "python.exe"),
-            os.path.join(os.getcwd(), "python", "python.exe"),
             os.path.join(tempfile.gettempdir(), "secrandom_python", "python.exe")
         ]
         

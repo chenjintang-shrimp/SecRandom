@@ -4,16 +4,20 @@ from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtGui import *
 
 import os
+import json
 from loguru import logger
+from pathlib import Path
 
 from app.common.config import get_theme_icon, load_custom_font
+from app.common.path_utils import path_manager, open_file
 
 class history_reward_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTitle("历史记录")
         self.setBorderRadius(8)
-        self.settings_file = "app/Settings/Settings.json"
+        app_dir = path_manager._app_root
+        self.settings_file = str(app_dir / "app" / "Settings" / "Settings.json")
 
         # 刷新按钮
         self.refresh_button = PrimaryPushButton('刷新列表/记录')
@@ -49,13 +53,14 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
 
     def refresh_reward_list(self):
         try:
-            list_folder = "app/resource/reward"
-            if os.path.exists(list_folder) and os.path.isdir(list_folder):
-                files = os.listdir(list_folder)
+            app_dir = path_manager._app_root
+            list_folder = app_dir / "app" / "resource" / "reward"
+            if list_folder.exists() and list_folder.is_dir():
+                files = list_folder.iterdir()
                 classes = []
                 for file in files:
-                    if file.endswith('.json'):
-                        reward_name = os.path.splitext(file)[0]
+                    if file.suffix == '.json':
+                        reward_name = file.stem
                         classes.append(reward_name)
                 
                 self.prize_pools_comboBox.clear()
@@ -66,10 +71,11 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
     def load_students(self):
         reward_name = self.prize_pools_comboBox.currentText()
         try:
-            student_file = f"app/resource/reward/{reward_name}.json"
+            app_dir = path_manager._app_root
+            student_file = app_dir / "app" / "resource" / "reward" / f"{reward_name}.json"
 
-            if os.path.exists(student_file):
-                with open(student_file, 'r', encoding='utf-8') as f:
+            if student_file.exists():
+                with open_file(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
                     for student_name, student_info in data.items():

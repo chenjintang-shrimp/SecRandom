@@ -10,6 +10,8 @@ import glob
 from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font
+from app.common.path_utils import path_manager
+from app.common.path_utils import open_file, ensure_dir
 
 
 class PluginSettingsPage(GroupHeaderCardWidget):
@@ -17,8 +19,8 @@ class PluginSettingsPage(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("插件设置")
         self.setBorderRadius(8)
-        self.settings_file = "app/Settings/plugin_settings.json"
-        self.plugin_dir = "app/plugin"
+        self.settings_file = path_manager.get_settings_path("plugin_settings.json")
+        self.plugin_dir = path_manager.get_plugin_path("plugin")
         self.default_settings = {
             "run_plugins_on_startup": True,
             "fetch_plugin_list_on_startup": True,
@@ -80,7 +82,7 @@ class PluginSettingsPage(GroupHeaderCardWidget):
                 plugin_json_path = os.path.join(item_path, "plugin.json")
                 if os.path.exists(plugin_json_path):
                     try:
-                        with open(plugin_json_path, 'r', encoding='utf-8') as f:
+                        with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                             plugin_config = json.load(f)
                             plugin_name = plugin_config.get("name", item)
                     except Exception as e:
@@ -99,7 +101,7 @@ class PluginSettingsPage(GroupHeaderCardWidget):
     def load_settings(self):
         try:
             if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     plugin_settings_settings = settings.get("plugin_settings", {})
                     
@@ -131,7 +133,7 @@ class PluginSettingsPage(GroupHeaderCardWidget):
         # 先读取现有设置
         existing_settings = {}
         if os.path.exists(self.settings_file):
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)
                 except json.JSONDecodeError:
@@ -147,8 +149,8 @@ class PluginSettingsPage(GroupHeaderCardWidget):
         plugin_settings_settings["fetch_plugin_list_on_startup"] = self.fetch_plugin_list_on_startup_switch.isChecked()
         plugin_settings_settings["selected_plugin"] = self.plugin_combo_box.currentText()
 
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open(self.settings_file, 'w', encoding='utf-8') as f:
+        ensure_dir(os.path.dirname(self.settings_file))
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)
     
     def _on_plugin_selected(self):

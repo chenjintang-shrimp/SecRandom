@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import *
 
 import json
 import os
+from pathlib import Path
 from loguru import logger
 import hashlib
 import pyotp
@@ -16,6 +17,7 @@ import secrets
 import ctypes
 
 from app.common.config import get_theme_icon, load_custom_font
+from app.common.path_utils import path_manager, open_file
 
 def create_hidden_folder(path):
     """创建隐藏文件夹"""
@@ -30,7 +32,10 @@ def create_hidden_folder(path):
         logger.error(f"创建隐藏文件夹失败: {e}")
         return
 
-create_hidden_folder("app/SecRandom")
+# 获取应用根目录并构建SecRandom文件夹路径
+app_dir = path_manager._app_root
+secrandom_dir = app_dir / 'app' / 'SecRandom'
+create_hidden_folder(secrandom_dir)
 
 def generate_qr_code(secret, username):
     """生成二维码"""
@@ -204,7 +209,7 @@ class SimpleTwoFactorAuthDialog(MessageBoxBase):
         code = self.codeLineEdit.text()
         
         # 从设置文件中获取2FA密钥
-        settings_file = "app/SecRandom/enc_set.json"
+        settings_file = secrandom_dir / "enc_set.json"
         if os.path.exists(settings_file):
             with open(settings_file, 'r', encoding='utf-8') as f:
                 try:
@@ -293,7 +298,7 @@ class PasswordDialog(MessageBoxBase):
     def validate(self):
         """ 验证密码 """
         # 从设置文件中获取密码
-        settings_file = "app/SecRandom/enc_set.json"
+        settings_file = secrandom_dir / "enc_set.json"
         if os.path.exists(settings_file):
             with open(settings_file, 'r', encoding='utf-8') as f:
                 try:
@@ -316,8 +321,8 @@ class password_SettingsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("密码设置")
         self.setBorderRadius(8)
-        self.settings_file = "app/SecRandom/enc_set.json"
-        self.secret_dir = "app/SecRandom"
+        self.settings_file = secrandom_dir / "enc_set.json"
+        self.secret_dir = secrandom_dir
         self.default_settings = {
             "start_password_enabled": False,
             "encrypt_setting_enabled": False,
@@ -439,7 +444,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
             return False
 
         try:
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 hashed_set = settings.get("hashed_set", {})
                 if hashed_set.get("verification_start") == True:
@@ -554,7 +559,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
             return
 
         try:
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 hashed_set = settings.get("hashed_set", {})
                 if hashed_set.get("verification_start") == True:
@@ -616,7 +621,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
         existing_settings = {}
         if os.path.exists(self.settings_file):
             try:
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     existing_settings = json.load(f)
             except json.JSONDecodeError:
                 existing_settings = {}
@@ -801,7 +806,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
                 existing_settings["hashed_set"] = {}
             existing_settings["hashed_set"]["encrypted_username"] = hashed_username
 
-            with open(self.settings_file, 'w', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'w', encoding='utf-8') as f:
                 json.dump(existing_settings, f, indent=4)
 
             # 生成密钥但暂不保存，等待用户验证成功后再保存
@@ -816,14 +821,14 @@ class password_SettingsCard(GroupHeaderCardWidget):
                 if dialog.exec():
                     # 用户验证成功，才保存密钥到设置文件
                     try:
-                        with open(self.settings_file, 'r', encoding='utf-8') as f:
+                        with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                             existing_settings = json.load(f)
                         
                         if "hashed_set" not in existing_settings:
                             existing_settings["hashed_set"] = {}
                         existing_settings["hashed_set"]["2fa_secret"] = self.secret
 
-                        with open(self.settings_file, 'w', encoding='utf-8') as f:
+                        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
                             json.dump(existing_settings, f, indent=4)
                             
                         self.show_info_bar('success', '成功', '2FA设置成功', 3000, self)
@@ -898,7 +903,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
 
     def _save_key_file(self, path, hashed_password):
         try:
-            with open(path, 'w') as f:
+            with open_file(path, 'w') as f:
                 f.write(hashed_password)
         except Exception as e:
             self.show_info_bar('error', '错误', f"密钥导出失败: {str(e)}", 3000, self)
@@ -906,7 +911,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
     def load_settings(self):
         try:
             if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     hashed_set_settings = settings.get("hashed_set", {})
 
@@ -951,7 +956,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
         _existing_settings = {}
         try:
             if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     _existing_settings = json.load(f)
         except json.JSONDecodeError:
             _existing_settings = {}
@@ -974,5 +979,5 @@ class password_SettingsCard(GroupHeaderCardWidget):
 
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
 
-        with open(self.settings_file, 'w', encoding='utf-8') as f:
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(_existing_settings, f, indent=4)

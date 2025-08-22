@@ -8,11 +8,22 @@ import json
 import os
 import sys
 import platform
-import winreg
+from pathlib import Path
 from datetime import datetime
 from loguru import logger
 
+# 平台特定导入
+if platform.system() == "Windows":
+    import winreg
+else:
+    # Linux平台使用subprocess处理注册表相关操作
+    import subprocess
+    import shutil
+    import stat
+
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
+from app.common.path_utils import path_manager
+from app.common.path_utils import open_file, ensure_dir
 
 is_dark = is_dark_theme(qconfig)
 
@@ -21,7 +32,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("基础设置")
         self.setBorderRadius(8)
-        self.settings_file = "app/Settings/Settings.json"
+        self.settings_file = path_manager.get_settings_path('Settings.json')
         self.default_settings = {
             "check_on_startup": True,
             "self_starting_enabled": False,
@@ -193,6 +204,23 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.load_settings()
         self.save_settings()
 
+    def open_folder(self, path):
+            """跨平台打开文件夹的方法"""
+            import subprocess
+            
+            try:
+                system = platform.system()
+                if system == 'Windows':
+                    os.startfile(path)
+                elif system == 'Darwin':  # macOS
+                    subprocess.run(['open', path], check=True)
+                elif system == 'Linux':
+                    subprocess.run(['xdg-open', path], check=True)
+                else:
+                    logger.warning(f"不支持的操作系统: {system}")
+            except Exception as e:
+                logger.error(f"打开文件夹失败: {e}")
+
     def on_pumping_floating_switch_changed(self, checked):
         self.save_settings()
 
@@ -233,47 +261,92 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         try:
             # 读取设置文件
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            from app.common.path_utils import path_manager
+            settings_file = path_manager.get_settings_path('Settings.json')
+            with open(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
                 self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
 
-                # 处理启动文件夹操作
-                if platform.system() != 'Windows':
-                    self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
-                    logger.error("仅支持Windows系统")
-                    return
+                # 处理不同平台的启动文件夹操作
+                if platform.system() == 'Windows':
+                    # Windows系统：使用启动文件夹快捷方式
+                    startup_folder = os.path.join(
+                        os.getenv('APPDATA'),
+                        r'Microsoft\Windows\Start Menu\Programs\Startup'
+                    )
+                    shortcut_path = os.path.join(startup_folder, 'SecRandom.lnk')
 
-                # 获取启动文件夹路径
-                startup_folder = os.path.join(
-                    os.getenv('APPDATA'),
-                    r'Microsoft\Windows\Start Menu\Programs\Startup'
-                )
-                shortcut_path = os.path.join(startup_folder, 'SecRandom.lnk')
+                    if self_starting_enabled:
+                        try:
+                            # 创建快捷方式
+                            import winshell
+                            from win32com.client import Dispatch
 
-                if self_starting_enabled:
-                    try:
-                        # 创建快捷方式
-                        import winshell
-                        from win32com.client import Dispatch
+                            shell = Dispatch('WScript.Shell')
+                            shortcut = shell.CreateShortCut(shortcut_path)
+                            shortcut.Targetpath = executable
+                            shortcut.WorkingDirectory = os.path.dirname(executable)
+                            shortcut.save()
+                            logger.success("开机自启动设置成功")
+                        except Exception as e:
+                            logger.error(f"创建快捷方式失败: {e}")
+                    else:
+                        try:
+                            if os.path.exists(shortcut_path):
+                                os.remove(shortcut_path)
+                                logger.success("开机自启动取消成功")
+                            else:
+                                logger.info("开机自启动项不存在，无需取消")
+                        except Exception as e:
+                            logger.error(f"删除快捷方式失败: {e}")
+                            
+                elif platform.system() == 'Linux':
+                    # Linux系统：使用~/.config/autostart/目录下的.desktop文件
+                    home_dir = os.path.expanduser('~')
+                    autostart_dir = os.path.join(home_dir, '.config', 'autostart')
+                    desktop_file_path = os.path.join(autostart_dir, 'SecRandom.desktop')
 
-                        shell = Dispatch('WScript.Shell')
-                        shortcut = shell.CreateShortCut(shortcut_path)
-                        shortcut.Targetpath = executable
-                        shortcut.WorkingDirectory = os.path.dirname(executable)
-                        shortcut.save()
-                        logger.success("开机自启动设置成功")
-                    except Exception as e:
-                        logger.error(f"创建快捷方式失败: {e}")
+                    if self_starting_enabled:
+                        try:
+                            # 确保autostart目录存在
+                            os.makedirs(autostart_dir, exist_ok=True)
+                            
+                            # 创建.desktop文件内容
+                            desktop_content = f"""[Desktop Entry]
+Type=Application
+Name=SecRandom
+Comment=SecRandom Application
+Exec={executable}
+Icon={os.path.join(os.path.dirname(executable), 'app', 'resources', 'icon.png')}
+Terminal=false
+Categories=Utility;
+StartupNotify=true
+"""
+                            
+                            # 写入.desktop文件
+                            with open(desktop_file_path, 'w', encoding='utf-8') as f:
+                                f.write(desktop_content)
+                            
+                            # 设置文件权限为可执行
+                            os.chmod(desktop_file_path, 0o644)
+                            logger.success("Linux开机自启动设置成功")
+                        except Exception as e:
+                            logger.error(f"创建.desktop文件失败: {e}")
+                    else:
+                        try:
+                            if os.path.exists(desktop_file_path):
+                                os.remove(desktop_file_path)
+                                logger.success("Linux开机自启动取消成功")
+                            else:
+                                logger.info("Linux开机自启动项不存在，无需取消")
+                        except Exception as e:
+                            logger.error(f"删除.desktop文件失败: {e}")
                 else:
-                    try:
-                        if os.path.exists(shortcut_path):
-                            os.remove(shortcut_path)
-                            logger.success("开机自启动取消成功")
-                        else:
-                            logger.info("开机自启动项不存在，无需取消")
-                    except Exception as e:
-                        logger.error(f"删除快捷方式失败: {e}")
+                    # 不支持的系统
+                    self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
+                    logger.error(f"不支持的操作系统: {platform.system()}")
+                    return
 
         except json.JSONDecodeError as e:
             logger.error(f"设置文件格式错误: {e}")
@@ -347,7 +420,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.main_window_comboBox.setCurrentIndex(main_window_mode)
                     self.settings_window_comboBox.setCurrentIndex(settings_window_mode)
                     self.check_on_startup.setChecked(check_on_startup)
-                    self.left_pumping_floating_switch.setChecked(pumping_floating_visible)
+                    self.left_pumping_floating_switch.setCurrentIndex(pumping_floating_visible)
                     self.topmost_switch.setChecked(topmost_switch)
                     self.url_protocol_switch.setChecked(url_protocol_enabled)
                     self.show_settings_icon_switch.setChecked(show_settings_icon)
@@ -363,7 +436,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.main_window_comboBox.setCurrentIndex(self.default_settings["main_window_mode"])
                 self.settings_window_comboBox.setCurrentIndex(self.default_settings["settings_window_mode"])
                 self.check_on_startup.setChecked(self.default_settings["check_on_startup"])
-                self.left_pumping_floating_switch.setChecked(self.default_settings["pumping_floating_visible"])
+                self.left_pumping_floating_switch.setCurrentIndex(self.default_settings["pumping_floating_visible"])
                 self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
                 self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
                 self.show_settings_icon_switch.setChecked(self.default_settings["show_settings_icon"])
@@ -380,7 +453,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.main_window_comboBox.setCurrentIndex(self.default_settings["main_window_mode"])
             self.settings_window_comboBox.setCurrentIndex(self.default_settings["settings_window_mode"])
             self.check_on_startup.setChecked(self.default_settings["check_on_startup"])
-            self.left_pumping_floating_switch.setChecked(self.default_settings["pumping_floating_visible"])
+            self.left_pumping_floating_switch.setCurrentIndex(self.default_settings["pumping_floating_visible"])
             self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
             self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
             self.show_settings_icon_switch.setChecked(self.default_settings["show_settings_icon"])
@@ -412,7 +485,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings["main_window_mode"] = self.main_window_comboBox.currentIndex()
         foundation_settings["settings_window_mode"] = self.settings_window_comboBox.currentIndex()
         foundation_settings["check_on_startup"] = self.check_on_startup.isChecked()
-        foundation_settings["pumping_floating_visible"] = self.left_pumping_floating_switch.isChecked()
+        foundation_settings["pumping_floating_visible"] = self.left_pumping_floating_switch.currentIndex()
         foundation_settings["topmost_switch"] = self.topmost_switch.isChecked()
         foundation_settings["url_protocol_enabled"] = self.url_protocol_switch.isChecked()
         foundation_settings["show_settings_icon"] = self.show_settings_icon_switch.isChecked()
@@ -427,11 +500,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             cleanup_times = dialog.getText()
             try:
                 # 确保Settings目录存在
-                os.makedirs(os.path.dirname('app/Settings/CleanupTimes.json'), exist_ok=True)
+                from app.common.path_utils import path_manager
+                cleanup_times_file = path_manager.get_settings_path('CleanupTimes.json')
+                os.makedirs(os.path.dirname(cleanup_times_file), exist_ok=True)
                 
                 settings = {}
-                if os.path.exists('app/Settings/CleanupTimes.json'):
-                    with open('app/Settings/CleanupTimes.json', 'r', encoding='utf-8') as f:
+                if os.path.exists(cleanup_times_file):
+                    with open(cleanup_times_file, 'r', encoding='utf-8') as f:
                         settings = json.load(f)
                 
                 # 处理多个时间输入
@@ -486,7 +561,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 for idx, time_str in enumerate(valid_times, 1):
                     settings.setdefault('foundation', {})[str(idx)] = time_str
                 
-                with open('app/Settings/CleanupTimes.json', 'w', encoding='utf-8') as f:
+                with open(cleanup_times_file, 'w', encoding='utf-8') as f:
                     json.dump(settings, f, ensure_ascii=False, indent=4)
                     logger.info(f"成功保存{len(time_list)}个定时清理时间设置")
                     InfoBar.success(
@@ -513,8 +588,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
     def check_cleanup_time(self):
         try:
             current_time = QTime.currentTime().toString("HH:mm:ss")
-            if os.path.exists('app/Settings/CleanupTimes.json'):
-                with open('app/Settings/CleanupTimes.json', 'r', encoding='utf-8') as f:
+            from app.common.path_utils import path_manager
+            cleanup_times_file = path_manager.get_settings_path('CleanupTimes.json')
+            if os.path.exists(cleanup_times_file):
+                with open(cleanup_times_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     # 检查所有设置的时间
                     foundation_times = settings.get('foundation', {})
@@ -536,13 +613,12 @@ class foundation_settingsCard(GroupHeaderCardWidget):
     
     def cleanup_temp_files(self):
         try:
-            temp_dir = "app/resource/Temp"
-            if os.path.exists(temp_dir):
-                for filename in os.listdir(temp_dir):
-                    if filename.endswith(".json"):
-                        file_path = os.path.join(temp_dir, filename)
-                        os.remove(file_path)
-                        logger.info(f"已清理文件: {file_path}")
+            temp_dir = path_manager.get_resource_path('Temp')
+            if temp_dir.exists():
+                for filename in temp_dir.iterdir():
+                    if filename.suffix == ".json":
+                        filename.unlink()
+                        logger.info(f"已清理文件: {filename}")
         except Exception as e:
             logger.error(f"清理TEMP文件夹时出错: {str(e)}")
 
@@ -590,7 +666,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             pass
 
         try:
-            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+            from app.common.path_utils import path_manager
+            enc_set_file = path_manager.get_plugin_path('SecRandom', 'enc_set.json')
+            with open(enc_set_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 logger.debug("正在读取安全设置，准备执行导出诊断数据验证～ ")
 
@@ -620,34 +698,34 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             
             # 需要导出的文件夹列表
             export_folders = [
-                "app/resource/list", 
-                "app/resource/reward",
-                "app/resource/history",
-                "app/resource/settings",
-                "app/plugin",
-                "logs"
+                path_manager.get_resource_path('list'), 
+                path_manager.get_resource_path('reward'),
+                path_manager.get_resource_path('history'),
+                path_manager.get_resource_path('settings'),
+                path_manager.get_plugin_path('plugin'),
+                path_manager.get_plugin_path('logs')
             ]
             
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 exported_count = 0
                 
                 for folder_path in export_folders:
-                    full_path = os.path.join(os.getcwd(), folder_path)
-                    if os.path.exists(full_path):
-                        for root, dirs, files in os.walk(full_path):
+                    if folder_path.exists():
+                        for root, dirs, files in os.walk(folder_path):
                             for file in files:
-                                file_path = os.path.join(root, file)
-                                arcname = os.path.relpath(file_path, os.getcwd())
+                                file_path = Path(root) / file
+                                arcname = str(file_path.relative_to(app_dir))
                                 zipf.write(file_path, arcname)
                                 exported_count += 1
                     else:
                         # 如果文件夹不存在，创建一个结构化的缺失记录
+                        relative_path = str(folder_path.relative_to(app_dir))
                         missing_info = {
-                            "folder": folder_path,
+                            "folder": relative_path,
                             "status": "missing",
                             "note": "该文件夹在导出时不存在"
                         }
-                        zipf.writestr(f"_missing_{folder_path.replace('/', '_')}.json", 
+                        zipf.writestr(f"_missing_{relative_path.replace('/', '_')}.json", 
                                     json.dumps(missing_info, ensure_ascii=False, indent=2))
                 
                 # 创建结构化的系统信息报告 - 使用JSON格式便于程序解析
@@ -662,7 +740,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     },
                     # 【系统环境信息】详细的运行环境数据
                     "system_info": {
-                        "software_path": os.getcwd(),                                           # 软件安装路径
+                        "software_path": str(app_dir),                                           # 软件安装路径
                         "operating_system": f"{platform.system()} {platform.release()}",        # 操作系统版本
                         "platform_details": {                                                   # 平台详细信息
                             "system": platform.system(),                                        # 系统类型 (Windows/Linux/Darwin)
@@ -712,7 +790,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 
                 if msg_box.exec():
                     # 用户选择打开文件夹
-                    os.startfile(os.path.dirname(zip_path))
+                    self.open_folder(os.path.dirname(zip_path))
                     logger.info("用户选择打开诊断数据导出文件夹")
                 else:
                     # 用户选择不打开
@@ -722,10 +800,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 # 如果消息框创建失败，回退到简单的提示
                 logger.error(f"创建消息框失败: {str(e)}")
                 try:
-                    os.startfile(os.path.dirname(zip_path))
+                    self.open_folder(os.path.dirname(zip_path))
                 except:
                     logger.error("无法打开诊断数据导出文件夹")
-                    os.startfile(desktop_path)
+                    self.open_folder(desktop_path)
             except:
                 pass
                 
@@ -765,7 +843,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 selected_settings = dialog.get_selected_settings()
                 
                 # 获取设置目录路径
-                settings_dir = "./app/Settings"
+                from app.common.path_utils import path_manager
+                settings_dir = path_manager.get_settings_path()
                 
                 # 应用选中的设置
                 for file_name, subcategories in selected_settings.items():
@@ -860,7 +939,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 selected_settings = dialog.get_selected_settings()
                 
                 # 获取设置目录路径
-                settings_dir = "./app/Settings"
+                from app.common.path_utils import path_manager
+                settings_dir = path_manager.get_settings_path()
                 
                 # 收集选中的设置
                 exported_settings = {}
@@ -1106,62 +1186,224 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 logger.error("无法获取可执行文件路径")
                 return False
             
-            # 构建命令行参数，包含URL处理
-            command = f'"{executable}" --url="%1"'
-            
-            # 注册URL协议到注册表
-            protocol_key = "secrandom"
-            
-            # 创建协议主键
-            with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
-                winreg.SetValue(key, None, winreg.REG_SZ, "URL:SecRandom Protocol")
-                winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
-            
-            # 创建默认图标
-            with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon") as key:
-                winreg.SetValue(key, None, winreg.REG_SZ, executable)
-            
-            # 创建shell\open\command
-            with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command") as key:
-                winreg.SetValue(key, None, winreg.REG_SZ, command)
-            
-            logger.info(f"URL协议注册成功: {protocol_key}")
-            return True
+            if platform.system() == "Windows":
+                # Windows平台使用注册表
+                # 构建命令行参数，包含URL处理
+                command = f'"{executable}" --url="%1"'
+                
+                # 注册URL协议到注册表
+                protocol_key = "secrandom"
+                
+                # 创建协议主键
+                with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
+                    winreg.SetValue(key, None, winreg.REG_SZ, "URL:SecRandom Protocol")
+                    winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
+                
+                # 创建默认图标
+                with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon") as key:
+                    winreg.SetValue(key, None, winreg.REG_SZ, executable)
+                
+                # 创建shell\open\command
+                with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command") as key:
+                    winreg.SetValue(key, None, winreg.REG_SZ, command)
+                
+                logger.info(f"URL协议注册成功: {protocol_key}")
+                return True
+                
+            else:
+                # Linux平台使用.desktop文件和MIME类型
+                return self._register_linux_url_protocol(executable)
             
         except Exception as e:
             logger.error(f"注册URL协议失败: {str(e)}")
             return False
     
+    def _register_linux_url_protocol(self, executable):
+        """在Linux上注册URL协议"""
+        try:
+            import os
+            import subprocess
+            import stat
+            
+            # 获取用户主目录
+            home_dir = os.path.expanduser("~")
+            desktop_dir = os.path.join(home_dir, ".local", "share", "applications")
+            mime_dir = os.path.join(home_dir, ".local", "share", "mime")
+            
+            # 创建必要的目录
+            os.makedirs(desktop_dir, exist_ok=True)
+            os.makedirs(mime_dir, exist_ok=True)
+            
+            # 创建.desktop文件
+            desktop_file = os.path.join(desktop_dir, "secrandom.desktop")
+            desktop_content = f"""[Desktop Entry]
+Version=1.0
+Type=Application
+Name=SecRandom
+Comment=Secure Random Number Generator
+Exec={executable} --url=%u
+Icon=secrandom
+Terminal=false
+Categories=Utility;
+MimeType=x-scheme-handler/secrandom;
+StartupNotify=true
+"""
+            
+            with open(desktop_file, 'w', encoding='utf-8') as f:
+                f.write(desktop_content)
+            
+            # 设置.desktop文件权限
+            os.chmod(desktop_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+            
+            # 创建MIME类型定义
+            mime_packages_dir = os.path.join(mime_dir, "packages")
+            os.makedirs(mime_packages_dir, exist_ok=True)
+            
+            mime_file = os.path.join(mime_packages_dir, "secrandom.xml")
+            mime_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="x-scheme-handler/secrandom">
+    <comment>SecRandom URL Protocol</comment>
+    <glob pattern="secrandom:*"/>
+  </mime-type>
+</mime-info>
+"""
+            
+            with open(mime_file, 'w', encoding='utf-8') as f:
+                f.write(mime_content)
+            
+            # 更新桌面数据库
+            try:
+                subprocess.run(["update-desktop-database", desktop_dir], check=True, capture_output=True)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                logger.warning("update-desktop-database 命令未找到或执行失败")
+            
+            # 更新MIME数据库
+            try:
+                subprocess.run(["update-mime-database", mime_dir], check=True, capture_output=True)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                logger.warning("update-mime-database 命令未找到或执行失败")
+            
+            logger.info("Linux URL协议注册成功")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Linux URL协议注册失败: {str(e)}")
+            return False
+    
     def unregister_url_protocol(self):
         """注销SecRandom URL协议"""
         try:
-            protocol_key = "secrandom"
-            
-            # 删除注册表项
-            try:
-                winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command")
-                winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open")
-                winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell")
-                winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon")
-                winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, protocol_key)
-            except WindowsError:
-                # 如果键不存在，忽略错误
-                pass
-            
-            logger.info(f"URL协议注销成功: {protocol_key}")
-            return True
+            if platform.system() == "Windows":
+                protocol_key = "secrandom"
+                
+                # 删除注册表项
+                try:
+                    winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command")
+                    winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open")
+                    winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell")
+                    winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon")
+                    winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, protocol_key)
+                except Exception:
+                    # 如果键不存在，忽略错误
+                    pass
+                
+                logger.info(f"URL协议注销成功: {protocol_key}")
+                return True
+                
+            else:
+                # Linux平台删除.desktop文件和MIME类型定义
+                return self._unregister_linux_url_protocol()
             
         except Exception as e:
             logger.error(f"注销URL协议失败: {str(e)}")
             return False
     
+    def _unregister_linux_url_protocol(self):
+        """在Linux上注销URL协议"""
+        try:
+            import os
+            import subprocess
+            
+            # 获取用户主目录
+            home_dir = os.path.expanduser("~")
+            desktop_dir = os.path.join(home_dir, ".local", "share", "applications")
+            mime_dir = os.path.join(home_dir, ".local", "share", "mime")
+            
+            # 删除.desktop文件
+            desktop_file = os.path.join(desktop_dir, "secrandom.desktop")
+            if os.path.exists(desktop_file):
+                os.remove(desktop_file)
+                logger.info("已删除 .desktop 文件")
+            
+            # 删除MIME类型定义
+            mime_file = os.path.join(mime_dir, "packages", "secrandom.xml")
+            if os.path.exists(mime_file):
+                os.remove(mime_file)
+                logger.info("已删除 MIME 类型定义文件")
+            
+            # 更新桌面数据库
+            try:
+                subprocess.run(["update-desktop-database", desktop_dir], check=True, capture_output=True)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                logger.warning("update-desktop-database 命令未找到或执行失败")
+            
+            # 更新MIME数据库
+            try:
+                subprocess.run(["update-mime-database", mime_dir], check=True, capture_output=True)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                logger.warning("update-mime-database 命令未找到或执行失败")
+            
+            logger.info("Linux URL协议注销成功")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Linux URL协议注销失败: {str(e)}")
+            return False
+    
     def is_url_protocol_registered(self):
         """检查URL协议是否已注册"""
         try:
-            protocol_key = "secrandom"
-            with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
-                return True
-        except WindowsError:
+            if platform.system() == "Windows":
+                protocol_key = "secrandom"
+                with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
+                    return True
+            else:
+                # Linux平台检查.desktop文件和MIME类型定义
+                return self._is_linux_url_protocol_registered()
+        except Exception:
+            return False
+    
+    def _is_linux_url_protocol_registered(self):
+        """在Linux上检查URL协议是否已注册"""
+        try:
+            import os
+            
+            # 获取用户主目录
+            home_dir = os.path.expanduser("~")
+            desktop_dir = os.path.join(home_dir, ".local", "share", "applications")
+            mime_dir = os.path.join(home_dir, ".local", "share", "mime")
+            
+            # 检查.desktop文件是否存在
+            desktop_file = os.path.join(desktop_dir, "secrandom.desktop")
+            if not os.path.exists(desktop_file):
+                return False
+            
+            # 检查MIME类型定义是否存在
+            mime_file = os.path.join(mime_dir, "packages", "secrandom.xml")
+            if not os.path.exists(mime_file):
+                return False
+            
+            # 检查.desktop文件内容是否正确
+            with open(desktop_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+                if "MimeType=x-scheme-handler/secrandom" not in content:
+                    return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"检查Linux URL协议注册状态失败: {str(e)}")
             return False
     
     def handle_url_command(self, url):
@@ -1266,7 +1508,7 @@ class SettingsSelectionDialog(QDialog):
         
         # 添加设置图标
         settings_icon = BodyLabel()
-        icon_path = "./app/resource/icon/SecRandom.png"
+        icon_path = path_manager.get_resource_path('icon', 'SecRandom.png')
         if os.path.exists(icon_path):
             settings_icon.setPixmap(QIcon(icon_path).pixmap(20, 20))
         else:
@@ -1488,7 +1730,7 @@ class SettingsSelectionDialog(QDialog):
             "main_window_focus_time": "焦点检测时间", # 有
             "main_window_mode": "主窗口位置", # 有
             "settings_window_mode": "设置窗口位置", # 有
-            "pumping_floating_visible": "浮窗样式", # 有
+            "pumping_floating_visible": "浮窗", # 有
             "topmost_switch": "主窗口置顶", # 有
             "window_width": "主窗口宽度", # 有
             "window_height": "主窗口高度", # 有
@@ -1675,8 +1917,9 @@ class CleanupTimeDialog(QDialog):
         self.setFont(QFont(load_custom_font(), 12))
 
         try:
-            if os.path.exists('app/Settings/CleanupTimes.json'):
-                with open('app/Settings/CleanupTimes.json', 'r', encoding='utf-8') as f:
+            cleanup_file = path_manager.get_settings_path('CleanupTimes.json')
+            if os.path.exists(cleanup_file):
+                with open_file(cleanup_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     
                     # 获取所有清理时间并格式化为字符串

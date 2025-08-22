@@ -5,16 +5,23 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 import os
+import json
+from pathlib import Path
 from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font
+from app.common.path_utils import path_manager, open_file, ensure_dir
 
 class history_reward_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTitle("历史记录")
         self.setBorderRadius(8)
-        self.settings_file = "app/Settings/Settings.json"
+        
+        # 获取应用根目录并构建设置文件路径
+        app_dir = path_manager._app_root
+        self.settings_file = app_dir / 'app' / 'Settings' / 'Settings.json'
+        
         self.default_settings = {
             "reward_history_enabled": True,
             "history_reward_days": 0
@@ -82,13 +89,16 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
 
     def refresh_reward_list(self):
         try:
-            list_folder = "app/resource/reward"
-            if os.path.exists(list_folder) and os.path.isdir(list_folder):
-                files = os.listdir(list_folder)
+            # 获取应用根目录并构建奖池文件夹路径
+            app_dir = path_manager._app_root
+            list_folder = app_dir / 'app' / 'resource' / 'reward'
+            
+            if list_folder.exists() and list_folder.is_dir():
+                files = list(list_folder.iterdir())
                 classes = []
                 for file in files:
-                    if file.endswith('.json'):
-                        reward_name = os.path.splitext(file)[0]
+                    if file.suffix == '.json':
+                        reward_name = file.stem
                         classes.append(reward_name)
                 
                 self.prize_pools_comboBox.clear()
@@ -101,10 +111,12 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
     def load_students(self):
         reward_name = self.prize_pools_comboBox.currentText()
         try:
-            student_file = f"app/resource/reward/{reward_name}.json"
+            # 获取应用根目录并构建学生文件路径
+            app_dir = path_manager._app_root
+            student_file = app_dir / 'app' / 'resource' / 'reward' / f'{reward_name}.json'
 
-            if os.path.exists(student_file):
-                with open(student_file, 'r', encoding='utf-8') as f:
+            if student_file.exists():
+                with open_file(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
                     for student_name, student_info in data.items():
@@ -126,8 +138,12 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
     def clear_history(self):
         reward_name = self.prize_pools_comboBox.currentText()
         try:
-            if os.path.exists(f"app/resource/reward/history/{reward_name}.json"):
-                os.remove(f"app/resource/reward/history/{reward_name}.json")
+            # 获取应用根目录并构建历史记录文件路径
+            app_dir = path_manager._app_root
+            history_file = app_dir / 'app' / 'resource' / 'reward' / 'history' / f'{reward_name}.json'
+            
+            if history_file.exists():
+                history_file.unlink()
                 logger.info("历史记录已清除！")
                 InfoBar.success(
                     title='清除成功',
@@ -163,8 +179,8 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+            if self.settings_file.exists():
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     history_settings = settings.get("history", {})
                         
@@ -187,8 +203,8 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
     def save_settings(self):
         # 先读取现有设置
         existing_settings = {}
-        if os.path.exists(self.settings_file):
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+        if self.settings_file.exists():
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)
                 except json.JSONDecodeError:
@@ -199,8 +215,23 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
             
         history_settings = existing_settings["history"]
         history_settings["reward_history_enabled"] = self.history_switch.isChecked()
-        history_settings["history_reward_days"] = self.history_reward_spinBox.value()
+        history_settings["history_days"] = self.history_reward_spinBox.value()
         
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+        # 确保设置目录存在
+        ensure_dir(Path(self.settings_file).parent)
+        
+        try:
+            with open_file(self.settings_file, 'w', encoding='utf-8') as f:
+                json.dump(existing_settings, f, ensure_ascii=False, indent=4)
+            logger.info("白露魔法: 保存了抽奖历史记录设置哦～ ✧*｡٩(ˊᗜˋ*)و✧*｡")
+        except Exception as e:
+            logger.error(f"保存设置时出错: {e}")
+            InfoBar.error(
+                title='错误',
+                content=f"保存设置时出错: {e}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                duration=3000,
+                position=InfoBarPosition.TOP,
+                parent=self
+            )

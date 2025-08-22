@@ -14,6 +14,8 @@ from loguru import logger
 
 # 🏰 应用内部魔法卷轴 🏰
 from app.common.config import get_theme_icon, load_custom_font, VERSION
+from app.common.path_utils import path_manager
+from app.common.path_utils import open_file, ensure_dir
 
 
 class GuideWindow(MSFluentWindow):
@@ -27,7 +29,7 @@ class GuideWindow(MSFluentWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('欢迎使用 SecRandom')
-        self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
+        self.setWindowIcon(QIcon(path_manager.get_resource_path('icon/SecRandom.png')))
         self.resize(800, 600)
         
         # 设置窗口居中
@@ -729,14 +731,13 @@ class GuideWindow(MSFluentWindow):
         用户点击开始使用后，关闭引导窗口并显示主界面～ ✨"""
         logger.info("白露引导: 用户点击开始使用，准备显示主界面～ ")
         
-        # 创建引导完成标志文件
-        settings_dir = 'app/Settings'
-        if not os.path.exists(settings_dir):
-            os.makedirs(settings_dir)
-            logger.info("白露魔法: 创建了设置目录哦～ ✧*｡٩(ˊᗜˋ*)و✧*｡")
+        # 获取引导完成标志文件路径
+        guide_complete_file = path_manager.get_guide_complete_path()
+        
+        # 确保设置目录存在
+        ensure_dir(os.path.dirname(guide_complete_file))
         
         # 创建引导完成标志文件
-        guide_complete_file = 'app/Settings/guide_complete.json'
         guide_complete_data = {
             'guide_completed': True,
             'completion_time': self.get_current_time_string(),
@@ -744,7 +745,7 @@ class GuideWindow(MSFluentWindow):
         }
         
         try:
-            with open(guide_complete_file, 'w', encoding='utf-8') as f:
+            with open_file(guide_complete_file, 'w', encoding='utf-8') as f:
                 json.dump(guide_complete_data, f, ensure_ascii=False, indent=4)
             logger.info("白露魔法: 创建了引导完成标志文件哦～ ✧*｡٩(ˊᗜˋ*)و✧*｡")
         except Exception as e:

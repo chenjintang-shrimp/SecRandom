@@ -6,21 +6,42 @@ from PyQt5.QtNetwork import *
 
 import json
 import os
+from pathlib import Path
 from loguru import logger
 
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from packaging.version import Version
-import comtypes
-from comtypes import POINTER
+import platform
+import subprocess
+import sys
+from app.common.path_utils import path_manager
+from app.common.path_utils import open_file, ensure_dir
+
+# Windows-specific imports
+if platform.system() == 'Windows':
+    try:
+        from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+        import comtypes
+        from comtypes import POINTER
+        WINDOWS_AUDIO_AVAILABLE = True
+    except ImportError:
+        WINDOWS_AUDIO_AVAILABLE = False
+else:
+    WINDOWS_AUDIO_AVAILABLE = False
 
 # 默认更新通道配置文件路径
-CHANNEL_CONFIG_PATH = './app/Settings/Settings.json'
+def get_settings_file_path():
+    """获取设置文件的绝对路径"""
+    app_dir = path_manager._app_root
+    return app_dir / 'app' / 'Settings' / 'Settings.json'
+
+CHANNEL_CONFIG_PATH = get_settings_file_path()
 
 def get_update_channel():
     """获取当前选择的更新通道，默认为稳定通道"""
     try:
-        if os.path.exists(CHANNEL_CONFIG_PATH):
-            with open(CHANNEL_CONFIG_PATH, 'r', encoding='utf-8') as f:
+        settings_file = path_manager.get_settings_path('Settings.json')
+        if settings_file.exists():
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
                 return config.get('channel', 'stable')
         return 'stable'
@@ -32,23 +53,29 @@ def get_update_channel():
 def set_update_channel(channel):
     """保存更新通道配置，保留其他配置信息"""
     try:
+        settings_file = path_manager.get_settings_path('Settings.json')
         # 读取现有配置
         config = {}
-        if os.path.exists(CHANNEL_CONFIG_PATH):
-            with open(CHANNEL_CONFIG_PATH, 'r', encoding='utf-8') as f:
+        if settings_file.exists():
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
         
         # 更新通道配置
         config['channel'] = channel
         
+        # 确保目录存在
+        ensure_dir(settings_file.parent)
+        
         # 保存更新后的配置
-        with open(CHANNEL_CONFIG_PATH, 'w', encoding='utf-8') as f:
+        with open_file(settings_file, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=2)
         logger.info(f"更新通道已设置为: {channel}")
     except json.JSONDecodeError:
         logger.error("配置文件格式错误，将创建新的配置文件")
         # 创建新的配置文件
-        with open(CHANNEL_CONFIG_PATH, 'w', encoding='utf-8') as f:
+        settings_file = path_manager.get_settings_path('Settings.json')
+        ensure_dir(settings_file.parent)
+        with open_file(settings_file, 'w', encoding='utf-8') as f:
             json.dump({'channel': channel}, f, ensure_ascii=False, indent=2)
     except Exception as e:
         logger.error(f"保存更新通道配置失败: {e}")
@@ -123,8 +150,8 @@ def check_for_updates(channel=None):
         return False, None
 
 def load_custom_font():
-    font_path = './app/resource/font/HarmonyOS_Sans_SC_Bold.ttf'
-    font_id = QFontDatabase.addApplicationFont(font_path)
+    font_path = path_manager.get_resource_path('font', 'HarmonyOS_Sans_SC_Bold.ttf')
+    font_id = QFontDatabase.addApplicationFont(str(font_path))
     if font_id < 0:
         logger.error(f"加载自定义字体失败: {font_path}")
         return None
@@ -137,17 +164,18 @@ def get_theme_icon(icon_name):
         
         prefix = "light" if is_dark else "dark"
         suffix = "_light" if is_dark else "_dark"
-        icon_path = f"app/resource/assets/{prefix}/{icon_name}{suffix}.svg"
         
-        if not os.path.exists(icon_path):
+        icon_path = path_manager.get_resource_path('assets', f'{prefix}/{icon_name}{suffix}.svg')
+        
+        if not icon_path.exists():
             logger.warning(f"图标文件缺失: {icon_path}")
             # 返回默认图标
-            default_path = f"app/resource/assets/{prefix}/ic_fluent_info_20_filled{suffix}.svg"
-            if os.path.exists(default_path):
-                return QIcon(default_path)
+            default_path = path_manager.get_resource_path('assets', f'{prefix}/ic_fluent_info_20_filled{suffix}.svg')
+            if default_path.exists():
+                return QIcon(str(default_path))
             return QIcon()
             
-        return QIcon(icon_path)
+        return QIcon(str(icon_path))
     except Exception as e:
         logger.error(f"加载图标{icon_name}出错: {str(e)}")
         return QIcon()
@@ -160,23 +188,70 @@ def is_dark_theme(qconfig):
         return qconfig.theme == Theme.DARK
 
 def restore_volume(volume_value):
-    # 初始化COM库
-    comtypes.CoInitialize()
+    """跨平台音量恢复函数
     
-    # 获取默认音频设备
-    devices = AudioUtilities.GetSpeakers()
-    interface = devices.Activate(
-        IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None)
-    volume = comtypes.cast(interface, POINTER(IAudioEndpointVolume))
+    Args:
+        volume_value (int): 音量值 (0-100)
+    """
+    system = platform.system()
     
-    # 取消静音
-    volume.SetMute(0, None)
+    if system == 'Windows' and WINDOWS_AUDIO_AVAILABLE:
+        # Windows音频控制
+        try:
+            # 初始化COM库
+            comtypes.CoInitialize()
+            
+            # 获取默认音频设备
+            devices = AudioUtilities.GetSpeakers()
+            interface = devices.Activate(
+                IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None)
+            volume = comtypes.cast(interface, POINTER(IAudioEndpointVolume))
+            
+            # 取消静音
+            volume.SetMute(0, None)
+            
+            # 设置音量
+            volume.SetMasterVolumeLevelScalar(volume_value / 100.0, None)
+            
+            # 释放COM库
+            comtypes.CoUninitialize()
+            logger.info(f"Windows音量设置为: {volume_value}%")
+        except Exception as e:
+            logger.error(f"Windows音量控制失败: {e}")
     
-    # 设置音量为100%
-    volume.SetMasterVolumeLevelScalar(volume_value / 100.0, None)
+    elif system == 'Linux':
+        # Linux音频控制 (使用pactl或amixer)
+        try:
+            # 尝试使用pactl (PulseAudio)
+            result = subprocess.run(
+                ['pactl', 'set-sink-volume', '@DEFAULT_SINK@', f'{volume_value}%'],
+                capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                # 取消静音
+                subprocess.run(['pactl', 'set-sink-mute', '@DEFAULT_SINK@', '0'], 
+                             capture_output=True)
+                logger.info(f"Linux音量设置为: {volume_value}% (使用pactl)")
+            else:
+                # 如果pactl失败，尝试使用amixer (ALSA)
+                result = subprocess.run(
+                    ['amixer', 'sset', 'Master', f'{volume_value}%'],
+                    capture_output=True, text=True
+                )
+                if result.returncode == 0:
+                    # 取消静音
+                    subprocess.run(['amixer', 'sset', 'Master', 'unmute'], 
+                                 capture_output=True)
+                    logger.info(f"Linux音量设置为: {volume_value}% (使用amixer)")
+                else:
+                    logger.warning("Linux音量控制失败，pactl和amixer都不可用")
+        except FileNotFoundError:
+            logger.warning("Linux音量控制工具未找到，请安装pulseaudio-utils或alsa-utils")
+        except Exception as e:
+            logger.error(f"Linux音量控制失败: {e}")
     
-    # 释放COM库
-    comtypes.CoUninitialize()
+    else:
+        logger.warning(f"不支持的操作系统: {system}，音量控制功能不可用")
 
 
 class Config(QConfig):
@@ -194,4 +269,13 @@ BILIBILI_WEB = "https://space.bilibili.com/520571577"
 cfg = Config()
 
 cfg.themeMode.value = Theme.AUTO
-qconfig.load('./app/Settings/config.json', cfg)
+
+# 获取配置文件的绝对路径
+def get_config_file_path():
+    """获取配置文件的绝对路径"""
+    return path_manager.get_settings_path('config.json')
+
+config_file_path = get_config_file_path()
+# 确保配置目录存在
+path_manager.ensure_directory_exists(config_file_path.parent)
+qconfig.load(str(config_file_path), cfg)

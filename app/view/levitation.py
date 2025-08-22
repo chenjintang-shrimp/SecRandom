@@ -12,11 +12,14 @@ import json
 from loguru import logger
 from pathlib import Path
 
-from app.common.config import load_custom_font
+from app.common.config import load_custom_font, is_dark_theme
+from app.common.path_utils import path_manager
+from app.common.path_utils import open_file, ensure_dir
 
 class LevitationWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.app_dir = path_manager._app_root
         self._load_settings()  # 加载配置
         self._load_plugin_settings()  # 加载插件设置
         self._init_ui_components()  # 初始化UI组件
@@ -26,25 +29,27 @@ class LevitationWindow(QWidget):
 
     def _load_settings(self):
         # 小鸟游星野：加载基础设置和透明度配置
-        settings_path = Path('app/Settings/Settings.json')
+        settings_path = self.app_dir / 'app' / 'Settings' / 'Settings.json'
         try:
-            with open(settings_path, 'r', encoding='utf-8') as f:
+            ensure_dir(settings_path.parent)
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
                 self.transparency_mode = foundation_settings.get('pumping_floating_transparency_mode', 6)
-                self.floating_visible = foundation_settings.get('pumping_floating_visible', True)
+                self.floating_visible = foundation_settings.get('pumping_floating_visible', 0)
                 # 确保透明度值在有效范围内
                 self.transparency_mode = max(0, min(self.transparency_mode, 9))
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.transparency_mode = 6
-            self.floating_visible = True
+            self.floating_visible = 0
             logger.error(f"加载基础设置失败: {e}")
 
     def _load_plugin_settings(self):
         # 小鸟游星野：加载插件设置
-        settings_path = Path('app/Settings/plugin_settings.json')
+        settings_path = self.app_dir / 'app' / 'Settings' / 'plugin_settings.json'
         try:
-            with open(settings_path, 'r', encoding='utf-8') as f:
+            ensure_dir(settings_path.parent)
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 plugin_settings = settings.get('plugin_settings', {})
                 self.selected_plugin = plugin_settings.get('selected_plugin', '主窗口')
@@ -55,9 +60,13 @@ class LevitationWindow(QWidget):
     def _init_ui_components(self):
         # 白露：初始化所有UI组件
         self._setup_main_layout()
-        if self.floating_visible:
+        if self.floating_visible == 0:
             self._init_menu_label()
-        self._init_people_label()
+            self._init_people_label()
+        elif self.floating_visible == 1:
+            self._init_people_label()
+        elif self.floating_visible == 2:
+            self._init_people_label()
         self._apply_window_styles()
 
     def _setup_main_layout(self):
@@ -73,10 +82,10 @@ class LevitationWindow(QWidget):
 
     def _init_menu_label(self):
         # 白露：初始化菜单标签
-        MENU_DEFAULT_ICON_PATH = Path("app/resource/icon/SecRandom_menu_30%.png")
+        MENU_DEFAULT_ICON_PATH = self.app_dir / "resource" / "icon" / "SecRandom_menu_30%.png"
         self.menu_label = QLabel(self.container_button)
         try:
-            icon_path = Path(f"app/resource/icon/SecRandom_menu_{(10 - self.transparency_mode) * 10}%.png")
+            icon_path = self.app_dir / "resource" / "icon" / f"SecRandom_menu_{(10 - self.transparency_mode) * 10}%.png"
             if not icon_path.exists():
                 icon_path = MENU_DEFAULT_ICON_PATH
             pixmap = QPixmap(str(icon_path))
@@ -94,10 +103,10 @@ class LevitationWindow(QWidget):
 
     def _init_people_label(self):
         # 小鸟游星野：初始化人物标签
-        FLOATING_DEFAULT_ICON_PATH = Path("app/resource/icon/SecRandom_floating_30%.png")
+        FLOATING_DEFAULT_ICON_PATH = self.app_dir / "resource" / "icon" / "SecRandom_floating_30%.png"
         self.people_label = QLabel(self.container_button)
         try:
-            icon_path = Path(f"app/resource/icon/SecRandom_floating_{(10 - self.transparency_mode) * 10}%.png")
+            icon_path = self.app_dir / "resource" / "icon" / f"SecRandom_floating_{(10 - self.transparency_mode) * 10}%.png"
             if not icon_path.exists():
                 icon_path = FLOATING_DEFAULT_ICON_PATH
             pixmap = QPixmap(str(icon_path))
@@ -148,7 +157,7 @@ class LevitationWindow(QWidget):
         self.move_timer.timeout.connect(self.save_position)
 
     def on_people_press(self, event):
-        # 小鸟游星野：记录拖动起始位置 ✧(๑•̀ㅂ•́)و✧
+        # 小鸟游星野：记录拖动起始位置 ✧(๑•̀ㅂ•́)ow✧
         self.drag_start_position = event.pos()
         # 启动长按计时器（100毫秒 - 进一步优化响应速度）
         self.click_timer.start(100)
@@ -162,6 +171,12 @@ class LevitationWindow(QWidget):
 
     # 白露：处理人物标签点击事件（忽略事件参数）
     def on_people_clicked(self, event=None):
+        # 小鸟游星野：检查floating_visible设置，决定显示内容 ✧(๑•̀ㅂ•́)و✧
+        if self.floating_visible in [2, 3]:
+            # 显示直接抽取窗口
+            self._show_direct_extraction_window()
+            return
+            
         # 获取当前选中的插件
         self._load_plugin_settings()
         selected_plugin = self.selected_plugin
@@ -187,7 +202,7 @@ class LevitationWindow(QWidget):
     def _open_plugin_window(self, plugin_name):
         """打开指定插件的窗口"""
         # 获取插件目录
-        plugin_dir = "app/plugin"
+        plugin_dir = path_manager.get_plugin_path("plugin")
         
         # 查找插件信息
         plugin_info = None
@@ -201,7 +216,7 @@ class LevitationWindow(QWidget):
                     info_file = os.path.join(folder_path, "plugin.json")
                     if os.path.exists(info_file):
                         try:
-                            with open(info_file, "r", encoding="utf-8") as f:
+                            with open_file(info_file, "r", encoding="utf-8") as f:
                                 info = json.load(f)
                                 if info.get("name") == plugin_name:
                                     plugin_info = info
@@ -220,10 +235,10 @@ class LevitationWindow(QWidget):
             error_dialog.exec()
             return
         
-        # 获取插件入口文件路径
+            # 获取插件入口文件路径
         entry_point = plugin_info.get("entry_point", "main.py")
-        plugin_file_path = os.path.join(plugin_path, entry_point)
-        
+        plugin_file_path = path_manager.get_plugin_path(f"plugin/{os.path.basename(plugin_path)}/{entry_point}")
+            
         if not os.path.exists(plugin_file_path):
             logger.warning(f"插件 {plugin_name} 的入口文件 {entry_point} 不存在")
             error_dialog = Dialog("文件不存在", f"插件 {plugin_name} 的入口文件 {entry_point} 不存在", self)
@@ -248,7 +263,7 @@ class LevitationWindow(QWidget):
                 sys.path.insert(0, plugin_path)
             
             # 添加插件专属site-packages目录到sys.path，以便插件可以使用安装的依赖
-            plugin_site_packages = os.path.join(plugin_path, "site-packages")
+            plugin_site_packages = path_manager.get_plugin_path(f"plugin/{os.path.basename(plugin_path)}/site-packages")
             if os.path.exists(plugin_site_packages) and plugin_site_packages not in sys.path:
                 sys.path.insert(0, plugin_site_packages)
                 logger.info(f"已添加插件专属site-packages到Python路径: {plugin_site_packages}")
@@ -375,8 +390,9 @@ class LevitationWindow(QWidget):
 
     def save_position(self):
         pos = self.pos()
+        settings_path = path_manager.get_settings_path("Settings.json")
         try:
-            with open("app/Settings/Settings.json", "r") as f:
+            with open_file(settings_path, "r") as f:
                 data = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             data = {}
@@ -385,12 +401,13 @@ class LevitationWindow(QWidget):
             "x": pos.x(), 
             "y": pos.y()
         }
-        with open("app/Settings/Settings.json", "w") as f:
+        with open_file(settings_path, "w") as f:
             json.dump(data, f, indent=4)
         
     def load_position(self):
+        settings_path = path_manager.get_settings_path("Settings.json")
         try:
-            with open("app/Settings/Settings.json", "r") as f:
+            with open_file(settings_path, "r") as f:
                 data = json.load(f)
                 pos = data.get("position", {"x": 100, "y": 100})
                 self.move(QPoint(pos["x"], pos["y"]))
@@ -399,3 +416,125 @@ class LevitationWindow(QWidget):
             x = (screen.width() - self.width()) // 2
             y = (screen.height() - self.height()) // 2
             self.move(QPoint(x, y))
+
+    def _show_direct_extraction_window(self):
+        # 小鸟游星野：显示直接抽取窗口 - 包含pumping_people功能 ✧(๑•̀ㅂ•́)و✧
+        try:
+            # 导入pumping_people模块
+            from app.view.main_page.levitation_pumping_people import pumping_people
+            from app.common.config import qconfig, is_dark_theme
+            # 创建pumping_people实例，直接作为窗口的内容
+            self.pumping_widget = pumping_people()
+
+            self.pumping_widget.setWindowTitle("SecRandom")
+            self.pumping_widget.setFixedSize(600, 400)
+            self.pumping_widget.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
+            
+            self.update_theme_style()
+            
+            # 窗口居中显示 - 相对于屏幕居中
+            screen = QApplication.desktop().screenGeometry()
+            x = (screen.width() - self.pumping_widget.width()) // 2
+            y = (screen.height() - self.pumping_widget.height()) // 2
+            self.pumping_widget.move(QPoint(x, y))
+            
+            # 直接显示窗口
+            self.pumping_widget.show()
+            logger.info("直接抽取窗口已打开")
+            self.pumping_widget.start_draw()
+            
+        except ImportError as e:
+            logger.error(f"导入pumping_people模块失败: {e}")
+            error_dialog = Dialog("加载失败", "无法加载抽取功能模块，请检查文件是否存在", self)
+            error_dialog.yesButton.setText("确定")
+            error_dialog.cancelButton.hide()
+            error_dialog.buttonLayout.insertStretch(1)
+            error_dialog.exec()
+            
+        except Exception as e:
+            logger.error(f"创建直接抽取窗口失败: {e}")
+            error_dialog = Dialog("创建失败", f"创建抽取窗口时发生错误: {str(e)}", self)
+            error_dialog.yesButton.setText("确定")
+            error_dialog.cancelButton.hide()
+            error_dialog.buttonLayout.insertStretch(1)
+            error_dialog.exec()
+
+    def update_theme_style(self):
+        """根据当前主题更新样式"""
+        if qconfig.theme == Theme.AUTO:
+            lightness = QApplication.palette().color(QPalette.Window).lightness()
+            is_dark = lightness <= 127
+        else:
+            is_dark = qconfig.theme == Theme.DARK
+        
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
+        self.pumping_widget.setStyleSheet(f"""
+            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
+            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
+            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            #CloseButton {{ 
+                background-color: transparent; 
+                color: {colors['text']}; 
+                border-radius: 4px; 
+                font-weight: bold; 
+                border: none;
+            }}
+            #CloseButton:hover {{ 
+                background-color: #ff4d4d; 
+                color: white; 
+                border: none;
+            }}
+            QLabel, QPushButton, QTextEdit {{ color: {colors['text']}; }}
+            QLineEdit {{ 
+                background-color: {colors['bg']}; 
+                color: {colors['text']}; 
+                border: 1px solid #555555; 
+                border-radius: 4px; 
+                padding: 5px; 
+            }}
+            QPushButton {{ 
+                background-color: {colors['bg']}; 
+                color: {colors['text']}; 
+                border: 1px solid #555555; 
+                border-radius: 4px; 
+                padding: 5px; 
+            }}
+            QPushButton:hover {{ background-color: #606060; }}
+            QComboBox {{ 
+                background-color: {colors['bg']}; 
+                color: {colors['text']}; 
+                border: 1px solid #555555; 
+                border-radius: 4px; 
+                padding: 5px; 
+            }}
+        """)
+        
+        # 设置标题栏颜色以匹配背景色（仅Windows系统）
+        if os.name == 'nt':
+            try:
+                import ctypes
+                hwnd = int(self.pumping_widget.winId())
+                
+                bg_color = colors['bg'].lstrip('#')
+                rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
+                
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_int(hwnd),
+                    35,
+                    ctypes.byref(ctypes.c_uint(rgb_color)),
+                    ctypes.sizeof(ctypes.c_uint)
+                )
+            except Exception as e:
+                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+
+class ConvenientMiniWindow(QWidget):
+    # 白露：便捷小窗类 - 提供便捷操作界面 (≧∇≦)ﾉ
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # 便捷小窗的具体实现将在后续版本中完成
+        pass
+        
+    def show_window(self):
+        # 小鸟游星野：显示便捷小窗 ✧(๑•̀ㅂ•́)و✧
+        # 具体实现将在后续版本中完成
+        pass

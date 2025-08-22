@@ -3,9 +3,12 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import os
+import json
 from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font
+from app.common.path_utils import path_manager
+from app.common.path_utils import open_file, ensure_dir
 
 # 导入子页面
 from app.view.settings_page.more_setting import more_setting
@@ -20,12 +23,15 @@ from app.view.plugins.plugin_settings import PluginSettingsWindow
 class settings_Window(MSFluentWindow):
     def __init__(self, parent=None):
         super().__init__()
+        self.app_dir = path_manager._app_root
         self.resize_timer = QTimer(self)
         self.resize_timer.setSingleShot(True)
         self.resize_timer.timeout.connect(self.save_settings_window_size)
 
+        settings_path = self.app_dir / 'app' / 'Settings' / 'Settings.json'
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            ensure_dir(settings_path.parent)
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
                 # 读取保存的窗口大小，默认为800x600
@@ -41,7 +47,7 @@ class settings_Window(MSFluentWindow):
 
         self.setMinimumSize(600, 400)
         self.setWindowTitle('SecRandom - 设置')
-        self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
+        self.setWindowIcon(QIcon(str(self.app_dir / 'resource' / 'icon' / 'SecRandom.png')))
 
         # 获取主屏幕
         screen = QApplication.primaryScreen()
@@ -49,7 +55,7 @@ class settings_Window(MSFluentWindow):
         desktop = screen.availableGeometry()
         w, h = desktop.width(), desktop.height()
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
                 settings_window_mode = foundation_settings.get('settings_window_mode', 0)
@@ -118,9 +124,10 @@ class settings_Window(MSFluentWindow):
     def save_settings_window_size(self):
         if not self.isMaximized():
             try:
+                settings_path = self.app_dir / 'Settings' / 'Settings.json'
                 # 读取现有设置
                 try:
-                    with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                    with open_file(settings_path, 'r', encoding='utf-8') as f:
                         settings = json.load(f)
                 except FileNotFoundError:
                     settings = {}
@@ -134,7 +141,8 @@ class settings_Window(MSFluentWindow):
                 settings['foundation']['settings_window_height'] = self.height()
                 
                 # 保存设置
-                with open('app/Settings/Settings.json', 'w', encoding='utf-8') as f:
+                ensure_dir(settings_path.parent)
+                with open_file(settings_path, 'w', encoding='utf-8') as f:
                     json.dump(settings, f, ensure_ascii=False, indent=4)
             except Exception as e:
                 logger.error(f"保存窗口大小设置失败: {e}")

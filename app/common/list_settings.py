@@ -7,8 +7,11 @@ from PyQt5.QtWidgets import *
 
 import os
 import json
+from pathlib import Path
 from loguru import logger
 import pandas as pd
+from app.common.path_utils import path_manager
+from app.common.path_utils import open_file, ensure_dir
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 
@@ -20,7 +23,9 @@ class list_SettinsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("抽人名单")
         self.setBorderRadius(8)
-        self.settings_file = "app/Settings/Settings.json"
+        # 获取应用根目录并构建设置文件路径
+        app_dir = path_manager._app_root
+        self.settings_file = app_dir / 'app' / 'Settings' / 'Settings.json'
 
         self.class_Button = PushButton("设置班级名称")
         self.class_Button.clicked.connect(self.show_class_dialog)
@@ -56,7 +61,9 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.export_Button.setFont(QFont(load_custom_font(), 12))
         
         try:
-            list_folder = "app/resource/list"
+            # 获取应用根目录并构建列表文件夹路径
+            app_dir = path_manager._app_root
+            list_folder = app_dir / 'app' / 'resource' / 'list'
             if os.path.exists(list_folder) and os.path.isdir(list_folder):
                 files = os.listdir(list_folder)
                 classes = []
@@ -109,8 +116,9 @@ class list_SettinsCard(GroupHeaderCardWidget):
 
             try:
                 # 🌟 小鸟游星野：确保目录存在并写入数据 ~ (๑•̀ㅂ•́)ญ✧
-                os.makedirs("app/resource/list", exist_ok=True)
-                with open(f"app/resource/list/{class_name}.json", 'w', encoding='utf-8') as f:
+                student_file = path_manager.get_resource_path(f'list/{class_name}.json')
+                ensure_dir(os.path.dirname(student_file))
+                with open_file(student_file, 'w', encoding='utf-8') as f:
                     json.dump(student_data, f, ensure_ascii=False, indent=4)
 
                 self.refresh_signal.emit()
@@ -134,8 +142,10 @@ class list_SettinsCard(GroupHeaderCardWidget):
             return
 
         try:
+            # 构建学生文件路径
+            student_file = path_manager.get_resource_path(f'list/{class_name}.json')
             # 读取学生数据
-            with open(f"app/resource/list/{class_name}.json", 'r', encoding='utf-8') as f:
+            with open_file(student_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
             if not data:
@@ -236,8 +246,9 @@ class list_SettinsCard(GroupHeaderCardWidget):
     def show_table(self):
         class_name = self.class_comboBox.currentText()
         # 获取是否存在学生
-        if os.path.exists(f"app/resource/list/{class_name}.json"):
-            with open(f"app/resource/list/{class_name}.json", 'r', encoding='utf-8') as f:
+        student_file = path_manager.get_resource_path('list', f'{class_name}.json')
+        if os.path.exists(student_file):
+            with open_file(student_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         else:
             data = []
@@ -266,7 +277,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
 
         if class_name:
             try:
-                with open(f"app/resource/list/{class_name}.json", 'r', encoding='utf-8') as f:
+                with open_file(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 self.table.setRowCount(len(data))
                 self.table.clearContents()
@@ -317,32 +328,32 @@ class list_SettinsCard(GroupHeaderCardWidget):
                 classes = [line.strip() for line in class_text.split('\n') if line.strip()]
                 
                 # 获取当前所有班级文件
-                list_folder = "app/resource/list"
+                list_folder = path_manager.get_resource_path('list')
                 existing_classes = []
                 if os.path.exists(list_folder):
-                    existing_classes = [f.split('.')[0] for f in os.listdir(list_folder) if f.endswith('.json')]
+                    existing_classes = [os.path.splitext(f)[0] for f in os.listdir(list_folder) if f.endswith('.json')]
                 
                 # 删除不再需要的班级文件
                 for existing_class in existing_classes:
                     if existing_class not in classes:
-                        class_file = f"app/resource/list/{existing_class}.json"
-                        history_file = f"app/resource/history/{existing_class}.json"
+                        class_file = path_manager.get_resource_path(f'list/{existing_class}.json')
+                        history_file = path_manager.get_resource_path(f'history/{existing_class}.json')
                         try:
-                            os.remove(class_file)
+                            class_file.unlink()
                             logger.info(f"已删除班级文件: {class_file}")
                             # 删除对应的历史记录文件
-                            if os.path.exists(f"app/resource/history/{existing_class}.json"):
-                                os.remove(history_file)
+                            if history_file.exists():
+                                history_file.unlink()
                                 logger.info(f"已删除历史记录文件: {history_file}")
                         except Exception as e:
                             logger.error(f"删除文件失败: {class_file}或{history_file}, 错误: {str(e)}")
 
-                os.makedirs("app/resource/list", exist_ok=True)
+                ensure_dir(list_folder)
                 
                 for class_name in classes:
-                    class_file = f"app/resource/list/{class_name}.json"
+                    class_file = path_manager.get_resource_path(f'list/{class_name}.json')
                     if not os.path.exists(class_file):
-                        with open(class_file, 'w', encoding='utf-8') as f:
+                        with open_file(class_file, 'w', encoding='utf-8') as f:
                             basic_structure = {
                                 "示例学生": {
                                     "id": 1,
@@ -369,13 +380,14 @@ class list_SettinsCard(GroupHeaderCardWidget):
                 try:
                     students = [line.strip() for line in student_text.split('\n') if line.strip()]
                     
-                    os.makedirs("app/resource/list", exist_ok=True)
+                    list_folder = path_manager.get_resource_path('list')
+                    ensure_dir(list_folder)
                     
-                    student_file = f"app/resource/list/{selected_class}.json"
+                    student_file = path_manager.get_resource_path(f'list/{selected_class}.json')
                     student_data = {}
                     
                     if os.path.exists(student_file):
-                        with open(student_file, 'r', encoding='utf-8') as f:
+                        with open_file(student_file, 'r', encoding='utf-8') as f:
                             student_data = json.load(f)
                     
                     # 先删除不在新名单中的学生
@@ -413,7 +425,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
                         }
                     student_data = new_student_data
                     
-                    with open(student_file, 'w', encoding='utf-8') as f:
+                    with open_file(student_file, 'w', encoding='utf-8') as f:
                         json.dump(student_data, f, ensure_ascii=False, indent=4)
                     
                     self.refresh_signal.emit()
@@ -430,13 +442,14 @@ class list_SettinsCard(GroupHeaderCardWidget):
                 try:
                     genders = [line.strip() for line in gender_text.split('\n') if line.strip()]
                     
-                    os.makedirs("app/resource/list", exist_ok=True)
+                    list_folder = path_manager.get_resource_path('list')
+                    ensure_dir(list_folder)
 
-                    student_file = f"app/resource/list/{class_name}.json"
+                    student_file = path_manager.get_resource_path(f'list/{class_name}.json')
                     student_data = {}
                     
                     if os.path.exists(student_file):
-                        with open(student_file, 'r', encoding='utf-8') as f:
+                        with open_file(student_file, 'r', encoding='utf-8') as f:
                             student_data = json.load(f)
                     
                     for idx, gender_name in enumerate(genders, start=1):
@@ -445,7 +458,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
                             if student_data[student_name]["id"] == idx:
                                 student_data[student_name]["gender"] = gender_name
                     
-                    with open(student_file, 'w', encoding='utf-8') as f:
+                    with open_file(student_file, 'w', encoding='utf-8') as f:
                         json.dump(student_data, f, ensure_ascii=False, indent=4)
                     
                     self.refresh_signal.emit()
@@ -462,13 +475,14 @@ class list_SettinsCard(GroupHeaderCardWidget):
                 try:
                     groups = [line.strip() for line in group_text.split('\n') if line.strip()]
                     
-                    os.makedirs("app/resource/list", exist_ok=True)
+                    list_folder = path_manager.get_resource_path('list')
+                    ensure_dir(list_folder)
 
-                    student_file = f"app/resource/list/{class_name}.json"
+                    student_file = path_manager.get_resource_path(f'list/{class_name}.json')
                     student_data = {}
                     
                     if os.path.exists(student_file):
-                        with open(student_file, 'r', encoding='utf-8') as f:
+                        with open_file(student_file, 'r', encoding='utf-8') as f:
                             student_data = json.load(f)
                     
                     for idx, group_name in enumerate(groups, start=1):
@@ -477,7 +491,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
                             if student_data[student_name]["id"] == idx:
                                 student_data[student_name]["group"] = group_name
                     
-                    with open(student_file, 'w', encoding='utf-8') as f:
+                    with open_file(student_file, 'w', encoding='utf-8') as f:
                         json.dump(student_data, f, ensure_ascii=False, indent=4)
                     
                     self.refresh_signal.emit()
@@ -502,9 +516,9 @@ class list_SettinsCard(GroupHeaderCardWidget):
         student_name = name_item.text()
         
         # 加载当前班级的学生数据
-        student_file = f"app/resource/list/{class_name}.json"
+        student_file = path_manager.get_resource_path(f'list/{class_name}.json')
         try:
-            with open(student_file, 'r', encoding='utf-8') as f:
+            with open_file(student_file, 'r', encoding='utf-8') as f:
                 student_data = json.load(f)
         except Exception as e:
             logger.error(f"加载学生数据失败: {str(e)}")
@@ -531,7 +545,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
         
         # 保存更新后的数据
         try:
-            with open(student_file, 'w', encoding='utf-8') as f:
+            with open_file(student_file, 'w', encoding='utf-8') as f:
                 json.dump(student_data, f, ensure_ascii=False, indent=4)
             logger.info(f"学生数据更新成功: {student_name}")
         except Exception as e:
@@ -1141,7 +1155,7 @@ class ClassInputDialog(QDialog):
         self.setFont(QFont(load_custom_font(), 12))
 
         try:
-            list_folder = "app/resource/list"
+            list_folder = path_manager.get_resource_path('list')
             if os.path.exists(list_folder) and os.path.isdir(list_folder):
                 files = os.listdir(list_folder)
                 classes = []
@@ -1322,11 +1336,12 @@ class StudentInputDialog(QDialog):
         
         class_name = self.parent().class_comboBox.currentText()
         try:
-            with open(f"app/resource/list/{class_name}.json", 'r', encoding='utf-8') as f:
+            student_file = path_manager.get_resource_path(f'list/{class_name}.json')
+            with open_file(student_file, 'r', encoding='utf-8') as f:
                 file_content = f.read()
                 if not file_content.strip():
                     # 处理空文件情况
-                    logger.warning(f"JSON文件为空: app/resource/list/{class_name}.json")
+                    logger.warning(f"JSON文件为空: {student_file}")
                     return
                 
                 try:
@@ -1343,7 +1358,7 @@ class StudentInputDialog(QDialog):
                 except ValueError as e:
                     logger.error(f"数据格式错误: {str(e)}")
         except FileNotFoundError:
-            logger.error(f"文件未找到: app/resource/list/{class_name}.json")
+            logger.error(f"文件未找到: {student_file}")
         except json.JSONDecodeError:
             logger.error("JSON文件格式错误，请检查文件内容")
         
@@ -1518,10 +1533,11 @@ class GenderInputDialog(QDialog):
         class_name = self.parent().class_comboBox.currentText()
         # 尝试读取已保存的性别值
         try:
-            with open(f"app/resource/list/{class_name}.json", 'r', encoding='utf-8') as f:
+            student_file = path_manager.get_resource_path(f'list/{class_name}.json')
+            with open_file(student_file, 'r', encoding='utf-8') as f:
                 file_content = f.read()
                 if not file_content.strip():
-                    logger.warning(f"JSON文件为空: app/resource/list/{class_name}.json")
+                    logger.warning(f"JSON文件为空: {student_file}")
                     return
                 data = json.loads(file_content)
                 if isinstance(data, dict):
@@ -1708,10 +1724,11 @@ class GroupInputDialog(QDialog):
         class_name = self.parent().class_comboBox.currentText()
         # 尝试读取已保存的小组值
         try:
-            with open(f"app/resource/list/{class_name}.json", 'r', encoding='utf-8') as f:
+            student_file = path_manager.get_resource_path(f'list/{class_name}.json')
+            with open_file(student_file, 'r', encoding='utf-8') as f:
                 file_content = f.read()
                 if not file_content.strip():
-                    logger.warning(f"JSON文件为空: app/resource/list/{class_name}.json")
+                    logger.warning(f"JSON文件为空: {student_file}")
                     return
                 data = json.loads(file_content)
                 if isinstance(data, dict):

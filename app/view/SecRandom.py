@@ -10,6 +10,7 @@ import time
 import subprocess
 import warnings
 from urllib3.exceptions import InsecureRequestWarning
+from pathlib import Path
 
 # 🧙‍♀️ 第三方魔法典籍 🧙‍♂️
 import loguru
@@ -23,6 +24,8 @@ from qfluentwidgets import *
 # 🏰 应用内部魔法卷轴 🏰
 from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, get_update_channel
+from app.common.path_utils import path_manager
+from app.common.path_utils import open_file, ensure_dir
 from app.view.settings import settings_Window
 from app.view.main_page.pumping_people import pumping_people
 from app.view.main_page.pumping_reward import pumping_reward
@@ -38,11 +41,10 @@ from app.common.about import ContributorDialog, DonationDialog
 # 🔮 忽略那些烦人的不安全请求警告
 warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
-# 星野导航：使用相对路径定位设置目录 ✧*｡٩(ˊᗜˋ*)و✧*｡
-settings_dir = './app/Settings'
-if not os.path.exists(settings_dir):
-    os.makedirs(settings_dir)
-    logger.info("白露魔法: 创建了设置目录哦~ ✧*｡٩(ˊᗜˋ*)و✧*｡")
+# 星野导航：使用跨平台路径定位设置目录 ✧*｡٩(ˊᗜˋ*)ow✧*｡
+settings_dir = path_manager.get_settings_path('').parent
+ensure_dir(settings_dir)
+logger.info("白露魔法: 创建了设置目录哦~ ✧*｡٩(ˊᗜˋ*)ow✧*｡")
 
 def show_update_notification(latest_version):
     """显示自定义更新通知窗口"""
@@ -76,31 +78,13 @@ def show_update_notification(latest_version):
 class ConfigurationManager:
     """(^・ω・^ ) 白露的配置管理魔法书
     负责保管所有设置的小管家哦~ 会把重要的配置都藏在安全的地方！
-    还会自动缓存设置，减少不必要的IO操作，是不是很聪明呀？(๑•̀ㅂ•́)و✧"""
-
-    def __init__(self):
-        """开启白露的配置魔法~ 初始化设置路径和默认值"""
-        self.settings_path = 'app/Settings/Settings.json'  # 📜 普通设置文件路径
-        self.enc_settings_path = 'app/SecRandom/enc_set.json'  # 🔒 加密设置文件路径
-        self.default_settings = {
-            'foundation': {
-                'main_window_focus_mode': 0,
-                'main_window_focus_time': 0,
-                'window_width': 800,
-                'window_height': 600,
-                'pumping_floating_enabled': True,
-                'pumping_floating_side': 0,
-                'pumping_reward_side': 0,
-                'main_window_mode': 0,
-                'check_on_startup': True,
-                'topmost_switch': False
-            }
-        }  # 📝 默认设置模板
+    还会自动缓存设置，减少不必要的IO操作，是不是很聪明呀？(๑•̀ㅂ•́)ow✧"""
 
     def __init__(self):
         """开启白露的配置魔法~ 初始化设置路径和默认值，并预加载设置"""
-        self.settings_path = 'app/Settings/Settings.json'  # 📜 普通设置文件路径
-        self.enc_settings_path = 'app/SecRandom/enc_set.json'  # 🔒 加密设置文件路径
+        self.app_dir = path_manager._app_root
+        self.settings_path = path_manager.get_settings_path('Settings.json')  # 📜 普通设置文件路径
+        self.enc_settings_path = path_manager.get_enc_set_path()  # 🔒 加密设置文件路径
         self.default_settings = {
             'foundation': {
                 'main_window_focus_mode': 0,
@@ -122,11 +106,12 @@ class ConfigurationManager:
     def load_settings(self):
         """(^・ω・^ ) 读取配置文件的魔法
         尝试打开设置文件，如果失败就用默认设置哦~ 不会让程序崩溃的！
-        使用缓存避免重复IO操作，就像记忆力超群的小精灵一样~ ✧*｡٩(ˊᗜˋ*)و✧*｡"""
+        使用缓存避免重复IO操作，就像记忆力超群的小精灵一样~ ✧*｡٩(ˊᗜˋ*)ow✧*｡"""
         # if self._settings_cache is not None:
         #     return self._settings_cache
         try:
-            with open(self.settings_path, 'r', encoding='utf-8') as f:
+            ensure_dir(self.settings_path.parent)
+            with open_file(self.settings_path, 'r', encoding='utf-8') as f:
                 self._settings_cache = json.load(f)
                 return self._settings_cache
         except Exception as e:
@@ -144,7 +129,7 @@ class ConfigurationManager:
     def save_window_size(self, width, height):
         """(^・ω・^ ) 保存窗口大小的魔法咒语
         确保窗口不会太小（至少600x400），然后把新尺寸记下来~ 
-        就像整理房间一样，要保持整洁又实用呢！(๑•̀ㅂ•́)و✧"""
+        就像整理房间一样，要保持整洁又实用呢！(๑•̀ㅂ•́)ow✧"""
         if width < 600 or height < 400:  # 太小的窗口可不行哦~ 
             logger.warning("白露提醒: 窗口尺寸太小啦，不保存哦~ ")
             return
@@ -156,7 +141,8 @@ class ConfigurationManager:
             settings['foundation']['window_width'] = width
             settings['foundation']['window_height'] = height
 
-            with open(self.settings_path, 'w', encoding='utf-8') as f:
+            ensure_dir(self.settings_path.parent)
+            with open_file(self.settings_path, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=4)
             logger.info(f"白露魔法成功: 窗口大小已保存为 {width}x{height} ✨")
         except Exception as e:
@@ -213,7 +199,7 @@ class UpdateChecker(QObject):
 class TrayIconManager:
     """(^・ω・^ ) 白露的系统托盘精灵！
     负责管理可爱的托盘图标和菜单，右键点击会有惊喜哦～
-    就像藏在任务栏里的小助手，随时待命呢！(๑•̀ㅂ•́)و✧"""
+    就像藏在任务栏里的小助手，随时待命呢！(๑•̀ㅂ•́)ow✧"""
 
     def __init__(self, main_window):
         """(^・ω・^ ) 唤醒托盘精灵！
@@ -221,7 +207,7 @@ class TrayIconManager:
         让它在任务栏安营扎寨，随时准备为用户服务！🏕️✨"""
         self.main_window = main_window
         self.tray_icon = QSystemTrayIcon(main_window)
-        self.tray_icon.setIcon(QIcon('./app/resource/icon/SecRandom.png'))  # 设置可爱的图标
+        self.tray_icon.setIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png')))) 
         self.tray_icon.setToolTip('SecRandom')  # 鼠标放上去会显示的文字
         self._create_menu()  # 创建魔法菜单
         self.tray_icon.activated.connect(self._on_tray_activated)  # 连接点击事件
@@ -250,10 +236,10 @@ class TrayIconManager:
     def _on_tray_activated(self, reason):
         """(^・ω・^ ) 托盘精灵响应事件！
         当用户点击托盘图标时，显示精心准备的菜单～ 
-        就像有人敲门时，立刻开门迎接客人一样热情！(๑•̀ㅂ•́)و✧"""
+        就像有人敲门时，立刻开门迎接客人一样热情！(๑•̀ㅂ•́)ow✧"""
         if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.Context):
             pos = QCursor.pos()  # 获取鼠标位置
-            self.tray_menu.exec_(pos)  # 在鼠标位置显示菜单
+            self.tray_menu.popup(pos)  # 在鼠标位置显示菜单
             logger.debug("白露魔法: 托盘菜单已显示给用户～ ")
 
 
@@ -263,7 +249,7 @@ class TrayIconManager:
 class Window(MSFluentWindow):
     """(ﾟДﾟ≡ﾟдﾟ) 星野的主窗口司令部！
     这里是程序的核心指挥中心喵！所有重要操作都从这里发起～
-    不要随便修改这里的核心逻辑，会导致系统崩溃喵！(๑•̀ㅂ•́)و✧"""
+    不要随便修改这里的核心逻辑，会导致系统崩溃喵！(๑•̀ㅂ•́)ow✧"""
 
     # ==============================
     # 星野的魔法常量库 ✨
@@ -286,7 +272,7 @@ class Window(MSFluentWindow):
 
     MINIMUM_WINDOW_SIZE = (600, 400)
     """(^・ω・^ ) 白露的窗口尺寸保护魔法！
-    窗口最小不能小于这个尺寸哦～ 太小了会看不清内容的！(๑•̀ㅂ•́)و✧"""
+    窗口最小不能小于这个尺寸哦～ 太小了会看不清内容的！(๑•̀ㅂ•́)ow✧"""
 
     # ==============================
     # 初始化与生命周期方法
@@ -343,7 +329,7 @@ class Window(MSFluentWindow):
         self.resize(window_width, window_height)
         self.setMinimumSize(self.MINIMUM_WINDOW_SIZE[0], self.MINIMUM_WINDOW_SIZE[1])
         self.setWindowTitle('SecRandom')
-        self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
+        self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png'))))
 
         # 检查更新
         check_startup = self.config_manager.get_foundation_setting('check_on_startup')
@@ -369,7 +355,7 @@ class Window(MSFluentWindow):
     def _position_window(self):
         """(^・ω・^ ) 白露的窗口定位魔法！
         根据屏幕尺寸和用户设置自动计算最佳位置～
-        确保窗口出现在最舒服的视觉位置，不会让眼睛疲劳哦！(๑•̀ㅂ•́)و✧"""
+        确保窗口出现在最舒服的视觉位置，不会让眼睛疲劳哦！(๑•̀ㅂ•́)ow✧"""
         screen = QApplication.primaryScreen()
         desktop = screen.availableGeometry()
         w, h = desktop.width(), desktop.height()
@@ -386,7 +372,7 @@ class Window(MSFluentWindow):
     def _apply_window_visibility_settings(self):
         """(^・ω・^ ) 白露的窗口显示魔法！
         根据用户保存的设置决定窗口是否自动显示～
-        如果上次设置为显示，启动时就会自动出现哦！(๑•̀ㅂ•́)و✧"""
+        如果上次设置为显示，启动时就会自动出现哦！(๑•̀ㅂ•́)ow✧"""
         try:
             settings = self.config_manager.load_settings()
             if settings.get('toggle_window') == 'show':
@@ -440,7 +426,8 @@ class Window(MSFluentWindow):
         根据用户设置构建个性化菜单导航～ 就像魔法地图一样清晰！
         确保每个功能模块都有明确路标，不会让用户迷路哦！🧭✨"""
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            settings_path = path_manager.get_settings_path('Settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
                 logger.debug("白露导航: 已读取导航配置，准备构建个性化菜单～ ")
@@ -602,11 +589,12 @@ class Window(MSFluentWindow):
         self.switchTo(self.about_settingInterface)
 
     def start_cleanup(self):
-        """(ﾟДﾟ≡ﾟдﾟ) 星野的启动清理魔法！
+        """(^・ω・^ ) 白露的启动清理魔法！
         软件启动时清理上次遗留的临时抽取记录文件喵～
         根据抽选模式决定是否需要清理，保持系统整洁！"""
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            settings_path = path_manager.get_settings_path('Settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 pumping_people_draw_mode = settings['pumping_people']['draw_mode']
                 logger.debug(f"星野侦察: 抽选模式为{pumping_people_draw_mode}，准备执行对应清理方案～ ")
@@ -616,7 +604,8 @@ class Window(MSFluentWindow):
             logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}, 使用默认:不重复抽取(直到软件重启)模式")
 
         import glob
-        temp_dir = "app/resource/Temp"
+        temp_dir = path_manager.get_temp_path('')
+        ensure_dir(temp_dir)
 
         if pumping_people_draw_mode == 1:  # 不重复抽取(直到软件重启)
             if os.path.exists(temp_dir):
@@ -630,7 +619,7 @@ class Window(MSFluentWindow):
 
 
     def toggle_window(self):
-        """(ﾟДﾟ≡ﾟдﾟ) 星野的窗口切换魔法！
+        """(^・ω・^ ) 白露的窗口切换魔法！
         显示→隐藏→显示，像捉迷藏一样好玩喵～
         切换时会自动激活抽人界面，方便用户继续操作！"""  
         if self.config_manager.get_foundation_setting('topmost_switch'):
@@ -660,7 +649,7 @@ class Window(MSFluentWindow):
     def calculate_menu_position(self, menu):
         """白露定位系统：
         正在计算托盘菜单最佳显示位置
-        确保菜单不会超出屏幕边界哦～(๑•̀ㅂ•́)و✧"""
+        确保菜单不会超出屏幕边界哦～(๑•̀ㅂ•́)ow✧"""
         screen = QApplication.primaryScreen().availableGeometry()
         menu_size = menu.sizeHint()
 
@@ -677,11 +666,12 @@ class Window(MSFluentWindow):
         return QPoint(x, y)
 
     def close_window_secrandom(self):
-        """(ﾟДﾟ≡ﾟдﾟ) 星野的终极安全检查！
+        """(^・ω・^ ) 白露的终极安全检查！
         检测到退出请求！需要通过密码验证才能离开基地喵！
         这是最高级别的安全防御，不能让坏人随便入侵喵！🔒✨"""
         try:
-            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+            enc_settings_path = path_manager.get_plugin_path('SecRandom/enc_set.json')
+            with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 logger.debug("星野安检: 正在读取安全设置，准备执行退出验证～ ")
 
@@ -718,7 +708,8 @@ class Window(MSFluentWindow):
 
     def restart_app(self):
         try:
-            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+            enc_settings_path = path_manager.get_plugin_path('SecRandom', 'enc_set.json')
+            with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
                     if settings.get('hashed_set', {}).get('restart_verification_enabled', False) == True:
@@ -811,10 +802,11 @@ class Window(MSFluentWindow):
             logger.error(f"密码验证失败: {e}")
 
         try:
-            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+            enc_settings_path = path_manager.get_plugin_path('SecRandom', 'enc_set.json')
+            with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
             settings['hashed_set']['verification_start'] = True
-            with open('app/SecRandom/enc_set.json', 'w', encoding='utf-8') as f:
+            with open_file(enc_settings_path, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=4)
         except Exception as e:
             logger.error(f"写入verification_start失败: {e}")
@@ -841,7 +833,8 @@ class Window(MSFluentWindow):
         浮窗显示状态切换中！
         注意不要让它挡住重要内容喵～(ฅ´ω`ฅ)"""
         try:
-            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+            enc_settings_path = path_manager.get_plugin_path('SecRandom', 'enc_set.json')
+            with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
                     if settings.get('hashed_set', {}).get('show_hide_verification_enabled', False) == True:

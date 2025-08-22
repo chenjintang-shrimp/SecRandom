@@ -7,10 +7,12 @@ from PyQt5.QtWidgets import *
 
 import os
 import json
+from pathlib import Path
 from loguru import logger
 import pandas as pd
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
+from app.common.path_utils import path_manager, open_file, ensure_dir
 
 is_dark = is_dark_theme(qconfig)
 
@@ -20,7 +22,8 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("抽奖名单")
         self.setBorderRadius(8)
-        self.settings_file = "app/Settings/Settings.json"
+        app_dir = path_manager._app_root
+        self.settings_file = app_dir / 'app' / 'Settings' / 'Settings.json'
 
         self.prize_pools_Button = PushButton("设置奖池名称")
         self.prize_pools_Button.clicked.connect(self.show_prize_pools_dialog)
@@ -52,13 +55,14 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         self.export_Button.setFont(QFont(load_custom_font(), 12))
 
         try:
-            list_folder = "app/resource/reward"
-            if os.path.exists(list_folder) and os.path.isdir(list_folder):
-                files = os.listdir(list_folder)
+            app_dir = path_manager._app_root
+            list_folder = app_dir / 'app' / 'resource' / 'reward'
+            if list_folder.exists() and list_folder.is_dir():
+                files = list(list_folder.iterdir())
                 prizes = []
                 for file in files:
-                    if file.endswith('.json'):
-                        prize_pools_name = os.path.splitext(file)[0]
+                    if file.suffix == '.json':
+                        prize_pools_name = file.stem
                         prizes.append(prize_pools_name)
                 
                 self.prize_pools_comboBox.clear()
@@ -105,8 +109,10 @@ class reward_SettinsCard(GroupHeaderCardWidget):
 
             try:
                 # 🌟 小鸟游星野：确保目录存在并写入数据 ~ (๑•̀ㅂ•́)ญ✧
-                os.makedirs("app/resource/reward", exist_ok=True)
-                with open(f"app/resource/reward/{prize_pools_name}.json", 'w', encoding='utf-8') as f:
+                app_dir = path_manager._app_root
+                reward_dir = app_dir / 'app' / 'resource' / 'reward'
+                ensure_dir(reward_dir)
+                with open_file(reward_dir / f'{prize_pools_name}.json', 'w', encoding='utf-8') as f:
                     json.dump(prize_data, f, ensure_ascii=False, indent=4)
 
                 self.refresh_signal.emit()
@@ -131,7 +137,8 @@ class reward_SettinsCard(GroupHeaderCardWidget):
 
         try:
             # 读取奖品数据
-            with open(f"app/resource/reward/{prize_pools_name}.json", 'r', encoding='utf-8') as f:
+            app_dir = path_manager._app_root
+            with open_file(app_dir / 'app' / 'resource' / 'reward' / f'{prize_pools_name}.json', 'r', encoding='utf-8') as f:
                 data = json.load(f)
             
             if not data:
@@ -228,8 +235,10 @@ class reward_SettinsCard(GroupHeaderCardWidget):
     def show_table(self):
         prize_pools_name = self.prize_pools_comboBox.currentText()
         # 获取是否存在奖品
-        if os.path.exists(f"app/resource/reward/{prize_pools_name}.json"):
-            with open(f"app/resource/reward/{prize_pools_name}.json", 'r', encoding='utf-8') as f:
+        app_dir = path_manager._app_root
+        prize_file = app_dir / 'app' / 'resource' / 'reward' / f'{prize_pools_name}.json'
+        if prize_file.exists():
+            with open_file(prize_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
         else:
             data = []
@@ -253,7 +262,8 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         if prize_pools_name:
             try:
                 # 🌟 小鸟游星野：确保目录存在并写入数据 ~ (๑•̀ㅂ•́)ญ✧
-                with open(f"app/resource/reward/{prize_pools_name}.json", 'r', encoding='utf-8') as f:
+                app_dir = path_manager._app_root
+                with open_file(app_dir / 'app' / 'resource' / 'reward' / f'{prize_pools_name}.json', 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 self.table.setRowCount(len(data))
                 self.table.clearContents()
@@ -310,32 +320,33 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                 prize_poolss = [line.strip() for line in prize_pools_text.split('\n') if line.strip()]
                 
                 # 获取当前所有奖池文件
-                list_folder = "app/resource/reward"
+                app_dir = path_manager._app_root
+                list_folder = app_dir / 'app' / 'resource' / 'reward'
                 existing_prize_poolss = []
-                if os.path.exists(list_folder):
-                    existing_prize_poolss = [f.split('.')[0] for f in os.listdir(list_folder) if f.endswith('.json')]
+                if list_folder.exists():
+                    existing_prize_poolss = [f.stem for f in list_folder.iterdir() if f.suffix == '.json']
                 
                 # 删除不再需要的奖池文件
                 for existing_prize in existing_prize_poolss:
                     if existing_prize not in prize_poolss:
-                        prize_pools_file = f"app/resource/reward/{existing_prize}.json"
-                        history_file = f"app/resource/reward/history/{existing_prize}.json"
+                        prize_pools_file = list_folder / f'{existing_prize}.json'
+                        history_file = list_folder / 'history' / f'{existing_prize}.json'
                         try:
-                            os.remove(prize_pools_file)
+                            prize_pools_file.unlink()
                             logger.info(f"已删除奖池文件: {prize_pools_file}")
                             # 删除对应的历史记录文件
-                            if os.path.exists(f"app/resource/reward/history/{existing_prize}.json"):
-                                os.remove(history_file)
+                            if history_file.exists():
+                                history_file.unlink()
                                 logger.info(f"已删除历史记录文件: {history_file}")
                         except Exception as e:
                             logger.error(f"删除文件失败: {prize_pools_file}或{history_file}, 错误: {str(e)}")
 
-                os.makedirs("app/resource/reward", exist_ok=True)
+                ensure_dir(list_folder)
                 
                 for prize_pools_name in prize_poolss:
-                    prize_pools_file = f"app/resource/reward/{prize_pools_name}.json"
-                    if not os.path.exists(prize_pools_file):
-                        with open(prize_pools_file, 'w', encoding='utf-8') as f:
+                    prize_pools_file = list_folder / f'{prize_pools_name}.json'
+                    if not prize_pools_file.exists():
+                        with open_file(prize_pools_file, 'w', encoding='utf-8') as f:
                             basic_structure = {
                                 "示例奖品": {
                                     "id": 1,
@@ -360,13 +371,15 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                 try:
                     students = [line.strip() for line in prize_text.split('\n') if line.strip()]
                     
-                    os.makedirs("app/resource/reward", exist_ok=True)
+                    app_dir = path_manager._app_root
+                    reward_dir = app_dir / 'app' / 'resource' / 'reward'
+                    ensure_dir(reward_dir)
                     
-                    prize_file = f"app/resource/reward/{selected_prize}.json"
+                    prize_file = reward_dir / f'{selected_prize}.json'
                     prize_data = {}
                     
                     if os.path.exists(prize_file):
-                        with open(prize_file, 'r', encoding='utf-8') as f:
+                        with open_file(prize_file, 'r', encoding='utf-8') as f:
                             prize_data = json.load(f)
                     
                     existing_students = {name for name in prize_data.keys()}
@@ -387,7 +400,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                         }
                     prize_data = new_prize_data
                     
-                    with open(prize_file, 'w', encoding='utf-8') as f:
+                    with open_file(prize_file, 'w', encoding='utf-8') as f:
                         json.dump(prize_data, f, ensure_ascii=False, indent=4)
                     
                     self.refresh_signal.emit()
@@ -400,10 +413,12 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         if dialog.exec():
             probability_text = dialog.getText()
             prize_pools_name = self.prize_pools_comboBox.currentText()
-            # 获取是否存在奖品
-            if os.path.exists(f"app/resource/reward/{prize_pools_name}.json"):
-                with open(f"app/resource/reward/{prize_pools_name}.json", 'r', encoding='utf-8') as f:
-                    data = json.load(f)
+        # 获取是否存在奖品
+        app_dir = path_manager._app_root
+        prize_file = app_dir / 'app' / 'resource' / 'reward' / f'{prize_pools_name}.json'
+        if prize_file.exists():
+            with open_file(prize_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
             if not data:
                 self.table.setRowCount(0)
                 self.table.setHorizontalHeaderLabels([])
@@ -412,13 +427,15 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                 try:
                     probabilitys = [line.strip() for line in probability_text.split('\n') if line.strip()]
                     
-                    os.makedirs("app/resource/reward", exist_ok=True)
+                    app_dir = path_manager._app_root
+                    reward_dir = app_dir / 'app' / 'resource' / 'reward'
+                    ensure_dir(reward_dir)
 
-                    prize_file = f"app/resource/reward/{prize_pools_name}.json"
+                    prize_file = reward_dir / f'{prize_pools_name}.json'
                     prize_data = {}
                     
                     if os.path.exists(prize_file):
-                        with open(prize_file, 'r', encoding='utf-8') as f:
+                        with open_file(prize_file, 'r', encoding='utf-8') as f:
                             
                             prize_data = json.load(f)
                     
@@ -428,7 +445,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                             if prize_data[prize_name]["id"] == idx:
                                 prize_data[prize_name]["probability"] = probability_name
                     
-                    with open(prize_file, 'w', encoding='utf-8') as f:
+                    with open_file(prize_file, 'w', encoding='utf-8') as f:
                         json.dump(prize_data, f, ensure_ascii=False, indent=4)
                     
                     self.refresh_signal.emit()
@@ -454,9 +471,10 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         prize_name = name_item.text()
         
         # 加载当前奖池的奖品数据
-        prize_file = f"app/resource/reward/{prize_pool}.json"
+        app_dir = path_manager._app_root
+        prize_file = app_dir / 'app' / 'resource' / 'reward' / f'{prize_pool}.json'
         try:
-            with open(prize_file, 'r', encoding='utf-8') as f:
+            with open_file(prize_file, 'r', encoding='utf-8') as f:
                 prize_data = json.load(f)
         except Exception as e:
             logger.error(f"加载奖品数据失败: {str(e)}")
@@ -485,7 +503,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         
         # 保存更新后的数据
         try:
-            with open(prize_file, 'w', encoding='utf-8') as f:
+            with open_file(prize_file, 'w', encoding='utf-8') as f:
                 json.dump(prize_data, f, ensure_ascii=False, indent=4)
             logger.info(f"奖品数据更新成功: {prize_name}")
         except Exception as e:
@@ -1040,13 +1058,14 @@ class Prize_pools_InputDialog(QDialog):
         self.setFont(QFont(load_custom_font(), 12))
 
         try:
-            list_folder = "app/resource/reward"
-            if os.path.exists(list_folder) and os.path.isdir(list_folder):
-                files = os.listdir(list_folder)
+            app_dir = path_manager._app_root
+            list_folder = app_dir / 'app' / 'resource' / 'reward'
+            if list_folder.exists() and list_folder.is_dir():
+                files = list(list_folder.iterdir())
                 prizes = []
                 for file in files:
-                    if file.endswith('.json'):
-                        prize_pools_name = os.path.splitext(file)[0]
+                    if file.suffix == '.json':
+                        prize_pools_name = file.stem
                         prizes.append(prize_pools_name)
                 
                 self.textEdit.setPlainText("\n".join(prizes))
@@ -1228,12 +1247,14 @@ class PrizeInputDialog(QDialog):
         self.setFont(QFont(load_custom_font(), 12))
         
         prize_pools_name = self.parent().prize_pools_comboBox.currentText()
+        app_dir = path_manager._app_root
+        prize_file = app_dir / 'app' / 'resource' / 'reward' / f'{prize_pools_name}.json'
         try:
-            with open(f"app/resource/reward/{prize_pools_name}.json", 'r', encoding='utf-8') as f:
+            with open_file(prize_file, 'r', encoding='utf-8') as f:
                 file_content = f.read()
                 if not file_content.strip():
                     # 处理空文件情况
-                    logger.warning(f"JSON文件为空: app/resource/reward/{prize_pools_name}.json")
+                    logger.warning(f"JSON文件为空: {prize_file}")
                     return
                 
                 try:
@@ -1250,7 +1271,7 @@ class PrizeInputDialog(QDialog):
                 except ValueError as e:
                     logger.error(f"数据格式错误: {str(e)}")
         except FileNotFoundError:
-            logger.error(f"文件未找到: app/resource/reward/{prize_pools_name}.json")
+            logger.error(f"文件未找到: {prize_file}")
         except json.JSONDecodeError:
             logger.error("JSON文件格式错误，请检查文件内容")
         
@@ -1417,11 +1438,13 @@ class ProbabilityInputDialog(QDialog):
         self.setFont(QFont(load_custom_font(), 12))
         
         prize_pools_name = self.parent().prize_pools_comboBox.currentText()
+        app_dir = path_manager._app_root
+        prize_file = app_dir / 'app' / 'resource' / 'reward' / f'{prize_pools_name}.json'
         try:
-            with open(f"app/resource/reward/{prize_pools_name}.json", 'r', encoding='utf-8') as f:
+            with open_file(prize_file, 'r', encoding='utf-8') as f:
                 file_content = f.read()
                 if not file_content.strip():
-                    logger.warning(f"JSON文件为空: app/resource/reward/{prize_pools_name}.json")
+                    logger.warning(f"JSON文件为空: {prize_file}")
                     return
                 data = json.loads(file_content)
                 if isinstance(data, dict):

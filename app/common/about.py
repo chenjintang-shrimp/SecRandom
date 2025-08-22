@@ -13,6 +13,7 @@ from PyQt5.QtGui import *
 from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
 from app.common.update_notification import show_update_notification
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, get_update_channel, set_update_channel
+from app.common.path_utils import path_manager
 
 class aboutCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -203,42 +204,43 @@ class ContributorDialog(QDialog):
         qconfig.themeChanged.connect(self.update_theme_style)
         
         # 贡献者数据
+        app_dir = path_manager._app_root
         contributors = [
             {
                 'name': 'lzy98276 (黎泽懿_Aionflux)',
                 'role': '设计 & 创意 & 策划 &\n维护 & 文档& 测试',
                 'github': 'https://github.com/lzy98276',
-                'avatar': 'app\\resource\\icon\\contributor1.png'
+                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor1.png')
             },
             {
                 'name': 'QiKeZhiCao (弃稞之草)',
                 'role': '创意 & 维护',
                 'github': 'https://github.com/QiKeZhiCao',
-                'avatar': 'app\\resource\\icon\\contributor2.png'
+                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor2.png')
             },
             {
                 'name': 'Fox-block-offcial',
                 'role': '应用测试',
                 'github': 'https://github.com/Fox-block-offcial',
-                'avatar': 'app\\resource\\icon\\contributor3.png'
+                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor3.png')
             },
             {
                 'name': 'yuanbenxin (本新同学)',
                 'role': '响应式前端页面\n设计及维护 & 文档',
                 'github': 'https://github.com/yuanbenxin',
-                'avatar': 'app\\resource\\icon\\contributor4.png'
+                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor4.png')
             },
             {
                 'name': 'zhangjianjian7 (叶背影)',
                 'role': '文档',
                 'github': 'https://github.com/zhangjianjian7',
-                'avatar': 'app\\resource\\icon\\contributor5.png'
+                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor5.png')
             },
             {
                 'name': 'Jursin',
                 'role': '响应式前端页面\n设计及维护 & 文档',
                 'github': 'https://github.com/jursin',
-                'avatar': 'app\\resource\\icon\\contributor6.png'
+                'avatar': str(app_dir / 'app' / 'resource' / 'icon' / 'contributor6.png')
             },
         ]
         

@@ -1,5 +1,5 @@
+# Core dependencies (cross-platform)
 colorama==0.4.6
-comtypes==1.4.10
 darkdetect==0.8.0
 asyncio~=3.4.3
 loguru==0.7.3
@@ -11,16 +11,12 @@ PyQt5-Qt5~=5.15.2
 PyQt5_sip==12.15.0
 pyotp==2.9.0
 sip~=6.8.6
-pywin32==310; platform_system == "Windows"
-win32_setctime==1.2.0
-winshell==0.6; platform_system == "Windows"
 pyqrcode~=1.2.1
 pypng~=0.20220715.0
 pillow~=10.4.0
 psutil~=7.0.0
 numpy~=1.24.4
 pandas~=2.0.3
-pycaw==20240210
 edge-tts==7.0.2
 sounddevice==0.5.2
 soundfile==0.13.1
@@ -28,3 +24,35 @@ openpyxl==3.1.5
 requests==2.32.4
 packaging==25.0
 jinja2~=3.1.6
+
+# Windows-specific dependencies
+comtypes==1.4.10; platform_system == "Windows"
+pywin32==310; platform_system == "Windows"
+win32_setctime==1.2.0; platform_system == "Windows"
+winshell==0.6; platform_system == "Windows"
+pycaw==20240210; platform_system == "Windows"
+
+# Linux-specific dependencies
+# Linux系统依赖安装说明：
+# 
+# Ubuntu/Debian/deepin/UOS:
+# sudo apt update
+# sudo apt install -y pulseaudio pulseaudio-utils alsa-utils espeak libasound2-dev libpulse-dev libxcb-cursor-dev libxcb-xinerama0 libxcb-shape0 libxcb-keysyms1-dev libxcb-image0-dev libxcb-render-util0-dev
+# 
+# Fedora/RHEL/CentOS:
+# sudo dnf update
+# sudo dnf install -y pulseaudio pulseaudio-utils alsa-utils espeak alsa-lib-devel pulseaudio-libs-devel libxcb-cursor-devel libxcb-keysyms-devel libxcb-image-devel libxcb-render-util-devel
+# 
+# Arch Linux/Manjaro:
+# sudo pacman -Syu
+# sudo pacman -S pulseaudio pulseaudio-alsa alsa-utils espeak alsa-lib pulseaudio libxcb-cursor libxcb-keysyms libxcb-image libxcb-render-util
+# 
+# openSUSE:
+# sudo zypper refresh
+# sudo zypper install -y pulseaudio pulseaudio-utils alsa-utils espeak alsa-devel pulseaudio-devel libxcb-cursor0 libxcb-keysyms1 libxcb-image0 libxcb-render-util0
+# 
+# 音频功能需要用户在audio组中：
+# sudo usermod -a -G audio $USER
+# 然后重新登录或重启系统
+# 
+# 注意：某些发行版可能需要额外启用multilib仓库（如Arch Linux）或epel仓库（如RHEL/CentOS）

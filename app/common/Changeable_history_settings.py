@@ -5,7 +5,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 import os
+from pathlib import Path
 from loguru import logger
+from app.common.path_utils import path_manager, open_file, ensure_dir
 
 from app.common.config import get_theme_icon, load_custom_font
 
@@ -115,7 +117,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
             student_file = f"app/resource/list/{class_name}.json"
 
             if os.path.exists(student_file):
-                with open(student_file, 'r', encoding='utf-8') as f:
+                with open_file(student_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cleaned_data = []
                     for student_name, student_info in data.items():
@@ -176,7 +178,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
     def load_settings(self):
         try:
             if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     history_settings = settings.get("history", {})
                         
@@ -212,7 +214,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
         # 先读取现有设置
         existing_settings = {}
         if os.path.exists(self.settings_file):
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)
                 except json.JSONDecodeError:
@@ -226,6 +228,6 @@ class history_SettinsCard(GroupHeaderCardWidget):
         history_settings["probability_weight"] = self.probability_or_weight.currentIndex()
         history_settings["history_days"] = self.history_spinBox.value()
         
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open(self.settings_file, 'w', encoding='utf-8') as f:
+        ensure_dir(Path(self.settings_file).parent)
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)

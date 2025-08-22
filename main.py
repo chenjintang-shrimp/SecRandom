@@ -25,6 +25,7 @@ from loguru import logger
 from app.common.config import cfg, VERSION
 from app.view.SecRandom import Window
 from app.common.url_handler import process_url_if_exists
+from app.common.path_utils import path_manager, ensure_dir, open_file, file_exists
 
 def send_ipc_message(url_command=None):
     """(^・ω・^ ) 白露的IPC信使魔法！
@@ -99,10 +100,12 @@ else:
 正在重置验证状态标记，确保程序启动时处于安全状态喵～
 这是防止重复验证的魔法保护措施哦～ 🔒"""
 try:
-    with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+    enc_set_path = path_manager.get_enc_set_path()
+    ensure_dir(enc_set_path.parent)
+    with open_file(enc_set_path, 'r') as f:
         settings = json.load(f)
     settings['hashed_set']['verification_start'] = False
-    with open('app/SecRandom/enc_set.json', 'w', encoding='utf-8') as f:
+    with open_file(enc_set_path, 'w') as f:
         json.dump(settings, f, ensure_ascii=False, indent=4)
     logger.info("星野安全: verification_start状态已成功重置为False喵～")
 except Exception as e:
@@ -177,16 +180,16 @@ def check_settings_directory():
     - 'guide': 没有文件或引导未完成，需要显示引导界面
     - 'update': 版本过低，需要显示新版本更新内容
     ✨"""
-    guide_complete_file = 'app/Settings/guide_complete.json'
+    guide_complete_file = path_manager.get_guide_complete_path()
     
     # 检查引导完成标志文件是否存在
-    if not os.path.exists(guide_complete_file):
+    if not file_exists(guide_complete_file):
         logger.info("白露检查: 引导完成标志文件不存在，需要显示引导界面～ ")
         return 'guide'
     
     # 检查引导完成标志文件内容是否有效
     try:
-        with open(guide_complete_file, 'r', encoding='utf-8') as f:
+        with open_file(guide_complete_file, 'r') as f:
             guide_data = json.load(f)
             
         # 检查是否包含必要的字段
@@ -260,9 +263,10 @@ def initialize_application():
             # 🌟 小鸟游星野：检查插件自启动设置 ~ (๑•̀ㅂ•́)ญ✧
             try:
                 # 读取插件设置文件
-                plugin_settings_file = 'app/Settings/plugin_settings.json'
-                if os.path.exists(plugin_settings_file):
-                    with open(plugin_settings_file, 'r', encoding='utf-8') as f:
+                plugin_settings_file = path_manager.get_settings_path('plugin_settings.json')
+                ensure_dir(plugin_settings_file.parent)
+                if file_exists(plugin_settings_file):
+                    with open_file(plugin_settings_file, 'r') as f:
                         plugin_settings = json.load(f)
                         run_plugins_on_startup = plugin_settings.get('plugin_settings', {}).get('run_plugins_on_startup', False)
                         
@@ -280,7 +284,9 @@ def initialize_application():
             
             # 显示主窗口
             try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings_file = path_manager.get_settings_path()
+                ensure_dir(settings_file.parent)
+                with open_file(settings_file, 'r') as f:
                     settings = json.load(f)
                     foundation_settings = settings.get('foundation', {})
                     self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
@@ -330,9 +336,10 @@ def initialize_application():
             # 🌟 小鸟游星野：检查插件自启动设置 ~ (๑•̀ㅂ•́)ญ✧
             try:
                 # 读取插件设置文件
-                plugin_settings_file = 'app/Settings/plugin_settings.json'
-                if os.path.exists(plugin_settings_file):
-                    with open(plugin_settings_file, 'r', encoding='utf-8') as f:
+                plugin_settings_file = path_manager.get_settings_path('plugin_settings.json')
+                ensure_dir(plugin_settings_file.parent)
+                if file_exists(plugin_settings_file):
+                    with open_file(plugin_settings_file, 'r') as f:
                         plugin_settings = json.load(f)
                         run_plugins_on_startup = plugin_settings.get('plugin_settings', {}).get('run_plugins_on_startup', False)
                         
@@ -350,7 +357,9 @@ def initialize_application():
             
             # 显示主窗口
             try:
-                with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+                settings_file = path_manager.get_settings_path()
+                ensure_dir(settings_file.parent)
+                with open_file(settings_file, 'r') as f:
                     settings = json.load(f)
                     foundation_settings = settings.get('foundation', {})
                     self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
@@ -388,9 +397,10 @@ def initialize_application():
         # 🌟 小鸟游星野：检查插件自启动设置 ~ (๑•̀ㅂ•́)ญ✧
         try:
             # 读取插件设置文件
-            plugin_settings_file = 'app/Settings/plugin_settings.json'
-            if os.path.exists(plugin_settings_file):
-                with open(plugin_settings_file, 'r', encoding='utf-8') as f:
+            plugin_settings_file = path_manager.get_settings_path('plugin_settings.json')
+            ensure_dir(plugin_settings_file.parent)
+            if file_exists(plugin_settings_file):
+                with open_file(plugin_settings_file, 'r') as f:
                     plugin_settings = json.load(f)
                     run_plugins_on_startup = plugin_settings.get('plugin_settings', {}).get('run_plugins_on_startup', False)
                     
@@ -407,7 +417,9 @@ def initialize_application():
             logger.error(f"白露错误: 检查插件自启动设置失败: {e}")
         
         try:
-            with open('app/Settings/Settings.json', 'r', encoding='utf-8') as f:
+            settings_file = path_manager.get_settings_path()
+            ensure_dir(settings_file.parent)
+            with open_file(settings_file, 'r') as f:
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
                 self_starting_enabled = foundation_settings.get('self_starting_enabled', False)

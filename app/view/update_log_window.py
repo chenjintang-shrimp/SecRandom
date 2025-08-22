@@ -14,6 +14,7 @@ from loguru import logger
 
 # 🏰 应用内部魔法卷轴 🏰
 from app.common.config import get_theme_icon, load_custom_font, VERSION
+from app.common.path_utils import path_manager
 
 
 class UpdateLogWindow(MSFluentWindow):
@@ -44,7 +45,12 @@ class UpdateLogWindow(MSFluentWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('SecRandom 更新日志')
-        self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
+        
+        # 获取应用根目录并构建图标路径
+        app_dir = path_manager._app_root
+        icon_path = app_dir / 'app' / 'resource' / 'icon' / 'SecRandom.png'
+        self.setWindowIcon(QIcon(str(icon_path)))
+        
         self.resize(800, 600)
         
         # 设置窗口居中

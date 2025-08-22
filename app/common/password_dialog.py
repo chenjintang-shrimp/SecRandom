@@ -9,6 +9,7 @@ import pyotp
 import os
 from loguru import logger
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
+from app.common.path_utils import path_manager, open_file
 
 class PasswordDialog(QDialog):
     def __init__(self, parent=None):
@@ -16,7 +17,7 @@ class PasswordDialog(QDialog):
         # 🌟 星穹铁道白露：设置无边框窗口样式并解决屏幕设置冲突~ 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("密码验证")
-        self.setWindowIcon(QIcon('./app/resource/icon/SecRandom.png'))
+        self.setWindowIcon(QIcon(path_manager.get_resource_path('icon', 'SecRandom.png')))
         self.setFixedSize(400, 300)
 
         self.dragging = False
@@ -266,7 +267,7 @@ class PasswordDialog(QDialog):
 
     def verify(self):
         try:
-            with open('app/SecRandom/enc_set.json', 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_plugin_path('SecRandom', 'enc_set.json'), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 hashed_set_settings = settings.get('hashed_set', {})
 
@@ -311,7 +312,7 @@ class PasswordDialog(QDialog):
                         return
 
                     try:
-                        with open(key_file, 'rb') as f:
+                        with open_file(key_file, 'rb') as f:
                             file_content = f.read()
                             file_content = file_content.decode().strip("b'").strip("'")
 
@@ -368,7 +369,7 @@ class PasswordDialog(QDialog):
     def verify_2fa_code(self, code, username):
         try:
             # 从设置文件中读取2FA密钥和加密用户名
-            with open('app/SecRandom/enc_set.json', 'r') as f:
+            with open_file(path_manager.get_plugin_path('SecRandom', 'enc_set.json'), 'r') as f:
                 settings = json.load(f)
                 secret = settings['hashed_set']['2fa_secret']
                 stored_username = settings['hashed_set'].get('encrypted_username', '')

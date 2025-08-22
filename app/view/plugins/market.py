@@ -17,6 +17,8 @@ from loguru import logger
 
 from packaging.version import Version
 from app.common.config import get_theme_icon, load_custom_font, VERSION
+from app.common.path_utils import path_manager
+from app.common.path_utils import open_file, ensure_dir
 
 
 class MarketPluginButtonGroup(QWidget):
@@ -64,7 +66,7 @@ class MarketPluginButtonGroup(QWidget):
     
     def _check_installed_version(self):
         """检查插件是否已安装及版本"""
-        plugin_dir = "app/plugin"
+        plugin_dir = path_manager.get_plugin_path("plugin")
         if not os.path.exists(plugin_dir):
             logger.debug(f"插件目录不存在: {plugin_dir}")
             return None
@@ -83,7 +85,7 @@ class MarketPluginButtonGroup(QWidget):
                 continue
             
             try:
-                with open(plugin_json_path, 'r', encoding='utf-8') as f:
+                with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                     plugin_config = json.load(f)
                 
                 # 获取已安装插件的信息用于日志记录
@@ -388,8 +390,8 @@ class MarketPluginButtonGroup(QWidget):
             logger.info(f"开始安装插件: {plugin_name}")
             
             # 创建插件目录
-            plugin_dir = "app/plugin"
-            os.makedirs(plugin_dir, exist_ok=True)
+            plugin_dir = path_manager.get_plugin_path("plugin")
+            ensure_dir(plugin_dir)
             
             # 生成插件文件夹名称（使用仓库名称）
             repo_name = self._get_repo_name_from_url(url)
@@ -405,7 +407,7 @@ class MarketPluginButtonGroup(QWidget):
                 plugin_json_path = os.path.join(target_dir, "plugin.json")
                 if os.path.exists(plugin_json_path):
                     try:
-                        with open(plugin_json_path, 'r', encoding='utf-8') as f:
+                        with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                             plugin_config = json.load(f)
                         # 更新按钮状态
                         self.installed_version = plugin_config.get("version")
@@ -462,7 +464,7 @@ class MarketPluginButtonGroup(QWidget):
             logger.info(f"开始卸载插件: {plugin_name}")
             
             # 查找插件目录
-            plugin_dir = "app/plugin"
+            plugin_dir = path_manager.get_plugin_path("plugin")
             if not os.path.exists(plugin_dir):
                 error_dialog = Dialog("卸载失败", f"插件目录不存在", self)
                 error_dialog.yesButton.setText("确定")
@@ -482,7 +484,7 @@ class MarketPluginButtonGroup(QWidget):
                     continue
                 
                 try:
-                    with open(plugin_json_path, 'r', encoding='utf-8') as f:
+                    with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                         plugin_config = json.load(f)
                     
                     # 获取已安装插件的信息用于日志记录
@@ -556,8 +558,8 @@ class MarketPluginButtonGroup(QWidget):
             branch = self.plugin_info.get("branch", "main")
             
             # 创建插件目录
-            plugin_dir = "app/plugin"
-            os.makedirs(plugin_dir, exist_ok=True)
+            plugin_dir = path_manager.get_plugin_path("plugin")
+            ensure_dir(plugin_dir)
             
             # 生成插件文件夹名称（使用仓库名称）
             repo_name = self._get_repo_name_from_url(url)
@@ -573,7 +575,7 @@ class MarketPluginButtonGroup(QWidget):
                 plugin_json_path = os.path.join(target_dir, "plugin.json")
                 if os.path.exists(plugin_json_path):
                     try:
-                        with open(plugin_json_path, 'r', encoding='utf-8') as f:
+                        with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                             plugin_config = json.load(f)
                         
                         
@@ -622,7 +624,7 @@ class MarketPluginButtonGroup(QWidget):
     def _uninstall_plugin_internal(self):
         """内部卸载插件（不显示对话框）"""
         plugin_name = self.plugin_info.get("name")
-        plugin_dir = "app/plugin"
+        plugin_dir = path_manager.get_plugin_path("plugin")
         
         if not os.path.exists(plugin_dir):
             return False
@@ -638,7 +640,7 @@ class MarketPluginButtonGroup(QWidget):
                 continue
             
             try:
-                with open(plugin_json_path, 'r', encoding='utf-8') as f:
+                with open_file(plugin_json_path, 'r', encoding='utf-8') as f:
                     plugin_config = json.load(f)
                 
                 # 检查是否是同一个插件（通过名称或URL匹配，与_check_installed_version保持一致）
@@ -842,7 +844,7 @@ class PluginMarketPage(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("插件广场")
         self.setBorderRadius(8)
-        self.settings_file = "app/Settings/plugin_settings.json"
+        self.settings_file = path_manager.get_settings_path("plugin_settings.json")
         
         # 插件市场仓库信息
         self.market_repo_url = "https://github.com/SECTL/SecRandom-market"
@@ -855,7 +857,7 @@ class PluginMarketPage(GroupHeaderCardWidget):
         """🌟 小鸟游星野 - 加载插件设置"""
         try:
             if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     return settings.get("plugin_settings", {})
             else:

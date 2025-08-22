@@ -6,9 +6,12 @@ from PyQt5.QtWidgets import *
 
 import json
 import os
+from pathlib import Path
 from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font
+from app.common.path_utils import path_manager
+from app.common.path_utils import open_file, ensure_dir
 from app.view.main_page import pumping_people
 
 
@@ -17,7 +20,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("抽人设置")
         self.setBorderRadius(8)
-        self.settings_file = "app/Settings/Settings.json"
+        self.settings_file = path_manager.get_settings_path('Settings.json')
         self.default_settings = {
             "font_size": 50,
             "draw_mode": 0,
@@ -290,26 +293,41 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         pumping_people_result_color_fixed_dialog.show()
 
     def open_music_path(self, button):
-        BGM_ANIMATION_PATH = './app/resource/music/pumping_people/Animation_music'
-        BGM_RESULT_PATH = './app/resource/music/pumping_people/result_music'
-        if not os.path.exists(BGM_ANIMATION_PATH):
-            os.makedirs(BGM_ANIMATION_PATH)
-        if not os.path.exists(BGM_RESULT_PATH):
-            os.makedirs(BGM_RESULT_PATH)
+        bgm_animation_path = path_manager.get_resource_path('music/pumping_people/Animation_music')
+        bgm_result_path = path_manager.get_resource_path('music/pumping_people/result_music')
+        ensure_dir(bgm_animation_path)
+        ensure_dir(bgm_result_path)
         # 星野引导：根据按钮选择打开对应的音乐文件夹 (๑•̀ㅂ•́)و✧
         if button == 'Animation_music':
             # 白露提示：确保路径是文件夹格式再打开哦～
-            os.startfile(os.path.abspath(BGM_ANIMATION_PATH))
+            self.open_folder(str(bgm_animation_path))
         elif button == 'result_music':
             # 星野守护：用绝对路径确保文件夹正确打开～
-            os.startfile(os.path.abspath(BGM_RESULT_PATH))
+            self.open_folder(str(bgm_result_path))
 
     def open_image_path(self):
-        IMAGE_PATH = './app/resource/images/students'
-        if not os.path.exists(IMAGE_PATH):
-            os.makedirs(IMAGE_PATH)
+        image_path = path_manager.get_resource_path('images/students')
+        ensure_dir(image_path)
         # 星野守护：用绝对路径确保文件夹正确打开～
-        os.startfile(os.path.abspath(IMAGE_PATH))
+        self.open_folder(str(image_path))
+
+    def open_folder(self, path):
+        """跨平台打开文件夹的方法"""
+        import subprocess
+        import platform
+        
+        try:
+            system = platform.system()
+            if system == 'Windows':
+                os.startfile(path)
+            elif system == 'Darwin':  # macOS
+                subprocess.run(['open', path], check=True)
+            elif system == 'Linux':
+                subprocess.run(['xdg-open', path], check=True)
+            else:
+                logger.warning(f"不支持的操作系统: {system}")
+        except Exception as e:
+            logger.error(f"打开文件夹失败: {e}")
 
     def apply_font_size(self):
         try:
@@ -354,7 +372,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
     def load_settings(self):
         try:
             if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     pumping_people_settings = settings.get("pumping_people", {})
 
@@ -492,7 +510,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         # 先读取现有设置
         existing_settings = {}
         if os.path.exists(self.settings_file):
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)
                 except json.JSONDecodeError:
@@ -535,15 +553,15 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             # logger.warning(f"无效的字体大小输入: {self.pumping_people_font_size_edit.text()}")
             pass
         
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open(self.settings_file, 'w', encoding='utf-8') as f:
+        ensure_dir(Path(self.settings_file).parent)
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)
 
     # 读取颜色设置
     def load_color_settings(self):
         existing_settings = {}
         if os.path.exists(self.settings_file):
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)
                 except json.JSONDecodeError:
@@ -556,7 +574,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         # 先读取现有设置
         existing_settings = {}
         if os.path.exists(self.settings_file):
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)
                 except json.JSONDecodeError:
@@ -572,6 +590,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         elif color_type == "result":
             pumping_people_settings["_result_color"] = color_name
         
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open(self.settings_file, 'w', encoding='utf-8') as f:
+        ensure_dir(Path(self.settings_file).parent)
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)

@@ -12,6 +12,7 @@ import edge_tts
 from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
+from app.common.path_utils import path_manager, ensure_dir, open_file
 
 class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
     # 星穹铁道白露：在初始化时启动任务~🌟
@@ -19,7 +20,7 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle("语音引擎")
         self.setBorderRadius(8)
-        self.settings_file = "./app/Settings/voice_engine.json"
+        self.settings_file = path_manager.get_voice_engine_path()
         self.default_settings = {
             "voice_engine": 0,
             "edge_tts_voice_name": "zh-CN-XiaoxiaoNeural",
@@ -129,7 +130,7 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
     def load_settings(self):
         try:
             if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     voice_engine_settings = settings.get("voice_engine", {})
 
@@ -172,7 +173,7 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
         # 先读取现有设置
         existing_settings = {}
         if os.path.exists(self.settings_file):
-            with open(self.settings_file, 'r', encoding='utf-8') as f:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 try:
                     existing_settings = json.load(f)
                 except json.JSONDecodeError:
@@ -191,6 +192,6 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
         voice_engine_settings["system_volume_enabled"] = self.pumping_people_system_volume_switch.isChecked()
         voice_engine_settings["system_volume_value"] = self.pumping_people_system_volume_SpinBox.value()
 
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open(self.settings_file, 'w', encoding='utf-8') as f:
+        ensure_dir(Path(self.settings_file).parent)
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)

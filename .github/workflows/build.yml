@@ -45,7 +45,7 @@ jobs:
       - name: 安装 Python
         uses: actions/setup-python@v5.3.0
         with:
-          python-version: '3.8.10'
+          python-version: ${{ matrix.os == 'windows-2022' && '3.8.10' || '3.13.1' }}
           architecture: ${{ matrix.arch }}
       - name: 安装 uv
         uses: astral-sh/setup-uv@v4

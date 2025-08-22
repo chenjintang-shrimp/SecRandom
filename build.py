@@ -11,6 +11,7 @@ import subprocess
 import shutil
 import platform
 from pathlib import Path
+from app.common.path_utils import path_manager, open_file
 
 
 def run_command(cmd, cwd=None, check=True):
@@ -165,37 +166,67 @@ def install_pyinstaller():
 
 
 def build_application(pack_mode='onefile'):
-    """使用PyInstaller打包应用程序
+    """使用PyInstaller打包应用程序（跨平台支持）
     
     Args:
         pack_mode: 打包模式，'onefile'为单文件模式，'dir'为目录模式
     """
     print(f"开始打包应用程序（{pack_mode}模式）...")
     
+    system = platform.system()
+    
     # 检查必要文件
-    required_files = ['main.py', 'resources/SecRandom.ico', 'LICENSE']
+    required_files = ['main.py', 'LICENSE']
+    
+    # 根据平台添加特定文件检查
+    if system == 'Windows':
+        required_files.append('resources/SecRandom.ico')
+    elif system == 'Linux':
+        # Linux可以使用PNG图标或没有图标
+        icon_file = 'resources/SecRandom.png'
+        if os.path.exists(icon_file):
+            required_files.append(icon_file)
+    
     for file in required_files:
         if not os.path.exists(file):
             print(f"错误: 缺少必要文件 {file}")
             sys.exit(1)
     
     # 检查version_info.txt文件
-    version_file = 'version_info.txt'
+    version_file = path_manager.get_project_path('version_info.txt')
     if not os.path.exists(version_file):
-        print(f"警告: {version_file} 不存在，将跳过版本信息")
+        print(f"警告: version_info.txt 不存在，将跳过版本信息")
         version_option = ''
     else:
         version_option = f'--version-file={version_file}'
     
     # 构建PyInstaller命令基础参数
     cmd = [
-        'pyinstaller', 'main.py',
-        '-w',  # 无控制台窗口
-        '-i', './resources/SecRandom.ico',  # 图标
+        'pyinstaller', path_manager.get_project_path('main.py'),
         '-n', 'SecRandom',  # 应用程序名称
-        '--add-data', './app/resource:app/resource',
-        '--add-data', 'LICENSE:.',
-        '--hidden-import=psutil._psutil_windows',
+        '--add-data', f'{path_manager.get_resource_path()}:app/resource',
+        '--add-data', f'{path_manager.get_project_path("LICENSE")}:.'
+    ]
+    
+    # 根据平台添加特定参数
+    if system == 'Windows':
+        cmd.extend(['-w', '-i', path_manager.get_project_path('resources/SecRandom.ico')])  # 无控制台窗口，Windows图标
+        cmd.extend(['--hidden-import=psutil._psutil_windows'])
+    elif system == 'Linux':
+        # Linux平台参数
+        cmd.extend(['--hidden-import=psutil._psutil_linux'])
+        # 如果有PNG图标，添加图标参数
+        icon_path = path_manager.get_project_path('resources/SecRandom.png')
+        if os.path.exists(icon_path):
+            cmd.extend(['-i', icon_path])
+        else:
+            print("警告: 未找到Linux图标文件，将使用默认图标")
+    else:
+        # 其他平台默认参数
+        cmd.append('-w')  # 无控制台窗口
+    
+    # 添加通用的hidden imports
+    hidden_imports = [
         '--hidden-import=pandas._libs.interval',
         '--hidden-import=pandas._libs.ops',
         '--hidden-import=pandas._libs.tslibs',
@@ -274,6 +305,7 @@ def build_application(pack_mode='onefile'):
         '--collect-submodules=numpy',
         '--collect-submodules=pandas'
     ]
+    cmd.extend(hidden_imports)
     
     # 根据打包模式添加不同参数
     if pack_mode == 'onefile':
@@ -287,9 +319,9 @@ def build_application(pack_mode='onefile'):
     if version_option:
         cmd.append(version_option)
     
-    # 在Windows上使用PowerShell语法
-    if platform.system() == 'Windows':
-        # 正确处理PowerShell命令格式，只对包含空格的参数加引号
+    # 构建命令字符串
+    if system == 'Windows':
+        # Windows上使用PowerShell语法，正确处理空格
         cmd_parts = []
         for item in cmd:
             if ' ' in item:
@@ -298,6 +330,7 @@ def build_application(pack_mode='onefile'):
                 cmd_parts.append(item)
         cmd_str = ' '.join(cmd_parts)
     else:
+        # Linux/Unix系统直接连接
         cmd_str = ' '.join(cmd)
     
     run_command(cmd_str)
@@ -305,12 +338,14 @@ def build_application(pack_mode='onefile'):
 
 
 def prepare_distribution(pack_mode='onefile'):
-    """准备分发文件
+    """准备分发文件（跨平台支持）
     
     Args:
         pack_mode: 打包模式，'onefile'为单文件模式，'dir'为目录模式
     """
     print(f"准备分发文件（{pack_mode}模式）...")
+    
+    system = platform.system()
     
     # 创建zip_dist目录
     zip_dist_dir = 'zip_dist/SecRandom'
@@ -319,40 +354,61 @@ def prepare_distribution(pack_mode='onefile'):
     
     os.makedirs(zip_dist_dir, exist_ok=True)
     
+    # 根据平台确定可执行文件名
+    if system == 'Windows':
+        executable_name = 'SecRandom.exe'
+    elif system == 'Linux':
+        executable_name = 'SecRandom'
+    else:
+        executable_name = 'SecRandom'
+    
     # 根据打包模式复制不同的文件
     if pack_mode == 'onefile':
-        # 单文件模式：复制SecRandom.exe可执行文件
-        if os.path.exists('dist/SecRandom.exe'):
-            shutil.copy2('dist/SecRandom.exe', os.path.join(zip_dist_dir, 'SecRandom.exe'))
+        # 单文件模式：复制可执行文件
+        executable_path = os.path.join('dist', executable_name)
+        if os.path.exists(executable_path):
+            shutil.copy2(executable_path, os.path.join(zip_dist_dir, executable_name))
+            print(f"复制可执行文件: {executable_path}")
+        else:
+            print(f"错误: 未找到可执行文件 {executable_path}")
+            return
     elif pack_mode == 'dir':
         # 目录模式：复制SecRandom文件夹内容
-        if os.path.exists('dist/SecRandom'):
-            for item in os.listdir('dist/SecRandom'):
-                src = os.path.join('dist/SecRandom', item)
+        app_dir = 'dist/SecRandom'
+        if os.path.exists(app_dir):
+            for item in os.listdir(app_dir):
+                src = os.path.join(app_dir, item)
                 dst = os.path.join(zip_dist_dir, item)
                 if os.path.isdir(src):
                     shutil.copytree(src, dst)
                 else:
                     shutil.copy2(src, dst)
+            print(f"复制应用程序目录: {app_dir}")
+        else:
+            print(f"错误: 未找到应用程序目录 {app_dir}")
+            return
     else:
         print(f"错误: 不支持的打包模式 {pack_mode}")
         return
     
     # 复制app/resource文件夹
-    if os.path.exists('app/resource'):
+    app_dir = os.path.dirname(os.path.abspath(__file__))
+    resource_src = os.path.join(app_dir, 'app', 'resource')
+    if os.path.exists(resource_src):
         resource_dst = os.path.join(zip_dist_dir, 'app', 'resource')
         os.makedirs(os.path.dirname(resource_dst), exist_ok=True)
-        shutil.copytree('app/resource', resource_dst)
+        shutil.copytree(resource_src, resource_dst)
     
     # 复制LICENSE文件
-    if os.path.exists('LICENSE'):
-        shutil.copy2('LICENSE', os.path.join(zip_dist_dir, 'LICENSE'))
+    license_path = path_manager.get_project_path('LICENSE')
+    if os.path.exists(license_path):
+        shutil.copy2(license_path, os.path.join(zip_dist_dir, 'LICENSE'))
     
     print(f"分发文件准备完成（{pack_mode}模式）")
 
 
 def create_zip_archive(pack_mode='onefile'):
-    """创建ZIP压缩包
+    """创建ZIP压缩包（跨平台支持）
     
     Args:
         pack_mode: 打包模式，'onefile'为单文件模式，'dir'为目录模式
@@ -364,9 +420,10 @@ def create_zip_archive(pack_mode='onefile'):
     
     # 获取版本信息
     version = "latest"
-    if os.path.exists('version_info.txt'):
+    version_file = path_manager.get_project_path('version_info.txt')
+    if os.path.exists(version_file):
         try:
-            with open('version_info.txt', 'r', encoding='utf-8') as f:
+            with open_file(version_file, 'r', encoding='utf-8') as f:
                 for line in f:
                     if line.startswith('VSVersionInfo('):
                         # 简单提取版本信息
@@ -378,16 +435,31 @@ def create_zip_archive(pack_mode='onefile'):
         except Exception as e:
             print(f"读取版本信息失败: {e}")
     
-    # 构建ZIP文件名
+    # 获取系统信息
+    system = platform.system()
     arch = platform.machine().lower()
+    
+    # 标准化架构名称
     if arch == 'amd64':
+        arch = 'x64'
+    elif arch == 'x86_64':
         arch = 'x64'
     elif arch == 'x86':
         arch = 'x86'
+    elif arch == 'aarch64':
+        arch = 'arm64'
+    
+    # 标准化系统名称
+    if system == 'Windows':
+        system_name = 'Windows'
+    elif system == 'Linux':
+        system_name = 'Linux'
+    else:
+        system_name = system
     
     # 添加打包模式到文件名
     pack_mode_name = 'onefile' if pack_mode == 'onefile' else 'dir'
-    zip_name = f"SecRandom-Windows-{version}-{arch}-{pack_mode_name}.zip"
+    zip_name = f"SecRandom-{system_name}-{version}-{arch}-{pack_mode_name}.zip"
     zip_path = os.path.join('zip', zip_name)
     
     # 创建ZIP文件
@@ -506,11 +578,27 @@ def main():
             create_zip_archive(pack_mode)
             
             print(f"\n=== {pack_mode}模式打包完成 ===")
-            if pack_mode == 'onefile':
-                print(f"可执行文件: {os.path.abspath('dist/SecRandom.exe')}")
+            
+            # 根据平台显示可执行文件路径
+            system = platform.system()
+            if system == 'Windows':
+                executable_name = 'SecRandom.exe'
+            elif system == 'Linux':
+                executable_name = 'SecRandom'
             else:
-                print(f"可执行文件: {os.path.abspath('dist/SecRandom/SecRandom.exe')}")
-            print(f"ZIP压缩包: {os.path.abspath(f'zip/SecRandom-Windows-*-{pack_mode}.zip')}")
+                executable_name = 'SecRandom'
+            
+            if pack_mode == 'onefile':
+                executable_path = os.path.join('dist', executable_name)
+                print(f"可执行文件: {os.path.abspath(executable_path)}")
+            else:
+                executable_path = os.path.join('dist', 'SecRandom', executable_name)
+                print(f"可执行文件: {os.path.abspath(executable_path)}")
+            
+            # 显示ZIP压缩包路径
+            system_name = 'Windows' if system == 'Windows' else 'Linux' if system == 'Linux' else system
+            zip_pattern = f"zip/SecRandom-{system_name}-*-{pack_mode}.zip"
+            print(f"ZIP压缩包: {os.path.abspath(zip_pattern)}")
         
         print("\n=== 所有打包完成 ===")
         
