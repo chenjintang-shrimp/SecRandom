@@ -194,9 +194,9 @@ class UpdateChecker(QObject):
 
 
 # ==================================================
-# 系统托盘管理类
+# 托盘图标管理器类
 # ==================================================
-class TrayIconManager:
+class TrayIconManager(QObject):
     """(^・ω・^ ) 白露的系统托盘精灵！
     负责管理可爱的托盘图标和菜单，右键点击会有惊喜哦～
     就像藏在任务栏里的小助手，随时待命呢！(๑•̀ㅂ•́)ow✧"""
@@ -205,12 +205,23 @@ class TrayIconManager:
         """(^・ω・^ ) 唤醒托盘精灵！
         初始化系统托盘图标，设置好图标和提示文字～ 
         让它在任务栏安营扎寨，随时准备为用户服务！🏕️✨"""
+        super().__init__(main_window)
         self.main_window = main_window
         self.tray_icon = QSystemTrayIcon(main_window)
         self.tray_icon.setIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png')))) 
         self.tray_icon.setToolTip('SecRandom')  # 鼠标放上去会显示的文字
         self._create_menu()  # 创建魔法菜单
         self.tray_icon.activated.connect(self._on_tray_activated)  # 连接点击事件
+        
+        # 初始化菜单自动关闭定时器
+        self.menu_timer = QTimer(main_window)
+        self.menu_timer.setSingleShot(True)
+        self.menu_timer.timeout.connect(self._on_menu_timeout)
+        
+        # 安装事件过滤器来检测点击外部
+        self.tray_menu.installEventFilter(self)
+        QApplication.instance().installEventFilter(self)
+        
         logger.info("白露魔法: 托盘精灵已唤醒！")
 
     def _create_menu(self):
@@ -239,8 +250,69 @@ class TrayIconManager:
         就像有人敲门时，立刻开门迎接客人一样热情！(๑•̀ㅂ•́)ow✧"""
         if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.Context):
             pos = QCursor.pos()  # 获取鼠标位置
-            self.tray_menu.popup(pos)  # 在鼠标位置显示菜单
+            
+            # 确保菜单不会超出屏幕边界
+            screen = QApplication.primaryScreen().availableGeometry()
+            menu_size = self.tray_menu.sizeHint()
+            
+            # 计算菜单显示位置，优先在鼠标位置附近显示
+            # 如果鼠标位置右侧空间不足，显示在鼠标左侧
+            if pos.x() + menu_size.width() > screen.right():
+                adjusted_x = pos.x() - menu_size.width()
+            else:
+                adjusted_x = pos.x()
+            
+            # 如果鼠标位置下方空间不足，显示在鼠标上方
+            if pos.y() + menu_size.height() > screen.bottom():
+                adjusted_y = pos.y() - menu_size.height()
+            else:
+                adjusted_y = pos.y()
+            
+            # 确保菜单完全在屏幕内
+            adjusted_x = max(screen.left(), min(adjusted_x, screen.right() - menu_size.width()))
+            adjusted_y = max(screen.top(), min(adjusted_y, screen.bottom() - menu_size.height()))
+            
+            adjusted_pos = QPoint(adjusted_x, adjusted_y - 35)
+            self.tray_menu.popup(adjusted_pos)  # 在调整后的位置显示菜单
+            
+            # 启动5秒自动关闭定时器
+            self.menu_timer.start(5000)  # 5秒后自动关闭
             logger.debug("白露魔法: 托盘菜单已显示给用户～ ")
+    
+    def _on_menu_timeout(self):
+        """(^・ω・^ ) 菜单超时自动关闭！
+        当用户5秒内没有操作菜单时，自动关闭菜单～
+        就像害羞的小精灵，等待太久就会悄悄离开呢！(๑•̀ㅂ•́)ow✧"""
+        if self.tray_menu.isVisible():
+            self.tray_menu.close()
+            logger.debug("白露魔法: 托盘菜单因超时自动关闭～ ")
+    
+    def eventFilter(self, obj, event):
+        """(^・ω・^ ) 事件过滤器魔法！
+        监听菜单相关事件，当用户点击菜单外部时自动关闭菜单～
+        就像敏锐的守护者，时刻关注着用户的一举一动！(๑•̀ㅂ•́)ow✧"""
+        if obj == self.tray_menu:
+            # 如果是菜单被点击，停止定时器（用户正在操作）
+            if event.type() == event.MouseButtonPress:
+                self.menu_timer.stop()
+            # 如果菜单失去焦点，关闭菜单
+            elif event.type() == event.Hide:
+                self.menu_timer.stop()
+        
+        # 检测点击外部区域关闭菜单
+        if event.type() == event.MouseButtonPress and self.tray_menu.isVisible():
+            # 获取点击位置
+            click_pos = event.globalPos()
+            menu_rect = self.tray_menu.geometry()
+            
+            # 如果点击位置不在菜单区域内，关闭菜单
+            if not menu_rect.contains(click_pos):
+                self.tray_menu.close()
+                self.menu_timer.stop()
+                logger.debug("白露魔法: 托盘菜单因点击外部而关闭～ ")
+                return True
+        
+        return super().eventFilter(obj, event)
 
 
 # ==================================================

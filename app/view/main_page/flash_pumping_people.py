@@ -777,8 +777,8 @@ class pumping_people(QWidget):
             
             if self.draw_mode in ["until_reboot", "until_all"]:
                 # 创建Temp目录如果不存在
-                path_manager.ensure_directory_exists(os.path.dirname(draw_record_file))
-                
+                path_manager.ensure_directory_exists(draw_record_file.parent)
+
                 # 初始化抽取记录文件
                 if not path_manager.file_exists(draw_record_file):
                     with open_file(draw_record_file, 'w', encoding='utf-8') as f:
@@ -1386,7 +1386,7 @@ class pumping_people(QWidget):
             return
         
         history_file = path_manager.get_resource_path("history", f"{class_name}.json")
-        path_manager.ensure_directory_exists(history_file)
+        path_manager.ensure_directory_exists(history_file.parent)
         history_data = {}
         if path_manager.file_exists(history_file):
             with open_file(history_file, 'r', encoding='utf-8') as f:

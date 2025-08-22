@@ -18,6 +18,532 @@ system_random = SystemRandom()
 from app.common.config import get_theme_icon, load_custom_font, restore_volume
 from app.common.path_utils import path_manager, open_file, remove_file
 from app.common.voice import TTSHandler
+
+class FloatingExtractionWindow(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # 设置窗口标志，使其成为浮窗
+        self.setWindowFlags(
+            Qt.Window | 
+            Qt.FramelessWindowHint | 
+            Qt.WindowStaysOnTopHint | 
+            Qt.Tool
+        )
+        # 设置窗口属性
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WA_ShowWithoutActivating)
+        
+        # 设置窗口大小
+        self.setFixedSize(300, 400)
+        
+        # 定义变量
+        self.is_animating = False
+        self.draw_mode = "random"
+        self.animation_timer = None
+        self.current_count = 1
+        self.max_count = 0
+        
+        # 音乐播放器初始化
+        self.music_player = QMediaPlayer()
+        
+        # 拖动相关变量
+        self.drag_position = None
+        
+        # 初始化UI
+        self.initUI()
+        
+        # 移动窗口到鼠标位置，确保不超出屏幕
+        self.move_to_mouse_position()
+    
+    def move_to_mouse_position(self):
+        """移动窗口到鼠标位置，确保不超出屏幕边界"""
+        cursor_pos = QCursor.pos()
+        screen_geometry = QApplication.desktop().screenGeometry()
+        
+        # 计算窗口位置
+        x = cursor_pos.x() - self.width() // 2
+        y = cursor_pos.y() - self.height() // 2
+        
+        # 确保不超出屏幕边界
+        x = max(0, min(x, screen_geometry.width() - self.width()))
+        y = max(0, min(y, screen_geometry.height() - self.height()))
+        
+        self.move(x, y)
+    
+    def mousePressEvent(self, event):
+        """鼠标按下事件，用于拖动窗口"""
+        if event.button() == Qt.LeftButton:
+            self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+    
+    def mouseMoveEvent(self, event):
+        """鼠标移动事件，用于拖动窗口"""
+        if event.buttons() == Qt.LeftButton and self.drag_position is not None:
+            new_pos = event.globalPos() - self.drag_position
+            screen_geometry = QApplication.desktop().screenGeometry()
+            
+            # 确保不超出屏幕边界
+            x = max(0, min(new_pos.x(), screen_geometry.width() - self.width()))
+            y = max(0, min(new_pos.y(), screen_geometry.height() - self.height()))
+            
+            self.move(x, y)
+            event.accept()
+    
+    def mouseReleaseEvent(self, event):
+        """鼠标释放事件"""
+        if event.button() == Qt.LeftButton:
+            self.drag_position = None
+            event.accept()
+    
+    def keyPressEvent(self, event):
+        """按键事件，按ESC关闭窗口"""
+        if event.key() == Qt.Key_Escape:
+            self.close()
+            event.accept()
+    
+    def initUI(self):
+        """初始化浮窗界面UI"""
+        # 设置窗口样式
+        self.setStyleSheet("""
+            QWidget {
+                background-color: rgba(255, 255, 255, 240);
+                border: 1px solid #cccccc;
+                border-radius: 10px;
+            }
+            QPushButton {
+                background-color: #0078d4;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 5px;
+                font-size: 12px;
+            }
+            QPushButton:hover {
+                background-color: #106ebe;
+            }
+            QComboBox {
+                background-color: white;
+                border: 1px solid #cccccc;
+                border-radius: 5px;
+                padding: 5px;
+                font-size: 12px;
+            }
+            BodyLabel {
+                font-size: 12px;
+                color: #333333;
+            }
+        """)
+        
+        # 主布局
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setSpacing(10)
+        
+        # 标题
+        title_label = BodyLabel("快速抽人")
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #333333; margin-bottom: 10px;")
+        main_layout.addWidget(title_label)
+        
+        # 班级选择
+        class_label = BodyLabel("班级:")
+        main_layout.addWidget(class_label)
+        
+        self.class_combo = ComboBox()
+        self.class_combo.setFixedSize(270, 30)
+        self.class_combo.setFont(QFont(load_custom_font(), 10))
+        self.load_class_list()
+        self.class_combo.currentIndexChanged.connect(self.refresh_group_list)
+        self.class_combo.currentIndexChanged.connect(self.refresh_gender_list)
+        self.class_combo.currentIndexChanged.connect(self.update_total_count)
+        main_layout.addWidget(self.class_combo)
+        
+        # 小组选择
+        group_label = BodyLabel("小组:")
+        main_layout.addWidget(group_label)
+        
+        self.group_combo = ComboBox()
+        self.group_combo.setFixedSize(270, 30)
+        self.group_combo.setFont(QFont(load_custom_font(), 10))
+        self.group_combo.addItem('抽取全班学生')
+        self.group_combo.currentIndexChanged.connect(self.update_total_count)
+        self.refresh_group_list()
+        main_layout.addWidget(self.group_combo)
+        
+        # 性别选择
+        gender_label = BodyLabel("性别:")
+        main_layout.addWidget(gender_label)
+        
+        self.gender_combo = ComboBox()
+        self.gender_combo.setFixedSize(270, 30)
+        self.gender_combo.setFont(QFont(load_custom_font(), 10))
+        self.gender_combo.addItem('抽取所有性别')
+        self.gender_combo.currentIndexChanged.connect(self.update_total_count)
+        self.refresh_gender_list()
+        main_layout.addWidget(self.gender_combo)
+        
+        # 人数控制
+        count_label = BodyLabel("抽取人数:")
+        main_layout.addWidget(count_label)
+        
+        count_layout = QHBoxLayout()
+        count_layout.setSpacing(5)
+        
+        self.minus_button = PushButton('-')
+        self.minus_button.setFixedSize(40, 30)
+        self.minus_button.setFont(QFont(load_custom_font(), 16))
+        self.minus_button.clicked.connect(self._decrease_count)
+        count_layout.addWidget(self.minus_button)
+        
+        self.count_label = BodyLabel('1')
+        self.count_label.setAlignment(Qt.AlignCenter)
+        self.count_label.setFont(QFont(load_custom_font(), 14))
+        self.count_label.setFixedSize(40, 30)
+        count_layout.addWidget(self.count_label)
+        
+        self.plus_button = PushButton('+')
+        self.plus_button.setFixedSize(40, 30)
+        self.plus_button.setFont(QFont(load_custom_font(), 16))
+        self.plus_button.clicked.connect(self._increase_count)
+        count_layout.addWidget(self.plus_button)
+        
+        main_layout.addLayout(count_layout)
+        
+        # 总人数显示
+        self.total_label = BodyLabel('总人数: 0 | 剩余人数: 0')
+        self.total_label.setFont(QFont(load_custom_font(), 10))
+        self.total_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(self.total_label)
+        
+        # 开始按钮
+        self.start_button = PrimaryPushButton('开始抽人')
+        self.start_button.setFixedSize(270, 40)
+        self.start_button.setFont(QFont(load_custom_font(), 14))
+        self.start_button.clicked.connect(self.start_draw)
+        main_layout.addWidget(self.start_button)
+        
+        # 关闭按钮
+        close_button = PushButton('关闭')
+        close_button.setFixedSize(270, 30)
+        close_button.setFont(QFont(load_custom_font(), 10))
+        close_button.clicked.connect(self.close)
+        main_layout.addWidget(close_button)
+        
+        # 初始化总人数显示
+        self.update_total_count()
+    
+    def load_class_list(self):
+        """加载班级列表"""
+        try:
+            list_folder = path_manager.get_resource_path("list")
+            if path_manager.file_exists(list_folder) and os.path.isdir(list_folder):
+                files = os.listdir(list_folder)
+                classes = []
+                for file in files:
+                    if file.endswith('.json'):
+                        class_name = os.path.splitext(file)[0]
+                        classes.append(class_name)
+                
+                self.class_combo.clear()
+                if classes:
+                    self.class_combo.addItems(classes)
+                else:
+                    logger.error("你暂未添加班级")
+                    self.class_combo.addItem("你暂未添加班级")
+            else:
+                logger.error("你暂未添加班级")
+                self.class_combo.addItem("你暂未添加班级")
+        except Exception as e:
+            logger.error(f"加载班级列表失败: {str(e)}")
+            self.class_combo.addItem("加载班级列表失败")
+    
+    def _decrease_count(self):
+        """减少抽取人数"""
+        if self.current_count > 1:
+            self.current_count -= 1
+            self.count_label.setText(str(self.current_count))
+    
+    def _increase_count(self):
+        """增加抽取人数"""
+        if self.current_count < self.max_count:
+            self.current_count += 1
+            self.count_label.setText(str(self.current_count))
+    
+    def update_total_count(self):
+        """更新总人数和剩余人数显示"""
+        class_name = self.class_combo.currentText()
+        group_name = self.group_combo.currentText()
+        gender_name = self.gender_combo.currentText()
+        
+        if class_name not in ["你暂未添加班级", "加载班级列表失败"]:
+            student_file = path_manager.get_resource_path("list", f"{class_name}.json")
+            try:
+                if path_manager.file_exists(student_file):
+                    with open_file(student_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        students = []
+                        
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                exist = student_info.get('exist', True)
+                                if not exist:
+                                    continue
+                                    
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                
+                                # 性别筛选
+                                if gender_name != '抽取所有性别' and gender != gender_name:
+                                    continue
+                                
+                                # 小组筛选
+                                if group_name == '抽取全班学生':
+                                    students.append(student_name)
+                                elif group_name == '抽取小组组号':
+                                    pass  # 小组组号模式不在这里计算
+                                elif group == group_name:
+                                    students.append(student_name)
+                        
+                        if group_name == '抽取小组组号':
+                            # 获取所有不重复的小组
+                            groups = set()
+                            for student_info in data.values():
+                                if isinstance(student_info, dict):
+                                    group = student_info.get('group', '')
+                                    if group and student_info.get('exist', True):
+                                        groups.add(group)
+                            total_count = len(groups)
+                        else:
+                            total_count = len(students)
+                        
+                        self.max_count = max(1, total_count)
+                        
+                        # 限制当前人数不超过最大人数
+                        if self.current_count > self.max_count:
+                            self.current_count = self.max_count
+                            self.count_label.setText(str(self.current_count))
+                        
+                        self.total_label.setText(f'总人数: {total_count} | 剩余人数: {total_count}')
+                else:
+                    self.total_label.setText('总人数: 0 | 剩余人数: 0')
+                    self.max_count = 0
+            except Exception as e:
+                logger.error(f"更新总人数失败: {str(e)}")
+                self.total_label.setText('总人数: 0 | 剩余人数: 0')
+                self.max_count = 0
+        else:
+            self.total_label.setText('总人数: 0 | 剩余人数: 0')
+            self.max_count = 0
+    
+    def refresh_group_list(self):
+        """刷新小组列表"""
+        class_name = self.class_combo.currentText()
+        
+        if class_name not in ["你暂未添加班级", "加载班级列表失败"]:
+            student_file = path_manager.get_resource_path("list", f"{class_name}.json")
+            try:
+                if path_manager.file_exists(student_file):
+                    with open_file(student_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        groups = set()
+                        
+                        for student_info in data.values():
+                            if isinstance(student_info, dict):
+                                group = student_info.get('group', '')
+                                if group and student_info.get('exist', True):
+                                    groups.add(group)
+                        
+                        self.group_combo.clear()
+                        self.group_combo.addItem('抽取全班学生')
+                        
+                        if groups:
+                            sorted_groups = sorted(groups)
+                            self.group_combo.addItems(sorted_groups)
+                            
+                            # 如果只有一个小组，默认选中它
+                            if len(sorted_groups) == 1:
+                                self.group_combo.setCurrentIndex(1)
+                        else:
+                            self.group_combo.addItem('暂无小组')
+                else:
+                    self.group_combo.clear()
+                    self.group_combo.addItem('抽取全班学生')
+                    self.group_combo.addItem('暂无小组')
+            except Exception as e:
+                logger.error(f"刷新小组列表失败: {str(e)}")
+                self.group_combo.clear()
+                self.group_combo.addItem('抽取全班学生')
+                self.group_combo.addItem('加载小组失败')
+        else:
+            self.group_combo.clear()
+            self.group_combo.addItem('抽取全班学生')
+            self.group_combo.addItem('暂无小组')
+    
+    def refresh_gender_list(self):
+        """刷新性别列表"""
+        class_name = self.class_combo.currentText()
+        
+        if class_name not in ["你暂未添加班级", "加载班级列表失败"]:
+            student_file = path_manager.get_resource_path("list", f"{class_name}.json")
+            try:
+                if path_manager.file_exists(student_file):
+                    with open_file(student_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        genders = set()
+                        
+                        for student_info in data.values():
+                            if isinstance(student_info, dict):
+                                gender = student_info.get('gender', '')
+                                if gender and student_info.get('exist', True):
+                                    genders.add(gender)
+                        
+                        self.gender_combo.clear()
+                        self.gender_combo.addItem('抽取所有性别')
+                        
+                        if genders:
+                            sorted_genders = sorted(genders)
+                            self.gender_combo.addItems(sorted_genders)
+                        else:
+                            self.gender_combo.addItem('暂无性别信息')
+                else:
+                    self.gender_combo.clear()
+                    self.gender_combo.addItem('抽取所有性别')
+                    self.gender_combo.addItem('暂无性别信息')
+            except Exception as e:
+                logger.error(f"刷新性别列表失败: {str(e)}")
+                self.gender_combo.clear()
+                self.gender_combo.addItem('抽取所有性别')
+                self.gender_combo.addItem('加载性别失败')
+        else:
+            self.gender_combo.clear()
+            self.gender_combo.addItem('抽取所有性别')
+            self.gender_combo.addItem('暂无性别信息')
+    
+    def start_draw(self):
+        """开始抽人"""
+        class_name = self.class_combo.currentText()
+        group_name = self.group_combo.currentText()
+        gender_name = self.gender_combo.currentText()
+        
+        if class_name in ["你暂未添加班级", "加载班级列表失败"]:
+            logger.warning("请先选择班级")
+            return
+        
+        if self.current_count <= 0:
+            logger.warning("请设置抽取人数")
+            return
+        
+        student_file = path_manager.get_resource_path("list", f"{class_name}.json")
+        try:
+            if path_manager.file_exists(student_file):
+                with open_file(student_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    students = []
+                    
+                    for student_name, student_info in data.items():
+                        if isinstance(student_info, dict) and 'id' in student_info:
+                            exist = student_info.get('exist', True)
+                            if not exist:
+                                continue
+                                
+                            gender = student_info.get('gender', '')
+                            group = student_info.get('group', '')
+                            
+                            # 性别筛选
+                            if gender_name != '抽取所有性别' and gender != gender_name:
+                                continue
+                            
+                            # 小组筛选
+                            if group_name == '抽取全班学生':
+                                students.append(student_name)
+                            elif group_name == '抽取小组组号':
+                                pass  # 小组组号模式不在这里处理
+                            elif group == group_name:
+                                students.append(student_name)
+                    
+                    if group_name == '抽取小组组号':
+                        # 获取所有不重复的小组
+                        groups = set()
+                        for student_info in data.values():
+                            if isinstance(student_info, dict):
+                                group = student_info.get('group', '')
+                                if group and student_info.get('exist', True):
+                                    groups.add(group)
+                        
+                        if groups:
+                            # 随机抽取小组
+                            selected_groups = random.sample(list(groups), min(self.current_count, len(groups)))
+                            result_text = "\n".join([f"小组: {group}" for group in selected_groups])
+                            
+                            # 显示结果
+                            result_dialog = QDialog(self)
+                            result_dialog.setWindowTitle("抽人结果")
+                            result_dialog.setFixedSize(300, 200)
+                            result_dialog.setWindowFlags(Qt.Dialog | Qt.WindowCloseButtonHint)
+                            
+                            layout = QVBoxLayout(result_dialog)
+                            layout.setContentsMargins(20, 20, 20, 20)
+                            
+                            result_label = BodyLabel(result_text)
+                            result_label.setAlignment(Qt.AlignCenter)
+                            result_label.setWordWrap(True)
+                            layout.addWidget(result_label)
+                            
+                            close_button = PushButton("关闭")
+                            close_button.clicked.connect(result_dialog.close)
+                            layout.addWidget(close_button)
+                            
+                            result_dialog.exec_()
+                    else:
+                        if students:
+                            # 随机抽取学生
+                            selected_students = random.sample(students, min(self.current_count, len(students)))
+                            result_text = "\n".join(selected_students)
+                            
+                            # 显示结果
+                            result_dialog = QDialog(self)
+                            result_dialog.setWindowTitle("抽人结果")
+                            result_dialog.setFixedSize(300, 200)
+                            result_dialog.setWindowFlags(Qt.Dialog | Qt.WindowCloseButtonHint)
+                            
+                            layout = QVBoxLayout(result_dialog)
+                            layout.setContentsMargins(20, 20, 20, 20)
+                            
+                            result_label = BodyLabel(result_text)
+                            result_label.setAlignment(Qt.AlignCenter)
+                            result_label.setWordWrap(True)
+                            layout.addWidget(result_label)
+                            
+                            close_button = PushButton("关闭")
+                            close_button.clicked.connect(result_dialog.close)
+                            layout.addWidget(close_button)
+                            
+                            result_dialog.exec_()
+                        else:
+                            logger.warning("没有符合条件的学生")
+            else:
+                logger.warning("班级文件不存在")
+        except Exception as e:
+            logger.error(f"抽人失败: {str(e)}")
+    
+    def _show_direct_extraction_window(self):
+        """显示闪抽窗口"""
+        # 获取鼠标位置
+        cursor_pos = QCursor.pos()
+        
+        # 创建闪抽窗口
+        self.floating_window = FloatingExtractionWindow()
+        
+        # 移动窗口到鼠标位置并确保不超出屏幕边界
+        self.floating_window.move_to_mouse_position(cursor_pos)
+        
+        # 显示窗口
+        self.floating_window.show()
+        
+        # 激活窗口
+        self.floating_window.raise_()
+        self.floating_window.activateWindow()
+
 class pumping_people(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)

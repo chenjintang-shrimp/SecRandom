@@ -107,25 +107,52 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
         self.edge_tts_voiceComboBox.setEnabled(index == 1)
 
     async def _get_edge_tts_voices(self):
-        try:
-            # 星穹铁道白露：捕获中日英韩四语言的Edge Neural语音~🌐
-            voices = await edge_tts.list_voices()
-            # 星穹铁道白露：调试语音列表长度~📊 {len(voices)}
-            filtered_voices = [{
-                "name": v['FriendlyName'],
-                "id": v['ShortName'] if not v['Locale'].startswith('zh-CN') else f"zh-CN-{v['FriendlyName'].split()[1]}Neural",
-                "languages": v['Locale'].replace('_', '-'),
-                "full_info": f"{v['Gender']} | {v['Locale']} | Type: {v.get('VoiceType', 'Unknown')}"
-            } for v in voices if v['Locale'].startswith(('zh-CN', 'en-', 'ja-JP', 'ko-KR'))]
-            return filtered_voices
-        except KeyError as e:
-            # 小鸟游星野：星轨数据字段丢失！{e}不存在~🚨
-            logger.error(f"Edge TTS语音解析失败: {str(e)!r}")
-            return [{"name": "xiaoxiao", "id": "zh-CN-XiaoxiaoNeural", "languages": "zh-CN", "full_info": "xiaoxiao (zh-CN)"}]
-        except Exception as e:
-            # 小鸟游星野：星轨数据丢失！启动备用方案~🚨
-            logger.error(f"Edge TTS语音解析失败: {str(e)!r}")
-            return [{"name": "xiaoxiao", "id": "zh-CN-XiaoxiaoNeural", "languages": "zh-CN", "full_info": "xiaoxiao (zh-CN)"}]
+        import aiohttp
+        max_retries = 3
+        retry_delay = 2  # 秒
+        
+        for attempt in range(max_retries):
+            try:
+                # 星穹铁道白露：捕获中日英韩四语言的Edge Neural语音~🌐
+                voices = await edge_tts.list_voices()
+                # 星穹铁道白露：调试语音列表长度~📊 {len(voices)}
+                filtered_voices = [{
+                    "name": v['FriendlyName'],
+                    "id": v['ShortName'] if not v['Locale'].startswith('zh-CN') else f"zh-CN-{v['FriendlyName'].split()[1]}Neural",
+                    "languages": v['Locale'].replace('_', '-'),
+                    "full_info": f"{v['Gender']} | {v['Locale']} | Type: {v.get('VoiceType', 'Unknown')}"
+                } for v in voices if v['Locale'].startswith(('zh-CN', 'en-', 'ja-JP', 'ko-KR'))]
+                return filtered_voices
+            except (aiohttp.ClientError, aiohttp.ClientResponseError) as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"Edge TTS服务连接失败，第{attempt + 1}次重试中... 错误: {str(e)!r}")
+                    await asyncio.sleep(retry_delay)
+                    continue
+                else:
+                    logger.error(f"Edge TTS服务连接失败，已重试{max_retries}次: {str(e)!r}")
+            except KeyError as e:
+                # 小鸟游星野：星轨数据字段丢失！{e}不存在~🚨
+                logger.error(f"Edge TTS语音解析失败: {str(e)!r}")
+                break
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"Edge TTS语音获取失败，第{attempt + 1}次重试中... 错误: {str(e)!r}")
+                    await asyncio.sleep(retry_delay)
+                    continue
+                else:
+                    # 小鸟游星野：星轨数据丢失！启动备用方案~🚨
+                    logger.error(f"Edge TTS语音解析失败: {str(e)!r}")
+        
+        # 所有尝试都失败后，返回默认语音列表
+        default_voices = [
+            {"name": "Xiaoxiao", "id": "zh-CN-XiaoxiaoNeural", "languages": "zh-CN", "full_info": "Female | zh-CN | Type: Neural"},
+            {"name": "Yunxi", "id": "zh-CN-YunxiNeural", "languages": "zh-CN", "full_info": "Male | zh-CN | Type: Neural"},
+            {"name": "Xiaoyi", "id": "zh-CN-XiaoyiNeural", "languages": "zh-CN", "full_info": "Female | zh-CN | Type: Neural"},
+            {"name": "Jenny", "id": "en-US-JennyNeural", "languages": "en-US", "full_info": "Female | en-US | Type: Neural"},
+            {"name": "Guy", "id": "en-US-GuyNeural", "languages": "en-US", "full_info": "Male | en-US | Type: Neural"}
+        ]
+        logger.info("Edge TTS服务不可用，使用默认语音列表")
+        return default_voices
 
     def load_settings(self):
         try:
