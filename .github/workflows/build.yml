@@ -184,23 +184,22 @@ jobs:
               exit $LASTEXITCODE 
             }
             echo "目录模式打包完成"
-            # 创建zip_dist/SecRandom目录
-            mkdir zip_dist/SecRandom
-            # 复制dist/SecRandom目录下的所有文件到zip_dist/SecRandom目录下（目录模式）
-            Copy-Item -Recurse -Force dist/SecRandom/* zip_dist/SecRandom
             
             # 记录需要签名的文件路径，稍后在SignPath步骤中统一签名
             echo "记录主可执行文件路径用于后续签名..."
-            $exePath = "zip_dist/SecRandom/SecRandom.exe"
+            $exePath = "dist/SecRandom/SecRandom.exe"
             if (Test-Path $exePath) {
               echo "找到主可执行文件: $exePath"
               echo "主可执行文件路径: $exePath" >> sign_files.txt
+              # 记录打包模式信息，用于签名后重新打包
+              echo "打包模式: dir" >> sign_files.txt
             } else {
               echo "警告: 未找到主可执行文件 SecRandom.exe"
               # 列出实际目录结构以便调试
-              echo "zip_dist/SecRandom目录内容:"
-              Get-ChildItem -Path "zip_dist/SecRandom" -Recurse | ForEach-Object { echo "  $($_.FullName)" }
+              echo "dist目录内容:"
+              Get-ChildItem -Path "dist" -Recurse | ForEach-Object { echo "  $($_.FullName)" }
             }
+              
           } elseif ('${{ matrix.pack_mode }}' -eq 'advanced') {
             # Advanced Installer 模式打包
             echo "开始 Advanced Installer 模式打包..."
@@ -304,162 +303,14 @@ jobs:
             if (Test-Path $exePath) {
               echo "找到主可执行文件: $exePath"
               echo "主可执行文件路径: $exePath" >> sign_files.txt
+              # 记录打包模式信息，用于签名后重新打包
+              echo "打包模式: advanced" >> sign_files.txt
             } else {
               echo "警告: 未找到主可执行文件 SecRandom.exe"
               # 列出实际目录结构以便调试
               echo "dist目录内容:"
               Get-ChildItem -Path "dist" -Recurse | ForEach-Object { echo "  $($_.FullName)" }
             }
-            
-            # 创建 Advanced Installer 项目目录
-            echo "创建 Advanced Installer 项目目录..."
-            mkdir installer_build
-            
-            # 复制 PyInstaller 输出到 Advanced Installer 目录
-            echo "复制文件到安装程序目录..."
-            Copy-Item -Recurse -Force dist/SecRandom installer_build/AppFiles
-            
-            # 复制资源文件
-            echo "复制资源文件..."
-            Copy-Item -Recurse -Force app/resource installer_build/AppFiles/app
-            Copy-Item LICENSE installer_build/AppFiles
-            Copy-Item resources/SecRandom.ico installer_build
-            
-            # 使用 Advanced Installer 编译安装程序
-            echo "使用 Advanced Installer 编译安装程序..."
-            
-            # 检查 Advanced Installer 是否可用
-            if (Get-Command "AdvancedInstaller.com" -ErrorAction SilentlyContinue) {
-              echo "使用 Advanced Installer 编译..."
-              
-              # 创建项目文件目录
-              mkdir installer_build -Force
-              
-              # 复制 Advanced Installer 项目文件到构建目录
-              # 注意：需要将 SR64.aip 文件放在项目的根目录或指定路径
-              if (Test-Path "SR64.aip") {
-                echo "找到 SR64.aip 文件，开始复制..."
-                Copy-Item SR64.aip installer_build/SecRandom.aip
-                echo "项目文件复制完成"
-                
-                # 验证复制后的文件
-                if (-not (Test-Path "installer_build/SecRandom.aip")) {
-                  echo "错误：项目文件复制失败"
-                  exit 1
-                }
-                
-                # 设置项目版本 - 验证版本号格式
-                $version = "${{ github.ref_name }}"
-                # 如果不是以v开头的版本号（如v1.0.0.0），则使用默认版本号
-                if ($version -match "^v\d+(\.\d+){3}$") {
-                  $version = $version.Substring(1) # 移除v前缀
-                } else {
-                  $version = "1.0.0.0" # 默认版本号（4位）
-                }
-                echo "使用版本号: $version"
-                
-                # 设置版本号
-                echo "正在设置项目版本..."
-                AdvancedInstaller.com edit /set version $version installer_build/SecRandom.aip
-                if ($LASTEXITCODE -ne 0) { 
-                  echo "版本号设置失败"
-                  exit $LASTEXITCODE 
-                }
-                echo "版本号设置完成"
-                
-                # 注册 Windows Installer 相关设置
-                echo "正在注册 Windows Installer 设置..."
-                AdvancedInstaller.com edit /RegisterWithWindowsInstaller installer_build/SecRandom.aip
-                if ($LASTEXITCODE -ne 0) { 
-                  echo "警告：Windows Installer 注册失败，继续构建..."
-                  # 不退出，继续构建流程
-                } else {
-                  echo "Windows Installer 注册完成"
-                }
-                
-                # 编辑更新通知设置
-                echo "正在配置更新通知设置..."
-                AdvancedInstaller.com edit /EditUpdateNotification installer_build/SecRandom.aip
-                if ($LASTEXITCODE -ne 0) { 
-                  echo "警告：更新通知配置失败，继续构建..."
-                  # 不退出，继续构建流程
-                } else {
-                  echo "更新通知配置完成"
-                }
-                
-                # 构建安装程序 - 生成EXE格式
-                echo "开始构建安装程序..."
-                AdvancedInstaller.com build installer_build/SecRandom.aip -builds EXE
-                if ($LASTEXITCODE -ne 0) { 
-                  echo "Advanced Installer 编译失败"
-                  echo "退出代码: $LASTEXITCODE"
-                  exit $LASTEXITCODE 
-                }
-                echo "Advanced Installer 编译完成"
-                
-                # 查找构建输出的安装程序文件
-                $outputExe = "installer_build/SecRandom.exe"
-                if (-not (Test-Path $outputExe)) {
-                  echo "未找到预期的输出文件，搜索其他可能的输出位置..."
-                  # 搜索可能的输出文件
-                  $exeFiles = Get-ChildItem -Path "installer_build" -Recurse -Filter "*.exe"
-                  if ($exeFiles.Count -gt 0) {
-                    $outputExe = $exeFiles[0].FullName
-                    echo "找到安装程序文件: $outputExe"
-                  } else {
-                    echo "错误：未找到任何安装程序输出文件"
-                    exit 1
-                  }
-                }
-                
-                # 将安装程序复制到 zip 目录
-                mkdir zip -Force
-                $finalExePath = "zip/SecRandom-Installer-${{ github.ref_name }}.exe"
-                Copy-Item $outputExe $finalExePath
-                echo "Advanced Installer 模式打包完成: $finalExePath"
-              } else {
-                echo "未找到 SR64.aip 文件，请确保该文件存在于项目根目录"
-                exit 1
-              }
-            } else {
-              echo "Advanced Installer 未找到，创建 ZIP 压缩包作为替代..."
-              mkdir zip_dist/SecRandom
-              Copy-Item -Recurse -Force dist/SecRandom/* zip_dist/SecRandom
-              mkdir zip_dist/SecRandom/app
-              Copy-Item -Recurse -Force app/resource zip_dist/SecRandom/app
-              Copy-Item LICENSE zip_dist/SecRandom
-              
-              $outputZip = "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-advanced.zip"
-              Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath $outputZip -Force
-              echo "Advanced Installer 模式打包完成（ZIP 格式）: $outputZip"
-            }
-          }
-          # 仅在非 advanced 模式下执行以下步骤
-          if ('${{ matrix.pack_mode }}' -ne 'advanced') {
-            # 创建app目录
-            echo "创建输出目录结构..."
-            mkdir zip_dist/SecRandom/app
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            
-            # 复制app/resource文件夹到zip_dist/SecRandom目录下
-            echo "复制资源文件..."
-            Copy-Item -Recurse -Force app/resource zip_dist/SecRandom/app
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            
-            # 复制 LICENSE 文件到zip_dist/SecRandom目录下
-            echo "复制许可证文件..."
-            Copy-Item LICENSE zip_dist/SecRandom
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            
-            # 使用系统自带的 Compress-Archive 压缩文件
-            echo "开始压缩打包文件..."
-            $outputZip = "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip"
-            Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath $outputZip -Force
-            if ($LASTEXITCODE -ne 0) { 
-              echo "压缩文件失败"
-              exit $LASTEXITCODE 
-            }
-            echo "打包完成: $outputZip"
           }
 
       - name: 运行 Linux 构建
@@ -660,6 +511,180 @@ jobs:
             Get-ChildItem -Path "." -Name
           }
           echo "SignPath 代码签名完成"
+
+      - name: 签名后打包操作
+        if: ${{ matrix.os == 'windows-2022'}}
+        run: |
+          echo "开始签名后打包操作..."
+          
+          # 检查打包模式并执行相应的打包操作
+          if (Test-Path "sign_files.txt") {
+            $packMode = ""
+            # 从sign_files.txt中读取打包模式
+            Get-Content sign_files.txt | ForEach-Object {
+              $line = $_.Trim()
+              if ($line -match "^打包模式: (.+)$") {
+                $packMode = $matches[1]
+                echo "检测到打包模式: $packMode"
+              }
+            }
+            
+            # 根据打包模式执行相应的打包操作
+            if ($packMode -eq "dir") {
+              echo "执行目录模式打包..."
+              
+              # 创建zip_dist/SecRandom目录
+              mkdir -p zip_dist/SecRandom
+              
+              # 复制dist/SecRandom目录下的所有文件到zip_dist/SecRandom目录下
+              Copy-Item -Recurse -Force dist/SecRandom/* zip_dist/SecRandom/
+              
+              # 创建app目录
+              mkdir -p zip_dist/SecRandom/app
+              
+              # 复制app/resource文件夹到zip_dist/SecRandom目录下
+              Copy-Item -Recurse -Force app/resource zip_dist/SecRandom/app
+              
+              # 复制 LICENSE 文件到zip_dist/SecRandom目录下
+              Copy-Item LICENSE zip_dist/SecRandom/
+              
+              # 使用 zip 压缩文件
+              mkdir zip -Force
+              $outputZip = "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip"
+              Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath $outputZip -Force
+              echo "目录模式打包完成: $outputZip"
+              
+            } elseif ($packMode -eq "advanced") {
+              echo "执行 Advanced Installer 模式打包..."
+              
+              # 创建 Advanced Installer 项目目录
+              echo "创建 Advanced Installer 项目目录..."
+              mkdir installer_build
+              
+              # 复制 PyInstaller 输出到 Advanced Installer 目录
+              echo "复制文件到安装程序目录..."
+              Copy-Item -Recurse -Force dist/SecRandom installer_build/AppFiles
+              
+              # 复制资源文件
+              echo "复制资源文件..."
+              Copy-Item -Recurse -Force app/resource installer_build/AppFiles/app
+              Copy-Item LICENSE installer_build/AppFiles
+              Copy-Item resources/SecRandom.ico installer_build
+              
+              # 使用 Advanced Installer 编译安装程序
+              echo "使用 Advanced Installer 编译安装程序..."
+              
+              # 检查 Advanced Installer 是否可用
+              if (Get-Command "AdvancedInstaller.com" -ErrorAction SilentlyContinue) {
+                echo "使用 Advanced Installer 编译..."
+                
+                # 复制 Advanced Installer 项目文件到构建目录
+                if (Test-Path "SR64.aip") {
+                  echo "找到 SR64.aip 文件，开始复制..."
+                  Copy-Item SR64.aip installer_build/SecRandom.aip
+                  echo "项目文件复制完成"
+                  
+                  # 验证复制后的文件
+                  if (-not (Test-Path "installer_build/SecRandom.aip")) {
+                    echo "错误：项目文件复制失败"
+                    exit 1
+                  }
+                  
+                  # 设置项目版本 - 验证版本号格式
+                  $version = "${{ github.ref_name }}"
+                  # 如果不是以v开头的版本号（如v1.0.0.0），则使用默认版本号
+                  if ($version -match "^v\d+(\.\d+){3}$") {
+                    $version = $version.Substring(1) # 移除v前缀
+                  } else {
+                    $version = "1.0.0.0" # 默认版本号（4位）
+                  }
+                  echo "使用版本号: $version"
+                  
+                  # 设置版本号
+                  echo "正在设置项目版本..."
+                  AdvancedInstaller.com edit /set version $version installer_build/SecRandom.aip
+                  if ($LASTEXITCODE -ne 0) { 
+                    echo "版本号设置失败"
+                    exit $LASTEXITCODE 
+                  }
+                  echo "版本号设置完成"
+                  
+                  # 注册 Windows Installer 相关设置
+                  echo "正在注册 Windows Installer 设置..."
+                  AdvancedInstaller.com edit /RegisterWithWindowsInstaller installer_build/SecRandom.aip
+                  if ($LASTEXITCODE -ne 0) { 
+                    echo "警告：Windows Installer 注册失败，继续构建..."
+                    # 不退出，继续构建流程
+                  } else {
+                    echo "Windows Installer 注册完成"
+                  }
+                  
+                  # 编辑更新通知设置
+                  echo "正在配置更新通知设置..."
+                  AdvancedInstaller.com edit /EditUpdateNotification installer_build/SecRandom.aip
+                  if ($LASTEXITCODE -ne 0) { 
+                    echo "警告：更新通知配置失败，继续构建..."
+                    # 不退出，继续构建流程
+                  } else {
+                    echo "更新通知配置完成"
+                  }
+                  
+                  # 构建安装程序 - 生成EXE格式
+                  echo "开始构建安装程序..."
+                  AdvancedInstaller.com build installer_build/SecRandom.aip -builds EXE
+                  if ($LASTEXITCODE -ne 0) { 
+                    echo "Advanced Installer 编译失败"
+                    echo "退出代码: $LASTEXITCODE"
+                    exit $LASTEXITCODE 
+                  }
+                  echo "Advanced Installer 编译完成"
+                  
+                  # 查找构建输出的安装程序文件
+                  $outputExe = "installer_build/SecRandom.exe"
+                  if (-not (Test-Path $outputExe)) {
+                    echo "未找到预期的输出文件，搜索其他可能的输出位置..."
+                    # 搜索可能的输出文件
+                    $exeFiles = Get-ChildItem -Path "installer_build" -Recurse -Filter "*.exe"
+                    if ($exeFiles.Count -gt 0) {
+                      $outputExe = $exeFiles[0].FullName
+                      echo "找到安装程序文件: $outputExe"
+                    } else {
+                      echo "错误：未找到任何安装程序输出文件"
+                      exit 1
+                    }
+                  }
+                  
+                  # 将安装程序复制到 zip 目录
+                  mkdir zip -Force
+                  $finalExePath = "zip/SecRandom-Installer-${{ github.ref_name }}.exe"
+                  Copy-Item $outputExe $finalExePath
+                  echo "Advanced Installer 模式打包完成: $finalExePath"
+                } else {
+                  echo "未找到 SR64.aip 文件，请确保该文件存在于项目根目录"
+                  exit 1
+                }
+              } else {
+                echo "Advanced Installer 未找到，创建 ZIP 压缩包作为替代..."
+                mkdir zip_dist/SecRandom
+                Copy-Item -Recurse -Force dist/SecRandom/* zip_dist/SecRandom
+                mkdir zip_dist/SecRandom/app
+                Copy-Item -Recurse -Force app/resource zip_dist/SecRandom/app
+                Copy-Item LICENSE zip_dist/SecRandom
+                
+                mkdir zip -Force
+                $outputZip = "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-advanced.zip"
+                Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath $outputZip -Force
+                echo "Advanced Installer 模式打包完成（ZIP 格式）: $outputZip"
+              }
+              
+            } else {
+              echo "未识别的打包模式: $packMode，跳过打包操作"
+            }
+            
+          } else {
+            echo "未找到 sign_files.txt 文件，无法确定打包模式，跳过打包操作"
+          }
+          echo "签名后打包操作完成"
 
       - name: 上传应用程序
         if: ${{ github.event_name != 'pull_request' }}
