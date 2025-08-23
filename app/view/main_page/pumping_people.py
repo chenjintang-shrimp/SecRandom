@@ -1845,6 +1845,8 @@ class pumping_people(QWidget):
     def _reset_to_initial_state(self):
         """恢复初始状态"""
         self._clean_temp_files()
+        self.current_count = 1
+        self.update_total_count()
         self.clear_layout(self.result_grid)
 
     # 清理临时文件
@@ -1866,9 +1868,11 @@ class pumping_people(QWidget):
             with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 pumping_people_student_quantity = settings['pumping_people']['people_theme']
+                main_window_control_Switch = settings['foundation']['main_window_control_Switch']
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             pumping_people_student_quantity = 0
+            main_window_control_Switch = False
             
         # 主布局
         scroll_area = SingleDirectionScrollArea()
@@ -2101,8 +2105,12 @@ class pumping_people(QWidget):
         control_button_widget = QWidget()
         control_button_widget.setLayout(control_button_layout)
         # 将control_button_widget添加到主布局中
-        main_layout.addWidget(control_button_widget)
-        main_layout.addWidget(scroll_area)
+        if main_window_control_Switch:
+            main_layout.addWidget(scroll_area)
+            main_layout.addWidget(control_button_widget)
+        else:
+            main_layout.addWidget(control_button_widget)
+            main_layout.addWidget(scroll_area)
 
         # 显示主布局
         self.setLayout(main_layout)

@@ -236,7 +236,7 @@ class TrayIconManager(QObject):
         # 主界面控制
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_power_20_filled"), '暂时显示/隐藏主界面', triggered=self.main_window.toggle_window))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.main_window.toggle_levitation_window))
-        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_inprivate_20_filled"), '切换窗口置顶', triggered=self.main_window.toggle_window_topmost))
+        # self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_inprivate_20_filled"), '切换窗口置顶', triggered=self.main_window.toggle_window_topmost))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_settings_20_filled"), '打开设置界面', triggered=self.main_window.show_setting_interface))
         self.tray_menu.addSeparator()
         # 系统操作

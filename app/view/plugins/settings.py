@@ -22,8 +22,8 @@ class PluginSettingsPage(GroupHeaderCardWidget):
         self.settings_file = path_manager.get_settings_path("plugin_settings.json")
         self.plugin_dir = path_manager.get_plugin_path()
         self.default_settings = {
-            "run_plugins_on_startup": True,
-            "fetch_plugin_list_on_startup": True,
+            "run_plugins_on_startup": False,
+            "fetch_plugin_list_on_startup": False,
             "selected_plugin": "主窗口",
 
         }

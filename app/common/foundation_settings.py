@@ -49,6 +49,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "topmost_switch": False,
             "url_protocol_enabled": False,
             "button_arrangement_mode": 0,
+            "main_window_control_Switch": False
         }
 
         self.self_starting_switch = SwitchButton()
@@ -160,28 +161,41 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.left_pumping_floating_switch = ComboBox()
         self.left_pumping_floating_switch.setFixedWidth(250)
         self.left_pumping_floating_switch.addItems([
+            # # 单个功能
+            # "显示 拖动",
+            # "显示 主界面",
+            # "显示 闪抽",
+            # "显示 辅窗",
+            
+            # # 两个功能组合
+            # "显示 拖动+主界面",
+            # "显示 拖动+闪抽",
+            # "显示 拖动+辅窗",
+            # "显示 主界面+闪抽",
+            # "显示 主界面+辅窗",
+            # "显示 闪抽+辅窗",
+            
+            # # 三个功能组合
+            # "显示 拖动+主界面+闪抽",
+            # "显示 拖动+主界面+辅窗",
+            # "显示 拖动+闪抽+辅窗",
+            # "显示 主界面+闪抽+辅窗",
+            
+            # # 四个功能组合
+            # "显示 拖动+主界面+闪抽+辅窗"
+
             # 单个功能
             "显示 拖动",
             "显示 主界面",
             "显示 闪抽",
-            "显示 辅窗",
             
             # 两个功能组合
             "显示 拖动+主界面",
             "显示 拖动+闪抽",
-            "显示 拖动+辅窗",
             "显示 主界面+闪抽",
-            "显示 主界面+辅窗",
-            "显示 闪抽+辅窗",
             
             # 三个功能组合
-            "显示 拖动+主界面+闪抽",
-            "显示 拖动+主界面+辅窗",
-            "显示 拖动+闪抽+辅窗",
-            "显示 主界面+闪抽+辅窗",
-            
-            # 四个功能组合
-            "显示 拖动+主界面+闪抽+辅窗"
+            "显示 拖动+主界面+闪抽"
         ])
         self.left_pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
         self.left_pumping_floating_switch.currentIndexChanged.connect(self.save_settings)
@@ -192,6 +206,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.topmost_switch.setOffText("取消置顶")
         self.topmost_switch.setFont(QFont(load_custom_font(), 12))
         self.topmost_switch.checkedChanged.connect(self.save_settings)
+
+        # 主界面控制面板（抽奖 抽人）
+        self.main_window_control_Switch = SwitchButton()
+        self.main_window_control_Switch.setOnText("左侧")
+        self.main_window_control_Switch.setOffText("右侧")
+        self.main_window_control_Switch.setFont(QFont(load_custom_font(), 12))
+        self.main_window_control_Switch.checkedChanged.connect(self.save_settings)
         
         # 浮窗按钮排列方式
         self.button_arrangement_comboBox = ComboBox()
@@ -219,6 +240,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "主窗口控制面板", "设置主窗口控制面板位置", self.main_window_control_Switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "主界面侧边栏是否显示设置图标", "设置主界面侧边栏是否显示设置图标", self.show_settings_icon_switch)
         self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "定时清理", "设置定时清理抽取记录的时间", self.cleanup_button)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗", "设置浮窗功能按钮数量", self.left_pumping_floating_switch)
@@ -452,6 +474,8 @@ StartupNotify=true
                         # 如果索引值无效，则使用默认值
                         button_arrangement_mode = self.default_settings["button_arrangement_mode"]
 
+                    main_window_control_Switch = foundation_settings.get("main_window_control_Switch", self.default_settings["main_window_control_Switch"])
+
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
                     self.pumping_floating_side_comboBox.setCurrentIndex(pumping_floating_side)
@@ -467,6 +491,7 @@ StartupNotify=true
                     self.url_protocol_switch.setChecked(url_protocol_enabled)
                     self.show_settings_icon_switch.setChecked(show_settings_icon)
                     self.button_arrangement_comboBox.setCurrentIndex(button_arrangement_mode)
+                    self.main_window_control_Switch.setChecked(main_window_control_Switch)
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
@@ -484,6 +509,7 @@ StartupNotify=true
                 self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
                 self.show_settings_icon_switch.setChecked(self.default_settings["show_settings_icon"])
                 self.button_arrangement_comboBox.setCurrentIndex(self.default_settings["button_arrangement_mode"])
+                self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -502,6 +528,7 @@ StartupNotify=true
             self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
             self.show_settings_icon_switch.setChecked(self.default_settings["show_settings_icon"])
             self.button_arrangement_comboBox.setCurrentIndex(self.default_settings["button_arrangement_mode"])
+            self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
             self.save_settings()
 
     def save_settings(self):
@@ -535,6 +562,7 @@ StartupNotify=true
         foundation_settings["url_protocol_enabled"] = self.url_protocol_switch.isChecked()
         foundation_settings["show_settings_icon"] = self.show_settings_icon_switch.isChecked()
         foundation_settings["button_arrangement_mode"] = self.button_arrangement_comboBox.currentIndex()
+        foundation_settings["main_window_control_Switch"] = self.main_window_control_Switch.isChecked()
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open_file(self.settings_file, 'w', encoding='utf-8') as f:
@@ -1637,7 +1665,7 @@ class SettingsSelectionDialog(QDialog):
                 "主窗口设置": [
                     "main_window_mode", "main_window_focus_mode", "main_window_focus_time",
                     "topmost_switch", "window_width", "window_height", "pumping_floating_side",
-                    "pumping_reward_side", "show_settings_icon"
+                    "pumping_reward_side", "show_settings_icon", "main_window_control_Switch"
                 ],
                 "设置窗口设置": [
                     "settings_window_mode", "settings_window_width", "settings_window_height"
@@ -1776,6 +1804,7 @@ class SettingsSelectionDialog(QDialog):
             "main_window_focus_mode": "主窗口焦点模式", # 有
             "main_window_focus_time": "焦点检测时间", # 有
             "main_window_mode": "主窗口位置", # 有
+            "main_window_control_Switch": "控制面板位置", # 有
             "settings_window_mode": "设置窗口位置", # 有
             "pumping_floating_visible": "浮窗", # 有
             "button_arrangement_mode": "浮窗按钮布局", # 有

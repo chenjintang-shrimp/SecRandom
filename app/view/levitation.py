@@ -9,6 +9,7 @@ import sys
 import importlib.util
 import json
 import random
+import re
 from loguru import logger
 from pathlib import Path
 
@@ -38,7 +39,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
                 self.transparency_mode = foundation_settings.get('pumping_floating_transparency_mode', 6)
-                self.floating_visible = foundation_settings.get('pumping_floating_visible', 4)
+                self.floating_visible = foundation_settings.get('pumping_floating_visible', 3)
                 self.button_arrangement_mode = foundation_settings.get('button_arrangement_mode', 0)
                 # 确保透明度值在有效范围内
                 self.transparency_mode = max(0, min(self.transparency_mode, 9))
@@ -46,7 +47,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
                 self.button_arrangement_mode = max(0, min(self.button_arrangement_mode, 2))
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.transparency_mode = 6
-            self.floating_visible = 4
+            self.floating_visible = 3
             self.button_arrangement_mode = 0
             logger.error(f"加载基础设置失败: {e}")
 
@@ -86,58 +87,79 @@ class LevitationWindow(QWidget, UIAccessMixin):
         # 14: 显示 拖动+主界面+闪抽+辅窗
         
 
+        # if self.floating_visible == 0:  # 显示 拖动
+        #     self._init_menu_label()
+        # elif self.floating_visible == 1:  # 显示 主界面
+        #     self._init_people_label()
+        # elif self.floating_visible == 2:  # 显示 闪抽
+        #     self._init_flash_button()
+        # elif self.floating_visible == 3:  # 显示 辅窗
+        #     self._init_auxiliary_button()
+        # elif self.floating_visible == 4:  # 显示 拖动+主界面
+        #     self._init_menu_label()
+        #     self._init_people_label()
+        # elif self.floating_visible == 5:  # 显示 拖动+闪抽
+        #     self._init_menu_label()
+        #     self._init_flash_button()
+        # elif self.floating_visible == 6:  # 显示 拖动+辅窗
+        #     self._init_menu_label()
+        #     self._init_auxiliary_button()
+        # elif self.floating_visible == 7:  # 显示 主界面+闪抽
+        #     self._init_people_label()
+        #     self._init_flash_button()
+        # elif self.floating_visible == 8:  # 显示 主界面+辅窗
+        #     self._init_people_label()
+        #     self._init_auxiliary_button()
+        # elif self.floating_visible == 9:  # 显示 闪抽+辅窗
+        #     self._init_flash_button()
+        #     self._init_auxiliary_button()
+        # elif self.floating_visible == 10:  # 显示 拖动+主界面+闪抽
+        #     # 3个按钮：拖动、主界面在上面，闪抽在下面
+        #     self._init_menu_label()
+        #     self._init_people_label()
+        #     self._init_flash_button()
+        # elif self.floating_visible == 11:  # 显示 拖动+主界面+辅窗
+        #     # 3个按钮：拖动、主界面在上面，辅窗在下面
+        #     self._init_menu_label()
+        #     self._init_people_label()
+        #     self._init_auxiliary_button()
+        # elif self.floating_visible == 12:  # 显示 拖动+闪抽+辅窗
+        #     # 3个按钮：拖动在上面，闪抽、辅窗在下面
+        #     self._init_menu_label()
+        #     self._init_flash_button()
+        #     self._init_auxiliary_button()
+        # elif self.floating_visible == 13:  # 显示 主界面+闪抽+辅窗
+        #     # 3个按钮：主界面在上面，闪抽、辅窗在下面
+        #     self._init_people_label()
+        #     self._init_flash_button()
+        #     self._init_auxiliary_button()
+        # elif self.floating_visible == 14:  # 显示 拖动+主界面+闪抽+辅窗
+        #     # 4个按钮：拖动、主界面在上面，闪抽、辅窗在下面
+        #     self._init_menu_label()
+        #     self._init_people_label()
+        #     self._init_flash_button()
+        #     self._init_auxiliary_button()
+
         if self.floating_visible == 0:  # 显示 拖动
             self._init_menu_label()
         elif self.floating_visible == 1:  # 显示 主界面
             self._init_people_label()
         elif self.floating_visible == 2:  # 显示 闪抽
             self._init_flash_button()
-        elif self.floating_visible == 3:  # 显示 辅窗
-            self._init_auxiliary_button()
-        elif self.floating_visible == 4:  # 显示 拖动+主界面
+        elif self.floating_visible == 3:  # 显示 拖动+主界面
             self._init_menu_label()
             self._init_people_label()
-        elif self.floating_visible == 5:  # 显示 拖动+闪抽
+        elif self.floating_visible == 4:  # 显示 拖动+闪抽
             self._init_menu_label()
             self._init_flash_button()
-        elif self.floating_visible == 6:  # 显示 拖动+辅窗
-            self._init_menu_label()
-            self._init_auxiliary_button()
-        elif self.floating_visible == 7:  # 显示 主界面+闪抽
+        elif self.floating_visible == 5:  # 显示 主界面+闪抽
             self._init_people_label()
             self._init_flash_button()
-        elif self.floating_visible == 8:  # 显示 主界面+辅窗
-            self._init_people_label()
-            self._init_auxiliary_button()
-        elif self.floating_visible == 9:  # 显示 闪抽+辅窗
-            self._init_flash_button()
-            self._init_auxiliary_button()
-        elif self.floating_visible == 10:  # 显示 拖动+主界面+闪抽
+        elif self.floating_visible == 6:  # 显示 拖动+主界面+闪抽
             # 3个按钮：拖动、主界面在上面，闪抽在下面
             self._init_menu_label()
             self._init_people_label()
             self._init_flash_button()
-        elif self.floating_visible == 11:  # 显示 拖动+主界面+辅窗
-            # 3个按钮：拖动、主界面在上面，辅窗在下面
-            self._init_menu_label()
-            self._init_people_label()
-            self._init_auxiliary_button()
-        elif self.floating_visible == 12:  # 显示 拖动+闪抽+辅窗
-            # 3个按钮：拖动在上面，闪抽、辅窗在下面
-            self._init_menu_label()
-            self._init_flash_button()
-            self._init_auxiliary_button()
-        elif self.floating_visible == 13:  # 显示 主界面+闪抽+辅窗
-            # 3个按钮：主界面在上面，闪抽、辅窗在下面
-            self._init_people_label()
-            self._init_flash_button()
-            self._init_auxiliary_button()
-        elif self.floating_visible == 14:  # 显示 拖动+主界面+闪抽+辅窗
-            # 4个按钮：拖动、主界面在上面，闪抽、辅窗在下面
-            self._init_menu_label()
-            self._init_people_label()
-            self._init_flash_button()
-            self._init_auxiliary_button()
         
         self._apply_window_styles()
 
@@ -235,24 +257,49 @@ class LevitationWindow(QWidget, UIAccessMixin):
         # 13: 显示 主界面+闪抽+辅窗 (3个)
         # 14: 显示 拖动+主界面+闪抽+辅窗 (4个)
         
-        if self.floating_visible in [0, 1, 2, 3]:
+        # if self.floating_visible in [0, 1, 2, 3]:
+        #     return 1
+        # elif self.floating_visible in [4, 5, 6, 7, 8, 9]:
+        #     return 2
+        # elif self.floating_visible in [10, 11, 12, 13]:
+        #     return 3
+        # elif self.floating_visible == 14:
+        #     return 4
+        # else:
+        #     return 1  # 默认值
+
+        # 映射关系：
+        # 0: 显示 拖动 (1个)
+        # 1: 显示 主界面 (1个)
+        # 2: 显示 闪抽 (1个)
+        # 3: 显示 拖动+主界面 (2个)
+        # 4: 显示 拖动+闪抽 (2个)
+        # 5: 显示 主界面+闪抽 (2个)
+        # 6: 显示 拖动+主界面+闪抽 (3个)
+
+        if self.floating_visible in [0, 1, 2]:
             return 1
-        elif self.floating_visible in [4, 5, 6, 7, 8, 9]:
+        elif self.floating_visible in [3, 4, 5]:
             return 2
-        elif self.floating_visible in [10, 11, 12, 13]:
+        elif self.floating_visible == 6:
             return 3
-        elif self.floating_visible == 14:
-            return 4
         else:
             return 1  # 默认值
 
     def _init_menu_label(self):
         # 白露：初始化菜单标签 - 只有在拖动+抽人模式时显示图标
-        if self.floating_visible == 4:  # 拖动+抽人模式
+        if self.floating_visible == 3:  # 拖动+抽人模式
             MENU_DEFAULT_ICON_PATH = path_manager.get_resource_path("icon", "SecRandom_menu_30%.png")
             self.menu_label = QLabel(self.container_button)
             try:
-                icon_path = path_manager.get_resource_path("icon", f"SecRandom_menu_{(10 - self.transparency_mode) * 10}%.png")
+                dark_mode = is_dark_theme(qconfig)
+                # 根据主题设置不同的颜色
+                if dark_mode:
+                    # 深色模式
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_menu_{(10 - self.transparency_mode) * 10}%_light.png")
+                else:
+                    # 浅色模式
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_menu_{(10 - self.transparency_mode) * 10}%_black.png")
                 if not icon_path.exists():
                     icon_path = MENU_DEFAULT_ICON_PATH
                 pixmap = QPixmap(str(icon_path))
@@ -268,7 +315,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
         else:
             # 其他模式显示文字按钮
             self.menu_label = PushButton("拖动")
-            self.menu_label.setStyleSheet('opacity: 0; border: none; background: transparent; color: white; font-weight: bold;')
+            self.menu_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
             self.menu_label.setFont(QFont(load_custom_font(), 12))
         
         # 根据排列方式决定按钮大小和添加位置
@@ -312,11 +359,18 @@ class LevitationWindow(QWidget, UIAccessMixin):
 
     def _init_people_label(self):
         # 小鸟游星野：初始化人物标签 - 只有在拖动+抽人模式时显示图标
-        if self.floating_visible == 4:  # 拖动+抽人模式
+        if self.floating_visible == 3:  # 拖动+抽人模式
             FLOATING_DEFAULT_ICON_PATH = path_manager.get_resource_path("icon", "SecRandom_floating_30%.png")
             self.people_label = QLabel(self.container_button)
             try:
-                icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_{(10 - self.transparency_mode) * 10}%.png")
+                dark_mode = is_dark_theme(qconfig)
+                # 根据主题设置不同的颜色
+                if dark_mode:
+                    # 深色模式
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_{(10 - self.transparency_mode) * 10}%_light.png")
+                else:
+                    # 浅色模式
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_{(10 - self.transparency_mode) * 10}%_black.png")
                 if not icon_path.exists():
                     icon_path = FLOATING_DEFAULT_ICON_PATH
                 pixmap = QPixmap(str(icon_path))
@@ -332,7 +386,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
         else:
             # 其他模式显示文字按钮
             self.people_label = PushButton("抽人")
-            self.people_label.setStyleSheet('opacity: 0; border: none; background: transparent; color: white; font-weight: bold;')
+            self.people_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
             self.people_label.setFont(QFont(load_custom_font(), 12))
         
         # 根据排列方式决定按钮大小和添加位置
@@ -413,7 +467,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
             else:
                 self.container_button.layout().addWidget(self.flash_button)
             
-        self.flash_button.setStyleSheet('opacity: 0; border: none; background: transparent; color: white; font-weight: bold;')
+        self.flash_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
         self.flash_button.setFont(QFont(load_custom_font(), 12))
         self.flash_button.clicked.connect(self._show_direct_extraction_window)
 
@@ -456,7 +510,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
             else:
                 self.container_button.layout().addWidget(self.auxiliary_button)
         
-        self.auxiliary_button.setStyleSheet('opacity: 0; border: none; background: transparent; color: white; font-weight: bold;')
+        self.auxiliary_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
         self.auxiliary_button.setFont(QFont(load_custom_font(), 12))
         self.auxiliary_button.clicked.connect(self._show_auxiliary_window)
 
@@ -466,7 +520,16 @@ class LevitationWindow(QWidget, UIAccessMixin):
         self.setAttribute(Qt.WA_TranslucentBackground)
         try:
             opacity = (10 - self.transparency_mode) * 0.1
-            self.setStyleSheet(f'border-radius: 5px; background-color: rgba(65, 66, 66, {opacity});')
+            # 使用现有函数检查当前主题是否为深色模式
+            dark_mode = is_dark_theme(qconfig)
+            # 根据主题设置不同的背景颜色
+            if dark_mode:
+                # 深色模式背景颜色
+                bg_color = f'rgba(65, 66, 66, {opacity})'
+            else:
+                # 浅色模式背景颜色
+                bg_color = f'rgba(240, 240, 240, {opacity})'
+            self.setStyleSheet(f'border-radius: 5px; background-color: {bg_color};')
         except Exception as e:
             self.setStyleSheet('border-radius: 5px; background-color: rgba(65, 66, 66, 0.3);')
             logger.error(f"应用窗口样式失败: {e}")
@@ -860,7 +923,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
             self.title_label.setFont(QFont(load_custom_font(), 12))
             
             # 窗口控制按钮
-            self.close_btn = QPushButton("✕")
+            self.close_btn = PushButton("✕")
             self.close_btn.setObjectName("CloseButton")
             self.close_btn.setFixedSize(25, 25)
             self.close_btn.clicked.connect(self.pumping_widget.reject)
@@ -1093,15 +1156,3 @@ class LevitationWindow(QWidget, UIAccessMixin):
         if hasattr(self, 'flash_button') and self.flash_button is not None:
             self.flash_button.setEnabled(True)
             logger.info("闪抽按钮已重新启用")
-
-class ConvenientMiniWindow(QWidget):
-    # 白露：便捷小窗类 - 提供便捷操作界面 (≧∇≦)ﾉ
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        # 便捷小窗的具体实现将在后续版本中完成
-        pass
-        
-    def show_window(self):
-        # 小鸟游星野：显示便捷小窗 ✧(๑•̀ㅂ•́)๑
-        # 具体实现将在后续版本中完成
-        pass

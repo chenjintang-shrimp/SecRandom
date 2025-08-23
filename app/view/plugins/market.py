@@ -861,10 +861,10 @@ class PluginMarketPage(GroupHeaderCardWidget):
                     settings = json.load(f)
                     return settings.get("plugin_settings", {})
             else:
-                return {"run_plugins_on_startup": False, "fetch_plugin_list_on_startup": True}
+                return {"run_plugins_on_startup": False, "fetch_plugin_list_on_startup": False}
         except Exception as e:
             logger.error(f"🌟 小鸟游星野 - 加载插件设置失败: {str(e)}")
-            return {"run_plugins_on_startup": False, "fetch_plugin_list_on_startup": True}
+            return {"run_plugins_on_startup": False, "fetch_plugin_list_on_startup": False}
     
     def fetch_plugin_list(self):
         """从远程仓库获取插件列表"""
@@ -961,7 +961,7 @@ class PluginMarketPage(GroupHeaderCardWidget):
         """🌟 小鸟游星野 - 加载插件市场中的插件列表"""
         # 🌟 小鸟游星野 - 检查是否需要在启动时获取插件列表
         plugin_settings = self.load_plugin_settings()
-        if not plugin_settings.get("fetch_plugin_list_on_startup", True):
+        if not plugin_settings.get("fetch_plugin_list_on_startup", False):
             logger.info("🌟 小鸟游星野 - 根据设置，跳过获取插件列表")
             # 显示跳过获取插件列表的提示
             no_plugin_label = BodyLabel("根据设置，跳过获取插件列表", self)
@@ -1061,7 +1061,7 @@ class PluginMarketPage(GroupHeaderCardWidget):
         """🌟 小鸟游星野 - 刷新插件列表"""
         # 🌟 小鸟游星野 - 检查是否允许获取插件列表
         plugin_settings = self.load_plugin_settings()
-        if not plugin_settings.get("fetch_plugin_list_on_startup", True):
+        if not plugin_settings.get("fetch_plugin_list_on_startup", False):
             logger.info("🌟 小鸟游星野 - 根据设置，不允许获取插件列表")
             info_dialog = Dialog("设置限制", "当前设置禁止获取插件列表，请先在插件设置中启用此功能", self)
             info_dialog.yesButton.setText("确定")
