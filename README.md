@@ -147,6 +147,22 @@
 - 技术交流：[QQ群 833875216](https://qm.qq.com/q/iWcfaPHn7W)
 - 问题反馈：[GitHub Issues](https://github.com/SECTL/SecRandom/issues)
 
+## 构建与打包
+
+项目支持多种打包模式：
+
+### Windows 打包模式
+- **目录模式 (dir)**: 生成可执行文件目录，便于调试和测试
+- **单文件模式 (onefile)**: 生成单个可执行文件，便于分发
+- **高级安装程序模式 (advanced)**: 使用 Advanced Installer 创建专业的 Windows 安装程序（EXE格式）
+
+### Linux 打包模式
+- **目录模式 (dir)**: 生成可执行文件目录
+- **单文件模式 (onefile)**: 生成单个可执行文件
+
+### 触发构建
+在提交信息中包含 `进行打包` 即可触发自动构建流程。
+
 </details>
 
 ## 🙏 贡献者和特别感谢
