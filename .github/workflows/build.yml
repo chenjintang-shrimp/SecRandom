@@ -285,6 +285,27 @@ jobs:
             }
             echo "PyInstaller 打包完成"
             
+            # 直接签名主可执行文件（简化流程）
+            echo "开始签名主可执行文件..."
+            $exePath = "dist/SecRandom/SecRandom.exe"
+            if (Test-Path $exePath) {
+              echo "找到主可执行文件: $exePath"
+              Submit-SigningRequest `
+                -InputArtifactPath $exePath `
+                -ApiToken "${{ secrets.SIGNPATH_API_TOKEN }}" `
+                -OrganizationId "dae8fd2b-8a02-4e36-aa15-3c8f475bc6b7" `
+                -ProjectSlug "SecRandom" `
+                -SigningPolicySlug "SecRandom" `
+                -OutputArtifactPath $exePath `
+                -WaitForCompletion
+              echo "主可执行文件签名完成"
+            } else {
+              echo "警告: 未找到主可执行文件 SecRandom.exe"
+              # 列出实际目录结构以便调试
+              echo "dist目录内容:"
+              Get-ChildItem -Path "dist" -Recurse | ForEach-Object { echo "  $($_.FullName)" }
+            }
+            
             # 创建 Advanced Installer 项目目录
             echo "创建 Advanced Installer 项目目录..."
             mkdir installer_build
@@ -340,6 +361,26 @@ jobs:
                   exit $LASTEXITCODE 
                 }
                 echo "版本号设置完成"
+                
+                # 注册 Windows Installer 相关设置
+                echo "正在注册 Windows Installer 设置..."
+                AdvancedInstaller.com edit /RegisterWithWindowsInstaller installer_build/SecRandom.aip
+                if ($LASTEXITCODE -ne 0) { 
+                  echo "警告：Windows Installer 注册失败，继续构建..."
+                  # 不退出，继续构建流程
+                } else {
+                  echo "Windows Installer 注册完成"
+                }
+                
+                # 编辑更新通知设置
+                echo "正在配置更新通知设置..."
+                AdvancedInstaller.com edit /EditUpdateNotification installer_build/SecRandom.aip
+                if ($LASTEXITCODE -ne 0) { 
+                  echo "警告：更新通知配置失败，继续构建..."
+                  # 不退出，继续构建流程
+                } else {
+                  echo "更新通知配置完成"
+                }
                 
                 # 构建安装程序 - 生成EXE格式
                 echo "开始构建安装程序..."
@@ -415,75 +456,6 @@ jobs:
             }
             echo "打包完成: $outputZip"
           }
-
-      - name: SignPath 代码签名 - Windows 应用程序
-        if: ${{ matrix.os == 'windows-2022'}}
-        run: |
-          echo "开始 SignPath 代码签名..."
-          # 安装 SignPath PowerShell 模块
-          Install-Module -Name SignPath -Force -Scope CurrentUser
-          
-          # 根据打包模式签名不同的文件
-          if ('${{ matrix.pack_mode }}' -eq 'dir') {
-            # 目录模式 - 签名 ZIP 文件中的主要可执行文件
-            echo "签名目录模式构建的应用程序..."
-            
-            # 解压 ZIP 文件
-            Expand-Archive -Path "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip" -DestinationPath "temp_signing" -Force
-            
-            # 签名主可执行文件
-            $exePath = "temp_signing/SecRandom/SecRandom.exe"
-            if (Test-Path $exePath) {
-              Submit-SigningRequest `
-                -InputArtifactPath $exePath `
-                -ApiToken "${{ secrets.SIGNPATH_API_TOKEN }}" `
-                -OrganizationId "dae8fd2b-8a02-4e36-aa15-3c8f475bc6b7" `
-                -ProjectSlug "SecRandom" `
-                -SigningPolicySlug "SecRandom" `
-                -OutputArtifactPath $exePath `
-                -WaitForCompletion
-              echo "主可执行文件签名完成"
-            }
-            
-            # 检查解压后的目录结构
-            $actualPath = "temp_signing/SecRandom"
-            if (-not (Test-Path $actualPath)) {
-              # 如果预期的SecRandom目录不存在，查找实际的目录结构
-              $subDirs = Get-ChildItem -Path "temp_signing" -Directory
-              if ($subDirs.Count -gt 0) {
-                $actualPath = $subDirs[0].FullName
-                echo "发现实际目录结构: $actualPath"
-              } else {
-                # 如果没有子目录，直接使用temp_signing目录
-                $actualPath = "temp_signing"
-                echo "使用根目录结构: $actualPath"
-              }
-            }
-            
-            # 重新打包 ZIP 文件
-            Compress-Archive -Path "$actualPath/*" -DestinationPath "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip" -Force
-            
-            # 清理临时文件
-            Remove-Item -Recurse -Force "temp_signing" -ErrorAction SilentlyContinue
-            
-          } elseif ('${{ matrix.pack_mode }}' -eq 'advanced') {
-            # Advanced Installer 模式 - 签名安装程序
-            echo "签名 Advanced Installer 安装程序..."
-            
-            $installerPath = "zip/SecRandom-Installer-${{ github.ref_name }}.exe"
-            if (Test-Path $installerPath) {
-              Submit-SigningRequest `
-                -InputArtifactPath $installerPath `
-                -ApiToken "${{ secrets.SIGNPATH_API_TOKEN }}" `
-                -OrganizationId "dae8fd2b-8a02-4e36-aa15-3c8f475bc6b7" `
-                -ProjectSlug "SecRandom" `
-                -SigningPolicySlug "SecRandom" `
-                -OutputArtifactPath $installerPath `
-                -WaitForCompletion
-              echo "安装程序签名完成"
-            }
-          }
-          echo "SignPath 代码签名完成"
 
       - name: 运行 Linux 构建
         if: ${{ matrix.os == 'ubuntu-latest' }}
