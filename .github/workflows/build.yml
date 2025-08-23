@@ -514,7 +514,8 @@ jobs:
                     -ProjectSlug "SecRandom" `
                     -SigningPolicySlug "SecRandom" `
                     -OutputArtifactPath $filePath `
-                    -WaitForCompletion
+                    -WaitForCompletion `
+                    -Force
                   echo "文件签名完成: $filePath"
                   $validFiles += $line
                 } else {
