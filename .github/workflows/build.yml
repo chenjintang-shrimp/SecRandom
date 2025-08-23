@@ -312,23 +312,65 @@ jobs:
               # 复制 Advanced Installer 项目文件到构建目录
               # 注意：需要将 SR64.aip 文件放在项目的根目录或指定路径
               if (Test-Path "SR64.aip") {
+                echo "找到 SR64.aip 文件，开始复制..."
                 Copy-Item SR64.aip installer_build/SecRandom.aip
+                echo "项目文件复制完成"
                 
-                # 设置项目版本
-                AdvancedInstaller.com edit /set version ${{ github.ref_name }} installer_build/SecRandom.aip
+                # 验证复制后的文件
+                if (-not (Test-Path "installer_build/SecRandom.aip")) {
+                  echo "错误：项目文件复制失败"
+                  exit 1
+                }
+                
+                # 设置项目版本 - 验证版本号格式
+                $version = "${{ github.ref_name }}"
+                # 如果不是以v开头的版本号（如v1.0.0.0），则使用默认版本号
+                if ($version -match "^v\d+(\.\d+){3}$") {
+                  $version = $version.Substring(1) # 移除v前缀
+                } else {
+                  $version = "1.0.0.0" # 默认版本号（4位）
+                }
+                echo "使用版本号: $version"
+                
+                # 设置版本号
+                echo "正在设置项目版本..."
+                AdvancedInstaller.com edit /set version $version installer_build/SecRandom.aip
+                if ($LASTEXITCODE -ne 0) { 
+                  echo "版本号设置失败"
+                  exit $LASTEXITCODE 
+                }
+                echo "版本号设置完成"
                 
                 # 构建安装程序 - 生成EXE格式
+                echo "开始构建安装程序..."
                 AdvancedInstaller.com build installer_build/SecRandom.aip -builds EXE
                 if ($LASTEXITCODE -ne 0) { 
                   echo "Advanced Installer 编译失败"
+                  echo "退出代码: $LASTEXITCODE"
                   exit $LASTEXITCODE 
                 }
                 echo "Advanced Installer 编译完成"
                 
+                # 查找构建输出的安装程序文件
+                $outputExe = "installer_build/SecRandom.exe"
+                if (-not (Test-Path $outputExe)) {
+                  echo "未找到预期的输出文件，搜索其他可能的输出位置..."
+                  # 搜索可能的输出文件
+                  $exeFiles = Get-ChildItem -Path "installer_build" -Recurse -Filter "*.exe"
+                  if ($exeFiles.Count -gt 0) {
+                    $outputExe = $exeFiles[0].FullName
+                    echo "找到安装程序文件: $outputExe"
+                  } else {
+                    echo "错误：未找到任何安装程序输出文件"
+                    exit 1
+                  }
+                }
+                
                 # 将安装程序复制到 zip 目录
                 mkdir zip -Force
-                Copy-Item installer_build/SecRandom.exe zip/SecRandom-Installer-${{ github.ref_name }}.exe
-                echo "Advanced Installer 模式打包完成: zip/SecRandom-Installer-${{ github.ref_name }}.exe"
+                $finalExePath = "zip/SecRandom-Installer-${{ github.ref_name }}.exe"
+                Copy-Item $outputExe $finalExePath
+                echo "Advanced Installer 模式打包完成: $finalExePath"
               } else {
                 echo "未找到 SR64.aip 文件，请确保该文件存在于项目根目录"
                 exit 1
@@ -403,8 +445,23 @@ jobs:
               echo "主可执行文件签名完成"
             }
             
+            # 检查解压后的目录结构
+            $actualPath = "temp_signing/SecRandom"
+            if (-not (Test-Path $actualPath)) {
+              # 如果预期的SecRandom目录不存在，查找实际的目录结构
+              $subDirs = Get-ChildItem -Path "temp_signing" -Directory
+              if ($subDirs.Count -gt 0) {
+                $actualPath = $subDirs[0].FullName
+                echo "发现实际目录结构: $actualPath"
+              } else {
+                # 如果没有子目录，直接使用temp_signing目录
+                $actualPath = "temp_signing"
+                echo "使用根目录结构: $actualPath"
+              }
+            }
+            
             # 重新打包 ZIP 文件
-            Compress-Archive -Path "temp_signing/SecRandom/*" -DestinationPath "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip" -Force
+            Compress-Archive -Path "$actualPath/*" -DestinationPath "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip" -Force
             
             # 清理临时文件
             Remove-Item -Recurse -Force "temp_signing" -ErrorAction SilentlyContinue
