@@ -187,17 +187,24 @@ jobs:
             
             # 记录需要签名的文件路径，稍后在SignPath步骤中统一签名
             echo "记录主可执行文件路径用于后续签名..."
-            $exePath = "dist/SecRandom/SecRandom.exe"
-            if (Test-Path $exePath) {
+            
+            # 搜索可能的可执行文件，处理可能的名称变化
+            $exeFiles = Get-ChildItem -Path "dist" -Recurse -Filter "*.exe"
+            if ($exeFiles.Count -gt 0) {
+              $exePath = $exeFiles[0].FullName
               echo "找到主可执行文件: $exePath"
               echo "主可执行文件路径: $exePath" >> sign_files.txt
               # 记录打包模式信息，用于签名后重新打包
               echo "打包模式: dir" >> sign_files.txt
+              echo "sign_files.txt文件已创建，包含主可执行文件路径"
             } else {
-              echo "警告: 未找到主可执行文件 SecRandom.exe"
+              echo "错误: 未找到任何可执行文件"
               # 列出实际目录结构以便调试
-              echo "dist目录内容:"
+              echo "dist目录内容:" 
               Get-ChildItem -Path "dist" -Recurse | ForEach-Object { echo "  $($_.FullName)" }
+              # 创建空的sign_files.txt文件，避免后续步骤失败
+              echo "创建空的sign_files.txt文件"
+              New-Item -Path "sign_files.txt" -ItemType File -Force
             }
               
           } elseif ('${{ matrix.pack_mode }}' -eq 'advanced') {
@@ -299,17 +306,24 @@ jobs:
             
             # 记录需要签名的文件路径，稍后在SignPath步骤中统一签名
             echo "记录主可执行文件路径用于后续签名..."
-            $exePath = "dist/SecRandom/SecRandom.exe"
-            if (Test-Path $exePath) {
+            
+            # 搜索可能的可执行文件，处理可能的名称变化
+            $exeFiles = Get-ChildItem -Path "dist" -Recurse -Filter "*.exe"
+            if ($exeFiles.Count -gt 0) {
+              $exePath = $exeFiles[0].FullName
               echo "找到主可执行文件: $exePath"
               echo "主可执行文件路径: $exePath" >> sign_files.txt
               # 记录打包模式信息，用于签名后重新打包
               echo "打包模式: advanced" >> sign_files.txt
+              echo "sign_files.txt文件已创建，包含主可执行文件路径"
             } else {
-              echo "警告: 未找到主可执行文件 SecRandom.exe"
+              echo "错误: 未找到任何可执行文件"
               # 列出实际目录结构以便调试
-              echo "dist目录内容:"
+              echo "dist目录内容:" 
               Get-ChildItem -Path "dist" -Recurse | ForEach-Object { echo "  $($_.FullName)" }
+              # 创建空的sign_files.txt文件，避免后续步骤失败
+              echo "创建空的sign_files.txt文件"
+              New-Item -Path "sign_files.txt" -ItemType File -Force
             }
           }
 
@@ -472,7 +486,7 @@ jobs:
           echo "打包完成: $outputZip"
 
       - name: SignPath 代码签名 - 所有文件
-        if: ${{ matrix.os == 'windows-2022'}}
+        if: ${{ matrix.os == 'windows-2022'}} 
         run: |
           echo "开始 SignPath 代码签名..."
           # 安装 SignPath PowerShell 模块
@@ -483,49 +497,65 @@ jobs:
             echo "找到需要签名的文件列表:"
             Get-Content sign_files.txt
             
+            # 创建一个临时文件来保存有效的文件路径
+            $validFiles = @()
+            
             # 逐个签名文件
             Get-Content sign_files.txt | ForEach-Object {
-              $filePath = $_.Trim()
-              if ($filePath -ne "" -and (Test-Path $filePath)) {
-                echo "正在签名文件: $filePath"
-                Submit-SigningRequest `
-                  -InputArtifactPath $filePath `
-                  -ApiToken "${{ secrets.SIGNPATH_API_TOKEN }}" `
-                  -OrganizationId "dae8fd2b-8a02-4e36-aa15-3c8f475bc6b7" `
-                  -ProjectSlug "SecRandom" `
-                  -SigningPolicySlug "SecRandom" `
-                  -OutputArtifactPath $filePath `
-                  -WaitForCompletion
-                echo "文件签名完成: $filePath"
-              } elseif ($filePath -ne "") {
-                echo "警告: 文件不存在，跳过签名: $filePath"
+              $line = $_.Trim()
+              if ($line -match "^主可执行文件路径: (.+)$") {
+                $filePath = $matches[1]
+                if (Test-Path $filePath) {
+                  echo "正在签名文件: $filePath"
+                  Submit-SigningRequest `
+                    -InputArtifactPath $filePath `
+                    -ApiToken "${{ secrets.SIGNPATH_API_TOKEN }}" `
+                    -OrganizationId "dae8fd2b-8a02-4e36-aa15-3c8f475bc6b7" `
+                    -ProjectSlug "SecRandom" `
+                    -SigningPolicySlug "SecRandom" `
+                    -OutputArtifactPath $filePath `
+                    -WaitForCompletion
+                  echo "文件签名完成: $filePath"
+                  $validFiles += $line
+                } else {
+                  echo "警告: 文件不存在，跳过签名: $filePath"
+                }
+              } elseif ($line -match "^打包模式: (.+)$") {
+                # 保留打包模式信息
+                $validFiles += $line
               }
             }
             
-            # 清理临时文件
-            Remove-Item sign_files.txt -Force -ErrorAction SilentlyContinue
-            echo "所有文件签名完成"
+            # 将有效的文件路径和打包模式写回sign_files.txt
+            Set-Content -Path "sign_files.txt" -Value $validFiles
+            echo "已更新sign_files.txt文件，仅保留有效条目"
           } else {
             echo "未找到需要签名的文件列表 (sign_files.txt)"
             echo "当前目录内容:"
             Get-ChildItem -Path "." -Name
+            # 创建空的sign_files.txt文件，避免后续步骤失败
+            New-Item -Path "sign_files.txt" -ItemType File -Force
           }
           echo "SignPath 代码签名完成"
 
       - name: 签名后打包操作
-        if: ${{ matrix.os == 'windows-2022'}}
+        if: ${{ matrix.os == 'windows-2022'}} 
         run: |
           echo "开始签名后打包操作..."
           
           # 检查打包模式并执行相应的打包操作
           if (Test-Path "sign_files.txt") {
             $packMode = ""
-            # 从sign_files.txt中读取打包模式
+            $exePath = ""
+            # 从sign_files.txt中读取打包模式和可执行文件路径
             Get-Content sign_files.txt | ForEach-Object {
               $line = $_.Trim()
               if ($line -match "^打包模式: (.+)$") {
                 $packMode = $matches[1]
                 echo "检测到打包模式: $packMode"
+              } elseif ($line -match "^主可执行文件路径: (.+)$") {
+                $exePath = $matches[1]
+                echo "检测到主可执行文件路径: $exePath"
               }
             }
             
@@ -533,49 +563,59 @@ jobs:
             if ($packMode -eq "dir") {
               echo "执行目录模式打包..."
               
-              # 创建zip_dist/SecRandom目录
-              mkdir -p zip_dist/SecRandom
-              
-              # 复制dist/SecRandom目录下的所有文件到zip_dist/SecRandom目录下
-              Copy-Item -Recurse -Force dist/SecRandom/* zip_dist/SecRandom/
-              
-              # 创建app目录
-              mkdir -p zip_dist/SecRandom/app
-              
-              # 复制app/resource文件夹到zip_dist/SecRandom目录下
-              Copy-Item -Recurse -Force app/resource zip_dist/SecRandom/app
-              
-              # 复制 LICENSE 文件到zip_dist/SecRandom目录下
-              Copy-Item LICENSE zip_dist/SecRandom/
-              
-              # 使用 zip 压缩文件
-              mkdir zip -Force
-              $outputZip = "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip"
-              Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath $outputZip -Force
-              echo "目录模式打包完成: $outputZip"
+              # 检查可执行文件是否存在
+              if (-not [string]::IsNullOrEmpty($exePath) -and (Test-Path $exePath)) {
+                # 创建zip_dist/SecRandom目录
+                mkdir -p zip_dist/SecRandom
+                
+                # 复制dist/SecRandom目录下的所有文件到zip_dist/SecRandom目录下
+                Copy-Item -Recurse -Force dist/SecRandom/* zip_dist/SecRandom/
+                
+                # 创建app目录
+                mkdir -p zip_dist/SecRandom/app
+                
+                # 复制app/resource文件夹到zip_dist/SecRandom目录下
+                Copy-Item -Recurse -Force app/resource zip_dist/SecRandom/app
+                
+                # 复制 LICENSE 文件到zip_dist/SecRandom目录下
+                Copy-Item LICENSE zip_dist/SecRandom/
+                
+                # 使用 zip 压缩文件
+                mkdir zip -Force
+                $outputZip = "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip"
+                Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath $outputZip -Force
+                echo "目录模式打包完成: $outputZip"
+              } else {
+                echo "错误: 主可执行文件不存在，无法执行目录模式打包"
+                # 列出dist目录内容以便调试
+                echo "dist目录内容:" 
+                Get-ChildItem -Path "dist" -Recurse | ForEach-Object { echo "  $($_.FullName)" }
+              }
               
             } elseif ($packMode -eq "advanced") {
               echo "执行 Advanced Installer 模式打包..."
               
-              # 创建 Advanced Installer 项目目录
-              echo "创建 Advanced Installer 项目目录..."
-              mkdir installer_build
-              
-              # 复制 PyInstaller 输出到 Advanced Installer 目录
-              echo "复制文件到安装程序目录..."
-              Copy-Item -Recurse -Force dist/SecRandom installer_build/AppFiles
-              
-              # 复制资源文件
-              echo "复制资源文件..."
-              Copy-Item -Recurse -Force app/resource installer_build/AppFiles/app
-              Copy-Item LICENSE installer_build/AppFiles
-              Copy-Item resources/SecRandom.ico installer_build
-              
-              # 使用 Advanced Installer 编译安装程序
-              echo "使用 Advanced Installer 编译安装程序..."
-              
-              # 检查 Advanced Installer 是否可用
-              if (Get-Command "AdvancedInstaller.com" -ErrorAction SilentlyContinue) {
+              # 检查可执行文件是否存在
+              if (-not [string]::IsNullOrEmpty($exePath) -and (Test-Path $exePath)) {
+                # 创建 Advanced Installer 项目目录
+                echo "创建 Advanced Installer 项目目录..."
+                mkdir installer_build
+                
+                # 复制 PyInstaller 输出到 Advanced Installer 目录
+                echo "复制文件到安装程序目录..."
+                Copy-Item -Recurse -Force dist/SecRandom installer_build/AppFiles
+                
+                # 复制资源文件
+                echo "复制资源文件..."
+                Copy-Item -Recurse -Force app/resource installer_build/AppFiles/app
+                Copy-Item LICENSE installer_build/AppFiles
+                Copy-Item resources/SecRandom.ico installer_build
+                
+                # 使用 Advanced Installer 编译安装程序
+                echo "使用 Advanced Installer 编译安装程序..."
+                
+                # 检查 Advanced Installer 是否可用
+                if (Get-Command "AdvancedInstaller.com" -ErrorAction SilentlyContinue) {
                 echo "使用 Advanced Installer 编译..."
                 
                 # 复制 Advanced Installer 项目文件到构建目录
@@ -677,12 +717,21 @@ jobs:
                 echo "Advanced Installer 模式打包完成（ZIP 格式）: $outputZip"
               }
               
+              } else {
+                echo "错误: 主可执行文件不存在，无法执行 Advanced Installer 模式打包"
+                # 列出dist目录内容以便调试
+                echo "dist目录内容:" 
+                Get-ChildItem -Path "dist" -Recurse | ForEach-Object { echo "  $($_.FullName)" }
+              }
+              
             } else {
               echo "未识别的打包模式: $packMode，跳过打包操作"
             }
             
           } else {
             echo "未找到 sign_files.txt 文件，无法确定打包模式，跳过打包操作"
+            # 创建空的sign_files.txt文件，以便下次运行
+            New-Item -Path "sign_files.txt" -ItemType File -Force
           }
           echo "签名后打包操作完成"
 
