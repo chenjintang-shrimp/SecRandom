@@ -15,9 +15,10 @@ from loguru import logger
 # 🏰 应用内部魔法卷轴 🏰
 from app.common.config import get_theme_icon, load_custom_font, VERSION
 from app.common.path_utils import path_manager, open_file, remove_file
+from app.common.ui_access_manager import UIAccessMixin
 
 
-class UpdateLogWindow(MSFluentWindow):
+class UpdateLogWindow(MSFluentWindow, UIAccessMixin):
     """(^・ω・^ ) 白露的更新日志精灵！
     为SecRandom用户提供更新日志查看功能～
     让用户了解每个版本的更新内容和新功能！✨"""
@@ -50,6 +51,9 @@ class UpdateLogWindow(MSFluentWindow):
         self.setWindowIcon(QIcon(str(icon_path)))
         
         self.resize(800, 600)
+        
+        # 初始化UIAccess权限
+        self._init_ui_access()
         
         # 设置窗口居中
         self.center_window()

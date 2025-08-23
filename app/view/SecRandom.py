@@ -26,6 +26,7 @@ from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_W
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, get_update_channel
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+from app.common.ui_access_manager import UIAccessManager, UIAccessMixin
 from app.view.settings import settings_Window
 from app.view.main_page.pumping_people import pumping_people
 from app.view.main_page.pumping_reward import pumping_reward
@@ -235,6 +236,7 @@ class TrayIconManager(QObject):
         # 主界面控制
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_power_20_filled"), '暂时显示/隐藏主界面', triggered=self.main_window.toggle_window))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.main_window.toggle_levitation_window))
+        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_inprivate_20_filled"), '切换窗口置顶', triggered=self.main_window.toggle_window_topmost))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_settings_20_filled"), '打开设置界面', triggered=self.main_window.show_setting_interface))
         self.tray_menu.addSeparator()
         # 系统操作
@@ -318,7 +320,7 @@ class TrayIconManager(QObject):
 # ==================================================
 # 主窗口类
 # ==================================================
-class Window(MSFluentWindow):
+class Window(MSFluentWindow, UIAccessMixin):
     """(ﾟДﾟ≡ﾟдﾟ) 星野的主窗口司令部！
     这里是程序的核心指挥中心喵！所有重要操作都从这里发起～
     不要随便修改这里的核心逻辑，会导致系统崩溃喵！(๑•̀ㅂ•́)ow✧"""
@@ -421,6 +423,10 @@ class Window(MSFluentWindow):
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint) # 置顶
         else:
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint) # 取消置顶
+            
+        # 根据用户设置应用UIAccess窗口样式
+        topmost_enabled = self.config_manager.get_foundation_setting('topmost_switch')
+        self._apply_ui_access_window_styles(enable_topmost=topmost_enabled)
 
         self._apply_window_visibility_settings()
 
@@ -511,6 +517,48 @@ class Window(MSFluentWindow):
         except Exception as e:
             logger.error(f"白露魔法出错: Linux延迟定位失败了呢～ {e}")
 
+    def toggle_window_topmost(self, enable_topmost=None):
+        """(^・ω・^ ) 白露的窗口置顶切换魔法！
+        动态切换窗口置顶状态，让用户可以随时控制窗口是否保持在最顶层～
+        
+        Args:
+            enable_topmost (bool, optional): 指定置顶状态，None表示切换当前状态
+        
+        Returns:
+            bool: 切换后的置顶状态
+        """
+        try:
+            # 使用UIAccessMixin的toggle_topmost方法
+            result = self.toggle_topmost(enable_topmost)
+            
+            # 如果切换成功，同步更新配置
+            if result is not False:
+                # 更新配置文件
+                settings = self.config_manager.load_settings()
+                foundation_settings = settings.get('foundation', {})
+                foundation_settings['topmost_switch'] = result
+                settings['foundation'] = foundation_settings
+                self.config_manager.save_settings(settings)
+                
+                # 同时更新Qt窗口标志
+                if result:
+                    self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+                else:
+                    self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
+                
+                # 重新显示窗口以应用新的窗口标志
+                if self.isVisible():
+                    self.hide()
+                    self.show()
+                
+                logger.info(f"白露魔法: 窗口置顶状态已切换为 {'启用' if result else '禁用'}～ ")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"白露魔法出错: 切换窗口置顶状态失败了呢～ {e}")
+            return False
+    
     def _apply_window_visibility_settings(self):
         """(^・ω・^ ) 白露的窗口显示魔法！
         根据用户保存的设置决定窗口是否自动显示～

@@ -1,23 +1,28 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<DOCUMENT Type="Advanced Installer" CreateVersion="22.4" version="22.4" Modules="professional" RootPath="." Language="zh" Id="{E3F3D138-E3F8-4BB8-990C-162C04CD0782}">
+<DOCUMENT Type="Advanced Installer" CreateVersion="22.4" version="22.4" PreviousModules="professional" Modules="enterprise" RootPath="." Language="zh" Id="{E3F3D138-E3F8-4BB8-990C-162C04CD0782}">
+  <COMPONENT cid="caphyon.advinst.msicomp.ProjectOptionsComponent">
+    <ROW Name="HiddenItems" Value="ActSyncAppComponent;CPLAppletComponent;AutorunComponent;GameUxComponent;SilverlightSlnComponent;SharePointSlnComponent"/>
+  </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiPropsComponent">
     <ROW Property="AI_BITMAP_DISPLAY_MODE" Value="0"/>
+    <ROW Property="AI_CF_FRAME_STYLE" Value="FlatCaption;FlatBorder;NoInactive" MultiBuildValue="DefaultBuild:true;true;true" MsiKey="AI_CF_FRAME_STYLE"/>
     <ROW Property="AI_FINDEXE_TITLE" Value="选择 [|ProductName] 安装包" ValueLocId="AI.Property.FindExeTitle"/>
     <ROW Property="AI_IA_APPLICATION_ID" Value="68a93a51e430c988b56fae63"/>
     <ROW Property="AI_IA_ENABLE" Value="1"/>
-    <ROW Property="AI_PREDEF_LCONDS_PROPS" Value="AI_DETECTED_ALL"/>
+    <ROW Property="AI_PREDEF_LCONDS_PROPS" Value="AI_DETECTED_ALL;AI_DETECTED_ADMIN_USER"/>
     <ROW Property="AI_SHORTCUTSREG" Value="0|0|0|0|"/>
     <ROW Property="AI_UPGRADE" Value="No"/>
-    <ROW Property="ALLUSERS" Value="1"/>
+    <ROW Property="ALLUSERS" Value="1" MultiBuildValue="DefaultBuild:2"/>
     <ROW Property="ARPCOMMENTS" Value="SecRandom 安装程序" ValueLocId="*"/>
     <ROW Property="ARPNOREPAIR" MultiBuildValue="DefaultBuild:1"/>
     <ROW Property="ARPPRODUCTICON" Value="SecRandom.exe" Type="8"/>
     <ROW Property="AiEmbeddedUI" Value="1"/>
     <ROW Property="AiWinUI" Value="1"/>
-    <ROW Property="AppLogoIcon" Value="applogo.png" MultiBuildValue="DefaultBuild:SecRandom.png" Type="1" MsiKey="AppLogoIcon"/>
+    <ROW Property="AppLogoIcon" Value="applogo.png" MultiBuildValue="DefaultBuild:SecRandom.png_1" Type="1" MsiKey="AppLogoIcon"/>
+    <ROW Property="AppLogoIconDark" Value="applogodark.png" MultiBuildValue="DefaultBuild:SecRandom.png_1" Type="1" MsiKey="AppLogoIconDark"/>
     <ROW Property="Manufacturer" Value="SECTL"/>
     <ROW Property="ProductCode" Value="2052:{055EA00F-F4A4-410C-BDE4-8B31ED6D91BE} " Type="16"/>
-    <ROW Property="ProductLanguage" Value="1033"/>
+    <ROW Property="ProductLanguage" Value="2052"/>
     <ROW Property="ProductName" Value="SecRandom"/>
     <ROW Property="ProductVersion" Value="1.1.4.0" Options="32"/>
     <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND;AI_SETUPEXEPATH;SETUPEXEDIR"/>
@@ -32,6 +37,7 @@
     <ROW Property="WindowsTypeNT5XDisplay" MultiBuildValue="DefaultBuild:Windows XP/2003" ValueLocId="-"/>
     <ROW Property="WindowsTypeNT60" MultiBuildValue="DefaultBuild:Windows Vista/Server 2008" ValueLocId="-"/>
     <ROW Property="WindowsTypeNT60Display" MultiBuildValue="DefaultBuild:Windows Vista/Server 2008" ValueLocId="-"/>
+    <ATTRIBUTE name="DeletedRows" value="AiSkipExitDlg"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiDirsComponent">
     <ROW Directory="APPDIR" Directory_Parent="TARGETDIR" DefaultDir="APPDIR:." IsPseudoRoot="1" DirectoryOptions="3"/>
@@ -217,6 +223,7 @@
     <ROW Component="ACT" ComponentId="{9AA1E21C-92A3-4852-B16E-8565A6070C71}" Directory_="Australia_Dir" Attributes="0" KeyPath="ACT" Type="0"/>
     <ROW Component="AI_ExePath" ComponentId="{196BAAF5-CB3D-4BA9-8323-234F6A51A70F}" Directory_="APPDIR" Attributes="4" KeyPath="AI_ExePath"/>
     <ROW Component="AI_IA_ENABLE" ComponentId="{BB61FB5B-7670-4BB6-8EA9-12D209E72C7B}" Directory_="APPDIR" Attributes="4" KeyPath="AI_IA_ENABLE" Options="1"/>
+    <ROW Component="AI_INSTALLPERUSER" ComponentId="{B37E85AF-4051-4A00-BD10-AD3B5D24ABFE}" Directory_="APPDIR" Attributes="4" KeyPath="AI_INSTALLPERUSER" Options="1"/>
     <ROW Component="AI_SHORTCUTSREG" ComponentId="{A8E4EC89-128E-4D6E-AA14-09338DFFE159}" Directory_="APPDIR" Attributes="4" KeyPath="AI_SHORTCUTSREG" Options="1"/>
     <ROW Component="APPDIR" ComponentId="{EDCD9B5A-4563-43B0-B686-90DE1870CF2B}" Directory_="APPDIR" Attributes="0"/>
     <ROW Component="Abidjan" ComponentId="{EA232D53-ACFC-4F15-8BDA-D3136A89EFF5}" Directory_="Africa_Dir" Attributes="0" KeyPath="Abidjan" Type="0"/>
@@ -2183,6 +2190,7 @@
   <COMPONENT cid="caphyon.advinst.msicomp.AiPersistentPropComponent">
     <ROW Property="AI_IA_ENABLE" Registry="AI_IA_ENABLE" HklmSearch="AI_IA_ENABLE" HkcuSearch="AI_IA_ENABLE_1"/>
     <ROW Property="AI_SHORTCUTSREG" Registry="AI_SHORTCUTSREG" HklmSearch="AI_SHORTCUTSREG" HkcuSearch="AI_SHORTCUTSREG_1"/>
+    <ROW Property="AI_INSTALLPERUSER" Registry="AI_INSTALLPERUSER" HklmSearch="AI_INSTALLPERUSER" HkcuSearch="AI_INSTALLPERUSER_1"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.BootstrOptComponent">
     <ROW BootstrOptKey="GlobalOptions" DownloadFolder="[AppDataFolder][|Manufacturer]\[|ProductName]\prerequisites" Options="2"/>
@@ -2202,6 +2210,7 @@
   <COMPONENT cid="caphyon.advinst.msicomp.FragmentComponent">
     <ROW Fragment="CommonUI.aip" Path="&lt;AI_FRAGS&gt;CommonUI.aip"/>
     <ROW Fragment="FolderDlg.aip" Path="&lt;AI_THEMES&gt;appinstaller\fragments\FolderDlg.aip"/>
+    <ROW Fragment="InstallTypeDlg.aip" Path="&lt;AI_THEMES&gt;appinstaller\fragments\InstallTypeDlg.aip"/>
     <ROW Fragment="MaintenanceWelcomeDlg.aip" Path="&lt;AI_THEMES&gt;appinstaller\fragments\MaintenanceWelcomeDlg.aip"/>
     <ROW Fragment="SequenceDialogs.aip" Path="&lt;AI_THEMES&gt;appinstaller\fragments\SequenceDialogs.aip"/>
     <ROW Fragment="Sequences.aip" Path="&lt;AI_FRAGS&gt;Sequences.aip"/>
@@ -2209,7 +2218,6 @@
     <ROW Fragment="StaticUIStrings.aip" Path="&lt;AI_FRAGS&gt;StaticUIStrings.aip"/>
     <ROW Fragment="Themes.aip" Path="&lt;AI_FRAGS&gt;Themes.aip"/>
     <ROW Fragment="UI.aip" Path="&lt;AI_THEMES&gt;appinstaller\fragments\UI.aip"/>
-    <ROW Fragment="UpgradeDlg.aip" Path="&lt;AI_THEMES&gt;appinstaller\fragments\UpgradeDlg.aip"/>
     <ROW Fragment="Validation.aip" Path="&lt;AI_FRAGS&gt;Validation.aip"/>
     <ROW Fragment="WelcomeDlg.aip" Path="&lt;AI_THEMES&gt;appinstaller\fragments\WelcomeDlg.aip"/>
   </COMPONENT>
@@ -2226,32 +2234,148 @@
     <ROW Property="AI_IA_ENABLE" Signature_="AI_IA_ENABLE_1"/>
     <ROW Property="AI_SHORTCUTSREG" Signature_="AI_SHORTCUTSREG"/>
     <ROW Property="AI_SHORTCUTSREG" Signature_="AI_SHORTCUTSREG_1"/>
+    <ROW Property="AI_INSTALLPERUSER" Signature_="AI_INSTALLPERUSER"/>
+    <ROW Property="AI_INSTALLPERUSER" Signature_="AI_INSTALLPERUSER_1"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiBinaryComponent">
     <ROW Name="InstallerAnalytics.dll" SourcePath="&lt;AI_CUSTACTS&gt;InstallerAnalytics.dll"/>
     <ROW Name="Prereq.dll" SourcePath="&lt;AI_CUSTACTS&gt;Prereq.dll"/>
-    <ROW Name="SecRandom.png" SourcePath="C:\Users\Fox_block\Desktop\测试\SR\app\resource\icon\SecRandom.png"/>
+    <ROW Name="SecRandom.png_1" SourcePath="..\SecRandom-Windows-v1.1.4.0-beta-x64-dir\app\resource\icon\SecRandom.png"/>
     <ROW Name="SoftwareDetector.dll" SourcePath="&lt;AI_CUSTACTS&gt;SoftwareDetector.dll"/>
     <ROW Name="aicustact.dll" SourcePath="&lt;AI_CUSTACTS&gt;aicustact.dll"/>
     <ROW Name="lzmaextractor.dll" SourcePath="&lt;AI_CUSTACTS&gt;lzmaextractor.dll"/>
   </COMPONENT>
+  <COMPONENT cid="caphyon.advinst.msicomp.MsiCheckBoxComponent">
+    <ATTRIBUTE name="DeletedRows" value="AiSkipExitDlg"/>
+  </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiControlComponent">
+    <ROW Dialog_="AdminWelcomeDlg" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="300" MsiKey="AdminWelcomeDlg#Bitmap"/>
+    <ROW Dialog_="AdminWelcomeDlg" Control="Next" Type="ImageButton" X="366" Y="234" Width="95" Height="28" Attributes="3" Text="[ButtonImage]" TextStyle="[ImageBtnFont]" Order="500" MsiKey="AdminWelcomeDlg#Next" Options="1" ExtType="ImageButton" ExtData="[ButtonText_Next]" ExtDataLocId="-"/>
+    <ROW Dialog_="AdminWelcomeDlg" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="600" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="AdminWelcomeDlg#CompanyText"/>
+    <ROW Dialog_="AdminWelcomeDlg" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="700" MsiKey="AdminWelcomeDlg#ProductLogo"/>
+    <ROW Dialog_="AdminWelcomeDlg" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="800" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="AdminWelcomeDlg#ProducVersionText"/>
+    <ROW Dialog_="AdminWelcomeDlg" Control="Description" Type="Text" X="16" Y="158" Width="454" Height="60" Attributes="196611" Text="[Wizard]将在指定的网络位置创建 [ProductName] 的服务器映像。单击 &quot;[Text_Next]&quot; 继续，或者单击 &quot;取消&quot; 退出[Wizard]。" TextStyle="[ManufacturerFont]" Order="900" TextLocId="Control.Text.AdminWelcomeDlg#Description" MsiKey="AdminWelcomeDlg#Description"/>
+    <ROW Dialog_="AdminWelcomeDlg" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="1000" MsiKey="AdminWelcomeDlg#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="AdminWelcomeDlg" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text="[ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="1100"/>
+    <ROW Dialog_="BrowseDlg" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text=" [ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="1100" MsiKey="BrowseDlg#ProductNameTitle"/>
+    <ROW Dialog_="BrowseDlg" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="1200" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="BrowseDlg#CompanyText"/>
+    <ROW Dialog_="BrowseDlg" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="1300" MsiKey="BrowseDlg#ProductLogo"/>
+    <ROW Dialog_="BrowseDlg" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="1400" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="BrowseDlg#ProducVersionText"/>
+    <ROW Dialog_="ExitDialog" Control="Bitmap" Type="Bitmap" X="0" Y="1" Width="490" Height="290" Attributes="1" Text="[Background]" Order="300" MsiKey="ExitDialog#Bitmap"/>
+    <ROW Dialog_="ExitDialog" Control="ProductNameTitle" Type="Text" X="115" Y="30" Width="364" Height="32" Attributes="196611" Text="[ProductName] 已安装" TextStyle="[ProductNameTitleFont]" Order="500" TextLocId="AppInstaller.Control.Text.ExitDialog#Title" MsiKey="ExitDialog#ProductNameTitle"/>
+    <ROW Dialog_="ExitDialog" Control="CompanyText" Type="Text" X="128" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="600" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="ExitDialog#CompanyText"/>
+    <ROW Dialog_="ExitDialog" Control="ProductLogo" Type="Bitmap" X="23" Y="30" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="700" MsiKey="ExitDialog#ProductLogo"/>
+    <ROW Dialog_="ExitDialog" Control="ProducVersionText" Type="Text" X="128" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="900" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="ExitDialog#ProducVersionText"/>
+    <ROW Dialog_="ExitDialog" Control="ViewReadmeText" Type="Text" X="32" Y="218" Width="220" Height="20" Attributes="196611" Text="查看自述文件" TextStyle="[ManufacturerFont]" Order="1100" TextLocId="Control.Text.ExitDialog#ViewReadmeText" MsiKey="ExitDialog#ViewReadmeText"/>
+    <ROW Dialog_="ExitDialog" Control="ViewReadmeCheckBox" Type="ImageCheckBox" X="14" Y="218" Width="12" Height="15" Attributes="3" Property="VIEWREADME" Text="[CheckboxImage]" TextStyle="[ManufacturerFont]" Order="1200" MsiKey="ExitDialog#ViewReadmeCheckBox" ExtType="ImageCheckBox"/>
+    <ROW Dialog_="FatalError" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="300" MsiKey="FatalError#Bitmap"/>
+    <ROW Dialog_="FatalError" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="500" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="FatalError#CompanyText"/>
+    <ROW Dialog_="FatalError" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="600" MsiKey="FatalError#ProductLogo"/>
+    <ROW Dialog_="FatalError" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="700" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="FatalError#ProducVersionText"/>
+    <ROW Dialog_="FatalError" Control="Description1" Type="Text" X="16" Y="158" Width="454" Height="40" Attributes="196611" Text="因为发生了错误，[ProductName] 的安装过早地结束。您的系统没有被修改。要稍后安装此程序，请再运行安装程序。" TextStyle="[DescriptionFont]" Order="800" TextLocId="Control.Text.FatalError#Description1" MsiKey="FatalError#Description1"/>
+    <ROW Dialog_="FatalError" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="900" MsiKey="FatalError#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="FatalError" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text="[ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="1000"/>
+    <ROW Dialog_="FilesInUse" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="200" MsiKey="FilesInUse#Bitmap"/>
+    <ROW Dialog_="FilesInUse" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text="[ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="700" MsiKey="FilesInUse#ProductNameTitle"/>
+    <ROW Dialog_="FilesInUse" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="800" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="FilesInUse#CompanyText"/>
+    <ROW Dialog_="FilesInUse" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="900" MsiKey="FilesInUse#ProductLogo"/>
+    <ROW Dialog_="FilesInUse" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="1000" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="FilesInUse#ProducVersionText"/>
+    <ROW Dialog_="FolderDlg" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="200" MsiKey="FolderDlg#Bitmap"/>
+    <ROW Dialog_="FolderDlg" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="300" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="FolderDlg#CompanyText"/>
+    <ROW Dialog_="FolderDlg" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="400" MsiKey="FolderDlg#ProductLogo"/>
+    <ROW Dialog_="FolderDlg" Control="Next" Type="ImageButton" X="366" Y="234" Width="95" Height="28" Attributes="3" Text="[ButtonImage]" TextStyle="[ImageBtnFont]" Order="500" MsiKey="FolderDlg#Next" Options="1" ExtType="ImageButton" ExtData="[ButtonText_Next]" ExtDataLocId="-"/>
+    <ROW Dialog_="FolderDlg" Control="Back" Type="ImageButton" X="260" Y="234" Width="95" Height="28" Attributes="3" Text="[ButtonImage]" TextStyle="[ImageBtnFont]" Order="600" MsiKey="FolderDlg#Back" Options="1" ExtType="ImageButton" ExtData="[ButtonText_Back]" ExtDataLocId="-"/>
+    <ROW Dialog_="FolderDlg" Control="FolderLabel" Type="Text" X="16" Y="158" Width="458" Height="15" Attributes="65539" Text="文件夹(&amp;F):" TextStyle="[ManufacturerFont]" Help="|" Order="700" TextLocId="Control.Text.FolderDlg#FolderLabel" HelpLocId="Control.Help.FolderDlg#FolderLabel" MsiKey="FolderDlg#FolderLabel"/>
+    <ROW Dialog_="FolderDlg" Control="FolderEdit" Type="PathEdit" X="16" Y="179" Width="432" Height="20" Attributes="7" Property="APPDIR" TextStyle="[ManufacturerFont]" Help="|" Order="800" HelpLocId="Control.Help.FolderDlg#FolderEdit" MsiKey="FolderDlg#FolderEdit"/>
+    <ROW Dialog_="FolderDlg" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="900" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="FolderDlg#ProducVersionText"/>
+    <ROW Dialog_="FolderDlg" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="1000" MsiKey="FolderDlg#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="FolderDlg" Control="Browse" Type="ImageButton" X="452" Y="179" Width="21" Height="20" Attributes="3" Text="[ButtonImage]" TextStyle="[ImageBtnFont]" Help="|" Order="1100" HelpLocId="Control.Help.FolderDlg#Browse" MsiKey="FolderDlg#Browse" ExtType="ImageButton" ExtData="..." ExtDataLocId="Metro.Control.ExtData.WelcomeDlg.BrowseTxt"/>
+    <ROW Dialog_="FolderDlg" Control="ProductNameTitle" Type="Text" X="32" Y="22" Width="364" Height="32" Attributes="196611" Text=" [ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="1200"/>
+    <ROW Dialog_="InstallTypeDlg" Control="CompanyText" Type="Text" X="16" Y="46" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="700" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="InstallTypeDlg#CompanyText"/>
+    <ROW Dialog_="InstallTypeDlg" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="1000" MsiKey="InstallTypeDlg#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="InstallTypeDlg" Control="ProductNameTitle" Type="Text" X="11" Y="9" Width="364" Height="32" Attributes="196611" Text=" [ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="1100"/>
     <ROW Dialog_="MaintenanceWelcomeDlg" Control="MaintenanceWelcomeDlgDialogInitializer" Type="DialogInitializer" X="0" Y="0" Width="0" Height="0" Attributes="0" Order="-1" TextLocId="-" HelpLocId="-" ExtDataLocId="-"/>
+    <ROW Dialog_="MaintenanceWelcomeDlg" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="300" MsiKey="MaintenanceWelcomeDlg#Bitmap"/>
+    <ROW Dialog_="MaintenanceWelcomeDlg" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="700" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="MaintenanceWelcomeDlg#CompanyText"/>
+    <ROW Dialog_="MaintenanceWelcomeDlg" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="800" MsiKey="MaintenanceWelcomeDlg#ProductLogo"/>
+    <ROW Dialog_="MaintenanceWelcomeDlg" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="900" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="MaintenanceWelcomeDlg#ProducVersionText"/>
+    <ROW Dialog_="MaintenanceWelcomeDlg" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="1000" MsiKey="MaintenanceWelcomeDlg#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="MaintenanceWelcomeDlg" Control="ProductNameTitle" Type="Text" X="29" Y="22" Width="364" Height="32" Attributes="196611" Text=" [ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="1100"/>
+    <ROW Dialog_="MsiRMFilesInUse" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="200" MsiKey="MsiRMFilesInUse#Bitmap"/>
+    <ROW Dialog_="MsiRMFilesInUse" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="700" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="MsiRMFilesInUse#CompanyText"/>
+    <ROW Dialog_="MsiRMFilesInUse" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="800" MsiKey="MsiRMFilesInUse#ProductLogo"/>
+    <ROW Dialog_="MsiRMFilesInUse" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="900" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="MsiRMFilesInUse#ProducVersionText"/>
+    <ROW Dialog_="MsiRMFilesInUse" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="1000" MsiKey="MsiRMFilesInUse#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="MsiRMFilesInUse" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text="[ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="1100"/>
+    <ROW Dialog_="OutOfDiskDlg" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="100" MsiKey="OutOfDiskDlg#Bitmap"/>
+    <ROW Dialog_="OutOfDiskDlg" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="500" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="OutOfDiskDlg#CompanyText"/>
+    <ROW Dialog_="OutOfDiskDlg" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="600" MsiKey="OutOfDiskDlg#ProductLogo"/>
+    <ROW Dialog_="OutOfDiskDlg" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="700" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="OutOfDiskDlg#ProducVersionText"/>
+    <ROW Dialog_="OutOfDiskDlg" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="800" MsiKey="OutOfDiskDlg#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="OutOfDiskDlg" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text="[ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="900"/>
+    <ROW Dialog_="OutOfRbDiskDlg" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="100" MsiKey="OutOfRbDiskDlg#Bitmap"/>
     <ROW Dialog_="OutOfRbDiskDlg" Control="Description" Type="Text" X="16" Y="94" Width="458" Height="57" Attributes="196611" Text="突出显示的卷没有足够的磁盘空间可用于当前选择的功能。您可以从突出显示的卷中移除一些文件，或者选择不同的目标驱动器。另外，您也可以选择禁用安装程序的回滚功能。如果您希望冒险禁用回滚，请点击“是”。" TextStyle="[DescriptionFont]" Order="400" TextLocId="AppInstaller.Control.Text.OutOfRbDiskDlg#Description" MsiKey="OutOfRbDiskDlg#Description"/>
     <ROW Dialog_="OutOfRbDiskDlg" Control="VolumeList" Type="VolumeCostList" X="16" Y="151" Width="458" Height="54" Attributes="393223" Text="{120}{70}{70}{70}{70}" TextStyle="ListFontDark" Order="500" TextLocId="Control.Text.OutOfDiskDlg#VolumeList" MsiKey="OutOfRbDiskDlg#VolumeList"/>
-    <ROW Dialog_="OutOfRbDiskDlg" Control="ProductNameTitle" Type="Text" X="15" Y="17" Width="364" Height="32" Attributes="196611" Text="安装 [ProductName] 吗？" TextStyle="[ProductNameTitleFont]" Order="600" TextLocId="AppInstaller.Control.Text.ProductName" MsiKey="OutOfRbDiskDlg#ProductNameTitle"/>
-    <ROW Dialog_="OutOfRbDiskDlg" Control="CompanyText" Type="Text" X="16" Y="46" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="700" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="OutOfRbDiskDlg#CompanyText"/>
-    <ROW Dialog_="OutOfRbDiskDlg" Control="ProductLogo" Type="Bitmap" X="404" Y="15" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="800" MsiKey="OutOfRbDiskDlg#ProductLogo"/>
-    <ROW Dialog_="OutOfRbDiskDlg" Control="ProducVersionText" Type="Text" X="16" Y="60" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="900" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="OutOfRbDiskDlg#ProducVersionText"/>
-    <ROW Dialog_="OutOfRbDiskDlg" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="1000" MsiKey="OutOfRbDiskDlg#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="OutOfRbDiskDlg" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="600" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="OutOfRbDiskDlg#CompanyText"/>
+    <ROW Dialog_="OutOfRbDiskDlg" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="700" MsiKey="OutOfRbDiskDlg#ProductLogo"/>
+    <ROW Dialog_="OutOfRbDiskDlg" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="800" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="OutOfRbDiskDlg#ProducVersionText"/>
+    <ROW Dialog_="OutOfRbDiskDlg" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="900" MsiKey="OutOfRbDiskDlg#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="OutOfRbDiskDlg" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text="[ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="1000"/>
     <ROW Dialog_="PatchWelcomeDlg" Control="PatchWelcomeDlgDialogInitializer" Type="DialogInitializer" X="0" Y="0" Width="0" Height="0" Attributes="0" Order="-1" TextLocId="-" HelpLocId="-" ExtDataLocId="-"/>
-    <ROW Dialog_="UpgradeDlg" Control="UpgradeDlgDialogInitializer" Type="DialogInitializer" X="0" Y="0" Width="0" Height="0" Attributes="0" Order="-1" TextLocId="-" HelpLocId="-" ExtDataLocId="-"/>
+    <ROW Dialog_="PatchWelcomeDlg" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="300" MsiKey="PatchWelcomeDlg#Bitmap"/>
+    <ROW Dialog_="PatchWelcomeDlg" Control="Next" Type="ImageButton" X="366" Y="234" Width="95" Height="28" Attributes="3" Text="[ButtonImage]" TextStyle="[ImageBtnFont]" Order="400" MsiKey="PatchWelcomeDlg#Next" Options="1" ExtType="ImageButton" ExtData="[ButtonText_Next]" ExtDataLocId="-"/>
+    <ROW Dialog_="PatchWelcomeDlg" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text="安装 [ProductName] 吗？" TextStyle="[ProductNameTitleFont]" Order="600" TextLocId="AppInstaller.Control.Text.ProductName" MsiKey="PatchWelcomeDlg#ProductNameTitle"/>
+    <ROW Dialog_="PatchWelcomeDlg" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="700" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="PatchWelcomeDlg#CompanyText"/>
+    <ROW Dialog_="PatchWelcomeDlg" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="800" MsiKey="PatchWelcomeDlg#ProductLogo"/>
+    <ROW Dialog_="PatchWelcomeDlg" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="900" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="PatchWelcomeDlg#ProducVersionText"/>
+    <ROW Dialog_="PrepareDlg" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="400" MsiKey="PrepareDlg#Bitmap"/>
+    <ROW Dialog_="PrepareDlg" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="600" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="PrepareDlg#CompanyText"/>
+    <ROW Dialog_="PrepareDlg" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="700" MsiKey="PrepareDlg#ProductLogo"/>
+    <ROW Dialog_="PrepareDlg" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="800" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="PrepareDlg#ProducVersionText"/>
+    <ROW Dialog_="PrepareDlg" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="900" MsiKey="PrepareDlg#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="PrepareDlg" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text=" [ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="1000"/>
+    <ROW Dialog_="ProgressDlg" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text="[Progress1] [ProductName]" TextStyle="[ProductNameTitleFont]" Order="700" TextLocId="Control.Text.ProgressDlg#Title" MsiKey="ProgressDlg#ProductNameTitle"/>
+    <ROW Dialog_="ProgressDlg" Control="CompanyText" Type="Text" X="42" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="800" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="ProgressDlg#CompanyText"/>
+    <ROW Dialog_="ProgressDlg" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="900" MsiKey="ProgressDlg#ProductLogo"/>
+    <ROW Dialog_="ProgressDlg" Control="ProducVersionText" Type="Text" X="42" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="1100" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="ProgressDlg#ProducVersionText"/>
+    <ROW Dialog_="ProgressDlg" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="1200" MsiKey="ProgressDlg#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="ProgressDlg" Control="LaunchCheckBox" Type="ImageCheckBox" X="16" Y="218" Width="220" Height="15" Attributes="3" Property="AiSkipExitDlg" Text="[CheckboxImage]" TextStyle="[ManufacturerFont]" Order="1300" MsiKey="ProgressDlg#LaunchCheckBox" ExtType="ImageCheckBox" ExtData="准备好时启动" ExtDataLocId="AppInstaller.Control.Text.LaunchWhenReadyCheckbox"/>
+    <ROW Dialog_="ResumeDlg" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="300" MsiKey="ResumeDlg#Bitmap"/>
+    <ROW Dialog_="ResumeDlg" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text="安装 [ProductName] 吗？" TextStyle="[ProductNameTitleFont]" Order="600" TextLocId="AppInstaller.Control.Text.ProductName" MsiKey="ResumeDlg#ProductNameTitle"/>
+    <ROW Dialog_="ResumeDlg" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="700" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="ResumeDlg#CompanyText"/>
+    <ROW Dialog_="ResumeDlg" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="800" MsiKey="ResumeDlg#ProductLogo"/>
+    <ROW Dialog_="ResumeDlg" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="900" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="ResumeDlg#ProducVersionText"/>
+    <ROW Dialog_="ShortcutsDlg" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="200" MsiKey="ShortcutsDlg#Bitmap"/>
+    <ROW Dialog_="ShortcutsDlg" Control="Next" Type="ImageButton" X="366" Y="234" Width="95" Height="28" Attributes="3" Text="[ButtonImage]" TextStyle="[ImageBtnFont]" Order="300" MsiKey="ShortcutsDlg#Next" Options="1" ExtType="ImageButton" ExtData="[ButtonText_Next]" ExtDataLocId="-"/>
+    <ROW Dialog_="ShortcutsDlg" Control="Back" Type="ImageButton" X="260" Y="234" Width="95" Height="28" Attributes="3" Text="[ButtonImage]" TextStyle="[ImageBtnFont]" Order="400" MsiKey="ShortcutsDlg#Back" Options="1" ExtType="ImageButton" ExtData="[ButtonText_Back]" ExtDataLocId="-"/>
+    <ROW Dialog_="ShortcutsDlg" Control="StartmenuShortcutsCheckBox" Type="CheckBox" X="35" Y="141" Width="344" Height="15" Attributes="3" Property="AI_STARTMENU_SH" Text="开始菜单程序文件夹" TextStyle="[ManufacturerFont]" Order="700" TextLocId="Control.Text.ShortcutsDlg#StartmenuShortcutsCheckBox" MsiKey="ShortcutsDlg#StartmenuShortcutsCheckBox"/>
+    <ROW Dialog_="ShortcutsDlg" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="800" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="ShortcutsDlg#CompanyText"/>
+    <ROW Dialog_="ShortcutsDlg" Control="StartupShorcutsCheckBox" Type="CheckBox" X="35" Y="164" Width="344" Height="15" Attributes="3" Property="AI_STARTUP_SH" Text="启动文件夹" TextStyle="[ManufacturerFont]" Order="900" TextLocId="Control.Text.ShortcutsDlg#StartupShorcutsCheckBox" MsiKey="ShortcutsDlg#StartupShorcutsCheckBox"/>
+    <ROW Dialog_="ShortcutsDlg" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="1000" MsiKey="ShortcutsDlg#ProductLogo"/>
+    <ROW Dialog_="ShortcutsDlg" Control="PinToTaskbarShortcutsCheckBox" Type="CheckBox" X="35" Y="192" Width="344" Height="15" Attributes="3" Property="PINTOTASKBAR" Text="Taskbar (pinned)" TextStyle="[ManufacturerFont]" Order="1100" TextLocId="Control.Text.ShortcutsDlg#PinToTaskbarShortcutsCheckBox" MsiKey="ShortcutsDlg#PinToTaskbarShortcutsCheckBox"/>
+    <ROW Dialog_="ShortcutsDlg" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="1200" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="ShortcutsDlg#ProducVersionText"/>
+    <ROW Dialog_="ShortcutsDlg" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="1300" MsiKey="ShortcutsDlg#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="ShortcutsDlg" Control="ProductNameTitle" Type="Text" X="20" Y="30" Width="364" Height="32" Attributes="196611" Text=" [ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="1400"/>
+    <ROW Dialog_="UserExit" Control="Bitmap" Type="Bitmap" X="2" Y="0" Width="490" Height="290" Attributes="1" Text="[Background]" Order="300" MsiKey="UserExit#Bitmap"/>
+    <ROW Dialog_="UserExit" Control="ProductNameTitle" Type="Text" X="30" Y="30" Width="364" Height="32" Attributes="196611" Text="[ProductName] 安装被中断" TextStyle="[ProductNameTitleFont]" Order="500" TextLocId="Graphite.Control.Text.UserExit#Title" MsiKey="UserExit#ProductNameTitle"/>
+    <ROW Dialog_="UserExit" Control="CompanyText" Type="Text" X="44" Y="62" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="600" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="UserExit#CompanyText"/>
+    <ROW Dialog_="UserExit" Control="ProductLogo" Type="Bitmap" X="384" Y="22" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="700" MsiKey="UserExit#ProductLogo"/>
+    <ROW Dialog_="UserExit" Control="ProducVersionText" Type="Text" X="44" Y="77" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="800" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="UserExit#ProducVersionText"/>
     <ROW Dialog_="WelcomeDlg" Control="WelcomeDlgDialogInitializer" Type="DialogInitializer" X="0" Y="0" Width="0" Height="0" Attributes="0" Order="-1" TextLocId="-" HelpLocId="-" ExtDataLocId="-"/>
-    <ROW Dialog_="WelcomeDlg" Control="CustomInstallBtn" Type="ImageButton" X="459" Y="210" Width="15" Height="28" Attributes="3" Text="[CustomInstallBtn]" TextStyle="[ImageBtnFont]" Order="400" MsiKey="WelcomeDlg#CustomInstallBtn" Options="1" ExtType="ImageButton"/>
+    <ROW Dialog_="WelcomeDlg" Control="Bitmap" Type="Bitmap" X="1" Y="1" Width="490" Height="290" Attributes="1" Text="[Background]" Order="300" MsiKey="WelcomeDlg#Bitmap"/>
+    <ROW Dialog_="WelcomeDlg" Control="CustomInstallBtn" Type="ImageButton" X="461" Y="234" Width="15" Height="28" Attributes="3" Text="[CustomInstallBtn]" TextStyle="[ImageBtnFont]" Order="400" MsiKey="WelcomeDlg#CustomInstallBtn" Options="1" ExtType="ImageButton"/>
+    <ROW Dialog_="WelcomeDlg" Control="Next" Type="ImageButton" X="366" Y="234" Width="95" Height="28" Attributes="7" Text="[ButtonImage]" TextStyle="[ImageBtnFont]" Order="500" MsiKey="WelcomeDlg#Next" Options="1" ExtType="ImageButton" ExtData="[ButtonText_Next]" ExtDataLocId="-"/>
+    <ROW Dialog_="WelcomeDlg" Control="ProductNameTitle" Type="Text" X="112" Y="40" Width="364" Height="32" Attributes="196611" Text=" [ProductName] 安装向导" TextStyle="[ProductNameTitleFont]" Order="600" MsiKey="WelcomeDlg#ProductNameTitle"/>
+    <ROW Dialog_="WelcomeDlg" Control="CompanyText" Type="Text" X="67" Y="110" Width="362" Height="15" Attributes="196611" Text="发布者: [Manufacturer]" TextStyle="[ManufacturerFont]" Order="700" TextLocId="AppInstaller.Control.Text.Manufacturer" MsiKey="WelcomeDlg#CompanyText"/>
+    <ROW Dialog_="WelcomeDlg" Control="ProductLogo" Type="Bitmap" X="23" Y="23" Width="70" Height="70" Attributes="1" Text="[AppLogoIcon]" Order="800" MsiKey="WelcomeDlg#ProductLogo"/>
+    <ROW Dialog_="WelcomeDlg" Control="ProducVersionText" Type="Text" X="67" Y="134" Width="362" Height="15" Attributes="196611" Text="版本: [ProductVersion]" TextStyle="[ManufacturerFont]" Order="900" TextLocId="AppInstaller.Control.Text.ProductVersion" MsiKey="WelcomeDlg#ProducVersionText"/>
+    <ROW Dialog_="WelcomeDlg" Control="AboutBtn" Type="ImageButton" X="5" Y="269" Width="18" Height="18" Attributes="4718595" Text="[AboutBtnIcon]" TextStyle="[ManufacturerFont]" Order="1000" MsiKey="WelcomeDlg#AboutBtn" Options="1" ExtType="ImageButton" ExtData="[InfoIconMsi]"/>
+    <ROW Dialog_="WelcomeDlg" Control="LaunchCheckBox" Type="ImageCheckBox" X="16" Y="218" Width="220" Height="15" Attributes="3" Property="AiSkipExitDlg" Text="[CheckboxImage]" TextStyle="[ManufacturerFont]" Order="1100" MsiKey="WelcomeDlg#LaunchCheckBox" ExtType="ImageCheckBox" ExtData="准备好时启动" ExtDataLocId="AppInstaller.Control.Text.LaunchWhenReadyCheckbox"/>
+    <ATTRIBUTE name="DeletedRows" value="AdminWelcomeDlg#ProductNameTitle@FatalError#ProductNameTitle@FolderDlg#ProductNameTitle@InstallTypeDlg#ProductNameTitle@MaintenanceWelcomeDlg#ProductNameTitle@MsiRMFilesInUse#ProductNameTitle@OutOfDiskDlg#ProductNameTitle@OutOfRbDiskDlg#ProductNameTitle@PrepareDlg#ProductNameTitle@ShortcutsDlg#ProductNameTitle@UI.aip@WelcomeDlg.aip"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiControlConditionComponent">
     <ROW Dialog_="ShortcutsDlg" Control_="StartupShorcutsCheckBox" Action="Hide" Condition="(Not Installed)"/>
-    <ATTRIBUTE name="DeletedRows" value="ShortcutsDlg#StartupShorcutsCheckBox#Show#(Not Installed)"/>
+    <ATTRIBUTE name="DeletedRows" value="ProgressDlg#LaunchCheckBox#Hide#((NOT AI_INSTALL) AND (NOT AI_PATCH)) OR ((CTRLS &lt;&gt; 2) AND (CTRLS &lt;&gt; 3))@ShortcutsDlg#StartupShorcutsCheckBox#Show#(Not Installed)@WelcomeDlg#LaunchCheckBox#Hide#((NOT AI_INSTALL) AND (NOT AI_PATCH)) OR ((CTRLS &lt;&gt; 2) AND (CTRLS &lt;&gt; 3))"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiControlEventComponent">
     <ROW Dialog_="WelcomeDlg" Control_="Next" Event="EndDialog" Argument="Return" Condition="AI_INSTALL" Ordering="1"/>
@@ -2289,25 +2413,26 @@
     <ROW Dialog_="CancelDlg" Control_="Yes" Event="DoAction" Argument="AI_IaLogPkgExitUserAbort" Condition="VersionMsi &lt; &quot;4.05&quot; OR UILevel = 2 OR LIMITUI = 1 OR UPGRADINGPRODUCTCODE" Ordering="201"/>
     <ROW Dialog_="FolderDlg" Control_="Next" Event="NewDialog" Argument="ShortcutsDlg" Condition="AI_INSTALL AND CustomInstallation" Ordering="101"/>
     <ROW Dialog_="FolderDlg" Control_="Back" Event="NewDialog" Argument="WelcomeDlg" Condition="AI_INSTALL AND CustomInstallation" Ordering="1"/>
-    <ROW Dialog_="ShortcutsDlg" Control_="Next" Event="NewDialog" Argument="UpgradeDlg" Condition="AI_INSTALL AND CustomInstallation" Ordering="1"/>
+    <ROW Dialog_="ShortcutsDlg" Control_="Next" Event="NewDialog" Argument="InstallTypeDlg" Condition="AI_INSTALL AND CustomInstallation" Ordering="1"/>
     <ROW Dialog_="ShortcutsDlg" Control_="Back" Event="NewDialog" Argument="FolderDlg" Condition="AI_INSTALL AND CustomInstallation" Ordering="1"/>
-    <ROW Dialog_="UpgradeDlg" Control_="Next" Event="EndDialog" Argument="Return" Condition="AI_INSTALL AND CustomInstallation" Ordering="1"/>
-    <ROW Dialog_="UpgradeDlg" Control_="Back" Event="NewDialog" Argument="ShortcutsDlg" Condition="AI_INSTALL AND CustomInstallation" Ordering="1"/>
-    <ROW Dialog_="UpgradeDlg" Control_="Next" Event="SpawnDialog" Argument="OutOfRbDiskDlg" Condition="AI_INSTALL AND CustomInstallation AND OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 0 AND (PROMPTROLLBACKCOST=&quot;P&quot; OR NOT PROMPTROLLBACKCOST)" Ordering="2" Options="2"/>
-    <ROW Dialog_="UpgradeDlg" Control_="Next" Event="EnableRollback" Argument="False" Condition="AI_INSTALL AND CustomInstallation AND OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 0 AND PROMPTROLLBACKCOST=&quot;D&quot;" Ordering="3" Options="2"/>
-    <ROW Dialog_="UpgradeDlg" Control_="Next" Event="SpawnDialog" Argument="OutOfDiskDlg" Condition="AI_INSTALL AND CustomInstallation AND ( (OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 1) OR (OutOfDiskSpace = 1 AND PROMPTROLLBACKCOST=&quot;F&quot;) )" Ordering="4" Options="2"/>
-    <ROW Dialog_="UpgradeDlg" Control_="UpgradeDlgDialogInitializer" Event="[AI_ButtonText_Next_Orig]" Argument="[ButtonText_Next]" Condition="AI_INSTALL AND CustomInstallation" Ordering="0" Options="2"/>
-    <ROW Dialog_="UpgradeDlg" Control_="UpgradeDlgDialogInitializer" Event="[ButtonText_Next]" Argument="[[AI_CommitButton]]" Condition="AI_INSTALL AND CustomInstallation" Ordering="1" Options="2"/>
-    <ROW Dialog_="UpgradeDlg" Control_="UpgradeDlgDialogInitializer" Event="[AI_Text_Next_Orig]" Argument="[Text_Next]" Condition="AI_INSTALL AND CustomInstallation" Ordering="2" Options="2"/>
-    <ROW Dialog_="UpgradeDlg" Control_="UpgradeDlgDialogInitializer" Event="[Text_Next]" Argument="[Text_Install]" Condition="AI_INSTALL AND CustomInstallation" Ordering="3" Options="2"/>
-    <ROW Dialog_="UpgradeDlg" Control_="Back" Event="[ButtonText_Next]" Argument="[AI_ButtonText_Next_Orig]" Condition="AI_INSTALL AND CustomInstallation" Ordering="2" Options="2"/>
-    <ROW Dialog_="UpgradeDlg" Control_="Back" Event="[Text_Next]" Argument="[AI_Text_Next_Orig]" Condition="AI_INSTALL AND CustomInstallation" Ordering="3" Options="2"/>
+    <ROW Dialog_="InstallTypeDlg" Control_="Next" Event="EndDialog" Argument="Return" Condition="AI_INSTALL AND CustomInstallation" Ordering="101"/>
+    <ROW Dialog_="InstallTypeDlg" Control_="Back" Event="NewDialog" Argument="ShortcutsDlg" Condition="AI_INSTALL AND CustomInstallation" Ordering="1"/>
+    <ROW Dialog_="InstallTypeDlg" Control_="Next" Event="SpawnDialog" Argument="OutOfRbDiskDlg" Condition="AI_INSTALL AND CustomInstallation AND OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 0 AND (PROMPTROLLBACKCOST=&quot;P&quot; OR NOT PROMPTROLLBACKCOST)" Ordering="102" Options="2"/>
+    <ROW Dialog_="InstallTypeDlg" Control_="Next" Event="EnableRollback" Argument="False" Condition="AI_INSTALL AND CustomInstallation AND OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 0 AND PROMPTROLLBACKCOST=&quot;D&quot;" Ordering="103" Options="2"/>
+    <ROW Dialog_="InstallTypeDlg" Control_="Next" Event="SpawnDialog" Argument="OutOfDiskDlg" Condition="AI_INSTALL AND CustomInstallation AND ( (OutOfDiskSpace = 1 AND OutOfNoRbDiskSpace = 1) OR (OutOfDiskSpace = 1 AND PROMPTROLLBACKCOST=&quot;F&quot;) )" Ordering="104" Options="2"/>
+    <ROW Dialog_="InstallTypeDlg" Control_="InstallTypeDlgDialogInitializer" Event="[AI_ButtonText_Next_Orig]" Argument="[ButtonText_Next]" Condition="AI_INSTALL AND CustomInstallation" Ordering="101" Options="2"/>
+    <ROW Dialog_="InstallTypeDlg" Control_="InstallTypeDlgDialogInitializer" Event="[ButtonText_Next]" Argument="[[AI_CommitButton]]" Condition="AI_INSTALL AND CustomInstallation" Ordering="102" Options="2"/>
+    <ROW Dialog_="InstallTypeDlg" Control_="InstallTypeDlgDialogInitializer" Event="[AI_Text_Next_Orig]" Argument="[Text_Next]" Condition="AI_INSTALL AND CustomInstallation" Ordering="103" Options="2"/>
+    <ROW Dialog_="InstallTypeDlg" Control_="InstallTypeDlgDialogInitializer" Event="[Text_Next]" Argument="[Text_Install]" Condition="AI_INSTALL AND CustomInstallation" Ordering="104" Options="2"/>
+    <ROW Dialog_="InstallTypeDlg" Control_="Back" Event="[ButtonText_Next]" Argument="[AI_ButtonText_Next_Orig]" Condition="AI_INSTALL AND CustomInstallation" Ordering="2" Options="2"/>
+    <ROW Dialog_="InstallTypeDlg" Control_="Back" Event="[Text_Next]" Argument="[AI_Text_Next_Orig]" Condition="AI_INSTALL AND CustomInstallation" Ordering="3" Options="2"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiCreateFolderComponent">
     <ROW Directory_="APPDIR" Component_="APPDIR" ManualDelete="true"/>
     <ROW Directory_="SHORTCUTDIR" Component_="SHORTCUTDIR" ManualDelete="false"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiCustActComponent">
+    <ROW Action="AI_AuthorSinglePackage" Type="1" Source="aicustact.dll" Target="AI_AuthorSinglePackage" WithoutSeq="true"/>
     <ROW Action="AI_BACKUP_AI_SETUPEXEPATH" Type="51" Source="AI_SETUPEXEPATH_ORIGINAL" Target="[AI_SETUPEXEPATH]"/>
     <ROW Action="AI_ChooseTextStyles" Type="1" Source="aicustact.dll" Target="ChooseTextStyles"/>
     <ROW Action="AI_DATA_SETTER" Type="51" Source="CustomActionData" Target="[AI_SETUPEXEPATH]"/>
@@ -2339,9 +2464,10 @@
     <ROW Action="AI_RESTORE_AI_SETUPEXEPATH" Type="51" Source="AI_SETUPEXEPATH" Target="[AI_SETUPEXEPATH_ORIGINAL]"/>
     <ROW Action="AI_RESTORE_LOCATION" Type="65" Source="aicustact.dll" Target="RestoreLocation"/>
     <ROW Action="AI_ResolveKnownFolders" Type="1" Source="aicustact.dll" Target="AI_ResolveKnownFolders"/>
+    <ROW Action="AI_SETMIXINSTLOCATION" Type="1" Source="aicustact.dll" Target="MixedAllUsersInstallLocation"/>
     <ROW Action="AI_SHOW_LOG" Type="65" Source="aicustact.dll" Target="LaunchLogFile" WithoutSeq="true"/>
     <ROW Action="AI_STORE_LOCATION" Type="51" Source="ARPINSTALLLOCATION" Target="[APPDIR]"/>
-    <ROW Action="SET_APPDIR" Type="307" Source="APPDIR" Target="[ProgramFilesFolder][Manufacturer]\[ProductName]"/>
+    <ROW Action="SET_APPDIR" Type="307" Source="APPDIR" Target="[ProgramFilesFolder][Manufacturer]\[ProductName]" MultiBuildTarget="DefaultBuild:[AI_UserProgramFiles][Manufacturer]\[ProductName]"/>
     <ROW Action="SET_SHORTCUTDIR" Type="307" Source="SHORTCUTDIR" Target="[ProgramMenuFolder][ProductName]"/>
     <ROW Action="SET_TARGETDIR_TO_APPDIR" Type="51" Source="TARGETDIR" Target="[APPDIR]"/>
   </COMPONENT>
@@ -2593,6 +2719,7 @@
     <ROW Feature_="MainFeature" Component_="libsndfile_x64.dll"/>
     <ROW Feature_="MainFeature" Component_="SHORTCUTDIR"/>
     <ROW Feature_="MainFeature" Component_="AI_SHORTCUTSREG"/>
+    <ROW Feature_="MainFeature" Component_="AI_INSTALLPERUSER"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiIconsComponent">
     <ROW Name="SecRandom.exe" SourcePath="..\SecRandom-Windows-v1.1.4.0-beta-x64-dir\SecRandom.exe" Index="0"/>
@@ -2628,6 +2755,7 @@
     <ROW Action="AI_DELETE_SHORTCUTS" Condition="NOT (REMOVE=&quot;ALL&quot;)" Sequence="1401"/>
     <ROW Action="AI_DEL_EMPTY_SHORTCUTDIR" Condition="NOT (REMOVE=&quot;ALL&quot;)" Sequence="6402"/>
     <ROW Action="AI_DATA_SETTER_1" Condition="NOT (REMOVE=&quot;ALL&quot;)" Sequence="6401"/>
+    <ROW Action="AI_SETMIXINSTLOCATION" Sequence="748"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiInstallUISequenceComponent">
     <ROW Action="AI_PRESERVE_INSTALL_TYPE" Sequence="199"/>
@@ -2642,6 +2770,7 @@
     <ROW Action="AI_IaLogMachineInfo" Sequence="399"/>
     <ROW Action="AI_DetectSoftware" Sequence="101"/>
     <ROW Action="AI_ChooseTextStyles" Sequence="74"/>
+    <ROW Action="AI_SETMIXINSTLOCATION" Sequence="748"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiLaunchConditionsComponent">
     <ROW Condition="((VersionNT &lt;&gt; 501) AND (VersionNT &lt;&gt; 502))" Description="[ProductName] 无法安装在 [WindowsTypeNT5XDisplay]." DescriptionLocId="AI.LaunchCondition.NoNT5X" IsPredefined="true" Builds="DefaultBuild"/>
@@ -2656,12 +2785,15 @@
     <ROW Signature_="AI_EXE_PATH_LM" Root="2" Key="Software\Caphyon\Advanced Installer\LZMA\[ProductCode]\[ProductVersion]" Name="AI_ExePath" Type="2"/>
     <ROW Signature_="AI_IA_ENABLE" Root="2" Key="Software\[Manufacturer]\[ProductCode]" Name="AI_IA_ENABLE" Type="2"/>
     <ROW Signature_="AI_IA_ENABLE_1" Root="1" Key="Software\[Manufacturer]\[ProductCode]" Name="AI_IA_ENABLE" Type="2"/>
+    <ROW Signature_="AI_INSTALLPERUSER" Root="2" Key="Software\[Manufacturer]\[UpgradeCode]" Name="AI_INSTALLPERUSER" Type="2"/>
+    <ROW Signature_="AI_INSTALLPERUSER_1" Root="1" Key="Software\[Manufacturer]\[UpgradeCode]" Name="AI_INSTALLPERUSER" Type="2"/>
     <ROW Signature_="AI_SHORTCUTSREG" Root="2" Key="Software\[Manufacturer]\[UpgradeCode]" Name="AI_SHORTCUTSREG" Type="2"/>
     <ROW Signature_="AI_SHORTCUTSREG_1" Root="1" Key="Software\[Manufacturer]\[UpgradeCode]" Name="AI_SHORTCUTSREG" Type="2"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.MsiRegsComponent">
     <ROW Registry="AI_ExePath" Root="-1" Key="Software\Caphyon\Advanced Installer\LZMA\[ProductCode]\[ProductVersion]" Name="AI_ExePath" Value="[AI_SETUPEXEPATH]" Component_="AI_ExePath"/>
     <ROW Registry="AI_IA_ENABLE" Root="-1" Key="Software\[Manufacturer]\[ProductCode]" Name="AI_IA_ENABLE" Value="[AI_IA_ENABLE]" Component_="AI_IA_ENABLE"/>
+    <ROW Registry="AI_INSTALLPERUSER" Root="-1" Key="Software\[Manufacturer]\[UpgradeCode]" Name="AI_INSTALLPERUSER" Value="[AI_INSTALLPERUSER]" Component_="AI_INSTALLPERUSER"/>
     <ROW Registry="AI_SHORTCUTSREG" Root="-1" Key="Software\[Manufacturer]\[UpgradeCode]" Name="AI_SHORTCUTSREG" Value="[AI_SHORTCUTSREG]" Component_="AI_SHORTCUTSREG"/>
     <ROW Registry="AdvancedInstaller" Root="-1" Key="Software\Caphyon\Advanced Installer" Name="\"/>
     <ROW Registry="Caphyon" Root="-1" Key="Software\Caphyon" Name="\"/>
@@ -2687,6 +2819,6 @@
     <ROW UpgradeCode="[|UpgradeCode]" VersionMin="0.0.1" VersionMax="[|ProductVersion]" Attributes="257" ActionProperty="OLDPRODUCTS"/>
   </COMPONENT>
   <COMPONENT cid="caphyon.advinst.msicomp.SynchronizedFolderComponent">
-    <ROW Directory_="APPDIR" SourcePath="..\SecRandom-Windows-v1.1.4.0-beta-x64-dir" ExcludePattern="*~|#*#|%*%|._|CVS|.cvsignore|SCCS|vssver.scc|mssccprj.scc|vssver2.scc|.svn|.DS_Store" ExcludeFlags="6"/>
+    <ROW Directory_="APPDIR" SourcePath="..\SecRandom-Windows-v1.1.4.0-beta-x64-dir" Feature="MainFeature" ExcludePattern="*~|#*#|%*%|._|CVS|.cvsignore|SCCS|vssver.scc|mssccprj.scc|vssver2.scc|.svn|.DS_Store" ExcludeFlags="6"/>
   </COMPONENT>
 </DOCUMENT>

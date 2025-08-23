@@ -18,8 +18,9 @@ system_random = SystemRandom()
 from app.common.config import get_theme_icon, load_custom_font, restore_volume
 from app.common.path_utils import path_manager, open_file, remove_file
 from app.common.voice import TTSHandler
+from app.common.ui_access_manager import UIAccessMixin
 
-class FloatingExtractionWindow(QWidget):
+class FloatingExtractionWindow(QWidget, UIAccessMixin):
     def __init__(self, parent=None):
         super().__init__(parent)
         # 设置窗口标志，使其成为浮窗
@@ -48,6 +49,9 @@ class FloatingExtractionWindow(QWidget):
         
         # 拖动相关变量
         self.drag_position = None
+        
+        # 初始化UIAccess权限
+        self._init_ui_access()
         
         # 初始化UI
         self.initUI()

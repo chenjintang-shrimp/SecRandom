@@ -16,9 +16,10 @@ from loguru import logger
 from app.common.config import get_theme_icon, load_custom_font, VERSION
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+from app.common.ui_access_manager import UIAccessMixin
 
 
-class GuideWindow(MSFluentWindow):
+class GuideWindow(MSFluentWindow, UIAccessMixin):
     """(^・ω・^ ) 白露的引导精灵！
     为首次使用SecRandom的用户提供友好的引导界面～
     帮助用户快速了解软件功能和使用方法！✨"""
@@ -31,6 +32,9 @@ class GuideWindow(MSFluentWindow):
         self.setWindowTitle('欢迎使用 SecRandom')
         self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png'))))
         self.resize(800, 600)
+        
+        # 初始化UIAccess权限
+        self._init_ui_access()
         
         # 设置窗口居中
         self.center_window()

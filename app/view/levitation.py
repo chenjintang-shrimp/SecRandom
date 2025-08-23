@@ -15,11 +15,13 @@ from pathlib import Path
 from app.common.config import load_custom_font, is_dark_theme
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+from app.common.ui_access_manager import UIAccessMixin
 
-class LevitationWindow(QWidget):
+class LevitationWindow(QWidget, UIAccessMixin):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.app_dir = path_manager._app_root
+        self._init_ui_access()  # 初始化UIAccess权限
         self._load_settings()  # 加载配置
         self._load_plugin_settings()  # 加载插件设置
         self._init_ui_components()  # 初始化UI组件
@@ -468,6 +470,9 @@ class LevitationWindow(QWidget):
         except Exception as e:
             self.setStyleSheet('border-radius: 5px; background-color: rgba(65, 66, 66, 0.3);')
             logger.error(f"应用窗口样式失败: {e}")
+        
+        # 应用UIAccess权限相关的窗口样式
+        self._apply_ui_access_window_styles(enable_topmost=True)
 
     def _setup_event_handlers(self):
         # 小鸟游星野：设置所有事件处理器 - 无论控件是否显示都要绑定 ✧(๑•̀ㅂ•́)ow✧

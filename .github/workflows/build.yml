@@ -26,12 +26,12 @@ jobs:
           - os: windows-2022
             arch: x64
             pack_mode: dir
-          - os: ubuntu-latest
-            arch: x64
-            pack_mode: dir
           - os: windows-2022
             arch: x64
             pack_mode: advanced
+          # - os: ubuntu-latest
+          #   arch: x64
+          #   pack_mode: dir
     runs-on: ${{ matrix.os }}
     steps:
       - name: 检出仓库
@@ -43,6 +43,7 @@ jobs:
           architecture: ${{ matrix.arch }}
       - name: 安装 uv
         uses: astral-sh/setup-uv@v4
+
       - name: 初始化 zip 文件夹
         run: mkdir zip
 
@@ -52,6 +53,13 @@ jobs:
           python update_version.py
         env:
           VERSION: ${{ github.ref_name }}
+
+      - name: 安装 Advanced Installer（使用官方 GitHub Action）
+        if: ${{ matrix.os == 'windows-2022' && matrix.pack_mode == 'advanced' }}
+        uses: caphyon/advinst-github-action@main
+        with:
+          advinst-version: '22.4'
+          advinst-enable-automation: 'true'
 
       - name: 运行 Windows 构建
         if: ${{ matrix.os == 'windows-2022' }}
@@ -367,7 +375,7 @@ jobs:
           }
 
       - name: SignPath 代码签名 - Windows 应用程序
-        if: ${{ matrix.os == 'windows-2022' && startsWith(github.ref_name, 'v') }}
+        if: ${{ matrix.os == 'windows-2022'}}
         run: |
           echo "开始 SignPath 代码签名..."
           # 安装 SignPath PowerShell 模块
