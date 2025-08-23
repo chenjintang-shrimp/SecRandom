@@ -188,6 +188,19 @@ jobs:
             mkdir zip_dist/SecRandom
             # 复制dist/SecRandom目录下的所有文件到zip_dist/SecRandom目录下（目录模式）
             Copy-Item -Recurse -Force dist/SecRandom/* zip_dist/SecRandom
+            
+            # 记录需要签名的文件路径，稍后在SignPath步骤中统一签名
+            echo "记录主可执行文件路径用于后续签名..."
+            $exePath = "zip_dist/SecRandom/SecRandom.exe"
+            if (Test-Path $exePath) {
+              echo "找到主可执行文件: $exePath"
+              echo "主可执行文件路径: $exePath" >> sign_files.txt
+            } else {
+              echo "警告: 未找到主可执行文件 SecRandom.exe"
+              # 列出实际目录结构以便调试
+              echo "zip_dist/SecRandom目录内容:"
+              Get-ChildItem -Path "zip_dist/SecRandom" -Recurse | ForEach-Object { echo "  $($_.FullName)" }
+            }
           } elseif ('${{ matrix.pack_mode }}' -eq 'advanced') {
             # Advanced Installer 模式打包
             echo "开始 Advanced Installer 模式打包..."
@@ -285,20 +298,12 @@ jobs:
             }
             echo "PyInstaller 打包完成"
             
-            # 直接签名主可执行文件（简化流程）
-            echo "开始签名主可执行文件..."
+            # 记录需要签名的文件路径，稍后在SignPath步骤中统一签名
+            echo "记录主可执行文件路径用于后续签名..."
             $exePath = "dist/SecRandom/SecRandom.exe"
             if (Test-Path $exePath) {
               echo "找到主可执行文件: $exePath"
-              Submit-SigningRequest `
-                -InputArtifactPath $exePath `
-                -ApiToken "${{ secrets.SIGNPATH_API_TOKEN }}" `
-                -OrganizationId "dae8fd2b-8a02-4e36-aa15-3c8f475bc6b7" `
-                -ProjectSlug "SecRandom" `
-                -SigningPolicySlug "SecRandom" `
-                -OutputArtifactPath $exePath `
-                -WaitForCompletion
-              echo "主可执行文件签名完成"
+              echo "主可执行文件路径: $exePath" >> sign_files.txt
             } else {
               echo "警告: 未找到主可执行文件 SecRandom.exe"
               # 列出实际目录结构以便调试
@@ -614,6 +619,47 @@ jobs:
             exit $?
           fi
           echo "打包完成: $outputZip"
+
+      - name: SignPath 代码签名 - 所有文件
+        if: ${{ matrix.os == 'windows-2022'}}
+        run: |
+          echo "开始 SignPath 代码签名..."
+          # 安装 SignPath PowerShell 模块
+          Install-Module -Name SignPath -Force -Scope CurrentUser
+          
+          # 检查是否有需要签名的文件列表
+          if (Test-Path "sign_files.txt") {
+            echo "找到需要签名的文件列表:"
+            Get-Content sign_files.txt
+            
+            # 逐个签名文件
+            Get-Content sign_files.txt | ForEach-Object {
+              $filePath = $_.Trim()
+              if ($filePath -ne "" -and (Test-Path $filePath)) {
+                echo "正在签名文件: $filePath"
+                Submit-SigningRequest `
+                  -InputArtifactPath $filePath `
+                  -ApiToken "${{ secrets.SIGNPATH_API_TOKEN }}" `
+                  -OrganizationId "dae8fd2b-8a02-4e36-aa15-3c8f475bc6b7" `
+                  -ProjectSlug "SecRandom" `
+                  -SigningPolicySlug "SecRandom" `
+                  -OutputArtifactPath $filePath `
+                  -WaitForCompletion
+                echo "文件签名完成: $filePath"
+              } elseif ($filePath -ne "") {
+                echo "警告: 文件不存在，跳过签名: $filePath"
+              }
+            }
+            
+            # 清理临时文件
+            Remove-Item sign_files.txt -Force -ErrorAction SilentlyContinue
+            echo "所有文件签名完成"
+          } else {
+            echo "未找到需要签名的文件列表 (sign_files.txt)"
+            echo "当前目录内容:"
+            Get-ChildItem -Path "." -Name
+          }
+          echo "SignPath 代码签名完成"
 
       - name: 上传应用程序
         if: ${{ github.event_name != 'pull_request' }}
