@@ -50,9 +50,9 @@ jobs:
           # Windows 构建产物
           mv artifacts/windows-2022-x64-dir/* release/ 2>/dev/null || echo "未找到 Windows x64-dir 构建产物"
           mv artifacts/windows-2022-x86-dir/* release/ 2>/dev/null || echo "未找到 Windows x86-dir 构建产物"
-          mv artifacts/windows-2022-x64-advanced/* release/ 2>/dev/null || echo "未找到 Windows x64-advanced 构建产物"
+          # mv artifacts/windows-2022-x64-advanced/* release/ 2>/dev/null || echo "未找到 Windows x64-advanced 构建产物"
           # Linux 构建产物
-          mv artifacts/ubuntu-latest-x64-dir/* release/ 2>/dev/null || echo "未找到 Linux x64-dir 构建产物"
+          # mv artifacts/ubuntu-latest-x64-dir/* release/ 2>/dev/null || echo "未找到 Linux x64-dir 构建产物"
           echo "构建产物整理完成"
           ls -la release/
 
@@ -102,11 +102,11 @@ jobs:
           echo "| --- | --- | --- | --- |" >> ../CHANGELOG.md
           echo "| ghfast.top | Windows 目录模式 | x86 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x86-dir.zip) |" >> ../CHANGELOG.md
           echo "| ghfast.top | Windows 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
-          echo "| ghfast.top | Windows 安装程序模式 | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64.exe) |" >> ../CHANGELOG.md
+          # echo "| ghfast.top | Windows 安装程序模式 | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64.exe) |" >> ../CHANGELOG.md
           # echo "| ghfast.top | Linux 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Linux-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
           echo "| gh-proxy.com | Windows 目录模式 | x86 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x86-dir.zip) |" >> ../CHANGELOG.md
           echo "| gh-proxy.com | Windows 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
-          echo "| gh-proxy.com | Windows 安装程序模式 | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64.exe) |" >> ../CHANGELOG.md
+          # echo "| gh-proxy.com | Windows 安装程序模式 | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64.exe) |" >> ../CHANGELOG.md
           # echo "| gh-proxy.com | Linux 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Linux-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
           echo "" >> ../CHANGELOG.md
           echo "**SHA256 校验值-请核对下载的文件的SHA256值是否正确**" >> ../CHANGELOG.md
