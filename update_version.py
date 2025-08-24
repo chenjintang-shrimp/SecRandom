@@ -1,6 +1,5 @@
 import os
 import re
-from app.common.path_utils import path_manager, open_file
 
 def get_version_from_env():
     # 🌟 星野小贴士：这里获取版本号并确保它是有效的数字格式哦 ~
@@ -25,7 +24,7 @@ def update_version_info(version):
     version_tuple = (major, minor, patch, build)
     version_str = f"{major}.{minor}.{patch}.{build}"
     
-    with open_file(path_manager.get_project_path('version_info.txt'), 'r', encoding='utf-8') as f:
+    with open('version_info.txt', 'r', encoding='utf-8') as f:
         content = f.read()
     
     content = re.sub(r'filevers=\(\d, \d, \d, \d\)', f'filevers={version_tuple}', content)
@@ -34,27 +33,27 @@ def update_version_info(version):
     content = re.sub(r'StringStruct\(u\'FileVersion\', u\'\d+\.\d+\.\d+\.\d+\'\)', f'StringStruct(u\'FileVersion\', u\'{version_str}\')', content)
     content = re.sub(r'StringStruct\(u\'ProductVersion\', u\'\d+\.\d+\.\d+\.\d+\'\)', f'StringStruct(u\'ProductVersion\', u\'{version_str}\')', content)
     
-    with open_file(path_manager.get_project_path('version_info.txt'), 'w', encoding='utf-8') as f:
+    with open('version_info.txt', 'w', encoding='utf-8') as f:
         f.write(content)
 
 def update_config_py(version):
-    with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
+    with open('settings.py', 'r', encoding='utf-8') as f:
         content = f.read()
     
     content = re.sub(r'VERSION = "v?\d+\.\d+\.\d+\.\d+"', f'VERSION = "{version}"', content)
     
-    with open_file(path_manager.get_settings_path(), 'w', encoding='utf-8') as f:
+    with open('settings.py', 'w', encoding='utf-8') as f:
         f.write(content)
 
 def update_aip_file(version):
-    aip_path = path_manager.get_project_path('SecRandom.aip')
-    with open_file(aip_path, 'r', encoding='utf-8') as f:
+    aip_path = 'SecRandom.aip'
+    with open(aip_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
     content = re.sub(r'<ROW Property="ProductVersion" Value="\d+\.\d+\.\d+\.\d+" Options="32"/>', 
                     f'<ROW Property="ProductVersion" Value="{version}" Options="32"/>', content)
     
-    with open_file(aip_path, 'w', encoding='utf-8') as f:
+    with open(aip_path, 'w', encoding='utf-8') as f:
         f.write(content)
 
 if __name__ == '__main__':
