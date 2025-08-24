@@ -1051,28 +1051,27 @@ StartupNotify=true
             processes = settings.get('foregroundsoftware_process', {}).values()
 
             # 检测逻辑
-            match detection_type:
-                case 0:  # 类名检测
-                    is_matched = any(software and software in foreground_info['class_name'] for software in class_names)
-                case 1:  # 标题检测
-                    is_matched = any(software and software in foreground_info['title'] for software in titles)
-                case 2:  # 进程检测
-                    is_matched = any(software and software in foreground_info['process_name'] for software in processes)
-                case 3:  # 类名+标题检测
-                    is_matched = (any(software and software in foreground_info['class_name'] for software in class_names) and
-                                 any(software and software in foreground_info['title'] for software in titles))
-                case 4:  # 类名+进程检测
-                    is_matched = (any(software and software in foreground_info['class_name'] for software in class_names) and
-                                 any(software and software in foreground_info['process_name'] for software in processes))
-                case 5:  # 标题+进程检测
-                    is_matched = (any(software and software in foreground_info['title'] for software in titles) and
-                                 any(software and software in foreground_info['process_name'] for software in processes))
-                case 6:  # 类名+标题+进程检测
-                    is_matched = (any(software and software in foreground_info['class_name'] for software in class_names) and
-                                 any(software and software in foreground_info['title'] for software in titles) and
-                                 any(software and software in foreground_info['process_name'] for software in processes))
-                case _:
-                    is_matched = False
+            if detection_type == 0:  # 类名检测
+                is_matched = any(software and software in foreground_info['class_name'] for software in class_names)
+            elif detection_type == 1:  # 标题检测
+                is_matched = any(software and software in foreground_info['title'] for software in titles)
+            elif detection_type == 2:  # 进程检测
+                is_matched = any(software and software in foreground_info['process_name'] for software in processes)
+            elif detection_type == 3:  # 类名+标题检测
+                is_matched = (any(software and software in foreground_info['class_name'] for software in class_names) and
+                             any(software and software in foreground_info['title'] for software in titles))
+            elif detection_type == 4:  # 类名+进程检测
+                is_matched = (any(software and software in foreground_info['class_name'] for software in class_names) and
+                             any(software and software in foreground_info['process_name'] for software in processes))
+            elif detection_type == 5:  # 标题+进程检测
+                is_matched = (any(software and software in foreground_info['title'] for software in titles) and
+                             any(software and software in foreground_info['process_name'] for software in processes))
+            elif detection_type == 6:  # 类名+标题+进程检测
+                is_matched = (any(software and software in foreground_info['class_name'] for software in class_names) and
+                             any(software and software in foreground_info['title'] for software in titles) and
+                             any(software and software in foreground_info['process_name'] for software in processes))
+            else:
+                is_matched = False
 
             # 根据模式决定返回值
             return is_matched if is_show_mode else not is_matched
