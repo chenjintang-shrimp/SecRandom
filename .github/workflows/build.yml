@@ -486,7 +486,7 @@ jobs:
           echo "打包完成: $outputZip"
 
       - name: SignPath 代码签名 - 所有文件
-        if: ${{ matrix.os == 'windows-2022'}} 
+        if: ${{ matrix.os == 'windows-2022' && github.ref_name == 'v*' }} 
         run: |
           echo "开始 SignPath 代码签名..."
           # 安装 SignPath PowerShell 模块
@@ -516,8 +516,15 @@ jobs:
                     -OutputArtifactPath $filePath `
                     -WaitForCompletion `
                     -Force
-                  echo "文件签名完成: $filePath"
-                  $validFiles += $line
+
+                  # 检查签名是否成功
+                  if ($LASTEXITCODE -ne 0) {
+                    echo "警告: 文件签名失败，跳过该文件: $filePath"
+                    echo "错误代码: $LASTEXITCODE"
+                  } else {
+                    echo "文件签名完成: $filePath"
+                    $validFiles += $line
+                  }
                 } else {
                   echo "警告: 文件不存在，跳过签名: $filePath"
                 }
