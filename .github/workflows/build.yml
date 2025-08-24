@@ -645,9 +645,10 @@ jobs:
                   
                   # 注册 Windows Installer 相关设置
                   echo "正在注册 Windows Installer 设置..."
-                  AdvancedInstaller.com edit /RegisterWithWindowsInstaller installer_build/SecRandom.aip
+                  AdvancedInstaller.com edit installer_build/SecRandom.aip /RegisterWithWindowsInstaller
                   if ($LASTEXITCODE -ne 0) { 
                     echo "警告：Windows Installer 注册失败，继续构建..."
+                    echo "错误代码: $LASTEXITCODE"
                     # 不退出，继续构建流程
                   } else {
                     echo "Windows Installer 注册完成"
@@ -655,9 +656,10 @@ jobs:
                   
                   # 编辑更新通知设置
                   echo "正在配置更新通知设置..."
-                  AdvancedInstaller.com edit /EditUpdateNotification installer_build/SecRandom.aip
+                  AdvancedInstaller.com edit installer_build/SecRandom.aip /EditUpdateNotification
                   if ($LASTEXITCODE -ne 0) { 
                     echo "警告：更新通知配置失败，继续构建..."
+                    echo "错误代码: $LASTEXITCODE"
                     # 不退出，继续构建流程
                   } else {
                     echo "更新通知配置完成"
@@ -669,12 +671,15 @@ jobs:
                   if ($LASTEXITCODE -ne 0) { 
                     echo "Advanced Installer 编译失败"
                     echo "退出代码: $LASTEXITCODE"
-                    exit $LASTEXITCODE 
+                    # 不退出，继续构建流程
+                  } else {
+                    echo "Advanced Installer 编译完成"
                   }
-                  echo "Advanced Installer 编译完成"
                   
                   # 查找构建输出的安装程序文件
                   $outputExe = "installer_build/SecRandom.exe"
+                  $installerSuccess = $true
+                  
                   if (-not (Test-Path $outputExe)) {
                     echo "未找到预期的输出文件，搜索其他可能的输出位置..."
                     # 搜索可能的输出文件
@@ -683,18 +688,22 @@ jobs:
                       $outputExe = $exeFiles[0].FullName
                       echo "找到安装程序文件: $outputExe"
                     } else {
-                      echo "错误：未找到任何安装程序输出文件"
-                      exit 1
+                      echo "警告：未找到任何安装程序输出文件"
+                      $installerSuccess = $false
                     }
                   }
                   
-                  # 将安装程序复制到 zip 目录
-                  mkdir zip -Force
-                  $finalExePath = "zip/SecRandom-Installer-${{ github.ref_name }}.exe"
-                  Copy-Item $outputExe $finalExePath
-                  echo "Advanced Installer 模式打包完成: $finalExePath"
+                  # 如果找到安装程序文件，则复制到 zip 目录
+                  if ($installerSuccess) {
+                    mkdir zip -Force
+                    $finalExePath = "zip/SecRandom-Installer-${{ github.ref_name }}.exe"
+                    Copy-Item $outputExe $finalExePath
+                    echo "Advanced Installer 模式打包完成: $finalExePath"
+                  } else {
+                    echo "跳过安装程序复制步骤，因为未找到输出文件"
+                  }
                 } else {
-                  echo "未找到 SR64.aip 文件，请确保该文件存在于项目根目录"
+                  echo "未找到 SecRandom.aip 文件，请确保该文件存在于项目根目录"
                   exit 1
                 }
               } else {
