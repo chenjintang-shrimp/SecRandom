@@ -442,6 +442,19 @@ def initialize_application():
 # 🎬 魔法冒险开始 (Main Adventure Starts)
 # ==================================================
 if __name__ == "__main__":
+    # 设置工作目录为程序所在目录，解决URL协议唤醒时工作目录错误的问题
+    if getattr(sys, 'frozen', False):
+        # 打包后的可执行文件
+        program_dir = os.path.dirname(sys.executable)
+    else:
+        # 开发环境
+        program_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # 更改当前工作目录
+    if os.getcwd() != program_dir:
+        os.chdir(program_dir)
+        logger.info(f"白露目录: 工作目录已设置为: {program_dir}")
+    
     # 配置日志系统
     configure_logging()
     
