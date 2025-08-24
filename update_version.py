@@ -37,12 +37,12 @@ def update_version_info(version):
         f.write(content)
 
 def update_config_py(version):
-    with open('settings.py', 'r', encoding='utf-8') as f:
+    with open('app/common/config.py', 'r', encoding='utf-8') as f:
         content = f.read()
     
     content = re.sub(r'VERSION = "v?\d+\.\d+\.\d+\.\d+"', f'VERSION = "{version}"', content)
     
-    with open('settings.py', 'w', encoding='utf-8') as f:
+    with open('app/common/config.py', 'w', encoding='utf-8') as f:
         f.write(content)
 
 def update_aip_file(version):
