@@ -73,6 +73,7 @@ class URLHandler:
                 "reward": "show_reward_window",
                 "history": "show_history_window",
                 "floating": "show_floating_window",
+                'direct_extraction': 'show_direct_extraction',
                 "plugin_settings": "show_plugin_settings_window"
             }
             
@@ -145,6 +146,7 @@ class URLHandler:
             "reward": "抽奖界面",
             "history": "历史记录界面",
             "floating": "浮窗界面",
+            'direct_extraction': '闪抽界面',
             "plugin_settings": "插件设置界面"
         }
     

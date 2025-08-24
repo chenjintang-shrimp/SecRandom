@@ -1110,6 +1110,7 @@ class Window(MSFluentWindow, UIAccessMixin):
                     'history': 'show_history_window',
                     'floating': 'show_floating_window',
                     'about': 'show_about_window',
+                    'direct_extraction': 'show_direct_extraction',
                     'plugin_settings': 'show_plugin_settings_window'
                 }
                 
@@ -1142,6 +1143,9 @@ class Window(MSFluentWindow, UIAccessMixin):
                                 self.show_contributor_dialog()
                             elif action == 'open' and path == 'plugin_settings':
                                 self.show_plugin_settings_window()
+                        else:
+                            # 没有action参数时直接调用对应方法
+                            method()
                     else:
                         logger.warning(f"找不到方法: {method_name}")
                 else:
@@ -1435,6 +1439,14 @@ class Window(MSFluentWindow, UIAccessMixin):
                 logger.warning("白露URL: 抽奖界面缺少_reset_to_initial_state方法～")
         except Exception as e:
             logger.error(f"白露URL: 重置抽奖状态失败: {e}")
+
+    def show_direct_extraction(self):
+        """(^・ω・^ ) 白露的闪抽召唤魔法！
+        通过URL参数直接打开抽人界面，让用户快速开始抽人操作～
+        会自动切换到抽人界面，方便用户开始抽人！✨"""
+        logger.info("白露URL: 正在打开闪抽界面～")
+        self.levitation_window._show_direct_extraction_window()
+        logger.info("白露URL: 闪抽界面已成功打开～")
     
     def show_about_window(self):
         """(^・ω・^ ) 白露的关于界面召唤魔法！
