@@ -620,9 +620,14 @@ jobs:
                 echo "使用 Advanced Installer 编译..."
                 
                 # 复制 Advanced Installer 项目文件到构建目录
-                if (Test-Path "SR64.aip") {
-                  echo "找到 SR64.aip 文件，开始复制..."
-                  Copy-Item SR64.aip installer_build/SecRandom.aip
+                if (Test-Path "SecRandom.aip") {
+                  echo "找到 SecRandom.aip 文件，开始复制..."
+                  # 确保目标目录存在
+                  if (-not (Test-Path "installer_build")) {
+                    New-Item -ItemType Directory -Path "installer_build" | Out-Null
+                    echo "创建 installer_build 目录成功"
+                  }
+                  Copy-Item SecRandom.aip installer_build
                   echo "项目文件复制完成"
                   
                   # 验证复制后的文件
@@ -630,25 +635,6 @@ jobs:
                     echo "错误：项目文件复制失败"
                     exit 1
                   }
-                  
-                  # 设置项目版本 - 验证版本号格式
-                  $version = "${{ github.ref_name }}"
-                  # 如果不是以v开头的版本号（如v1.0.0.0），则使用默认版本号
-                  if ($version -match "^v\d+(\.\d+){3}$") {
-                    $version = $version.Substring(1) # 移除v前缀
-                  } else {
-                    $version = "1.0.0.0" # 默认版本号（4位）
-                  }
-                  echo "使用版本号: $version"
-                  
-                  # 设置版本号
-                  echo "正在设置项目版本..."
-                  AdvancedInstaller.com edit /set version $version installer_build/SecRandom.aip
-                  if ($LASTEXITCODE -ne 0) { 
-                    echo "版本号设置失败"
-                    exit $LASTEXITCODE 
-                  }
-                  echo "版本号设置完成"
                   
                   # 注册 Windows Installer 相关设置
                   echo "正在注册 Windows Installer 设置..."

@@ -38,7 +38,7 @@ class pumping_reward(QWidget):
         """开始抽选奖品"""
         # 获取抽选模式和动画模式设置
         try:
-            with open_file(path_manager.get_voice_engine_path(), 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 pumping_reward_draw_mode = settings['pumping_reward']['draw_mode']
                 pumping_reward_animation_mode = settings['pumping_reward']['animation_mode']
@@ -54,6 +54,7 @@ class pumping_reward(QWidget):
         except Exception as e:
             pumping_reward_draw_mode = 0
             pumping_reward_animation_mode = 0
+            self.interval = 100
             self.auto_play = 5
             self.animation_music_enabled = False
             self.result_music_enabled = False
@@ -265,7 +266,7 @@ class pumping_reward(QWidget):
                                 for ext in image_extensions:
                                     temp_path = path_manager.get_resource_path("images", f"rewards/{name}{ext}")
                                     if path_manager.file_exists(temp_path):
-                                        current_image_path = temp_path
+                                        current_image_path = str(temp_path)
                                         break
                                     else:
                                         current_image_path = None
@@ -547,7 +548,7 @@ class pumping_reward(QWidget):
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
-                music_files.extend(glob.glob(BGM_RESULT_PATH, ext))
+                music_files.extend(glob.glob(os.path.join(BGM_RESULT_PATH, ext)))
 
             if not music_files:
                 logger.warning(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
@@ -601,7 +602,7 @@ class pumping_reward(QWidget):
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
-                music_files.extend(glob.glob(BGM_ANIMATION_PATH, ext))
+                music_files.extend(glob.glob(os.path.join(BGM_ANIMATION_PATH, ext)))
 
             if not music_files:
                 logger.warning(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
@@ -825,7 +826,7 @@ class pumping_reward(QWidget):
                                 for ext in image_extensions:
                                     temp_path = path_manager.get_resource_path("images/rewards", f"{name}{ext}")
                                     if os.path.isfile(temp_path):
-                                        current_image_path = temp_path
+                                        current_image_path = str(temp_path)
                                         break
                                     else:
                                         current_image_path = None
@@ -1366,20 +1367,20 @@ class pumping_reward(QWidget):
         
         # 控制面板
         control_panel = QVBoxLayout()
-        control_panel.setContentsMargins(10, 10, 50, 10)
+        control_panel.setContentsMargins(10, 10, 10, 10)
 
         # 刷新按钮
         self.refresh_button = PushButton('重置已抽取名单')
-        self.refresh_button.setFixedSize(200, 50)
-        self.refresh_button.setFont(QFont(load_custom_font(), 15))
+        self.refresh_button.setFixedSize(180, 50)
+        self.refresh_button.setFont(QFont(load_custom_font(), 13))
         self.refresh_button.clicked.connect(self._reset_to_initial_state)
         self.refresh_button.clicked.connect(self.update_total_count)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 刷新按钮
         self.refresh_button = PushButton('刷新奖品列表')
-        self.refresh_button.setFixedSize(200, 50)
-        self.refresh_button.setFont(QFont(load_custom_font(), 15))
+        self.refresh_button.setFixedSize(180, 50)
+        self.refresh_button.setFont(QFont(load_custom_font(), 13))
         self.refresh_button.clicked.connect(self.refresh_reward_list)
         self.refresh_button.clicked.connect(self.update_total_count)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
@@ -1389,22 +1390,22 @@ class pumping_reward(QWidget):
 
         # 减号按钮
         self.minus_button = PushButton('-')
-        self.minus_button.setFixedSize(60, 50)
-        self.minus_button.setFont(QFont(load_custom_font(), 30))
+        self.minus_button.setFixedSize(50, 50)
+        self.minus_button.setFont(QFont(load_custom_font(), 25))
         self.minus_button.clicked.connect(self._decrease_count)
         horizontal_layout.addWidget(self.minus_button, 0, Qt.AlignLeft)
 
         # 奖数显示
         self.count_label = BodyLabel('1')
         self.count_label.setAlignment(Qt.AlignCenter)
-        self.count_label.setFont(QFont(load_custom_font(), 30))
+        self.count_label.setFont(QFont(load_custom_font(), 25))
         self.count_label.setFixedWidth(65)
         horizontal_layout.addWidget(self.count_label, 0, Qt.AlignLeft)
 
         # 加号按钮
         self.plus_button = PushButton('+')
-        self.plus_button.setFixedSize(60, 50)
-        self.plus_button.setFont(QFont(load_custom_font(), 30))
+        self.plus_button.setFixedSize(50, 50)
+        self.plus_button.setFont(QFont(load_custom_font(), 25))
         self.plus_button.clicked.connect(self._increase_count)
         horizontal_layout.addWidget(self.plus_button, 0, Qt.AlignLeft)
 
@@ -1413,15 +1414,15 @@ class pumping_reward(QWidget):
 
         # 开始按钮
         self.start_button = PrimaryPushButton('开始')
-        self.start_button.setFixedSize(200, 50)
-        self.start_button.setFont(QFont(load_custom_font(), 20))
+        self.start_button.setFixedSize(180, 50)
+        self.start_button.setFont(QFont(load_custom_font(), 15))
         self.start_button.clicked.connect(self.start_draw)
         control_panel.addWidget(self.start_button, 0, Qt.AlignVCenter)
         
         # 奖池下拉框
         self.reward_combo = ComboBox()
-        self.reward_combo.setFixedSize(200, 50)
-        self.reward_combo.setFont(QFont(load_custom_font(), 15))
+        self.reward_combo.setFixedSize(180, 50)
+        self.reward_combo.setFont(QFont(load_custom_font(), 13))
         
         # 加载奖池列表
         try:
@@ -1456,9 +1457,9 @@ class pumping_reward(QWidget):
             self.total_label = BodyLabel('剩余奖数: 0')
         else:
             self.total_label = BodyLabel('总奖数: 0 | 剩余奖数: 0')
-        self.total_label.setFont(QFont(load_custom_font(), 12))
+        self.total_label.setFont(QFont(load_custom_font(), 11))
         self.total_label.setAlignment(Qt.AlignCenter)
-        self.total_label.setFixedWidth(200)
+        self.total_label.setFixedWidth(180)
         control_panel.addWidget(self.total_label, 0, Qt.AlignLeft)
         
         control_panel.addStretch(1)

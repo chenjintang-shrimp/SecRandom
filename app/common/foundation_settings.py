@@ -49,7 +49,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "topmost_switch": False,
             "url_protocol_enabled": False,
             "button_arrangement_mode": 0,
-            "main_window_control_Switch": False
+            "main_window_control_Switch": False,
+            "flash_window_auto_close": True,
+            "flash_window_close_time": 2
         }
 
         self.self_starting_switch = SwitchButton()
@@ -158,6 +160,20 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.check_on_startup.checkedChanged.connect(self.save_settings)
         
         # 浮窗
+        # 闪抽窗口自动关闭开关
+        self.flash_window_auto_close_switch = SwitchButton()
+        self.flash_window_auto_close_switch.setOnText("开启")
+        self.flash_window_auto_close_switch.setOffText("关闭")
+        self.flash_window_auto_close_switch.setFont(QFont(load_custom_font(), 12))
+        self.flash_window_auto_close_switch.checkedChanged.connect(self.save_settings)
+
+        # 闪抽窗口自动关闭时间设置
+        self.flash_window_close_time_comboBox = ComboBox()
+        self.flash_window_close_time_comboBox.setFixedWidth(100)
+        self.flash_window_close_time_comboBox.addItems(["1秒", "2秒", "3秒", "5秒", "10秒", "15秒", "30秒"])
+        self.flash_window_close_time_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.flash_window_close_time_comboBox.setFont(QFont(load_custom_font(), 12))
+
         self.left_pumping_floating_switch = ComboBox()
         self.left_pumping_floating_switch.setFixedWidth(250)
         self.left_pumping_floating_switch.addItems([
@@ -219,8 +235,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.button_arrangement_comboBox.setFixedWidth(200)
         self.button_arrangement_comboBox.addItems([
             "矩形排列",
-            "竖着排列",
-            "横着排列"
+            "竖向排列",
+            "横向排列"
         ])
         self.button_arrangement_comboBox.setFont(QFont(load_custom_font(), 12))
         self.button_arrangement_comboBox.currentIndexChanged.connect(self.save_settings)
@@ -245,6 +261,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "定时清理", "设置定时清理抽取记录的时间", self.cleanup_button)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗", "设置浮窗功能按钮数量", self.left_pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "按钮排列方式", "设置浮窗按钮的排列方式", self.button_arrangement_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽自动关闭", "设置闪抽窗口是否自动关闭", self.flash_window_auto_close_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "设置闪抽关闭时间", "设置闪抽窗口关闭时间", self.flash_window_close_time_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "主窗口置顶", "设置主窗口是否置顶(需重新打开主窗口生效-不是重启软件)", self.topmost_switch)
         self.addGroup(get_theme_icon("ic_fluent_layout_row_two_focus_top_settings_20_filled"), "主窗口焦点", "设置主窗口不是焦点时关闭延迟", self.main_window_focus_comboBox)
@@ -476,6 +494,10 @@ StartupNotify=true
 
                     main_window_control_Switch = foundation_settings.get("main_window_control_Switch", self.default_settings["main_window_control_Switch"])
 
+                    # 闪抽窗口自动关闭设置
+                    flash_window_auto_close = foundation_settings.get("flash_window_auto_close", self.default_settings["flash_window_auto_close"])
+                    flash_window_close_time = foundation_settings.get("flash_window_close_time", self.default_settings["flash_window_close_time"])
+                    
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
                     self.pumping_floating_side_comboBox.setCurrentIndex(pumping_floating_side)
@@ -492,6 +514,8 @@ StartupNotify=true
                     self.show_settings_icon_switch.setChecked(show_settings_icon)
                     self.button_arrangement_comboBox.setCurrentIndex(button_arrangement_mode)
                     self.main_window_control_Switch.setChecked(main_window_control_Switch)
+                    self.flash_window_auto_close_switch.setChecked(flash_window_auto_close)
+                    self.flash_window_close_time_comboBox.setCurrentIndex(flash_window_close_time)
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
@@ -510,6 +534,8 @@ StartupNotify=true
                 self.show_settings_icon_switch.setChecked(self.default_settings["show_settings_icon"])
                 self.button_arrangement_comboBox.setCurrentIndex(self.default_settings["button_arrangement_mode"])
                 self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
+                self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
+                self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -529,6 +555,8 @@ StartupNotify=true
             self.show_settings_icon_switch.setChecked(self.default_settings["show_settings_icon"])
             self.button_arrangement_comboBox.setCurrentIndex(self.default_settings["button_arrangement_mode"])
             self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
+            self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
+            self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
             self.save_settings()
 
     def save_settings(self):
@@ -563,6 +591,8 @@ StartupNotify=true
         foundation_settings["show_settings_icon"] = self.show_settings_icon_switch.isChecked()
         foundation_settings["button_arrangement_mode"] = self.button_arrangement_comboBox.currentIndex()
         foundation_settings["main_window_control_Switch"] = self.main_window_control_Switch.isChecked()
+        foundation_settings["flash_window_auto_close"] = self.flash_window_auto_close_switch.isChecked()
+        foundation_settings["flash_window_close_time"] = self.flash_window_close_time_comboBox.currentIndex()
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open_file(self.settings_file, 'w', encoding='utf-8') as f:
@@ -1672,7 +1702,7 @@ class SettingsSelectionDialog(QDialog):
                 ],
                 "浮窗设置": [
                     "pumping_floating_enabled", "pumping_floating_transparency_mode", "pumping_floating_visible",
-                    "button_arrangement_mode"
+                    "button_arrangement_mode", "flash_window_auto_close", "flash_window_close_time"
                 ],
                 "启动设置": [
                     "check_on_startup", "self_starting_enabled", "url_protocol_enabled"
@@ -1808,6 +1838,8 @@ class SettingsSelectionDialog(QDialog):
             "settings_window_mode": "设置窗口位置", # 有
             "pumping_floating_visible": "浮窗", # 有
             "button_arrangement_mode": "浮窗按钮布局", # 有
+            "flash_window_auto_close": "闪抽窗口自动关闭", # 有
+            "flash_window_close_time": "闪抽窗口关闭时间", # 有
             "topmost_switch": "主窗口置顶", # 有
             "window_width": "主窗口宽度", # 有
             "window_height": "主窗口高度", # 有

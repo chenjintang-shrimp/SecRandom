@@ -18,6 +18,8 @@ from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
 from app.common.ui_access_manager import UIAccessMixin
 
+dark_mode = is_dark_theme(qconfig)
+
 class LevitationWindow(QWidget, UIAccessMixin):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -292,7 +294,6 @@ class LevitationWindow(QWidget, UIAccessMixin):
             MENU_DEFAULT_ICON_PATH = path_manager.get_resource_path("icon", "SecRandom_menu_30%.png")
             self.menu_label = QLabel(self.container_button)
             try:
-                dark_mode = is_dark_theme(qconfig)
                 # 根据主题设置不同的颜色
                 if dark_mode:
                     # 深色模式
@@ -315,7 +316,10 @@ class LevitationWindow(QWidget, UIAccessMixin):
         else:
             # 其他模式显示文字按钮
             self.menu_label = PushButton("拖动")
-            self.menu_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
+            if dark_mode:
+                self.menu_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold; color: #ffffff;')
+            else:
+                self.menu_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
             self.menu_label.setFont(QFont(load_custom_font(), 12))
         
         # 根据排列方式决定按钮大小和添加位置
@@ -324,7 +328,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
         if self.button_arrangement_mode == 0:  # 矩形排列
             if button_count >= 3:
                 # 3个或4个按钮时，拖动按钮放在上面
-                if self.floating_visible != 4:  # 非图标模式需要设置按钮大小
+                if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
                     self.menu_label.setFixedSize(50, 50)
                 if hasattr(self, 'top_container') and self.top_container:
                     self.top_container.layout().addWidget(self.menu_label)
@@ -332,7 +336,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
                     self.container_button.layout().addWidget(self.menu_label)
             else:
                 # 1个或2个按钮时使用水平布局
-                if self.floating_visible != 4:  # 非图标模式需要设置按钮大小
+                if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
                     self.menu_label.setFixedSize(50, 50)
                 if hasattr(self, 'top_container') and self.top_container:
                     self.top_container.layout().addWidget(self.menu_label)
@@ -341,7 +345,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
                     
         elif self.button_arrangement_mode == 1:  # 竖着排列
             # 所有按钮都垂直排列
-            if self.floating_visible != 4:  # 非图标模式需要设置按钮大小
+            if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
                 self.menu_label.setFixedSize(50, 50)
             if hasattr(self, 'top_container') and self.top_container:
                 self.top_container.layout().addWidget(self.menu_label)
@@ -350,7 +354,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
                 
         elif self.button_arrangement_mode == 2:  # 横着排列
             # 所有按钮都水平排列
-            if self.floating_visible != 4:  # 非图标模式需要设置按钮大小
+            if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
                 self.menu_label.setFixedSize(50, 50)
             if hasattr(self, 'top_container') and self.top_container:
                 self.top_container.layout().addWidget(self.menu_label)
@@ -363,7 +367,6 @@ class LevitationWindow(QWidget, UIAccessMixin):
             FLOATING_DEFAULT_ICON_PATH = path_manager.get_resource_path("icon", "SecRandom_floating_30%.png")
             self.people_label = QLabel(self.container_button)
             try:
-                dark_mode = is_dark_theme(qconfig)
                 # 根据主题设置不同的颜色
                 if dark_mode:
                     # 深色模式
@@ -386,7 +389,10 @@ class LevitationWindow(QWidget, UIAccessMixin):
         else:
             # 其他模式显示文字按钮
             self.people_label = PushButton("抽人")
-            self.people_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
+            if dark_mode:
+                self.people_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold; color: #ffffff;')
+            else:
+                self.people_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
             self.people_label.setFont(QFont(load_custom_font(), 12))
         
         # 根据排列方式决定按钮大小和添加位置
@@ -395,7 +401,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
         if self.button_arrangement_mode == 0:  # 矩形排列
             if button_count >= 3:
                 # 3个或4个按钮时，人物按钮放在上面
-                if self.floating_visible != 4:  # 非图标模式需要设置按钮大小
+                if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
                     self.people_label.setFixedSize(50, 50)
                 if hasattr(self, 'top_container') and self.top_container:
                     self.top_container.layout().addWidget(self.people_label)
@@ -403,7 +409,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
                     self.container_button.layout().addWidget(self.people_label)
             else:
                 # 1个或2个按钮时使用水平布局
-                if self.floating_visible != 4:  # 非图标模式需要设置按钮大小
+                if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
                     self.people_label.setFixedSize(50, 50)
                 if hasattr(self, 'top_container') and self.top_container:
                     self.top_container.layout().addWidget(self.people_label)
@@ -412,7 +418,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
                     
         elif self.button_arrangement_mode == 1:  # 竖着排列
             # 所有按钮都垂直排列
-            if self.floating_visible != 4:  # 非图标模式需要设置按钮大小
+            if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
                 self.people_label.setFixedSize(50, 50)
             if hasattr(self, 'top_container') and self.top_container:
                 self.top_container.layout().addWidget(self.people_label)
@@ -421,7 +427,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
                 
         elif self.button_arrangement_mode == 2:  # 横着排列
             # 所有按钮都水平排列
-            if self.floating_visible != 4:  # 非图标模式需要设置按钮大小
+            if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
                 self.people_label.setFixedSize(50, 50)
             if hasattr(self, 'top_container') and self.top_container:
                 self.top_container.layout().addWidget(self.people_label)
@@ -466,8 +472,11 @@ class LevitationWindow(QWidget, UIAccessMixin):
                 self.top_container.layout().addWidget(self.flash_button)
             else:
                 self.container_button.layout().addWidget(self.flash_button)
-            
-        self.flash_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
+
+        if dark_mode:
+            self.flash_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold; color: #ffffff;')
+        else:
+            self.flash_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
         self.flash_button.setFont(QFont(load_custom_font(), 12))
         self.flash_button.clicked.connect(self._show_direct_extraction_window)
 
@@ -509,8 +518,11 @@ class LevitationWindow(QWidget, UIAccessMixin):
                 self.top_container.layout().addWidget(self.auxiliary_button)
             else:
                 self.container_button.layout().addWidget(self.auxiliary_button)
-        
-        self.auxiliary_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
+                
+        if dark_mode:
+            self.auxiliary_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold; color: #ffffff;')
+        else:
+            self.auxiliary_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
         self.auxiliary_button.setFont(QFont(load_custom_font(), 12))
         self.auxiliary_button.clicked.connect(self._show_auxiliary_window)
 
@@ -520,8 +532,6 @@ class LevitationWindow(QWidget, UIAccessMixin):
         self.setAttribute(Qt.WA_TranslucentBackground)
         try:
             opacity = (10 - self.transparency_mode) * 0.1
-            # 使用现有函数检查当前主题是否为深色模式
-            dark_mode = is_dark_theme(qconfig)
             # 根据主题设置不同的背景颜色
             if dark_mode:
                 # 深色模式背景颜色
@@ -831,9 +841,12 @@ class LevitationWindow(QWidget, UIAccessMixin):
         msg_box.exec_()
 
     def mousePressEvent(self, event):
-        # 星穹铁道白露：右键点击也会触发事件哦~ 要检查正确的控件呀 (๑•̀ㅂ•́)๑
-        if event.button() and hasattr(self, 'menu_label') and self.menu_label.geometry().contains(event.pos()):
-            self.start_drag(event)
+        # 星穹铁道白露：右键点击也会触发事件哦~ 现在整个窗口都可以拖动啦 (๑•̀ㅂ•́)๑
+        if event.button() == Qt.LeftButton:
+            # 记录拖动起始位置
+            self.drag_start_position = event.pos()
+            # 启动长按计时器（100毫秒 - 优化响应速度）
+            self.click_timer.start(100)
         else:
             event.ignore()
 
@@ -923,11 +936,11 @@ class LevitationWindow(QWidget, UIAccessMixin):
             self.title_label.setFont(QFont(load_custom_font(), 12))
             
             # 窗口控制按钮
-            self.close_btn = PushButton("✕")
+            self.close_btn = QPushButton("✕")
             self.close_btn.setObjectName("CloseButton")
             self.close_btn.setFixedSize(25, 25)
             self.close_btn.clicked.connect(self.pumping_widget.reject)
-            
+
             # 添加组件到标题栏
             title_layout.addWidget(self.title_label)
             title_layout.addStretch()
@@ -950,7 +963,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
             # 根据字体大小计算窗口尺寸
             # 基础尺寸 + 字体大小相关缩放，确保内容完整显示
             base_width = 310
-            base_height = 310
+            base_height = 350
             
             # 字体大小对应的缩放因子，确保小字号有足够空间，适配到200字号
             if font_size <= 30:
@@ -980,6 +993,17 @@ class LevitationWindow(QWidget, UIAccessMixin):
             
             self.pumping_widget.setFixedSize(dynamic_width, dynamic_height)
             
+            # 创建倒计时标签
+            self.countdown_label = BodyLabel("")
+            self.countdown_label.setObjectName("CountdownLabel")
+            self.countdown_label.setFont(QFont(load_custom_font(), 12))
+            self.countdown_label.setAlignment(Qt.AlignCenter | Qt.AlignVCenter)
+
+            # 创建底部布局
+            bottom_layout = QHBoxLayout()
+            bottom_layout.setContentsMargins(10, 5, 10, 5)
+            bottom_layout.addWidget(self.countdown_label)
+
             # 主布局
             main_layout = QVBoxLayout(self.pumping_widget)
             main_layout.setContentsMargins(0, 0, 0, 0)
@@ -988,6 +1012,8 @@ class LevitationWindow(QWidget, UIAccessMixin):
             main_layout.addWidget(self.title_bar)
             # 添加内容区域
             main_layout.addWidget(self.pumping_content)
+            # 添加底部布局
+            main_layout.addLayout(bottom_layout)
             
             # 添加窗口拖动功能 - 整个窗口都可以拖动
             self.dragging = False
@@ -1022,11 +1048,54 @@ class LevitationWindow(QWidget, UIAccessMixin):
             
             self.pumping_content.start_draw()
             
-            # 添加3秒自动关闭功能
-            self.auto_close_timer = QTimer(self.pumping_widget)
-            self.auto_close_timer.setSingleShot(True)
-            self.auto_close_timer.timeout.connect(self.pumping_widget.reject)
-            self.auto_close_timer.start(3000)  # 3秒后自动关闭
+            # 从设置中获取闪抽窗口自动关闭设置
+            try:
+                # 获取设置
+                settings_file = path_manager.get_settings_path()
+                with open_file(settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    
+                # 检查是否启用自动关闭
+                auto_close_enabled = settings.get('flash_window_auto_close', True)
+                close_time = settings.get('flash_window_close_time', 2)
+                close_time = close_time + 1
+                
+                if auto_close_enabled:
+                    # 初始化倒计时
+                    self.remaining_time = close_time
+                    self.countdown_label.setText(f"将在{self.remaining_time}秒自动关闭该窗口")
+                    self.countdown_label.setFont(QFont(load_custom_font(), 12))
+
+                    # 创建倒计时定时器
+                    self.countdown_timer = QTimer(self.pumping_widget)
+                    self.countdown_timer.timeout.connect(self._update_countdown)
+                    self.countdown_timer.start(1000)  # 每秒更新一次
+
+                    # 创建自动关闭定时器
+                    self.auto_close_timer = QTimer(self.pumping_widget)
+                    self.auto_close_timer.setSingleShot(True)
+                    self.auto_close_timer.timeout.connect(self.pumping_widget.reject)
+                    self.auto_close_timer.start(close_time * 1000)  # 转换为毫秒
+                    logger.info(f"闪抽窗口将在{close_time}秒后自动关闭")
+                else:
+                    logger.info("闪抽窗口自动关闭功能已禁用")
+            except Exception as e:
+                logger.error(f"加载闪抽窗口设置时出错: {e}, 使用默认设置")
+                # 默认启用3秒自动关闭
+                close_time = 3
+                self.remaining_time = close_time
+                self.countdown_label.setText(f"将在{self.remaining_time}秒自动关闭该窗口")
+                self.countdown_label.setFont(QFont(load_custom_font(), 12))
+
+                # 创建倒计时定时器
+                self.countdown_timer = QTimer(self.pumping_widget)
+                self.countdown_timer.timeout.connect(self._update_countdown)
+                self.countdown_timer.start(1000)  # 每秒更新一次
+
+                self.auto_close_timer = QTimer(self.pumping_widget)
+                self.auto_close_timer.setSingleShot(True)
+                self.auto_close_timer.timeout.connect(self.pumping_widget.reject)
+                self.auto_close_timer.start(close_time * 1000)  # 3秒后自动关闭
             
         except ImportError as e:
             logger.error(f"导入pumping_people模块失败: {e}")
@@ -1058,6 +1127,17 @@ class LevitationWindow(QWidget, UIAccessMixin):
 
     def _on_title_bar_release(self, event):
         self.dragging = False
+
+    def _update_countdown(self):
+        # 更新倒计时
+        self.remaining_time -= 1
+        self.countdown_label.setText(f"将在{self.remaining_time}秒自动关闭该窗口")
+        self.countdown_label.setFont(QFont(load_custom_font(), 12))
+
+        # 当倒计时结束时停止定时器
+        if self.remaining_time <= 0:
+            if hasattr(self, 'countdown_timer'):
+                self.countdown_timer.stop()
 
     def update_theme_style(self):
         """根据当前主题更新样式"""
@@ -1148,9 +1228,15 @@ class LevitationWindow(QWidget, UIAccessMixin):
             
     def _on_pumping_widget_closed(self):
         """直接抽取窗口关闭事件 - 清理定时器资源并重新启用闪抽按钮"""
+        # 停止自动关闭定时器
         if hasattr(self, 'auto_close_timer') and self.auto_close_timer.isActive():
             self.auto_close_timer.stop()
-            logger.info("直接抽取窗口已关闭，定时器已停止")
+            logger.info("直接抽取窗口已关闭，自动关闭定时器已停止")
+
+        # 停止倒计时定时器
+        if hasattr(self, 'countdown_timer') and self.countdown_timer.isActive():
+            self.countdown_timer.stop()
+            logger.info("直接抽取窗口已关闭，倒计时定时器已停止")
         
         # 重新启用闪抽按钮
         if hasattr(self, 'flash_button') and self.flash_button is not None:

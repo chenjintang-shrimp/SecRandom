@@ -272,7 +272,7 @@ class pumping_people(QWidget):
                                 for ext in image_extensions:
                                     temp_path = path_manager.get_resource_path("images", f"students/{selected}{ext}")
                                     if path_manager.file_exists(temp_path):
-                                        current_image_path = temp_path
+                                        current_image_path = str(temp_path)
                                         break
                                     else:
                                         current_image_path = None
@@ -633,7 +633,7 @@ class pumping_people(QWidget):
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
-                music_files.extend(glob.glob(BGM_RESULT_PATH, ext))
+                music_files.extend(glob.glob(os.path.join(BGM_RESULT_PATH, ext)))
 
             if not music_files:
                 logger.warning(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
@@ -693,7 +693,7 @@ class pumping_people(QWidget):
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
-                music_files.extend(glob.glob(BGM_ANIMATION_PATH, ext))
+                music_files.extend(glob.glob(os.path.join(BGM_ANIMATION_PATH, ext)))
 
             if not music_files:
                 logger.warning(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
@@ -1060,7 +1060,7 @@ class pumping_people(QWidget):
                                 for ext in image_extensions:
                                     temp_path = path_manager.get_resource_path("images", f"students/{selected}{ext}")
                                     if path_manager.file_exists(temp_path):
-                                        current_image_path = temp_path
+                                        current_image_path = str(temp_path)
                                         break
                                     else:
                                         current_image_path = None
@@ -1897,19 +1897,19 @@ class pumping_people(QWidget):
         
         # 控制面板
         control_panel = QVBoxLayout()
-        control_panel.setContentsMargins(10, 10, 50, 10)
+        control_panel.setContentsMargins(10, 10, 10, 10) # 左、上、右、下   
 
         # 刷新按钮
         self.refresh_button = PushButton('重置已抽取名单')
-        self.refresh_button.setFixedSize(200, 50)
-        self.refresh_button.setFont(QFont(load_custom_font(), 15))
+        self.refresh_button.setFixedSize(180, 50)
+        self.refresh_button.setFont(QFont(load_custom_font(), 13))
         self.refresh_button.clicked.connect(lambda: self._reset_to_initial_state())
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 刷新按钮
         self.refresh_button = PushButton('刷新学生列表')
-        self.refresh_button.setFixedSize(200, 50)
-        self.refresh_button.setFont(QFont(load_custom_font(), 15))
+        self.refresh_button.setFixedSize(180, 50)
+        self.refresh_button.setFont(QFont(load_custom_font(), 13))
         self.refresh_button.clicked.connect(self.refresh_class_list)
         control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
@@ -1918,22 +1918,22 @@ class pumping_people(QWidget):
 
         # 减号按钮
         self.minus_button = PushButton('-')
-        self.minus_button.setFixedSize(60, 50)
-        self.minus_button.setFont(QFont(load_custom_font(), 30))
+        self.minus_button.setFixedSize(50, 50)
+        self.minus_button.setFont(QFont(load_custom_font(), 25))
         self.minus_button.clicked.connect(self._decrease_count)
         horizontal_layout.addWidget(self.minus_button, 0, Qt.AlignLeft)
 
         # 人数显示
         self.count_label = BodyLabel('1')
         self.count_label.setAlignment(Qt.AlignCenter)
-        self.count_label.setFont(QFont(load_custom_font(), 30))
+        self.count_label.setFont(QFont(load_custom_font(), 25))
         self.count_label.setFixedWidth(65)
         horizontal_layout.addWidget(self.count_label, 0, Qt.AlignLeft)
 
         # 加号按钮
         self.plus_button = PushButton('+')
-        self.plus_button.setFixedSize(60, 50)
-        self.plus_button.setFont(QFont(load_custom_font(), 30))
+        self.plus_button.setFixedSize(50, 50)
+        self.plus_button.setFont(QFont(load_custom_font(), 25))
         self.plus_button.clicked.connect(self._increase_count)
         horizontal_layout.addWidget(self.plus_button, 0, Qt.AlignLeft)
 
@@ -1942,15 +1942,15 @@ class pumping_people(QWidget):
 
         # 开始按钮
         self.start_button = PrimaryPushButton('开始')
-        self.start_button.setFixedSize(200, 50)
-        self.start_button.setFont(QFont(load_custom_font(), 20))
+        self.start_button.setFixedSize(180, 50)
+        self.start_button.setFont(QFont(load_custom_font(), 15))
         self.start_button.clicked.connect(self.start_draw)
         control_panel.addWidget(self.start_button, 0, Qt.AlignVCenter)
         
         # 班级下拉框
         self.class_combo = ComboBox()
-        self.class_combo.setFixedSize(200, 50)
-        self.class_combo.setFont(QFont(load_custom_font(), 15))
+        self.class_combo.setFixedSize(180, 50)
+        self.class_combo.setFont(QFont(load_custom_font(), 13))
         
         # 加载班级列表
         try:
@@ -1980,8 +1980,8 @@ class pumping_people(QWidget):
 
         # 小组下拉框
         self.group_combo = ComboBox()
-        self.group_combo.setFixedSize(200, 50)
-        self.group_combo.setFont(QFont(load_custom_font(), 15))
+        self.group_combo.setFixedSize(180, 50)
+        self.group_combo.setFont(QFont(load_custom_font(), 13))
         self.group_combo.addItem('抽取全班学生')
         self.group_combo.currentIndexChanged.connect(self.update_total_count)
         self.class_combo.currentIndexChanged.connect(self.refresh_group_list)
@@ -2019,8 +2019,8 @@ class pumping_people(QWidget):
 
         # 性别下拉框
         self.gender_combo = ComboBox()
-        self.gender_combo.setFixedSize(200, 50)
-        self.gender_combo.setFont(QFont(load_custom_font(), 15))
+        self.gender_combo.setFixedSize(180, 50)
+        self.gender_combo.setFont(QFont(load_custom_font(), 13))
         self.gender_combo.addItem('抽取所有性别')
         self.gender_combo.currentIndexChanged.connect(self.update_total_count)
         self.class_combo.currentIndexChanged.connect(self.refresh_gender_list)
@@ -2063,9 +2063,9 @@ class pumping_people(QWidget):
             self.total_label = BodyLabel('剩余人数: 0')
         else:
             self.total_label = BodyLabel('总人数: 0 | 剩余人数: 0')
-        self.total_label.setFont(QFont(load_custom_font(), 12))
+        self.total_label.setFont(QFont(load_custom_font(), 11))
         self.total_label.setAlignment(Qt.AlignCenter)
-        self.total_label.setFixedWidth(200)
+        self.total_label.setFixedWidth(180)
         control_panel.addWidget(self.total_label, 0, Qt.AlignLeft)
         
         control_panel.addStretch(1)

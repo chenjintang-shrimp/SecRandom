@@ -261,7 +261,7 @@ class pumping_people(QWidget):
                                 for ext in image_extensions:
                                     temp_path = path_manager.get_resource_path("images/students", f"{selected}{ext}")
                                     if os.path.isfile(temp_path):
-                                        current_image_path = temp_path
+                                        current_image_path = str(temp_path)
                                         break
                                     else:
                                         current_image_path = None
@@ -618,7 +618,7 @@ class pumping_people(QWidget):
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
-                music_files.extend(glob.glob(BGM_RESULT_PATH, ext))
+                music_files.extend(glob.glob(os.path.join(BGM_RESULT_PATH, ext)))
 
             if not music_files:
                 logger.warning(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
@@ -678,7 +678,7 @@ class pumping_people(QWidget):
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
-                music_files.extend(glob.glob(BGM_ANIMATION_PATH, ext))
+                music_files.extend(glob.glob(os.path.join(BGM_ANIMATION_PATH, ext)))
 
             if not music_files:
                 logger.warning(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
@@ -1046,7 +1046,7 @@ class pumping_people(QWidget):
                                 for ext in image_extensions:
                                     temp_path = path_manager.get_resource_path("images/students", f"{selected}{ext}")
                                     if os.path.isfile(temp_path):
-                                        current_image_path = temp_path
+                                        current_image_path = str(temp_path)
                                         break
                                     else:
                                         current_image_path = None
