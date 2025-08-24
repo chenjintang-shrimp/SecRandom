@@ -99,6 +99,7 @@ jobs:
               -D `
               -i ./resources/SecRandom.ico `
               -n SecRandom `
+              --collect-submodules=app
               --add-data ./app/resource:app/resource `
               --add-data LICENSE:. `
               --version-file=version_info.txt `
@@ -218,6 +219,7 @@ jobs:
               -D `
               -i ./resources/SecRandom.ico `
               -n SecRandom `
+              --collect-submodules=app
               --add-data ./app/resource:app/resource `
               --add-data LICENSE:. `
               --version-file=version_info.txt `
@@ -369,6 +371,7 @@ jobs:
               -D \
               -i ./resources/SecRandom.ico \
               -n SecRandom \
+              --collect-submodules=app
               --add-data ./app/resource:app/resource \
               --add-data LICENSE:. \
               --version-file=version_info.txt \
