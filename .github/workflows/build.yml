@@ -99,8 +99,7 @@ jobs:
               -D `
               -i ./resources/SecRandom.ico `
               -n SecRandom `
-              --collect-submodules=app
-              --add-data "./app/resource:app/resource" `
+              --add-data ./app/resource:app/resource `
               --add-data LICENSE:. `
               --version-file=version_info.txt `
               --hidden-import=psutil._psutil_windows `
@@ -219,8 +218,7 @@ jobs:
               -D `
               -i ./resources/SecRandom.ico `
               -n SecRandom `
-              --collect-submodules=app
-              --add-data "./app/resource:app/resource" `
+              --add-data ./app/resource:app/resource `
               --add-data LICENSE:. `
               --version-file=version_info.txt `
               --hidden-import=psutil._psutil_windows `
@@ -371,8 +369,7 @@ jobs:
               -D \
               -i ./resources/SecRandom.ico \
               -n SecRandom \
-              --collect-submodules=app
-              --add-data "./app/resource:app/resource" \
+              --add-data ./app/resource:app/resource \
               --add-data LICENSE:. \
               --version-file=version_info.txt \
               --hidden-import=psutil._psutil_linux \
