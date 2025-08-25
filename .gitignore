@@ -188,4 +188,4 @@ cython_debug/
 /app/plugin/SecRandom-plugins
 /app/resource/images
 /logs
-/app/resource/assets/face_models
+*.zip

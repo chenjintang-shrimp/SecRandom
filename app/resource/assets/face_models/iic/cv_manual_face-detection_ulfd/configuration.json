@@ -1,0 +1,7 @@
+{
+	"framework": "pytorch",
+	"task": "face-detection",
+	"pipeline": {
+		"type": "manual-face-detection-ulfd"
+	}
+}
