@@ -1,3 +1,4 @@
+from shlex import join
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtGui import *
@@ -440,15 +441,15 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                             
                             # 创建.desktop文件内容
                             desktop_content = f"""[Desktop Entry]
-Type=Application
-Name=SecRandom
-Comment=SecRandom Application
-Exec={executable}
-Icon={os.path.join(os.path.dirname(executable), 'app', 'resources', 'icon.png')}
-Terminal=false
-Categories=Utility;
-StartupNotify=true
-"""
+                            Type=Application
+                            Name=SecRandom
+                            Comment=SecRandom Application
+                            Exec={executable}
+                            Icon={os.path.join(os.path.dirname(executable), 'app', 'resources', 'icon.png')}
+                            Terminal=false
+                            Categories=Utility;
+                            StartupNotify=true
+                            """
                             
                             # 写入.desktop文件
                             with open_file(desktop_file_path, 'w', encoding='utf-8') as f:
@@ -1244,13 +1245,15 @@ StartupNotify=true
             
             # 需要导出的文件夹列表
             export_folders = [
-                path_manager.get_resource_path('list', ''), 
-                path_manager.get_resource_path('reward', ''),
-                path_manager.get_resource_path('history', ''),
-                path_manager.get_resource_path('settings', ''),
-                path_manager.get_plugin_path('plugin'),
-                path_manager.get_plugin_path('logs')
+                path_manager.get_resource_path('list'), 
+                path_manager.get_resource_path('reward'),
+                path_manager.get_resource_path('history'),
+                path_manager._app_root / "app" / "settings",
+                path_manager.get_plugin_path(),
+                path_manager._app_root / "logs"
             ]
+
+            app_dir = path_manager._app_root
             
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 exported_count = 0
@@ -1264,15 +1267,35 @@ StartupNotify=true
                                 zipf.write(file_path, arcname)
                                 exported_count += 1
                     else:
-                        # 如果文件夹不存在，创建一个结构化的缺失记录
-                        relative_path = str(folder_path.relative_to(app_dir))
-                        missing_info = {
-                            "folder": relative_path,
-                            "status": "missing",
-                            "note": "该文件夹在导出时不存在"
-                        }
-                        zipf.writestr(f"_missing_{relative_path.replace('/', '_')}.json", 
-                                    json.dumps(missing_info, ensure_ascii=False, indent=2))
+                        # 如果文件夹不存在，自动创建目录以确保导出完整
+                        try:
+                            folder_path.mkdir(parents=True, exist_ok=True)
+                            logger.info(f"自动创建不存在的文件夹: {folder_path}")
+                            
+                            # 创建一个说明文件，记录该文件夹是自动创建的
+                            readme_path = folder_path / "_auto_created_readme.txt"
+                            with open(readme_path, 'w', encoding='utf-8') as f:
+                                f.write(f"此文件夹是在诊断数据导出时自动创建的\n")
+                                f.write(f"创建时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                                f.write(f"原因: 原文件夹不存在，为确保导出完整性而自动创建\n")
+                            
+                            # 将创建的说明文件添加到压缩包
+                            arcname = str(readme_path.relative_to(app_dir))
+                            zipf.write(readme_path, arcname)
+                            exported_count += 1
+                            
+                        except Exception as create_error:
+                            # 如果创建失败，记录错误但继续导出其他文件夹
+                            logger.error(f"创建文件夹失败 {folder_path}: {str(create_error)}")
+                            relative_path = str(folder_path.relative_to(app_dir))
+                            error_info = {
+                                "folder": relative_path,
+                                "status": "creation_failed",
+                                "error": str(create_error),
+                                "note": "自动创建文件夹失败"
+                            }
+                            zipf.writestr(f"_error_{relative_path.replace('/', '_')}.json", 
+                                        json.dumps(error_info, ensure_ascii=False, indent=2))
                 
                 # 创建结构化的系统信息报告 - 使用JSON格式便于程序解析
                 system_info = {
@@ -1287,11 +1310,11 @@ StartupNotify=true
                     # 【系统环境信息】详细的运行环境数据
                     "system_info": {
                         "software_path": str(app_dir),                                           # 软件安装路径
-                        "operating_system": f"{platform.system()} {platform.release()}",        # 操作系统版本
+                        "operating_system": self._get_operating_system(),                       # 操作系统版本（正确识别Win11）
                         "platform_details": {                                                   # 平台详细信息
                             "system": platform.system(),                                        # 系统类型 (Windows/Linux/Darwin)
-                            "release": platform.release(),                                      # 系统发行版本
-                            "version": platform.version(),                                      # 完整系统版本
+                            "release": self._get_platform_release(),                          # 系统发行版本（正确识别Win11）
+                            "version": self._get_platform_version(),                          # 完整系统版本（正确识别Win11）
                             "machine": platform.machine(),                                      # 机器架构 (AMD64/x86_64)
                             "processor": platform.processor()                                   # 处理器信息
                         },
@@ -1301,8 +1324,8 @@ StartupNotify=true
                     # 【导出摘要】统计信息和导出详情
                     "export_summary": {
                         "total_files_exported": exported_count,                                 # 成功导出的文件总数
-                        "export_folders": export_folders,                                       # 导出的文件夹列表
-                        "export_location": zip_path                                             # 导出压缩包的完整路径
+                        "export_folders": [str(folder) for folder in export_folders],         # 导出的文件夹列表（转换为字符串）
+                        "export_location": str(zip_path)                                         # 导出压缩包的完整路径
                     }
                 }
                 # 将系统信息写入JSON文件，使用中文编码确保兼容性
@@ -1364,6 +1387,149 @@ StartupNotify=true
                 duration=5000,
                 parent=self
             )
+
+    def _get_operating_system(self):
+        """
+        获取操作系统版本信息，正确识别Windows 11系统
+        
+        Returns:
+            str: 操作系统版本字符串
+        """
+        try:
+            system = platform.system()
+            if system != "Windows":
+                # 非Windows系统直接返回标准信息
+                return f"{system} {platform.release()}"
+            
+            # Windows系统特殊处理，正确识别Windows 11
+            try:
+                import winreg
+                # 查询注册表获取当前Windows版本号
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
+                current_build = winreg.QueryValueEx(key, "CurrentBuild")[0]
+                display_version = winreg.QueryValueEx(key, "DisplayVersion")[0]
+                product_name = winreg.QueryValueEx(key, "ProductName")[0]
+                winreg.CloseKey(key)
+                
+                # Windows 11的构建版本号从22000开始
+                if int(current_build) >= 22000:
+                    return f"Windows 11 (Build {current_build}, Version {display_version})"
+                else:
+                    # Windows 10或其他版本
+                    return f"{product_name} (Build {current_build}, Version {display_version})"
+                    
+            except Exception as e:
+                logger.warning(f"从注册表获取Windows版本信息失败: {str(e)}")
+                # 回退到标准方法
+                release = platform.release()
+                version = platform.version()
+                # 通过版本号简单判断（不精确但比直接显示Windows 10好）
+                if release == "10" and version and version.split(".")[-1] >= "22000":
+                    return f"Windows 11 {version}"
+                return f"Windows {release} {version}"
+                
+        except Exception as e:
+            logger.error(f"获取操作系统版本信息失败: {str(e)}")
+            # 最终回退方案
+            return f"{platform.system()} {platform.release()} {platform.version()}"
+
+    def _get_platform_release(self):
+        """
+        获取系统发行版本，正确识别Windows 11
+        
+        Returns:
+            str: 系统发行版本
+        """
+        try:
+            system = platform.system()
+            if system != "Windows":
+                # 非Windows系统直接返回标准信息
+                return platform.release()
+            
+            # Windows系统特殊处理，正确识别Windows 11
+            try:
+                import winreg
+                # 查询注册表获取当前Windows版本号
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
+                current_build = winreg.QueryValueEx(key, "CurrentBuild")[0]
+                product_name = winreg.QueryValueEx(key, "ProductName")[0]
+                winreg.CloseKey(key)
+                
+                # Windows 11的构建版本号从22000开始
+                if int(current_build) >= 22000:
+                    return "11"
+                else:
+                    # 从产品名称中提取版本号
+                    if "Windows 10" in product_name:
+                        return "10"
+                    elif "Windows 8" in product_name:
+                        return "8"
+                    elif "Windows 7" in product_name:
+                        return "7"
+                    else:
+                        # 回退到标准方法
+                        return platform.release()
+                        
+            except Exception as e:
+                logger.warning(f"从注册表获取Windows版本信息失败: {str(e)}")
+                # 回退到标准方法
+                release = platform.release()
+                version = platform.version()
+                # 通过版本号简单判断
+                if release == "10" and version and version.split(".")[-1] >= "22000":
+                    return "11"
+                return release
+                
+        except Exception as e:
+            logger.error(f"获取系统发行版本失败: {str(e)}")
+            # 最终回退方案
+            return platform.release()
+    
+    def _get_platform_version(self):
+        """
+        获取完整系统版本，正确识别Windows 11
+        
+        Returns:
+            str: 完整系统版本
+        """
+        try:
+            system = platform.system()
+            if system != "Windows":
+                # 非Windows系统直接返回标准信息
+                return platform.version()
+            
+            # Windows系统特殊处理，正确识别Windows 11
+            try:
+                import winreg
+                # 查询注册表获取当前Windows版本号
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
+                current_build = winreg.QueryValueEx(key, "CurrentBuild")[0]
+                display_version = winreg.QueryValueEx(key, "DisplayVersion")[0]
+                ubr = winreg.QueryValueEx(key, "UBR")[0]  # Update Build Revision
+                winreg.CloseKey(key)
+                
+                # 构建更准确的版本字符串
+                if int(current_build) >= 22000:
+                    # Windows 11
+                    return f"{current_build}.{ubr} (Version {display_version})"
+                else:
+                    # Windows 10或其他版本
+                    return f"{current_build}.{ubr} (Version {display_version})"
+                    
+            except Exception as e:
+                logger.warning(f"从注册表获取Windows版本信息失败: {str(e)}")
+                # 回退到标准方法但进行修正
+                version = platform.version()
+                release = platform.release()
+                if release == "10" and version and version.split(".")[-1] >= "22000":
+                    # 修正为Windows 11版本信息
+                    return version
+                return version
+                
+        except Exception as e:
+            logger.error(f"获取完整系统版本失败: {str(e)}")
+            # 最终回退方案
+            return platform.version()
 
     def import_settings(self):
         """导入设置"""
@@ -1783,17 +1949,17 @@ StartupNotify=true
             # 创建.desktop文件
             desktop_file = os.path.join(desktop_dir, "secrandom.desktop")
             desktop_content = f"""[Desktop Entry]
-Version=1.0
-Type=Application
-Name=SecRandom
-Comment=Secure Random Number Generator
-Exec={executable} --url=%u
-Icon=secrandom
-Terminal=false
-Categories=Utility;
-MimeType=x-scheme-handler/secrandom;
-StartupNotify=true
-"""
+            Version=1.0
+            Type=Application
+            Name=SecRandom
+            Comment=Secure Random Number Generator
+            Exec={executable} --url=%u
+            Icon=secrandom
+            Terminal=false
+            Categories=Utility;
+            MimeType=x-scheme-handler/secrandom;
+            StartupNotify=true
+            """
             
             with open_file(desktop_file, 'w', encoding='utf-8') as f:
                 f.write(desktop_content)
@@ -1807,13 +1973,13 @@ StartupNotify=true
             
             mime_file = os.path.join(mime_packages_dir, "secrandom.xml")
             mime_content = f"""<?xml version="1.0" encoding="UTF-8"?>
-<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
-  <mime-type type="x-scheme-handler/secrandom">
-    <comment>SecRandom URL Protocol</comment>
-    <glob pattern="secrandom:*"/>
-  </mime-type>
-</mime-info>
-"""
+            <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+            <mime-type type="x-scheme-handler/secrandom">
+                <comment>SecRandom URL Protocol</comment>
+                <glob pattern="secrandom:*"/>
+            </mime-type>
+            </mime-info>
+            """
             
             with open_file(mime_file, 'w', encoding='utf-8') as f:
                 f.write(mime_content)
