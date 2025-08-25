@@ -25,6 +25,7 @@ PyQt5~=5.15.9
 PyQt5-Qt5~=5.15.2
 PyQt5_sip==12.15.0
 comtypes==1.4.10
+wmi==1.5.1
 pywin32==310; platform_system == "Windows"
 win32_setctime==1.2.0; platform_system == "Windows"
 winshell==0.6; platform_system == "Windows"

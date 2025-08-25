@@ -6,7 +6,6 @@ from PyQt5.QtWidgets import *
 
 import json
 import os
-from pathlib import Path
 from loguru import logger
 import hashlib
 import pyotp
@@ -157,7 +156,7 @@ class TwoFactorAuthDialog(MessageBoxBase):
         self.buttonLayout.insertStretch(1)
 
     def verify_otp(self):
-        """ 验证OTP码 """
+        """ 验证TOTP码 """
         otp = self.otpInput.text()
         totp = pyotp.TOTP(self.secret)
         if totp.verify(otp):
@@ -182,7 +181,7 @@ class SimpleTwoFactorAuthDialog(MessageBoxBase):
     """ 2FA验证对话框 """
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.titleLabel = SubtitleLabel('2FA验证(注:如是开关请确认是开还是关,有些BUG,见谅)', self)
+        self.titleLabel = SubtitleLabel('2FA验证', self)
         self.titleLabel.setFont(QFont(load_custom_font(), 12))
         self.codeLineEdit = LineEdit(self)
         self.warningLabel = CaptionLabel("验证码错误")
@@ -207,13 +206,21 @@ class SimpleTwoFactorAuthDialog(MessageBoxBase):
         """ 验证验证码 """
         code = self.codeLineEdit.text()
         
-        # 从设置文件中获取2FA密钥
+        # 从设置文件中获取2FA密钥和用户名
         settings_file = path_manager.get_enc_set_path()
         if settings_file.exists():
             with open_file(settings_file, 'r', encoding='utf-8') as f:
                 try:
                     settings = json.load(f)
                     secret = settings.get("hashed_set", {}).get("2fa_secret")
+                    encrypted_username = settings.get("hashed_set", {}).get("encrypted_username")
+                    
+                    # 检查用户名是否存在
+                    if not encrypted_username:
+                        self.warningLabel.setText("2FA用户名未设置，请先设置用户名")
+                        self.warningLabel.setHidden(False)
+                        return False
+                    
                     if secret:
                         totp = pyotp.TOTP(secret)
                         isValid = totp.verify(code)
@@ -272,7 +279,7 @@ class PasswordDialog(MessageBoxBase):
     """ 密码对话框 """
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.titleLabel = SubtitleLabel('输入密码(注:如是开关请确认是开还是关,有些BUG,见谅)')
+        self.titleLabel = SubtitleLabel('输入密码')
         self.titleLabel.setFont(QFont(load_custom_font(), 12))
         self.passwordLineEdit = LineEdit(self)
         self.warningLabel = CaptionLabel("密码错误")
@@ -315,6 +322,187 @@ class PasswordDialog(MessageBoxBase):
         self.warningLabel.setHidden(False)
         return False
 
+class ChangePasswordDialog(MessageBoxBase):
+    """ 修改密码对话框 """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.titleLabel = SubtitleLabel('修改密码')
+        self.titleLabel.setFont(QFont(load_custom_font(), 12))
+        
+        # 当前密码输入框
+        self.currentPasswordLabel = BodyLabel('当前密码:')
+        self.currentPasswordLabel.setFont(QFont(load_custom_font(), 12))
+        self.currentPasswordLineEdit = LineEdit(self)
+        self.currentPasswordLineEdit.setEchoMode(QLineEdit.Password)
+        self.currentPasswordLineEdit.setPlaceholderText("请输入当前密码")
+        self.currentPasswordLineEdit.setClearButtonEnabled(True)
+        self.currentPasswordLineEdit.setFont(QFont(load_custom_font(), 12))
+        
+        # 新密码输入框
+        self.newPasswordLabel = BodyLabel('新密码:')
+        self.newPasswordLabel.setFont(QFont(load_custom_font(), 12))
+        self.newPasswordLineEdit = LineEdit(self)
+        self.newPasswordLineEdit.setEchoMode(QLineEdit.Password)
+        self.newPasswordLineEdit.setPlaceholderText("请输入新密码")
+        self.newPasswordLineEdit.setClearButtonEnabled(True)
+        self.newPasswordLineEdit.setFont(QFont(load_custom_font(), 12))
+        
+        # 确认新密码输入框
+        self.confirmPasswordLabel = BodyLabel('确认新密码:')
+        self.confirmPasswordLabel.setFont(QFont(load_custom_font(), 12))
+        self.confirmPasswordLineEdit = LineEdit(self)
+        self.confirmPasswordLineEdit.setEchoMode(QLineEdit.Password)
+        self.confirmPasswordLineEdit.setPlaceholderText("请确认新密码")
+        self.confirmPasswordLineEdit.setClearButtonEnabled(True)
+        self.confirmPasswordLineEdit.setFont(QFont(load_custom_font(), 12))
+        
+        self.warningLabel = CaptionLabel("")
+        self.warningLabel.setTextColor("#cf1010", QColor(255, 28, 32))
+
+        # 设置输入框回车键切换焦点
+        self.currentPasswordLineEdit.returnPressed.connect(self.newPasswordLineEdit.setFocus)
+        self.newPasswordLineEdit.returnPressed.connect(self.confirmPasswordLineEdit.setFocus)
+        self.confirmPasswordLineEdit.returnPressed.connect(self.accept)
+
+        # 添加组件到布局
+        self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.currentPasswordLabel)
+        self.viewLayout.addWidget(self.currentPasswordLineEdit)
+        self.viewLayout.addWidget(self.newPasswordLabel)
+        self.viewLayout.addWidget(self.newPasswordLineEdit)
+        self.viewLayout.addWidget(self.confirmPasswordLabel)
+        self.viewLayout.addWidget(self.confirmPasswordLineEdit)
+        self.viewLayout.addWidget(self.warningLabel)
+        self.warningLabel.hide()
+
+        # 设置对话框最小宽度
+        self.widget.setMinimumWidth(400)
+
+    def validate(self):
+        """ 验证密码修改 """
+        current_password = self.currentPasswordLineEdit.text()
+        new_password = self.newPasswordLineEdit.text()
+        confirm_password = self.confirmPasswordLineEdit.text()
+        
+        # 检查新密码和确认密码是否一致
+        if new_password != confirm_password:
+            self.warningLabel.setText("两次输入的新密码不一致")
+            self.warningLabel.show()
+            return False
+        
+        # 检查新密码是否为空
+        if not new_password:
+            self.warningLabel.setText("新密码不能为空")
+            self.warningLabel.show()
+            return False
+        
+        # 检查新密码是否与当前密码相同
+        if new_password == current_password:
+            self.warningLabel.setText("新密码不能与当前密码相同")
+            self.warningLabel.show()
+            return False
+        
+        # 验证当前密码是否正确
+        settings_file = path_manager.get_enc_set_path()
+        if path_manager.file_exists(settings_file):
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
+                try:
+                    settings = json.load(f)
+                    hashed_password = settings.get("hashed_set", {}).get("hashed_password")
+                    salt = settings.get("hashed_set", {}).get("password_salt")
+                    if hashed_password and salt:
+                        is_current_valid = hashed_password == hashlib.md5((current_password + salt).encode()).hexdigest()
+                        if not is_current_valid:
+                            self.warningLabel.setText("当前密码错误")
+                            self.warningLabel.show()
+                            return False
+                except json.JSONDecodeError:
+                    self.warningLabel.setText("设置文件损坏")
+                    self.warningLabel.show()
+                    return False
+        
+        self.warningLabel.hide()
+        return True
+
+class ChangeUsernameDialog(MessageBoxBase):
+    """ 修改2FA用户名对话框 """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.titleLabel = SubtitleLabel('修改2FA用户名')
+        self.titleLabel.setFont(QFont(load_custom_font(), 12))
+        
+        # 当前用户名显示
+        self.currentUsernameLabel = BodyLabel('当前用户名:')
+        self.currentUsernameLabel.setFont(QFont(load_custom_font(), 12))
+        self.currentUsernameValue = BodyLabel('')
+        self.currentUsernameValue.setFont(QFont(load_custom_font(), 12))
+        
+        # 新用户名输入框
+        self.newUsernameLabel = BodyLabel('新用户名:')
+        self.newUsernameLabel.setFont(QFont(load_custom_font(), 12))
+        self.newUsernameLineEdit = LineEdit(self)
+        self.newUsernameLineEdit.setPlaceholderText('请输入新的2FA用户名(仅限英文大小写字母和数字)')
+        self.newUsernameLineEdit.setClearButtonEnabled(True)
+        self.newUsernameLineEdit.setFont(QFont(load_custom_font(), 12))
+        self.newUsernameLineEdit.returnPressed.connect(self.accept)
+        
+        # 设置输入验证器，只允许英文大小写字母
+        regex = QRegExp("[A-Za-z0-9]+")
+        validator = QRegExpValidator(regex, self.newUsernameLineEdit)
+        self.newUsernameLineEdit.setValidator(validator)
+        
+        self.warningLabel = CaptionLabel("用户名只能包含英文大小写字母、数字且不能为空")
+        self.warningLabel.setTextColor("#cf1010", QColor(255, 28, 32))
+
+        # 添加组件到布局
+        self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.currentUsernameLabel)
+        self.viewLayout.addWidget(self.currentUsernameValue)
+        self.viewLayout.addWidget(self.newUsernameLabel)
+        self.viewLayout.addWidget(self.newUsernameLineEdit)
+        self.viewLayout.addWidget(self.warningLabel)
+        self.warningLabel.hide()
+
+        # 设置对话框最小宽度
+        self.widget.setMinimumWidth(500)
+        
+        # 加载当前用户名
+        self._load_current_username()
+    
+    def _load_current_username(self):
+        """加载当前用户名"""
+        settings_file = path_manager.get_enc_set_path()
+        if path_manager.file_exists(settings_file):
+            try:
+                with open_file(settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    encrypted_username = settings.get("hashed_set", {}).get("encrypted_username")
+                    if encrypted_username:
+                        salt = 'SecRandomSalt'
+                        # 这里无法直接解密，因为MD5是单向哈希
+                        # 显示为已加密状态
+                        self.currentUsernameValue.setText("[已加密存储]")
+                    else:
+                        self.currentUsernameValue.setText("[未设置]")
+            except json.JSONDecodeError:
+                self.currentUsernameValue.setText("[设置文件损坏]")
+        else:
+            self.currentUsernameValue.setText("[设置文件不存在]")
+
+    def validate(self):
+        """ 验证用户名修改 """
+        new_username = self.newUsernameLineEdit.text()
+        
+        # 检查用户名格式
+        isValid = bool(re.match(r'^[A-Za-z0-9]+$', new_username))
+        if not isValid:
+            self.warningLabel.setText("用户名只能包含英文大小写字母、数字且不能为空")
+            self.warningLabel.show()
+            return False
+        
+        self.warningLabel.hide()
+        return True
+
 class password_SettingsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -328,7 +516,8 @@ class password_SettingsCard(GroupHeaderCardWidget):
             "two_factor_auth": False,
             "exit_verification_enabled": False,
             "restart_verification_enabled": False,
-            "show_hide_verification_enabled": False
+            "show_hide_verification_enabled": False,
+            "usb_auth_enabled": False
         }
 
         # 密码功能开关
@@ -361,6 +550,16 @@ class password_SettingsCard(GroupHeaderCardWidget):
         self.set_password_button = PushButton('设置密码')
         self.set_password_button.setFont(QFont(load_custom_font(), 12))
         self.set_password_button.clicked.connect(self.show_password_dialog)
+        
+        # 修改密码按钮
+        self.change_password_button = PushButton('修改密码')
+        self.change_password_button.setFont(QFont(load_custom_font(), 12))
+        self.change_password_button.clicked.connect(self.show_change_password_dialog)
+        
+        # 修改2FA用户名按钮
+        self.change_username_button = PushButton('修改2FA用户名')
+        self.change_username_button.setFont(QFont(load_custom_font(), 12))
+        self.change_username_button.clicked.connect(self.show_change_username_dialog)
 
         # 退出软件是否需要验证密码开关
         self.exit_verification_switch = SwitchButton()
@@ -386,8 +585,10 @@ class password_SettingsCard(GroupHeaderCardWidget):
         # 添加组件到分组中
         self.addGroup(get_theme_icon("ic_fluent_person_passkey_20_filled"), "密码功能", "启用后将启用该设置卡的所有功能", self.start_password_switch)
         self.addGroup(get_theme_icon("ic_fluent_password_20_filled"), "设置密码", "设置管理员账号密码", self.set_password_button)
+        self.addGroup(get_theme_icon("ic_fluent_password_20_filled"), "修改密码", "修改管理员账号密码", self.change_password_button)
         self.addGroup(get_theme_icon("ic_fluent_document_key_20_filled"), '密钥导出', '导出密钥文件', self.export_key_button)
         self.addGroup(get_theme_icon("ic_fluent_certificate_20_filled"), "双重认证", "启用2FA验证", self.two_factor_switch)
+        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "修改2FA用户名", "修改双因素认证的用户名", self.change_username_button)
         # self.addGroup(FIF.VPN, "数据加密", "加密设置和名单文件", self.encrypt_setting_switch)
         if path_manager.file_exists('_internal'):
             self.addGroup(get_theme_icon("ic_fluent_arrow_reset_20_filled"), "重启软件验证", "重启软件时需要验证密码", self.restart_verification_switch)
@@ -604,6 +805,162 @@ class password_SettingsCard(GroupHeaderCardWidget):
             self.show_info_bar('error', '错误', '设置文件损坏', 3000, self)
             return
 
+    def show_change_password_dialog(self):
+        """显示修改密码对话框"""
+        if not path_manager.file_exists(self.settings_file):
+            self.show_info_bar('error', '错误', '设置文件不存在', 3000, self)
+            return
+
+        try:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                hashed_set = settings.get("hashed_set", {})
+                
+                # 检查是否已设置密码
+                if not hashed_set.get("hashed_password") or not hashed_set.get("password_salt"):
+                    self.show_info_bar('warning', '警告', '请先设置密码', 3000, self)
+                    return
+                
+                # 检查密码功能是否启用
+                if hashed_set.get("verification_start") == True:
+                    # 如果启用了2FA，需要先验证2FA
+                    if hashed_set.get("two_factor_auth") == True:
+                        dialog = SimpleTwoFactorAuthDialog(self)
+                        dialog.yesButton.setText("确认")
+                        dialog.cancelButton.setText("取消")
+                        if dialog.exec_() != QDialog.Accepted:
+                            self.show_info_bar('warning', '警告', '修改密码已取消', 3000, self)
+                            return
+                    
+                    # 显示修改密码对话框
+                    dialog = ChangePasswordDialog(self)
+                    dialog.yesButton.setText("确认")
+                    dialog.cancelButton.setText("取消")
+                    if dialog.exec():
+                        self.update_password(dialog, dialog.newPasswordLineEdit)
+                    else:
+                        self.show_info_bar('warning', '警告', '修改密码已取消', 3000, self)
+                else:
+                    self.show_info_bar('warning', '警告', '请先启用密码功能', 3000, self)
+                    return
+        except json.JSONDecodeError as e:
+            self.show_info_bar('error', '错误', '设置文件损坏', 3000, self)
+            return
+
+    def update_password(self, dialog, new_password_input):
+        """更新密码"""
+        new_password = new_password_input.text()
+        
+        if not new_password:
+            self.show_info_bar('error', '错误', '新密码不能为空', 3000, self)
+            return
+        
+        # 生成新的随机盐值
+        new_salt = secrets.token_hex(16)
+        new_hashed_password = hashlib.md5((new_password + new_salt).encode()).hexdigest()
+        
+        # 更新设置文件中的密码和盐值
+        try:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+            
+            if "hashed_set" not in settings:
+                settings["hashed_set"] = {}
+            
+            settings["hashed_set"]["hashed_password"] = new_hashed_password
+            settings["hashed_set"]["password_salt"] = new_salt
+            
+            with open_file(self.settings_file, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, indent=4)
+            
+            logger.info("密码修改成功")
+            self.show_info_bar('success', '成功', "密码修改成功", 3000, self)
+            dialog.accept()
+            
+        except Exception as e:
+            logger.error(f"密码修改失败: {e}")
+            self.show_info_bar('error', '错误', f"密码修改失败: {str(e)}", 3000, self)
+
+    def show_change_username_dialog(self):
+        """显示修改2FA用户名对话框"""
+        if not path_manager.file_exists(self.settings_file):
+            self.show_info_bar('error', '错误', '设置文件不存在', 3000, self)
+            return
+
+        try:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                hashed_set = settings.get("hashed_set", {})
+
+            # 检查是否启用了密码功能
+            if hashed_set.get("verification_start") != True:
+                self.show_info_bar('warning', '提示', '请先启用密码功能', 3000, self)
+                return
+
+            # 检查是否启用了2FA
+            if not hashed_set.get("two_factor_auth", False):
+                self.show_info_bar('warning', '提示', '请先启用2FA功能', 3000, self)
+                return
+
+            # 验证当前密码
+            dialog = PasswordDialog(self)
+            dialog.yesButton.setText("确认")
+            dialog.cancelButton.setText("取消")
+            if dialog.exec_() != QDialog.Accepted:
+                return
+
+            # 验证2FA
+            dialog = SimpleTwoFactorAuthDialog(self)
+            dialog.yesButton.setText("确认")
+            dialog.cancelButton.setText("取消")
+            if dialog.exec_() != QDialog.Accepted:
+                return
+
+            # 显示修改用户名对话框
+            dialog = ChangeUsernameDialog(self)
+            dialog.yesButton.setText("确认")
+            dialog.cancelButton.setText("取消")
+            if dialog.exec():
+                if dialog.validate():
+                    new_username = dialog.usernameLineEdit.text().strip()
+                    if self.update_username(new_username):
+                        self.show_info_bar('success', '用户名修改成功', '2FA用户名已成功修改', 3000, self)
+                    else:
+                        self.show_info_bar('error', '用户名修改失败', '2FA用户名修改失败', 3000, self)
+
+        except Exception as e:
+            logger.error(f"修改用户名对话框显示失败: {e}")
+            self.show_info_bar('error', '错误', f'修改用户名对话框显示失败: {str(e)}', 3000, self)
+
+    def update_username(self, new_username):
+        """更新2FA用户名"""
+        if not path_manager.file_exists(self.settings_file):
+            self.show_info_bar('error', '错误', '设置文件不存在', 3000, self)
+            return False
+
+        try:
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                hashed_set = settings.get("hashed_set", {})
+
+            # 生成新的用户名哈希（使用固定盐值）
+            username_salt = 'SecRandomSalt'
+            hashed_username = hashlib.md5((new_username + username_salt).encode('utf-8')).hexdigest()
+
+            # 更新设置
+            hashed_set['encrypted_username'] = hashed_username
+
+            settings['hashed_set'] = hashed_set
+
+            with open_file(self.settings_file, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, indent=4)
+
+            return True
+
+        except Exception as e:
+            logger.error(f"用户名修改失败: {e}")
+            return False
+
     def validate_and_save_password(self, dialog, password_input, confirm_password_input):
         password = password_input.text()
         confirm_password = confirm_password_input.text()
@@ -787,7 +1144,18 @@ class password_SettingsCard(GroupHeaderCardWidget):
             if dialog.exec():
                 username = dialog.usernameLineEdit.text()
                 if not username:
+                    self.show_info_bar('warning', '警告', '用户名不能为空', 3000, self)
+                    self.two_factor_switch.blockSignals(True)
+                    self.two_factor_switch.setChecked(False)
+                    self.two_factor_switch.blockSignals(False)
                     return
+            else:
+                # 用户取消用户名输入，重置开关状态
+                self.show_info_bar('warning', '警告', '2FA设置已取消', 3000, self)
+                self.two_factor_switch.blockSignals(True)
+                self.two_factor_switch.setChecked(False)
+                self.two_factor_switch.blockSignals(False)
+                return
 
             salt = 'SecRandomSalt'
             hashed_username = hashlib.md5((username + salt).encode()).hexdigest()
@@ -932,7 +1300,14 @@ class password_SettingsCard(GroupHeaderCardWidget):
                     self.show_hide_verification_switch.setChecked(
                         hashed_set_settings.get("show_hide_verification_enabled", self.default_settings["show_hide_verification_enabled"])
                     )
+                    self.usb_auth_switch.setChecked(
+                        settings.get("usb_auth_enabled", self.default_settings["usb_auth_enabled"])
+                    )
                     logger.info("安全设置加载完成")
+                    
+                    # 如果U盘认证已启用，启动监控线程
+                    if settings.get("usb_auth_enabled", False):
+                        self.start_usb_monitoring()
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.start_password_switch.setChecked(self.default_settings["start_password_enabled"])
@@ -941,6 +1316,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
                 self.exit_verification_switch.setChecked(self.default_settings["exit_verification_enabled"])
                 self.restart_verification_switch.setChecked(self.default_settings["restart_verification_enabled"])
                 self.show_hide_verification_switch.setChecked(self.default_settings["show_hide_verification_enabled"])
+                self.usb_auth_switch.setChecked(self.default_settings["usb_auth_enabled"])
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.start_password_switch.setChecked(self.default_settings["start_password_enabled"])
@@ -949,6 +1325,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
             self.exit_verification_switch.setChecked(self.default_settings["exit_verification_enabled"])
             self.restart_verification_switch.setChecked(self.default_settings["restart_verification_enabled"])
             self.show_hide_verification_switch.setChecked(self.default_settings["show_hide_verification_enabled"])
+            self.usb_auth_switch.setChecked(self.default_settings["usb_auth_enabled"])
 
     def save_settings(self):
         # 先读取现有设置
@@ -975,6 +1352,9 @@ class password_SettingsCard(GroupHeaderCardWidget):
             "restart_verification_enabled": self.restart_verification_switch.isChecked(),
             "show_hide_verification_enabled": self.show_hide_verification_switch.isChecked()
         })
+        
+        # 更新U盘认证设置（存储在根级别，不在hashed_set中）
+        _existing_settings["usb_auth_enabled"] = self.usb_auth_switch.isChecked()
 
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
 
