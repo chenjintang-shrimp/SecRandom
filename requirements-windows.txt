@@ -42,3 +42,4 @@ sortedcontainers==2.4.0
 scikit-image==0.21.0
 torchvision==0.19.1
 tensorboard==2.14.0
+expecttest==0.3.0

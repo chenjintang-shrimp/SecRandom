@@ -7,6 +7,7 @@ from PyQt5.QtMultimedia import *
 import os
 import json
 import random
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -151,11 +152,11 @@ class FaceRecognitionPumping(QWidget):
                 raise Exception(f"创建模型目录失败: {dir_error}")
             
             # 检查模型是否已存在
-            if os.path.exists(model_save_dir) and os.listdir(model_save_dir):
+            if model_save_dir.exists() and any(model_save_dir.iterdir()):
                 logger.info(f"检测到本地模型目录存在: {model_save_dir}")
                 self.status_label.setText("状态：检测到本地模型，正在加载...")
                 # 使用字符串路径，避免WindowsPath对象问题
-                model_dir = str(model_save_dir)
+                model_dir = str(model_save_dir.resolve())
             
             # 验证模型目录
             if model_dir is None:
@@ -165,7 +166,7 @@ class FaceRecognitionPumping(QWidget):
             self.status_label.setText("状态：正在初始化模型...")
             try:
                 # 确保model_dir是有效路径
-                if not os.path.exists(model_dir):
+                if not Path(model_dir).exists():
                     raise Exception(f"模型目录不存在: {model_dir}")
                     
                 # 初始化pipeline并验证
@@ -177,8 +178,22 @@ class FaceRecognitionPumping(QWidget):
                 if not hasattr(self.face_detector, '__call__'):
                     raise Exception("初始化的人脸检测器不可调用")
                     
+                # 测试模型是否能正常工作
+                test_result = self.face_detector(np.zeros((100, 100, 3), dtype=np.uint8))
+                if not isinstance(test_result, dict) or 'boxes' not in test_result:
+                    raise Exception("模型测试失败，返回无效结果")
+                    
             except Exception as init_error:
                 logger.error(f"本地模型初始化失败: {init_error}")
+                # 尝试使用在线模型作为备用方案
+                try:
+                    logger.info("尝试使用在线模型...")
+                    self.face_detector = pipeline(Tasks.face_detection, model=model_name)
+                    if self.face_detector is not None:
+                        logger.info("在线模型加载成功")
+                except Exception as online_error:
+                    logger.error(f"在线模型加载也失败: {online_error}")
+                    raise
             
             self.models_loaded = True
             self.status_label.setText("状态：人脸检测模型加载完成")
