@@ -43,3 +43,5 @@ scikit-image==0.21.0
 torchvision==0.19.1
 tensorboard==2.14.0
 expecttest==0.3.0
+onnxscript==0.2.7
+pytest==8.3.5
