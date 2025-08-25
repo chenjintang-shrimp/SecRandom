@@ -6,6 +6,7 @@
 import os
 import json
 import webbrowser
+from datetime import datetime
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -383,10 +384,44 @@ class UpdateLogWindow(MSFluentWindow, UIAccessMixin):
         # 更新下一个按钮状态
         self.next_button.setEnabled(self.current_page_index < self.total_pages - 1)
     
+    def update_guide_complete_version(self):
+        """(^・ω・^ ) 白露的版本号更新魔法！
+        更新guide_complete.json文件中的版本号为当前版本～ ✨"""
+        try:
+            guide_complete_path = path_manager.get_settings_path('guide_complete.json')
+            
+            # 读取现有配置
+            if os.path.exists(guide_complete_path):
+                with open(guide_complete_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+            else:
+                config = {
+                    "guide_completed": True,
+                    "completion_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "version": VERSION
+                }
+            
+            # 更新版本号
+            config["version"] = VERSION
+            config["completion_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # 确保目录存在
+            os.makedirs(os.path.dirname(guide_complete_path), exist_ok=True)
+            
+            # 保存更新后的配置
+            with open(guide_complete_path, 'w', encoding='utf-8') as f:
+                json.dump(config, f, ensure_ascii=False, indent=4)
+            
+            logger.info(f"白露更新日志: 已更新guide_complete.json中的版本号为 {VERSION}")
+        except Exception as e:
+            logger.error(f"白露更新日志: 更新guide_complete.json版本号失败: {e}")
+    
     def close_window(self):
         """(^・ω・^ ) 白露的窗口关闭魔法！
-        关闭更新日志窗口并发送打开主界面信号～ ✨"""
+        关闭更新日志窗口并发送打开主界面信号，同时更新版本号～ ✨"""
         logger.info("白露更新日志: 用户关闭更新日志窗口，准备打开主界面～ ")
+        # 更新guide_complete.json中的版本号
+        self.update_guide_complete_version()
         # 发射信号通知主程序打开主界面
         self.start_signal_update.emit()
         self.close()
@@ -422,8 +457,10 @@ class UpdateLogWindow(MSFluentWindow, UIAccessMixin):
     
     def closeEvent(self, event):
         """(^・ω・^ ) 白露的窗口关闭魔法！
-        确保更新日志窗口关闭时正确清理资源并发送打开主界面信号～ ✨"""
+        确保更新日志窗口关闭时正确清理资源并发送打开主界面信号，同时更新版本号～ ✨"""
         logger.debug("白露更新日志: 更新日志窗口已关闭，准备打开主界面～ ")
+        # 更新guide_complete.json中的版本号
+        self.update_guide_complete_version()
         # 发射信号通知主程序打开主界面
         self.start_signal_update.emit()
         super().closeEvent(event)
