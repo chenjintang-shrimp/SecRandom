@@ -216,7 +216,7 @@ class FaceRecognitionPumping(QWidget):
             # 设置摄像头分辨率，降低数据量提高性能
             self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.display_width)
             self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.display_height)
-                
+            
             self.camera_button.setText("关闭摄像头")
             self.start_button.setEnabled(True)
             self.status_label.setText("状态：摄像头已开启")
