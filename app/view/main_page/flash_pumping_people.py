@@ -884,7 +884,7 @@ class pumping_people(QWidget):
 
                         elif use_system_random == 2 or use_system_random == 3:  # 动态权重调整抽取系统
                             # 加载历史记录
-                            history_file = path_manager.get_history_path(f"{class_name}.json")
+                            history_file = path_manager.get_resource_path("history", f"{class_name}.json")
                             history_data = {}
                             if path_manager.file_exists(history_file):
                                 with open_file(history_file, 'r', encoding='utf-8') as f:
