@@ -31,6 +31,7 @@ from app.view.settings import settings_Window
 from app.view.main_page.pumping_people import pumping_people
 from app.view.main_page.pumping_reward import pumping_reward
 from app.view.main_page.history_handoff_setting import history_handoff_setting
+from app.view.main_page.face_recognition_pumping import FaceRecognitionPumping
 from app.view.levitation import LevitationWindow
 from app.view.settings_page.about_setting import about
 from app.common.about import ContributorDialog, DonationDialog
@@ -95,6 +96,7 @@ class ConfigurationManager:
                 'pumping_floating_enabled': True,
                 'pumping_floating_side': 0,
                 'pumping_reward_side': 0,
+                'face_recognition_pumping_side': 0,
                 'main_window_mode': 0,
                 'check_on_startup': True,
                 'topmost_switch': False
@@ -607,6 +609,11 @@ class Window(MSFluentWindow, UIAccessMixin):
         self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
         logger.debug("白露建筑: 抽奖界面房间已建成～ ")
 
+        # 创建人脸识别抽人界面
+        self.face_recognition_pumpingInterface = FaceRecognitionPumping(self)
+        self.face_recognition_pumpingInterface.setObjectName("face_recognition_pumpingInterface")
+        logger.debug("白露建筑: 人脸识别抽人界面房间已建成～ ")
+
         # 初始化导航系统
         self.initNavigation()
         logger.info("白露建筑: 所有子界面和导航系统已完工！城堡可以正式对外开放啦～ ")
@@ -638,10 +645,19 @@ class Window(MSFluentWindow, UIAccessMixin):
                     self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
                     logger.debug("白露导航: '抽奖'界面已放置在顶部导航栏～ ")
 
+                # 根据设置决定"人脸识别抽人"界面位置
+                if foundation_settings.get('face_recognition_pumping_side', 0) == 1:
+                    self.addSubInterface(self.face_recognition_pumpingInterface, get_theme_icon("ic_fluent_camera_20_filled"), '人脸识别抽人', position=NavigationItemPosition.BOTTOM)
+                    logger.debug("白露导航: '人脸识别抽人'界面已放置在底部导航栏～ ")
+                else:
+                    self.addSubInterface(self.face_recognition_pumpingInterface, get_theme_icon("ic_fluent_camera_20_filled"), '人脸识别抽人', position=NavigationItemPosition.TOP)
+                    logger.debug("白露导航: '人脸识别抽人'界面已放置在顶部导航栏～ ")
+
         except FileNotFoundError as e:
             logger.error(f"白露导航出错: 配置文件找不到啦～ {e}, 使用默认顶部导航布局")
             self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
             self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
+            self.addSubInterface(self.face_recognition_pumpingInterface, get_theme_icon("ic_fluent_camera_20_filled"), '人脸识别抽人', position=NavigationItemPosition.TOP)
 
         # 添加固定位置的导航项
         # 为历史记录导航项添加点击事件处理器

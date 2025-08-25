@@ -29,3 +29,15 @@ pywin32==310; platform_system == "Windows"
 win32_setctime==1.2.0; platform_system == "Windows"
 winshell==0.6; platform_system == "Windows"
 pycaw==20240210; platform_system == "Windows"
+
+# 人脸识别引擎
+opencv-python==4.12.0.88
+modelscope==1.29.1
+torch==2.4.1
+NumPy==1.24.4
+addict==2.4.0
+datasets==3.1.0
+simplejson==3.19.2
+sortedcontainers==2.4.0
+scikit-image==0.21.0
+torchvision==0.19.1
