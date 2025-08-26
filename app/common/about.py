@@ -702,7 +702,8 @@ class DonationDialog(QDialog):
         def calculate_file_md5(self, file_path):
             """计算文件的MD5值"""
             try:
-                with open_file(file_path, 'rb') as f:
+                # 直接使用内置open函数，避免二进制模式下的encoding参数问题
+                with open(file_path, 'rb') as f:
                     file_hash = hashlib.md5()
                     while chunk := f.read(8192):
                         file_hash.update(chunk)
@@ -727,7 +728,7 @@ class DonationDialog(QDialog):
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
                 
                 # 写入文件
-                with open_file(local_path, 'wb') as f:
+                with open(local_path, 'wb') as f:
                     f.write(response.content)
                 
                 logger.info(f"成功下载文件: {filename}")
@@ -746,7 +747,7 @@ class DonationDialog(QDialog):
                     os.makedirs(os.path.dirname(local_path), exist_ok=True)
                     
                     # 写入文件
-                    with open_file(local_path, 'wb') as f:
+                    with open(local_path, 'wb') as f:
                         f.write(response.content)
                     
                     logger.info(f"成功下载文件(禁用SSL验证): {filename}")
