@@ -69,12 +69,19 @@ class reward_SettinsCard(GroupHeaderCardWidget):
             logger.error(f"加载奖品名称失败: {str(e)}")
 
         # 添加组件到分组中
-        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "设置奖池", "设置奖池名称", self.prize_pools_Button)
-        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "选择奖池", "选择一个需要设置奖品的奖池", self.prize_pools_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导入奖品名单", "点击按钮快速导入奖品名单(该功能会覆盖原名单)", self.import_Button)
-        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置奖品名称", "设置该奖池的奖品", self.prize_Button)
-        self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置奖品权重", "设置奖品权重", self.probability_Button)
-        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导出奖品名单", "点击按钮导出当前奖池奖品名单文件", self.export_Button)
+        # 奖池管理设置
+        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "设置奖池", "创建或修改奖池名称信息", self.prize_pools_Button)
+        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "选择奖池", "选择要配置奖品的奖池", self.prize_pools_comboBox)
+        
+        # 数据导入设置
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导入奖品名单", "批量导入奖品数据（将覆盖现有数据）", self.import_Button)
+        
+        # 奖品设置
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置奖品名称", "配置奖池中的奖品项目", self.prize_Button)
+        self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置奖品权重", "调整奖品的中奖概率权重", self.probability_Button)
+        
+        # 数据导出设置
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导出奖品名单", "导出当前奖池奖品数据到文件", self.export_Button)
 
         # 创建表格
         self.table = TableWidget(self)

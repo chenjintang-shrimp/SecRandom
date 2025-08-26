@@ -75,14 +75,22 @@ class list_SettinsCard(GroupHeaderCardWidget):
         except Exception as e:
             logger.error(f"加载班级名称失败: {str(e)}")
 
-        # 添加组件到分组中
-        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "设置班级", "点击按钮设置班级名称", self.class_Button)
-        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "选择班级", "选择一个需要设置学生姓名的班级", self.class_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导入学生名单", "点击按钮快速导入学生名单(该功能会覆盖原名单)", self.import_Button)
-        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置学生姓名", "点击按钮设置学生姓名", self.student_Button)
-        self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置学生性别", "点击按钮设置学生性别", self.gender_Button)
-        self.addGroup(get_theme_icon("ic_fluent_group_20_filled"), "设置小组", "点击按钮设置小组名单", self.group_Button)
-        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导出学生名单", "点击按钮导出当前班级学生名单文件", self.export_Button)
+        # 班级管理设置
+        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "设置班级", "创建或编辑班级名称信息", self.class_Button)
+        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "选择班级", "选择要管理学生信息的班级", self.class_comboBox)
+        
+        # 数据导入设置
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导入学生名单", "从文件批量导入学生信息(将覆盖现有数据)", self.import_Button)
+        
+        # 学生信息设置
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "设置学生姓名", "编辑或添加学生姓名信息", self.student_Button)
+        self.addGroup(get_theme_icon("ic_fluent_person_pill_20_filled"), "设置学生性别", "配置学生性别信息", self.gender_Button)
+        
+        # 小组管理设置
+        self.addGroup(get_theme_icon("ic_fluent_group_20_filled"), "设置小组", "创建和管理学生小组分配", self.group_Button)
+        
+        # 数据导出设置
+        self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), "导出学生名单", "将当前班级学生信息导出为文件", self.export_Button)
 
         # 创建表格
         self.table = TableWidget(self)

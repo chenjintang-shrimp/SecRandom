@@ -46,9 +46,14 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         self.load_students()
 
         # 添加组件到分组中
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "点击按钮刷新奖池列表/记录表格", self.refresh_button)
-        self.addGroup(get_theme_icon("ic_fluent_reward_20_filled"), "选择奖池", "选择一个需要查看历史记录的奖池", self.prize_pools_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择奖品", "这个一个可查看单个奖品的功能", self.reward_comboBox)
+        # ===== 数据刷新 =====
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "重新加载奖池列表和历史记录数据", self.refresh_button)
+        
+        # ===== 奖池选择 =====
+        self.addGroup(get_theme_icon("ic_fluent_reward_20_filled"), "选择奖池", "选择要查看历史记录的目标奖池", self.prize_pools_comboBox)
+        
+        # ===== 奖品选择 =====
+        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择奖品", "选择查看范围：全部奖品、时间排序或单个奖品", self.reward_comboBox)
 
     def refresh_reward_list(self):
         try:

@@ -47,9 +47,14 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.load_students()
 
         # 添加组件到分组中
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "点击按钮刷新班级列表/记录表格", self.refresh_button)
-        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "选择班级", "选择一个需要查看历史记录的班级", self.class_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择同学", "全班同学是详细的内容,个人是只有抽取的时间与方式", self.student_comboBox)
+        # ===== 数据刷新 =====
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "重新加载班级列表和历史记录数据", self.refresh_button)
+        
+        # ===== 班级选择 =====
+        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "选择班级", "选择要查看历史记录的目标班级", self.class_comboBox)
+        
+        # ===== 查看范围选择 =====
+        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择同学", "选择查看范围：全班(详细记录)或个人(抽取时间与方式)", self.student_comboBox)
 
     def refresh_class_list(self):
         try:

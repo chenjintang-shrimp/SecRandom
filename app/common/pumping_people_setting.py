@@ -239,31 +239,42 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_image_path_button.clicked.connect(lambda: self.open_image_path())
 
         # 添加组件到分组中
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_people_Draw_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_Draw_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小(支持小数)", self.pumping_people_font_size_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_number_symbol_square_20_filled"), "学号格式", "设置学号格式设置", self.pumping_people_student_id_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_rename_20_filled"), "姓名格式", "设置姓名格式设置", self.pumping_people_student_name_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "显示格式", "设置抽取结果的显示格式", self.pumping_people_display_format_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "显示随机组员", "抽取小组时是否显示随机组员", self.show_random_member_checkbox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "组员显示格式", "设置随机组员的显示格式", self.random_member_format_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "班级人|组数", "设置该功能的显示格式", self.pumping_people_theme_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画/结果颜色", "设置动画/结果的字体颜色", self.pumping_people_student_name_color_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画颜色", "设置动画的固定字体颜色", self.pumping_people_animation_color_fixed_dialog_button)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "结果颜色", "设置结果的固定字体颜色", self.pumping_people_result_color_fixed_dialog_button)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "学生图片", "是否显示学生图片", self.pumping_people_show_image_switch)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "学生图片文件夹", "点击打开学生图片目录(图片名称需与学生名称对应)(没有图片则会显示第一个字)", self.pumping_people_image_path_button)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_people_Animation_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "设置抽取时的动画播放间隔(50-2000)(<1,2号动画模式>适用)", self.pumping_people_Animation_interval_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置抽取时的自动播放次数(1-200)(<2号动画模式>适用)", self.pumping_people_Animation_auto_play_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐", "抽取动画背景音乐是否进行播放", self.pumping_people_Animation_music_switch)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐", "抽取结果背景音乐是否进行播放", self.pumping_people_result_music_switch)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐文件夹", "点击打开抽取动画背景音乐目录(支持mp3,wav,flac,ogg)", self.pumping_people_Animation_music_path_button)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐文件夹", "点击打开抽取结果背景音乐目录(支持mp3,wav,flac,ogg)", self.pumping_people_result_music_path_button)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐音量", "设置抽取动画背景音乐音量 (0-100)", self.pumping_people_Animation_music_volume_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐音量", "设置抽取结果背景音乐音量 (0-100)", self.pumping_people_result_music_volume_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐入时间", "设置抽取动画/结果背景音乐渐入时间 (0-1000)(ms)", self.pumping_people_music_fade_in_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐出时间", "设置抽取动画/结果背景音乐渐出时间 (0-1000)(ms)", self.pumping_people_music_fade_out_SpinBox)
+        # 抽取模式设置
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "配置抽取人员的基本模式", self.pumping_people_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "选择具体的抽取执行方式", self.pumping_Draw_comboBox)
+        
+        # 显示格式设置
+        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "调整抽取结果显示的字体大小", self.pumping_people_font_size_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_number_symbol_square_20_filled"), "学号格式", "设置学号的显示格式规范", self.pumping_people_student_id_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_rename_20_filled"), "姓名格式", "配置姓名的显示格式规范", self.pumping_people_student_name_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "显示格式", "选择抽取结果的展示格式", self.pumping_people_display_format_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "显示随机组员", "抽取小组时是否同步显示组员信息", self.show_random_member_checkbox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "组员显示格式", "配置随机组员信息的显示格式", self.random_member_format_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "班级人|组数", "设置人数或组数的显示样式", self.pumping_people_theme_comboBox)
+        
+        # 颜色设置
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画/结果颜色", "配置动画和结果的字体颜色主题", self.pumping_people_student_name_color_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画颜色", "自定义动画播放时的字体颜色", self.pumping_people_animation_color_fixed_dialog_button)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "结果颜色", "自定义抽取结果展示的字体颜色", self.pumping_people_result_color_fixed_dialog_button)
+        
+        # 图片显示设置
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "学生图片", "是否在抽取时显示学生照片", self.pumping_people_show_image_switch)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "学生图片文件夹", "管理学生照片目录（图片名需与学生姓名对应）", self.pumping_people_image_path_button)
+        
+        # 动画设置
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "选择抽取过程的动画播放模式", self.pumping_people_Animation_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "调整动画播放的速度间隔（适用于1、2号模式）", self.pumping_people_Animation_interval_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置动画自动重复播放的次数（适用于2号模式）", self.pumping_people_Animation_auto_play_SpinBox)
+        
+        # 音乐设置
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐", "启用抽取动画的背景音乐播放", self.pumping_people_Animation_music_switch)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐", "启用抽取结果的背景音乐播放", self.pumping_people_result_music_switch)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐文件夹", "管理动画背景音乐文件目录", self.pumping_people_Animation_music_path_button)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐文件夹", "管理结果背景音乐文件目录", self.pumping_people_result_music_path_button)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐音量", "调整动画背景音乐的播放音量", self.pumping_people_Animation_music_volume_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐音量", "调整结果背景音乐的播放音量", self.pumping_people_result_music_volume_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐入时间", "设置音乐淡入效果的持续时间", self.pumping_people_music_fade_in_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐出时间", "设置音乐淡出效果的持续时间", self.pumping_people_music_fade_out_SpinBox)
 
         self.load_settings()  # 加载设置
         self.save_settings()  # 保存设置

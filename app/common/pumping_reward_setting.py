@@ -200,27 +200,38 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_image_path_button.clicked.connect(lambda: self.open_image_path())
 
         # 添加组件到分组中
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "设置抽取模式", self.pumping_reward_Draw_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "设置抽取方式", self.pumping_reward_mode_Draw_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "设置抽取结果的字体大小", self.pumping_reward_font_size_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品量", "设置该功能的显示格式", self.pumping_reward_theme_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "显示格式", "设置抽取结果的显示格式", self.pumping_reward_display_format_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画/结果颜色", "设置动画/结果的字体颜色", self.pumping_reward_student_name_color_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画颜色", "设置动画的固定字体颜色", self.pumping_reward_animation_color_fixed_dialog_button)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "结果颜色", "设置结果的固定字体颜色", self.pumping_reward_result_color_fixed_dialog_button)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品图片", "是否显示奖品图片", self.pumping_reward_show_image_switch)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品图片文件夹", "点击打开奖品图片目录(图片名称需与奖品名称对应)(没有图片则会显示第一个字)", self.pumping_reward_image_path_button)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "设置抽取时的动画播放方式", self.pumping_reward_Animation_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "设置抽取时的动画播放间隔(50-2000)(<1,2号动画模式>适用)", self.pumping_reward_animation_interval_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置抽取时的自动播放次数(1-200)(<2号动画模式>适用)", self.pumping_reward_animation_auto_play_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐", "抽取动画背景音乐是否进行播放", self.pumping_reward_Animation_music_switch)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐", "抽取结果背景音乐是否进行播放", self.pumping_reward_result_music_switch)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐文件夹", "点击打开抽取动画背景音乐目录(支持mp3,wav,flac,ogg)", self.pumping_reward_Animation_music_path_button)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐文件夹", "点击打开抽取结果背景音乐目录(支持mp3,wav,flac,ogg)", self.pumping_reward_result_music_path_button)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐音量", "设置抽取动画背景音乐音量 (0-100)", self.pumping_reward_Animation_music_volume_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐音量", "设置抽取结果背景音乐音量 (0-100)", self.pumping_reward_result_music_volume_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐入时间", "设置抽取动画/结果背景音乐渐入时间 (0-1000)(ms)", self.pumping_reward_music_fade_in_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐出时间", "设置抽取动画/结果背景音乐渐出时间 (0-1000)(ms)", self.pumping_reward_music_fade_out_SpinBox)
+        # ===== 抽取模式设置 =====
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "配置抽取奖品的基本模式", self.pumping_reward_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "选择抽取奖品的具体方式", self.pumping_reward_mode_Draw_comboBox)
+        
+        # ===== 显示格式设置 =====
+        self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "调整抽取结果显示的字体大小", self.pumping_reward_font_size_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品量", "设置抽取结果的显示样式", self.pumping_reward_theme_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "显示格式", "配置抽取结果的展示格式", self.pumping_reward_display_format_comboBox)
+        
+        # ===== 颜色设置 =====
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画/结果颜色", "设置动画和结果的字体颜色", self.pumping_reward_student_name_color_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画颜色", "自定义动画过程的字体颜色", self.pumping_reward_animation_color_fixed_dialog_button)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "结果颜色", "自定义最终结果的字体颜色", self.pumping_reward_result_color_fixed_dialog_button)
+        
+        # ===== 图片显示设置 =====
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品图片", "控制是否显示奖品图片", self.pumping_reward_show_image_switch)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品图片文件夹", "打开奖品图片目录(图片名需与奖品名对应，无图则显示首字)", self.pumping_reward_image_path_button)
+        
+        # ===== 动画设置 =====
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "选择抽取时的动画播放模式", self.pumping_reward_Animation_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "调整动画播放的时间间隔(50-2000ms，适用于1、2号动画)", self.pumping_reward_animation_interval_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置动画自动播放的次数(1-200次，仅适用于2号动画)", self.pumping_reward_animation_auto_play_SpinBox)
+        
+        # ===== 音乐设置 =====
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐", "开启或关闭抽取动画的背景音乐", self.pumping_reward_Animation_music_switch)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐", "开启或关闭抽取结果的背景音乐", self.pumping_reward_result_music_switch)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐文件夹", "打开动画音乐目录(支持mp3、wav、flac、ogg格式)", self.pumping_reward_Animation_music_path_button)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐文件夹", "打开结果音乐目录(支持mp3、wav、flac、ogg格式)", self.pumping_reward_result_music_path_button)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐音量", "调整动画背景音乐的播放音量(0-100)", self.pumping_reward_Animation_music_volume_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "结果音乐音量", "调整结果背景音乐的播放音量(0-100)", self.pumping_reward_result_music_volume_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐入时间", "设置音乐渐入效果的时间长度(0-1000ms)", self.pumping_reward_music_fade_in_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐出时间", "设置音乐渐出效果的时间长度(0-1000ms)", self.pumping_reward_music_fade_out_SpinBox)
 
         self.load_settings()  # 加载设置
         self.save_settings()  # 保存设置

@@ -289,33 +289,43 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.url_protocol_switch.checkedChanged.connect(self.toggle_url_protocol)
 
 
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新设置", "启动时自动检查软件更新", self.check_on_startup)
-        self.addGroup(get_theme_icon("ic_fluent_branch_compare_20_filled"), "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
-        self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "URL协议注册", "注册SecRandom URL协议，允许其他程序通过URL启动SecRandom并打开特定界面", self.url_protocol_switch)
-        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "主窗口控制面板", "设置主窗口控制面板位置", self.main_window_control_Switch)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "主界面侧边栏是否显示设置图标", "设置主界面侧边栏是否显示设置图标", self.show_settings_icon_switch)
-
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗", "设置浮窗功能按钮数量", self.left_pumping_floating_switch)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "按钮排列方式", "设置浮窗按钮的排列方式", self.button_arrangement_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽自动关闭", "设置闪抽窗口是否自动关闭", self.flash_window_auto_close_switch)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "设置闪抽关闭时间", "设置闪抽窗口关闭时间", self.flash_window_close_time_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗透明度", "设置便捷抽人的浮窗透明度", self.pumping_floating_transparency_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "主窗口置顶", "设置主窗口是否置顶(需重新打开主窗口生效-不是重启软件)", self.topmost_switch)
-        self.addGroup(get_theme_icon("ic_fluent_layout_row_two_focus_top_settings_20_filled"), "主窗口焦点", "设置主窗口不是焦点时关闭延迟", self.main_window_focus_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "检测主窗口焦点时间", "设置检测主窗口焦点时间", self.main_window_focus_time_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "是否检测前台软件", "设置是否检测前台软件", self.floating_window_visibility_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "检测前台软件类名", "设置检测前台软件类名", self.foreground_software_class_button)
-        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "检测前台软件标题", "设置检测前台软件标题", self.foreground_software_title_button)
-        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "检测前台软件进程", "设置检测前台软件进程", self.foreground_software_process_button)
-        self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "定时清理", "设置定时清理抽取记录的时间", self.cleanup_button)
-        self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "主窗口位置", "设置主窗口的显示位置", self.main_window_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "设置窗口位置", "设置设置窗口的显示位置", self.settings_window_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_group_20_filled"), "导出诊断数据", "导出软件诊断数据用于问题排查", self.export_diagnostic_button)
-        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "导入设置", "从文件导入软件设置", self.import_settings_button)
-        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "导出设置", "导出软件设置到文件", self.export_settings_button)
+        # 系统功能设置
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新设置", "软件启动时自动检查并提示可用更新", self.check_on_startup)
+        self.addGroup(get_theme_icon("ic_fluent_branch_compare_20_filled"), "开机自启", "系统开机时自动运行SecRandom(启用后将默认隐藏主窗口)", self.self_starting_switch)
+        self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "URL协议注册", "注册SecRandom协议，支持通过URL链接快速启动特定功能", self.url_protocol_switch)
+        
+        # 窗口位置设置
+        self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "主窗口位置", "设置主窗口在屏幕上的默认显示位置", self.main_window_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "设置窗口位置", "设置设置窗口在屏幕上的默认显示位置", self.settings_window_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "主窗口置顶", "使主窗口始终显示在其他窗口之上(需重新打开窗口生效)", self.topmost_switch)
+        
+        # 界面布局设置
+        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "设置图标显示", "控制主界面侧边栏中设置图标的显示状态", self.show_settings_icon_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "主窗口控制面板", "配置主窗口控制面板的显示位置", self.main_window_control_Switch)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "调整抽人功能侧边栏的显示位置", self.pumping_floating_side_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "调整抽奖功能侧边栏的显示位置", self.pumping_reward_side_comboBox)
+        
+        # 浮窗功能设置
+        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "控制便捷抽人悬浮窗的显示和隐藏状态", self.pumping_floating_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗按钮数量", "自定义悬浮窗中显示的功能按钮数量", self.left_pumping_floating_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "按钮排列方式", "选择悬浮窗按钮的水平或垂直排列布局", self.button_arrangement_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗透明度", "调整悬浮窗的透明度以适应不同使用场景", self.pumping_floating_transparency_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽自动关闭", "启用后闪抽窗口将在完成操作后自动关闭", self.flash_window_auto_close_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽关闭时间", "设置闪抽窗口自动关闭的延迟时间", self.flash_window_close_time_comboBox)
+        
+        # 智能检测设置
+        self.addGroup(get_theme_icon("ic_fluent_layout_row_two_focus_top_settings_20_filled"), "窗口焦点延迟", "设置主窗口失去焦点后的自动关闭延迟时间", self.main_window_focus_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "焦点检测间隔", "配置主窗口焦点状态的检测频率", self.main_window_focus_time_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "前台软件检测", "启用基于前台软件的悬浮窗智能显示控制", self.floating_window_visibility_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "软件类名检测", "设置用于检测的前台软件窗口类名", self.foreground_software_class_button)
+        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "软件标题检测", "设置用于检测的前台软件窗口标题", self.foreground_software_title_button)
+        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "软件进程检测", "设置用于检测的前台软件进程名称", self.foreground_software_process_button)
+        
+        # 数据管理设置
+        self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "定时清理记录", "配置自动清理抽取记录的时间间隔", self.cleanup_button)
+        self.addGroup(get_theme_icon("ic_fluent_group_20_filled"), "导出诊断数据", "生成并导出系统诊断信息用于技术支持", self.export_diagnostic_button)
+        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "导入设置", "从配置文件恢复软件的各项设置参数", self.import_settings_button)
+        self.addGroup(get_theme_icon("ic_fluent_multiselect_ltr_20_filled"), "导出设置", "将当前软件设置保存到配置文件中", self.export_settings_button)
         
         # 定时检查清理
         self.cleanup_timer = QTimer(self)

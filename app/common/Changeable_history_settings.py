@@ -79,13 +79,24 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.load_students()
 
         # 添加组件到分组中
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "点击按钮刷新班级列表/记录表格", self.refresh_button)
-        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "选择班级", "选择一个需要查看历史记录的班级", self.class_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择学生", "这个一个可查看单个学生的功能", self.student_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "配置过期天数", "配置历史记录中抽取时间戳的过期天数", self.history_spinBox)
-        self.addGroup(get_theme_icon("ic_fluent_delete_dismiss_20_filled"), "清除历史记录", "点击按钮清除当前选择的班级点名历史记录", self.clear_history_Button)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "权重|概率", "选择是否使用'权重'还是'概率'进行显示以及公平抽取", self.probability_or_weight)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "历史记录", "选择是否开启该功能(如果使用更'精确'的公平抽取务必打开)", self.history_switch)
+        # ===== 数据刷新 =====
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "重新加载班级列表和历史记录数据", self.refresh_button)
+        
+        # ===== 数据选择 =====
+        self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), "选择班级", "选择要查看历史记录的目标班级", self.class_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择学生", "选择查看范围：全班(详细记录)或个人(抽取时间与方式)", self.student_comboBox)
+        
+        # ===== 时间配置 =====
+        self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "配置过期天数", "设置历史记录的保留时间(0-365天)", self.history_spinBox)
+        
+        # ===== 数据管理 =====
+        self.addGroup(get_theme_icon("ic_fluent_delete_dismiss_20_filled"), "清除历史记录", "删除当前班级的所有点名历史记录", self.clear_history_Button)
+        
+        # ===== 显示设置 =====
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "权重|概率", "选择抽取数据显示方式：权重或概率模式", self.probability_or_weight)
+        
+        # ===== 功能开关 =====
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "历史记录", "启用历史记录功能(精确公平抽取必需开启)", self.history_switch)
 
         self.load_settings()
         self.save_settings()

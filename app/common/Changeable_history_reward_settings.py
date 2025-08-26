@@ -70,12 +70,21 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         self.load_students()
 
         # 添加组件到分组中
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "点击按钮刷新奖池列表/记录表格", self.refresh_button)
-        self.addGroup(get_theme_icon("ic_fluent_reward_20_filled"), "选择奖池", "选择一个需要查看历史记录的奖池", self.prize_pools_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择奖品", "这个一个可查看单个奖品的功能", self.reward_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_delete_dismiss_20_filled"), "配置过期天数", "配置历史记录中抽取时间戳的过期天数", self.history_reward_spinBox)
-        self.addGroup(get_theme_icon("ic_fluent_delete_dismiss_20_filled"), "清除历史记录", "点击按钮清除当前选择的奖池点名历史记录", self.clear_history_Button)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "历史记录", "选择是否开启该功能", self.history_switch)
+        # ===== 数据刷新 =====
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "刷新列表/记录", "重新加载奖池列表和历史记录数据", self.refresh_button)
+        
+        # ===== 数据选择 =====
+        self.addGroup(get_theme_icon("ic_fluent_reward_20_filled"), "选择奖池", "选择要查看历史记录的目标奖池", self.prize_pools_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "选择奖品", "选择查看范围：全部奖品、时间排序或单个奖品", self.reward_comboBox)
+        
+        # ===== 时间配置 =====
+        self.addGroup(get_theme_icon("ic_fluent_clock_20_filled"), "配置过期天数", "设置历史记录的保留时间(0-365天)", self.history_reward_spinBox)
+        
+        # ===== 数据管理 =====
+        self.addGroup(get_theme_icon("ic_fluent_delete_dismiss_20_filled"), "清除历史记录", "删除当前奖池的所有抽奖历史记录", self.clear_history_Button)
+        
+        # ===== 功能开关 =====
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "历史记录", "启用抽奖历史记录功能", self.history_switch)
 
         self.load_settings()
         self.save_settings()
