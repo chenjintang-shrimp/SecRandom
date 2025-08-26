@@ -291,8 +291,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新设置", "启动时自动检查软件更新", self.check_on_startup)
         self.addGroup(get_theme_icon("ic_fluent_branch_compare_20_filled"), "开机自启", "系统启动时自动启动本应用(启用后将自动设置不显示主窗口)", self.self_starting_switch)
-        if path_manager.file_exists(os.path.join(os.getcwd(), '_internal')):
-            self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "URL协议注册", "注册SecRandom URL协议，允许其他程序通过URL启动SecRandom并打开特定界面", self.url_protocol_switch)
+        self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "URL协议注册", "注册SecRandom URL协议，允许其他程序通过URL启动SecRandom并打开特定界面", self.url_protocol_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "设置便捷抽人的浮窗显示/隐藏", self.pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "设置抽人选项侧边栏位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "设置抽奖选项侧边栏位置", self.pumping_reward_side_comboBox)
@@ -1623,6 +1622,16 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                                         
                                         if target_section in imported_settings and setting_name in imported_settings[target_section]:
                                             current_settings[target_section][setting_name] = imported_settings[target_section][setting_name]
+                                elif file_name == "CleanupTimes":
+                                    if file_name not in current_settings:
+                                        current_settings[file_name] = imported_settings["cleanuptimes"]
+                                elif file_name == "ForegroundSoftware":
+                                    if file_name not in current_settings:
+                                        current_settings[file_name] = {}
+                                    
+                                    for setting_name in settings:
+                                        if file_name in imported_settings and setting_name in imported_settings[file_name]:
+                                            current_settings[file_name][setting_name] = imported_settings[file_name][setting_name]
                                 
                         # 保存更新后的设置
                         with open_file(file_path, 'w', encoding='utf-8') as f:
@@ -2382,7 +2391,17 @@ class SettingsSelectionDialog(QDialog):
                 "插件设置": [
                     "run_plugins_on_startup", "fetch_plugin_list_on_startup", "selected_plugin"
                 ]
-            }
+            },
+            "CleanupTimes": {
+                "清理时间设置": [
+                    "cleanuptimes"
+                ]
+            },
+            "ForegroundSoftware": {
+                "前台软件设置": [
+                    "foregroundsoftware_class", "foregroundsoftware_title", "foregroundsoftware_process"
+                ]
+            },
         }
         
         # 为每个功能分类创建选择区域
@@ -2505,7 +2524,13 @@ class SettingsSelectionDialog(QDialog):
             "voice_volume": "语音音量", # 有
             "voice_speed": "语音速度", # 有
             "system_volume_enabled": "系统音量控制", # 有
-            "system_volume_value": "系统音量值" # 有
+            "system_volume_value": "系统音量值", # 有
+            # CleanupTimes设置
+            "cleanuptimes": "清理时间", # 有
+            # ForegroundSoftware设置
+            "foregroundsoftware_class": "前台软件类名", # 有
+            "foregroundsoftware_title": "前台软件标题", # 有
+            "foregroundsoftware_process": "前台软件进程名", # 有
         }
         return display_names.get(setting_name, setting_name)
     
