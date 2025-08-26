@@ -10,22 +10,25 @@ import os
 from loguru import logger
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 from app.common.path_utils import path_manager, open_file
+from app.common.password_settings import is_usb_bound, get_usb_drives
 
 class PasswordDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         # 🌟 星穹铁道白露：设置无边框窗口样式并解决屏幕设置冲突~ 
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window | Qt.Tool | Qt.WindowStaysOnTopHint)
         self.setWindowTitle("密码验证")
         self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png'))))
         self.setFixedSize(400, 300)
 
         self.dragging = False
         self.drag_position = None
-
-        # 确保不设置子窗口的屏幕属性
-        if parent is not None:
-            self.setParent(parent)
+        
+        # 自动验证相关变量
+        self.auto_verify_timer = QTimer()
+        self.auto_verify_timer.setSingleShot(True)
+        self.auto_verify_timer.timeout.connect(self.auto_verify)
+        self.auto_verify_delay = 1000  # 1秒延迟，避免频繁验证
         
         # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
         self.title_bar = QWidget()
@@ -70,61 +73,144 @@ class PasswordDialog(QDialog):
         
         # 添加内容区域
         content_layout = QVBoxLayout()
-        content_layout.setContentsMargins(20, 10, 20, 20)
+        content_layout.setContentsMargins(20, 15, 20, 20)
+        content_layout.setSpacing(10)
         layout.addLayout(content_layout)
 
-        # 解锁方式选择
+        # 解锁方式选择 - 根据配置动态显示
         self.unlock_method = ComboBox()
-        self.unlock_method.addItems(["密码解锁", "密钥文件解锁", "2FA验证"])
-        self.unlock_method.setFont(QFont(load_custom_font(), 14))
-        content_layout.addWidget(self.unlock_method)
+        self.unlock_method.setFont(QFont(load_custom_font(), 12))
+        self.unlock_method.setFixedWidth(360)
+        
+        # 根据配置文件动态添加解锁方式
+        self.update_unlock_methods()
+        content_layout.addWidget(self.unlock_method, 0, Qt.AlignCenter)
 
         # 密码输入框
         self.password_input = LineEdit()
         self.password_input.setPlaceholderText("请输入密码")
         self.password_input.setEchoMode(QLineEdit.Password)
-        self.password_input.setFont(QFont(load_custom_font(), 14))
+        self.password_input.setFont(QFont(load_custom_font(), 12))
+        self.password_input.setFixedWidth(360)
         # 回车确认
         self.password_input.returnPressed.connect(self.verify)
-        content_layout.addWidget(self.password_input)
+        content_layout.addWidget(self.password_input, 0, Qt.AlignCenter)
 
         # 密钥文件选择
+        key_file_widget = QWidget()
+        key_file_layout = QHBoxLayout(key_file_widget)
+        key_file_layout.setContentsMargins(0, 0, 0, 0)
+        key_file_layout.setSpacing(8)
+        
         self.key_file_input = LineEdit()
         self.key_file_input.setPlaceholderText("请选择密钥文件")
-        self.key_file_input.setFont(QFont(load_custom_font(), 14))
+        self.key_file_input.setFont(QFont(load_custom_font(), 12))
+        self.key_file_input.setFixedWidth(230)
         self.key_file_btn = PushButton("选择文件")
-        self.key_file_btn.setFont(QFont(load_custom_font(), 14))
+        self.key_file_btn.setFont(QFont(load_custom_font(), 12))
         self.key_file_btn.clicked.connect(self.select_key_file)
-
-        key_file_layout = QHBoxLayout()
-        key_file_layout.addWidget(self.key_file_input)
-        key_file_layout.addWidget(self.key_file_btn)
-
-        content_layout.addLayout(key_file_layout)
+        self.key_file_btn.setFixedWidth(110)
+        # 自动验证 - 密钥文件输入框
+        self.key_file_input.textChanged.connect(self.start_auto_verify)
+        
+        key_file_layout.addWidget(self.key_file_input, 0, Qt.AlignCenter)
+        key_file_layout.addStretch()
+        key_file_layout.addWidget(self.key_file_btn, 0, Qt.AlignCenter)
+        
+        content_layout.addWidget(key_file_widget, 0, Qt.AlignCenter)
 
         # 用户名输入框（2FA验证时显示）
         self.username_input = LineEdit()
         self.username_input.setPlaceholderText("请输入用户名")
-        self.username_input.setFont(QFont(load_custom_font(), 14))
-        content_layout.addWidget(self.username_input)
+        self.username_input.setFont(QFont(load_custom_font(), 12))
+        self.username_input.setFixedWidth(360)
+        content_layout.addWidget(self.username_input, 0, Qt.AlignCenter)
 
         # 2FA验证码
         self.totp_input = LineEdit()
         self.totp_input.setPlaceholderText("请输入2FA验证码")
-        self.totp_input.setFont(QFont(load_custom_font(), 14))
+        self.totp_input.setFont(QFont(load_custom_font(), 12))
+        self.totp_input.setFixedWidth(360)
         # 回车确认
         self.totp_input.returnPressed.connect(self.verify)
-        content_layout.addWidget(self.totp_input)
+        content_layout.addWidget(self.totp_input, 0, Qt.AlignCenter)
+
+        # U盘状态显示
+        self.usb_status_widget = QWidget()
+        usb_status_layout = QVBoxLayout(self.usb_status_widget)
+        usb_status_layout.setContentsMargins(0, 0, 0, 0)
+        usb_status_layout.setSpacing(5)
+        
+        self.usb_status_label = BodyLabel("正在检测U盘...")
+        self.usb_status_label.setFont(QFont(load_custom_font(), 12))
+        self.usb_status_label.setAlignment(Qt.AlignCenter)
+        usb_status_layout.addWidget(self.usb_status_label, 0, Qt.AlignCenter)
+        
+        self.usb_refresh_btn = PushButton("重新检测")
+        self.usb_refresh_btn.setFont(QFont(load_custom_font(), 12))
+        self.usb_refresh_btn.clicked.connect(self.check_usb_status)
+        self.usb_refresh_btn.setFixedWidth(100)
+        usb_status_layout.addWidget(self.usb_refresh_btn, alignment=Qt.AlignCenter)
+        
+        content_layout.addWidget(self.usb_status_widget, 0, Qt.AlignCenter)
+        
+        # 默认隐藏U盘状态组件
+        self.usb_status_widget.hide()
 
         # 按钮
         self.verify_btn = PushButton("验证")
         self.verify_btn.clicked.connect(self.verify)
-        self.verify_btn.setFont(QFont(load_custom_font(), 14))
-        content_layout.addWidget(self.verify_btn)
+        self.verify_btn.setFont(QFont(load_custom_font(), 12))
+        self.verify_btn.setFixedWidth(100)
+        content_layout.addWidget(self.verify_btn, 0, Qt.AlignRight)
 
         # 根据选择显示不同控件
         self.unlock_method.currentIndexChanged.connect(self.update_ui)
         self.update_ui()
+    
+    def update_unlock_methods(self):
+        """根据配置文件更新解锁方式选项"""
+        try:
+            # 清空现有选项
+            self.unlock_method.clear()
+            
+            # 读取配置文件
+            with open_file(path_manager.get_enc_set_path(), 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                
+            hashed_set = settings.get('hashed_set', {})
+            
+            # 根据配置添加解锁方式
+            unlock_methods = []
+            
+            # 密码解锁
+            if hashed_set.get('start_password_enabled', False):
+                unlock_methods.append("密码解锁")
+            
+            # 密钥文件解锁 - 如果有hashed_password则启用
+            if hashed_set.get('hashed_password', ''):
+                unlock_methods.append("密钥文件解锁")
+            
+            # 2FA验证
+            if hashed_set.get('two_factor_auth', False):
+                unlock_methods.append("2FA验证")
+            
+            # U盘解锁
+            if settings.get('usb_auth_enabled', False):
+                unlock_methods.append("U盘解锁")
+            
+            # 添加解锁方式到下拉框
+            if unlock_methods:
+                self.unlock_method.addItems(unlock_methods)
+            else:
+                # 如果没有启用的解锁方式，显示提示
+                self.unlock_method.addItem("无可用解锁方式")
+                self.unlock_method.setEnabled(False)
+                
+        except Exception as e:
+            logger.error(f"读取解锁方式配置失败: {e}")
+            # 读取失败时显示所有解锁方式作为备用
+            self.unlock_method.addItems(["密码解锁", "密钥文件解锁", "2FA验证", "U盘解锁"])
 
     def mousePressEvent(self, event):
         # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
@@ -251,6 +337,9 @@ class PasswordDialog(QDialog):
         """窗口关闭时隐藏主界面"""
         self.hide()
         event.ignore()
+        # 确保不会触发应用程序退出
+        if QApplication.instance():
+            QApplication.instance().setQuitOnLastWindowClosed(False)
 
     def update_ui(self):
         method = self.unlock_method.currentText()
@@ -259,6 +348,13 @@ class PasswordDialog(QDialog):
         self.key_file_btn.setVisible(method == "密钥文件解锁")
         self.username_input.setVisible(method == "2FA验证")
         self.totp_input.setVisible(method == "2FA验证")
+        self.usb_status_widget.setVisible(method == "U盘解锁")
+        
+        # 如果切换到U盘解锁，立即检测U盘状态并尝试自动验证
+        if method == "U盘解锁":
+            self.check_usb_status()
+            # 延迟一点时间让U盘检测完成，然后自动验证
+            QTimer.singleShot(500, self.start_auto_verify)
 
     def select_key_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, "选择密钥文件", "", "Key Files (*.key)")
@@ -267,7 +363,7 @@ class PasswordDialog(QDialog):
 
     def verify(self):
         try:
-            with open_file(path_manager.get_plugin_path('SecRandom', 'enc_set.json'), 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_enc_set_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 hashed_set_settings = settings.get('hashed_set', {})
 
@@ -297,6 +393,7 @@ class PasswordDialog(QDialog):
                         w.cancelButton.hide()
                         w.buttonLayout.insertStretch(1)
                         w.exec_()
+                        return
 
                 elif method == "密钥文件解锁":
                     key_file = self.key_file_input.text()
@@ -356,6 +453,19 @@ class PasswordDialog(QDialog):
 
                     self.accept()
 
+                elif method == "U盘解锁":
+                    if self.verify_usb():
+                        self.accept()
+                        return
+                    else:
+                        w = MessageBox("错误", "U盘验证失败，请确保已插入正确的U盘", self)
+                        w.setFont(QFont(load_custom_font(), 14))
+                        w.yesButton.setText("知道了")
+                        w.cancelButton.hide()
+                        w.buttonLayout.insertStretch(1)
+                        w.exec_()
+                        return
+
         except Exception as e:
             logger.error(f"验证失败: {e}")
             w = MessageBox("错误", f"验证失败: {str(e)}", self)
@@ -369,7 +479,7 @@ class PasswordDialog(QDialog):
     def verify_2fa_code(self, code, username):
         try:
             # 从设置文件中读取2FA密钥和加密用户名
-            with open_file(path_manager.get_plugin_path('SecRandom', 'enc_set.json'), 'r') as f:
+            with open_file(path_manager.get_enc_set_path(), 'r') as f:
                 settings = json.load(f)
                 secret = settings['hashed_set']['2fa_secret']
                 stored_username = settings['hashed_set'].get('encrypted_username', '')
@@ -384,3 +494,76 @@ class PasswordDialog(QDialog):
         except Exception as e:
             logger.error(f"2FA验证失败: {e}")
             return False
+             
+    def check_usb_status(self):
+        """检查U盘状态并更新UI显示"""
+        try:
+            self.usb_status_label.setText("正在检测U盘...")
+            
+            # 获取当前插入的USB设备
+            usb_drives = get_usb_drives()
+            
+            if not usb_drives:
+                self.usb_status_label.setText("未检测到U盘设备")
+                self.usb_status_label.setStyleSheet("color: #ff4d4d;")
+                return
+            
+            # 检查是否有绑定的U盘
+            if is_usb_bound():
+                self.usb_status_label.setText(f"检测到 {len(usb_drives)} 个U盘设备，验证通过")
+                self.usb_status_label.setStyleSheet("color: #4caf50;")
+            else:
+                self.usb_status_label.setText(f"检测到 {len(usb_drives)} 个U盘设备，但未通过验证")
+                self.usb_status_label.setStyleSheet("color: #ff9800;")
+                
+        except Exception as e:
+            logger.error(f"检查U盘状态失败: {e}")
+            self.usb_status_label.setText("检测U盘状态时出错")
+            self.usb_status_label.setStyleSheet("color: #ff4d4d;")
+    
+    def verify_usb(self):
+        """验证U盘"""
+        try:
+            # 使用password_settings.py中的is_usb_bound函数进行验证
+            return is_usb_bound()
+        except Exception as e:
+            logger.error(f"U盘验证失败: {e}")
+            return False
+    
+    def start_auto_verify(self):
+        """启动自动验证计时器"""
+        # 重启计时器，实现防抖效果
+        self.auto_verify_timer.start(self.auto_verify_delay)
+    
+    def auto_verify(self):
+        """自动验证方法"""
+        try:
+            method = self.unlock_method.currentText()
+            
+            # 根据当前选择的验证方式检查是否满足自动验证条件
+            if method == "密码解锁":
+                password = self.password_input.text().strip()
+                if password:  # 只有输入密码后才自动验证
+                    self.verify()
+                    
+            elif method == "密钥文件解锁":
+                key_file = self.key_file_input.text().strip()
+                if key_file and os.path.exists(key_file):  # 只有选择了存在的密钥文件后才自动验证
+                    self.verify()
+                    
+            elif method == "2FA验证":
+                username = self.username_input.text().strip()
+                totp_code = self.totp_input.text().strip()
+                # 只有用户名和验证码都输入后才自动验证
+                if username and totp_code and len(totp_code) >= 6:
+                    self.verify()
+                    
+            elif method == "U盘解锁":
+                # U盘解锁在检测到U盘时自动验证
+                usb_drives = get_usb_drives()
+                if usb_drives:  # 只有检测到U盘设备后才自动验证
+                    self.verify()
+                    
+        except Exception as e:
+            logger.error(f"自动验证失败: {e}")
+            
