@@ -115,6 +115,11 @@ class settings_Window(MSFluentWindow, UIAccessMixin):
 
     def closeEvent(self, event):
         """窗口关闭时隐藏主界面"""
+        # 停止resize_timer以优化CPU占用
+        if hasattr(self, 'resize_timer') and self.resize_timer.isActive():
+            self.resize_timer.stop()
+            logger.info("设置窗口resize_timer已停止")
+        
         self.hide()
         event.ignore()
         self.save_settings_window_size()
