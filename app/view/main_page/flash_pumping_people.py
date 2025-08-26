@@ -19,6 +19,9 @@ from app.common.config import get_theme_icon, load_custom_font, restore_volume
 from app.common.path_utils import path_manager, open_file, remove_file
 from app.common.voice import TTSHandler
 class pumping_people(QWidget):
+    # 抽取完成信号
+    draw_finished = pyqtSignal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         # 定义变量
@@ -577,6 +580,8 @@ class pumping_people(QWidget):
         # 显示最终结果
         self.random()
         self.voice_play()
+        # 发射抽取完成信号
+        self.draw_finished.emit()
     
     def _play_full_animation(self):
         """播放完整动画（快速显示n个随机学生后显示最终结果）
@@ -602,6 +607,8 @@ class pumping_people(QWidget):
             self._play_result_music()
         self.random()
         self.voice_play()
+        # 发射抽取完成信号
+        self.draw_finished.emit()
 
     def _play_result_music(self):
         """播放结果音乐
