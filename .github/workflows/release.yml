@@ -89,7 +89,7 @@ jobs:
         run: |
           cd release
           echo "" >> ../CHANGELOG.md
-          echo "Full Changelog: [v1.1.4.0-beta...${{ github.ref_name }}](https://github.com/SECTL/SecRandom/compare/v1.1.4.0-beta...${{ github.ref_name }})" >> ../CHANGELOG.md
+          echo "Full Changelog: [v1.2.0.0...${{ github.ref_name }}](https://github.com/SECTL/SecRandom/compare/v1.2.0.0...${{ github.ref_name }})" >> ../CHANGELOG.md
           echo "" >> ../CHANGELOG.md
           echo "**国内 下载链接**" >> ../CHANGELOG.md
           echo "| 平台/打包方式 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
