@@ -34,6 +34,7 @@ from app.view.main_page.history_handoff_setting import history_handoff_setting
 from app.view.levitation import LevitationWindow
 from app.view.settings_page.about_setting import about
 from app.common.about import ContributorDialog, DonationDialog
+from app.common.password_settings import check_and_delete_pending_usb
 
 # ================================================== (^・ω・^ )
 # 白露的初始化魔法阵 ⭐
@@ -174,24 +175,86 @@ class UpdateChecker(QObject):
         logger.info("星野指令: 更新检查小分队已出发！")
 
     class UpdateCheckWorker(QThread):
-        """(ﾟДﾟ≡ﾟдﾟ) 更新检查特工队！
+        """(ﾟдﾟ≡ﾟдﾟ) 更新检查特工队！
         在后台默默工作的线程，专门负责版本侦察任务喵！
         绝对不会打扰UI主线程的工作，非常专业！💪"""
         result_ready = pyqtSignal(bool, str)  # 📡 发送侦察结果的信号
-
+        
+        def __init__(self):
+            super().__init__()
+            self._is_running = True
+            self._force_stop = False
+        
+        def stop(self):
+            """停止特工队行动！"""
+            self._is_running = False
+            self._force_stop = True
+        
         def run(self):
             """特工队行动开始！连接服务器获取最新版本信息！"""
-            channel = get_update_channel()
-            update_available, latest_version = check_for_updates(channel)
-            self.result_ready.emit(update_available, latest_version)
+            try:
+                # 设置线程为可终止
+                self.setTerminationEnabled(True)
+                
+                channel = get_update_channel()
+                if self._is_running and not self._force_stop:
+                    update_available, latest_version = check_for_updates(channel)
+                    if self._is_running and not self._force_stop:
+                        self.result_ready.emit(update_available, latest_version)
+            except Exception as e:
+                logger.error(f"星野侦察失败: 更新检查过程中出错喵～ {e}")
+                if self._is_running and not self._force_stop:
+                    self.result_ready.emit(False, "")
 
     def on_update_result(self, update_available, latest_version):
-        """(ﾟДﾟ≡ﾟдﾟ) 收到侦察报告！
+        """(ﾟдﾟ≡ﾟдﾟ) 收到侦察报告！
         如果发现新版本，立刻拉响警报发射信号喵！
         绝不让用户错过任何重要更新！🚨✨"""
         if update_available and latest_version:
             logger.info(f"星野警报: 发现新版本 {latest_version}！准备通知用户！")
             self.update_available.emit(latest_version)  # 发射新版本信号
+    
+    def stop_checking(self):
+        """(ﾟдﾟ≡ﾟдﾟ) 停止更新检查任务！
+        确保worker线程安全停止，不会造成线程销毁错误喵！
+        就像让特工队安全撤退一样重要！🛡️✨"""
+        try:
+            if hasattr(self, 'worker') and self.worker:
+                # 立即设置强制停止标志
+                self.worker.stop()
+                
+                # 断开信号连接
+                try:
+                    self.worker.result_ready.disconnect(self.on_update_result)
+                except:
+                    pass
+                
+                # 停止worker线程
+                if self.worker.isRunning():
+                    # 首先尝试优雅退出
+                    self.worker.quit()
+                    if not self.worker.wait(2000):  # 等待最多2秒
+                        logger.warning("星野撤退: 线程优雅退出失败，准备强制终止～ ")
+                        # 如果优雅退出失败，强制终止
+                        self.worker.terminate()
+                        self.worker.wait(1000)  # 再等待1秒
+                        
+                        # 如果还在运行，记录警告
+                        if self.worker.isRunning():
+                            logger.error("星野撤退: 线程仍然在运行，可能存在资源泄漏！")
+                
+                # 清理引用
+                self.worker = None
+                logger.info("星野撤退: 更新检查任务已安全停止～ ")
+        except Exception as e:
+            logger.error(f"星野撤退失败: 停止更新检查时出错喵～ {e}")
+    
+    def __del__(self):
+        """析构函数，确保资源正确释放"""
+        try:
+            self.stop_checking()
+        except:
+            pass
 
 
 # ==================================================
@@ -240,9 +303,7 @@ class TrayIconManager(QObject):
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_settings_20_filled"), '打开设置界面', triggered=self.main_window.show_setting_interface))
         self.tray_menu.addSeparator()
         # 系统操作
-        # 检查是否为目录模式（存在_internal目录）
-        if path_manager.file_exists(os.path.join(os.getcwd(), '_internal')):
-            self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.main_window.restart_app))
+        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.main_window.restart_app))
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_exit_20_filled"), '退出', triggered=self.main_window.close_window_secrandom))
         logger.info("白露魔法: 托盘菜单已准备就绪！")
 
@@ -379,6 +440,12 @@ class Window(MSFluentWindow, UIAccessMixin):
         self.resize_timer = QTimer(self)
         self.resize_timer.setSingleShot(True)
         self.resize_timer.timeout.connect(lambda: self.config_manager.save_window_size(self.width(), self.height()))
+
+        # USB检测定时器
+        self.usb_detection_timer = QTimer(self)
+        self.usb_detection_timer.timeout.connect(self._check_and_delete_pending_usb)
+        self.usb_detection_timer.start(5000)  # 每5秒检查一次
+
 
         # 初始化焦点模式设置
         self.focus_mode = self.config_manager.get_foundation_setting('main_window_focus_mode')
@@ -881,17 +948,65 @@ class Window(MSFluentWindow, UIAccessMixin):
         if hasattr(self, 'levitation_window'):
             self.levitation_window.hide()
             logger.debug("星野撤退: 悬浮窗已隐藏～ ")
+            
         if hasattr(self, 'focus_timer'):
             self.stop_focus_timer()
             logger.debug("星野撤退: 焦点计时器已停止～ ")
+
+        if hasattr(self, 'usb_detection_timer'):
+            self.usb_detection_timer.stop()
+            logger.debug("星野撤退: USB绑定已关闭～ ")
+
+        # 停止resize_timer以优化CPU占用
+        if hasattr(self, 'resize_timer') and self.resize_timer.isActive():
+            self.resize_timer.stop()
+            logger.debug("星野撤退: resize_timer已停止～ ")
+
+        # 停止托盘菜单定时器
+        if hasattr(self, 'tray_manager') and hasattr(self.tray_manager, 'menu_timer'):
+            if self.tray_manager.menu_timer.isActive():
+                self.tray_manager.menu_timer.stop()
+                logger.debug("星野撤退: 托盘菜单定时器已停止～ ")
+
+        # 停止USB监控线程
+        if hasattr(self, 'settingInterface') and self.settingInterface:
+            if hasattr(self.settingInterface, 'usb_monitor_thread') and self.settingInterface.usb_monitor_thread:
+                # 先断开信号连接，避免在线程停止过程中触发信号
+                self.settingInterface.usb_monitor_thread.usb_removed.disconnect()
+                # 停止线程并等待完全停止
+                self.settingInterface.usb_monitor_thread.stop()
+                # 等待一小段时间确保线程完全停止
+                if self.settingInterface.usb_monitor_thread.isRunning():
+                    self.settingInterface.usb_monitor_thread.wait(500)  # 等待最多500ms
+                self.settingInterface.usb_monitor_thread = None
+                logger.debug("星野撤退: USB监控线程已停止～ ")
+
         if hasattr(self, 'server'):
             self.server.close()
             logger.debug("星野撤退: IPC服务器已关闭～ ")
+
+        # 停止更新检查
+        if hasattr(self, 'update_checker') and self.update_checker:
+            self.update_checker.stop_checking()
+            logger.debug("星野撤退: 更新检查已停止～ ")
+            
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
-            self.shared_memory.detach()
-            logger.info("星野撤退: 共享内存已安全关闭～ ")
-        logger.remove()
+            try:
+                self.shared_memory.detach()
+                if self.shared_memory.isAttached():
+                    self.shared_memory.detach()
+                logger.info("星野撤退: 共享内存已完全释放～ ")
+            except Exception as e:
+                logger.error(f"星野撤退: 共享内存释放出错喵～ {e}")
+        
+        # 正确关闭日志系统
+        try:
+            # 移除所有日志处理器
+            loguru.logger.remove()
+            logger.info("星野撤退: 日志系统已安全关闭～ ")
+        except Exception as e:
+            logger.error(f"星野撤退: 日志系统关闭出错喵～ {e}")
         # 确保完全退出应用程序
         QApplication.quit()
         sys.exit(0)
@@ -924,11 +1039,46 @@ class Window(MSFluentWindow, UIAccessMixin):
         if hasattr(self, 'focus_timer'):
             self.stop_focus_timer()
             logger.debug("星野重启: 焦点计时器已停止～ ")
+    
+        # 停止USB检测计时器
+        if hasattr(self, 'usb_detection_timer'):
+            self.usb_detection_timer.stop()
+            logger.debug("星野重启: USB绑定已关闭～ ")
+
+        # 停止resize_timer以优化CPU占用
+        if hasattr(self, 'resize_timer') and self.resize_timer.isActive():
+            self.resize_timer.stop()
+            logger.debug("星野重启: resize_timer已停止～ ")
+
+        # 停止托盘菜单定时器
+        if hasattr(self, 'tray_manager') and hasattr(self.tray_manager, 'menu_timer'):
+            if self.tray_manager.menu_timer.isActive():
+                self.tray_manager.menu_timer.stop()
+                logger.debug("星野重启: 托盘菜单定时器已停止～ ")
+                
+        # 停止USB监控线程
+        if hasattr(self, 'settingInterface') and self.settingInterface:
+            if hasattr(self.settingInterface, 'usb_monitor_thread') and self.settingInterface.usb_monitor_thread:
+                # 先断开信号连接，避免在线程停止过程中触发信号
+                self.settingInterface.usb_monitor_thread.usb_removed.disconnect()
+                # 停止线程并等待完全停止
+                self.settingInterface.usb_monitor_thread.stop()
+                # 等待一小段时间确保线程完全停止
+                if self.settingInterface.usb_monitor_thread.isRunning():
+                    self.settingInterface.usb_monitor_thread.wait(500)  # 等待最多500ms
+                self.settingInterface.usb_monitor_thread = None
+                logger.debug("星野重启: USB监控线程已停止～ ")
         
         # 关闭IPC服务器
         if hasattr(self, 'server'):
             self.server.close()
             logger.debug("星野重启: IPC服务器已关闭～ ")
+        
+        # 停止更新检查
+        if hasattr(self, 'update_checker') and self.update_checker:
+            self.update_checker.stop_checking()
+            logger.debug("星野重启: 更新检查已停止～ ")
+
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
             try:
@@ -1214,6 +1364,13 @@ class Window(MSFluentWindow, UIAccessMixin):
         if hasattr(self, 'levitation_window') and self.levitation_window:
             self.levitation_window.raise_()
             self.levitation_window.activateWindow()
+    
+    def _check_and_delete_pending_usb(self):
+        """检查并删除待删除的USB密钥文件"""
+        try:
+            check_and_delete_pending_usb()
+        except Exception as e:
+            logger.error(f"检查并删除待删除USB密钥文件时发生错误: {e}")
     
     # ==================================================
     # URL协议支持方法
