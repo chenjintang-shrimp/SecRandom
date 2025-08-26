@@ -30,6 +30,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
         self._init_ui_components()  # 初始化UI组件
         self._setup_event_handlers()  # 设置事件处理器
         self._init_drag_system()  # 初始化拖动系统
+        self._init_keep_top_timer()  # 初始化保持置顶定时器
         self.load_position()
 
     def _load_settings(self):
@@ -956,8 +957,10 @@ class LevitationWindow(QWidget, UIAccessMixin):
                 with open_file(settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     font_size = settings['pumping_people']['font_size']
+                    show_student_image = settings['pumping_people']['show_student_image']
             except Exception as e:
                 font_size = 50  # 默认字体大小
+                show_student_image = False
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
             
             # 根据字体大小计算窗口尺寸
@@ -988,8 +991,28 @@ class LevitationWindow(QWidget, UIAccessMixin):
                 scale_factor = 3.5
             
             # 计算动态窗口大小，确保最小和最大尺寸限制，适配200字号
-            dynamic_width = max(150, min(1500, int(base_width * scale_factor)))
-            dynamic_height = max(170, min(1500, int(base_height * scale_factor)))
+            # 如果显示学生图片，需要增加窗口宽度
+            if show_student_image:
+                # 显示图片时根据字体大小动态计算图片额外宽度
+                # 基准：字体大小50时，图片额外宽度为150
+                if font_size <= 30:
+                    image_width_bonus = 170   # 小字体时的图片额外宽度
+                elif font_size <= 50:
+                    image_width_bonus = 170  # 中等字体时的图片额外宽度
+                elif font_size <= 80:
+                    image_width_bonus = 240  # 较大字体时的图片额外宽度
+                elif font_size <= 120:
+                    image_width_bonus = 320  # 大字体时的图片额外宽度
+                elif font_size <= 150:
+                    image_width_bonus = 450  # 很大字体时的图片额外宽度
+                elif font_size <= 180:
+                    image_width_bonus = 600  # 很大字体时的图片额外宽度
+                else:
+                    image_width_bonus = 800  # 超大字体时的图片额外宽度
+                dynamic_width = max(150, min(1920, int((base_width + image_width_bonus) * scale_factor)))
+            else:
+                dynamic_width = max(150, min(1920, int(base_width * scale_factor)))
+            dynamic_height = max(170, min(1080, int(base_height * scale_factor)))
             
             self.pumping_widget.setFixedSize(dynamic_width, dynamic_height)
             
@@ -1048,54 +1071,12 @@ class LevitationWindow(QWidget, UIAccessMixin):
             
             self.pumping_content.start_draw()
             
-            # 从设置中获取闪抽窗口自动关闭设置
-            try:
-                # 获取设置
-                settings_file = path_manager.get_settings_path()
-                with open_file(settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    
-                # 检查是否启用自动关闭
-                auto_close_enabled = settings.get('flash_window_auto_close', True)
-                close_time = settings.get('flash_window_close_time', 2)
-                close_time = close_time + 1
-                
-                if auto_close_enabled:
-                    # 初始化倒计时
-                    self.remaining_time = close_time
-                    self.countdown_label.setText(f"将在{self.remaining_time}秒自动关闭该窗口")
-                    self.countdown_label.setFont(QFont(load_custom_font(), 12))
-
-                    # 创建倒计时定时器
-                    self.countdown_timer = QTimer(self.pumping_widget)
-                    self.countdown_timer.timeout.connect(self._update_countdown)
-                    self.countdown_timer.start(1000)  # 每秒更新一次
-
-                    # 创建自动关闭定时器
-                    self.auto_close_timer = QTimer(self.pumping_widget)
-                    self.auto_close_timer.setSingleShot(True)
-                    self.auto_close_timer.timeout.connect(self.pumping_widget.reject)
-                    self.auto_close_timer.start(close_time * 1000)  # 转换为毫秒
-                    logger.info(f"闪抽窗口将在{close_time}秒后自动关闭")
-                else:
-                    logger.info("闪抽窗口自动关闭功能已禁用")
-            except Exception as e:
-                logger.error(f"加载闪抽窗口设置时出错: {e}, 使用默认设置")
-                # 默认启用3秒自动关闭
-                close_time = 3
-                self.remaining_time = close_time
-                self.countdown_label.setText(f"将在{self.remaining_time}秒自动关闭该窗口")
-                self.countdown_label.setFont(QFont(load_custom_font(), 12))
-
-                # 创建倒计时定时器
-                self.countdown_timer = QTimer(self.pumping_widget)
-                self.countdown_timer.timeout.connect(self._update_countdown)
-                self.countdown_timer.start(1000)  # 每秒更新一次
-
-                self.auto_close_timer = QTimer(self.pumping_widget)
-                self.auto_close_timer.setSingleShot(True)
-                self.auto_close_timer.timeout.connect(self.pumping_widget.reject)
-                self.auto_close_timer.start(close_time * 1000)  # 3秒后自动关闭
+            # 连接抽取完成信号，在抽取完成后才开始倒计时
+            self.pumping_content.draw_finished.connect(self._start_countdown_after_draw)
+            
+            # 初始显示提示信息
+            self.countdown_label.setText("抽取进行中，完成后将开始倒计时")
+            self.countdown_label.setFont(QFont(load_custom_font(), 12))
             
         except ImportError as e:
             logger.error(f"导入pumping_people模块失败: {e}")
@@ -1128,6 +1109,57 @@ class LevitationWindow(QWidget, UIAccessMixin):
     def _on_title_bar_release(self, event):
         self.dragging = False
 
+    def _start_countdown_after_draw(self):
+        """抽取完成后开始倒计时"""
+        # 从设置中获取闪抽窗口自动关闭设置
+        try:
+            # 获取设置
+            settings_file = path_manager.get_settings_path()
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                
+            # 检查是否启用自动关闭
+            auto_close_enabled = settings.get('flash_window_auto_close', True)
+            close_time = settings.get('flash_window_close_time', 2)
+            close_time = close_time + 1
+            
+            if auto_close_enabled:
+                # 初始化倒计时
+                self.remaining_time = close_time
+                self.countdown_label.setText(f"将在{self.remaining_time}秒自动关闭该窗口")
+                self.countdown_label.setFont(QFont(load_custom_font(), 12))
+
+                # 创建倒计时定时器
+                self.countdown_timer = QTimer(self.pumping_widget)
+                self.countdown_timer.timeout.connect(self._update_countdown)
+                self.countdown_timer.start(1000)  # 每秒更新一次
+
+                # 创建自动关闭定时器
+                self.auto_close_timer = QTimer(self.pumping_widget)
+                self.auto_close_timer.setSingleShot(True)
+                self.auto_close_timer.timeout.connect(self.pumping_widget.reject)
+                self.auto_close_timer.start(close_time * 1000)  # 转换为毫秒
+                logger.info(f"闪抽窗口将在{close_time}秒后自动关闭")
+            else:
+                logger.info("闪抽窗口自动关闭功能已禁用")
+        except Exception as e:
+            logger.error(f"加载闪抽窗口设置时出错: {e}, 使用默认设置")
+            # 默认启用3秒自动关闭
+            close_time = 3
+            self.remaining_time = close_time
+            self.countdown_label.setText(f"将在{self.remaining_time}秒自动关闭该窗口")
+            self.countdown_label.setFont(QFont(load_custom_font(), 12))
+
+            # 创建倒计时定时器
+            self.countdown_timer = QTimer(self.pumping_widget)
+            self.countdown_timer.timeout.connect(self._update_countdown)
+            self.countdown_timer.start(1000)  # 每秒更新一次
+
+            self.auto_close_timer = QTimer(self.pumping_widget)
+            self.auto_close_timer.setSingleShot(True)
+            self.auto_close_timer.timeout.connect(self.pumping_widget.reject)
+            self.auto_close_timer.start(close_time * 1000)  # 3秒后自动关闭
+    
     def _update_countdown(self):
         # 更新倒计时
         self.remaining_time -= 1
@@ -1242,3 +1274,48 @@ class LevitationWindow(QWidget, UIAccessMixin):
         if hasattr(self, 'flash_button') and self.flash_button is not None:
             self.flash_button.setEnabled(True)
             logger.info("闪抽按钮已重新启用")
+    
+    def closeEvent(self, event):
+        """窗口关闭事件 - 清理所有定时器资源"""
+        # 停止保持置顶定时器
+        if hasattr(self, 'keep_top_timer') and self.keep_top_timer.isActive():
+            self.keep_top_timer.stop()
+            logger.info("浮窗置顶定时器已停止")
+        
+        # 停止点击定时器
+        if hasattr(self, 'click_timer') and self.click_timer.isActive():
+            self.click_timer.stop()
+            logger.info("点击定时器已停止")
+        
+        # 停止移动定时器
+        if hasattr(self, 'move_timer') and self.move_timer.isActive():
+            self.move_timer.stop()
+            logger.info("移动定时器已停止")
+        
+        # 停止自动关闭定时器
+        if hasattr(self, 'auto_close_timer') and self.auto_close_timer.isActive():
+            self.auto_close_timer.stop()
+            logger.info("自动关闭定时器已停止")
+        
+        # 停止倒计时定时器
+        if hasattr(self, 'countdown_timer') and self.countdown_timer.isActive():
+            self.countdown_timer.stop()
+            logger.info("倒计时定时器已停止")
+        
+        # 调用父类的closeEvent
+        super().closeEvent(event)
+
+    def _init_keep_top_timer(self):
+        """初始化保持置顶定时器 - 每5秒钟让浮窗置顶一下"""
+        self.keep_top_timer = QTimer(self)
+        self.keep_top_timer.timeout.connect(self._keep_window_on_top)
+        self.keep_top_timer.start(5000)
+        logger.info("浮窗置顶定时器已启动")
+
+    def _keep_window_on_top(self):
+        """保持窗口置顶"""
+        try:
+            self.raise_()  # 将窗口提升到最前面
+            # self.activateWindow()  # 激活窗口
+        except Exception as e:
+            logger.warning(f"保持窗口置顶失败: {e}")
