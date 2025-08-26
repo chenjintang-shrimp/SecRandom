@@ -746,6 +746,14 @@ class ImportPrizeDialog(QDialog):
                 self._load_excel_columns()
             elif self.file_type == 'csv':
                 self._load_csv_columns()
+        except Warning as w:
+            # 🌟 小鸟游星野：处理提示性警告，不清除文件路径 ~ (๑•̀ㅂ•́)ญ✧
+            logger.warning(f"列选择提示: {str(w)}")
+            msg_box = MessageBox("列选择提示", str(w), self)
+            msg_box.yesButton.setText("确定")
+            msg_box.cancelButton.hide()
+            msg_box.buttonLayout.insertStretch(1)
+            msg_box.exec_()
         except Exception as e:
             logger.error(f"加载文件列失败: {str(e)}")
             # 🌟 小鸟游星野：文件加载失败提示 ~ (๑•̀ㅂ•́)ญ✧
@@ -759,7 +767,7 @@ class ImportPrizeDialog(QDialog):
 
     def _init_combo_boxes(self, columns):
         # 🌟 小鸟游星野：初始化所有下拉框 ~ (๑•̀ㅂ•́)ญ✧
-        column_items = ['请选择'] + columns
+        column_items = ['请选择'] + [str(col) for col in columns]
         for combo in [self.id_combo, self.reward_combo, self.probability_combo]:
             combo.clear()
             combo.addItems(column_items)
@@ -774,22 +782,32 @@ class ImportPrizeDialog(QDialog):
             (self.probability_combo, ['probability', '权重', 'weight'], False, '权重')
         ]
 
-        for combo, keywords, is_required, field_name in fields:
-            # 自动选择匹配项
-            auto_selected = False
-            for i, col in enumerate(columns):
-                if any(key in col.lower() for key in keywords):
-                    combo.setCurrentIndex(i + 1)  # +1是因为第一个选项是"请选择"
-                    auto_selected = True
-                    break
+        # 检查是否为数字列名（如CSV文件没有标题行的情况）
+        is_numeric_columns = all(str(col).isdigit() for col in columns)
+        
+        if is_numeric_columns and len(columns) >= 2:
+            # 如果列名都是数字，默认第一列作为学号，第二列作为姓名
+            self.id_combo.setCurrentIndex(1)  # 第一列
+            self.reward_combo.setCurrentIndex(2)  # 第二列
+            # 可选列不自动选择
+            self.probability_check.setChecked(False)
+        else:
+            for combo, keywords, is_required, field_name in fields:
+                # 自动选择匹配项
+                auto_selected = False
+                for i, col in enumerate(columns):
+                    if any(key in col.lower() for key in keywords):
+                        combo.setCurrentIndex(i + 1)  # +1是因为第一个选项是"请选择"
+                        auto_selected = True
+                        break
 
-        # 必选列验证
-        self._validate_required_column(combo, is_required, field_name, columns)
+                # 必选列验证
+                self._validate_required_column(combo, is_required, field_name, columns)
 
-        # 可选列未找到匹配时取消勾选
-        if not is_required and not auto_selected:
-            if field_name == '权重':
-                self.probability_check.setChecked(False)
+                # 可选列未找到匹配时取消勾选
+                if not is_required and not auto_selected:
+                    if field_name == '权重':
+                        self.probability_check.setChecked(False)
 
         self.update_mapping()
         self._validate_mandatory_columns()
@@ -820,7 +838,7 @@ class ImportPrizeDialog(QDialog):
     def _load_csv_columns(self):
         # 🌟 星穹铁道白露：加载CSV列并智能匹配 ~ (๑•̀ㅂ•́)ญ✧
         df = self._read_csv_file(self.file_path)
-        columns = df.columns.tolist()
+        columns = list(df.columns)
         self._init_combo_boxes(columns)
         self._auto_select_columns(columns)
 
@@ -982,12 +1000,30 @@ class ImportPrizeDialog(QDialog):
 
     def _validate_csv_json(self):
         # 🌟 星穹铁道白露：CSV/JSON文件验证 ~ (๑•̀ㅂ•́)ญ✧
-        if self.column_mapping.get('序号', -1) == -1:
-            self._show_error_message("验证失败", "文件缺少必要的序号列！")
+        if self.id_combo.currentIndex() <= 0:
+            self._show_error_message("序号列未选择", "请选择有效的序号列！")
             return False
 
-        if self.column_mapping.get('奖品', -1) == -1:
-            self._show_error_message("验证失败", "文件缺少必要的奖品列！")
+        if self.reward_combo.currentIndex() <= 0:
+            self._show_error_message("奖品列未选择", "请选择有效的奖品列！")
+            return False
+
+        # 可选列未选择时自动取消勾选
+        if self.probability_check.isChecked() and self.probability_combo.currentIndex() <= 0:
+            self.probability_check.setChecked(False)
+
+        # 验证列选择唯一性
+        selected_columns = []
+        if self.id_combo.currentIndex() > 0:
+            selected_columns.append(self.id_combo.currentIndex() - 1)
+        if self.reward_combo.currentIndex() > 0:
+            selected_columns.append(self.reward_combo.currentIndex() - 1)
+        if self.probability_check.isChecked() and self.probability_combo.currentIndex() > 0:
+            selected_columns.append(self.probability_combo.currentIndex() - 1)
+
+        # 检查重复选择
+        if len(selected_columns) != len(set(selected_columns)):
+            self._show_error_message("列选择错误", "不能选择重复的列！请确保所有选中的列都是唯一的。")
             return False
 
         return True
