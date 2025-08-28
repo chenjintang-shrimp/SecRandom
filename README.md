@@ -20,6 +20,8 @@
 [![bilibili](https://img.shields.io/badge/-UP%E4%B8%BB%EF%BD%9C黎泽懿-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://opensource.org/licenses/GPL-3.0)
 
+![代码贡献统计](https://repobeats.axiom.co/api/embed/7d42538bcd781370672c00b6b6ecd5282802ee3d.svg "代码贡献统计图表")
+
 </div>
 
 > [!note]
@@ -71,10 +73,16 @@
 - 📥 **[官方下载页面](https://secrandom.netlify.app/download)** - 获取最新稳定版本和测试版本
 
 ### 📦 下载源选择
-- **GitHub 官方源** - 官方发布渠道，海外访问较快
-- **GitHub 镜像源(ghfast.top)** - 国内加速镜像
-- **GitHub 镜像源(gh-proxy.com)** - 国内加速镜像  
-- **123云盘源** - 云盘下载，不限速
+
+#### 官方渠道
+- **GitHub 官方源** - 官方发布渠道，海外访问较快，推荐使用
+- **123云盘源** - 云盘下载，不限速，适合大文件下载
+
+#### 国内加速镜像
+- **GitHub 镜像源(ghfast.top)** - 国内加速镜像，速度快且稳定
+- **GitHub 镜像源(gh-proxy.com)** - 国内加速镜像，适合网络环境特殊的用户
+
+#### 社区支持
 - **cloudreve分流** - 感谢Lotus大佬提供的分流，如有兴趣欢迎[去看看Lotus的主页](https://github.com/SummerLotus520/)或[进入荷花的小群](https://qm.qq.com/q/pj7Q9Tmh9K)
 
 ## 💻 选择版本
