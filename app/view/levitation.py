@@ -31,6 +31,9 @@ class LevitationWindow(QWidget, UIAccessMixin):
         self._setup_event_handlers()  # 设置事件处理器
         self._init_drag_system()  # 初始化拖动系统
         self._init_keep_top_timer()  # 初始化保持置顶定时器
+        self.max_count = 0 # 初始化最大抽取人数
+        self.is_drawing = False # 标记是否正在抽取
+        self.update_total_count() # 更新最大抽取人数
         self.load_position()
 
     def _load_settings(self):
@@ -76,72 +79,11 @@ class LevitationWindow(QWidget, UIAccessMixin):
         # 0: 显示 拖动
         # 1: 显示 主界面
         # 2: 显示 闪抽
-        # 3: 显示 辅窗
-        # 4: 显示 拖动+主界面
-        # 5: 显示 拖动+闪抽
-        # 6: 显示 拖动+辅窗
-        # 7: 显示 主界面+闪抽
-        # 8: 显示 主界面+辅窗
-        # 9: 显示 闪抽+辅窗
-        # 10: 显示 拖动+主界面+闪抽
-        # 11: 显示 拖动+主界面+辅窗
-        # 12: 显示 拖动+闪抽+辅窗
-        # 13: 显示 主界面+闪抽+辅窗
-        # 14: 显示 拖动+主界面+闪抽+辅窗
-        
-
-        # if self.floating_visible == 0:  # 显示 拖动
-        #     self._init_menu_label()
-        # elif self.floating_visible == 1:  # 显示 主界面
-        #     self._init_people_label()
-        # elif self.floating_visible == 2:  # 显示 闪抽
-        #     self._init_flash_button()
-        # elif self.floating_visible == 3:  # 显示 辅窗
-        #     self._init_auxiliary_button()
-        # elif self.floating_visible == 4:  # 显示 拖动+主界面
-        #     self._init_menu_label()
-        #     self._init_people_label()
-        # elif self.floating_visible == 5:  # 显示 拖动+闪抽
-        #     self._init_menu_label()
-        #     self._init_flash_button()
-        # elif self.floating_visible == 6:  # 显示 拖动+辅窗
-        #     self._init_menu_label()
-        #     self._init_auxiliary_button()
-        # elif self.floating_visible == 7:  # 显示 主界面+闪抽
-        #     self._init_people_label()
-        #     self._init_flash_button()
-        # elif self.floating_visible == 8:  # 显示 主界面+辅窗
-        #     self._init_people_label()
-        #     self._init_auxiliary_button()
-        # elif self.floating_visible == 9:  # 显示 闪抽+辅窗
-        #     self._init_flash_button()
-        #     self._init_auxiliary_button()
-        # elif self.floating_visible == 10:  # 显示 拖动+主界面+闪抽
-        #     # 3个按钮：拖动、主界面在上面，闪抽在下面
-        #     self._init_menu_label()
-        #     self._init_people_label()
-        #     self._init_flash_button()
-        # elif self.floating_visible == 11:  # 显示 拖动+主界面+辅窗
-        #     # 3个按钮：拖动、主界面在上面，辅窗在下面
-        #     self._init_menu_label()
-        #     self._init_people_label()
-        #     self._init_auxiliary_button()
-        # elif self.floating_visible == 12:  # 显示 拖动+闪抽+辅窗
-        #     # 3个按钮：拖动在上面，闪抽、辅窗在下面
-        #     self._init_menu_label()
-        #     self._init_flash_button()
-        #     self._init_auxiliary_button()
-        # elif self.floating_visible == 13:  # 显示 主界面+闪抽+辅窗
-        #     # 3个按钮：主界面在上面，闪抽、辅窗在下面
-        #     self._init_people_label()
-        #     self._init_flash_button()
-        #     self._init_auxiliary_button()
-        # elif self.floating_visible == 14:  # 显示 拖动+主界面+闪抽+辅窗
-        #     # 4个按钮：拖动、主界面在上面，闪抽、辅窗在下面
-        #     self._init_menu_label()
-        #     self._init_people_label()
-        #     self._init_flash_button()
-        #     self._init_auxiliary_button()
+        # 3: 显示 拖动+主界面
+        # 4: 显示 拖动+闪抽
+        # 5: 显示 主界面+闪抽
+        # 6: 显示 拖动+主界面+闪抽
+        # 7: 显示 即抽
 
         if self.floating_visible == 0:  # 显示 拖动
             self._init_menu_label()
@@ -163,6 +105,8 @@ class LevitationWindow(QWidget, UIAccessMixin):
             self._init_menu_label()
             self._init_people_label()
             self._init_flash_button()
+        elif self.floating_visible == 7:  # 测试 即抽(带调节人数功能)
+            self._init_instant_draw_button()
         
         self._apply_window_styles()
 
@@ -217,14 +161,17 @@ class LevitationWindow(QWidget, UIAccessMixin):
             main_layout.setContentsMargins(0, 0, 0, 0)
             main_layout.setSpacing(0)
             
-            # 创建单个容器，使用垂直布局
-            self.top_container = self.container_button
+            # 创建专用的垂直容器，避免布局冲突
+            self.top_container = QWidget()
             self.bottom_container = None
             
-            # 将容器布局改为垂直布局
+            # 为垂直容器设置垂直布局
             vertical_layout = QVBoxLayout(self.top_container)
             vertical_layout.setContentsMargins(0, 0, 0, 0)
             vertical_layout.setSpacing(0)
+            
+            # 将垂直容器添加到主布局
+            main_layout.addWidget(self.top_container)
             
         elif self.button_arrangement_mode == 2:  # 横着排列
             # 所有按钮都水平排列
@@ -232,8 +179,17 @@ class LevitationWindow(QWidget, UIAccessMixin):
             main_layout.setContentsMargins(0, 0, 0, 0)
             main_layout.setSpacing(0)
             
-            # 创建单个容器，使用水平布局
-            self.top_container = self.container_button
+            # 创建专用的水平容器，与竖着排列区分
+            self.horizontal_container = QWidget()
+            horizontal_layout = QHBoxLayout(self.horizontal_container)
+            horizontal_layout.setContentsMargins(0, 0, 0, 0)
+            horizontal_layout.setSpacing(0)
+            
+            # 将水平容器添加到主布局
+            main_layout.addWidget(self.horizontal_container)
+            
+            # 设置其他容器为None，确保独立性
+            self.top_container = None
             self.bottom_container = None
 
         # 设置窗口主布局
@@ -247,38 +203,11 @@ class LevitationWindow(QWidget, UIAccessMixin):
         # 0: 显示 拖动 (1个)
         # 1: 显示 主界面 (1个)
         # 2: 显示 闪抽 (1个)
-        # 3: 显示 辅窗 (1个)
-        # 4: 显示 拖动+主界面 (2个)
-        # 5: 显示 拖动+闪抽 (2个)
-        # 6: 显示 拖动+辅窗 (2个)
-        # 7: 显示 主界面+闪抽 (2个)
-        # 8: 显示 主界面+辅窗 (2个)
-        # 9: 显示 闪抽+辅窗 (2个)
-        # 10: 显示 拖动+主界面+闪抽 (3个)
-        # 11: 显示 拖动+主界面+辅窗 (3个)
-        # 12: 显示 拖动+闪抽+辅窗 (3个)
-        # 13: 显示 主界面+闪抽+辅窗 (3个)
-        # 14: 显示 拖动+主界面+闪抽+辅窗 (4个)
-        
-        # if self.floating_visible in [0, 1, 2, 3]:
-        #     return 1
-        # elif self.floating_visible in [4, 5, 6, 7, 8, 9]:
-        #     return 2
-        # elif self.floating_visible in [10, 11, 12, 13]:
-        #     return 3
-        # elif self.floating_visible == 14:
-        #     return 4
-        # else:
-        #     return 1  # 默认值
-
-        # 映射关系：
-        # 0: 显示 拖动 (1个)
-        # 1: 显示 主界面 (1个)
-        # 2: 显示 闪抽 (1个)
         # 3: 显示 拖动+主界面 (2个)
         # 4: 显示 拖动+闪抽 (2个)
         # 5: 显示 主界面+闪抽 (2个)
         # 6: 显示 拖动+主界面+闪抽 (3个)
+        # 7: 显示 即抽
 
         if self.floating_visible in [0, 1, 2]:
             return 1
@@ -286,6 +215,8 @@ class LevitationWindow(QWidget, UIAccessMixin):
             return 2
         elif self.floating_visible == 6:
             return 3
+        elif self.floating_visible == 7:
+            return 4
         else:
             return 1  # 默认值
 
@@ -293,7 +224,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
         # 白露：初始化菜单标签 - 只有在拖动+抽人模式时显示图标
         if self.floating_visible == 3:  # 拖动+抽人模式
             MENU_DEFAULT_ICON_PATH = path_manager.get_resource_path("icon", "SecRandom_menu_30%.png")
-            self.menu_label = QLabel(self.container_button)
+            self.menu_label = BodyLabel(self.container_button)
             try:
                 # 根据主题设置不同的颜色
                 if dark_mode:
@@ -357,7 +288,9 @@ class LevitationWindow(QWidget, UIAccessMixin):
             # 所有按钮都水平排列
             if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
                 self.menu_label.setFixedSize(50, 50)
-            if hasattr(self, 'top_container') and self.top_container:
+            if hasattr(self, 'horizontal_container') and self.horizontal_container:
+                self.horizontal_container.layout().addWidget(self.menu_label)
+            elif hasattr(self, 'top_container') and self.top_container:
                 self.top_container.layout().addWidget(self.menu_label)
             else:
                 self.container_button.layout().addWidget(self.menu_label)
@@ -366,7 +299,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
         # 小鸟游星野：初始化人物标签 - 只有在拖动+抽人模式时显示图标
         if self.floating_visible == 3:  # 拖动+抽人模式
             FLOATING_DEFAULT_ICON_PATH = path_manager.get_resource_path("icon", "SecRandom_floating_30%.png")
-            self.people_label = QLabel(self.container_button)
+            self.people_label = BodyLabel(self.container_button)
             try:
                 # 根据主题设置不同的颜色
                 if dark_mode:
@@ -430,7 +363,9 @@ class LevitationWindow(QWidget, UIAccessMixin):
             # 所有按钮都水平排列
             if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
                 self.people_label.setFixedSize(50, 50)
-            if hasattr(self, 'top_container') and self.top_container:
+            if hasattr(self, 'horizontal_container') and self.horizontal_container:
+                self.horizontal_container.layout().addWidget(self.people_label)
+            elif hasattr(self, 'top_container') and self.top_container:
                 self.top_container.layout().addWidget(self.people_label)
             else:
                 self.container_button.layout().addWidget(self.people_label)
@@ -469,7 +404,9 @@ class LevitationWindow(QWidget, UIAccessMixin):
         elif self.button_arrangement_mode == 2:  # 横着排列
             # 所有按钮都水平排列
             self.flash_button.setFixedSize(50, 50)
-            if hasattr(self, 'top_container') and self.top_container:
+            if hasattr(self, 'horizontal_container') and self.horizontal_container:
+                self.horizontal_container.layout().addWidget(self.flash_button)
+            elif hasattr(self, 'top_container') and self.top_container:
                 self.top_container.layout().addWidget(self.flash_button)
             else:
                 self.container_button.layout().addWidget(self.flash_button)
@@ -481,51 +418,138 @@ class LevitationWindow(QWidget, UIAccessMixin):
         self.flash_button.setFont(QFont(load_custom_font(), 12))
         self.flash_button.clicked.connect(self._show_direct_extraction_window)
 
-    def _init_auxiliary_button(self):
-        # 小鸟游星野：初始化辅窗按钮 - 纯文字按钮 ✧(๑•̀ㅂ•́)๑
-        self.auxiliary_button = PushButton("辅窗")
+    def _init_instant_draw_button(self):
+        # 小鸟游星野：初始化即抽按钮和人数调节功能
+        # 创建主容器
+        self.instant_draw_container = QWidget()
+        main_layout = QVBoxLayout(self.instant_draw_container)
+        main_layout.setContentsMargins(5, 5, 5, 5)
+        main_layout.setSpacing(5)
         
-        # 根据排列方式决定按钮大小和添加位置
-        button_count = self._get_button_count()
+        # 创建抽取按钮 - 增大尺寸并居中
+        self.instant_draw_button = PushButton("抽取")
+        self.instant_draw_button.setFixedSize(65, 30)
         
-        if self.button_arrangement_mode == 0:  # 矩形排列
-            if button_count >= 3:
-                # 3个或4个按钮时，辅窗按钮放在下面
-                self.auxiliary_button.setFixedSize(50, 50)
-                if hasattr(self, 'bottom_container') and self.bottom_container:
-                    self.bottom_container.layout().addWidget(self.auxiliary_button)
-                else:
-                    self.container_button.layout().addWidget(self.auxiliary_button)
-            else:
-                # 1个或2个按钮时使用水平布局
-                self.auxiliary_button.setFixedSize(50, 50)
-                if hasattr(self, 'top_container') and self.top_container:
-                    self.top_container.layout().addWidget(self.auxiliary_button)
-                else:
-                    self.container_button.layout().addWidget(self.auxiliary_button)
-                    
-        elif self.button_arrangement_mode == 1:  # 竖着排列
-            # 所有按钮都垂直排列
-            self.auxiliary_button.setFixedSize(50, 50)
-            if hasattr(self, 'top_container') and self.top_container:
-                self.top_container.layout().addWidget(self.auxiliary_button)
-            else:
-                self.container_button.layout().addWidget(self.auxiliary_button)
-                
-        elif self.button_arrangement_mode == 2:  # 横着排列
-            # 所有按钮都水平排列
-            self.auxiliary_button.setFixedSize(50, 50)
-            if hasattr(self, 'top_container') and self.top_container:
-                self.top_container.layout().addWidget(self.auxiliary_button)
-            else:
-                self.container_button.layout().addWidget(self.auxiliary_button)
-                
-        if dark_mode:
-            self.auxiliary_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold; color: #ffffff;')
+        # 创建人数调节容器 - 优化布局
+        count_control_container = QWidget()
+        # 根据排列模式决定水平或垂直布局
+        if self.button_arrangement_mode == 1:  # 竖着排列
+            # 竖排模式下使用垂直布局
+            count_control_layout = QVBoxLayout(count_control_container)
         else:
-            self.auxiliary_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
-        self.auxiliary_button.setFont(QFont(load_custom_font(), 12))
-        self.auxiliary_button.clicked.connect(self._show_auxiliary_window)
+            # 其他模式使用水平布局
+            count_control_layout = QHBoxLayout(count_control_container)
+        count_control_layout.setContentsMargins(0, 0, 0, 0)
+        count_control_layout.setSpacing(5)
+        
+        # 创建-按钮
+        self.decrease_button = PushButton("-")
+        # 竖排模式下宽度为60，其他模式保持原尺寸
+        if self.button_arrangement_mode == 1:  # 竖着排列
+            self.decrease_button.setFixedSize(65, 30)
+        else:
+            self.decrease_button.setFixedSize(41, 30)
+        
+        # 创建当前人数显示文本 - 增大并美化
+        self.count_label = BodyLabel("1")
+        self.count_label.setAlignment(Qt.AlignCenter)
+        # 竖排模式下宽度为60，其他模式保持原尺寸
+        if self.button_arrangement_mode == 1:  # 竖着排列
+            self.count_label.setFixedSize(65, 30)
+        else:
+            self.count_label.setFixedSize(43, 30)
+        
+        # 创建+按钮
+        self.increase_button = PushButton("+")
+        # 竖排模式下宽度为60，其他模式保持原尺寸
+        if self.button_arrangement_mode == 1:  # 竖着排列
+            self.increase_button.setFixedSize(65, 30)
+        else:
+            self.increase_button.setFixedSize(41, 30)
+        
+        # 创建重置按钮 - 调整大小
+        self.reset_button = PushButton("重置")
+        self.reset_button.setFixedSize(65, 30)
+        
+        if self.button_arrangement_mode == 1:  # 竖着排列
+            # 竖排模式下使用垂直布局
+            count_control_layout.addStretch()
+            count_control_layout.addWidget(self.increase_button)
+            count_control_layout.addWidget(self.count_label)
+            count_control_layout.addWidget(self.decrease_button)
+            count_control_layout.addWidget(self.reset_button)
+            count_control_layout.addStretch()
+        else:
+            # 其他模式使用水平布局
+            count_control_layout.addStretch()
+            count_control_layout.addWidget(self.decrease_button)
+            count_control_layout.addWidget(self.count_label)
+            count_control_layout.addWidget(self.increase_button)
+            count_control_layout.addStretch()
+
+        
+        # 为抽取按钮和重置按钮创建布局 - 根据排列模式决定水平或垂直
+        if self.button_arrangement_mode == 1:  # 竖着排列
+            # 竖排模式下使用垂直布局
+            button_layout = QVBoxLayout()
+            button_layout.addWidget(self.instant_draw_button)
+        else:
+            # 其他模式使用水平布局
+            button_layout = QHBoxLayout()
+            button_layout.addWidget(self.instant_draw_button)
+            button_layout.addWidget(self.reset_button)
+        button_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 创建按钮容器
+        button_container = QWidget()
+        button_container.setLayout(button_layout)
+        
+        # 将按钮容器和人数调节容器添加到主布局 - 居中对齐
+        main_layout.addStretch()
+        main_layout.addWidget(button_container, 0, Qt.AlignCenter)
+        main_layout.addWidget(count_control_container, 0, Qt.AlignCenter)
+        main_layout.addStretch()
+        
+        self.instant_draw_button.setFont(QFont(load_custom_font(), 12))
+        self.increase_button.setFont(QFont(load_custom_font(), 12))
+        self.decrease_button.setFont(QFont(load_custom_font(), 12))
+        self.reset_button.setFont(QFont(load_custom_font(), 12))
+        self.count_label.setFont(QFont(load_custom_font(), 12))
+        
+        # 连接信号
+        self.instant_draw_button.clicked.connect(self._show_instant_draw_window)
+        self.increase_button.clicked.connect(self._increase_count)
+        self.decrease_button.clicked.connect(self._decrease_count)
+        self.reset_button.clicked.connect(self._reset_count)
+        
+        # 初始化当前抽取人数
+        self.current_count = 1
+        
+        # 为整个即抽容器添加拖动功能（仅空白区域）
+        self.instant_draw_container.mousePressEvent = self.on_instant_draw_container_press
+        self.instant_draw_container.mouseReleaseEvent = self.on_instant_draw_container_release
+
+        # 根据排列方式决定添加位置
+        target_container = None
+        
+        # 确定目标容器 - 支持3种独立排列样式
+        if self.button_arrangement_mode == 0:  # 矩形排列
+            target_container = self.bottom_container if hasattr(self, 'bottom_container') and self.bottom_container else None
+        elif self.button_arrangement_mode == 1:  # 竖着排列
+            target_container = self.top_container if hasattr(self, 'top_container') and self.top_container else None
+        elif self.button_arrangement_mode == 2:  # 横着排列
+            # 横着排列使用专用的水平容器，确保与竖着排列区分
+            if hasattr(self, 'horizontal_container') and self.horizontal_container:
+                target_container = self.horizontal_container
+            elif hasattr(self, 'top_container') and self.top_container:
+                # 如果没有专门的horizontal_container，则使用top_container
+                target_container = self.top_container
+        
+        # 添加即抽容器到目标位置
+        if target_container:
+            target_container.layout().addWidget(self.instant_draw_container)
+        else:
+            self.container_button.layout().addWidget(self.instant_draw_container)
 
     def _apply_window_styles(self):
         # 白露：应用窗口样式和标志
@@ -568,6 +592,24 @@ class LevitationWindow(QWidget, UIAccessMixin):
         if hasattr(self, 'auxiliary_button') and self.auxiliary_button is not None:
             self.auxiliary_button.mousePressEvent = self.on_auxiliary_press
             self.auxiliary_button.mouseReleaseEvent = self.on_auxiliary_release
+            
+        # 即抽按钮和重置按钮的拖动事件处理器 - 支持长按拖动
+        if hasattr(self, 'instant_draw_button') and self.instant_draw_button is not None:
+            self.instant_draw_button.mousePressEvent = self.on_instant_draw_button_press
+            self.instant_draw_button.mouseReleaseEvent = self.on_instant_draw_button_release
+            
+        if hasattr(self, 'reset_button') and self.reset_button is not None:
+            self.reset_button.mousePressEvent = self.on_reset_button_press
+            self.reset_button.mouseReleaseEvent = self.on_reset_button_release
+            
+        # 加减按钮的拖动事件处理器 - 支持长按拖动
+        if hasattr(self, 'increase_button') and self.increase_button is not None:
+            self.increase_button.mousePressEvent = self.on_increase_button_press
+            self.increase_button.mouseReleaseEvent = self.on_increase_button_release
+            
+        if hasattr(self, 'decrease_button') and self.decrease_button is not None:
+            self.decrease_button.mousePressEvent = self.on_decrease_button_press
+            self.decrease_button.mouseReleaseEvent = self.on_decrease_button_release
 
     def _init_drag_system(self):
         # 白露：初始化拖动系统
@@ -593,6 +635,58 @@ class LevitationWindow(QWidget, UIAccessMixin):
             # 短按：停止计时器并触发点击事件
             self.click_timer.stop()
             self.on_people_clicked()
+            # 长按：计时器已触发拖动，不执行点击
+            
+    def on_instant_draw_button_press(self, event):
+        # 即抽按钮按下事件 - 支持长按拖动
+        self.drag_start_position = event.pos()
+        # 启动长按计时器（100毫秒）
+        self.click_timer.start(100)
+        
+    def on_instant_draw_button_release(self, event):
+        if self.click_timer.isActive():
+            # 短按：停止计时器并触发点击事件
+            self.click_timer.stop()
+            self._show_instant_draw_window()
+            # 长按：计时器已触发拖动，不执行点击
+            
+    def on_reset_button_press(self, event):
+        # 重置按钮按下事件 - 支持长按拖动
+        self.drag_start_position = event.pos()
+        # 启动长按计时器（100毫秒）
+        self.click_timer.start(100)
+        
+    def on_reset_button_release(self, event):
+        if self.click_timer.isActive():
+            # 短按：停止计时器并触发点击事件
+            self.click_timer.stop()
+            self._reset_count()
+            # 长按：计时器已触发拖动，不执行点击
+            
+    def on_increase_button_press(self, event):
+        # 增加按钮按下事件 - 支持长按拖动
+        self.drag_start_position = event.pos()
+        # 启动长按计时器（100毫秒）
+        self.click_timer.start(100)
+        
+    def on_increase_button_release(self, event):
+        if self.click_timer.isActive():
+            # 短按：停止计时器并触发点击事件
+            self.click_timer.stop()
+            self._increase_count()
+            # 长按：计时器已触发拖动，不执行点击
+            
+    def on_decrease_button_press(self, event):
+        # 减少按钮按下事件 - 支持长按拖动
+        self.drag_start_position = event.pos()
+        # 启动长按计时器（100毫秒）
+        self.click_timer.start(100)
+        
+    def on_decrease_button_release(self, event):
+        if self.click_timer.isActive():
+            # 短按：停止计时器并触发点击事件
+            self.click_timer.stop()
+            self._decrease_count()
             # 长按：计时器已触发拖动，不执行点击
 
     # 白露：处理人物标签点击事件（忽略事件参数）
@@ -754,16 +848,20 @@ class LevitationWindow(QWidget, UIAccessMixin):
         if hasattr(self, 'is_dragging') and self.is_dragging and event.buttons() == Qt.LeftButton:
             # 计算鼠标移动偏移量并保持相对位置
             # drag_position现在存储的是鼠标相对于窗口的偏移量
-            new_pos = event.globalPos() - self.drag_position
+            if hasattr(self, 'drag_position') and self.drag_position is not None:
+                new_pos = event.globalPos() - self.drag_position
 
-            # 获取屏幕尺寸
-            screen = QApplication.desktop().screenGeometry()
+                # 获取屏幕尺寸
+                screen = QApplication.desktop().screenGeometry()
 
-            # 限制窗口不超出屏幕
-            new_pos.setX(max(0, min(new_pos.x(), screen.width() - self.width())))
-            new_pos.setY(max(0, min(new_pos.y(), screen.height() - self.height())))
+                # 限制窗口不超出屏幕
+                new_pos.setX(max(0, min(new_pos.x(), screen.width() - self.width())))
+                new_pos.setY(max(0, min(new_pos.y(), screen.height() - self.height())))
 
-            self.move(new_pos)
+                self.move(new_pos)
+            else:
+                # 如果drag_position未正确设置，重新初始化拖动
+                self.start_drag(event)
         super().mouseMoveEvent(event)
 
     def on_people_release(self, event):
@@ -830,6 +928,39 @@ class LevitationWindow(QWidget, UIAccessMixin):
     def on_auxiliary_clicked(self, event=None):
         # 小鸟游星野：辅窗按钮点击事件 - 显示辅窗窗口 ✧(๑•̀ㅂ•́)๑
         self._show_auxiliary_window()
+    
+    def on_instant_draw_container_press(self, event):
+        """处理即抽容器鼠标按下事件，支持拖动（仅空白区域）"""
+        if event.button() == Qt.LeftButton:
+            # 获取点击位置的子控件
+            child = self.instant_draw_container.childAt(event.pos())
+            # 如果点击的是容器空白区域（没有子控件或子控件不是按钮），则触发拖动
+            if child is None or not isinstance(child, QPushButton):
+                self.drag_start_position = event.pos()
+                # 启动长按计时器
+                if hasattr(self, 'click_timer'):
+                    self.click_timer.start(100)  # 100ms后开始拖动
+                event.accept()
+            else:
+                # 如果点击的是按钮，不处理拖动，让按钮保持原有功能
+                event.ignore()
+        else:
+            event.ignore()
+    
+    def on_instant_draw_container_release(self, event):
+        """处理即抽容器鼠标释放事件（仅空白区域）"""
+        was_dragging = getattr(self, 'is_dragging', False)
+        self.is_dragging = False
+        
+        if hasattr(self, 'click_timer') and self.click_timer.isActive():
+            # 短按点击容器空白区域，触发即抽窗口
+            self.click_timer.stop()
+            self._show_instant_draw_window()
+        elif was_dragging:
+            # 拖动结束，保存新位置
+            self.save_position()
+        
+        event.accept()
 
     def show_connection_error_dialog(self):
         # 小鸟游星野：显示连接错误对话框
@@ -851,6 +982,38 @@ class LevitationWindow(QWidget, UIAccessMixin):
         else:
             event.ignore()
 
+    def _animate_button_press(self, button):
+        """按钮按下动画效果"""
+        # 使用样式表实现简单的按下效果
+        original_style = button.styleSheet()
+        pressed_style = original_style + "transform: scale(0.95);"
+        button.setStyleSheet(pressed_style)
+        # 保存原始样式以便恢复
+        if not hasattr(button, '_original_style'):
+            button._original_style = original_style
+    
+    def _animate_button_release(self, button):
+        """按钮释放动画效果"""
+        # 恢复原始样式
+        if hasattr(button, '_original_style'):
+            button.setStyleSheet(button._original_style)
+    
+    def _animate_count_change(self, new_count):
+        """人数变化动画效果"""
+        # 使用定时器实现简单的淡入淡出效果
+        original_style = self.count_label.styleSheet()
+        
+        # 淡出效果
+        fade_out_style = original_style + "opacity: 0.3;"
+        self.count_label.setStyleSheet(fade_out_style)
+        
+        def update_text():
+            self.count_label.setText(str(new_count))
+            # 淡入效果
+            self.count_label.setStyleSheet(original_style)
+        
+        QTimer.singleShot(150, update_text)
+    
     def stop_drag(self, event=None):
         # 小鸟游星野：停止拖动时的处理逻辑 - 菜单标签专用 ✧(๑•̀ㅂ•́)๑
         self.setCursor(Qt.ArrowCursor)
@@ -894,27 +1057,14 @@ class LevitationWindow(QWidget, UIAccessMixin):
             y = (screen.height() - self.height()) // 2
             self.move(QPoint(x, y))
 
-    def _show_auxiliary_window(self):
-        # 小鸟游星野：显示辅窗窗口 - 包含便捷小窗功能 ✧(๑•̀ㅂ•́)๑
-        try:
-            # 创建便捷小窗实例
-            self.auxiliary_widget = ConvenientMiniWindow()
-            self.auxiliary_widget.show_window()
-            logger.info("辅窗已打开")
-            
-        except Exception as e:
-            logger.error(f"创建辅窗失败: {e}")
-            error_dialog = Dialog("创建失败", f"创建辅窗时发生错误: {str(e)}", self)
-            error_dialog.yesButton.setText("确定")
-            error_dialog.cancelButton.hide()
-            error_dialog.buttonLayout.insertStretch(1)
-            error_dialog.exec()
-
-    def _show_direct_extraction_window(self):
+    def _show_direct_extraction_window(self, draw_count=1):
         # 小鸟游星野：显示直接抽取窗口 - 包含pumping_people功能 ✧(๑•̀ㅂ•́)๑
         try:
             # 导入pumping_people模块
             from app.view.main_page.flash_pumping_people import pumping_people
+            
+            # 初始化当前抽取人数
+            self.current_count = draw_count
             
             # 创建自定义标题栏的对话框
             self.pumping_widget = QDialog()
@@ -932,7 +1082,8 @@ class LevitationWindow(QWidget, UIAccessMixin):
             title_layout.setContentsMargins(10, 0, 10, 0)
             
             # 窗口标题
-            self.title_label = BodyLabel("SecRandom - 闪抽")
+            title_text = "SecRandom - 闪抽" if self.floating_visible != 7 else "SecRandom - 即抽"
+            self.title_label = BodyLabel(title_text)
             self.title_label.setObjectName("TitleLabel")
             self.title_label.setFont(QFont(load_custom_font(), 12))
             
@@ -948,7 +1099,7 @@ class LevitationWindow(QWidget, UIAccessMixin):
             title_layout.addWidget(self.close_btn)
             
             # 创建pumping_people内容
-            self.pumping_content = pumping_people()
+            self.pumping_content = pumping_people(draw_count=self.current_count)
             
             # 获取字体大小设置以动态调整窗口大小
             try:
@@ -994,7 +1145,6 @@ class LevitationWindow(QWidget, UIAccessMixin):
             # 如果显示学生图片，需要增加窗口宽度
             if show_student_image:
                 # 显示图片时根据字体大小动态计算图片额外宽度
-                # 基准：字体大小50时，图片额外宽度为150
                 if font_size <= 30:
                     image_width_bonus = 170   # 小字体时的图片额外宽度
                 elif font_size <= 50:
@@ -1010,6 +1160,23 @@ class LevitationWindow(QWidget, UIAccessMixin):
                 else:
                     image_width_bonus = 800  # 超大字体时的图片额外宽度
                 dynamic_width = max(150, min(1920, int((base_width + image_width_bonus) * scale_factor)))
+            elif self.current_count > 1:
+                # 显示更多人时根据字体大小动态计算额外宽度
+                if font_size <= 30:
+                    dynamic_width_bonus = 150   # 小字体时的额外宽度
+                elif font_size <= 50:
+                    dynamic_width_bonus = 150  # 中等字体时的额外宽度
+                elif font_size <= 80:
+                    dynamic_width_bonus = 220  # 较大字体时的额外宽度
+                elif font_size <= 120:
+                    dynamic_width_bonus = 300  # 大字体时的额外宽度
+                elif font_size <= 150:
+                    dynamic_width_bonus = 430  # 很大字体时的额外宽度
+                elif font_size <= 180:
+                    dynamic_width_bonus = 580  # 很大字体时的额外宽度
+                else:
+                    dynamic_width_bonus = 780  # 超大字体时的额外宽度
+                dynamic_width = max(150, min(1920, int((base_width + dynamic_width_bonus) * scale_factor)))
             else:
                 dynamic_width = max(150, min(1920, int(base_width * scale_factor)))
             dynamic_height = max(170, min(1080, int(base_height * scale_factor)))
@@ -1068,6 +1235,15 @@ class LevitationWindow(QWidget, UIAccessMixin):
             if hasattr(self, 'flash_button') and self.flash_button is not None:
                 self.flash_button.setEnabled(False)
                 logger.info("闪抽按钮已禁用")
+            
+            # 禁用即抽按钮，防止重复点击
+            if hasattr(self, 'instant_draw_button') and self.instant_draw_button is not None:
+                self.instant_draw_button.setEnabled(False)
+                logger.info("即抽按钮已禁用")
+            
+            # 标记抽取正在进行
+            self.is_drawing = True
+            logger.info("抽取状态已设置为进行中")
             
             self.pumping_content.start_draw()
             
@@ -1274,6 +1450,15 @@ class LevitationWindow(QWidget, UIAccessMixin):
         if hasattr(self, 'flash_button') and self.flash_button is not None:
             self.flash_button.setEnabled(True)
             logger.info("闪抽按钮已重新启用")
+        
+        # 重新启用即抽按钮
+        if hasattr(self, 'instant_draw_button') and self.instant_draw_button is not None:
+            self.instant_draw_button.setEnabled(True)
+            logger.info("即抽按钮已重新启用")
+        
+        # 标记抽取已结束
+        self.is_drawing = False
+        logger.info("抽取状态已设置为结束")
     
     def closeEvent(self, event):
         """窗口关闭事件 - 清理所有定时器资源"""
@@ -1319,3 +1504,263 @@ class LevitationWindow(QWidget, UIAccessMixin):
             # self.activateWindow()  # 激活窗口
         except Exception as e:
             logger.warning(f"保持窗口置顶失败: {e}")
+
+    # 对用户的选择进行返回学生数量或小组数量
+    def _get_cleaned_data(self, student_file, group_name, genders):
+        with open_file(student_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            # 初始化不同情况的列表
+            group_data = []
+            student_data = []
+            for student_name, student_info in data.items():
+                if isinstance(student_info, dict) and 'id' in student_info:
+                    id = student_info.get('id', '')
+                    name = student_name.replace('【', '').replace('】', '')
+                    gender = student_info.get('gender', '')
+                    group = student_info.get('group', '')
+                    exist = student_info.get('exist', True)
+                    if group_name == '抽取小组组号':
+                        group_data.append((id, group, exist))
+                    elif group_name == group:
+                        if (not genders) or (genders and gender in genders) or (genders == '抽取所有性别'):
+                            student_data.append((id, name, exist))
+                    elif group_name == '抽取全班学生':
+                        if (not genders) or (genders and gender in genders) or (genders == '抽取所有性别'):
+                            student_data.append((id, name, exist))
+                        
+            if group_name == '抽取小组组号':
+                valid_groups = set()
+                group_exist_map = {}
+                for _, group, exist in group_data:
+                    if group not in group_exist_map:
+                        group_exist_map[group] = exist
+                    else:
+                        group_exist_map[group] = group_exist_map[group] or exist
+                for group, has_exist in group_exist_map.items():
+                    if has_exist:
+                        valid_groups.add(group)
+                unique_groups = sorted(valid_groups, key=self.sort_key)
+                cleaned_data = [(group_id, group, True) for group_id, group in enumerate(sorted(unique_groups, key=self.sort_key), start=1)]
+            else:
+                cleaned_data = [data for data in student_data if data[2]]
+            return cleaned_data
+
+    # 增加抽取人数
+    def _increase_count(self):
+        """增加抽取人数"""
+        if self.current_count < self.max_count:
+            self.current_count += 1
+            self._animate_count_change(self.current_count)
+            self._update_count_display()
+
+    # 减少抽取人数        
+    def _decrease_count(self):
+        """减少抽取人数"""
+        if self.current_count > 1:
+            self.current_count -= 1
+            self._animate_count_change(self.current_count)
+            self._update_count_display()
+
+    # 更新人数显示        
+    def _update_count_display(self):
+        """更新人数显示"""
+        self.count_label.setText(str(self.current_count))
+        
+        # 根据当前人数启用/禁用按钮
+        self.increase_button.setEnabled(self.current_count < self.max_count)
+        self.decrease_button.setEnabled(self.current_count > 1)
+        
+        # 只有在不在抽取过程中时才根据人数条件启用/禁用即抽按钮
+        if not self.is_drawing:
+            self.instant_draw_button.setEnabled(self.current_count <= self.max_count and self.current_count > 0)
+        # 如果正在抽取，保持按钮禁用状态
+        
+        # 如果当前人数超过最大人数，自动调整到最大人数
+        if self.current_count > self.max_count:
+            self.current_count = self.max_count
+            self.count_label.setText(str(self.current_count))
+            self._animate_count_change(self.current_count)
+            # 重新更新按钮状态
+            self.increase_button.setEnabled(self.current_count < self.max_count)
+            self.decrease_button.setEnabled(self.current_count > 1)
+            # 只有在不在抽取过程中时才根据人数条件启用/禁用即抽按钮
+            if not self.is_drawing:
+                self.instant_draw_button.setEnabled(self.current_count <= self.max_count and self.current_count > 0)
+    
+    def _reset_count(self):
+        # 小鸟游星野：重置抽取人数和已抽取名单 ✧(๑•̀ㅂ•́)๑
+        self.current_count = 1
+        self._animate_count_change(self.current_count)
+        self._update_count_display()
+        self._clean_temp_files()
+
+    # 清理临时文件
+    def _clean_temp_files(self):
+        import glob
+        temp_dir = path_manager.get_temp_path()
+        if path_manager.file_exists(temp_dir):
+            for file in glob.glob(f"{temp_dir}/until_*.json"):
+                try:
+                    path_manager.remove_file(file)
+                    logger.info(f"已清理临时抽取记录文件: {file}")
+                except Exception as e:
+                    logger.error(f"清理临时抽取记录文件失败: {e}")
+
+    def _load_classes(self):
+        # 初始化班级下拉框
+        self.class_combo = ComboBox()
+        self.class_combo.setFixedSize(180, 50)
+        self.class_combo.setFont(QFont(load_custom_font(), 13))
+        # 加载班级列表
+        try:
+            list_folder = path_manager.get_resource_path("list")
+            if path_manager.file_exists(list_folder) and os.path.isdir(list_folder):
+                files = os.listdir(list_folder)
+                classes = []
+                for file in files:
+                    if file.endswith('.json'):
+                        class_name = os.path.splitext(file)[0]
+                        classes.append(class_name)
+                
+                self.class_combo.clear()
+                if classes:
+                    self.class_combo.addItems(classes)
+                else:
+                    logger.error("你暂未添加班级")
+                    self.class_combo.addItem("你暂未添加班级")
+            else:
+                logger.error("你暂未添加班级")
+                self.class_combo.addItem("你暂未添加班级")
+        except Exception as e:
+            logger.error(f"加载班级列表失败: {str(e)}")
+            self.class_combo.addItem("加载班级列表失败")
+
+    def _load_groups(self):
+        # 小组下拉框
+        self.group_combo = ComboBox()
+        self.group_combo.setFixedSize(180, 50)
+        self.group_combo.setFont(QFont(load_custom_font(), 13))
+        self.group_combo.addItem('抽取全班学生')
+        self.group_combo.currentIndexChanged.connect(self.update_total_count)
+
+        class_name = self.class_combo.currentText()
+        pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
+        try:
+            if path_manager.file_exists(pumping_people_file):
+                with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    groups = set()
+                    for student_name, student_info in data.items():
+                        if isinstance(student_info, dict) and 'id' in student_info:
+                            id = student_info.get('id', '')
+                            name = student_name.replace('【', '').replace('】', '')
+                            gender = student_info.get('gender', '')
+                            group = student_info.get('group', '')
+                            if group:  # 只添加非空小组
+                                groups.add(group)
+                    cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
+                    if groups:
+                        self.group_combo.addItem('抽取小组组号')
+                        self.group_combo.addItems(cleaned_data)
+                    else:
+                        logger.error("你暂未添加小组")
+                        self.group_combo.addItem("你暂未添加小组")
+            else:
+                logger.error("你暂未添加小组")
+                self.group_combo.addItem("你暂未添加小组")
+        except Exception as e:
+            logger.error(f"加载小组列表失败: {str(e)}")
+            self.group_combo.addItem("加载小组列表失败")
+        
+    def _load_genders(self):
+        # 性别下拉框
+        self.gender_combo = ComboBox()
+        self.gender_combo.setFixedSize(180, 50)
+        self.gender_combo.setFont(QFont(load_custom_font(), 13))
+        self.gender_combo.addItem('抽取所有性别')
+        self.gender_combo.currentIndexChanged.connect(self.update_total_count)
+
+        class_name = self.class_combo.currentText()
+        pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
+        try:
+            if path_manager.file_exists(pumping_people_file):
+                with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    genders = set()
+                    for student_name, student_info in data.items():
+                        if isinstance(student_info, dict) and 'id' in student_info:
+                            id = student_info.get('id', '')
+                            name = student_name.replace('【', '').replace('】', '')
+                            gender = student_info.get('gender', '')
+                            group = student_info.get('group', '')
+                            if gender:  # 只添加非空小组
+                                genders.add(gender)
+                    cleaned_data = sorted(list(genders), key=lambda x: self.sort_key(str(x)))
+                    if genders:
+                        self.gender_combo.addItems(cleaned_data)
+                    else:
+                        logger.error("你暂未添加性别")
+                        self.gender_combo.addItem("你暂未添加性别")
+            else:
+                logger.error("你暂未添加性别")
+                self.gender_combo.addItem("你暂未添加性别")
+        except Exception as e:
+            logger.error(f"加载性别列表失败: {str(e)}")
+            self.gender_combo.addItem("加载性别列表失败")
+
+    # 将小组名称转换为排序键
+    def sort_key(self, group):
+        # 尝试匹配 '第X小组' 或 '第X组' 格式
+        match = re.match(r'第\s*(\d+|一|二|三|四|五|六|七|八|九|十)\s*(小组|组)', group)
+        if match:
+            num = match.group(1)
+            num_map = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10}
+            if num in num_map:
+                return (1, num_map[num])  # 类型1: 中文数字组
+            else:
+                return (1, int(num))       # 类型1: 阿拉伯数字组
+        
+        # 尝试匹配仅数字格式
+        try:
+            return (2, int(group))         # 类型2: 纯数字组
+        except ValueError:
+            pass
+        
+        # 🌟 星穹铁道白露：自定义组名直接使用中文排序啦~
+        return (3, group) # ✨ 小鸟游星野：类型3: 其他名称组，保持排序功能不变
+
+    def update_total_count(self):
+        """更新总人数"""
+        self._load_classes()
+        self._load_groups()
+        self._load_genders()
+            
+        class_name = self.class_combo.currentText()
+        group_name = self.group_combo.currentText()
+        gender_name = self.gender_combo.currentText()
+
+        student_file = path_manager.get_resource_path("list", f"{class_name}.json")
+
+        cleaned_data = self._get_cleaned_data(student_file, group_name, gender_name)
+
+        self.max_count = len(cleaned_data)
+    
+    def _show_instant_draw_window(self):
+        # 小鸟游星野：显示即抽窗口 - 使用_show_direct_extraction_window传递抽取人数 ✧(๑•̀ㅂ•́)๑
+        try:
+            # 确保当前抽取人数已设置
+            if not hasattr(self, 'current_count'):
+                self.current_count = 1
+
+            self.update_total_count()
+            
+            # 调用直接抽取窗口方法，会自动传递抽取人数
+            self._show_direct_extraction_window(self.current_count)
+            
+        except Exception as e:
+            logger.error(f"执行抽取功能失败: {e}")
+            error_dialog = Dialog("抽取失败", f"执行抽取功能时发生错误: {str(e)}", self)
+            error_dialog.yesButton.setText("确定")
+            error_dialog.cancelButton.hide()
+            error_dialog.buttonLayout.insertStretch(1)
+            error_dialog.exec()

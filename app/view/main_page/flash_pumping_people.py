@@ -22,7 +22,7 @@ class pumping_people(QWidget):
     # 抽取完成信号
     draw_finished = pyqtSignal()
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, draw_count=1):
         super().__init__(parent)
         # 定义变量
         self.is_animating = False
@@ -30,6 +30,7 @@ class pumping_people(QWidget):
         self.animation_timer = None
         # 音乐播放器初始化 ✧(◍˃̶ᗜ˂̶◍)✩ 感谢白露提供的播放器
         self.music_player = QMediaPlayer()
+        self.draw_count = draw_count
         self.initUI()
     
     def start_draw(self):
@@ -1700,7 +1701,7 @@ class pumping_people(QWidget):
             self.gender_combo.addItem("加载性别列表失败")
         
         # 初始化抽取人数
-        self.current_count = 1
+        self.current_count = self.draw_count
         self.max_count = 0
 
         # 结果区域布局

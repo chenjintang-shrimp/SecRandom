@@ -179,29 +179,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.left_pumping_floating_switch = ComboBox()
         self.left_pumping_floating_switch.setFixedWidth(250)
         self.left_pumping_floating_switch.addItems([
-            # # 单个功能
-            # "显示 拖动",
-            # "显示 主界面",
-            # "显示 闪抽",
-            # "显示 辅窗",
-            
-            # # 两个功能组合
-            # "显示 拖动+主界面",
-            # "显示 拖动+闪抽",
-            # "显示 拖动+辅窗",
-            # "显示 主界面+闪抽",
-            # "显示 主界面+辅窗",
-            # "显示 闪抽+辅窗",
-            
-            # # 三个功能组合
-            # "显示 拖动+主界面+闪抽",
-            # "显示 拖动+主界面+辅窗",
-            # "显示 拖动+闪抽+辅窗",
-            # "显示 主界面+闪抽+辅窗",
-            
-            # # 四个功能组合
-            # "显示 拖动+主界面+闪抽+辅窗"
-
             # 单个功能
             "显示 拖动",
             "显示 主界面",
@@ -213,7 +190,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "显示 主界面+闪抽",
             
             # 三个功能组合
-            "显示 拖动+主界面+闪抽"
+            "显示 拖动+主界面+闪抽",
+
+            # 即抽
+            "显示 即抽"
         ])
         self.left_pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
         self.left_pumping_floating_switch.currentIndexChanged.connect(self.save_settings)
