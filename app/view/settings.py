@@ -9,7 +9,6 @@ from loguru import logger
 from app.common.config import get_theme_icon, load_custom_font
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
-from app.common.ui_access_manager import UIAccessManager, UIAccessMixin
 
 # 导入子页面
 from app.view.settings_page.more_setting import more_setting
@@ -21,7 +20,7 @@ from app.view.settings_page.voice_engine_setting import voice_engine_settings
 from app.view.plugins.plugin_settings import PluginSettingsWindow
 
 
-class settings_Window(MSFluentWindow, UIAccessMixin):
+class settings_Window(MSFluentWindow):
     def __init__(self, parent=None):
         super().__init__()
         self.app_dir = path_manager._app_root
@@ -66,9 +65,6 @@ class settings_Window(MSFluentWindow, UIAccessMixin):
         except FileNotFoundError as e:
             logger.error(f"加载设置时出错: {e}, 使用默认窗口居中显示设置界面")
             self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
-
-        # 初始化UIAccess权限
-        self._init_ui_access()
 
         self.createSubInterface()
 
