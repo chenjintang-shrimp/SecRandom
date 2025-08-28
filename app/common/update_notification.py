@@ -86,7 +86,7 @@ class UpdateNotification(QDialog):
 
         # 关闭按钮
         close_btn = PushButton("")
-        close_icon_path = path_manager.get_resource_path('dark', 'ic_fluent_arrow_exit_20_filled_dark', '.svg')
+        close_icon_path = path_manager.get_resource_path('assets', 'dark/ic_fluent_arrow_exit_20_filled_dark.svg')
         close_btn.setIcon(QIcon(str(close_icon_path)))
         close_btn.setStyleSheet("background: transparent; border: none;")
         close_btn.clicked.connect(self.close_with_animation)
@@ -103,7 +103,7 @@ class UpdateNotification(QDialog):
 
         # 官网
         manual_update_btn = PushButton("     官网 下载更新")
-        manual_update_btn.setIcon(QIcon(icon_path))
+        manual_update_btn.setIcon(QIcon(str(icon_path)))
         manual_update_btn.setStyleSheet(""
             "QPushButton {background-color: #4a6cf7; color: white; border-radius: 8px; padding: 8px 16px; font-weight: 500; border: none;}"
             "QPushButton:hover {background-color: #3a5bdb;}"

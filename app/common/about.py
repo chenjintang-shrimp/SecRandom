@@ -76,7 +76,7 @@ class aboutCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新通道", "选择更新通道", self.channel_combo)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "检查更新", "检查是否为最新版本(应用启动时会自动检查更新)", self.check_update_button)
 
-        self.on_channel_changed(self.channel_combo.currentIndex())
+        # self.on_channel_changed(self.channel_combo.currentIndex())
         self.read_channel_setting()
 
     class UpdateCheckWorker(QThread):
@@ -87,6 +87,17 @@ class aboutCard(GroupHeaderCardWidget):
             self.result_ready.emit(update_available, latest_version)
         
     def check_updates_async(self):
+        # 清理可能存在的旧worker，避免内存泄漏
+        if hasattr(self, 'update_worker') and self.update_worker is not None:
+            try:
+                if self.update_worker.isRunning():
+                    self.update_worker.quit()
+                    self.update_worker.wait(1000)  # 等待1秒让线程正常结束
+                self.update_worker.deleteLater()
+            except Exception as e:
+                logger.warning(f"清理旧update_worker时出现错误: {e}")
+        
+        # 创建新的worker
         self.update_worker = self.UpdateCheckWorker()
         self.update_worker.result_ready.connect(self.on_update_check_finished)
         self.update_worker.start()
@@ -101,7 +112,15 @@ class aboutCard(GroupHeaderCardWidget):
             w.buttonLayout.insertStretch(1)
             if w.exec():
                 logger.info("用户点击了知道啦👌")
-        self.update_worker.deleteLater()
+        # 安全地删除worker对象，避免重复删除导致的错误
+        if hasattr(self, 'update_worker') and self.update_worker is not None:
+            try:
+                self.update_worker.deleteLater()
+                self.update_worker = None
+            except RuntimeError as e:
+                logger.warning(f"删除update_worker时出现错误: {e}")
+            except Exception as e:
+                logger.warning(f"删除update_worker时出现未知错误: {e}")
 
     def on_channel_changed(self, index):
         channel = 'stable' if index == 0 else 'beta'

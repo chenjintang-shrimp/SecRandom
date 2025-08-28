@@ -264,17 +264,20 @@ class list_SettinsCard(GroupHeaderCardWidget):
             self.gender_Button.setEnabled(False)
             self.group_Button.setEnabled(False)
             self.import_Button.setEnabled(False)
+            self.export_Button.setEnabled(False)
             self.class_comboBox.setPlaceholderText("选择一个需要设置名单的班级")
         elif not data:
             self.student_Button.setEnabled(True)
             self.gender_Button.setEnabled(False)
             self.group_Button.setEnabled(False)
             self.import_Button.setEnabled(True)
+            self.export_Button.setEnabled(False)
         else:
             self.student_Button.setEnabled(True)
             self.gender_Button.setEnabled(True)
             self.group_Button.setEnabled(True)
             self.import_Button.setEnabled(True)
+            self.export_Button.setEnabled(True)
 
         if class_name and (not data):
             self.table.setRowCount(0)

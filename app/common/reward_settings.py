@@ -248,13 +248,19 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         if not prize_pools_name:
             self.prize_Button.setEnabled(False)
             self.probability_Button.setEnabled(False)
+            self.import_Button.setEnabled(False)
+            self.export_Button.setEnabled(False)
             self.prize_pools_comboBox.setPlaceholderText("选择一个需要设置奖品的奖池")
         elif not data:
             self.prize_Button.setEnabled(True)
+            self.import_Button.setEnabled(True)
+            self.export_Button.setEnabled(False)
             self.probability_Button.setEnabled(False)
         else:
             self.prize_Button.setEnabled(True)
             self.probability_Button.setEnabled(True)
+            self.import_Button.setEnabled(True)
+            self.export_Button.setEnabled(True)
 
         if prize_pools_name and (not data):
             self.table.setRowCount(0)

@@ -8,6 +8,10 @@ import json
 import os
 from pathlib import Path
 from loguru import logger
+import requests
+# 禁用requests的SSL验证警告
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from packaging.version import Version
 import platform
@@ -87,25 +91,16 @@ def check_for_updates(channel=None):
         else:
             url = "https://api.github.com/repos/SECTL/SecRandom/releases"
 
-        # (ﾟДﾟ≡ﾟдﾟ) 星野的Qt网络请求魔法！
-        network_manager = QNetworkAccessManager()
-        event_loop = QEventLoop()
+        # (ﾟДﾟ≡ﾟдﾟ) 星野的requests网络请求魔法！
+        headers = {
+            'User-Agent': 'SecRandom-Updater'
+        }
         
-        request = QNetworkRequest(QUrl(url))
-        request.setRawHeader(b'User-Agent', b'SecRandom-Updater')
+        # 禁用SSL验证以避免证书验证失败的问题
+        response = requests.get(url, headers=headers, timeout=10, verify=False)
+        response.raise_for_status()
         
-        reply = network_manager.get(request)
-        reply.finished.connect(event_loop.quit)
-        
-        # 等待请求完成
-        event_loop.exec_()
-        
-        if reply.error() != QNetworkReply.NoError:
-            logger.error(f"(×﹏×) 白露出错: 网络请求失败了呢～ {reply.errorString()}")
-            return False, None
-            
-        response_data = reply.readAll().data().decode('utf-8')
-        response_json = json.loads(response_data)
+        response_json = response.json()
         
         if channel == 'stable':
             latest_release = response_json
@@ -134,6 +129,9 @@ def check_for_updates(channel=None):
         else:
             logger.info(f"(ﾟДﾟ≡ﾟдﾟ) 星野报告: 当前版本 {current_version} 已经是最新的啦，不需要更新喵～")
             return False, None
+    except requests.exceptions.RequestException as e:
+        logger.error(f"(×﹏×) 白露出错: 网络请求失败了呢～ {e}")
+        return False, None
     except json.JSONDecodeError as e:
         logger.error(f"(×﹏×) 白露出错: API响应格式不对哦～ {e}")
         return False, None

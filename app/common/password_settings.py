@@ -501,6 +501,8 @@ def unbind_usb(device_id=None, serial_number=None, model=None):
             # 如果存在USB绑定信息
             if "usb_binding" in settings and settings["usb_binding"]:
                 unbound_count = 0
+                unbound_with_key_count = 0  # 需要.key文件的U盘数量
+                unbound_without_key_count = 0  # 无需.key文件的U盘数量
                 remaining_bindings = []
                 pending_deletions = settings.get("usb_pending_deletion", [])
                 
@@ -535,9 +537,11 @@ def unbind_usb(device_id=None, serial_number=None, model=None):
                             }
                             pending_deletions.append(deletion_info)
                             logger.info(f"已从绑定列表中移除U盘并添加到待删除列表: {usb_binding['DeviceID']}, 型号: {usb_binding.get('Model', '')}")
+                            unbound_with_key_count += 1
                         else:
                             # 不需要.key文件，直接移除，无需删除文件
                             logger.info(f"已从绑定列表中直接移除U盘（无需删除.key文件）: {usb_binding['DeviceID']}, 型号: {usb_binding.get('Model', '')}")
+                            unbound_without_key_count += 1
                         
                         unbound_count += 1
                     else:
@@ -553,7 +557,12 @@ def unbind_usb(device_id=None, serial_number=None, model=None):
                     json.dump(settings, f, indent=4, ensure_ascii=False)
                 
                 if unbound_count > 0:
-                    logger.info(f"成功解绑 {unbound_count} 个U盘，已添加到待删除列表")
+                    if unbound_with_key_count > 0 and unbound_without_key_count > 0:
+                        logger.info(f"成功解绑 {unbound_count} 个U盘（{unbound_with_key_count} 个需要删除.key文件，{unbound_without_key_count} 个无需.key文件）")
+                    elif unbound_with_key_count > 0:
+                        logger.info(f"成功解绑 {unbound_count} 个U盘，已添加到待删除列表")
+                    else:
+                        logger.info(f"成功解绑 {unbound_count} 个U盘（均为无需.key文件的U盘）")
                     return True
                 else:
                     logger.warning("没有找到匹配的U盘进行解绑")
@@ -1705,9 +1714,9 @@ class password_SettingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_document_key_20_filled"), '密钥导出', '导出加密密钥文件用于备份', self.export_key_button)
         self.addGroup(get_theme_icon("ic_fluent_certificate_20_filled"), "双重认证", "启用双因素认证(2FA)增强安全性", self.two_factor_switch)
         self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "修改用户名", "更改双因素认证的标识用户名", self.change_username_button)
-        self.addGroup(get_theme_icon("ic_fluent_usb_20_filled"), "U盘认证", "启用U盘作为身份验证设备，增强软件安全性", self.usb_auth_switch)
-        self.addGroup(get_theme_icon("ic_fluent_usb_plug_20_filled"), "绑定U盘", "选择并绑定U盘作为专属验证设备", self.bind_usb_button)
-        self.addGroup(get_theme_icon("ic_fluent_usb_disconnect_20_filled"), "解绑U盘", "移除已绑定的U盘验证设备（支持远程解绑）", self.unbind_usb_button)
+        self.addGroup(get_theme_icon("ic_fluent_tv_usb_20_filled"), "U盘认证", "启用U盘作为身份验证设备，增强软件安全性", self.usb_auth_switch)
+        self.addGroup(get_theme_icon("ic_fluent_usb_stick_20_filled"), "绑定U盘", "选择并绑定U盘作为专属验证设备", self.bind_usb_button)
+        self.addGroup(get_theme_icon("ic_fluent_usb_plug_20_filled"), "解绑U盘", "移除已绑定的U盘验证设备（支持远程解绑）", self.unbind_usb_button)
         # self.addGroup(FIF.VPN, "数据加密", "加密设置和名单文件", self.encrypt_setting_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_reset_20_filled"), "重启软件验证", "重启软件时需要验证身份", self.restart_verification_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_exit_20_filled"), "退出软件验证", "退出软件时需要验证身份", self.exit_verification_switch)
@@ -2439,6 +2448,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
             with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 hashed_set = settings.get("hashed_set", {})
+                usb_bindings = settings.get("usb_binding", [])
                 if hashed_set.get("verification_start") == True:
                     if not hashed_set.get("hashed_password") or not hashed_set.get("password_salt"):
                         self.show_info_bar('warning', '警告', '请先设置密码', 3000, self)
@@ -2452,10 +2462,12 @@ class password_SettingsCard(GroupHeaderCardWidget):
                             if unbind_dialog.exec_() == QDialog.Accepted:
                                 self.show_info_bar('success', '成功', 'U盘解绑成功', 3000, self)
                                 # 如果U盘认证已启用，自动关闭
-                                if self.usb_auth_switch.isChecked():
+                                if self.usb_auth_switch.isChecked() and not usb_bindings:
                                     self.usb_auth_switch.blockSignals(True)
+                                    self.usb_auth_switch.setChecked(False)
                                     self.usb_auth_switch.blockSignals(False)
                                     self.save_settings()
+                                    self.show_info_bar('warning', '警告', 'U盘认证已自动关闭', 3000, self)
                         else:
                             self.show_info_bar('warning', '警告', 'U盘解绑已取消', 3000, self)
         except json.JSONDecodeError as e:
@@ -2491,6 +2503,18 @@ class password_SettingsCard(GroupHeaderCardWidget):
                     )
                     logger.info("安全设置加载完成")
                     
+                    # 检查是否有绑定的U盘，如果没有则关闭U盘认证开关
+                    try:
+                        usb_bindings = settings.get("usb_binding", [])
+                        if not usb_bindings and self.usb_auth_switch.isChecked():
+                            self.usb_auth_switch.blockSignals(True)
+                            self.usb_auth_switch.setChecked(False)
+                            self.usb_auth_switch.blockSignals(False)
+                            self.save_settings()
+                            logger.info("没有绑定的U盘，已自动关闭U盘认证开关")
+                    except Exception as e:
+                        logger.error(f"检查U盘绑定时出错: {e}")
+                    
                     # 如果U盘认证已启用，启动监控线程
                     if settings.get("usb_auth_enabled", False):
                         self.start_usb_monitoring()
@@ -2503,6 +2527,13 @@ class password_SettingsCard(GroupHeaderCardWidget):
                 self.restart_verification_switch.setChecked(self.default_settings["restart_verification_enabled"])
                 self.show_hide_verification_switch.setChecked(self.default_settings["show_hide_verification_enabled"])
                 self.usb_auth_switch.setChecked(self.default_settings["usb_auth_enabled"])
+                
+                # 设置文件不存在时，确保U盘认证开关关闭（因为没有绑定的U盘）
+                if self.usb_auth_switch.isChecked():
+                    self.usb_auth_switch.blockSignals(True)
+                    self.usb_auth_switch.setChecked(False)
+                    self.usb_auth_switch.blockSignals(False)
+                    logger.info("设置文件不存在，已关闭U盘认证开关")
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.start_password_switch.setChecked(self.default_settings["start_password_enabled"])
@@ -2512,6 +2543,13 @@ class password_SettingsCard(GroupHeaderCardWidget):
             self.restart_verification_switch.setChecked(self.default_settings["restart_verification_enabled"])
             self.show_hide_verification_switch.setChecked(self.default_settings["show_hide_verification_enabled"])
             self.usb_auth_switch.setChecked(self.default_settings["usb_auth_enabled"])
+            
+            # 加载设置出错时，确保U盘认证开关关闭（因为没有绑定的U盘）
+            if self.usb_auth_switch.isChecked():
+                self.usb_auth_switch.blockSignals(True)
+                self.usb_auth_switch.setChecked(False)
+                self.usb_auth_switch.blockSignals(False)
+                logger.info("加载设置出错，已关闭U盘认证开关")
 
     def save_settings(self):
         # 先读取现有设置
