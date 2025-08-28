@@ -240,7 +240,7 @@ class ContributorDialog(QDialog):
             },
             {
                 'name': 'Fox-block-offcial',
-                'role': '应用测试',
+                'role': '应用测试 & 文档 & 安装包制作',
                 'github': 'https://github.com/Fox-block-offcial',
                 'avatar': str(path_manager.get_resource_path('icon', 'contributor3.png'))
             },
@@ -949,3 +949,4 @@ class DonationDialog(QDialog):
                 event.ignore()
                 return
         event.accept()
+        
