@@ -1271,7 +1271,9 @@ class pumping_reward(QWidget):
         # 根据当前奖数启用/禁用按钮
         self.plus_button.setEnabled(self.current_count < self.max_count)
         self.minus_button.setEnabled(self.current_count > 1)
-        self.start_button.setEnabled(self.current_count <= self.max_count and self.current_count > 0)
+
+        if not self.is_animating:
+            self.start_button.setEnabled(self.current_count <= self.max_count and self.current_count > 0)
     
     # 刷新奖池列表         
     def refresh_reward_list(self):
