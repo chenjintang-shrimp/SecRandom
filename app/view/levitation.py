@@ -1634,6 +1634,12 @@ class LevitationWindow(QWidget):
         self.group_combo.currentIndexChanged.connect(self.update_total_count)
 
         class_name = self.class_combo.currentText()
+        
+        # 检查是否选择了有效的班级
+        if class_name == "你暂未添加班级" or class_name == "加载班级列表失败":
+            self.group_combo.addItem("你暂未添加小组")
+            return
+            
         pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
         try:
             if path_manager.file_exists(pumping_people_file):
@@ -1671,6 +1677,12 @@ class LevitationWindow(QWidget):
         self.gender_combo.currentIndexChanged.connect(self.update_total_count)
 
         class_name = self.class_combo.currentText()
+        
+        # 检查是否选择了有效的班级
+        if class_name == "你暂未添加班级" or class_name == "加载班级列表失败":
+            self.gender_combo.addItem("你暂未添加性别")
+            return
+            
         pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
         try:
             if path_manager.file_exists(pumping_people_file):
@@ -1729,7 +1741,17 @@ class LevitationWindow(QWidget):
         group_name = self.group_combo.currentText()
         gender_name = self.gender_combo.currentText()
 
+        # 检查是否选择了有效的班级
+        if class_name == "你暂未添加班级" or class_name == "加载班级列表失败":
+            self.max_count = 0
+            return
+            
         student_file = path_manager.get_resource_path("list", f"{class_name}.json")
+
+        # 检查文件是否存在
+        if not path_manager.file_exists(student_file):
+            self.max_count = 0
+            return
 
         cleaned_data = self._get_cleaned_data(student_file, group_name, gender_name)
 

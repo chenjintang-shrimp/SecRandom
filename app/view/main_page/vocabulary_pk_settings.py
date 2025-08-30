@@ -12,6 +12,10 @@ class VocabularyPKSettingsDialog(QDialog):
     def __init__(self, parent=None, settings=None):
         super().__init__(parent)
         self.settings = settings or {}
+
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
+
         self.initUI()
         
     def initUI(self):
@@ -135,14 +139,14 @@ class VocabularyPKSettingsDialog(QDialog):
         settings_card_layout.addWidget(basic_group)
         
         # 高级设置区域
-        advanced_group = QGroupBox("高级设置")
-        advanced_group.setFont(QFont(load_custom_font(), 12))
-        advanced_layout = QFormLayout(advanced_group)
+        self.advanced_group = QGroupBox("高级设置")
+        self.advanced_group.setFont(QFont(load_custom_font(), 12))
+        advanced_layout = QFormLayout(self.advanced_group)
         advanced_layout.setLabelAlignment(Qt.AlignRight)
         advanced_layout.setFormAlignment(Qt.AlignLeft)
         advanced_layout.setSpacing(15)
 
-        advanced_group.setStyleSheet("QGroupBox { border: 1px solid #cccccc; border-radius: 6px; margin-top: 12px; } "
+        self.advanced_group.setStyleSheet("QGroupBox { border: 1px solid #cccccc; border-radius: 6px; margin-top: 12px; } "
                          "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px; }")
         
         # 练习模式选择
@@ -221,7 +225,7 @@ class VocabularyPKSettingsDialog(QDialog):
         
         advanced_layout.addRow(countdown_label, self.countdown_widget)
         
-        settings_card_layout.addWidget(advanced_group)
+        settings_card_layout.addWidget(self.advanced_group)
         
         main_layout.addWidget(settings_card)
         
@@ -260,7 +264,7 @@ class VocabularyPKSettingsDialog(QDialog):
                 content="没有选择可删除的词汇表",
                 duration=3000,
                 parent=self
-            ).show()
+            )
             return
         
         # 确认删除
@@ -306,7 +310,7 @@ class VocabularyPKSettingsDialog(QDialog):
                         content=f"已成功删除词汇表: {current_vocabulary}",
                         duration=3000,
                         parent=self
-                    ).show()
+                    )
                 else:
                     # 显示删除失败的提示
                     InfoBar.error(
@@ -314,7 +318,7 @@ class VocabularyPKSettingsDialog(QDialog):
                         content=f"删除词汇表 '{current_vocabulary}' 失败，请重试",
                         duration=3000,
                         parent=self
-                    ).show()
+                    )
             else:
                 # 如果父窗口不存在或没有删除词汇表方法，显示错误提示
                 InfoBar.error(
@@ -322,7 +326,64 @@ class VocabularyPKSettingsDialog(QDialog):
                     content="无法删除词汇表，请重试",
                     duration=3000,
                     parent=self
-                ).show()
+                )
+
+    def update_theme_style(self):
+        """根据当前主题更新样式"""
+        if qconfig.theme == Theme.AUTO:
+            lightness = QApplication.palette().color(QPalette.Window).lightness()
+            is_dark = lightness <= 127
+        else:
+            is_dark = qconfig.theme == Theme.DARK
+        
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
+        self.setStyleSheet(f"""
+            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
+            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
+            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            #CloseButton {{ 
+                background-color: transparent; 
+                color: {colors['text']}; 
+                border-radius: 4px; 
+                font-weight: bold; 
+                border: none;
+            }}
+            #CloseButton:hover {{ 
+                background-color: #ff4d4d; 
+                color: white; 
+                border: none;
+            }}
+            QLabel, QPushButton, QTextEdit {{ color: {colors['text']}; }}
+            QLineEdit {{ 
+                background-color: {colors['bg']}; 
+                color: {colors['text']}; 
+                border: 1px solid #555555; 
+                border-radius: 4px; 
+                padding: 5px; 
+            }}
+            QPushButton {{ 
+                background-color: {colors['bg']}; 
+                color: {colors['text']}; 
+                border: 1px solid #555555; 
+                border-radius: 4px; 
+                padding: 5px; 
+            }}
+            QPushButton:hover {{ background-color: #606060; }}
+            QComboBox {{ 
+                background-color: {colors['bg']}; 
+                color: {colors['text']}; 
+                border: 1px solid #555555; 
+                border-radius: 4px; 
+                padding: 5px; 
+            }}
+            QGroupBox {{ color: {colors['text']}; }}
+            QGroupBox::title {{ color: {colors['text']}; }}
+        """)
+        
+        # 更新高级设置QGroupBox的字体颜色
+        if hasattr(self, 'advanced_group'):
+            self.advanced_group.setStyleSheet(f"QGroupBox {{ color: {colors['text']}; border: 1px solid #cccccc; border-radius: 6px; margin-top: 12px; }} "
+                                     f"QGroupBox::title {{ subcontrol-origin: margin; left: 10px; padding: 0 3px 0 3px; color: {colors['text']}; }}")
     
     def on_import_vocabulary_clicked(self):
         """导入词汇表按钮点击事件处理函数"""
@@ -365,7 +426,7 @@ class VocabularyPKSettingsDialog(QDialog):
                 content="无法导入词汇表，请重试",
                 duration=3000,
                 parent=self
-            ).show()
+            )
     
     def get_settings(self):
         """获取设置值"""
