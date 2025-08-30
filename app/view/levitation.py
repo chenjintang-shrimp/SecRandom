@@ -1285,9 +1285,29 @@ class LevitationWindow(QWidget):
                 settings = json.load(f)
                 
             # 检查是否启用自动关闭
-            auto_close_enabled = settings.get('flash_window_auto_close', True)
-            close_time = settings.get('flash_window_close_time', 2)
-            close_time = close_time + 1
+            auto_close_enabled = settings['foundation']['flash_window_auto_close']
+            close_time_setting = settings['foundation']['flash_window_close_time']
+            
+            # 根据设置值映射到实际的关闭时间
+            # 0：1，1：2，2：3，3：5，4：10，5：15，6：30
+            close_time_mapping = {
+                0: 1,
+                1: 2,
+                2: 3,
+                3: 5,
+                4: 10,
+                5: 15,
+                6: 30
+            }
+            
+            # 如果close_time_setting是字符串类型，尝试转换为整数
+            if isinstance(close_time_setting, str):
+                try:
+                    close_time_setting = int(close_time_setting)
+                except ValueError:
+                    close_time_setting = 2
+            
+            close_time = close_time_mapping.get(close_time_setting, 3)  # 默认值为3秒
             
             if auto_close_enabled:
                 # 初始化倒计时
