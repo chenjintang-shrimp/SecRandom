@@ -415,7 +415,7 @@ class changeable_history_reward(QFrame):
     def _setup_reward_summary_table(self, data: list):
         """设置奖品汇总表格"""
         if not data:
-            data = [['0', '无', '无', '无']]
+            data = []
 
         self._configure_table(len(data), 4)
         self._fill_table_data(data)
@@ -425,7 +425,7 @@ class changeable_history_reward(QFrame):
     def _setup_reward_time_table(self, data: list):
         """设置奖品时间排序表格"""
         if not data:
-            data = [['无', '0', '无', '无']]
+            data = []
 
         self._configure_table(len(data), 4)
         self._fill_table_data(data)
@@ -435,7 +435,7 @@ class changeable_history_reward(QFrame):
         """设置单个奖品表格"""
         current_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
         if not data:
-            data = [[current_time, '无', '无']]
+            data = []
 
         self._configure_table(len(data), 3)
         self._fill_table_data(data)

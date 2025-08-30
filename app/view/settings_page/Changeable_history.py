@@ -561,7 +561,7 @@ class changeable_history(QFrame):
     def _setup_class_table(self, data: list, include_probability: bool = True, time_sort: bool = False):
         """设置班级表格"""
         if not data:
-            data = [['0', '无', '无', '无', '无', '无']] if include_probability else [['无', '0', '无', '无', '无']]
+            data = []
 
         if time_sort:
             headers = ['时间', '学号', '姓名', '性别', '所处小组']
@@ -582,7 +582,7 @@ class changeable_history(QFrame):
         """设置个人表格"""
         current_time = QDateTime.currentDateTime().toString("yyyy-MM-dd HH:mm:ss")
         if not data:
-            data = [[current_time, '无', '无', '无', '无']]
+            data = []
 
         self._configure_table(len(data), 5)
         self._fill_table_data(data)
