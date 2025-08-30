@@ -21,7 +21,7 @@ class VocabularyPKSettingsDialog(QDialog):
     def initUI(self):
         # 设置对话框属性
         self.setWindowTitle("单词PK设置")
-        self.setFixedSize(700, 700)  # 增加对话框尺寸以容纳美化后的布局
+        self.setFixedSize(700, 800)  # 增加对话框尺寸以容纳美化后的布局
         self.setWindowModality(Qt.ApplicationModal)  # 设置为模态对话框
         
         # 创建主布局
@@ -224,6 +224,33 @@ class VocabularyPKSettingsDialog(QDialog):
         countdown_layout.addWidget(seconds_label)
         
         advanced_layout.addRow(countdown_label, self.countdown_widget)
+        
+        # 自动下一个设置
+        auto_next_label = BodyLabel("答题后自动下一个:")
+        auto_next_label.setFont(QFont(load_custom_font(), 12))
+        self.auto_next_checkbox = CheckBox()
+        self.auto_next_checkbox.setChecked(self.settings.get('auto_next', False))
+        self.auto_next_checkbox.setFont(QFont(load_custom_font(), 12))
+        advanced_layout.addRow(auto_next_label, self.auto_next_checkbox)
+        
+        # 下一个单词时间设置
+        next_word_time_label = BodyLabel("下一个单词时间:")
+        next_word_time_label.setFont(QFont(load_custom_font(), 12))
+        self.next_word_time_spin = SpinBox()
+        self.next_word_time_spin.setRange(0, 120)
+        self.next_word_time_spin.setValue(self.settings.get('next_word_time', 3))
+        self.next_word_time_spin.setFont(QFont(load_custom_font(), 12))
+        next_word_time_unit = BodyLabel("秒")
+        next_word_time_unit.setFont(QFont(load_custom_font(), 12))
+        
+        next_word_time_widget = QWidget()
+        next_word_time_layout = QHBoxLayout(next_word_time_widget)
+        next_word_time_layout.setContentsMargins(0, 0, 0, 0)
+        next_word_time_layout.setSpacing(5)
+        next_word_time_layout.addWidget(self.next_word_time_spin)
+        next_word_time_layout.addWidget(next_word_time_unit)
+        
+        advanced_layout.addRow(next_word_time_label, next_word_time_widget)
         
         settings_card_layout.addWidget(self.advanced_group)
         
@@ -428,6 +455,24 @@ class VocabularyPKSettingsDialog(QDialog):
                 parent=self
             )
     
+    def accept(self):
+        """接受设置并关闭对话框"""
+        # 确保设置已正确保存
+        settings = self.get_settings()
+        
+        # 检查词库选择是否有效
+        if settings['current_vocabulary'] == "未添加词库":
+            InfoBar.warning(
+                title="警告",
+                content="请先选择或导入一个词库",
+                duration=3000,
+                parent=self
+            )
+            return
+        
+        # 调用父类的accept方法关闭对话框
+        super().accept()
+    
     def get_settings(self):
         """获取设置值"""
         return {
@@ -440,5 +485,7 @@ class VocabularyPKSettingsDialog(QDialog):
             'countdown_seconds': self.countdown_seconds_spin.value(),
             'current_vocabulary': self.vocabulary_combo.currentText(),
             'mode': self.mode_combo.currentText(),
-            'player_mode': self.player_mode_combo.currentText()
+            'player_mode': self.player_mode_combo.currentText(),
+            'auto_next': self.auto_next_checkbox.isChecked(),
+            'next_word_time': self.next_word_time_spin.value()
         }

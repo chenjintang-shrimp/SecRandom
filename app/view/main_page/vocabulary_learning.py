@@ -29,12 +29,99 @@ class vocabulary_learning(QWidget):
         super().__init__(parent)
         self.initUI()
         
+    def start_auto_next_timer(self):
+        """启动自动下一个单词计时器（向后兼容）"""
+        # 根据当前活动的侧边启动相应的计时器
+        if hasattr(self, '_active_side') and self._active_side == 'right':
+            self.start_right_auto_next_timer()
+        else:
+            self.start_left_auto_next_timer()
+            
+    def start_left_auto_next_timer(self):
+        """启动左侧自动下一个单词计时器"""
+        # 如果已经存在左侧计时器，先停止
+        if self.left_auto_next_timer is not None:
+            self.left_auto_next_timer.stop()
+            
+        # 创建新的左侧计时器
+        self.left_auto_next_timer = QTimer(self)
+        self.left_auto_next_timer.timeout.connect(self._on_left_auto_next_timer_timeout)
+        
+        # 设置计时器间隔（毫秒）并启动
+        interval = self.next_word_time * 1000  # 转换为毫秒
+        self.left_auto_next_timer.start(interval)
+        
+    def start_right_auto_next_timer(self):
+        """启动右侧自动下一个单词计时器"""
+        # 如果已经存在右侧计时器，先停止
+        if self.right_auto_next_timer is not None:
+            self.right_auto_next_timer.stop()
+            
+        # 创建新的右侧计时器
+        self.right_auto_next_timer = QTimer(self)
+        self.right_auto_next_timer.timeout.connect(self._on_right_auto_next_timer_timeout)
+        
+        # 设置计时器间隔（毫秒）并启动
+        interval = self.next_word_time * 1000  # 转换为毫秒
+        self.right_auto_next_timer.start(interval)
+        
+    def stop_auto_next_timer(self):
+        """停止自动下一个单词计时器"""
+        if self.auto_next_timer is not None:
+            self.auto_next_timer.stop()
+            self.auto_next_timer = None
+            
+        # 停止左侧计时器
+        if self.left_auto_next_timer is not None:
+            self.left_auto_next_timer.stop()
+            self.left_auto_next_timer = None
+            
+        # 停止右侧计时器
+        if self.right_auto_next_timer is not None:
+            self.right_auto_next_timer.stop()
+            self.right_auto_next_timer = None
+            
+    def _on_auto_next_timer_timeout(self):
+        """自动下一个单词计时器超时处理（向后兼容）"""
+        # 停止计时器
+        self.stop_auto_next_timer()
+        
+        # 根据当前活动的侧边显示下一个单词
+        if hasattr(self, '_active_side') and self._active_side == 'right':
+            # 如果当前活动侧边是右侧，显示右侧下一个单词
+            self.show_right_next_word()
+        else:
+            # 默认显示左侧下一个单词
+            self.show_next_word()
+            
+    def _on_left_auto_next_timer_timeout(self):
+        """左侧自动下一个单词计时器超时处理"""
+        # 停止左侧计时器
+        if self.left_auto_next_timer is not None:
+            self.left_auto_next_timer.stop()
+            self.left_auto_next_timer = None
+        
+        # 显示左侧下一个单词
+        self.show_next_word()
+        
+    def _on_right_auto_next_timer_timeout(self):
+        """右侧自动下一个单词计时器超时处理"""
+        # 停止右侧计时器
+        if self.right_auto_next_timer is not None:
+            self.right_auto_next_timer.stop()
+            self.right_auto_next_timer = None
+        
+        # 显示右侧下一个单词
+        self.show_right_next_word()
+        
     def initUI(self):
         # 初始化答题统计变量
         self.left_correct_count = 0
         self.left_wrong_count = 0
         self.right_correct_count = 0
         self.right_wrong_count = 0
+        self.left_skip_count = 0
+        self.right_skip_count = 0
 
         # 初始化变量
         self.current_word_index = -1
@@ -71,6 +158,13 @@ class vocabulary_learning(QWidget):
         
         # 初始化当前词库变量
         self.current_vocabulary = None  # 当前选择的词库
+        
+        # 自动下一个单词设置
+        self.auto_next = False  # 是否启用答题后自动下一个
+        self.next_word_time = 3  # 下一个单词等待时间（秒）
+        self.auto_next_timer = None  # 自动下一个单词的计时器
+        self.left_auto_next_timer = None  # 左侧自动下一个单词的计时器
+        self.right_auto_next_timer = None  # 右侧自动下一个单词的计时器
         
         # 创建主布局
         main_layout = QVBoxLayout(self)
@@ -371,6 +465,30 @@ class vocabulary_learning(QWidget):
         self.start_button.setEnabled(True)  # 默认启用按钮
         control_layout.addWidget(self.start_button)
         
+        # 左侧pass按钮（初始隐藏）
+        self.left_pass_button = PushButton("跳过")
+        self.left_pass_button.clicked.connect(self.pass_left_word)
+        self.left_pass_button.setFont(QFont(load_custom_font(), 12))
+        self.left_pass_button.hide()  # 初始隐藏
+        control_layout.addWidget(self.left_pass_button)
+        
+        # 重新再来按钮（初始隐藏）
+        self.restart_button = PushButton("重新再来")
+        self.restart_button.clicked.connect(self.restart_learning)
+        self.restart_button.setFont(QFont(load_custom_font(), 12))
+        self.restart_button.hide()  # 初始隐藏
+        control_layout.addWidget(self.restart_button)
+        
+        # 右侧pass按钮（初始隐藏，双人模式使用）
+        self.right_pass_button = PushButton("跳过")
+        self.right_pass_button.clicked.connect(self.pass_right_word)
+        self.right_pass_button.setFont(QFont(load_custom_font(), 12))
+        self.right_pass_button.hide()  # 初始隐藏
+        control_layout.addWidget(self.right_pass_button)
+        
+        # 为了向后兼容，创建原始pass按钮的引用
+        self.pass_button = self.left_pass_button
+        
         # 单词PK设置按钮
         self.settings_button = PushButton("单词PK设置")
         self.settings_button.clicked.connect(self.open_settings_dialog)
@@ -453,7 +571,9 @@ class vocabulary_learning(QWidget):
             'available_vocabularies': self.get_available_vocabularies(),
             'current_vocabulary': self.current_vocabulary if hasattr(self, 'current_vocabulary') else None,
             'player_mode': "双人模式" if self.is_dual_mode else "单人模式",
-            'mode': "随机学习"  # 默认随机学习模式
+            'mode': "随机学习",  # 默认随机学习模式
+            'auto_next': self.auto_next,
+            'next_word_time': self.next_word_time
         }
         
         # 创建并显示设置对话框
@@ -531,6 +651,12 @@ class vocabulary_learning(QWidget):
                     self.current_vocabulary = settings['current_vocabulary']
                     # 重新加载词库
                     self.load_vocabulary(self.current_vocabulary)
+                
+                if 'auto_next' in settings:
+                    self.auto_next = settings['auto_next']
+                    
+                if 'next_word_time' in settings:
+                    self.next_word_time = settings['next_word_time']
                     
                 logger.info("单词PK设置已加载")
                 return True
@@ -552,7 +678,9 @@ class vocabulary_learning(QWidget):
             'countdown_minutes': self.countdown_minutes,
             'countdown_seconds': self.countdown_seconds,
             'player_mode': "双人模式" if self.is_dual_mode else "单人模式",
-            'current_vocabulary': self.current_vocabulary if hasattr(self, 'current_vocabulary') else None
+            'current_vocabulary': self.current_vocabulary if hasattr(self, 'current_vocabulary') else None,
+            'auto_next': self.auto_next,
+            'next_word_time': self.next_word_time
         }
         
         try:
@@ -646,6 +774,15 @@ class vocabulary_learning(QWidget):
                     duration=3000,
                     parent=self
                 )
+        
+        # 应用自动下一个单词设置
+        if 'auto_next' in settings:
+            self.auto_next = settings['auto_next']
+            
+        if 'next_word_time' in settings:
+            self.next_word_time = settings['next_word_time']
+            # 确保时间在合理范围内（1-120秒）
+            self.next_word_time = max(1, min(120, self.next_word_time))
         
         # 保存设置到文件
         self.save_settings()
@@ -804,6 +941,9 @@ class vocabulary_learning(QWidget):
     
     def load_vocabulary(self, vocabulary_type=None):
         """从文件加载词库"""
+        # 停止自动下一个单词的计时器（如果有）
+        self.stop_auto_next_timer()
+        
         # 如果没有指定词库类型，使用默认词库类型
         if vocabulary_type is None:
             vocabulary_type = "未添加词库"  # 默认词库
@@ -930,6 +1070,9 @@ class vocabulary_learning(QWidget):
         
     def start_learning(self):
         """开始学习"""
+        # 停止自动下一个单词的计时器（如果有）
+        self.stop_auto_next_timer()
+        
         # 重置答题统计变量
         self.left_correct_count = 0
         self.left_wrong_count = 0
@@ -1029,6 +1172,23 @@ class vocabulary_learning(QWidget):
             self.show_answer_button.setEnabled(False)
         else:
             self.show_answer_button.setEnabled(True)
+            
+        # 隐藏开始学习按钮，显示pass按钮和重新再来按钮
+        self.start_button.hide()
+        self.restart_button.show()
+        
+        # 根据模式显示pass按钮
+        if self.is_dual_mode:
+            # 双人模式：显示两个pass按钮，并添加左右标记
+            self.left_pass_button.setText("跳过(左)")
+            self.left_pass_button.show()
+            self.right_pass_button.setText("跳过(右)")
+            self.right_pass_button.show()
+        else:
+            # 单人模式：只显示左侧pass按钮，文本为"跳过"
+            self.left_pass_button.setText("跳过")
+            self.left_pass_button.show()
+            self.right_pass_button.hide()
         
         # 如果是双人模式，初始化右侧
         if self.is_dual_mode:
@@ -1063,6 +1223,183 @@ class vocabulary_learning(QWidget):
             self.right_next_button.show()
             self.right_prev_button.show()
         
+    def pass_left_word(self):
+        """跳过左侧单词"""
+        try:
+            # 根据模式选择使用的词汇表
+            words_list = self.left_words_list if self.is_dual_mode and hasattr(self, 'left_words_list') else self.words_list
+            
+            # 记录当前单词的答题信息（跳过）
+            if 0 <= self.current_word_index < len(words_list):
+                word = words_list[self.current_word_index]
+                
+                # 保存答题的选项记录信息
+                if not hasattr(self, 'answer_records'):
+                    self.answer_records = {}
+                
+                # 检查是否已经有答题记录
+                if self.current_word_index not in self.answer_records:
+                    # 如果没有答题记录，则创建跳过记录
+                    self.answer_records[self.current_word_index] = {
+                        'word': word['word'],
+                        'meaning': word['meaning'],
+                        'selected_option': -1,  # -1表示跳过
+                        'correct_option': self.correct_option_index if hasattr(self, 'correct_option_index') else 0,
+                        'is_correct': False,  # 跳过视为不正确
+                        'is_skipped': True,  # 标记为跳过
+                        'options': self.current_options.copy() if hasattr(self, 'current_options') else [{'meaning': word['meaning'], 'is_correct': True}]
+                    }
+                else:
+                    # 如果已经有答题记录，保留原有记录，只添加跳过标记
+                    self.answer_records[self.current_word_index]['is_skipped'] = True
+                
+                # 更新左侧答题统计（跳过不计入错误，但计入已答题数）
+                # 添加跳过计数
+                if not hasattr(self, 'left_skip_count'):
+                    self.left_skip_count = 0
+                self.left_skip_count += 1
+                self.left_stats_label.setText(f"正确答对{self.left_correct_count}个，答错{self.left_wrong_count}个，跳过{self.left_skip_count}个")
+                
+                # 更新已答题数（如果是总题数模式或无尽模式）
+                if self.learning_mode == "总题数模式" or self.learning_mode == "无尽模式":
+                    self.questions_answered += 1
+                    self.update_learning_status()
+                    
+                    # 检查是否达到总题数（仅总题数模式）
+                    if self.learning_mode == "总题数模式" and self.questions_answered >= self.total_questions:
+                        # 显示提示
+                        InfoBar.info(
+                            title="学习结束",
+                            content=f"已完成{self.questions_answered}道题目，学习完成！",
+                            duration=3000,
+                            parent=self
+                        )
+                        
+                        # 禁用答题按钮
+                        self.next_button.setEnabled(False)
+                        self.show_answer_button.setEnabled(False)
+                        
+                        # 如果是双人模式，也禁用右侧按钮
+                        if self.is_dual_mode:
+                            self.right_next_button.setEnabled(False)
+                            self.right_show_answer_button.setEnabled(False)
+            
+            # 左侧索引增加
+            self.current_word_index += 1
+            
+            # 检查是否超出词汇表范围
+            if self.current_word_index >= len(words_list):
+                # 如果超出范围，重新打乱词汇表
+                system_random.shuffle(words_list)
+                self.current_word_index = 0
+                
+                # 如果是双人模式，更新左侧词汇表
+                if self.is_dual_mode and hasattr(self, 'left_words_list'):
+                    self.left_words_list = words_list
+            
+            # 显示左侧下一个单词
+            self.show_word()
+            
+            # 重置答案显示状态
+            self.answer_shown = False
+            
+            # 根据干扰词汇设置更新显示答案按钮状态
+            if hasattr(self, 'distractor_count') and self.distractor_count > 0:
+                self.show_answer_button.setEnabled(False)
+            else:
+                self.show_answer_button.setEnabled(True)
+                    
+        except Exception as e:
+            logger.error(f"跳过左侧单词失败: {e}")
+    
+    def pass_right_word(self):
+        """跳过右侧单词"""
+        try:
+            # 如果是双人模式，跳过右侧单词
+            if self.is_dual_mode and hasattr(self, 'right_words_list') and 0 <= self.right_word_index < len(self.right_words_list):
+                # 记录右侧单词的答题信息（跳过）
+                right_word = self.right_words_list[self.right_word_index]
+                
+                # 保存答题的选项记录信息
+                if not hasattr(self, 'answer_records'):
+                    self.answer_records = {}
+                
+                # 检查是否已经有答题记录
+                right_key = f"right_{self.right_word_index}"
+                if right_key not in self.answer_records:
+                    # 如果没有答题记录，则创建跳过记录
+                    self.answer_records[right_key] = {
+                        'word': right_word['word'],
+                        'meaning': right_word['meaning'],
+                        'selected_option': -1,  # -1表示跳过
+                        'correct_option': 0,
+                        'is_correct': False,  # 跳过视为不正确
+                        'is_skipped': True,  # 标记为跳过
+                        'is_right': True,  # 标记为右侧单词
+                        'options': [{'meaning': right_word['meaning'], 'is_correct': True}]
+                    }
+                else:
+                    # 如果已经有答题记录，保留原有记录，只添加跳过标记
+                    self.answer_records[right_key]['is_skipped'] = True
+                
+                # 更新右侧答题统计（跳过不计入错误，但计入已答题数）
+                # 添加跳过计数
+                if not hasattr(self, 'right_skip_count'):
+                    self.right_skip_count = 0
+                self.right_skip_count += 1
+                self.right_stats_label.setText(f"正确答对{self.right_correct_count}个，答错{self.right_wrong_count}个，跳过{self.right_skip_count}个")
+                
+                # 右侧索引增加
+                self.right_word_index += 1
+                
+                # 检查是否超出词汇表范围
+                if self.right_word_index >= len(self.right_words_list):
+                    # 如果超出范围，重新打乱词汇表
+                    system_random.shuffle(self.right_words_list)
+                    self.right_word_index = 0
+                
+                # 显示右侧下一个单词
+                self.show_right_word()
+                
+                # 重置右侧答案显示状态
+                if hasattr(self, 'right_answer_shown'):
+                    self.right_answer_shown = False
+                
+                # 根据干扰词汇设置更新右侧显示答案按钮状态
+                if hasattr(self, 'distractor_count') and self.distractor_count > 0:
+                    self.right_show_answer_button.setEnabled(False)
+                else:
+                    self.right_show_answer_button.setEnabled(True)
+                    
+        except Exception as e:
+            logger.error(f"跳过右侧单词失败: {e}")
+    
+    def pass_current_word(self):
+        """跳过当前单词（为了向后兼容）"""
+        # 在单人模式下，调用左侧单词跳过方法
+        if not self.is_dual_mode:
+            self.pass_left_word()
+        else:
+            # 在双人模式下，同时跳过左右两侧单词
+            self.pass_left_word()
+            self.pass_right_word()
+    
+    def restart_learning(self):
+        """重新触发开始学习流程"""
+        try:
+            # 停止计时器（如果有）
+            if hasattr(self, 'timer') and self.timer is not None and self.timer.isActive():
+                self.timer.stop()
+            
+            # 停止自动下一个单词的计时器（如果有）
+            self.stop_auto_next_timer()
+            
+            # 重新调用开始学习方法
+            self.start_learning()
+            
+        except Exception as e:
+            logger.error(f"重新开始学习失败: {e}")
+    
     def play_left_word_voice(self):
         """播报左侧单词"""
         try:
@@ -1136,6 +1473,10 @@ class vocabulary_learning(QWidget):
     
     def show_word(self):
         """显示当前单词"""
+        # 停止左侧计时器，确保两侧同时点击选项时不会互相干扰
+        if hasattr(self, 'left_auto_next_timer') and self.left_auto_next_timer is not None:
+            self.left_auto_next_timer.stop()
+        
         # 根据模式选择使用的词汇表
         words_list = self.left_words_list if self.is_dual_mode and hasattr(self, 'left_words_list') else self.words_list
         
@@ -1253,33 +1594,25 @@ class vocabulary_learning(QWidget):
                 # 显示选项按钮容器
                 self.left_options_container.show()
                 
-                # 生成干扰词汇
-                self.current_distractors = self.generate_distractor_words(word['meaning'], "left")
-                
-                # 创建选项列表（正确答案+干扰项）
-                self.current_options = [{'meaning': word['meaning'], 'is_correct': True}]
-                for d in self.current_distractors:
-                    self.current_options.append({'meaning': d['meaning'], 'is_correct': False})
-                    
-                # 随机排序选项
-                system_random.shuffle(self.current_options)
-                
-                # 验证选项列表中只有一个正确答案
-                correct_count = sum(1 for option in self.current_options if option['is_correct'])
-                if correct_count != 1:
-                    # 如果不只有一个正确答案，重新生成选项列表
-                    # 这种情况理论上不应该发生，但需要处理以防万一
-                    self.current_options = [{'meaning': word['meaning'], 'is_correct': True}]
-                    for d in distractors:
-                        self.current_options.append({'meaning': d['meaning'], 'is_correct': False})
-                    system_random.shuffle(self.current_options)
-                
-                # 找到正确答案的索引
-                self.correct_option_index = 0  # 设置默认值
-                for i, option in enumerate(self.current_options):
-                    if option['is_correct']:
-                        self.correct_option_index = i
-                        break
+                # 检查是否有答题记录，如果有则使用记录中的选项顺序
+                if hasattr(self, 'answer_records') and self.current_word_index in self.answer_records and self.current_word_index in self.left_answered_words:
+                    record = self.answer_records[self.current_word_index]
+                    if 'options' in record:
+                        # 使用保存的选项顺序
+                        self.current_options = record['options'].copy()
+                        
+                        # 找到正确答案的索引
+                        self.correct_option_index = 0  # 设置默认值
+                        for i, option in enumerate(self.current_options):
+                            if option['is_correct']:
+                                self.correct_option_index = i
+                                break
+                    else:
+                        # 如果没有保存选项顺序，则生成新的选项
+                        self.generate_new_left_options(word)
+                else:
+                    # 如果没有答题记录或未回答，则生成新的选项
+                    self.generate_new_left_options(word)
                         
                 # 显示选项按钮
                 for i in range(min(len(self.current_options), len(self.left_option_buttons))):
@@ -1317,6 +1650,36 @@ class vocabulary_learning(QWidget):
                 for i in range(len(self.left_option_buttons)):
                     self.left_option_buttons[i].setVisible(False)
             
+    def generate_new_left_options(self, word):
+        """生成左侧新的选项列表"""
+        # 生成干扰词汇
+        self.current_distractors = self.generate_distractor_words(word['meaning'], "left")
+        
+        # 创建选项列表（正确答案+干扰项）
+        self.current_options = [{'meaning': word['meaning'], 'is_correct': True}]
+        for d in self.current_distractors:
+            self.current_options.append({'meaning': d['meaning'], 'is_correct': False})
+            
+        # 随机排序选项
+        system_random.shuffle(self.current_options)
+        
+        # 验证选项列表中只有一个正确答案
+        correct_count = sum(1 for option in self.current_options if option['is_correct'])
+        if correct_count != 1:
+            # 如果不只有一个正确答案，重新生成选项列表
+            # 这种情况理论上不应该发生，但需要处理以防万一
+            self.current_options = [{'meaning': word['meaning'], 'is_correct': True}]
+            for d in self.current_distractors:
+                self.current_options.append({'meaning': d['meaning'], 'is_correct': False})
+            system_random.shuffle(self.current_options)
+        
+        # 找到正确答案的索引
+        self.correct_option_index = 0  # 设置默认值
+        for i, option in enumerate(self.current_options):
+            if option['is_correct']:
+                self.correct_option_index = i
+                break
+    
     def show_answer(self):
         """显示答案"""
         # 根据模式选择使用的词汇表
@@ -1383,8 +1746,15 @@ class vocabulary_learning(QWidget):
                         self.right_next_button.setEnabled(False)
                         self.right_show_answer_button.setEnabled(False)
             
+            # 如果启用了自动下一个单词功能，启动左侧计时器
+            if self.auto_next:
+                self.start_left_auto_next_timer()
+            
     def on_left_option_selected(self, option_index):
         """左侧选项被选中时的处理函数"""
+        # 设置当前活动侧边为左侧
+        self._active_side = 'left'
+        
         # 根据模式选择使用的词汇表
         words_list = self.left_words_list if self.is_dual_mode and hasattr(self, 'left_words_list') else self.words_list
         
@@ -1434,7 +1804,7 @@ class vocabulary_learning(QWidget):
                 
                 # 更新左侧答题统计
                 self.left_correct_count += 1
-                self.left_stats_label.setText(f"正确答对{self.left_correct_count}个，答错{self.left_wrong_count}个")
+                self.left_stats_label.setText(f"正确答对{self.left_correct_count}个，答错{self.left_wrong_count}个，跳过{self.left_skip_count}个")
             else:
                 # 选择错误
                 self.meaning_label.setText("✗ 回答错误！")
@@ -1454,11 +1824,22 @@ class vocabulary_learning(QWidget):
                 
                 # 更新左侧答题统计
                 self.left_wrong_count += 1
-                self.left_stats_label.setText(f"正确答对{self.left_correct_count}个，答错{self.left_wrong_count}个")
+                self.left_stats_label.setText(f"正确答对{self.left_correct_count}个，答错{self.left_wrong_count}个，跳过{self.left_skip_count}个")
             
             # 保存答题的选项记录信息
             if not hasattr(self, 'answer_records'):
                 self.answer_records = {}
+            
+            # 检查之前是否有跳过记录
+            was_skipped = False
+            if self.current_word_index in self.answer_records:
+                was_skipped = self.answer_records[self.current_word_index].get('is_skipped', False)
+            
+            # 如果之前是跳过的，需要减少跳过计数
+            if was_skipped and hasattr(self, 'left_skip_count') and self.left_skip_count > 0:
+                self.left_skip_count -= 1
+                # 更新统计标签
+                self.left_stats_label.setText(f"正确答对{self.left_correct_count}个，答错{self.left_wrong_count}个，跳过{self.left_skip_count}个")
             
             # 记录当前单词的答题信息
             self.answer_records[self.current_word_index] = {
@@ -1467,7 +1848,9 @@ class vocabulary_learning(QWidget):
                 'selected_option': option_index,
                 'correct_option': self.correct_option_index,
                 'is_correct': option_index == self.correct_option_index,
-                'options': self.current_options.copy()
+                'options': self.current_options.copy(),
+                'options_order': self.current_options.copy(),  # 保存选项顺序
+                'is_skipped': False  # 明确设置为非跳过状态
             }
                 
             self.answer_shown = True
@@ -1502,8 +1885,15 @@ class vocabulary_learning(QWidget):
                         self.right_next_button.setEnabled(False)
                         self.right_show_answer_button.setEnabled(False)
             
+            # 如果启用了自动下一个单词功能，启动左侧计时器
+            if self.auto_next:
+                self.start_left_auto_next_timer()
+    
     def on_right_option_selected(self, option_index):
         """右侧选项被选中时的处理函数"""
+        # 设置当前活动侧边为右侧
+        self._active_side = 'right'
+        
         # 根据模式选择使用的词汇表
         words_list = self.right_words_list if self.is_dual_mode and hasattr(self, 'right_words_list') else self.words_list
         
@@ -1553,7 +1943,7 @@ class vocabulary_learning(QWidget):
                 
                 # 更新右侧答题统计
                 self.right_correct_count += 1
-                self.right_stats_label.setText(f"正确答对{self.right_correct_count}个，答错{self.right_wrong_count}个")
+                self.right_stats_label.setText(f"正确答对{self.right_correct_count}个，答错{self.right_wrong_count}个，跳过{self.right_skip_count}个")
             else:
                 # 选择错误
                 self.right_meaning_label.setText("✗ 回答错误！")
@@ -1573,11 +1963,23 @@ class vocabulary_learning(QWidget):
                 
                 # 更新右侧答题统计
                 self.right_wrong_count += 1
-                self.right_stats_label.setText(f"正确答对{self.right_correct_count}个，答错{self.right_wrong_count}个")
+                self.right_stats_label.setText(f"正确答对{self.right_correct_count}个，答错{self.right_wrong_count}个，跳过{self.right_skip_count}个")
             
             # 保存答题的选项记录信息
             if not hasattr(self, 'answer_records'):
                 self.answer_records = {}
+            
+            # 检查之前是否有跳过记录
+            was_skipped = False
+            right_key = f"right_{self.right_word_index}"
+            if right_key in self.answer_records:
+                was_skipped = self.answer_records[right_key].get('is_skipped', False)
+            
+            # 如果之前是跳过的，需要减少跳过计数
+            if was_skipped and hasattr(self, 'right_skip_count') and self.right_skip_count > 0:
+                self.right_skip_count -= 1
+                # 更新统计标签
+                self.right_stats_label.setText(f"正确答对{self.right_correct_count}个，答错{self.right_wrong_count}个，跳过{self.right_skip_count}个")
             
             # 记录当前单词的答题信息
             self.answer_records[self.right_word_index] = {
@@ -1586,7 +1988,22 @@ class vocabulary_learning(QWidget):
                 'selected_option': option_index,
                 'correct_option': self.right_correct_option_index,
                 'is_correct': option_index == self.right_correct_option_index,
-                'options': self.right_current_options.copy()
+                'options': self.right_current_options.copy(),
+                'options_order': self.right_current_options.copy(),  # 保存选项顺序
+                'is_skipped': False  # 明确设置为非跳过状态
+            }
+            
+            # 同时更新right_key记录，确保跳过状态正确
+            self.answer_records[right_key] = {
+                'word': word['word'],
+                'meaning': word['meaning'],
+                'selected_option': option_index,
+                'correct_option': self.right_correct_option_index,
+                'is_correct': option_index == self.right_correct_option_index,
+                'options': self.right_current_options.copy(),
+                'options_order': self.right_current_options.copy(),  # 保存选项顺序
+                'is_skipped': False,  # 明确设置为非跳过状态
+                'is_right': True  # 标记为右侧单词
             }
                 
             self.right_answer_shown = True
@@ -1621,6 +2038,10 @@ class vocabulary_learning(QWidget):
                         self.right_next_button.setEnabled(False)
                         self.right_show_answer_button.setEnabled(False)
             
+            # 如果启用了自动下一个单词功能，启动右侧计时器
+            if self.auto_next:
+                self.start_right_auto_next_timer()
+    
     # 为了向后兼容，保留原始函数名
     def on_option_selected(self, option_index):
         """选项被选中时的处理函数（向后兼容）"""
@@ -1628,6 +2049,9 @@ class vocabulary_learning(QWidget):
             
     def show_prev_word(self):
         """显示上一个单词"""
+        # 停止自动下一个单词的计时器（如果有）
+        self.stop_auto_next_timer()
+        
         # 根据模式选择使用的词汇表
         words_list = self.left_words_list if self.is_dual_mode and hasattr(self, 'left_words_list') else self.words_list
         
@@ -1681,8 +2105,25 @@ class vocabulary_learning(QWidget):
                 for btn in self.left_option_buttons:
                     btn.setEnabled(False)
             
+            # 检查上一个单词是否是跳过的，如果是则减少跳过计数
+            if hasattr(self, 'answer_records') and self.current_word_index in self.answer_records:
+                record = self.answer_records[self.current_word_index]
+                if record.get('is_skipped', False):
+                    # 减少跳过计数
+                    if hasattr(self, 'left_skip_count') and self.left_skip_count > 0:
+                        self.left_skip_count -= 1
+                        # 更新统计标签
+                        self.left_stats_label.setText(f"正确答对{self.left_correct_count}个，答错{self.left_wrong_count}个，跳过{self.left_skip_count}个")
+                    # 移除跳过标记
+                    record['is_skipped'] = False
+            
     def show_next_word(self):
         """显示下一个单词"""
+        # 停止左侧自动下一个单词的计时器（如果有）
+        if self.left_auto_next_timer is not None:
+            self.left_auto_next_timer.stop()
+            self.left_auto_next_timer = None
+        
         # 显示当前页的响应状态
         if 0 <= self.current_word_index < len(self.words_list):
             word = self.words_list[self.current_word_index]
@@ -1713,42 +2154,50 @@ class vocabulary_learning(QWidget):
         
         # 根据模式选择不同的处理方式
         if hasattr(self, 'repeat_mode') and self.repeat_mode == "不重复模式":
-            # 不重复模式：跳过已回答的单词
+            # 不重复模式：检查下一个单词是否已回答
             if self.answer_shown:
                 self.left_answered_words.add(self.current_word_index)
             
-            # 查找下一个未回答的单词
+            # 获取下一个单词的索引
             next_index = self.current_word_index + 1
-            while next_index < len(self.words_list) and next_index in self.left_answered_words:
-                next_index += 1
             
-            if next_index < len(self.words_list):
+            # 检查下一个单词是否已回答过
+            if next_index < len(self.words_list) and next_index in self.left_answered_words:
+                # 如果下一个单词已回答过，直接显示它
                 self.current_word_index = next_index
                 self.show_word()
             else:
-                # 所有单词都已回答
-                if self.learning_mode == "无尽模式":
-                    # 无尽模式：重置已回答单词集合
-                    self.left_answered_words.clear()
-                    self.current_word_index = 0
+                # 如果下一个单词未回答过，查找下一个未回答的单词
+                while next_index < len(self.words_list) and next_index in self.left_answered_words:
+                    next_index += 1
+                
+                if next_index < len(self.words_list):
+                    self.current_word_index = next_index
                     self.show_word()
-                    
-                    InfoBar.info(
-                        title="不重复模式",
-                        content="所有单词已学习一遍，重新开始！",
-                        duration=2000,
-                        parent=self
-                    )
                 else:
-                    # 总题数模式：显示提示
-                    InfoBar.info(
-                        title="不重复模式",
-                        content="所有单词已学习一遍！",
-                        duration=2000,
-                        parent=self
-                    )
+                    # 所有单词都已回答
+                    if self.learning_mode == "无尽模式":
+                        # 无尽模式：重置已回答单词集合
+                        self.left_answered_words.clear()
+                        self.current_word_index = 0
+                        self.show_word()
+                        
+                        InfoBar.info(
+                            title="不重复模式",
+                            content="所有单词已学习一遍，重新开始！",
+                            duration=2000,
+                            parent=self
+                        )
+                    else:
+                        # 总题数模式：显示提示
+                        InfoBar.info(
+                            title="不重复模式",
+                            content="所有单词已学习一遍！",
+                            duration=2000,
+                            parent=self
+                        )
         else:
-            # 重复模式：直接翻到下一个单词
+            # 重复模式下，直接翻到下一个单词
             if self.current_word_index < len(self.words_list) - 1:
                 # 如果当前单词已回答（通过选项选择或显示答案），则将其添加到已回答集合
                 if self.answer_shown:
@@ -1846,6 +2295,10 @@ class vocabulary_learning(QWidget):
         
     def show_right_word(self):
         """显示右侧当前单词"""
+        # 停止右侧计时器，确保两侧同时点击选项时不会互相干扰
+        if hasattr(self, 'right_auto_next_timer') and self.right_auto_next_timer is not None and self.right_auto_next_timer.isActive():
+            self.right_auto_next_timer.stop()
+        
         # 根据模式选择使用的词汇表
         words_list = self.right_words_list if self.is_dual_mode and hasattr(self, 'right_words_list') else self.words_list
         
@@ -1960,33 +2413,24 @@ class vocabulary_learning(QWidget):
                 # 显示选项按钮容器
                 self.right_options_container.show()
                 
-                # 生成干扰词汇
-                self.right_current_distractors = self.generate_distractor_words(word['meaning'], "right")
-                
-                # 创建选项列表（正确答案+干扰项）
-                self.right_current_options = [{'meaning': word['meaning'], 'is_correct': True}]
-                for d in self.right_current_distractors:
-                    self.right_current_options.append({'meaning': d['meaning'], 'is_correct': False})
-                    
-                # 随机排序选项
-                system_random.shuffle(self.right_current_options)
-                
-                # 验证选项列表中只有一个正确答案
-                correct_count = sum(1 for option in self.right_current_options if option['is_correct'])
-                if correct_count != 1:
-                    # 如果不只有一个正确答案，重新生成选项列表
-                    # 这种情况理论上不应该发生，但需要处理以防万一
-                    self.right_current_options = [{'meaning': word['meaning'], 'is_correct': True}]
-                    for d in distractors:
-                        self.right_current_options.append({'meaning': d['meaning'], 'is_correct': False})
-                    system_random.shuffle(self.right_current_options)
-                
-                # 找到正确答案的索引
-                self.right_correct_option_index = 0  # 设置默认值
-                for i, option in enumerate(self.right_current_options):
-                    if option['is_correct']:
-                        self.right_correct_option_index = i
-                        break
+                # 检查是否有保存的答题记录
+                if hasattr(self, 'answer_records') and self.right_word_index in self.answer_records:
+                    record = self.answer_records[self.right_word_index]
+                    if 'options_order' in record:
+                        # 使用保存的选项顺序
+                        self.right_current_options = record['options_order']
+                        # 找到正确答案的索引
+                        self.right_correct_option_index = 0  # 设置默认值
+                        for i, option in enumerate(self.right_current_options):
+                            if option['is_correct']:
+                                self.right_correct_option_index = i
+                                break
+                    else:
+                        # 生成新的选项
+                        self.generate_new_right_options(word)
+                else:
+                    # 生成新的选项
+                    self.generate_new_right_options(word)
                         
                 # 显示选项按钮
                 for i in range(min(len(self.right_current_options), len(self.right_option_buttons))):
@@ -2024,6 +2468,36 @@ class vocabulary_learning(QWidget):
                 for i in range(len(self.right_option_buttons)):
                     self.right_option_buttons[i].setVisible(False)
             
+    def generate_new_right_options(self, word):
+        """生成右侧新的选项列表"""
+        # 生成干扰词汇
+        self.right_current_distractors = self.generate_distractor_words(word['meaning'], "right")
+        
+        # 创建选项列表（正确答案+干扰项）
+        self.right_current_options = [{'meaning': word['meaning'], 'is_correct': True}]
+        for d in self.right_current_distractors:
+            self.right_current_options.append({'meaning': d['meaning'], 'is_correct': False})
+            
+        # 随机排序选项
+        system_random.shuffle(self.right_current_options)
+        
+        # 验证选项列表中只有一个正确答案
+        correct_count = sum(1 for option in self.right_current_options if option['is_correct'])
+        if correct_count != 1:
+            # 如果不只有一个正确答案，重新生成选项列表
+            # 这种情况理论上不应该发生，但需要处理以防万一
+            self.right_current_options = [{'meaning': word['meaning'], 'is_correct': True}]
+            for d in self.right_current_distractors:
+                self.right_current_options.append({'meaning': d['meaning'], 'is_correct': False})
+            system_random.shuffle(self.right_current_options)
+        
+        # 找到正确答案的索引
+        self.right_correct_option_index = 0  # 设置默认值
+        for i, option in enumerate(self.right_current_options):
+            if option['is_correct']:
+                self.right_correct_option_index = i
+                break
+    
     def show_right_answer(self):
         """显示右侧答案"""
         # 根据模式选择使用的词汇表
@@ -2142,8 +2616,26 @@ class vocabulary_learning(QWidget):
                 for btn in self.right_option_buttons:
                     btn.setEnabled(False)
             
+            # 检查上一个单词是否是跳过的，如果是则减少跳过计数
+            right_key = f"right_{self.right_word_index}"
+            if hasattr(self, 'answer_records') and right_key in self.answer_records:
+                record = self.answer_records[right_key]
+                if record.get('is_skipped', False):
+                    # 减少跳过计数
+                    if hasattr(self, 'right_skip_count') and self.right_skip_count > 0:
+                        self.right_skip_count -= 1
+                        # 更新统计标签
+                        self.right_stats_label.setText(f"正确答对{self.right_correct_count}个，答错{self.right_wrong_count}个，跳过{self.right_skip_count}个")
+                    # 移除跳过标记
+                    record['is_skipped'] = False
+            
     def show_right_next_word(self):
         """显示右侧下一个单词"""
+        # 停止右侧自动下一个单词的计时器（如果有）
+        if self.right_auto_next_timer is not None:
+            self.right_auto_next_timer.stop()
+            self.right_auto_next_timer = None
+        
         # 显示当前页的响应状态
         if 0 <= self.right_word_index < len(self.words_list):
             word = self.words_list[self.right_word_index]
@@ -2174,40 +2666,48 @@ class vocabulary_learning(QWidget):
         
         # 根据模式选择不同的处理方式
         if hasattr(self, 'repeat_mode') and self.repeat_mode == "不重复模式":
-            # 不重复模式：跳过已回答的单词
+            # 不重复模式：检查下一个单词是否已回答
             if self.right_answer_shown:
                 self.right_answered_words.add(self.right_word_index)
             
-            # 查找下一个未回答的单词
+            # 获取下一个单词的索引
             next_index = self.right_word_index + 1
-            while next_index < len(self.words_list) and next_index in self.right_answered_words:
-                next_index += 1
             
-            if next_index < len(self.words_list):
+            # 检查下一个单词是否已回答过
+            if next_index < len(self.words_list) and next_index in self.right_answered_words:
+                # 如果下一个单词已回答过，直接显示它
                 self.right_word_index = next_index
                 self.show_right_word()
             else:
-                # 所有单词都已回答
-                if self.learning_mode == "无尽模式":
-                    # 无尽模式：重置已回答单词集合
-                    self.right_answered_words.clear()
-                    self.right_word_index = 0
+                # 如果下一个单词未回答过，查找下一个未回答的单词
+                while next_index < len(self.words_list) and next_index in self.right_answered_words:
+                    next_index += 1
+                
+                if next_index < len(self.words_list):
+                    self.right_word_index = next_index
                     self.show_right_word()
-                    
-                    InfoBar.info(
-                        title="不重复模式",
-                        content="所有单词已学习一遍，重新开始！",
-                        duration=2000,
-                        parent=self
-                    )
                 else:
-                    # 总题数模式：显示提示
-                    InfoBar.info(
-                        title="不重复模式",
-                        content="所有单词已学习一遍！",
-                        duration=2000,
-                        parent=self
-                    )
+                    # 所有单词都已回答
+                    if self.learning_mode == "无尽模式":
+                        # 无尽模式：重置已回答单词集合
+                        self.right_answered_words.clear()
+                        self.right_word_index = 0
+                        self.show_right_word()
+                        
+                        InfoBar.info(
+                            title="不重复模式",
+                            content="所有单词已学习一遍，重新开始！",
+                            duration=2000,
+                            parent=self
+                        )
+                    else:
+                        # 总题数模式：显示提示
+                        InfoBar.info(
+                            title="不重复模式",
+                            content="所有单词已学习一遍！",
+                            duration=2000,
+                            parent=self
+                        )
         else:
             # 重复模式下，直接翻到下一个单词
             if self.right_word_index < len(self.words_list) - 1:
