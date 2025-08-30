@@ -183,65 +183,35 @@ def restore_volume(volume_value):
     Args:
         volume_value (int): 音量值 (0-100)
     """
-    system = platform.system()
-    
-    if system == 'Windows' and WINDOWS_AUDIO_AVAILABLE:
-        # Windows音频控制
+    # Windows音频控制
+    try:
+        # 初始化COM库
+        comtypes.CoInitialize()
+        
+        # 获取默认音频设备
+        devices = AudioUtilities.GetSpeakers()
+        interface = devices.Activate(
+            IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None)
+        volume = comtypes.cast(interface, POINTER(IAudioEndpointVolume))
+        
         try:
-            # 初始化COM库
-            comtypes.CoInitialize()
-            
-            # 获取默认音频设备
-            devices = AudioUtilities.GetSpeakers()
-            interface = devices.Activate(
-                IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None)
-            volume = comtypes.cast(interface, POINTER(IAudioEndpointVolume))
-            
             # 取消静音
             volume.SetMute(0, None)
             
             # 设置音量
             volume.SetMasterVolumeLevelScalar(volume_value / 100.0, None)
+            logger.info(f"Windows音量设置为: {volume_value}%")
+        finally:
+            # 确保COM对象在释放COM库前被正确释放
+            # 通过将对象设置为None来减少引用计数
+            volume = None
+            interface = None
+            devices = None
             
             # 释放COM库
             comtypes.CoUninitialize()
-            logger.info(f"Windows音量设置为: {volume_value}%")
-        except Exception as e:
-            logger.error(f"Windows音量控制失败: {e}")
-    
-    elif system == 'Linux':
-        # Linux音频控制 (使用pactl或amixer)
-        try:
-            # 尝试使用pactl (PulseAudio)
-            result = subprocess.run(
-                ['pactl', 'set-sink-volume', '@DEFAULT_SINK@', f'{volume_value}%'],
-                capture_output=True, text=True
-            )
-            if result.returncode == 0:
-                # 取消静音
-                subprocess.run(['pactl', 'set-sink-mute', '@DEFAULT_SINK@', '0'], 
-                             capture_output=True)
-                logger.info(f"Linux音量设置为: {volume_value}% (使用pactl)")
-            else:
-                # 如果pactl失败，尝试使用amixer (ALSA)
-                result = subprocess.run(
-                    ['amixer', 'sset', 'Master', f'{volume_value}%'],
-                    capture_output=True, text=True
-                )
-                if result.returncode == 0:
-                    # 取消静音
-                    subprocess.run(['amixer', 'sset', 'Master', 'unmute'], 
-                                 capture_output=True)
-                    logger.info(f"Linux音量设置为: {volume_value}% (使用amixer)")
-                else:
-                    logger.warning("Linux音量控制失败，pactl和amixer都不可用")
-        except FileNotFoundError:
-            logger.warning("Linux音量控制工具未找到，请安装pulseaudio-utils或alsa-utils")
-        except Exception as e:
-            logger.error(f"Linux音量控制失败: {e}")
-    
-    else:
-        logger.warning(f"不支持的操作系统: {system}，音量控制功能不可用")
+    except Exception as e:
+        logger.error(f"Windows音量控制失败: {e}")
 
 
 class Config(QConfig):
