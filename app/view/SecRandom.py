@@ -672,8 +672,13 @@ class Window(MSFluentWindow):
             self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
             self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
 
-        # 添加单词PK界面导航项
-        self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_group_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
+        try:
+            # 添加单词PK界面导航项
+            if foundation_settings.get('main_window_side_switch', True):
+                self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_group_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
+        except Exception as e:
+            self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_group_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
+            logger.error(f"白露导航出错: 加载单词PK界面导航项失败了呢～ {e}")
 
         # 添加固定位置的导航项
         # 为历史记录导航项添加点击事件处理器

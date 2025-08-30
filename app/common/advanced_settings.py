@@ -1315,7 +1315,8 @@ class SettingsSelectionDialog(QDialog):
                 "主窗口设置": [
                     "main_window_mode", "main_window_focus_mode", "main_window_focus_time",
                     "topmost_switch", "window_width", "window_height", "pumping_floating_side",
-                    "pumping_reward_side", "show_settings_icon", "main_window_control_Switch"
+                    "pumping_reward_side", "show_settings_icon", "main_window_control_Switch",
+                    "main_window_side_switch"
                 ],
                 "设置窗口设置": [
                     "settings_window_mode", "settings_window_width", "settings_window_height"
@@ -1468,6 +1469,7 @@ class SettingsSelectionDialog(QDialog):
             "pumping_floating_enabled": "浮窗启用", # 有
             "pumping_floating_side": "抽人侧边栏位置", # 有
             "pumping_reward_side": "抽奖侧边栏位置", # 有
+            "main_window_side_switch": "主窗口侧边显示单词PK", # 有
             "show_settings_icon": "显示设置图标", # 有
             "pumping_floating_transparency_mode": "浮窗透明度", # 有
             "main_window_focus_mode": "主窗口焦点模式", # 有

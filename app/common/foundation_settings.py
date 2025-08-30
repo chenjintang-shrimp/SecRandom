@@ -58,6 +58,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "global_shortcut_key": "",
             "local_pumping_shortcut_key": "",
             "local_reward_shortcut_key": "",
+            "main_window_side_switch": True,
         }
 
         self.self_starting_switch = SwitchButton()
@@ -200,6 +201,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.main_window_control_Switch.setOffText("右侧")
         self.main_window_control_Switch.setFont(QFont(load_custom_font(), 12))
         self.main_window_control_Switch.checkedChanged.connect(self.save_settings)
+
+        # 主界面侧边是否现实单词PK
+        self.main_window_side_switch = SwitchButton()
+        self.main_window_side_switch.setOnText("显示")
+        self.main_window_side_switch.setOffText("隐藏")
+        self.main_window_side_switch.setFont(QFont(load_custom_font(), 12))
+        self.main_window_side_switch.checkedChanged.connect(self.save_settings)
         
         # 浮窗按钮排列方式
         self.button_arrangement_comboBox = ComboBox()
@@ -338,6 +346,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "主窗口控制面板", "配置主窗口控制面板的显示位置", self.main_window_control_Switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "调整抽人功能侧边栏的显示位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "调整抽奖功能侧边栏的显示位置", self.pumping_reward_side_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "主窗口侧边显示单词PK", "控制主窗口侧边栏中单词PK的显示状态", self.main_window_side_switch)
         
         # 浮窗功能设置
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "控制便捷抽人悬浮窗的显示和隐藏状态", self.pumping_floating_switch)
@@ -591,6 +600,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     global_shortcut_key = foundation_settings.get("global_shortcut_key", self.default_settings["global_shortcut_key"])
                     local_pumping_shortcut_key = foundation_settings.get("local_pumping_shortcut_key", self.default_settings["local_pumping_shortcut_key"])
                     local_reward_shortcut_key = foundation_settings.get("local_reward_shortcut_key", self.default_settings["local_reward_shortcut_key"])
+
+                    # 主窗口侧边是否现实单词PK
+                    main_window_side_switch = foundation_settings.get("main_window_side_switch", self.default_settings["main_window_side_switch"])
                     
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
@@ -610,6 +622,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.main_window_control_Switch.setChecked(main_window_control_Switch)
                     self.flash_window_auto_close_switch.setChecked(flash_window_auto_close)
                     self.flash_window_close_time_comboBox.setCurrentIndex(flash_window_close_time)
+                    self.main_window_side_switch.setChecked(main_window_side_switch)
                     
                     # 更新快捷键设置
                     self.global_shortcut_switch.setChecked(global_shortcut_enabled)
@@ -642,6 +655,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
                 self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
                 self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
+                self.main_window_side_switch.setChecked(self.default_settings["main_window_side_switch"])
                 
                 # 加载快捷键设置的默认值
                 self.global_shortcut_switch.setChecked(self.default_settings["global_shortcut_enabled"])
@@ -670,6 +684,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
             self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
             self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
+            self.main_window_side_switch.setChecked(self.default_settings["main_window_side_switch"])
             
             # 加载快捷键设置的默认值
             self.global_shortcut_switch.setChecked(self.default_settings["global_shortcut_enabled"])
@@ -718,6 +733,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings["main_window_control_Switch"] = self.main_window_control_Switch.isChecked()
         foundation_settings["flash_window_auto_close"] = self.flash_window_auto_close_switch.isChecked()
         foundation_settings["flash_window_close_time"] = self.flash_window_close_time_comboBox.currentIndex()
+        foundation_settings["main_window_side_switch"] = self.main_window_side_switch.isChecked()
         
         # 保存快捷键设置
         foundation_settings["global_shortcut_enabled"] = self.global_shortcut_switch.isChecked()
