@@ -26,6 +26,8 @@ from app.common.voice import TTSHandler
 class pumping_reward(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        # 设置对象名称，用于快捷键功能识别
+        self.setObjectName("RewardInterface")
         # 定义变量
         self.is_animating = False
         self.draw_mode = "random"
@@ -651,8 +653,25 @@ class pumping_reward(QWidget):
                         'system_voice_name': edge_tts_voice_name,
                     }
                     students_name = []
-                    for label in self.student_labels:
-                        parts = label.text().split()
+                    for label in self.reward_labels:
+                        # 检查label是否是QWidget容器类型
+                        if isinstance(label, QWidget) and hasattr(label, 'layout'):
+                            # 如果是容器类型，从容器中获取文本标签的文本
+                            layout = label.layout()
+                            text = ""
+                            if layout:
+                                for i in range(layout.count()):
+                                    item = layout.itemAt(i)
+                                    widget = item.widget()
+                                    if isinstance(widget, BodyLabel):
+                                        text = widget.text()
+                                        break
+                        else:
+                            # 如果是普通的BodyLabel，直接获取文本
+                            text = label.text()
+                        
+                        # 处理文本内容
+                        parts = text.split()
                         if len(parts) >= 2 and len(parts[-1]) == 1 and len(parts[-2]) == 1:
                             name = parts[-2] + parts[-1]
                         else:
@@ -1416,6 +1435,7 @@ class pumping_reward(QWidget):
 
         # 开始按钮
         self.start_button = PrimaryPushButton('开始')
+        self.start_button.setObjectName("rewardButton")
         self.start_button.setFixedSize(180, 50)
         self.start_button.setFont(QFont(load_custom_font(), 15))
         self.start_button.clicked.connect(self.start_draw)

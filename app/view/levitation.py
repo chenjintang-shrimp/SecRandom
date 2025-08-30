@@ -582,11 +582,6 @@ class LevitationWindow(QWidget):
         if hasattr(self, 'flash_button') and self.flash_button is not None:
             self.flash_button.mousePressEvent = self.on_flash_press
             self.flash_button.mouseReleaseEvent = self.on_flash_release
-
-        # 小鸟游星野：辅窗按钮事件处理器 - 与抽人按钮相同的拖动功能 ✧(๑•̀ㅂ•́)๑
-        if hasattr(self, 'auxiliary_button') and self.auxiliary_button is not None:
-            self.auxiliary_button.mousePressEvent = self.on_auxiliary_press
-            self.auxiliary_button.mouseReleaseEvent = self.on_auxiliary_release
             
         # 即抽按钮和重置按钮的拖动事件处理器 - 支持长按拖动
         if hasattr(self, 'instant_draw_button') and self.instant_draw_button is not None:
@@ -1077,7 +1072,7 @@ class LevitationWindow(QWidget):
             title_layout.setContentsMargins(10, 0, 10, 0)
             
             # 窗口标题
-            title_text = "SecRandom - 闪抽" if self.floating_visible != 7 else "SecRandom - 即抽"
+            title_text = "SecRandom - 抽取"
             self.title_label = BodyLabel(title_text)
             self.title_label.setObjectName("TitleLabel")
             self.title_label.setFont(QFont(load_custom_font(), 12))

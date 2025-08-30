@@ -1326,6 +1326,10 @@ class SettingsSelectionDialog(QDialog):
                 ],
                 "启动设置": [
                     "check_on_startup", "self_starting_enabled", "url_protocol_enabled"
+                ],
+                "全局快捷键设置": [
+                    "global_shortcut_enabled", "global_shortcut_target", "global_shortcut_key",
+                    "local_pumping_shortcut_key", "local_reward_shortcut_key",
                 ]
             },
             "advanced": {
@@ -1481,6 +1485,11 @@ class SettingsSelectionDialog(QDialog):
             "settings_window_width": "设置窗口宽度", # 有
             "settings_window_height": "设置窗口高度", # 有
             "url_protocol_enabled": "URL协议注册", # 有
+            "global_shortcut_enabled": "全局快捷键启用", # 有
+            "global_shortcut_target": "全局快捷键目标", # 有
+            "global_shortcut_key": "全局快捷键", # 有
+            "local_pumping_shortcut_key": "抽人操作快捷键", # 有
+            "local_reward_shortcut_key": "抽奖操作快捷键", # 有
             # advanced设置
             "floating_window_visibility": "浮窗显隐条件", # 有
             # pumping_people设置（跟pumping_reward设置有重复的不计入）

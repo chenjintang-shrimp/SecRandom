@@ -53,6 +53,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "main_window_control_Switch": False,
             "flash_window_auto_close": True,
             "flash_window_close_time": 2,
+            "global_shortcut_enabled": False,
+            "global_shortcut_target": 0,
+            "global_shortcut_key": "",
+            "local_pumping_shortcut_key": "",
+            "local_reward_shortcut_key": "",
         }
 
         self.self_starting_switch = SwitchButton()
@@ -214,11 +219,114 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.url_protocol_switch.setFont(QFont(load_custom_font(), 12))
         self.url_protocol_switch.checkedChanged.connect(self.toggle_url_protocol)
 
+        # 快捷键设置功能
+        # 全局快捷键开关
+        self.global_shortcut_switch = SwitchButton()
+        self.global_shortcut_switch.setOnText("开启")
+        self.global_shortcut_switch.setOffText("关闭")
+        self.global_shortcut_switch.setFont(QFont(load_custom_font(), 12))
+        self.global_shortcut_switch.checkedChanged.connect(self.save_settings)
+        
+        # 全局快捷键目标选择下拉框
+        self.global_shortcut_target_comboBox = ComboBox()
+        self.global_shortcut_target_comboBox.setFixedWidth(200)
+        self.global_shortcut_target_comboBox.addItems(["抽人界面", "闪抽界面", "抽奖界面"])
+        self.global_shortcut_target_comboBox.setFont(QFont(load_custom_font(), 12))
+        self.global_shortcut_target_comboBox.currentIndexChanged.connect(self.save_settings)
+        
+        # 全局快捷键设置按钮
+        self.global_shortcut_button = PushButton("设置快捷键")
+        self.global_shortcut_button.setFixedWidth(120)
+        self.global_shortcut_button.setFont(QFont(load_custom_font(), 12))
+        self.global_shortcut_button.clicked.connect(self.set_global_shortcut)
+        
+        # 全局快捷键清除按钮
+        self.global_shortcut_clear_button = PushButton("清除")
+        self.global_shortcut_clear_button.setFixedWidth(60)
+        self.global_shortcut_clear_button.setFont(QFont(load_custom_font(), 12))
+        self.global_shortcut_clear_button.clicked.connect(self.clear_global_shortcut)
+        
+        # 全局快捷键显示标签
+        self.global_shortcut_label = BodyLabel("未设置")
+        self.global_shortcut_label.setFont(QFont(load_custom_font(), 12))
+        
+        # 创建水平布局来容纳按钮和标签
+        self.global_shortcut_layout = QHBoxLayout()
+        self.global_shortcut_layout.addWidget(self.global_shortcut_button)
+        self.global_shortcut_layout.addWidget(self.global_shortcut_label)
+        self.global_shortcut_layout.addWidget(self.global_shortcut_clear_button)
+        self.global_shortcut_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 创建容器widget来包含布局
+        self.global_shortcut_widget = QWidget()
+        self.global_shortcut_widget.setLayout(self.global_shortcut_layout)
+        
+        # 局部快捷键设置 - 抽人操作
+        self.local_pumping_shortcut_button = PushButton("设置抽人快捷键")
+        self.local_pumping_shortcut_button.setFixedWidth(150)
+        self.local_pumping_shortcut_button.setFont(QFont(load_custom_font(), 12))
+        self.local_pumping_shortcut_button.clicked.connect(self.set_pumping_shortcut)
+        
+        # 抽人快捷键清除按钮
+        self.local_pumping_shortcut_clear_button = PushButton("清除")
+        self.local_pumping_shortcut_clear_button.setFixedWidth(60)
+        self.local_pumping_shortcut_clear_button.setFont(QFont(load_custom_font(), 12))
+        self.local_pumping_shortcut_clear_button.clicked.connect(self.clear_pumping_shortcut)
+        
+        # 抽人快捷键显示标签
+        self.local_pumping_shortcut_label = BodyLabel("未设置")
+        self.local_pumping_shortcut_label.setFont(QFont(load_custom_font(), 12))
+        
+        # 创建水平布局来容纳按钮和标签
+        self.local_pumping_shortcut_layout = QHBoxLayout()
+        self.local_pumping_shortcut_layout.addWidget(self.local_pumping_shortcut_button)
+        self.local_pumping_shortcut_layout.addWidget(self.local_pumping_shortcut_label)
+        self.local_pumping_shortcut_layout.addWidget(self.local_pumping_shortcut_clear_button)
+        self.local_pumping_shortcut_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 创建容器widget来包含布局
+        self.local_pumping_shortcut_widget = QWidget()
+        self.local_pumping_shortcut_widget.setLayout(self.local_pumping_shortcut_layout)
+        
+        # 局部快捷键设置 - 抽奖操作
+        self.local_reward_shortcut_button = PushButton("设置抽奖快捷键")
+        self.local_reward_shortcut_button.setFixedWidth(150)
+        self.local_reward_shortcut_button.setFont(QFont(load_custom_font(), 12))
+        self.local_reward_shortcut_button.clicked.connect(self.set_reward_shortcut)
+        
+        # 抽奖快捷键清除按钮
+        self.local_reward_shortcut_clear_button = PushButton("清除")
+        self.local_reward_shortcut_clear_button.setFixedWidth(60)
+        self.local_reward_shortcut_clear_button.setFont(QFont(load_custom_font(), 12))
+        self.local_reward_shortcut_clear_button.clicked.connect(self.clear_reward_shortcut)
+        
+        # 抽奖快捷键显示标签
+        self.local_reward_shortcut_label = BodyLabel("未设置")
+        self.local_reward_shortcut_label.setFont(QFont(load_custom_font(), 12))
+        
+        # 创建水平布局来容纳按钮和标签
+        self.local_reward_shortcut_layout = QHBoxLayout()
+        self.local_reward_shortcut_layout.addWidget(self.local_reward_shortcut_button)
+        self.local_reward_shortcut_layout.addWidget(self.local_reward_shortcut_label)
+        self.local_reward_shortcut_layout.addWidget(self.local_reward_shortcut_clear_button)
+        self.local_reward_shortcut_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 创建容器widget来包含布局
+        self.local_reward_shortcut_widget = QWidget()
+        self.local_reward_shortcut_widget.setLayout(self.local_reward_shortcut_layout)
+
 
         # 系统功能设置
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "更新设置", "软件启动时自动检查并提示可用更新", self.check_on_startup)
         self.addGroup(get_theme_icon("ic_fluent_branch_compare_20_filled"), "开机自启", "系统开机时自动运行SecRandom(启用后将默认隐藏主窗口)", self.self_starting_switch)
         self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "URL协议注册", "注册SecRandom协议，支持通过URL链接快速启动特定功能", self.url_protocol_switch)
+        
+        # 快捷键设置
+        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "全局快捷键", "启用全局快捷键功能，快速访问指定界面", self.global_shortcut_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "快捷键目标", "选择全局快捷键触发时打开的界面", self.global_shortcut_target_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "全局快捷键", "设置用于快速打开指定界面的全局快捷键", self.global_shortcut_widget)
+        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "抽人快捷键", "设置抽人操作的开始/停止快捷键", self.local_pumping_shortcut_widget)
+        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "抽奖快捷键", "设置抽奖操作的开始/停止快捷键", self.local_reward_shortcut_widget)
         
         # 窗口位置设置
         self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "主窗口位置", "设置主窗口在屏幕上的默认显示位置", self.main_window_comboBox)
@@ -474,6 +582,16 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         # 如果索引值无效，则使用默认值
                         flash_window_close_time = self.default_settings["flash_window_close_time"]
                     
+                    # 快捷键设置
+                    global_shortcut_enabled = foundation_settings.get("global_shortcut_enabled", self.default_settings["global_shortcut_enabled"])
+                    global_shortcut_target = foundation_settings.get("global_shortcut_target", self.default_settings["global_shortcut_target"])
+                    if global_shortcut_target < 0 or global_shortcut_target >= self.global_shortcut_target_comboBox.count():
+                        # 如果索引值无效，则使用默认值
+                        global_shortcut_target = self.default_settings["global_shortcut_target"]
+                    global_shortcut_key = foundation_settings.get("global_shortcut_key", self.default_settings["global_shortcut_key"])
+                    local_pumping_shortcut_key = foundation_settings.get("local_pumping_shortcut_key", self.default_settings["local_pumping_shortcut_key"])
+                    local_reward_shortcut_key = foundation_settings.get("local_reward_shortcut_key", self.default_settings["local_reward_shortcut_key"])
+                    
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
                     self.pumping_floating_side_comboBox.setCurrentIndex(pumping_floating_side)
@@ -492,6 +610,18 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.main_window_control_Switch.setChecked(main_window_control_Switch)
                     self.flash_window_auto_close_switch.setChecked(flash_window_auto_close)
                     self.flash_window_close_time_comboBox.setCurrentIndex(flash_window_close_time)
+                    
+                    # 更新快捷键设置
+                    self.global_shortcut_switch.setChecked(global_shortcut_enabled)
+                    self.global_shortcut_target_comboBox.setCurrentIndex(global_shortcut_target)
+                    self.global_shortcut_label.setText(global_shortcut_key if global_shortcut_key else "未设置")
+                    self.local_pumping_shortcut_label.setText(local_pumping_shortcut_key if local_pumping_shortcut_key else "未设置")
+                    self.local_reward_shortcut_label.setText(local_reward_shortcut_key if local_reward_shortcut_key else "未设置")
+                    
+                    # 注册快捷键
+                    if global_shortcut_enabled and global_shortcut_key:
+                        self.register_global_shortcut(global_shortcut_key)
+                    self.register_local_shortcuts()
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
@@ -512,6 +642,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
                 self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
                 self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
+                
+                # 加载快捷键设置的默认值
+                self.global_shortcut_switch.setChecked(self.default_settings["global_shortcut_enabled"])
+                self.global_shortcut_target_comboBox.setCurrentIndex(self.default_settings["global_shortcut_target"])
+                self.global_shortcut_label.setText(self.default_settings["global_shortcut_key"] if self.default_settings["global_shortcut_key"] else "未设置")
+                self.local_pumping_shortcut_label.setText(self.default_settings["local_pumping_shortcut_key"] if self.default_settings["local_pumping_shortcut_key"] else "未设置")
+                self.local_reward_shortcut_label.setText(self.default_settings["local_reward_shortcut_key"] if self.default_settings["local_reward_shortcut_key"] else "未设置")
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -533,7 +670,19 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
             self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
             self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
+            
+            # 加载快捷键设置的默认值
+            self.global_shortcut_switch.setChecked(self.default_settings["global_shortcut_enabled"])
+            self.global_shortcut_target_comboBox.setCurrentIndex(self.default_settings["global_shortcut_target"])
+            self.global_shortcut_label.setText(self.default_settings["global_shortcut_key"] if self.default_settings["global_shortcut_key"] else "未设置")
+            self.local_pumping_shortcut_label.setText(self.default_settings["local_pumping_shortcut_key"] if self.default_settings["local_pumping_shortcut_key"] else "未设置")
+            self.local_reward_shortcut_label.setText(self.default_settings["local_reward_shortcut_key"] if self.default_settings["local_reward_shortcut_key"] else "未设置")
             self.save_settings()
+            
+            # 注册快捷键
+            if self.global_shortcut_switch.isChecked() and self.global_shortcut_label.text() != "未设置":
+                self.register_global_shortcut(self.global_shortcut_label.text())
+            self.register_local_shortcuts()
 
     def save_settings(self):
         # 先读取现有设置
@@ -569,6 +718,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings["main_window_control_Switch"] = self.main_window_control_Switch.isChecked()
         foundation_settings["flash_window_auto_close"] = self.flash_window_auto_close_switch.isChecked()
         foundation_settings["flash_window_close_time"] = self.flash_window_close_time_comboBox.currentIndex()
+        
+        # 保存快捷键设置
+        foundation_settings["global_shortcut_enabled"] = self.global_shortcut_switch.isChecked()
+        foundation_settings["global_shortcut_target"] = self.global_shortcut_target_comboBox.currentIndex()
+        foundation_settings["global_shortcut_key"] = self.global_shortcut_label.text() if self.global_shortcut_label.text() != "未设置" else ""
+        foundation_settings["local_pumping_shortcut_key"] = self.local_pumping_shortcut_label.text() if self.local_pumping_shortcut_label.text() != "未设置" else ""
+        foundation_settings["local_reward_shortcut_key"] = self.local_reward_shortcut_label.text() if self.local_reward_shortcut_label.text() != "未设置" else ""
         
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open_file(self.settings_file, 'w', encoding='utf-8') as f:
@@ -702,6 +858,535 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         except Exception as e:
             logger.error(f"清理TEMP文件夹时出错: {str(e)}")
         
+    def set_global_shortcut(self):
+        """设置全局快捷键"""
+        
+        # 获取当前快捷键
+        current_shortcut = self.global_shortcut_label.text() if self.global_shortcut_label.text() != "未设置" else ""
+        
+        # 创建一个对话框来捕获快捷键
+        dialog = MessageBoxBase(self)
+        dialog.setWindowTitle("设置抽奖快捷键")
+        dialog.yesButton.setText("确定")
+        dialog.cancelButton.setText("取消")
+        
+        # 创建垂直布局
+        layout = QVBoxLayout()
+        
+        # 添加说明标签
+        info_label = BodyLabel(f"当前快捷键: {current_shortcut if current_shortcut else '无'}\n请点击输入框后按下快捷键组合（如Ctrl+Alt+P）：")
+        info_label.setFont(QFont(load_custom_font(), 12))
+        layout.addWidget(info_label)
+        
+        # 添加快捷键输入框
+        key_sequence_edit = QKeySequenceEdit()
+        key_sequence_edit.setFont(QFont(load_custom_font(), 12))
+        if current_shortcut:
+            key_sequence_edit.setKeySequence(QKeySequence(current_shortcut))
+        layout.addWidget(key_sequence_edit)
+        
+        dialog.viewLayout.addLayout(layout)
+        
+        # 设置对话框最小宽度
+        dialog.widget.setMinimumWidth(300)
+        
+        # 显示为无模态窗口
+        dialog.show()
+        
+        # 连接按钮信号
+        def on_ok():
+            key_sequence = key_sequence_edit.keySequence()
+            if not key_sequence.isEmpty():
+                captured_shortcut = key_sequence.toString()
+                # 更新标签显示
+                self.global_shortcut_label.setText(captured_shortcut)
+                # 保存设置
+                self.save_settings()
+                
+                # 注册全局快捷键
+                self.register_global_shortcut(captured_shortcut)
+                
+                InfoBar.success(
+                    title='设置成功',
+                    content=f'全局快捷键已设置为: {captured_shortcut}',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+            dialog.close()
+        
+        def on_cancel():
+            dialog.close()
+        
+        dialog.yesButton.clicked.connect(on_ok)
+        dialog.cancelButton.clicked.connect(on_cancel)
+    
+    def set_pumping_shortcut(self):
+        """设置抽人操作快捷键"""
+        # 获取当前快捷键
+        current_shortcut = self.local_pumping_shortcut_label.text() if self.local_pumping_shortcut_label.text() != "未设置" else ""
+        
+        # 创建一个对话框来捕获快捷键
+        dialog = MessageBoxBase(self)
+        dialog.setWindowTitle("设置抽人快捷键")
+        dialog.yesButton.setText("确定")
+        dialog.cancelButton.setText("取消")
+        
+        # 创建垂直布局
+        layout = QVBoxLayout()
+        
+        # 添加说明标签
+        info_label = BodyLabel(f"当前快捷键: {current_shortcut if current_shortcut else '无'}\n请点击输入框后按下快捷键组合（如F1）：")
+        info_label.setFont(QFont(load_custom_font(), 12))
+        layout.addWidget(info_label)
+        
+        # 添加快捷键输入框
+        key_sequence_edit = QKeySequenceEdit()
+        key_sequence_edit.setFont(QFont(load_custom_font(), 12))
+        if current_shortcut:
+            key_sequence_edit.setKeySequence(QKeySequence(current_shortcut))
+        layout.addWidget(key_sequence_edit)
+        
+        dialog.viewLayout.addLayout(layout)
+        
+        # 设置对话框最小宽度
+        dialog.widget.setMinimumWidth(300)
+        
+        # 显示为无模态窗口
+        dialog.show()
+        
+        # 连接按钮信号
+        def on_ok():
+            key_sequence = key_sequence_edit.keySequence()
+            if not key_sequence.isEmpty():
+                captured_shortcut = key_sequence.toString()
+                # 更新标签显示
+                self.local_pumping_shortcut_label.setText(captured_shortcut)
+                # 保存设置
+                self.save_settings()
+                
+                # 注册局部快捷键
+                self.register_local_shortcuts()
+                
+                InfoBar.success(
+                    title='设置成功',
+                    content=f'抽人快捷键已设置为: {captured_shortcut}',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+            dialog.close()
+        
+        def on_cancel():
+            dialog.close()
+        
+        dialog.yesButton.clicked.connect(on_ok)
+        dialog.cancelButton.clicked.connect(on_cancel)
+    
+    def set_reward_shortcut(self):
+        """设置抽奖操作快捷键"""
+        # 获取当前快捷键
+        current_shortcut = self.local_reward_shortcut_label.text() if self.local_reward_shortcut_label.text() != "未设置" else ""
+        
+        # 创建一个对话框来捕获快捷键
+        dialog = MessageBoxBase(self)
+        dialog.setWindowTitle("设置抽奖快捷键")
+        dialog.yesButton.setText("确定")
+        dialog.cancelButton.setText("取消")
+        
+        # 创建垂直布局
+        layout = QVBoxLayout()
+        
+        # 添加说明标签
+        info_label = BodyLabel(f"当前快捷键: {current_shortcut if current_shortcut else '无'}\n请点击输入框后按下快捷键组合（如F2）：")
+        info_label.setFont(QFont(load_custom_font(), 12))
+        layout.addWidget(info_label)
+        
+        # 添加快捷键输入框
+        key_sequence_edit = QKeySequenceEdit()
+        key_sequence_edit.setFont(QFont(load_custom_font(), 12))
+        if current_shortcut:
+            key_sequence_edit.setKeySequence(QKeySequence(current_shortcut))
+        layout.addWidget(key_sequence_edit)
+        
+        dialog.viewLayout.addLayout(layout)
+        
+        # 设置对话框最小宽度
+        dialog.widget.setMinimumWidth(300)
+        
+        # 显示为无模态窗口
+        dialog.show()
+        
+        # 连接按钮信号
+        def on_ok():
+            key_sequence = key_sequence_edit.keySequence()
+            if not key_sequence.isEmpty():
+                captured_shortcut = key_sequence.toString()
+                # 更新标签显示
+                self.local_reward_shortcut_label.setText(captured_shortcut)
+                # 保存设置
+                self.save_settings()
+                
+                # 注册局部快捷键
+                self.register_local_shortcuts()
+                
+                InfoBar.success(
+                    title='设置成功',
+                    content=f'抽奖快捷键已设置为: {captured_shortcut}',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+            dialog.close()
+        
+        def on_cancel():
+            dialog.close()
+        
+        dialog.yesButton.clicked.connect(on_ok)
+        dialog.cancelButton.clicked.connect(on_cancel)
+    
+    def register_global_shortcut(self, shortcut):
+        """注册全局快捷键"""
+        try:
+            # 导入keyboard库用于全局快捷键
+            import keyboard
+            
+            # 如果之前有注册的快捷键，先取消注册
+            if hasattr(self, '_current_global_shortcut') and self._current_global_shortcut:
+                try:
+                    keyboard.remove_hotkey(self._current_global_shortcut)
+                except:
+                    pass
+            
+            # 注册新的快捷键
+            keyboard.add_hotkey(shortcut, self.trigger_global_shortcut)
+            
+            # 保存当前注册的快捷键
+            self._current_global_shortcut = shortcut
+            
+            logger.info(f"注册全局快捷键成功: {shortcut}")
+        except ImportError:
+            logger.error("keyboard库未安装，无法注册全局快捷键")
+            InfoBar.warning(
+                title='缺少依赖',
+                content='keyboard库未安装，无法注册全局快捷键，请安装keyboard库',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except Exception as e:
+            logger.error(f"注册全局快捷键失败: {str(e)}")
+            InfoBar.error(
+                title='注册失败',
+                content=f'全局快捷键注册失败: {str(e)}',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+    
+    def trigger_global_shortcut(self):
+        """触发全局快捷键"""
+        if not self.global_shortcut_switch.isChecked():
+            return
+            
+        # 获取目标界面
+        target_index = self.global_shortcut_target_comboBox.currentIndex()
+        
+        # 根据目标索引打开对应界面
+        try:
+            # 获取主窗口
+            main_window = None
+            for widget in QApplication.topLevelWidgets():
+                if hasattr(widget, 'toggle_window'):  # 通过特征识别主窗口
+                    main_window = widget
+                    break
+
+            if not main_window:
+                logger.error("未找到主窗口实例")
+                return
+            
+            if target_index == 0:  # 抽人界面
+                # 打开抽人界面
+                logger.info("通过全局快捷键打开抽人界面")
+                # 使用QMetaObject.invokeMethod确保在主线程中执行UI操作
+                QMetaObject.invokeMethod(main_window, "_show_pumping_interface_from_shortcut", Qt.QueuedConnection)
+
+            elif target_index == 1:  # 闪抽界面
+                # 打开闪抽界面
+                logger.info("通过全局快捷键打开闪抽界面")
+                # 使用QMetaObject.invokeMethod确保在主线程中执行UI操作
+                QMetaObject.invokeMethod(main_window, "_show_direct_extraction_window_from_shortcut", Qt.QueuedConnection)
+
+            elif target_index == 2:  # 抽奖界面
+                # 打开抽奖界面
+                logger.info("通过全局快捷键打开抽奖界面")
+                # 使用QMetaObject.invokeMethod确保在主线程中执行UI操作
+                QMetaObject.invokeMethod(main_window, "_show_reward_interface_from_shortcut", Qt.QueuedConnection)
+
+        except Exception as e:
+            logger.error(f"触发全局快捷键失败: {str(e)}")
+
+    def register_local_shortcuts(self):
+        """注册全局快捷键（抽人和抽奖）"""
+        try:
+            # 导入keyboard库用于全局快捷键
+            import keyboard
+            
+            # 获取抽人和抽奖快捷键
+            pumping_shortcut = self.local_pumping_shortcut_label.text()
+            reward_shortcut = self.local_reward_shortcut_label.text()
+            
+            # 如果之前有注册的快捷键，先取消注册
+            if hasattr(self, '_pumping_shortcut') and self._pumping_shortcut:
+                try:
+                    keyboard.remove_hotkey(self._pumping_shortcut)
+                except:
+                    pass
+            
+            if hasattr(self, '_reward_shortcut') and self._reward_shortcut:
+                try:
+                    keyboard.remove_hotkey(self._reward_shortcut)
+                except:
+                    pass
+            
+            # 注册抽人快捷键
+            if pumping_shortcut and pumping_shortcut != "未设置":
+                keyboard.add_hotkey(pumping_shortcut, lambda: self.trigger_local_shortcut('pumping'))
+                self._pumping_shortcut = pumping_shortcut
+                logger.info(f"注册抽人全局快捷键成功: {pumping_shortcut}")
+            
+            # 注册抽奖快捷键
+            if reward_shortcut and reward_shortcut != "未设置":
+                keyboard.add_hotkey(reward_shortcut, lambda: self.trigger_local_shortcut('reward'))
+                self._reward_shortcut = reward_shortcut
+                logger.info(f"注册抽奖全局快捷键成功: {reward_shortcut}")
+                
+        except ImportError:
+            logger.error("keyboard库未安装，无法注册全局快捷键")
+            InfoBar.warning(
+                title='缺少依赖',
+                content='keyboard库未安装，无法注册全局快捷键，请安装keyboard库',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except Exception as e:
+            logger.error(f"注册全局快捷键失败: {str(e)}")
+            InfoBar.error(
+                title='注册失败',
+                content=f'全局快捷键注册失败: {str(e)}',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+    
+    def trigger_local_shortcut(self, shortcut_type):
+        """触发全局快捷键（抽人和抽奖）"""
+        if not self.global_shortcut_switch.isChecked():
+            return
+
+        try:
+            # 获取主窗口
+            main_window = None
+            for widget in QApplication.topLevelWidgets():
+                if hasattr(widget, 'toggle_window'):  # 通过特征识别主窗口
+                    main_window = widget
+                    break
+
+            if not main_window:
+                logger.error("未找到主窗口实例")
+                return
+            
+            if shortcut_type == 'pumping':
+                # 触发抽人操作
+                logger.info("通过全局快捷键触发抽人操作")
+                
+                # 使用QMetaObject.invokeMethod确保在主线程中执行UI操作
+                QMetaObject.invokeMethod(main_window, "_trigger_pumping_from_shortcut", Qt.QueuedConnection)
+                    
+            elif shortcut_type == 'reward':
+                # 触发抽奖操作
+                logger.info("通过全局快捷键触发抽奖操作")
+                
+                # 使用QMetaObject.invokeMethod确保在主线程中执行UI操作
+                QMetaObject.invokeMethod(main_window, "_trigger_reward_from_shortcut", Qt.QueuedConnection)
+                    
+        except Exception as e:
+            logger.error(f"触发全局快捷键失败: {str(e)}")
+    
+    def clear_global_shortcut(self):
+        """清除全局快捷键"""
+        try:
+            # 导入keyboard库用于全局快捷键
+            import keyboard
+            
+            # 如果有注册的快捷键，先取消注册
+            if hasattr(self, '_current_global_shortcut') and self._current_global_shortcut:
+                try:
+                    keyboard.remove_hotkey(self._current_global_shortcut)
+                    self._current_global_shortcut = ""
+                    logger.info("全局快捷键已清除")
+                except Exception as e:
+                    logger.error(f"清除全局快捷键失败: {str(e)}")
+            
+            # 更新标签显示
+            self.global_shortcut_label.setText("未设置")
+            
+            # 保存设置
+            self.save_settings()
+            
+            InfoBar.success(
+                title='清除成功',
+                content='全局快捷键已清除',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except ImportError:
+            logger.error("keyboard库未安装，无法清除全局快捷键")
+            InfoBar.warning(
+                title='缺少依赖',
+                content='keyboard库未安装，无法清除全局快捷键',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except Exception as e:
+            logger.error(f"清除全局快捷键失败: {str(e)}")
+            InfoBar.error(
+                title='清除失败',
+                content=f'清除全局快捷键失败: {str(e)}',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+    
+    def clear_pumping_shortcut(self):
+        """清除抽人快捷键"""
+        try:
+            # 导入keyboard库用于全局快捷键
+            import keyboard
+            
+            # 如果有注册的快捷键，先取消注册
+            if hasattr(self, '_pumping_shortcut') and self._pumping_shortcut:
+                try:
+                    keyboard.remove_hotkey(self._pumping_shortcut)
+                    self._pumping_shortcut = ""
+                    logger.info("抽人快捷键已清除")
+                except Exception as e:
+                    logger.error(f"清除抽人快捷键失败: {str(e)}")
+            
+            # 更新标签显示
+            self.local_pumping_shortcut_label.setText("未设置")
+            
+            # 保存设置
+            self.save_settings()
+            
+            InfoBar.success(
+                title='清除成功',
+                content='抽人快捷键已清除',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except ImportError:
+            logger.error("keyboard库未安装，无法清除抽人快捷键")
+            InfoBar.warning(
+                title='缺少依赖',
+                content='keyboard库未安装，无法清除抽人快捷键',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except Exception as e:
+            logger.error(f"清除抽人快捷键失败: {str(e)}")
+            InfoBar.error(
+                title='清除失败',
+                content=f'清除抽人快捷键失败: {str(e)}',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+    
+    def clear_reward_shortcut(self):
+        """清除抽奖快捷键"""
+        try:
+            # 导入keyboard库用于全局快捷键
+            import keyboard
+            
+            # 如果有注册的快捷键，先取消注册
+            if hasattr(self, '_reward_shortcut') and self._reward_shortcut:
+                try:
+                    keyboard.remove_hotkey(self._reward_shortcut)
+                    self._reward_shortcut = ""
+                    logger.info("抽奖快捷键已清除")
+                except Exception as e:
+                    logger.error(f"清除抽奖快捷键失败: {str(e)}")
+            
+            # 更新标签显示
+            self.local_reward_shortcut_label.setText("未设置")
+            
+            # 保存设置
+            self.save_settings()
+            
+            InfoBar.success(
+                title='清除成功',
+                content='抽奖快捷键已清除',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except ImportError:
+            logger.error("keyboard库未安装，无法清除抽奖快捷键")
+            InfoBar.warning(
+                title='缺少依赖',
+                content='keyboard库未安装，无法清除抽奖快捷键',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except Exception as e:
+            logger.error(f"清除抽奖快捷键失败: {str(e)}")
+            InfoBar.error(
+                title='清除失败',
+                content=f'清除抽奖快捷键失败: {str(e)}',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+
     def toggle_url_protocol(self, enabled):
         """切换URL协议注册状态"""
         try:
@@ -1101,7 +1786,7 @@ class CleanupTimeDialog(QDialog):
         title_layout.setContentsMargins(10, 0, 10, 0)
         
         # 窗口标题
-        self.title_label = QLabel("输入定时清理记录时间")
+        self.title_label = BodyLabel("输入定时清理记录时间")
         self.title_label.setObjectName("TitleLabel")
         self.title_label.setFont(QFont(load_custom_font(), 12))
         
@@ -1201,7 +1886,7 @@ class CleanupTimeDialog(QDialog):
                 font-weight: bold; 
             }}
             #CloseButton:hover {{ background-color: #ff4d4d; color: white; }}
-            QLabel, QPushButton, QTextEdit {{ color: {colors['text']}; }}
+            BodyLabel, QPushButton, QTextEdit {{ color: {colors['text']}; }}
         """)
         
         # 设置标题栏颜色以匹配背景色（仅Windows系统）

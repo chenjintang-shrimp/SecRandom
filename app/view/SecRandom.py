@@ -30,6 +30,7 @@ from app.view.settings import settings_Window
 from app.view.main_page.pumping_people import pumping_people
 from app.view.main_page.pumping_reward import pumping_reward
 from app.view.main_page.history_handoff_setting import history_handoff_setting
+from app.view.main_page.vocabulary_learning import vocabulary_learning
 from app.view.levitation import LevitationWindow
 from app.view.settings_page.about_setting import about
 from app.common.about import ContributorDialog, DonationDialog
@@ -413,6 +414,9 @@ class Window(MSFluentWindow):
     # ==============================
     def __init__(self):
         super().__init__()
+        # 设置窗口对象名称，方便其他组件查找
+        self.setObjectName("MainWindow")
+        
         # 初始化管理器
         self.config_manager = ConfigurationManager()
         self.update_checker = UpdateChecker(self)
@@ -626,6 +630,11 @@ class Window(MSFluentWindow):
         self.pumping_rewardInterface = pumping_reward(self)
         self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
         logger.debug("白露建筑: 抽奖界面房间已建成～ ")
+        
+        # 创建背单词界面
+        self.vocabulary_learningInterface = vocabulary_learning(self)
+        self.vocabulary_learningInterface.setObjectName("vocabulary_learningInterface")
+        logger.debug("白露建筑: 背单词界面房间已建成～ ")
 
         # 初始化导航系统
         self.initNavigation()
@@ -662,6 +671,9 @@ class Window(MSFluentWindow):
             logger.error(f"白露导航出错: 配置文件找不到啦～ {e}, 使用默认顶部导航布局")
             self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
             self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
+
+        # 添加单词PK界面导航项
+        self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_group_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
 
         # 添加固定位置的导航项
         # 为历史记录导航项添加点击事件处理器
@@ -1149,6 +1161,100 @@ class Window(MSFluentWindow):
             self.levitation_window.show()
             self.levitation_window.activateWindow()
             self.levitation_window.raise_()
+
+    @pyqtSlot()
+    def _show_direct_extraction_window_from_shortcut(self):
+        """星野闪抽快捷键处理：
+        通过全局快捷键触发闪抽界面！
+        确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
+        try:
+            # 检查levitation_window是否存在，不存在则创建
+            if not hasattr(self, 'levitation_window') or not self.levitation_window:
+                self.levitation_window = LevitationWindow()
+            
+            # 调用LevitationWindow的_show_direct_extraction_window方法
+            self.levitation_window._show_direct_extraction_window()
+            logger.info("星野闪抽: 通过快捷键成功触发闪抽界面～ ")
+        except Exception as e:
+            logger.error(f"星野闪抽: 快捷键触发闪抽界面失败喵～ {e}")
+
+    @pyqtSlot()
+    def _show_pumping_interface_from_shortcut(self):
+        """抽人界面快捷键处理：
+        通过全局快捷键打开抽人界面！
+        确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到抽人界面
+            self.switchTo(self.pumping_peopleInterface)
+            logger.info("抽人界面: 通过快捷键成功打开抽人界面～ ")
+        except Exception as e:
+            logger.error(f"抽人界面: 快捷键打开抽人界面失败喵～ {e}")
+
+    @pyqtSlot()
+    def _show_reward_interface_from_shortcut(self):
+        """抽奖界面快捷键处理：
+        通过全局快捷键打开抽奖界面！
+        确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到抽奖界面
+            self.switchTo(self.pumping_rewardInterface)
+            logger.info("抽奖界面: 通过快捷键成功打开抽奖界面～ ")
+        except Exception as e:
+            logger.error(f"抽奖界面: 快捷键打开抽奖界面失败喵～ {e}")
+
+    @pyqtSlot()
+    def _trigger_pumping_from_shortcut(self):
+        """抽人快捷键处理：
+        通过全局快捷键触发抽人操作！
+        确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到抽人界面
+            self.switchTo(self.pumping_peopleInterface)
+            
+            # 触发抽人操作
+            self.pumping_peopleInterface.start_draw()
+            logger.info("抽人: 通过快捷键成功触发抽人操作～ ")
+        except Exception as e:
+            logger.error(f"抽人: 快捷键触发抽人操作失败喵～ {e}")
+
+    @pyqtSlot()
+    def _trigger_reward_from_shortcut(self):
+        """抽奖快捷键处理：
+        通过全局快捷键触发抽奖操作！
+        确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
+        try:
+            # 确保主窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 切换到抽奖界面
+            self.switchTo(self.pumping_rewardInterface)
+            
+            # 触发抽奖操作
+            self.pumping_rewardInterface.start_draw()
+            logger.info("抽奖: 通过快捷键成功触发抽奖操作～ ")
+        except Exception as e:
+            logger.error(f"抽奖: 快捷键触发抽奖操作失败喵～ {e}")
 
     def handle_new_connection(self):
         client_connection = self.server.nextPendingConnection()

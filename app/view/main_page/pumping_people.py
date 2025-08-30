@@ -21,6 +21,8 @@ from app.common.voice import TTSHandler
 class pumping_people(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        # 设置对象名称，用于快捷键功能识别
+        self.setObjectName("PumpingInterface")
         # 定义变量
         self.is_animating = False
         self.draw_mode = "random"
@@ -1944,6 +1946,7 @@ class pumping_people(QWidget):
 
         # 开始按钮
         self.start_button = PrimaryPushButton('开始')
+        self.start_button.setObjectName("pumpingButton")
         self.start_button.setFixedSize(180, 50)
         self.start_button.setFont(QFont(load_custom_font(), 15))
         self.start_button.clicked.connect(self.start_draw)
