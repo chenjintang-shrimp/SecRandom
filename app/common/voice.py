@@ -342,37 +342,10 @@ class TTSHandler:
     
     def _handle_system_tts(self, student_names, config):
         """系统TTS处理"""
-        if self.voice_engine is None:
-            logger.warning("系统TTS引擎未初始化，跳过语音播报")
-            return
-            
         with self.system_tts_lock:
-            try:
-                # 配置TTS引擎参数
-                self.voice_engine.setProperty('volume', config['voice_volume'] / 100.0)
-                self.voice_engine.setProperty('rate', int(200 * (config['voice_speed'] / 100)))
-                
-                # 设置语音（Linux和Windows可能有不同的可用语音）
-                voices = self.voice_engine.getProperty('voices')
-                voice_found = False
-                for voice in voices:
-                    if config['system_voice_name'] in voice.id:
-                        self.voice_engine.setProperty('voice', voice.id)
-                        voice_found = True
-                        break
-                
-                if not voice_found and voices:
-                    # 如果找不到指定语音，使用第一个可用语音
-                    self.voice_engine.setProperty('voice', voices[0].id)
-                    logger.info(f"未找到语音'{config['system_voice_name']}'，使用默认语音")
-                
-                # 执行语音播报
-                for name in student_names:
-                    self.voice_engine.say(f"{name}")
-                    self.voice_engine.iterate()
-                    
-            except Exception as e:
-                logger.error(f"系统TTS处理失败: {e}")
+            for name in student_names:
+                self.voice_engine.say(f"{name}")
+                self.voice_engine.iterate()
     
     def _init_system_tts(self, config):
         """初始化系统TTS引擎（跨平台支持）"""

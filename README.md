@@ -209,7 +209,6 @@
 ## 📄 文档
 
 - 📄 **[SecRandom 官方文档](https://secrandom.netlify.app)**
-  - [![Netlify Status](https://api.netlify.com/api/v1/badges/f31b1cc4-0fdf-45fd-96f2-ef92ec108fde/deploy-status)](https://app.netlify.com/projects/secrandom/deploys)
 - [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
 
 
@@ -217,7 +216,7 @@
 
 >[!TIP]
 >
-> 📊 **贡献值计算公式**：贡献值 = （提出PR×3分） + （提交×2分） + （文档×5分） + （处理Issue×5分）
+> 📊 **贡献值计算公式**：贡献值 = 文档提交新增行数 x5 + 主程序提交新增行数 x5 + 处理issue x5
 > 
 > 📅 **统计时间范围**：2025.08.01 - 2026.01.31 (中国时间 UTC+8)
 > 

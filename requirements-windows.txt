@@ -27,6 +27,7 @@ PyQt5_sip==12.15.0
 comtypes==1.4.10
 wmi==1.5.1
 pycryptodome==3.23.0
+keyboard==0.13.5
 pywin32==310; platform_system == "Windows"
 win32_setctime==1.2.0; platform_system == "Windows"
 winshell==0.6; platform_system == "Windows"
