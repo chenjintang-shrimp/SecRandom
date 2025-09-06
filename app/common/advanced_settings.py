@@ -1,3 +1,4 @@
+from ast import In
 from shlex import join
 from qfluentwidgets import *
 from qfluentwidgets import FluentIcon as FIF
@@ -90,7 +91,14 @@ class advanced_settingsCard(GroupHeaderCardWidget):
         self.export_settings_button.clicked.connect(self.export_settings)
         self.export_settings_button.setFont(QFont(load_custom_font(), 12))
         
+        # 保活功能设置按钮
+        self.setup_keep_alive_button = PushButton("文档教程")
+        self.setup_keep_alive_button.clicked.connect(self.open_keep_alive_tutorial)
+        self.setup_keep_alive_button.setFont(QFont(load_custom_font(), 12))
+        
         # 添加组件到分组中
+        # 保活功能设置
+        self.addGroup(get_theme_icon("ic_fluent_shield_20_filled"), "系统级保活", "设置Windows任务计划程序实现的保活功能", self.setup_keep_alive_button)
 
         # 智能检测设置
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "前台软件检测", "启用基于前台软件的悬浮窗智能显示控制", self.floating_window_visibility_comboBox)
@@ -156,7 +164,21 @@ class advanced_settingsCard(GroupHeaderCardWidget):
             json.dump(existing_settings, f, indent=4)
 
 
-
+    def open_keep_alive_tutorial(self):
+        try:
+            # 打开保活功能文档
+            QDesktopServices.openUrl(QUrl("https://secrandom.netlify.app/settings/keep_alive"))
+        except Exception as e:
+            logger.error(f"打开保活功能文档时出错: {e}")
+            InfoBar.error(
+                title='打开文档失败',
+                content='请检查网络连接或文档链接是否有效，稍后重试。若问题持续存在，请联系技术支持。',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self
+            )
 
 
     class ForegroundSoftwareDialog(QDialog):
@@ -1323,7 +1345,8 @@ class SettingsSelectionDialog(QDialog):
                 ],
                 "浮窗设置": [
                     "pumping_floating_enabled", "pumping_floating_transparency_mode", "pumping_floating_visible",
-                    "button_arrangement_mode", "flash_window_auto_close", "flash_window_close_time"
+                    "button_arrangement_mode", "flash_window_auto_close", "flash_window_close_time",
+                    "floating_icon_mode", "flash_window_side_switch"
                 ],
                 "启动设置": [
                     "check_on_startup", "self_starting_enabled", "url_protocol_enabled"
@@ -1478,6 +1501,8 @@ class SettingsSelectionDialog(QDialog):
             "main_window_control_Switch": "控制面板位置", # 有
             "settings_window_mode": "设置窗口位置", # 有
             "pumping_floating_visible": "浮窗", # 有
+            "floating_icon_mode": "浮窗图标", # 有
+            "flash_window_side_switch": "浮窗窗口贴边", # 有
             "button_arrangement_mode": "浮窗按钮布局", # 有
             "flash_window_auto_close": "闪抽窗口自动关闭", # 有
             "flash_window_close_time": "闪抽窗口关闭时间", # 有

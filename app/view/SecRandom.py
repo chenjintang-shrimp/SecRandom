@@ -446,7 +446,7 @@ class Window(MSFluentWindow):
 
         # USB检测定时器
         self.usb_detection_timer = QTimer(self)
-        self.usb_detection_timer.timeout.connect(self._check_and_delete_pending_usb)
+        self.usb_detection_timer.timeout.connect(check_and_delete_pending_usb)
         self.usb_detection_timer.start(5000)  # 每5秒检查一次
 
 
@@ -1428,13 +1428,6 @@ class Window(MSFluentWindow):
         if hasattr(self, 'levitation_window') and self.levitation_window:
             self.levitation_window.raise_()
             self.levitation_window.activateWindow()
-    
-    def _check_and_delete_pending_usb(self):
-        """检查并删除待删除的USB密钥文件"""
-        try:
-            check_and_delete_pending_usb()
-        except Exception as e:
-            logger.error(f"检查并删除待删除USB密钥文件时发生错误: {e}")
     
     # ==================================================
     # URL协议支持方法

@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtNetwork import *
+from PyQt5.QtSvg import *
 
 import os
 import sys
@@ -13,7 +14,7 @@ import re
 from loguru import logger
 from pathlib import Path
 
-from app.common.config import load_custom_font, is_dark_theme
+from app.common.config import load_custom_font, is_dark_theme, get_theme_icon
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
 
@@ -42,17 +43,23 @@ class LevitationWindow(QWidget):
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
-                self.transparency_mode = foundation_settings.get('pumping_floating_transparency_mode', 6)
+                self.transparency_mode = foundation_settings.get('pumping_floating_transparency_mode', 80)
                 self.floating_visible = foundation_settings.get('pumping_floating_visible', 3)
                 self.button_arrangement_mode = foundation_settings.get('button_arrangement_mode', 0)
+                self.floating_icon_mode = foundation_settings.get('floating_icon_mode', 0)
                 # 确保透明度值在有效范围内
-                self.transparency_mode = max(0, min(self.transparency_mode, 9))
+                self.transparency_mode = max(0, min(self.transparency_mode / 100, 1))
                 # 确保按钮排列方式值在有效范围内
                 self.button_arrangement_mode = max(0, min(self.button_arrangement_mode, 2))
+                # 确保图标显示模式值在有效范围内
+                self.floating_icon_mode = max(0, min(self.floating_icon_mode, 2))
+                # 添加边缘贴边隐藏功能开关，默认关闭
+                self.flash_window_side_switch = foundation_settings.get('flash_window_side_switch', False)
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            self.transparency_mode = 6
+            self.transparency_mode = 0.8
             self.floating_visible = 3
             self.button_arrangement_mode = 0
+            self.floating_icon_mode = 0
             logger.error(f"加载基础设置失败: {e}")
 
     def _load_plugin_settings(self):
@@ -111,11 +118,17 @@ class LevitationWindow(QWidget):
     def _setup_main_layout(self):
         # 小鸟游星野：设置主布局容器 - 支持多种排列方式
         self.container_button = QWidget()
+        # 根据透明度模式设置按钮透明度
+        opacity_value = self.transparency_mode
+        # 使用QGraphicsOpacityEffect设置按钮透明度
+        opacity_effect = QGraphicsOpacityEffect()
+        opacity_effect.setOpacity(opacity_value)
+        self.container_button.setGraphicsEffect(opacity_effect)
         
         # 根据显示的按钮数量和排列方式决定布局
         button_count = self._get_button_count()
         
-        if self.button_arrangement_mode == 0:  # 矩形排列（当前方式）
+        if self.button_arrangement_mode == 0:  # 矩形排列
             if button_count >= 3:
                 # 3个或4个按钮时使用垂直布局，文字按钮放在下面
                 main_layout = QVBoxLayout(self.container_button)
@@ -141,7 +154,10 @@ class LevitationWindow(QWidget):
                 main_layout.addWidget(self.bottom_container)
                 
                 # 设置下层高度
-                self.bottom_container.setFixedHeight(50)
+                if self.floating_icon_mode != 0:
+                    self.bottom_container.setFixedHeight(50)
+                else:
+                    self.bottom_container.setFixedHeight(70)
                 
             else:
                 # 1个或2个按钮时使用水平布局
@@ -219,38 +235,103 @@ class LevitationWindow(QWidget):
             return 1  # 默认值
 
     def _init_menu_label(self):
-        # 白露：初始化菜单标签 - 只有在拖动+抽人模式时显示图标
-        if self.floating_visible == 3:  # 拖动+抽人模式
-            MENU_DEFAULT_ICON_PATH = path_manager.get_resource_path("icon", "SecRandom_menu_30%.png")
+        # 根据floating_icon_mode值决定显示模式
+        if self.floating_icon_mode == 1:  # 仅图标模式
             self.menu_label = BodyLabel(self.container_button)
             try:
                 # 根据主题设置不同的颜色
                 if dark_mode:
                     # 深色模式
-                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_menu_{(10 - self.transparency_mode) * 10}%_light.png")
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_menu_light.png")
                 else:
                     # 浅色模式
-                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_menu_{(10 - self.transparency_mode) * 10}%_black.png")
-                if not icon_path.exists():
-                    icon_path = MENU_DEFAULT_ICON_PATH
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_menu_black.png")
+
                 pixmap = QPixmap(str(icon_path))
-                self.menu_label.setPixmap(pixmap.scaled(27, 27, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                self.menu_label.setPixmap(pixmap.scaled(30, 30, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             except FileNotFoundError as e:
-                pixmap = QPixmap(str(MENU_DEFAULT_ICON_PATH))
-                self.menu_label.setPixmap(pixmap.scaled(27, 27, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                pixmap = QPixmap(str(icon_path))
+                self.menu_label.setPixmap(pixmap.scaled(30, 30, Qt.KeepAspectRatio, Qt.SmoothTransformation))
                 logger.error(f"加载菜单图标失败: {e}")
-     
-            self.menu_label.setStyleSheet('opacity: 0;')
+         
+            self.menu_label.setStyleSheet('opacity: 0; background: transparent;')
             self.menu_label.setFixedSize(50, 50)
             self.menu_label.setAlignment(Qt.AlignCenter)
-        else:
-            # 其他模式显示文字按钮
+            # 确保图标在标签中居中显示
+            self.menu_label.setProperty('class', 'centered-icon')
+            # 根据透明度模式设置按钮透明度
+            opacity_value = self.transparency_mode
+            # 使用QGraphicsOpacityEffect设置按钮透明度
+            opacity_effect = QGraphicsOpacityEffect()
+            opacity_effect.setOpacity(opacity_value)
+            self.menu_label.setGraphicsEffect(opacity_effect)
+            
+        elif self.floating_icon_mode == 2:  # 仅文字模式
             self.menu_label = PushButton("拖动")
+            # 设置按钮固定大小和样式
+            self.menu_label.setFixedSize(50, 50)
+            # 根据透明度模式设置按钮透明度
+            opacity_value = self.transparency_mode
+            if dark_mode:
+                self.menu_label.setStyleSheet('border: none; background: transparent; font-weight: bold; text-align: center; color: #ffffff;')
+            else:
+                self.menu_label.setStyleSheet('border: none; background: transparent; font-weight: bold; text-align: center; color: #000000;')
+            # 使用QGraphicsOpacityEffect设置按钮透明度
+            opacity_effect = QGraphicsOpacityEffect()
+            opacity_effect.setOpacity(opacity_value)
+            self.menu_label.setGraphicsEffect(opacity_effect)
+            self.menu_label.setFont(QFont(load_custom_font(), 12))
+            
+        else:  # 图标+文字模式（默认）
+            # 创建一个垂直布局的容器，图标在上，文字在下
+            self.menu_label = PushButton()
+            menu_layout = QVBoxLayout(self.menu_label)
+            menu_layout.setContentsMargins(0, 5, 0, 5)
+            menu_layout.setSpacing(2)
+            
+            # 添加图标
+            icon_label = BodyLabel()
+            icon_label.setAlignment(Qt.AlignCenter)  # 确保图标在标签中居中显示
+            try:
+                # 根据主题设置不同的颜色
+                if dark_mode:
+                    # 深色模式
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_menu_light.png")
+                else:
+                    # 浅色模式
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_menu_black.png")
+
+                pixmap = QPixmap(str(icon_path))
+                icon_label.setPixmap(pixmap.scaled(30, 30, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            except FileNotFoundError as e:
+                pixmap = QPixmap(str(icon_path))
+                icon_label.setPixmap(pixmap.scaled(30, 30, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                logger.error(f"加载菜单图标失败: {e}")
+            
+            # 添加文字
+            text_label = BodyLabel("拖动")
+            text_label.setFont(QFont(load_custom_font(), 10))
+            text_label.setAlignment(Qt.AlignCenter)
+            
+            # 将图标和文字添加到布局（图标在上，文字在下）
+            menu_layout.addWidget(icon_label)
+            menu_layout.addWidget(text_label)
+            menu_layout.setAlignment(Qt.AlignCenter)
+            
+            # 设置按钮样式
             if dark_mode:
                 self.menu_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold; color: #ffffff;')
             else:
-                self.menu_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
-            self.menu_label.setFont(QFont(load_custom_font(), 12))
+                self.menu_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold; color: #000000;')
+            
+            self.menu_label.setFixedSize(50, 70)  # 调整大小以适应垂直布局
+            # 根据透明度模式设置按钮透明度
+            opacity_value = self.transparency_mode
+            self.menu_label.setProperty('class', 'centered-icon')
+            # 使用QGraphicsOpacityEffect设置按钮透明度
+            opacity_effect = QGraphicsOpacityEffect()
+            opacity_effect.setOpacity(opacity_value)
+            self.menu_label.setGraphicsEffect(opacity_effect)
         
         # 根据排列方式决定按钮大小和添加位置
         button_count = self._get_button_count()
@@ -258,16 +339,12 @@ class LevitationWindow(QWidget):
         if self.button_arrangement_mode == 0:  # 矩形排列
             if button_count >= 3:
                 # 3个或4个按钮时，拖动按钮放在上面
-                if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
-                    self.menu_label.setFixedSize(50, 50)
                 if hasattr(self, 'top_container') and self.top_container:
                     self.top_container.layout().addWidget(self.menu_label)
                 else:
                     self.container_button.layout().addWidget(self.menu_label)
             else:
                 # 1个或2个按钮时使用水平布局
-                if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
-                    self.menu_label.setFixedSize(50, 50)
                 if hasattr(self, 'top_container') and self.top_container:
                     self.top_container.layout().addWidget(self.menu_label)
                 else:
@@ -275,8 +352,6 @@ class LevitationWindow(QWidget):
                     
         elif self.button_arrangement_mode == 1:  # 竖着排列
             # 所有按钮都垂直排列
-            if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
-                self.menu_label.setFixedSize(50, 50)
             if hasattr(self, 'top_container') and self.top_container:
                 self.top_container.layout().addWidget(self.menu_label)
             else:
@@ -284,8 +359,6 @@ class LevitationWindow(QWidget):
                 
         elif self.button_arrangement_mode == 2:  # 横着排列
             # 所有按钮都水平排列
-            if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
-                self.menu_label.setFixedSize(50, 50)
             if hasattr(self, 'horizontal_container') and self.horizontal_container:
                 self.horizontal_container.layout().addWidget(self.menu_label)
             elif hasattr(self, 'top_container') and self.top_container:
@@ -294,38 +367,105 @@ class LevitationWindow(QWidget):
                 self.container_button.layout().addWidget(self.menu_label)
 
     def _init_people_label(self):
-        # 小鸟游星野：初始化人物标签 - 只有在拖动+抽人模式时显示图标
-        if self.floating_visible == 3:  # 拖动+抽人模式
-            FLOATING_DEFAULT_ICON_PATH = path_manager.get_resource_path("icon", "SecRandom_floating_30%.png")
+        # 根据floating_icon_mode值决定显示模式
+        if self.floating_icon_mode == 1:  # 仅图标模式
             self.people_label = BodyLabel(self.container_button)
             try:
                 # 根据主题设置不同的颜色
                 if dark_mode:
                     # 深色模式
-                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_{(10 - self.transparency_mode) * 10}%_light.png")
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_light.png")
                 else:
                     # 浅色模式
-                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_{(10 - self.transparency_mode) * 10}%_black.png")
-                if not icon_path.exists():
-                    icon_path = FLOATING_DEFAULT_ICON_PATH
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_black.png")
+
                 pixmap = QPixmap(str(icon_path))
-                self.people_label.setPixmap(pixmap.scaled(50, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                self.people_label.setPixmap(pixmap.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation))
             except FileNotFoundError as e:
-                pixmap = QPixmap(str(FLOATING_DEFAULT_ICON_PATH))
-                self.people_label.setPixmap(pixmap.scaled(50, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                pixmap = QPixmap(str(icon_path))
+                self.people_label.setPixmap(pixmap.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation))
                 logger.error(f"加载人物图标失败: {e}")
-     
-            self.people_label.setStyleSheet('opacity: 0;')
+         
+            self.people_label.setStyleSheet('opacity: 0; background: transparent;')
             self.people_label.setFixedSize(50, 50)
             self.people_label.setAlignment(Qt.AlignCenter)
-        else:
-            # 其他模式显示文字按钮
+            # 确保图标在标签中居中显示
+            self.people_label.setProperty('class', 'centered-icon')
+            # 根据透明度模式设置按钮透明度
+            opacity_value = self.transparency_mode
+            # 使用QGraphicsOpacityEffect设置按钮透明度
+            opacity_effect = QGraphicsOpacityEffect()
+            opacity_effect.setOpacity(opacity_value)
+            self.people_label.setGraphicsEffect(opacity_effect)
+            
+        elif self.floating_icon_mode == 2:  # 仅文字模式
             self.people_label = PushButton("抽人")
+            # 设置按钮固定大小和样式
+            self.people_label.setFixedSize(50, 50)
+            # 根据透明度模式设置按钮透明度
+            opacity_value = self.transparency_mode
+            if dark_mode:
+                self.people_label.setStyleSheet('border: none; background: transparent; font-weight: bold; text-align: center; color: #ffffff;')
+            else:
+                self.people_label.setStyleSheet('border: none; background: transparent; font-weight: bold; text-align: center; color: #000000;')
+            # 使用QGraphicsOpacityEffect设置按钮透明度
+            opacity_effect = QGraphicsOpacityEffect()
+            opacity_effect.setOpacity(opacity_value)
+            self.people_label.setGraphicsEffect(opacity_effect)
+            self.people_label.setFont(QFont(load_custom_font(), 12))
+
+            
+        else:  # 图标+文字模式（默认）
+            # 创建一个垂直布局的容器，图标在上，文字在下
+            self.people_label = PushButton()
+            people_layout = QVBoxLayout(self.people_label)
+            people_layout.setContentsMargins(0, 5, 0, 5)
+            people_layout.setSpacing(0)
+            
+            # 添加图标
+            icon_label = BodyLabel()
+            icon_label.setAlignment(Qt.AlignCenter)  # 确保图标在标签中居中显示
+            try:
+                # 根据主题设置不同的颜色
+                if dark_mode:
+                    # 深色模式
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_light.png")
+                else:
+                    # 浅色模式
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_black.png")
+
+                pixmap = QPixmap(str(icon_path))
+                icon_label.setPixmap(pixmap.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            except FileNotFoundError as e:
+                pixmap = QPixmap(str(icon_path))
+                icon_label.setPixmap(pixmap.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                logger.error(f"加载人物图标失败: {e}")
+            
+            # 添加文字
+            text_label = BodyLabel("抽人")
+            text_label.setFont(QFont(load_custom_font(), 10))
+            text_label.setAlignment(Qt.AlignCenter)
+            
+            # 将图标和文字添加到布局（图标在上，文字在下）
+            people_layout.addWidget(icon_label)
+            people_layout.addWidget(text_label)
+            people_layout.addSpacing(5)
+            people_layout.setAlignment(Qt.AlignCenter)
+            
+            # 设置按钮样式
             if dark_mode:
                 self.people_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold; color: #ffffff;')
             else:
-                self.people_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
-            self.people_label.setFont(QFont(load_custom_font(), 12))
+                self.people_label.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold; color: #000000;')
+            
+            self.people_label.setFixedSize(50, 70)  # 调整大小以适应垂直布局
+            # 根据透明度模式设置按钮透明度
+            opacity_value = self.transparency_mode
+            self.people_label.setProperty('class', 'centered-icon')
+            # 使用QGraphicsOpacityEffect设置按钮透明度
+            opacity_effect = QGraphicsOpacityEffect()
+            opacity_effect.setOpacity(opacity_value)
+            self.people_label.setGraphicsEffect(opacity_effect)
         
         # 根据排列方式决定按钮大小和添加位置
         button_count = self._get_button_count()
@@ -333,16 +473,12 @@ class LevitationWindow(QWidget):
         if self.button_arrangement_mode == 0:  # 矩形排列
             if button_count >= 3:
                 # 3个或4个按钮时，人物按钮放在上面
-                if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
-                    self.people_label.setFixedSize(50, 50)
                 if hasattr(self, 'top_container') and self.top_container:
                     self.top_container.layout().addWidget(self.people_label)
                 else:
                     self.container_button.layout().addWidget(self.people_label)
             else:
                 # 1个或2个按钮时使用水平布局
-                if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
-                    self.people_label.setFixedSize(50, 50)
                 if hasattr(self, 'top_container') and self.top_container:
                     self.top_container.layout().addWidget(self.people_label)
                 else:
@@ -350,8 +486,6 @@ class LevitationWindow(QWidget):
                     
         elif self.button_arrangement_mode == 1:  # 竖着排列
             # 所有按钮都垂直排列
-            if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
-                self.people_label.setFixedSize(50, 50)
             if hasattr(self, 'top_container') and self.top_container:
                 self.top_container.layout().addWidget(self.people_label)
             else:
@@ -359,8 +493,6 @@ class LevitationWindow(QWidget):
                 
         elif self.button_arrangement_mode == 2:  # 横着排列
             # 所有按钮都水平排列
-            if self.floating_visible != 3:  # 非图标模式需要设置按钮大小
-                self.people_label.setFixedSize(50, 50)
             if hasattr(self, 'horizontal_container') and self.horizontal_container:
                 self.horizontal_container.layout().addWidget(self.people_label)
             elif hasattr(self, 'top_container') and self.top_container:
@@ -369,23 +501,164 @@ class LevitationWindow(QWidget):
                 self.container_button.layout().addWidget(self.people_label)
 
     def _init_flash_button(self):
-        # 小鸟游星野：初始化闪抽按钮 - 纯文字按钮 ✧(๑•̀ㅂ•́)๑
-        self.flash_button = PushButton("闪抽")
+        # 根据floating_icon_mode值决定显示模式
+        if self.floating_icon_mode == 1:  # 仅图标模式
+            self.flash_button = PushButton()
+            try:
+                # 根据主题设置不同的颜色
+                is_dark = is_dark_theme(qconfig) # True: 深色, False: 浅色
+                
+                prefix = "light" if is_dark else "dark"
+                suffix = "_light" if is_dark else "_dark"
+                
+                icon_path = path_manager.get_resource_path('assets', f'{prefix}/ic_fluent_flash_20_filled{suffix}.svg')
+
+                # 使用QSvgRenderer处理SVG，保持矢量图形的清晰度和固定纵横比
+                svg_renderer = QSvgRenderer(str(icon_path))
+                # 创建一个适当大小的pixmap来渲染SVG
+                svg_pixmap = QPixmap(25, 25)
+                svg_pixmap.fill(Qt.transparent)
+                painter = QPainter(svg_pixmap)
+                # 获取SVG的原始尺寸
+                svg_size = svg_renderer.defaultSize()
+                # 计算保持纵横比的缩放比例
+                if svg_size.width() > 0 and svg_size.height() > 0:
+                    scale = min(25.0 / svg_size.width(), 25.0 / svg_size.height())
+                    # 计算渲染区域，保持纵横比
+                    render_width = int(svg_size.width() * scale)
+                    render_height = int(svg_size.height() * scale)
+                    # 居中渲染
+                    render_x = (25 - render_width) // 2
+                    render_y = (25 - render_height) // 2
+                    # 在指定区域内渲染SVG，保持纵横比
+                    svg_renderer.render(painter, QRectF(render_x, render_y, render_width, render_height))
+                else:
+                    # 如果无法获取原始尺寸，则使用默认渲染方式
+                    svg_renderer.render(painter)
+                painter.end()
+                self.flash_button.setIcon(QIcon(svg_pixmap))
+                self.flash_button.setIconSize(QSize(25, 25))
+            except FileNotFoundError as e:
+                # 创建一个空的透明pixmap
+                empty_pixmap = QPixmap(25, 25)
+                empty_pixmap.fill(Qt.transparent)
+                self.flash_button.setIcon(QIcon(empty_pixmap))
+                self.flash_button.setIconSize(QSize(25, 25))
+                logger.error(f"加载闪抽图标失败: {e}")
+            
+            # 设置按钮固定大小和样式
+            self.flash_button.setFixedSize(50, 50)
+            # 根据透明度模式设置按钮透明度
+            opacity_value = self.transparency_mode
+            self.flash_button.setStyleSheet('border: none; background: transparent; text-align: center;')
+            self.flash_button.setProperty('class', 'centered-icon')
+            # 使用QGraphicsOpacityEffect设置按钮透明度
+            opacity_effect = QGraphicsOpacityEffect()
+            opacity_effect.setOpacity(opacity_value)
+            self.flash_button.setGraphicsEffect(opacity_effect)
+            
+        elif self.floating_icon_mode == 2:  # 仅文字模式
+            self.flash_button = PushButton("闪抽")
+            # 设置按钮固定大小和样式
+            self.flash_button.setFixedSize(50, 50)
+            # 根据透明度模式设置按钮透明度
+            opacity_value = self.transparency_mode
+            if dark_mode:
+                self.flash_button.setStyleSheet('border: none; background: transparent; font-weight: bold; text-align: center; color: #ffffff;')
+            else:
+                self.flash_button.setStyleSheet('border: none; background: transparent; font-weight: bold; text-align: center; color: #000000;')
+            # 使用QGraphicsOpacityEffect设置按钮透明度
+            opacity_effect = QGraphicsOpacityEffect()
+            opacity_effect.setOpacity(opacity_value)
+            self.flash_button.setGraphicsEffect(opacity_effect)
+            self.flash_button.setFont(QFont(load_custom_font(), 12))
+            
+        else:  # 图标+文字模式（默认）
+            # 创建一个垂直布局的容器，图标在上，文字在下
+            self.flash_button = PushButton()
+            flash_layout = QVBoxLayout(self.flash_button)
+            flash_layout.setContentsMargins(0, 5, 0, 5)
+            flash_layout.setSpacing(7)
+            
+            # 添加图标
+            icon_label = BodyLabel()
+            icon_label.setAlignment(Qt.AlignCenter)  # 确保图标在标签中居中显示
+            icon_label.setProperty('class', 'centered-icon')  # 添加居中类属性确保图标正确居中
+            try:
+                # 根据主题设置不同的颜色
+                is_dark = is_dark_theme(qconfig) # True: 深色, False: 浅色
+                
+                prefix = "light" if is_dark else "dark"
+                suffix = "_light" if is_dark else "_dark"
+                
+                icon_path = path_manager.get_resource_path('assets', f'{prefix}/ic_fluent_flash_20_filled{suffix}.svg')
+
+                # 使用QSvgRenderer处理SVG，保持矢量图形的清晰度和固定纵横比
+                svg_renderer = QSvgRenderer(str(icon_path))
+                # 创建一个适当大小的pixmap来渲染SVG
+                svg_pixmap = QPixmap(25, 25)
+                svg_pixmap.fill(Qt.transparent)
+                painter = QPainter(svg_pixmap)
+                # 获取SVG的原始尺寸
+                svg_size = svg_renderer.defaultSize()
+                # 计算保持纵横比的缩放比例
+                if svg_size.width() > 0 and svg_size.height() > 0:
+                    scale = min(25.0 / svg_size.width(), 25.0 / svg_size.height())
+                    # 计算渲染区域，保持纵横比
+                    render_width = int(svg_size.width() * scale)
+                    render_height = int(svg_size.height() * scale)
+                    # 居中渲染，向左偏移3个像素
+                    render_x = (25 - render_width) // 2
+                    render_y = (25 - render_height) // 2
+                    # 在指定区域内渲染SVG，保持纵横比
+                    svg_renderer.render(painter, QRectF(render_x, render_y, render_width, render_height))
+                else:
+                    # 如果无法获取原始尺寸，则使用默认渲染方式
+                    svg_renderer.render(painter)
+                painter.end()
+                icon_label.setPixmap(svg_pixmap)
+            except FileNotFoundError as e:
+                # 创建一个空的透明pixmap
+                empty_pixmap = QPixmap(25, 25)
+                empty_pixmap.fill(Qt.transparent)
+                icon_label.setPixmap(empty_pixmap)
+                logger.error(f"加载闪抽图标失败: {e}")
+            
+            # 添加文字
+            text_label = BodyLabel("闪抽")
+            text_label.setFont(QFont(load_custom_font(), 10))
+            text_label.setAlignment(Qt.AlignCenter)
+            
+            # 将图标和文字添加到布局（图标在上，文字在下）
+            flash_layout.addWidget(icon_label)
+            flash_layout.addWidget(text_label)
+            flash_layout.setAlignment(Qt.AlignCenter)
+            
+            # 设置按钮固定大小和样式
+            self.flash_button.setFixedSize(50, 70)  # 调整大小以适应垂直布局
+            # 根据透明度模式设置按钮透明度
+            opacity_value = self.transparency_mode
+            if dark_mode:
+                self.flash_button.setStyleSheet('border: none; background: transparent; font-weight: bold; text-align: center; color: #ffffff;')
+            else:
+                self.flash_button.setStyleSheet('border: none; background: transparent; font-weight: bold; text-align: center; color: #000000;')
+            # 使用QGraphicsOpacityEffect设置按钮透明度
+            opacity_effect = QGraphicsOpacityEffect()
+            opacity_effect.setOpacity(opacity_value)
+            self.flash_button.setGraphicsEffect(opacity_effect)
         
-        # 根据排列方式决定按钮大小和添加位置
+        # 根据排列方式决定按钮添加位置（保留根据显示模式设置的大小）
         button_count = self._get_button_count()
         
         if self.button_arrangement_mode == 0:  # 矩形排列
             if button_count >= 3:
                 # 3个或4个按钮时，闪抽按钮放在下面
-                self.flash_button.setFixedSize(50, 50)
                 if hasattr(self, 'bottom_container') and self.bottom_container:
                     self.bottom_container.layout().addWidget(self.flash_button)
                 else:
                     self.container_button.layout().addWidget(self.flash_button)
             else:
                 # 1个或2个按钮时使用水平布局
-                self.flash_button.setFixedSize(50, 50)
                 if hasattr(self, 'top_container') and self.top_container:
                     self.top_container.layout().addWidget(self.flash_button)
                 else:
@@ -393,7 +666,6 @@ class LevitationWindow(QWidget):
                     
         elif self.button_arrangement_mode == 1:  # 竖着排列
             # 所有按钮都垂直排列
-            self.flash_button.setFixedSize(50, 50)
             if hasattr(self, 'top_container') and self.top_container:
                 self.top_container.layout().addWidget(self.flash_button)
             else:
@@ -401,7 +673,6 @@ class LevitationWindow(QWidget):
                 
         elif self.button_arrangement_mode == 2:  # 横着排列
             # 所有按钮都水平排列
-            self.flash_button.setFixedSize(50, 50)
             if hasattr(self, 'horizontal_container') and self.horizontal_container:
                 self.horizontal_container.layout().addWidget(self.flash_button)
             elif hasattr(self, 'top_container') and self.top_container:
@@ -409,10 +680,6 @@ class LevitationWindow(QWidget):
             else:
                 self.container_button.layout().addWidget(self.flash_button)
 
-        if dark_mode:
-            self.flash_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold; color: #ffffff;')
-        else:
-            self.flash_button.setStyleSheet('opacity: 0; border: none; background: transparent; font-weight: bold;')
         self.flash_button.setFont(QFont(load_custom_font(), 12))
         self.flash_button.clicked.connect(self._show_direct_extraction_window)
 
@@ -427,6 +694,7 @@ class LevitationWindow(QWidget):
         # 创建抽取按钮 - 增大尺寸并居中
         self.instant_draw_button = PushButton("抽取")
         self.instant_draw_button.setFixedSize(65, 30)
+        self.instant_draw_button.setStyleSheet('border: none; background: transparent;')
         
         # 创建人数调节容器 - 优化布局
         count_control_container = QWidget()
@@ -447,6 +715,7 @@ class LevitationWindow(QWidget):
             self.decrease_button.setFixedSize(65, 30)
         else:
             self.decrease_button.setFixedSize(41, 30)
+        self.decrease_button.setStyleSheet('border: none; background: transparent;')
         
         # 创建当前人数显示文本 - 增大并美化
         self.count_label = BodyLabel("1")
@@ -464,10 +733,12 @@ class LevitationWindow(QWidget):
             self.increase_button.setFixedSize(65, 30)
         else:
             self.increase_button.setFixedSize(41, 30)
+        self.increase_button.setStyleSheet('border: none; background: transparent;')
         
         # 创建重置按钮 - 调整大小
         self.reset_button = PushButton("重置")
         self.reset_button.setFixedSize(65, 30)
+        self.reset_button.setStyleSheet('border: none; background: transparent;')
         
         if self.button_arrangement_mode == 1:  # 竖着排列
             # 竖排模式下使用垂直布局
@@ -514,11 +785,15 @@ class LevitationWindow(QWidget):
         self.reset_button.setFont(QFont(load_custom_font(), 12))
         self.count_label.setFont(QFont(load_custom_font(), 12))
         
-        # 连接信号
-        self.instant_draw_button.clicked.connect(self._show_instant_draw_window)
-        self.increase_button.clicked.connect(self._increase_count)
-        self.decrease_button.clicked.connect(self._decrease_count)
-        self.reset_button.clicked.connect(self._reset_count)
+        # 连接信号 - 仅PushButton有clicked信号
+        if hasattr(self.instant_draw_button, 'clicked'):
+            self.instant_draw_button.clicked.connect(self._show_instant_draw_window)
+        if hasattr(self.increase_button, 'clicked'):
+            self.increase_button.clicked.connect(self._increase_count)
+        if hasattr(self.decrease_button, 'clicked'):
+            self.decrease_button.clicked.connect(self._decrease_count)
+        if hasattr(self.reset_button, 'clicked'):
+            self.reset_button.clicked.connect(self._reset_count)
         
         # 初始化当前抽取人数
         self.current_count = 1
@@ -551,7 +826,7 @@ class LevitationWindow(QWidget):
 
     def _apply_window_styles(self):
         # 白露：应用窗口样式和标志
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.NoFocus | Qt.Popup)
         self.setAttribute(Qt.WA_TranslucentBackground)
         try:
             opacity = (10 - self.transparency_mode) * 0.1
@@ -849,6 +1124,8 @@ class LevitationWindow(QWidget):
                 new_pos.setY(max(0, min(new_pos.y(), screen.height() - self.height())))
 
                 self.move(new_pos)
+                
+                # 拖动过程中不立即检查边缘，而是在拖动结束后再检查
             else:
                 # 如果drag_position未正确设置，重新初始化拖动
                 self.start_drag(event)
@@ -866,8 +1143,15 @@ class LevitationWindow(QWidget):
         elif was_dragging:
             # 白露：拖动结束，保存新位置 (≧∇≦)ﾉ
             self.save_position()
+            
+            # 如果启用了边缘贴边隐藏功能，在拖动结束后检查是否需要贴边
+            if hasattr(self, 'flash_window_side_switch') and self.flash_window_side_switch:
+                # 使用定时器延迟执行边缘检测，确保位置已经保存
+                QTimer.singleShot(100, self._check_edge_proximity)
         
-        event.accept()
+        # 如果是BodyLabel（仅图标模式），需要手动调用accept()来处理事件
+        if hasattr(self, 'people_label') and isinstance(self.people_label, BodyLabel):
+            event.accept()
 
     def on_flash_press(self, event):
         # 小鸟游星野：闪抽按钮按下事件 - 记录拖动起始位置 ✧(๑•̀ㅂ•́)ow✧
@@ -888,7 +1172,9 @@ class LevitationWindow(QWidget):
             # 白露：拖动结束，保存新位置 (≧∇≦)ﾉ
             self.save_position()
         
-        event.accept()
+        # 如果是BodyLabel（仅图标模式），需要手动调用accept()来处理事件
+        if hasattr(self, 'flash_button') and isinstance(self.flash_button, BodyLabel):
+            event.accept()
 
     def on_flash_clicked(self, event=None):
         # 小鸟游星野：闪抽按钮点击事件 - 显示直接抽取窗口 ✧(๑•̀ㅂ•́)๑
@@ -949,6 +1235,11 @@ class LevitationWindow(QWidget):
         elif was_dragging:
             # 拖动结束，保存新位置
             self.save_position()
+            
+            # 如果启用了边缘贴边隐藏功能，在拖动结束后检查是否需要贴边
+            if hasattr(self, 'flash_window_side_switch') and self.flash_window_side_switch:
+                # 使用定时器延迟执行边缘检测，确保位置已经保存
+                QTimer.singleShot(100, self._check_edge_proximity)
         
         event.accept()
 
@@ -1012,10 +1303,16 @@ class LevitationWindow(QWidget):
         # 白露：菜单标签拖动结束，保存新位置
         self.save_position()
         
+        # 如果启用了边缘贴边隐藏功能，在拖动结束后检查是否需要贴边
+        if hasattr(self, 'flash_window_side_switch') and self.flash_window_side_switch:
+            # 使用定时器延迟执行边缘检测，确保位置已经保存
+            QTimer.singleShot(100, self._check_edge_proximity)
+        
         # 小鸟游星野：延迟保存，避免频繁写入
         self.move_timer.start(300)
         
-        if event:
+        # 如果是BodyLabel（仅图标模式），需要手动调用accept()来处理事件
+        if event and hasattr(self, 'menu_label') and isinstance(self.menu_label, BodyLabel):
             event.accept()
 
     def save_position(self):
@@ -1041,6 +1338,39 @@ class LevitationWindow(QWidget):
                 data = json.load(f)
                 pos = data.get("position", {"x": 100, "y": 100})
                 self.move(QPoint(pos["x"], pos["y"]))
+                
+                # 如果启用了边缘贴边隐藏功能，检查窗口是否需要贴边
+                if hasattr(self, 'flash_window_side_switch') and self.flash_window_side_switch:
+                    # 获取屏幕尺寸和窗口位置
+                    screen = QApplication.desktop().screenGeometry()
+                    window_pos = self.pos()
+                    window_width = self.width()
+                    window_height = self.height()
+                    
+                    # 定义边缘阈值（像素）
+                    edge_threshold = 30
+                    
+                    # 检查窗口是否靠近边缘，只有靠近边缘时才执行贴边隐藏
+                    is_near_edge = (
+                        window_pos.x() <= edge_threshold or
+                        window_pos.x() + window_width >= screen.width() - edge_threshold or
+                        window_pos.y() <= edge_threshold or
+                        window_pos.y() + window_height >= screen.height() - edge_threshold
+                    )
+                    
+                    if is_near_edge:
+                        # 使用定时器延迟执行边缘检测，确保窗口已经完全加载
+                        QTimer.singleShot(100, self._check_edge_proximity)
+                    else:
+                        # 检查窗口是否已经处于隐藏状态
+                        # 左边缘隐藏
+                        if window_pos.x() + window_width <= 0:
+                            # 创建向右箭头按钮
+                            QTimer.singleShot(100, lambda: self._create_arrow_button('right', 0, window_pos.y() + window_height // 2 - 15))
+                        # 右边缘隐藏
+                        elif window_pos.x() >= screen.width():
+                            # 创建向左箭头按钮
+                            QTimer.singleShot(100, lambda: self._create_arrow_button('left', screen.width() - 30, window_pos.y() + window_height // 2 - 15))
         except (FileNotFoundError, json.JSONDecodeError):
             screen = QApplication.desktop().screenGeometry()
             x = (screen.width() - self.width()) // 2
@@ -1504,7 +1834,7 @@ class LevitationWindow(QWidget):
         """初始化保持置顶定时器 - 每5秒钟让浮窗置顶一下"""
         self.keep_top_timer = QTimer(self)
         self.keep_top_timer.timeout.connect(self._keep_window_on_top)
-        self.keep_top_timer.start(5000)
+        self.keep_top_timer.start(200)
         logger.info("浮窗置顶定时器已启动")
 
     def _keep_window_on_top(self):
@@ -1796,3 +2126,123 @@ class LevitationWindow(QWidget):
             error_dialog.cancelButton.hide()
             error_dialog.buttonLayout.insertStretch(1)
             error_dialog.exec()
+    
+    def _check_edge_proximity(self):
+        """检测窗口是否靠近屏幕边缘，并实现贴边隐藏功能"""
+        # 获取屏幕尺寸
+        screen = QApplication.desktop().screenGeometry()
+        
+        # 获取窗口当前位置和尺寸
+        window_pos = self.pos()
+        window_width = self.width()
+        window_height = self.height()
+        
+        # 定义边缘阈值（像素）
+        edge_threshold = 30
+        
+        # 检测左边缘
+        if window_pos.x() <= edge_threshold:
+            # 将窗口完全移出屏幕左侧
+            self.move(-window_width, window_pos.y())
+            # 创建向右箭头按钮
+            self._create_arrow_button('right', 0, window_pos.y() + window_height // 2 - 15)
+            return
+        # 检测右边缘
+        elif window_pos.x() + window_width >= screen.width() - edge_threshold:
+            # 将窗口完全移出屏幕右侧
+            self.move(screen.width(), window_pos.y())
+            # 创建向左箭头按钮
+            self._create_arrow_button('left', screen.width() - 30, window_pos.y() + window_height // 2 - 15)
+            return
+        
+        # 保存新位置
+        self.save_position()
+        
+    def _create_arrow_button(self, direction, x, y):
+        """创建箭头按钮用于显示隐藏的窗口"""
+        # 如果已存在箭头按钮，先删除
+        if hasattr(self, 'arrow_button') and self.arrow_button:
+            self.arrow_button.deleteLater()
+            
+        # 创建箭头按钮作为独立窗口
+        self.arrow_button = QPushButton()
+        self.arrow_button.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.arrow_button.setFixedSize(30, 30)
+        self.arrow_button.move(x, y)
+        
+        # 根据深色模式设置按钮样式
+        if dark_mode:
+            self.arrow_button.setStyleSheet('border: none; background: transparent; border-radius: 15px; font-weight: bold; text-align: center; color: #ffffff; font-size: 16px;')
+        else:
+            self.arrow_button.setStyleSheet('border: none; background: transparent; border-radius: 15px; font-weight: bold; text-align: center; color: #000000; font-size: 16px;')
+        
+        # 设置箭头图标
+        if direction == 'right':
+            self.arrow_button.setText(">")
+        else:  # left
+            self.arrow_button.setText("<")
+            
+        # 设置按钮点击事件
+        self.arrow_button.clicked.connect(lambda: self._show_hidden_window(direction))
+        
+        opacity_effect = QGraphicsOpacityEffect()
+        # 如果有透明度模式设置，使用该值，否则使用默认值0.8
+        opacity_value = getattr(self, 'transparency_mode', 0.8)
+        opacity_effect.setOpacity(opacity_value)
+        self.arrow_button.setGraphicsEffect(opacity_effect)
+        
+        # 确保按钮显示在最前面
+        self.arrow_button.raise_()
+        self.arrow_button.show()
+        
+        # 强制按钮获取焦点
+        self.arrow_button.setFocus()
+    
+    def _show_hidden_window(self, direction):
+        """显示隐藏的窗口"""
+        # 获取屏幕尺寸
+        screen = QApplication.desktop().screenGeometry()
+        
+        # 获取窗口当前位置和尺寸
+        window_pos = self.pos()
+        window_width = self.width()
+        
+        # 根据方向显示窗口
+        if direction == 'right':
+            # 从左侧显示窗口
+            self.move(0, window_pos.y())
+        else:  # left
+            # 从右侧显示窗口
+            self.move(screen.width() - window_width, window_pos.y())
+            
+        # 删除箭头按钮
+        if hasattr(self, 'arrow_button') and self.arrow_button:
+            self.arrow_button.deleteLater()
+            self.arrow_button = None
+            
+        # 保存新位置
+        self.save_position()
+        
+        # 激活主窗口，确保窗口显示在最前面
+        self.raise_()
+        self.activateWindow()
+        
+        # 5秒后自动隐藏窗口
+        QTimer.singleShot(5000, self._auto_hide_window)
+        
+    def _auto_hide_window(self):
+        """自动隐藏窗口"""
+        # 检查是否启用了边缘贴边隐藏功能
+        if hasattr(self, 'flash_window_side_switch') and self.flash_window_side_switch:
+            # 调用边缘检测方法隐藏窗口
+            self._check_edge_proximity()
+    
+    def enterEvent(self, event):
+        """鼠标进入窗口区域时的事件处理，不再自动展开贴边隐藏的窗口"""
+        # 调用父类的enterEvent
+        super().enterEvent(event)
+    
+    def leaveEvent(self, event):
+        """鼠标离开窗口区域时的事件处理，不再自动贴边隐藏窗口"""
+        # 调用父类的leaveEvent
+        super().leaveEvent(event)
