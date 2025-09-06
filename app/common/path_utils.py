@@ -210,6 +210,9 @@ class PathManager:
             文件对象
         """
         absolute_path = self.get_absolute_path(path)
+        # 二进制模式下不传递encoding参数
+        if 'b' in mode:
+            return open(absolute_path, mode)
         return open(absolute_path, mode, encoding=encoding)
     
     def remove_file(self, path: Union[str, Path]) -> bool:

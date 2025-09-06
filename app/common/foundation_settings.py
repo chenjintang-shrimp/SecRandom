@@ -197,8 +197,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         # 主界面控制面板（抽奖 抽人）
         self.main_window_control_Switch = SwitchButton()
-        self.main_window_control_Switch.setOnText("左侧")
-        self.main_window_control_Switch.setOffText("右侧")
+        self.main_window_control_Switch.setOnText("右侧")
+        self.main_window_control_Switch.setOffText("左侧")
         self.main_window_control_Switch.setFont(QFont(load_custom_font(), 12))
         self.main_window_control_Switch.checkedChanged.connect(self.save_settings)
 

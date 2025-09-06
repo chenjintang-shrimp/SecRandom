@@ -171,7 +171,7 @@ class UpdateNotification(QDialog):
 
     def on_manual_update_clicked(self):
         """官网手动更新按钮点击事件"""
-        webbrowser.open("https://secrandom.netlify.app//download")
+        webbrowser.open("https://secrandom.netlify.app/download")
         self.close_with_animation()
 
     def show_auto_update_dialog(self):

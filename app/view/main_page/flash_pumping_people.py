@@ -511,6 +511,10 @@ class pumping_people(QWidget):
                         if not hasattr(self, 'container'):
                             self.container = QWidget()
                             self.vbox_layout = QGridLayout()
+                            # 设置标签之间的水平和垂直间距
+                            self.vbox_layout.setSpacing(15)  # 设置统一的间距
+                            self.vbox_layout.setHorizontalSpacing(20)  # 设置水平间距
+                            self.vbox_layout.setVerticalSpacing(10)   # 设置垂直间距
                             self.container.setLayout(self.vbox_layout)
                         else:
                             # 清空旧标签
@@ -1300,6 +1304,10 @@ class pumping_people(QWidget):
                         if not hasattr(self, 'container'):
                             self.container = QWidget()
                             self.vbox_layout = QGridLayout()
+                            # 设置标签之间的水平和垂直间距
+                            self.vbox_layout.setSpacing(15)  # 设置统一的间距
+                            self.vbox_layout.setHorizontalSpacing(20)  # 设置水平间距
+                            self.vbox_layout.setVerticalSpacing(10)   # 设置垂直间距
                             self.container.setLayout(self.vbox_layout)
                         else:
                             # 清空旧标签
