@@ -59,7 +59,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "global_shortcut_key": "",
             "local_pumping_shortcut_key": "",
             "local_reward_shortcut_key": "",
-            "main_window_side_switch": True,
+            "main_window_side_switch": False,
             "floating_icon_mode": 0,
             "custom_retract_time": 5,
             "custom_display_mode": 1,
