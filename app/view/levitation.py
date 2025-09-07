@@ -55,6 +55,10 @@ class LevitationWindow(QWidget):
                 self.floating_icon_mode = max(0, min(self.floating_icon_mode, 2))
                 # 添加边缘贴边隐藏功能开关，默认关闭
                 self.flash_window_side_switch = foundation_settings.get('flash_window_side_switch', False)
+                # 添加自定义收回秒数设置，默认5秒
+                self.custom_retract_time = foundation_settings.get('custom_retract_time', 5)
+                # 添加自定义显示方式设置，默认0（箭头）
+                self.custom_display_mode = foundation_settings.get('custom_display_mode', 0)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.transparency_mode = 0.8
             self.floating_visible = 3
@@ -829,7 +833,7 @@ class LevitationWindow(QWidget):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.NoFocus | Qt.Popup)
         self.setAttribute(Qt.WA_TranslucentBackground)
         try:
-            opacity = (10 - self.transparency_mode) * 0.1
+            opacity = self.transparency_mode
             # 根据主题设置不同的背景颜色
             if dark_mode:
                 # 深色模式背景颜色
@@ -1841,6 +1845,8 @@ class LevitationWindow(QWidget):
         """保持窗口置顶"""
         try:
             self.raise_()  # 将窗口提升到最前面
+            if hasattr(self, 'arrow_widget') and self.arrow_widget:
+                self.arrow_widget.raise_()
             # self.activateWindow()  # 激活窗口
         except Exception as e:
             logger.warning(f"保持窗口置顶失败: {e}")
@@ -2138,7 +2144,7 @@ class LevitationWindow(QWidget):
         window_height = self.height()
         
         # 定义边缘阈值（像素）
-        edge_threshold = 30
+        edge_threshold = 5
         
         # 检测左边缘
         if window_pos.x() <= edge_threshold:
@@ -2164,56 +2170,144 @@ class LevitationWindow(QWidget):
         if hasattr(self, 'arrow_button') and self.arrow_button:
             self.arrow_button.deleteLater()
             
-        # 创建箭头按钮作为独立窗口
-        self.arrow_button = QPushButton()
-        self.arrow_button.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        # 创建透明的可拖动QWidget作为容器
+        self.arrow_widget = DraggableWidget()
+        self.arrow_widget.setFixedSize(30, 30)
+        self.arrow_widget.move(x, y)
+        self.arrow_widget.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.NoFocus | Qt.Popup)
+        self.arrow_widget.setFixedX(x)  # 设置固定的x坐标
+        
+        # 设置容器透明
+        self.arrow_widget.setAttribute(Qt.WA_TranslucentBackground)
+        
+        # 创建布局
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        # 创建箭头按钮
+        self.arrow_button = PushButton()
         self.arrow_button.setFixedSize(30, 30)
-        self.arrow_button.move(x, y)
+        self.arrow_button.setFont(QFont(load_custom_font(), 12))
         
-        # 根据深色模式设置按钮样式
-        if dark_mode:
-            self.arrow_button.setStyleSheet('border: none; background: transparent; border-radius: 15px; font-weight: bold; text-align: center; color: #ffffff; font-size: 16px;')
-        else:
-            self.arrow_button.setStyleSheet('border: none; background: transparent; border-radius: 15px; font-weight: bold; text-align: center; color: #000000; font-size: 16px;')
+        try:
+            opacity = self.transparency_mode
+            # 根据主题设置不同的背景颜色
+            if dark_mode:
+                # 深色模式背景颜色
+                bg_color = f'rgba(65, 66, 66, {opacity})'
+                color = '#ffffff'
+            else:
+                # 浅色模式背景颜色
+                bg_color = f'rgba(240, 240, 240, {opacity})'
+                color = '#000000'
+            self.arrow_button.setStyleSheet(f'border: none; border-radius: 5px; background-color: {bg_color}; text-align: center; color: {color};')
+        except Exception as e:
+            self.arrow_button.setStyleSheet('border: none; border-radius: 5px; background-color: rgba(65, 66, 66, 0.8); text-align: center;')
+            logger.error(f"应用窗口样式失败: {e}")
         
-        # 设置箭头图标
-        if direction == 'right':
-            self.arrow_button.setText(">")
-        else:  # left
-            self.arrow_button.setText("<")
+        # 根据自定义显示方式设置按钮内容
+        display_mode = getattr(self, 'custom_display_mode', 0)
+        
+        if display_mode == 0:  # 箭头模式
+            # 调整按钮尺寸以保持一致性
+            self.arrow_button.setFixedSize(30, 30)
+            # 设置箭头图标
+            if direction == 'right':
+                self.arrow_button.setText(">")
+            else:  # left
+                self.arrow_button.setText("<")
+        elif display_mode == 1:  # 文字模式
+            # 调整按钮尺寸以适应文字显示
+            self.arrow_button.setFixedSize(30, 30)
+            self.arrow_button.setText("抽")
+        elif display_mode == 2:  # 图标模式
+            self.arrow_button.setFixedSize(30, 30)
+            try:
+                # 根据主题设置不同的颜色
+                if dark_mode:
+                    # 深色模式
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_light.png")
+                else:
+                    # 浅色模式
+                    icon_path = path_manager.get_resource_path("icon", f"SecRandom_floating_black.png")
+                pixmap = QPixmap(str(icon_path))
+                self.arrow_button.setIcon(QIcon(pixmap.scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)))
+                self.arrow_button.setIconSize(QSize(20, 20))
+            except FileNotFoundError as e:
+                pixmap = QPixmap(str(icon_path))
+                self.arrow_button.setIcon(QIcon(pixmap.scaled(20, 20, Qt.KeepAspectRatio, Qt.SmoothTransformation)))
+                self.arrow_button.setIconSize(QSize(20, 20))
+                logger.error(f"加载人物图标失败: {e}")
             
         # 设置按钮点击事件
         self.arrow_button.clicked.connect(lambda: self._show_hidden_window(direction))
         
+        # 为箭头按钮容器添加点击事件处理，确保在拖动操作不会干扰点击事件
+        def handle_click():
+            # 检查是否发生了拖动操作
+            if hasattr(self.arrow_widget, '_was_dragging') and self.arrow_widget._was_dragging:
+                return  # 如果发生了拖动，不执行点击操作
+            if not self.arrow_widget._dragging:
+                self._show_hidden_window(direction)
+        
+        # 修改容器的mouseReleaseEvent，处理点击事件
+        original_release = self.arrow_widget.mouseReleaseEvent
+        def new_mouse_release(event):
+            original_release(event)
+            # 检查是否发生了拖动操作
+            was_dragging = hasattr(self.arrow_widget, '_was_dragging') and self.arrow_widget._was_dragging
+            if event.button() == Qt.LeftButton and not self.arrow_widget._dragging and not was_dragging:
+                handle_click()
+        
+        self.arrow_widget.mouseReleaseEvent = new_mouse_release
+        
+        # 设置按钮自定义透明度
         opacity_effect = QGraphicsOpacityEffect()
-        # 如果有透明度模式设置，使用该值，否则使用默认值0.8
-        opacity_value = getattr(self, 'transparency_mode', 0.8)
+        opacity_value = self.transparency_mode
         opacity_effect.setOpacity(opacity_value)
         self.arrow_button.setGraphicsEffect(opacity_effect)
         
-        # 确保按钮显示在最前面
-        self.arrow_button.raise_()
-        self.arrow_button.show()
+        # 将按钮添加到布局中
+        layout.addWidget(self.arrow_button, alignment=Qt.AlignCenter)
         
-        # 强制按钮获取焦点
-        self.arrow_button.setFocus()
-    
+        # 设置容器的布局
+        self.arrow_widget.setLayout(layout)
+        
+        # 确保容器显示在最前面
+        self.arrow_widget.raise_()
+        self.arrow_widget.show()
+        
+        # 强制容器获取焦点
+        self.arrow_widget.setFocus()
+        
     def _show_hidden_window(self, direction):
         """显示隐藏的窗口"""
         # 获取屏幕尺寸
         screen = QApplication.desktop().screenGeometry()
         
         # 获取窗口当前位置和尺寸
-        window_pos = self.pos()
         window_width = self.width()
+        
+        # 获取箭头按钮容器的当前位置作为窗口的y坐标
+        if hasattr(self, 'arrow_widget') and self.arrow_widget:
+            arrow_y = self.arrow_widget.y()
+        else:
+            # 如果箭头按钮容器不存在，使用窗口的原始位置
+            arrow_y = self.y()
         
         # 根据方向显示窗口
         if direction == 'right':
             # 从左侧显示窗口
-            self.move(0, window_pos.y())
+            self.move(0, arrow_y)
         else:  # left
             # 从右侧显示窗口
-            self.move(screen.width() - window_width, window_pos.y())
+            self.move(screen.width() - window_width, arrow_y)
+            
+        # 删除箭头按钮容器
+        if hasattr(self, 'arrow_widget') and self.arrow_widget:
+            self.arrow_widget.deleteLater()
+            self.arrow_widget = None
             
         # 删除箭头按钮
         if hasattr(self, 'arrow_button') and self.arrow_button:
@@ -2227,8 +2321,9 @@ class LevitationWindow(QWidget):
         self.raise_()
         self.activateWindow()
         
-        # 5秒后自动隐藏窗口
-        QTimer.singleShot(5000, self._auto_hide_window)
+        # 根据自定义收回秒数设置延迟后自动隐藏窗口
+        retract_time = getattr(self, 'custom_retract_time', 5) * 1000  # 转换为毫秒
+        QTimer.singleShot(retract_time, self._auto_hide_window)
         
     def _auto_hide_window(self):
         """自动隐藏窗口"""
@@ -2236,6 +2331,86 @@ class LevitationWindow(QWidget):
         if hasattr(self, 'flash_window_side_switch') and self.flash_window_side_switch:
             # 调用边缘检测方法隐藏窗口
             self._check_edge_proximity()
+        
+class DraggableWidget(QWidget):
+    """可垂直拖动的窗口部件"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMouseTracking(True)
+        self._dragging = False
+        self._drag_start_y = 0
+        self._original_y = 0
+        self._fixed_x = 0  # 固定的x坐标
+        self._press_start_time = 0  # 记录按下时间
+        self._long_press_duration = 100  # 长按时间阈值（毫秒）
+        self._long_press_timer = QTimer(self)  # 长按检测计时器
+        self._long_press_timer.setSingleShot(True)
+        self._long_press_timer.timeout.connect(self._on_long_press)
+        self._long_press_triggered = False  # 标记是否触发长按
+        
+    def setFixedX(self, x):
+        """设置固定的x坐标"""
+        self._fixed_x = x
+        
+    def _on_long_press(self):
+        """长按触发事件"""
+        self._long_press_triggered = True
+        self.setCursor(Qt.ClosedHandCursor)
+        
+    def mousePressEvent(self, event):
+        """鼠标按下事件"""
+        if event.button() == Qt.LeftButton:
+            self._press_start_time = QDateTime.currentMSecsSinceEpoch()
+            self._drag_start_y = event.globalY()
+            self._original_y = self.y()
+            self._long_press_triggered = False
+            # 重置拖动标志
+            self._was_dragging = False
+            # 启动长按检测计时器
+            self._long_press_timer.start(self._long_press_duration)
+        
+    def mouseMoveEvent(self, event):
+        """鼠标移动事件"""
+        if event.buttons() & Qt.LeftButton:  # 确保左键按下
+            current_time = QDateTime.currentMSecsSinceEpoch()
+            # 检查是否已经长按或者移动距离足够大
+            if self._long_press_triggered or (current_time - self._press_start_time > 100 and 
+                                            abs(event.globalY() - self._drag_start_y) > 5):
+                if not self._dragging:
+                    self._dragging = True
+                    # 设置拖动标志，表示发生了拖动操作
+                    self._was_dragging = True
+                    self.setCursor(Qt.ClosedHandCursor)
+                    # 如果还没触发长按，停止计时器
+                    if not self._long_press_triggered:
+                        self._long_press_timer.stop()
+                
+                # 计算新的y坐标
+                new_y = self._original_y + (event.globalY() - self._drag_start_y)
+                # 保持x坐标不变
+                self.move(self._fixed_x, new_y)
+                
+                # 同时更新主窗口的位置
+                if hasattr(self, 'parent') and self.parent() and hasattr(self.parent(), 'move'):
+                    # 获取主窗口的当前位置
+                    parent_x = self.parent().x()
+                    parent_y = self.parent().y()
+                    # 更新主窗口的y坐标，保持x坐标不变
+                    self.parent().move(parent_x, new_y)
+        
+    def mouseReleaseEvent(self, event):
+        """鼠标释放事件"""
+        if event.button() == Qt.LeftButton:
+            # 先保存拖动状态，然后再重置
+            was_dragging = self._dragging
+            self._dragging = False
+            self._long_press_timer.stop()  # 停止长按计时器
+            self.setCursor(Qt.ArrowCursor)
+            
+            # 如果没有触发长按且移动距离很小，则视为点击
+            if not self._long_press_triggered and abs(event.globalY() - self._drag_start_y) < 5 and not was_dragging:
+                # 这里可以添加点击事件处理
+                pass
     
     def enterEvent(self, event):
         """鼠标进入窗口区域时的事件处理，不再自动展开贴边隐藏的窗口"""

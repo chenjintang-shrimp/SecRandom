@@ -61,6 +61,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "local_reward_shortcut_key": "",
             "main_window_side_switch": True,
             "floating_icon_mode": 0,
+            "custom_retract_time": 5,
+            "custom_display_mode": 1,
         }
 
         self.self_starting_switch = SwitchButton()
@@ -185,6 +187,23 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.flash_window_close_time_comboBox.addItems(["1秒", "2秒", "3秒", "5秒", "10秒", "15秒", "30秒"])
         self.flash_window_close_time_comboBox.currentIndexChanged.connect(self.save_settings)
         self.flash_window_close_time_comboBox.setFont(QFont(load_custom_font(), 12))
+
+        # 自定义收回秒数设置
+        self.custom_retract_time_spinBox = SpinBox()
+        self.custom_retract_time_spinBox.setFixedWidth(150)
+        self.custom_retract_time_spinBox.setRange(1, 60)  # 1-60秒
+        self.custom_retract_time_spinBox.setValue(5)  # 默认5秒
+        self.custom_retract_time_spinBox.setSingleStep(1)
+        self.custom_retract_time_spinBox.setSuffix("秒")
+        self.custom_retract_time_spinBox.valueChanged.connect(self.save_settings)
+        self.custom_retract_time_spinBox.setFont(QFont(load_custom_font(), 12))
+
+        # 自定义显示方式设置
+        self.custom_display_mode_comboBox = ComboBox()
+        self.custom_display_mode_comboBox.setFixedWidth(150)
+        self.custom_display_mode_comboBox.addItems(["箭头", "文字", "图标"])
+        self.custom_display_mode_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.custom_display_mode_comboBox.setFont(QFont(load_custom_font(), 12))
 
         self.left_pumping_floating_switch = ComboBox()
         self.left_pumping_floating_switch.setFixedWidth(250)
@@ -371,6 +390,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         # 浮窗功能设置
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "控制便捷抽人悬浮窗的显示和隐藏状态", self.pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗贴边", "控制便捷抽人悬浮窗是否贴边", self.flash_window_side_switch)
+        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "浮窗贴边收回秒数", "设置浮窗贴边自定义收回的秒数(1-60秒)", self.custom_retract_time_spinBox)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗贴边显示方式", "选择浮窗贴边的显示方式(箭头/文字)", self.custom_display_mode_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗按钮数量", "自定义悬浮窗中显示的功能按钮数量", self.left_pumping_floating_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "按钮排列方式", "选择悬浮窗按钮的水平或垂直排列布局", self.button_arrangement_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗图标显示模式", "选择悬浮窗按钮的显示样式", self.floating_icon_mode_comboBox)
@@ -635,6 +656,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     # 浮窗贴边
                     flash_window_side_switch = foundation_settings.get("flash_window_side_switch", self.default_settings["flash_window_side_switch"])
                     
+                    # 自定义设置
+                    custom_retract_time = foundation_settings.get("custom_retract_time", self.default_settings["custom_retract_time"])
+                    custom_display_mode = foundation_settings.get("custom_display_mode", self.default_settings["custom_display_mode"])
+                    if custom_display_mode < 0 or custom_display_mode >= self.custom_display_mode_comboBox.count():
+                        # 如果索引值无效，则使用默认值
+                        custom_display_mode = self.default_settings["custom_display_mode"]
+                    
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
                     self.pumping_floating_side_comboBox.setCurrentIndex(pumping_floating_side)
@@ -656,6 +684,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.main_window_side_switch.setChecked(main_window_side_switch)
                     self.floating_icon_mode_comboBox.setCurrentIndex(floating_icon_mode)
                     self.flash_window_side_switch.setChecked(flash_window_side_switch)
+                    
+                    # 设置自定义选项
+                    self.custom_retract_time_spinBox.setValue(custom_retract_time)
+                    self.custom_display_mode_comboBox.setCurrentIndex(custom_display_mode)
                     
                     # 更新快捷键设置
                     self.global_shortcut_switch.setChecked(global_shortcut_enabled)
@@ -692,6 +724,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.floating_icon_mode_comboBox.setCurrentIndex(self.default_settings["floating_icon_mode"])
                 self.flash_window_side_switch.setChecked(self.default_settings["flash_window_side_switch"])
                 
+                # 设置自定义选项的默认值
+                self.custom_retract_time_spinBox.setValue(self.default_settings["custom_retract_time"])
+                self.custom_display_mode_comboBox.setCurrentIndex(self.default_settings["custom_display_mode"])
+                
                 # 加载快捷键设置的默认值
                 self.global_shortcut_switch.setChecked(self.default_settings["global_shortcut_enabled"])
                 self.global_shortcut_target_comboBox.setCurrentIndex(self.default_settings["global_shortcut_target"])
@@ -722,6 +758,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.main_window_side_switch.setChecked(self.default_settings["main_window_side_switch"])
             self.floating_icon_mode_comboBox.setCurrentIndex(self.default_settings["floating_icon_mode"])
             self.flash_window_side_switch.setChecked(self.default_settings["flash_window_side_switch"])
+            
+            # 设置自定义选项的默认值
+            self.custom_retract_time_spinBox.setValue(self.default_settings["custom_retract_time"])
+            self.custom_display_mode_comboBox.setCurrentIndex(self.default_settings["custom_display_mode"])
             
             # 加载快捷键设置的默认值
             self.global_shortcut_switch.setChecked(self.default_settings["global_shortcut_enabled"])
@@ -773,6 +813,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings["main_window_side_switch"] = self.main_window_side_switch.isChecked()
         foundation_settings["floating_icon_mode"] = self.floating_icon_mode_comboBox.currentIndex()
         foundation_settings["flash_window_side_switch"] = self.flash_window_side_switch.isChecked()
+        
+        # 保存自定义设置
+        foundation_settings["custom_retract_time"] = self.custom_retract_time_spinBox.value()
+        foundation_settings["custom_display_mode"] = self.custom_display_mode_comboBox.currentIndex()
         
         # 保存快捷键设置
         foundation_settings["global_shortcut_enabled"] = self.global_shortcut_switch.isChecked()
