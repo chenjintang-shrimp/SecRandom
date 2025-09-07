@@ -91,15 +91,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
         self.export_settings_button.clicked.connect(self.export_settings)
         self.export_settings_button.setFont(QFont(load_custom_font(), 12))
         
-        # 保活功能设置按钮
-        self.setup_keep_alive_button = PushButton("文档教程")
-        self.setup_keep_alive_button.clicked.connect(self.open_keep_alive_tutorial)
-        self.setup_keep_alive_button.setFont(QFont(load_custom_font(), 12))
-        
         # 添加组件到分组中
-        # 保活功能设置
-        self.addGroup(get_theme_icon("ic_fluent_shield_20_filled"), "系统级保活", "设置Windows任务计划程序实现的保活功能", self.setup_keep_alive_button)
-
         # 智能检测设置
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "前台软件检测", "启用基于前台软件的悬浮窗智能显示控制", self.floating_window_visibility_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "软件类名检测", "设置用于检测的前台软件窗口类名", self.foreground_software_class_button)
@@ -162,23 +154,6 @@ class advanced_settingsCard(GroupHeaderCardWidget):
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open_file(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)
-
-
-    def open_keep_alive_tutorial(self):
-        try:
-            # 打开保活功能文档
-            QDesktopServices.openUrl(QUrl("https://secrandom.netlify.app/settings/keep_alive"))
-        except Exception as e:
-            logger.error(f"打开保活功能文档时出错: {e}")
-            InfoBar.error(
-                title='打开文档失败',
-                content='请检查网络连接或文档链接是否有效，稍后重试。若问题持续存在，请联系技术支持。',
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=5000,
-                parent=self
-            )
 
 
     class ForegroundSoftwareDialog(QDialog):
@@ -1346,7 +1321,7 @@ class SettingsSelectionDialog(QDialog):
                 "浮窗设置": [
                     "pumping_floating_enabled", "pumping_floating_transparency_mode", "pumping_floating_visible",
                     "button_arrangement_mode", "flash_window_auto_close", "flash_window_close_time",
-                    "floating_icon_mode", "flash_window_side_switch"
+                    "floating_icon_mode", "flash_window_side_switch", "custom_retract_time", "custom_display_mode"
                 ],
                 "启动设置": [
                     "check_on_startup", "self_starting_enabled", "url_protocol_enabled"
@@ -1517,6 +1492,8 @@ class SettingsSelectionDialog(QDialog):
             "global_shortcut_key": "全局快捷键", # 有
             "local_pumping_shortcut_key": "抽人操作快捷键", # 有
             "local_reward_shortcut_key": "抽奖操作快捷键", # 有
+            "custom_retract_time": "自定义收起时间", # 有
+            "custom_display_mode": "自定义显示模式", # 有
             # advanced设置
             "floating_window_visibility": "浮窗显隐条件", # 有
             # pumping_people设置（跟pumping_reward设置有重复的不计入）

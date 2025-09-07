@@ -88,7 +88,6 @@ jobs:
               --add-data ./app/resource:app/resource `
               --add-data LICENSE:. `
               --version-file=version_info.txt `
-              --uac-admin `
               --hidden-import=psutil._psutil_windows `
               --hidden-import=pandas._libs.interval `
               --hidden-import=pandas._libs.ops `
