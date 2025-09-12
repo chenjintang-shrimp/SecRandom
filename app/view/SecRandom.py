@@ -606,35 +606,68 @@ class Window(MSFluentWindow):
         """(^・ω・^ ) 白露的魔法建筑师开工啦！
         正在搭建子界面导航系统，就像建造一座功能齐全的魔法城堡～
         每个功能模块都是城堡的房间，马上就能入住使用啦！🏰✨"""
-        # 创建设置界面
-        self.settingInterface = settings_Window(self)
-        self.settingInterface.setObjectName("settingInterface")
-        logger.debug("白露建筑: 设置界面房间已建成～ ")
+        try:
+            # 创建设置界面
+            self.settingInterface = settings_Window(self)
+            self.settingInterface.setObjectName("settingInterface")
+            logger.debug("白露建筑: 设置界面房间已建成～ ")
+        except Exception as e:
+            logger.error(f"白露建筑失败: 创建设置界面时出错喵～ {e}")
+            self.settingInterface = None
+            
+        try:
+            # 创建历史交接设置界面
+            self.history_handoff_settingInterface = history_handoff_setting(self)
+            self.history_handoff_settingInterface.setObjectName("history_handoff_settingInterface")
+            logger.debug("白露建筑: 历史交接设置界面房间已建成～ ")
+        except Exception as e:
+            logger.error(f"白露建筑失败: 创建历史交接设置界面时出错喵～ {e}")
+            self.history_handoff_settingInterface = None
 
-        # 创建历史交接设置界面
-        self.history_handoff_settingInterface = history_handoff_setting(self)
-        self.history_handoff_settingInterface.setObjectName("history_handoff_settingInterface")
-        logger.debug("白露建筑: 历史交接设置界面房间已建成～ ")
+        try:
+            # 创建抽人界面（主界面）
+            self.pumping_peopleInterface = pumping_people(self)
+            self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
+            logger.debug("白露建筑: 抽人界面房间已建成～ ")
+        except Exception as e:
+            logger.error(f"白露建筑失败: 创建抽人界面时出错喵～ {e}")
+            self.pumping_peopleInterface = None
+            # 抽人界面是核心界面，如果创建失败，尝试重新创建一次
+            try:
+                logger.info("白露建筑: 尝试重新创建抽人界面～ ")
+                self.pumping_peopleInterface = pumping_people(self)
+                self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
+                logger.debug("白露建筑: 抽人界面重新创建成功～ ")
+            except Exception as e2:
+                logger.error(f"白露建筑失败: 重新创建抽人界面仍然失败喵～ {e2}")
+                self.pumping_peopleInterface = None
 
-        # 创建抽人界面（主界面）
-        self.pumping_peopleInterface = pumping_people(self)
-        self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
-        logger.debug("白露建筑: 抽人界面房间已建成～ ")
+        try:
+            # 创建关于界面
+            self.about_settingInterface = about(self)
+            self.about_settingInterface.setObjectName("about_settingInterface")
+            logger.debug("白露建筑: 关于界面房间已建成～ ")
+        except Exception as e:
+            logger.error(f"白露建筑失败: 创建关于界面时出错喵～ {e}")
+            self.about_settingInterface = None
 
-        # 创建关于界面
-        self.about_settingInterface = about(self)
-        self.about_settingInterface.setObjectName("about_settingInterface")
-        logger.debug("白露建筑: 关于界面房间已建成～ ")
-
-        # 创建抽奖界面
-        self.pumping_rewardInterface = pumping_reward(self)
-        self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
-        logger.debug("白露建筑: 抽奖界面房间已建成～ ")
-        
-        # 创建背单词界面
-        self.vocabulary_learningInterface = vocabulary_learning(self)
-        self.vocabulary_learningInterface.setObjectName("vocabulary_learningInterface")
-        logger.debug("白露建筑: 背单词界面房间已建成～ ")
+        try:
+            # 创建抽奖界面
+            self.pumping_rewardInterface = pumping_reward(self)
+            self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
+            logger.debug("白露建筑: 抽奖界面房间已建成～ ")
+        except Exception as e:
+            logger.error(f"白露建筑失败: 创建抽奖界面时出错喵～ {e}")
+            self.pumping_rewardInterface = None
+            
+        try:
+            # 创建背单词界面
+            self.vocabulary_learningInterface = vocabulary_learning(self)
+            self.vocabulary_learningInterface.setObjectName("vocabulary_learningInterface")
+            logger.debug("白露建筑: 背单词界面房间已建成～ ")
+        except Exception as e:
+            logger.error(f"白露建筑失败: 创建背单词界面时出错喵～ {e}")
+            self.vocabulary_learningInterface = None
 
         # 初始化导航系统
         self.initNavigation()
@@ -652,41 +685,57 @@ class Window(MSFluentWindow):
                 logger.debug("白露导航: 已读取导航配置，准备构建个性化菜单～ ")
 
                 # 根据设置决定"抽人"界面位置
-                if foundation_settings.get('pumping_floating_side', 0) == 1:
-                    self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.BOTTOM)
-                    logger.debug("白露导航: '抽人'界面已放置在底部导航栏～ ")
+                if self.pumping_peopleInterface is not None:
+                    if foundation_settings.get('pumping_floating_side', 0) == 1:
+                        self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.BOTTOM)
+                        logger.debug("白露导航: '抽人'界面已放置在底部导航栏～ ")
+                    else:
+                        self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
+                        logger.debug("白露导航: '抽人'界面已放置在顶部导航栏～ ")
                 else:
-                    self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
-                    logger.debug("白露导航: '抽人'界面已放置在顶部导航栏～ ")
+                    logger.error("白露导航失败: 抽人界面不存在，无法添加到导航栏～ ")
 
                 # 根据设置决定"抽奖"界面位置
-                if foundation_settings.get('pumping_reward_side', 0) == 1:
-                    self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.BOTTOM)
-                    logger.debug("白露导航: '抽奖'界面已放置在底部导航栏～ ")
+                if self.pumping_rewardInterface is not None:
+                    if foundation_settings.get('pumping_reward_side', 0) == 1:
+                        self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.BOTTOM)
+                        logger.debug("白露导航: '抽奖'界面已放置在底部导航栏～ ")
+                    else:
+                        self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
+                        logger.debug("白露导航: '抽奖'界面已放置在顶部导航栏～ ")
                 else:
-                    self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
-                    logger.debug("白露导航: '抽奖'界面已放置在顶部导航栏～ ")
+                    logger.error("白露导航失败: 抽奖界面不存在，无法添加到导航栏～ ")
 
         except FileNotFoundError as e:
             logger.error(f"白露导航出错: 配置文件找不到啦～ {e}, 使用默认顶部导航布局")
-            self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
-            self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
+            if self.pumping_peopleInterface is not None:
+                self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
+            if self.pumping_rewardInterface is not None:
+                self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
 
         try:
             # 添加单词PK界面导航项
-            if foundation_settings.get('main_window_side_switch', True):
-                self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_group_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
+            if self.vocabulary_learningInterface is not None:
+                if foundation_settings.get('main_window_side_switch', True):
+                    self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_group_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
         except Exception as e:
-            self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_group_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
+            if self.vocabulary_learningInterface is not None:
+                self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_group_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
             logger.error(f"白露导航出错: 加载单词PK界面导航项失败了呢～ {e}")
 
         # 添加固定位置的导航项
         # 为历史记录导航项添加点击事件处理器
-        history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
-        # 首次点击时加载数据
-        history_item.clicked.connect(lambda: self.history_handoff_settingInterface.pumping_people_card.load_data())
+        if self.history_handoff_settingInterface is not None:
+            history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+            # 首次点击时加载数据
+            history_item.clicked.connect(lambda: self.history_handoff_settingInterface.pumping_people_card.load_data())
+        else:
+            logger.error("白露导航失败: 历史记录界面不存在，无法添加到导航栏～ ")
 
-        self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
+        if self.about_settingInterface is not None:
+            self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
+        else:
+            logger.error("白露导航失败: 关于界面不存在，无法添加到导航栏～ ")
 
         try:
             if foundation_settings.get('show_settings_icon', True):
@@ -696,7 +745,8 @@ class Window(MSFluentWindow):
                 settings_item = self.addSubInterface(self.settings_placeholder, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.BOTTOM)
                 # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
-                settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
+                if self.pumping_peopleInterface is not None:
+                    settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
         except Exception as e:
             logger.error(f"白露导航出错: 加载设置图标失败了呢～ {e}")
             # 创建一个空的设置界面占位符，用于导航栏
@@ -705,7 +755,8 @@ class Window(MSFluentWindow):
             settings_item = self.addSubInterface(self.settings_placeholder, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.BOTTOM)
             # 为导航项添加点击事件处理器，调用show_setting_interface方法
             settings_item.clicked.connect(self.show_setting_interface)
-            settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
+            if self.pumping_peopleInterface is not None:
+                settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
         
         logger.info("白露导航: 所有导航项已布置完成，导航系统可以正常使用啦～ ")
 
@@ -1030,19 +1081,25 @@ class Window(MSFluentWindow):
         if hasattr(self, 'settingInterface') and self.settingInterface:
             if hasattr(self.settingInterface, 'usb_monitor_thread') and self.settingInterface.usb_monitor_thread:
                 # 先断开信号连接，避免在线程停止过程中触发信号
-                self.settingInterface.usb_monitor_thread.usb_removed.disconnect()
+                try:
+                    self.settingInterface.usb_monitor_thread.usb_removed.disconnect()
+                except:
+                    pass  # 忽略断开连接时的错误
                 # 停止线程并等待完全停止
                 self.settingInterface.usb_monitor_thread.stop()
-                # 等待一小段时间确保线程完全停止
+                # 等待更长时间确保线程完全停止
                 if self.settingInterface.usb_monitor_thread.isRunning():
-                    self.settingInterface.usb_monitor_thread.wait(500)  # 等待最多500ms
+                    self.settingInterface.usb_monitor_thread.wait(1000)  # 增加等待时间到1000ms
                 self.settingInterface.usb_monitor_thread = None
                 logger.debug("星野重启: USB监控线程已停止～ ")
         
         # 关闭IPC服务器
         if hasattr(self, 'server'):
-            self.server.close()
-            logger.debug("星野重启: IPC服务器已关闭～ ")
+            try:
+                self.server.close()
+                logger.debug("星野重启: IPC服务器已关闭～ ")
+            except Exception as e:
+                logger.error(f"星野重启: 关闭IPC服务器时出错: {e}")
         
         # 停止更新检查
         if hasattr(self, 'update_checker') and self.update_checker:
@@ -1067,8 +1124,17 @@ class Window(MSFluentWindow):
         except Exception as e:
             logger.error(f"星野重启: 日志系统关闭出错喵～ {e}")
         
-        # 给系统一点时间清理资源
-        time.sleep(0.5)
+        # 确保设置界面被正确关闭和清理
+        if hasattr(self, 'settingInterface') and self.settingInterface:
+            try:
+                self.settingInterface.close()
+                self.settingInterface = None
+                logger.debug("星野重启: 设置界面已关闭并清理～ ")
+            except Exception as e:
+                logger.error(f"星野重启: 关闭设置界面时出错: {e}")
+        
+        # 给系统更多时间清理资源
+        time.sleep(1.0)  # 增加等待时间到1秒
         
         # 启动新进程
         try:
@@ -1122,22 +1188,58 @@ class Window(MSFluentWindow):
         except Exception as e:
             logger.error(f"写入verification_start失败: {e}")
 
+        # 检查设置界面是否存在，如果不存在则创建
         if not hasattr(self, 'settingInterface') or not self.settingInterface:
-            self.settingInterface = settings_Window(self)
+            try:
+                from app.view.settings import settings_Window
+                self.settingInterface = settings_Window(self)
+                logger.info("设置界面已成功创建")
+            except Exception as e:
+                logger.error(f"创建设置界面失败: {e}")
+                # 尝试再次创建，增加重试机制
+                try:
+                    time.sleep(0.5)  # 等待一小段时间再重试
+                    self.settingInterface = settings_Window(self)
+                    logger.info("设置界面重试创建成功")
+                except Exception as e2:
+                    logger.error(f"重试创建设置界面仍然失败: {e2}")
+                    return
 
-        if self.settingInterface.isVisible() and not self.settingInterface.isMinimized():
-            self.settingInterface.showNormal() 
-            self.settingInterface.activateWindow()
-            self.settingInterface.raise_()
-        else:
-            if self.settingInterface.isMinimized():
-                self.settingInterface.showNormal()
+        # 显示设置界面
+        try:
+            if self.settingInterface.isVisible() and not self.settingInterface.isMinimized():
+                self.settingInterface.showNormal() 
                 self.settingInterface.activateWindow()
                 self.settingInterface.raise_()
+                logger.info("设置界面已显示并激活")
             else:
+                if self.settingInterface.isMinimized():
+                    self.settingInterface.showNormal()
+                    self.settingInterface.activateWindow()
+                    self.settingInterface.raise_()
+                    logger.info("设置界面已从最小化状态恢复并激活")
+                else:
+                    self.settingInterface.show()
+                    self.settingInterface.activateWindow()
+                    self.settingInterface.raise_()
+                    logger.info("设置界面已显示并激活")
+        except Exception as e:
+            logger.error(f"显示设置界面时出错: {e}")
+            # 尝试重新创建设置界面
+            try:
+                if hasattr(self, 'settingInterface'):
+                    try:
+                        self.settingInterface.close()
+                    except:
+                        pass
+                from app.view.settings import settings_Window
+                self.settingInterface = settings_Window(self)
                 self.settingInterface.show()
                 self.settingInterface.activateWindow()
                 self.settingInterface.raise_()
+                logger.info("设置界面重新创建并显示成功")
+            except Exception as e2:
+                logger.error(f"重新创建并显示设置界面失败: {e2}")
 
     def toggle_levitation_window(self):
         """星野悬浮控制：
