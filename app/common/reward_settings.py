@@ -238,7 +238,7 @@ class reward_SettinsCard(GroupHeaderCardWidget):
     def show_table(self):
         prize_pools_name = self.prize_pools_comboBox.currentText()
         # 获取是否存在奖品
-        prize_file = path_manager.get_resource_path('reward/reward_dir', f'{prize_pools_name}.json')
+        prize_file = path_manager.get_resource_path('reward', f'{prize_pools_name}.json')
         if prize_file.exists():
             with open_file(prize_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
