@@ -60,6 +60,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "local_pumping_shortcut_key": "",
             "local_reward_shortcut_key": "",
             "main_window_side_switch": False,
+            "show_startup_window_switch": True,
             "floating_icon_mode": 0,
             "custom_retract_time": 5,
             "custom_display_mode": 1,
@@ -79,13 +80,12 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.self_starting_switch.setOnText("开启")
         self.self_starting_switch.setOffText("关闭")
         self.self_starting_switch.setFont(QFont(load_custom_font(), 12))
-        self.self_starting_switch.checkedChanged.connect(self.on_pumping_floating_switch_changed)
         self.self_starting_switch.checkedChanged.connect(self.setting_startup)
 
         # 浮窗显示/隐藏按钮
         self.pumping_floating_switch.setOnText("显示")
         self.pumping_floating_switch.setOffText("隐藏")
-        self.pumping_floating_switch.checkedChanged.connect(self.on_pumping_floating_switch_changed)
+        self.pumping_floating_switch.checkedChanged.connect(self.save_settings)
         self.pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
 
         # 抽人选项侧边栏位置设置
@@ -266,6 +266,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.url_protocol_switch.setFont(QFont(load_custom_font(), 12))
         self.url_protocol_switch.checkedChanged.connect(self.toggle_url_protocol)
 
+        # 设置是否显示启动窗口
+        self.show_startup_window_switch = SwitchButton()
+        self.show_startup_window_switch.setOnText("开启")
+        self.show_startup_window_switch.setOffText("关闭")
+        self.show_startup_window_switch.setFont(QFont(load_custom_font(), 12))
+        self.show_startup_window_switch.checkedChanged.connect(self.save_settings)
+
         # 快捷键设置功能
         # 全局快捷键开关
         self.global_shortcut_switch = SwitchButton()
@@ -368,6 +375,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_branch_compare_20_filled"), "开机自启", "系统开机时自动运行SecRandom(启用后将默认隐藏主窗口)", self.self_starting_switch)
         self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "URL协议注册", "注册SecRandom协议，支持通过URL链接快速启动特定功能", self.url_protocol_switch)
         
+        # 显示启动窗口
+        self.addGroup(get_theme_icon("ic_fluent_branch_fork_link_20_filled"), "显示启动窗口", "系统开机时自动运行SecRandom(启用后将默认隐藏主窗口)", self.show_startup_window_switch)
+        
         # 快捷键设置
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "全局快捷键", "启用全局快捷键功能，快速访问指定界面", self.global_shortcut_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "快捷键目标", "选择全局快捷键触发时打开的界面", self.global_shortcut_target_comboBox)
@@ -469,6 +479,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             logger.error("无法获取可执行文件路径")
             return
 
+        self.save_settings()
+
         try:
             # 读取设置文件
             from app.common.path_utils import path_manager
@@ -478,7 +490,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 foundation_settings = settings.get('foundation', {})
                 self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
 
-                # 处理不同平台的启动文件夹操作
+                # 处理Windows系统的启动文件夹操作
                 if platform.system() == 'Windows':
                     # Windows系统：使用启动文件夹快捷方式
                     startup_folder = os.path.join(
@@ -510,48 +522,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                                 logger.info("开机自启动项不存在，无需取消")
                         except Exception as e:
                             logger.error(f"删除快捷方式失败: {e}")
-                            
-                elif platform.system() == 'Linux':
-                    # Linux系统：使用~/.config/autostart/目录下的.desktop文件
-                    home_dir = os.path.expanduser('~')
-                    autostart_dir = os.path.join(home_dir, '.config', 'autostart')
-                    desktop_file_path = os.path.join(autostart_dir, 'SecRandom.desktop')
-
-                    if self_starting_enabled:
-                        try:
-                            # 确保autostart目录存在
-                            os.makedirs(autostart_dir, exist_ok=True)
-                            
-                            # 创建.desktop文件内容
-                            desktop_content = f"""[Desktop Entry]
-                            Type=Application
-                            Name=SecRandom
-                            Comment=SecRandom Application
-                            Exec={executable}
-                            Icon={os.path.join(os.path.dirname(executable), 'app', 'resources', 'icon.png')}
-                            Terminal=false
-                            Categories=Utility;
-                            StartupNotify=true
-                            """
-                            
-                            # 写入.desktop文件
-                            with open_file(desktop_file_path, 'w', encoding='utf-8') as f:
-                                f.write(desktop_content)
-                            
-                            # 设置文件权限为可执行
-                            os.chmod(desktop_file_path, 0o644)
-                            logger.success("Linux开机自启动设置成功")
-                        except Exception as e:
-                            logger.error(f"创建.desktop文件失败: {e}")
-                    else:
-                        try:
-                            if path_manager.file_exists(desktop_file_path):
-                                os.remove(desktop_file_path)
-                                logger.success("Linux开机自启动取消成功")
-                            else:
-                                logger.info("Linux开机自启动项不存在，无需取消")
-                        except Exception as e:
-                            logger.error(f"删除.desktop文件失败: {e}")
                 else:
                     # 不支持的系统
                     self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
@@ -662,6 +632,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     if custom_display_mode < 0 or custom_display_mode >= self.custom_display_mode_comboBox.count():
                         # 如果索引值无效，则使用默认值
                         custom_display_mode = self.default_settings["custom_display_mode"]
+
+                    # 显示启动窗口
+                    show_startup_window_switch = foundation_settings.get("show_startup_window_switch", self.default_settings["show_startup_window_switch"])
                     
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
@@ -684,6 +657,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.main_window_side_switch.setChecked(main_window_side_switch)
                     self.floating_icon_mode_comboBox.setCurrentIndex(floating_icon_mode)
                     self.flash_window_side_switch.setChecked(flash_window_side_switch)
+                    self.show_startup_window_switch.setChecked(show_startup_window_switch)
                     
                     # 设置自定义选项
                     self.custom_retract_time_spinBox.setValue(custom_retract_time)
@@ -723,6 +697,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.main_window_side_switch.setChecked(self.default_settings["main_window_side_switch"])
                 self.floating_icon_mode_comboBox.setCurrentIndex(self.default_settings["floating_icon_mode"])
                 self.flash_window_side_switch.setChecked(self.default_settings["flash_window_side_switch"])
+                self.show_startup_window_switch.setChecked(self.default_settings["show_startup_window_switch"])
                 
                 # 设置自定义选项的默认值
                 self.custom_retract_time_spinBox.setValue(self.default_settings["custom_retract_time"])
@@ -758,6 +733,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.main_window_side_switch.setChecked(self.default_settings["main_window_side_switch"])
             self.floating_icon_mode_comboBox.setCurrentIndex(self.default_settings["floating_icon_mode"])
             self.flash_window_side_switch.setChecked(self.default_settings["flash_window_side_switch"])
+            self.show_startup_window_switch.setChecked(self.default_settings["show_startup_window_switch"])
             
             # 设置自定义选项的默认值
             self.custom_retract_time_spinBox.setValue(self.default_settings["custom_retract_time"])
@@ -813,7 +789,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings["main_window_side_switch"] = self.main_window_side_switch.isChecked()
         foundation_settings["floating_icon_mode"] = self.floating_icon_mode_comboBox.currentIndex()
         foundation_settings["flash_window_side_switch"] = self.flash_window_side_switch.isChecked()
-        
+        # 显示启动窗口
+        foundation_settings["show_startup_window_switch"] = self.show_startup_window_switch.isChecked()
+
         # 保存自定义设置
         foundation_settings["custom_retract_time"] = self.custom_retract_time_spinBox.value()
         foundation_settings["custom_display_mode"] = self.custom_display_mode_comboBox.currentIndex()
@@ -1506,15 +1484,44 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 else:
                     self.url_protocol_switch.setChecked(False)
                     logger.error("URL协议注册失败")
-                    InfoBar.error(
-                        title='注册失败',
-                        content='URL协议注册失败，请检查权限设置',
-                        orient=Qt.Horizontal,
-                        isClosable=True,
-                        position=InfoBarPosition.TOP,
-                        duration=3000,
-                        parent=self
-                    )
+                    
+                    # 检查是否是权限问题
+                    try:
+                        import ctypes
+                        if not ctypes.windll.shell32.IsUserAnAdmin():
+                            # 不是管理员，提供更具体的错误信息
+                            InfoBar.warning(
+                                title='权限不足',
+                                content='URL协议注册需要管理员权限，请以管理员身份运行程序',
+                                orient=Qt.Horizontal,
+                                isClosable=True,
+                                position=InfoBarPosition.TOP,
+                                duration=5000,
+                                parent=self
+                            )
+                        else:
+                            # 已经是管理员但仍然失败
+                            InfoBar.error(
+                                title='注册失败',
+                                content='URL协议注册失败，即使以管理员权限运行也无法完成',
+                                orient=Qt.Horizontal,
+                                isClosable=True,
+                                position=InfoBarPosition.TOP,
+                                duration=5000,
+                                parent=self
+                            )
+                    except Exception:
+                        # 无法检查管理员权限
+                        InfoBar.error(
+                            title='注册失败',
+                            content='URL协议注册失败，请检查权限设置',
+                            orient=Qt.Horizontal,
+                            isClosable=True,
+                            position=InfoBarPosition.TOP,
+                            duration=3000,
+                            parent=self
+                        )
+                    
                     self.url_protocol_switch.setChecked(False)
                     self.save_settings()
             else:
@@ -1574,21 +1581,42 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 # 注册URL协议到注册表
                 protocol_key = "secrandom"
                 
-                # 创建协议主键
-                with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
-                    winreg.SetValue(key, None, winreg.REG_SZ, "URL:SecRandom Protocol")
-                    winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
-                
-                # 创建默认图标
-                with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon") as key:
-                    winreg.SetValue(key, None, winreg.REG_SZ, executable)
-                
-                # 创建shell\open\command
-                with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command") as key:
-                    winreg.SetValue(key, None, winreg.REG_SZ, command)
-                
-                logger.info(f"URL协议注册成功: {protocol_key}")
-                return True
+                # 尝试以管理员权限注册URL协议
+                try:
+                    # 创建协议主键
+                    with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
+                        winreg.SetValue(key, None, winreg.REG_SZ, "URL:SecRandom Protocol")
+                        winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
+                    
+                    # 创建默认图标
+                    with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon") as key:
+                        winreg.SetValue(key, None, winreg.REG_SZ, executable)
+                    
+                    # 创建shell\open\command
+                    with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command") as key:
+                        winreg.SetValue(key, None, winreg.REG_SZ, command)
+                    
+                    logger.info(f"URL协议注册成功: {protocol_key}")
+                    return True
+                except PermissionError as e:
+                    logger.error(f"权限不足，无法注册URL协议: {str(e)}")
+                    # 提示用户需要管理员权限
+                    try:
+                        import ctypes
+                        if ctypes.windll.shell32.IsUserAnAdmin():
+                            # 已经是管理员，但仍然失败
+                            logger.error("即使以管理员权限运行，URL协议注册仍然失败")
+                            return False
+                        else:
+                            # 不是管理员，提示用户
+                            logger.warning("需要管理员权限才能注册URL协议")
+                            return False
+                    except Exception:
+                        logger.error("无法检查管理员权限")
+                        return False
+                except Exception as e:
+                    logger.error(f"注册URL协议时发生未知错误: {str(e)}")
+                    return False
                 
             else:
                 # Linux平台使用.desktop文件和MIME类型

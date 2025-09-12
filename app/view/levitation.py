@@ -2587,21 +2587,35 @@ class LevitationWindow(QWidget):
         
         # 获取窗口当前位置和尺寸
         window_width = self.width()
+        window_height = self.height()
         
-        # 获取箭头按钮容器的当前位置作为窗口的y坐标
+        # 获取箭头按钮容器的当前位置
         if hasattr(self, 'arrow_widget') and self.arrow_widget:
+            arrow_x = self.arrow_widget.x()
             arrow_y = self.arrow_widget.y()
+            arrow_height = self.arrow_widget.height()
         else:
             # 如果箭头按钮容器不存在，使用窗口的原始位置
+            arrow_x = self.x()
             arrow_y = self.y()
+            arrow_height = 30  # 默认箭头按钮高度
+        
+        # 计算窗口应该显示的位置，使窗口中心与箭头按钮中心对齐
+        window_y = arrow_y + (arrow_height // 2) - (window_height // 2)
+        
+        # 确保窗口不会超出屏幕顶部和底部
+        if window_y < 0:
+            window_y = 0
+        elif window_y + window_height > screen.height():
+            window_y = screen.height() - window_height
         
         # 根据方向显示窗口
         if direction == 'right':
             # 从左侧显示窗口
-            self.move(0, arrow_y)
+            self.move(0, window_y)
         else:  # left
             # 从右侧显示窗口
-            self.move(screen.width() - window_width, arrow_y)
+            self.move(screen.width() - window_width, window_y)
             
         # 删除箭头按钮容器
         if hasattr(self, 'arrow_widget') and self.arrow_widget:
