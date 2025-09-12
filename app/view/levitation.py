@@ -162,6 +162,9 @@ class LevitationWindow(QWidget):
                     self.bottom_container.setFixedHeight(50)
                 else:
                     self.bottom_container.setFixedHeight(70)
+
+                if self.floating_visible == 7:
+                    self.bottom_container.setFixedHeight(165)
                 
             else:
                 # 1个或2个按钮时使用水平布局
@@ -695,10 +698,54 @@ class LevitationWindow(QWidget):
         main_layout.setContentsMargins(5, 5, 5, 5)
         main_layout.setSpacing(5)
         
+        # 创建选择容器 - 添加班级、小组和性别选择
+        selection_container = QWidget()
+        selection_layout = QVBoxLayout(selection_container)
+        selection_layout.setContentsMargins(0, 0, 0, 0)
+        selection_layout.setSpacing(5)
+        
+        # 创建班级下拉框
+        self.instant_class_combo = ComboBox()
+        self.instant_class_combo.setFixedSize(130, 30)
+        if dark_mode:
+            self.instant_class_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+        else:
+            self.instant_class_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
+        self.instant_class_combo.setFont(QFont(load_custom_font(), 10))
+        
+        # 创建小组下拉框
+        self.instant_group_combo = ComboBox()
+        self.instant_group_combo.setFixedSize(130, 30)
+        if dark_mode:
+            self.instant_group_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+        else:
+            self.instant_group_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
+        self.instant_group_combo.setFont(QFont(load_custom_font(), 10))
+        
+        # 创建性别下拉框
+        self.instant_gender_combo = ComboBox()
+        self.instant_gender_combo.setFixedSize(130, 30)
+        if dark_mode:
+            self.instant_gender_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+        else:
+            self.instant_gender_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
+        self.instant_gender_combo.setFont(QFont(load_custom_font(), 10))
+        
+        # 添加标签和下拉框到选择布局
+        selection_layout.addWidget(self.instant_class_combo)
+        selection_layout.addWidget(self.instant_group_combo)
+        selection_layout.addWidget(self.instant_gender_combo)
+        
+        # 初始化下拉框数据
+        self._init_instant_combo_data()
+        
         # 创建抽取按钮 - 增大尺寸并居中
         self.instant_draw_button = PushButton("抽取")
         self.instant_draw_button.setFixedSize(65, 30)
-        self.instant_draw_button.setStyleSheet('border: none; background: transparent;')
+        if dark_mode:
+            self.instant_draw_button.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+        else:
+            self.instant_draw_button.setStyleSheet('border: none; background: transparent; color: #000000;')
         
         # 创建人数调节容器 - 优化布局
         count_control_container = QWidget()
@@ -719,7 +766,11 @@ class LevitationWindow(QWidget):
             self.decrease_button.setFixedSize(65, 30)
         else:
             self.decrease_button.setFixedSize(41, 30)
-        self.decrease_button.setStyleSheet('border: none; background: transparent;')
+
+        if dark_mode:
+            self.decrease_button.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+        else:
+            self.decrease_button.setStyleSheet('border: none; background: transparent; color: #000000;')
         
         # 创建当前人数显示文本 - 增大并美化
         self.count_label = BodyLabel("1")
@@ -737,12 +788,19 @@ class LevitationWindow(QWidget):
             self.increase_button.setFixedSize(65, 30)
         else:
             self.increase_button.setFixedSize(41, 30)
-        self.increase_button.setStyleSheet('border: none; background: transparent;')
+
+        if dark_mode:
+            self.increase_button.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+        else:
+            self.increase_button.setStyleSheet('border: none; background: transparent; color: #000000;')
         
         # 创建重置按钮 - 调整大小
         self.reset_button = PushButton("重置")
         self.reset_button.setFixedSize(65, 30)
-        self.reset_button.setStyleSheet('border: none; background: transparent;')
+        if dark_mode:
+            self.reset_button.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+        else:
+            self.reset_button.setStyleSheet('border: none; background: transparent; color: #000000;')
         
         if self.button_arrangement_mode == 1:  # 竖着排列
             # 竖排模式下使用垂直布局
@@ -777,10 +835,11 @@ class LevitationWindow(QWidget):
         button_container = QWidget()
         button_container.setLayout(button_layout)
         
-        # 将按钮容器和人数调节容器添加到主布局 - 居中对齐
+        # 将选择容器、按钮容器和人数调节容器添加到主布局 - 居中对齐
         main_layout.addStretch()
         main_layout.addWidget(button_container, 0, Qt.AlignCenter)
         main_layout.addWidget(count_control_container, 0, Qt.AlignCenter)
+        main_layout.addWidget(selection_container, 0, Qt.AlignCenter)
         main_layout.addStretch()
         
         self.instant_draw_button.setFont(QFont(load_custom_font(), 12))
@@ -798,6 +857,11 @@ class LevitationWindow(QWidget):
             self.decrease_button.clicked.connect(self._decrease_count)
         if hasattr(self.reset_button, 'clicked'):
             self.reset_button.clicked.connect(self._reset_count)
+            
+        # 连接下拉框信号
+        self.instant_class_combo.currentIndexChanged.connect(self._on_instant_class_changed)
+        self.instant_group_combo.currentIndexChanged.connect(self._on_instant_group_changed)
+        self.instant_gender_combo.currentIndexChanged.connect(self._on_instant_gender_changed)
         
         # 初始化当前抽取人数
         self.current_count = 1
@@ -827,6 +891,80 @@ class LevitationWindow(QWidget):
             target_container.layout().addWidget(self.instant_draw_container)
         else:
             self.container_button.layout().addWidget(self.instant_draw_container)
+
+    def _init_instant_combo_data(self):
+        """初始化即抽下拉框数据"""
+        try:
+            # 加载班级列表
+            list_folder = path_manager.get_resource_path("list")
+            if path_manager.file_exists(list_folder) and os.path.isdir(list_folder):
+                files = os.listdir(list_folder)
+                classes = []
+                for file in files:
+                    if file.endswith('.json'):
+                        class_name = os.path.splitext(file)[0]
+                        classes.append(class_name)
+                
+                self.instant_class_combo.clear()
+                if classes:
+                    self.instant_class_combo.addItems(classes)
+                    # 设置当前班级
+                    if hasattr(self, 'class_combo') and self.class_combo:
+                        current_class = self.class_combo.currentText()
+                        index = self.instant_class_combo.findText(current_class)
+                        if index >= 0:
+                            self.instant_class_combo.setCurrentIndex(index)
+                else:
+                    logger.error("你暂未添加班级")
+                    self.instant_class_combo.addItem("你暂未添加班级")
+            else:
+                logger.error("你暂未添加班级")
+                self.instant_class_combo.addItem("你暂未添加班级")
+                
+            # 初始化小组列表
+            self._update_instant_group_list()
+            
+            # 初始化性别列表
+            self._update_instant_gender_list()
+            
+        except Exception as e:
+            logger.error(f"初始化即抽下拉框数据失败: {str(e)}")
+            self.instant_class_combo.addItem("加载班级列表失败")
+            self.instant_class_combo.clear()
+            self.instant_class_combo.addItem("你暂未添加班级")
+            self.instant_group_combo.clear()
+            self.instant_group_combo.addItem("你暂未添加小组")
+            self.instant_gender_combo.clear()
+            self.instant_gender_combo.addItem("你暂未添加性别")
+        except Exception as e:
+            logger.error(f"初始化即抽下拉框数据失败: {str(e)}")
+            self.instant_class_combo.clear()
+            self.instant_class_combo.addItem("加载班级列表失败")
+            self.instant_group_combo.clear()
+            self.instant_group_combo.addItem("加载小组列表失败")
+            self.instant_gender_combo.clear()
+            self.instant_gender_combo.addItem("加载性别列表失败")
+    
+    def _on_instant_class_changed(self, index):
+        """班级下拉框变化事件处理"""
+        # 更新小组列表
+        self._update_instant_group_list()
+        # 更新性别列表
+        self._update_instant_gender_list()
+        # 更新pumping_content的选择
+        self._update_pumping_content_selection()
+    
+    def _on_instant_group_changed(self, index):
+        """小组下拉框变化事件处理"""
+        # 更新性别列表
+        self._update_instant_gender_list()
+        # 更新pumping_content的选择
+        self._update_pumping_content_selection()
+    
+    def _on_instant_gender_changed(self, index):
+        """性别下拉框变化事件处理"""
+        # 更新pumping_content的选择
+        self._update_pumping_content_selection()
 
     def _apply_window_styles(self):
         # 白露：应用窗口样式和标志
@@ -1106,11 +1244,10 @@ class LevitationWindow(QWidget):
         self.is_dragging = True
 
     def mouseMoveEvent(self, event):
-        # 白露：处理鼠标移动事件 - 实现窗口跟随拖动
         # 检测长按计时期间的鼠标移动，超过阈值立即触发拖动
         if self.click_timer.isActive() and event.buttons() == Qt.LeftButton:
             delta = event.pos() - self.drag_start_position
-            if abs(delta.x()) > 2 or abs(delta.y()) > 2:
+            if abs(delta.x()) > 8 or abs(delta.y()) > 8:
                 self.click_timer.stop()
                 self.start_drag(event)
 
@@ -1381,7 +1518,7 @@ class LevitationWindow(QWidget):
             y = (screen.height() - self.height()) // 2
             self.move(QPoint(x, y))
 
-    def _show_direct_extraction_window(self, draw_count=1):
+    def _show_direct_extraction_window(self, draw_count=1, class_name=None, group_name=None, gender_name=None):
         # 小鸟游星野：显示直接抽取窗口 - 包含pumping_people功能 ✧(๑•̀ㅂ•́)๑
         try:
             # 导入pumping_people模块
@@ -1422,8 +1559,11 @@ class LevitationWindow(QWidget):
             title_layout.addStretch()
             title_layout.addWidget(self.close_btn)
             
-            # 创建pumping_people内容
-            self.pumping_content = pumping_people(draw_count=self.current_count)
+            # 创建pumping_people内容，并传递班级、小组和性别信息
+            self.pumping_content = pumping_people(draw_count=self.current_count, 
+                                                 class_name=class_name, 
+                                                 group_name=group_name, 
+                                                 gender_name=gender_name)
             
             # 获取字体大小设置以动态调整窗口大小
             try:
@@ -1594,6 +1734,158 @@ class LevitationWindow(QWidget):
             error_dialog.buttonLayout.insertStretch(1)
             error_dialog.exec()
             
+    def _update_instant_group_list(self):
+        """更新即抽窗口中的小组列表"""
+        try:
+            class_name = self.instant_class_combo.currentText()
+            if class_name in ["你暂未添加班级", "加载班级列表失败"]:
+                return
+                
+            pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
+            if path_manager.file_exists(pumping_people_file):
+                with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    groups = set()
+                    for student_name, student_info in data.items():
+                        if isinstance(student_info, dict) and 'id' in student_info:
+                            id = student_info.get('id', '')
+                            name = student_name.replace('【', '').replace('】', '')
+                            gender = student_info.get('gender', '')
+                            group = student_info.get('group', '')
+                            if group:  # 只添加非空小组
+                                groups.add(group)
+                    cleaned_data = sorted(list(groups), key=lambda x: self._sort_key(str(x)))
+                    
+                    # 保存当前选择
+                    current_group = self.instant_group_combo.currentText()
+                    
+                    # 清空并重新添加选项
+                    self.instant_group_combo.clear()
+                    self.instant_group_combo.addItem('抽取全班学生')
+                    
+                    if groups:
+                        self.instant_group_combo.addItem('抽取小组组号')
+                        self.instant_group_combo.addItems(cleaned_data)
+                    else:
+                        logger.error("你暂未添加小组")
+                        self.instant_group_combo.addItem("你暂未添加小组")
+                    
+                    # 恢复之前的选择（如果存在）
+                    index = self.instant_group_combo.findText(current_group)
+                    if index >= 0:
+                        self.instant_group_combo.setCurrentIndex(index)
+            else:
+                logger.error("你暂未添加小组")
+                self.instant_group_combo.clear()
+                self.instant_group_combo.addItem('抽取全班学生')
+                self.instant_group_combo.addItem("你暂未添加小组")
+        except Exception as e:
+            logger.error(f"更新小组列表失败: {str(e)}")
+            self.instant_group_combo.clear()
+            self.instant_group_combo.addItem('抽取全班学生')
+            self.instant_group_combo.addItem("加载小组列表失败")
+    
+    def _update_instant_gender_list(self):
+        """更新即抽窗口中的性别列表"""
+        try:
+            class_name = self.instant_class_combo.currentText()
+            if class_name in ["你暂未添加班级", "加载班级列表失败"]:
+                return
+                
+            pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
+            if path_manager.file_exists(pumping_people_file):
+                with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    genders = set()
+                    for student_name, student_info in data.items():
+                        if isinstance(student_info, dict) and 'id' in student_info:
+                            id = student_info.get('id', '')
+                            name = student_name.replace('【', '').replace('】', '')
+                            gender = student_info.get('gender', '')
+                            group = student_info.get('group', '')
+                            
+                            # 根据小组选择过滤性别
+                            group_name = self.instant_group_combo.currentText()
+                            if group_name != '抽取全班学生' and group_name != '抽取小组组号' and group != group_name:
+                                continue
+                                
+                            if gender:  # 只添加非空性别
+                                genders.add(gender)
+                    cleaned_data = sorted(list(genders), key=lambda x: self._sort_key(str(x)))
+                    
+                    # 保存当前选择
+                    current_gender = self.instant_gender_combo.currentText()
+                    
+                    # 清空并重新添加选项
+                    self.instant_gender_combo.clear()
+                    self.instant_gender_combo.addItem('抽取所有性别')
+                    
+                    if genders:
+                        self.instant_gender_combo.addItems(cleaned_data)
+                    else:
+                        logger.error("你暂未添加性别")
+                        self.instant_gender_combo.addItem("你暂未添加性别")
+                    
+                    # 恢复之前的选择（如果存在）
+                    index = self.instant_gender_combo.findText(current_gender)
+                    if index >= 0:
+                        self.instant_gender_combo.setCurrentIndex(index)
+            else:
+                logger.error("你暂未添加性别")
+                self.instant_gender_combo.clear()
+                self.instant_gender_combo.addItem('抽取所有性别')
+                self.instant_gender_combo.addItem("你暂未添加性别")
+        except Exception as e:
+            logger.error(f"更新性别列表失败: {str(e)}")
+            self.instant_gender_combo.clear()
+            self.instant_gender_combo.addItem('抽取所有性别')
+            self.instant_gender_combo.addItem("加载性别列表失败")
+    
+    def _update_pumping_content_selection(self):
+        """更新pumping_content的选择"""
+        if hasattr(self, 'pumping_content') and self.pumping_content:
+            # 更新班级选择
+            if hasattr(self.pumping_content, 'class_combo'):
+                current_class = self.instant_class_combo.currentText()
+                index = self.pumping_content.class_combo.findText(current_class)
+                if index >= 0:
+                    self.pumping_content.class_combo.setCurrentIndex(index)
+            
+            # 更新小组选择
+            if hasattr(self.pumping_content, 'group_combo'):
+                current_group = self.instant_group_combo.currentText()
+                index = self.pumping_content.group_combo.findText(current_group)
+                if index >= 0:
+                    self.pumping_content.group_combo.setCurrentIndex(index)
+            
+            # 更新性别选择
+            if hasattr(self.pumping_content, 'gender_combo'):
+                current_gender = self.instant_gender_combo.currentText()
+                index = self.pumping_content.gender_combo.findText(current_gender)
+                if index >= 0:
+                    self.pumping_content.gender_combo.setCurrentIndex(index)
+    
+    def _sort_key(self, group):
+        """将小组名称转换为排序键"""
+        # 尝试匹配 '第X小组' 或 '第X组' 格式
+        match = re.match(r'第\s*(\d+|一|二|三|四|五|六|七|八|九|十)\s*(小组|组)', group)
+        if match:
+            num = match.group(1)
+            num_map = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10}
+            if num in num_map:
+                return (1, num_map[num])  # 类型1: 中文数字组
+            else:
+                return (1, int(num))       # 类型1: 阿拉伯数字组
+        
+        # 尝试匹配仅数字格式
+        try:
+            return (2, int(group))         # 类型2: 纯数字组
+        except ValueError:
+            pass
+        
+        # 其他名称组，保持排序功能不变
+        return (3, group) # 类型3: 其他名称组
+
     def _on_title_bar_press(self, event):
         # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)๑
         if event.button() == Qt.LeftButton:
@@ -2114,7 +2406,7 @@ class LevitationWindow(QWidget):
         self.max_count = len(cleaned_data)
     
     def _show_instant_draw_window(self):
-        # 小鸟游星野：显示即抽窗口 - 使用_show_direct_extraction_window传递抽取人数 ✧(๑•̀ㅂ•́)๑
+        # 小鸟游星野：显示即抽窗口 - 使用_show_direct_extraction_window传递抽取人数、班级、小组和性别 ✧(๑•̀ㅂ•́)๑
         try:
             # 确保当前抽取人数已设置
             if not hasattr(self, 'current_count'):
@@ -2122,8 +2414,15 @@ class LevitationWindow(QWidget):
 
             self.update_total_count()
             
-            # 调用直接抽取窗口方法，会自动传递抽取人数
-            self._show_direct_extraction_window(self.current_count)
+            # 获取当前选择的班级、小组和性别
+            class_name = self.instant_class_combo.currentText()
+            group_name = self.instant_group_combo.currentText()
+            gender_name = self.instant_gender_combo.currentText()
+
+            print(class_name, group_name, gender_name)
+            
+            # 调用直接抽取窗口方法，传递抽取人数、班级、小组和性别
+            self._show_direct_extraction_window(self.current_count, class_name, group_name, gender_name)
             
         except Exception as e:
             logger.error(f"执行抽取功能失败: {e}")

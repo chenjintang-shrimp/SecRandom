@@ -22,7 +22,7 @@ class pumping_people(QWidget):
     # 抽取完成信号
     draw_finished = pyqtSignal()
     
-    def __init__(self, parent=None, draw_count=1):
+    def __init__(self, parent=None, draw_count=1, class_name="你暂未添加班级", group_name="你暂未添加小组", gender_name="你暂未添加性别"):
         super().__init__(parent)
         # 定义变量
         self.is_animating = False
@@ -31,6 +31,9 @@ class pumping_people(QWidget):
         # 音乐播放器初始化 ✧(◍˃̶ᗜ˂̶◍)✩ 感谢白露提供的播放器
         self.music_player = QMediaPlayer()
         self.draw_count = draw_count
+        self.class_name = class_name
+        self.group_name = group_name
+        self.gender_name = gender_name
         self.initUI()
     
     def start_draw(self):
@@ -80,9 +83,9 @@ class pumping_people(QWidget):
         
     def _show_random_student(self):
         """显示随机学生（用于动画效果）"""
-        class_name = self.class_combo.currentText()
-        group_name = self.group_combo.currentText()
-        genders = self.gender_combo.currentText()
+        class_name = self.class_name
+        group_name = self.group_name
+        genders = self.gender_name
 
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
             student_file = path_manager.get_resource_path('list', f'{class_name}.json')
@@ -308,7 +311,7 @@ class pumping_people(QWidget):
                                 }
 
                                 # 构建学生数据文件路径
-                                student_file = path_manager.get_resource_path("list", f"{self.class_combo.currentText()}.json")
+                                student_file = path_manager.get_resource_path("list", f"{self.class_name}.json")
                                 members = []
 
                                 # 加载学生数据和筛选组成员
@@ -765,9 +768,9 @@ class pumping_people(QWidget):
     # 根据抽取模式抽选学生
     def random(self):
         """根据抽取模式抽选学生"""
-        class_name = self.class_combo.currentText()
-        group_name = self.group_combo.currentText()
-        genders = self.gender_combo.currentText()
+        class_name = self.class_name
+        group_name = self.group_name
+        genders = self.gender_name
         
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
             student_file = path_manager.get_resource_path("list", f"{class_name}.json")
@@ -1101,7 +1104,7 @@ class pumping_people(QWidget):
                                 }
 
                                 # 构建学生数据文件路径
-                                student_file = path_manager.get_resource_path("list", f"{self.class_combo.currentText()}.json")
+                                student_file = path_manager.get_resource_path("list", f"{self.class_name}.json")
                                 members = []
 
                                 # 加载学生数据和筛选组成员
@@ -1124,10 +1127,11 @@ class pumping_people(QWidget):
 
                                 # 加载显示设置
                                 try:
-                                    with open_file(settings, 'r', encoding='utf-8') as f:
-                                        settings = json.load(f)
-                                        show_random = settings['pumping_people'].get('show_random_member', False)
-                                        format_str = settings['pumping_people'].get('random_member_format', FORMAT_GROUP_SIMPLE)
+                                    settings_path = path_manager.get_settings_path()
+                                    with open_file(settings_path, 'r', encoding='utf-8') as f:
+                                        settings_data = json.load(f)
+                                        show_random = settings_data['pumping_people'].get('show_random_member', False)
+                                        format_str = settings_data['pumping_people'].get('random_member_format', FORMAT_GROUP_SIMPLE)
                                 except (json.JSONDecodeError, IOError, KeyError) as e:
                                     show_random = False
                                     format_str = FORMAT_GROUP_SIMPLE
@@ -1612,101 +1616,15 @@ class pumping_people(QWidget):
 
         # 班级下拉框
         self.class_combo = ComboBox()
-        self.class_combo.setFixedSize(200, 50)
-        self.class_combo.setFont(QFont(load_custom_font(), 15))
-        
-        # 加载班级列表
-        try:
-            list_folder = path_manager.get_resource_path("list")
-            if path_manager.file_exists(list_folder) and os.path.isdir(list_folder):
-                files = os.listdir(list_folder)
-                classes = []
-                for file in files:
-                    if file.endswith('.json'):
-                        class_name = os.path.splitext(file)[0]
-                        classes.append(class_name)
-                
-                self.class_combo.clear()
-                if classes:
-                    self.class_combo.addItems(classes)
-                else:
-                    logger.error("你暂未添加班级")
-                    self.class_combo.addItem("你暂未添加班级")
-            else:
-                logger.error("你暂未添加班级")
-                self.class_combo.addItem("你暂未添加班级")
-        except Exception as e:
-            logger.error(f"加载班级列表失败: {str(e)}")
-            self.class_combo.addItem("加载班级列表失败")
+        self.class_combo = self.class_name
 
         # 小组下拉框
         self.group_combo = ComboBox()
-        self.group_combo.setFixedSize(200, 50)
-        self.group_combo.setFont(QFont(load_custom_font(), 15))
-        self.group_combo.addItem('抽取全班学生')
-
-        class_name = self.class_combo.currentText()
-        pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
-        try:
-            if path_manager.file_exists(pumping_people_file):
-                with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    groups = set()
-                    for student_name, student_info in data.items():
-                        if isinstance(student_info, dict) and 'id' in student_info:
-                            id = student_info.get('id', '')
-                            name = student_name.replace('【', '').replace('】', '')
-                            gender = student_info.get('gender', '')
-                            group = student_info.get('group', '')
-                            if group:  # 只添加非空小组
-                                groups.add(group)
-                    cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
-                    if groups:
-                        self.group_combo.addItem('抽取小组组号')
-                        self.group_combo.addItems(cleaned_data)
-                    else:
-                        logger.error("你暂未添加小组")
-                        self.group_combo.addItem("你暂未添加小组")
-            else:
-                logger.error("你暂未添加小组")
-                self.group_combo.addItem("你暂未添加小组")
-        except Exception as e:
-            logger.error(f"加载小组列表失败: {str(e)}")
-            self.group_combo.addItem("加载小组列表失败")
+        self.group_combo = self.group_name
 
         # 性别下拉框
         self.gender_combo = ComboBox()
-        self.gender_combo.setFixedSize(200, 50)
-        self.gender_combo.setFont(QFont(load_custom_font(), 15))
-        self.gender_combo.addItem('抽取所有性别')
-
-        class_name = self.class_combo.currentText()
-        pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
-        try:
-            if path_manager.file_exists(pumping_people_file):
-                with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    genders = set()
-                    for student_name, student_info in data.items():
-                        if isinstance(student_info, dict) and 'id' in student_info:
-                            id = student_info.get('id', '')
-                            name = student_name.replace('【', '').replace('】', '')
-                            gender = student_info.get('gender', '')
-                            group = student_info.get('group', '')
-                            if gender:  # 只添加非空小组
-                                genders.add(gender)
-                    cleaned_data = sorted(list(genders), key=lambda x: self.sort_key(str(x)))
-                    if genders:
-                        self.gender_combo.addItems(cleaned_data)
-                    else:
-                        logger.error("你暂未添加性别")
-                        self.gender_combo.addItem("你暂未添加性别")
-            else:
-                logger.error("你暂未添加性别")
-                self.gender_combo.addItem("你暂未添加性别")
-        except Exception as e:
-            logger.error(f"加载性别列表失败: {str(e)}")
-            self.gender_combo.addItem("加载性别列表失败")
+        self.gender_combo = self.gender_name
         
         # 初始化抽取人数
         self.current_count = self.draw_count
