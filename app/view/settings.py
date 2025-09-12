@@ -69,45 +69,102 @@ class settings_Window(MSFluentWindow):
         self.createSubInterface()
 
     def createSubInterface(self):
-        loop = QEventLoop(self)
-        QTimer.singleShot(1, loop.quit)
-        loop.exec()
 
-        self.more_settingInterface = more_setting(self)
-        self.more_settingInterface.setObjectName("more_settingInterface")
+        try:
+            self.more_settingInterface = more_setting(self)
+            self.more_settingInterface.setObjectName("more_settingInterface")
+            logger.debug("设置界面: 更多设置界面创建成功")
+        except Exception as e:
+            logger.error(f"设置界面: 创建更多设置界面失败: {e}")
+            self.more_settingInterface = None
 
-        self.plugin_settingsInterface = PluginSettingsWindow(self)
-        self.plugin_settingsInterface.setObjectName("plugin_settingsInterface")
+        try:
+            self.plugin_settingsInterface = PluginSettingsWindow(self)
+            self.plugin_settingsInterface.setObjectName("plugin_settingsInterface")
+            logger.debug("设置界面: 插件设置界面创建成功")
+        except Exception as e:
+            logger.error(f"设置界面: 创建插件设置界面失败: {e}")
+            self.plugin_settingsInterface = None
 
-        self.pumping_handoff_settingInterface = pumping_handoff_setting(self)
-        self.pumping_handoff_settingInterface.setObjectName("pumping_handoff_settingInterface")
+        try:
+            self.pumping_handoff_settingInterface = pumping_handoff_setting(self)
+            self.pumping_handoff_settingInterface.setObjectName("pumping_handoff_settingInterface")
+            logger.debug("设置界面: 抽取设置界面创建成功")
+        except Exception as e:
+            logger.error(f"设置界面: 创建抽取设置界面失败: {e}")
+            self.pumping_handoff_settingInterface = None
 
-        self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
-        self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
+        try:
+            self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
+            self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
+            logger.debug("设置界面: 历史记录设置界面创建成功")
+        except Exception as e:
+            logger.error(f"设置界面: 创建历史记录设置界面失败: {e}")
+            self.changeable_history_handoff_settingInterface = None
 
-        self.about_settingInterface = about(self)
-        self.about_settingInterface.setObjectName("about_settingInterface")
+        try:
+            self.about_settingInterface = about(self)
+            self.about_settingInterface.setObjectName("about_settingInterface")
+            logger.debug("设置界面: 关于界面创建成功")
+        except Exception as e:
+            logger.error(f"设置界面: 创建关于界面失败: {e}")
+            self.about_settingInterface = None
 
-        self.password_setInterface = password_set(self)
-        self.password_setInterface.setObjectName("password_setInterface")
+        try:
+            self.password_setInterface = password_set(self)
+            self.password_setInterface.setObjectName("password_setInterface")
+            logger.debug("设置界面: 安全设置界面创建成功")
+        except Exception as e:
+            logger.error(f"设置界面: 创建安全设置界面失败: {e}")
+            self.password_setInterface = None
 
-        self.voice_engine_settingsInterface = voice_engine_settings(self)
-        self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
+        try:
+            self.voice_engine_settingsInterface = voice_engine_settings(self)
+            self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
+            logger.debug("设置界面: 语音设置界面创建成功")
+        except Exception as e:
+            logger.error(f"设置界面: 创建语音设置界面失败: {e}")
+            self.voice_engine_settingsInterface = None
 
         self.initNavigation()
 
     def initNavigation(self):
         # 使用 MSFluentWindow 的 addSubInterface 方法
-        self.addSubInterface(self.pumping_handoff_settingInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽取设置', position=NavigationItemPosition.TOP)
+        if self.pumping_handoff_settingInterface is not None:
+            self.addSubInterface(self.pumping_handoff_settingInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽取设置', position=NavigationItemPosition.TOP)
+        else:
+            logger.error("设置界面导航: 抽取设置界面不存在，无法添加到导航栏")
 
-        self.addSubInterface(self.plugin_settingsInterface, get_theme_icon("ic_fluent_extensions_20_filled"), '插件', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
-        history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
-        history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
+        if self.plugin_settingsInterface is not None:
+            self.addSubInterface(self.plugin_settingsInterface, get_theme_icon("ic_fluent_extensions_20_filled"), '插件', position=NavigationItemPosition.BOTTOM)
+        else:
+            logger.error("设置界面导航: 插件设置界面不存在，无法添加到导航栏")
 
-        self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
-        self.addSubInterface(self.more_settingInterface, get_theme_icon("ic_fluent_more_horizontal_20_filled"), '更多设置', position=NavigationItemPosition.BOTTOM)
+        if self.voice_engine_settingsInterface is not None:
+            self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
+        else:
+            logger.error("设置界面导航: 语音设置界面不存在，无法添加到导航栏")
+
+        if self.password_setInterface is not None:
+            self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
+        else:
+            logger.error("设置界面导航: 安全设置界面不存在，无法添加到导航栏")
+
+        if self.changeable_history_handoff_settingInterface is not None:
+            history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+            history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
+        else:
+            logger.error("设置界面导航: 历史记录设置界面不存在，无法添加到导航栏")
+
+        if self.about_settingInterface is not None:
+            self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
+        else:
+            logger.error("设置界面导航: 关于界面不存在，无法添加到导航栏")
+
+        if self.more_settingInterface is not None:
+            self.addSubInterface(self.more_settingInterface, get_theme_icon("ic_fluent_more_horizontal_20_filled"), '更多设置', position=NavigationItemPosition.BOTTOM)
+        else:
+            logger.error("设置界面导航: 更多设置界面不存在，无法添加到导航栏")
 
     def closeEvent(self, event):
         """窗口关闭时隐藏主界面"""
@@ -158,16 +215,35 @@ class settings_Window(MSFluentWindow):
         """
         logger.info(f"白露URL: 正在打开插件设置界面～")
         
-        # 确保设置窗口可见
-        if not self.isVisible():
-            self.show()
-            self.activateWindow()
-            self.raise_()
-        
-        # 如果窗口最小化，则恢复
-        if self.isMinimized():
-            self.showNormal()
-        
-        # 切换到插件设置界面
-        self.stackedWidget.setCurrentWidget(self.plugin_settingsInterface)
-        logger.info(f"白露URL: 插件设置界面已成功打开～")
+        try:
+            # 确保设置窗口可见
+            if not self.isVisible():
+                self.show()
+                self.activateWindow()
+                self.raise_()
+            
+            # 如果窗口最小化，则恢复
+            if self.isMinimized():
+                self.showNormal()
+            
+            # 检查插件设置界面是否存在
+            if self.plugin_settingsInterface is not None:
+                # 切换到插件设置界面
+                self.stackedWidget.setCurrentWidget(self.plugin_settingsInterface)
+                logger.info(f"白露URL: 插件设置界面已成功打开～")
+            else:
+                logger.error(f"白露URL: 插件设置界面不存在，无法打开～")
+                # 尝试重新创建插件设置界面
+                try:
+                    self.plugin_settingsInterface = PluginSettingsWindow(self)
+                    self.plugin_settingsInterface.setObjectName("plugin_settingsInterface")
+                    logger.debug("设置界面: 插件设置界面重新创建成功")
+                    # 重新初始化导航
+                    self.initNavigation()
+                    # 切换到插件设置界面
+                    self.stackedWidget.setCurrentWidget(self.plugin_settingsInterface)
+                    logger.info(f"白露URL: 插件设置界面重新创建并成功打开～")
+                except Exception as e:
+                    logger.error(f"白露URL: 重新创建插件设置界面失败: {e}")
+        except Exception as e:
+            logger.error(f"白露URL: 打开插件设置界面时发生异常: {e}")
