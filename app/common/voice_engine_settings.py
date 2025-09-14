@@ -33,7 +33,6 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
 
         # 选择语音引擎
         self.voice_engine_comboBox = ComboBox()
-        self.voice_engine_comboBox.setFixedWidth(200)
         self.voice_engine_comboBox.setPlaceholderText("选择语音引擎")
         self.voice_engine_comboBox.addItems(["系统TTS", "Edge TTS"])
         self.voice_engine_comboBox.setCurrentIndex(self.default_settings["voice_engine"])
@@ -44,7 +43,6 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
         # 选择Edge TTS的语音名称
         self.edge_tts_voiceComboBox = ComboBox()
         self.edge_tts_voiceComboBox.addItems([v['id'] for v in asyncio.run(self._get_edge_tts_voices())])
-        self.edge_tts_voiceComboBox.setFixedWidth(450)
         self.edge_tts_voiceComboBox.currentTextChanged.connect(self.save_settings)
         self.edge_tts_voiceComboBox.setFont(QFont(load_custom_font(), 10))
         self.edge_tts_voiceComboBox.setEnabled((self.voice_engine_comboBox.currentIndex() == 1))
