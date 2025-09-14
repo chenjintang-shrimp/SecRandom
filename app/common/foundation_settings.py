@@ -39,9 +39,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "self_starting_enabled": False,
             "pumping_floating_enabled": True,
             "pumping_floating_visible": 3,
-            "show_settings_icon": True,
-            "pumping_floating_side": 0,
-            "pumping_reward_side": 0,
             "pumping_floating_transparency_mode": 80,
             "flash_window_side_switch": False,
             "main_window_focus_mode": 0,
@@ -59,7 +56,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "global_shortcut_key": "",
             "local_pumping_shortcut_key": "",
             "local_reward_shortcut_key": "",
-            "main_window_side_switch": False,
             "show_startup_window_switch": True,
             "floating_icon_mode": 0,
             "custom_retract_time": 5,
@@ -68,8 +64,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         self.self_starting_switch = SwitchButton()
         self.pumping_floating_switch = SwitchButton()
-        self.pumping_floating_side_comboBox = ComboBox()
-        self.pumping_reward_side_comboBox = ComboBox()
         self.floating_icon_mode_comboBox = ComboBox()
         self.main_window_focus_comboBox = ComboBox()
         self.main_window_focus_time_comboBox = ComboBox()
@@ -88,25 +82,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.pumping_floating_switch.checkedChanged.connect(self.save_settings)
         self.pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
 
-        # 抽人选项侧边栏位置设置
-        self.pumping_floating_side_comboBox.setFixedWidth(100)
-        self.pumping_floating_side_comboBox.addItems(["顶部", "底部"])
-        self.pumping_floating_side_comboBox.currentIndexChanged.connect(self.save_settings)
-        self.pumping_floating_side_comboBox.setFont(QFont(load_custom_font(), 12))
-
-        # 抽奖选项侧边栏位置设置
-        self.pumping_reward_side_comboBox.setFixedWidth(100)
-        self.pumping_reward_side_comboBox.addItems(["顶部", "底部"])
-        self.pumping_reward_side_comboBox.currentIndexChanged.connect(self.save_settings)
-        self.pumping_reward_side_comboBox.setFont(QFont(load_custom_font(), 12))
-
-        # 设置主界面侧边栏是否显示设置图标
-        self.show_settings_icon_switch = SwitchButton()
-        self.show_settings_icon_switch.setOnText("显示")
-        self.show_settings_icon_switch.setOffText("隐藏")
-        self.show_settings_icon_switch.setFont(QFont(load_custom_font(), 12))
-        self.show_settings_icon_switch.checkedChanged.connect(self.save_settings)
-
         # 定时清理按钮
         self.cleanup_button = PushButton("设置定时清理")
         self.cleanup_button.clicked.connect(self.show_cleanup_dialog)
@@ -114,7 +89,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         # 浮窗透明度设置下拉框
         self.pumping_floating_transparency_SpinBox = SpinBox()
-        self.pumping_floating_transparency_SpinBox.setFixedWidth(200)
         self.pumping_floating_transparency_SpinBox.setRange(0, 100)
         self.pumping_floating_transparency_SpinBox.setValue(30)
         self.pumping_floating_transparency_SpinBox.setSingleStep(10)
@@ -123,14 +97,12 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.pumping_floating_transparency_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 浮窗图标显示模式设置下拉框
-        self.floating_icon_mode_comboBox.setFixedWidth(200)
         self.floating_icon_mode_comboBox.addItems(["图标+文字", "图标", "文字"])
         self.floating_icon_mode_comboBox.setCurrentIndex(0)  # 默认选择"图标+文字"
         self.floating_icon_mode_comboBox.currentIndexChanged.connect(self.save_settings)
         self.floating_icon_mode_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 设置主窗口不是焦点时关闭延迟
-        self.main_window_focus_comboBox.setFixedWidth(200)
         self.main_window_focus_comboBox.addItems(
             ["不关闭", "直接关闭", "3秒后关闭", "5秒后关闭", "10秒后关闭", "15秒后关闭", "30秒后关闭", "1分钟后关闭",
              "2分钟后关闭", "3分钟后关闭", "5分钟后关闭", "10分钟后关闭", "30分钟后关闭", "45分钟后关闭", "1小时后关闭",
@@ -139,7 +111,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.main_window_focus_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 设置检测主窗口焦点时间
-        self.main_window_focus_time_comboBox.setFixedWidth(200)
         self.main_window_focus_time_comboBox.addItems(
             ["不检测", "1秒", "2秒", "3秒", "5秒", "10秒", "15秒", "30秒",
              "1分钟", "5分钟", "10分钟", "15分钟", "30分钟",
@@ -148,13 +119,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.main_window_focus_time_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 主窗口窗口显示位置下拉框
-        self.main_window_comboBox.setFixedWidth(200)
         self.main_window_comboBox.addItems(["居中", "居中向下3/5"])
         self.main_window_comboBox.currentIndexChanged.connect(self.save_settings)
         self.main_window_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 设置窗口显示位置下拉框
-        self.settings_window_comboBox.setFixedWidth(200)
         self.settings_window_comboBox.addItems(["居中", "居中向下3/5"])
         self.settings_window_comboBox.currentIndexChanged.connect(self.save_settings)
         self.settings_window_comboBox.setFont(QFont(load_custom_font(), 12))
@@ -183,14 +152,12 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         # 闪抽窗口自动关闭时间设置
         self.flash_window_close_time_comboBox = ComboBox()
-        self.flash_window_close_time_comboBox.setFixedWidth(100)
         self.flash_window_close_time_comboBox.addItems(["1秒", "2秒", "3秒", "5秒", "10秒", "15秒", "30秒"])
         self.flash_window_close_time_comboBox.currentIndexChanged.connect(self.save_settings)
         self.flash_window_close_time_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 自定义收回秒数设置
         self.custom_retract_time_spinBox = SpinBox()
-        self.custom_retract_time_spinBox.setFixedWidth(150)
         self.custom_retract_time_spinBox.setRange(1, 60)  # 1-60秒
         self.custom_retract_time_spinBox.setValue(5)  # 默认5秒
         self.custom_retract_time_spinBox.setSingleStep(1)
@@ -200,13 +167,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         # 自定义显示方式设置
         self.custom_display_mode_comboBox = ComboBox()
-        self.custom_display_mode_comboBox.setFixedWidth(150)
         self.custom_display_mode_comboBox.addItems(["箭头", "文字", "图标"])
         self.custom_display_mode_comboBox.currentIndexChanged.connect(self.save_settings)
         self.custom_display_mode_comboBox.setFont(QFont(load_custom_font(), 12))
 
         self.left_pumping_floating_switch = ComboBox()
-        self.left_pumping_floating_switch.setFixedWidth(250)
         self.left_pumping_floating_switch.addItems([
             # 单个功能
             "显示 拖动",
@@ -240,17 +205,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.main_window_control_Switch.setOffText("左侧")
         self.main_window_control_Switch.setFont(QFont(load_custom_font(), 12))
         self.main_window_control_Switch.checkedChanged.connect(self.save_settings)
-
-        # 主界面侧边是否现实单词PK
-        self.main_window_side_switch = SwitchButton()
-        self.main_window_side_switch.setOnText("显示")
-        self.main_window_side_switch.setOffText("隐藏")
-        self.main_window_side_switch.setFont(QFont(load_custom_font(), 12))
-        self.main_window_side_switch.checkedChanged.connect(self.save_settings)
         
         # 浮窗按钮排列方式
         self.button_arrangement_comboBox = ComboBox()
-        self.button_arrangement_comboBox.setFixedWidth(200)
         self.button_arrangement_comboBox.addItems([
             "矩形排列",
             "竖向排列",
@@ -283,20 +240,17 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         
         # 全局快捷键目标选择下拉框
         self.global_shortcut_target_comboBox = ComboBox()
-        self.global_shortcut_target_comboBox.setFixedWidth(200)
         self.global_shortcut_target_comboBox.addItems(["抽人界面", "闪抽界面", "抽奖界面"])
         self.global_shortcut_target_comboBox.setFont(QFont(load_custom_font(), 12))
         self.global_shortcut_target_comboBox.currentIndexChanged.connect(self.save_settings)
         
         # 全局快捷键设置按钮
         self.global_shortcut_button = PushButton("设置快捷键")
-        self.global_shortcut_button.setFixedWidth(120)
         self.global_shortcut_button.setFont(QFont(load_custom_font(), 12))
         self.global_shortcut_button.clicked.connect(self.set_global_shortcut)
         
         # 全局快捷键清除按钮
         self.global_shortcut_clear_button = PushButton("清除")
-        self.global_shortcut_clear_button.setFixedWidth(60)
         self.global_shortcut_clear_button.setFont(QFont(load_custom_font(), 12))
         self.global_shortcut_clear_button.clicked.connect(self.clear_global_shortcut)
         
@@ -317,13 +271,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         
         # 局部快捷键设置 - 抽人操作
         self.local_pumping_shortcut_button = PushButton("设置抽人快捷键")
-        self.local_pumping_shortcut_button.setFixedWidth(150)
         self.local_pumping_shortcut_button.setFont(QFont(load_custom_font(), 12))
         self.local_pumping_shortcut_button.clicked.connect(self.set_pumping_shortcut)
         
         # 抽人快捷键清除按钮
         self.local_pumping_shortcut_clear_button = PushButton("清除")
-        self.local_pumping_shortcut_clear_button.setFixedWidth(60)
         self.local_pumping_shortcut_clear_button.setFont(QFont(load_custom_font(), 12))
         self.local_pumping_shortcut_clear_button.clicked.connect(self.clear_pumping_shortcut)
         
@@ -344,13 +296,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         
         # 局部快捷键设置 - 抽奖操作
         self.local_reward_shortcut_button = PushButton("设置抽奖快捷键")
-        self.local_reward_shortcut_button.setFixedWidth(150)
         self.local_reward_shortcut_button.setFont(QFont(load_custom_font(), 12))
         self.local_reward_shortcut_button.clicked.connect(self.set_reward_shortcut)
         
         # 抽奖快捷键清除按钮
         self.local_reward_shortcut_clear_button = PushButton("清除")
-        self.local_reward_shortcut_clear_button.setFixedWidth(60)
         self.local_reward_shortcut_clear_button.setFont(QFont(load_custom_font(), 12))
         self.local_reward_shortcut_clear_button.clicked.connect(self.clear_reward_shortcut)
         
@@ -391,11 +341,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "主窗口置顶", "使主窗口始终显示在其他窗口之上(需重新打开窗口生效)", self.topmost_switch)
         
         # 界面布局设置
-        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "设置图标显示", "控制主界面侧边栏中设置图标的显示状态", self.show_settings_icon_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "主窗口控制面板", "配置主窗口控制面板的显示位置", self.main_window_control_Switch)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽人选项侧边栏位置", "调整抽人功能侧边栏的显示位置", self.pumping_floating_side_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "抽奖选项侧边栏位置", "调整抽奖功能侧边栏的显示位置", self.pumping_reward_side_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_height_20_filled"), "主窗口侧边显示单词PK", "控制主窗口侧边栏中单词PK的显示状态", self.main_window_side_switch)
         
         # 浮窗功能设置
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "控制便捷抽人悬浮窗的显示和隐藏状态", self.pumping_floating_switch)
@@ -544,16 +490,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self_starting_enabled = foundation_settings.get("self_starting_enabled", self.default_settings["self_starting_enabled"])
 
                     pumping_floating_enabled = foundation_settings.get("pumping_floating_enabled", self.default_settings["pumping_floating_enabled"])
-
-                    pumping_floating_side = foundation_settings.get("pumping_floating_side", self.default_settings["pumping_floating_side"])
-                    if pumping_floating_side < 0 or pumping_floating_side >= self.pumping_floating_side_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        pumping_floating_side = self.default_settings["pumping_floating_side"]
-
-                    pumping_reward_side = foundation_settings.get("pumping_reward_side", self.default_settings["pumping_reward_side"])
-                    if pumping_reward_side < 0 or pumping_reward_side >= self.pumping_reward_side_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        pumping_reward_side = self.default_settings["pumping_reward_side"]
                         
                     main_window_mode = foundation_settings.get("main_window_mode", self.default_settings["main_window_mode"])
                     if main_window_mode < 0 or main_window_mode >= self.main_window_comboBox.count():
@@ -588,8 +524,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
                     url_protocol_enabled = foundation_settings.get("url_protocol_enabled", self.default_settings["url_protocol_enabled"])
 
-                    show_settings_icon = foundation_settings.get("show_settings_icon", self.default_settings["show_settings_icon"])
-
                     button_arrangement_mode = foundation_settings.get("button_arrangement_mode", self.default_settings["button_arrangement_mode"])
                     if button_arrangement_mode < 0 or button_arrangement_mode >= self.button_arrangement_comboBox.count():
                         # 如果索引值无效，则使用默认值
@@ -613,9 +547,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     global_shortcut_key = foundation_settings.get("global_shortcut_key", self.default_settings["global_shortcut_key"])
                     local_pumping_shortcut_key = foundation_settings.get("local_pumping_shortcut_key", self.default_settings["local_pumping_shortcut_key"])
                     local_reward_shortcut_key = foundation_settings.get("local_reward_shortcut_key", self.default_settings["local_reward_shortcut_key"])
-
-                    # 主窗口侧边是否现实单词PK
-                    main_window_side_switch = foundation_settings.get("main_window_side_switch", self.default_settings["main_window_side_switch"])
                     
                     # 浮窗图标显示模式
                     floating_icon_mode = foundation_settings.get("floating_icon_mode", self.default_settings["floating_icon_mode"])
@@ -638,8 +569,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     
                     self.self_starting_switch.setChecked(self_starting_enabled)
                     self.pumping_floating_switch.setChecked(pumping_floating_enabled)
-                    self.pumping_floating_side_comboBox.setCurrentIndex(pumping_floating_side)
-                    self.pumping_reward_side_comboBox.setCurrentIndex(pumping_reward_side)
                     self.pumping_floating_transparency_SpinBox.setValue(pumping_floating_transparency_mode)
                     self.main_window_focus_comboBox.setCurrentIndex(main_window_focus_mode)
                     self.main_window_focus_time_comboBox.setCurrentIndex(main_window_focus_time)
@@ -649,12 +578,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.left_pumping_floating_switch.setCurrentIndex(pumping_floating_visible)
                     self.topmost_switch.setChecked(topmost_switch)
                     self.url_protocol_switch.setChecked(url_protocol_enabled)
-                    self.show_settings_icon_switch.setChecked(show_settings_icon)
                     self.button_arrangement_comboBox.setCurrentIndex(button_arrangement_mode)
                     self.main_window_control_Switch.setChecked(main_window_control_Switch)
                     self.flash_window_auto_close_switch.setChecked(flash_window_auto_close)
                     self.flash_window_close_time_comboBox.setCurrentIndex(flash_window_close_time)
-                    self.main_window_side_switch.setChecked(main_window_side_switch)
                     self.floating_icon_mode_comboBox.setCurrentIndex(floating_icon_mode)
                     self.flash_window_side_switch.setChecked(flash_window_side_switch)
                     self.show_startup_window_switch.setChecked(show_startup_window_switch)
@@ -678,8 +605,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
                 self.pumping_floating_switch.setChecked(self.default_settings["pumping_floating_enabled"])
-                self.pumping_floating_side_comboBox.setCurrentIndex(self.default_settings["pumping_floating_side"])
-                self.pumping_reward_side_comboBox.setCurrentIndex(self.default_settings["pumping_reward_side"])
                 self.pumping_floating_transparency_SpinBox.setValue(self.default_settings["pumping_floating_transparency_mode"])
                 self.main_window_focus_comboBox.setCurrentIndex(self.default_settings["main_window_focus_mode"])
                 self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
@@ -689,12 +614,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.left_pumping_floating_switch.setCurrentIndex(self.default_settings["pumping_floating_visible"])
                 self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
                 self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
-                self.show_settings_icon_switch.setChecked(self.default_settings["show_settings_icon"])
                 self.button_arrangement_comboBox.setCurrentIndex(self.default_settings["button_arrangement_mode"])
                 self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
                 self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
                 self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
-                self.main_window_side_switch.setChecked(self.default_settings["main_window_side_switch"])
                 self.floating_icon_mode_comboBox.setCurrentIndex(self.default_settings["floating_icon_mode"])
                 self.flash_window_side_switch.setChecked(self.default_settings["flash_window_side_switch"])
                 self.show_startup_window_switch.setChecked(self.default_settings["show_startup_window_switch"])
@@ -714,8 +637,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             logger.error(f"加载设置时出错: {e}")
             self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
             self.pumping_floating_switch.setChecked(self.default_settings["pumping_floating_enabled"])
-            self.pumping_floating_side_comboBox.setCurrentIndex(self.default_settings["pumping_floating_side"])
-            self.pumping_reward_side_comboBox.setCurrentIndex(self.default_settings["pumping_reward_side"])
             self.pumping_floating_transparency_SpinBox.setValue(self.default_settings["pumping_floating_transparency_mode"])
             self.main_window_focus_comboBox.setCurrentIndex(self.default_settings["main_window_focus_mode"])
             self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
@@ -725,12 +646,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.left_pumping_floating_switch.setCurrentIndex(self.default_settings["pumping_floating_visible"])
             self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
             self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
-            self.show_settings_icon_switch.setChecked(self.default_settings["show_settings_icon"])
             self.button_arrangement_comboBox.setCurrentIndex(self.default_settings["button_arrangement_mode"])
             self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
             self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
             self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
-            self.main_window_side_switch.setChecked(self.default_settings["main_window_side_switch"])
             self.floating_icon_mode_comboBox.setCurrentIndex(self.default_settings["floating_icon_mode"])
             self.flash_window_side_switch.setChecked(self.default_settings["flash_window_side_switch"])
             self.show_startup_window_switch.setChecked(self.default_settings["show_startup_window_switch"])
@@ -770,8 +689,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         # 删除保存文字选项的代码
         foundation_settings["self_starting_enabled"] = self.self_starting_switch.isChecked()
         foundation_settings["pumping_floating_enabled"] = self.pumping_floating_switch.isChecked()
-        foundation_settings["pumping_floating_side"] = self.pumping_floating_side_comboBox.currentIndex()
-        foundation_settings["pumping_reward_side"] = self.pumping_reward_side_comboBox.currentIndex()
         foundation_settings["pumping_floating_transparency_mode"] = self.pumping_floating_transparency_SpinBox.value()
         foundation_settings["main_window_focus_mode"] = self.main_window_focus_comboBox.currentIndex()
         foundation_settings["main_window_focus_time"] = self.main_window_focus_time_comboBox.currentIndex()
@@ -781,12 +698,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings["pumping_floating_visible"] = self.left_pumping_floating_switch.currentIndex()
         foundation_settings["topmost_switch"] = self.topmost_switch.isChecked()
         foundation_settings["url_protocol_enabled"] = self.url_protocol_switch.isChecked()
-        foundation_settings["show_settings_icon"] = self.show_settings_icon_switch.isChecked()
         foundation_settings["button_arrangement_mode"] = self.button_arrangement_comboBox.currentIndex()
         foundation_settings["main_window_control_Switch"] = self.main_window_control_Switch.isChecked()
         foundation_settings["flash_window_auto_close"] = self.flash_window_auto_close_switch.isChecked()
         foundation_settings["flash_window_close_time"] = self.flash_window_close_time_comboBox.currentIndex()
-        foundation_settings["main_window_side_switch"] = self.main_window_side_switch.isChecked()
         foundation_settings["floating_icon_mode"] = self.floating_icon_mode_comboBox.currentIndex()
         foundation_settings["flash_window_side_switch"] = self.flash_window_side_switch.isChecked()
         # 显示启动窗口
