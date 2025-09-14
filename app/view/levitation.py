@@ -1518,7 +1518,7 @@ class LevitationWindow(QWidget):
             y = (screen.height() - self.height()) // 2
             self.move(QPoint(x, y))
 
-    def _show_direct_extraction_window(self, draw_count=1, class_name=None, group_name=None, gender_name=None):
+    def _show_direct_extraction_window(self, draw_count=1, class_name=None, group_name='抽取全班学生', gender_name='抽取所有性别'):
         # 小鸟游星野：显示直接抽取窗口 - 包含pumping_people功能 ✧(๑•̀ㅂ•́)๑
         try:
             # 导入pumping_people模块
@@ -1526,6 +1526,15 @@ class LevitationWindow(QWidget):
             
             # 初始化当前抽取人数
             self.current_count = draw_count
+
+            # 获取班级列表
+            self._load_classes()
+            class_list = self.class_combo.currentText()
+
+            # 初始化班级、小组和性别
+            class_name = class_list
+            group_name = group_name
+            gender_name = gender_name
             
             # 创建自定义标题栏的对话框
             self.pumping_widget = QDialog()
@@ -2418,8 +2427,6 @@ class LevitationWindow(QWidget):
             class_name = self.instant_class_combo.currentText()
             group_name = self.instant_group_combo.currentText()
             gender_name = self.instant_gender_combo.currentText()
-
-            print(class_name, group_name, gender_name)
             
             # 调用直接抽取窗口方法，传递抽取人数、班级、小组和性别
             self._show_direct_extraction_window(self.current_count, class_name, group_name, gender_name)
