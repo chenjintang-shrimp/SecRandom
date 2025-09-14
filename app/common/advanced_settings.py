@@ -40,7 +40,6 @@ class advanced_settingsCard(GroupHeaderCardWidget):
         
         # 浮窗显隐条件
         self.floating_window_visibility_comboBox = ComboBox()
-        self.floating_window_visibility_comboBox.setFixedWidth(200)
         self.floating_window_visibility_comboBox.addItems([
             "不检测",
             "类名-前台应用存在->显示",
@@ -1311,9 +1310,8 @@ class SettingsSelectionDialog(QDialog):
             "foundation": {
                 "主窗口设置": [
                     "main_window_mode", "main_window_focus_mode", "main_window_focus_time",
-                    "topmost_switch", "window_width", "window_height", "pumping_floating_side",
-                    "pumping_reward_side", "show_settings_icon", "main_window_control_Switch",
-                    "main_window_side_switch"
+                    "topmost_switch", "window_width", "window_height", 
+                    "show_settings_icon", "main_window_control_Switch"
                 ],
                 "设置窗口设置": [
                     "settings_window_mode", "settings_window_width", "settings_window_height"
@@ -1413,6 +1411,28 @@ class SettingsSelectionDialog(QDialog):
                     "foregroundsoftware_class", "foregroundsoftware_title", "foregroundsoftware_process"
                 ]
             },
+            "fixed_url": {
+                "固定URL设置": [
+                    "enable_main_url", "enable_settings_url", "enable_pumping_url", "enable_reward_url",
+                    "enable_history_url", "enable_floating_url", "enable_about_url", "enable_direct_extraction_url",
+                    "enable_pumping_action_url", "enable_reward_action_url", "enable_about_action_url", "enable_plugin_settings_action_url",
+                    "enable_pumping_start_url", "enable_pumping_stop_url", "enable_pumping_reset_url", "enable_reward_start_url",
+                    "enable_reward_stop_url", "enable_reward_reset_url", "enable_about_donation_url", "enable_about_contributor_url",
+                    "enable_plugin_settings_open_url", "main_url_notification", "settings_url_notification", "pumping_url_notification",
+                    "reward_url_notification", "history_url_notification", "floating_url_notification", "about_url_notification",
+                    "direct_extraction_url_notification", "plugin_settings_url_notification", "pumping_start_url_notification", "pumping_stop_url_notification",
+                    "pumping_reset_url_notification", "reward_start_url_notification", "reward_stop_url_notification", "reward_reset_url_notification",
+                    "about_donation_url_notification", "about_contributor_url_notification", "plugin_settings_open_url_notification", "settings_url_skip_security",
+                    "floating_url_skip_security", "plugin_settings_open_url_skip_security",
+                ]
+            },
+            "personal": {
+                "主题设置": [
+                    "enable_background_icon", "background_blur", "background_brightness", "enable_main_background",
+                    "enable_settings_background", "enable_flash_background", "main_background_image", "settings_background_image",
+                    "flash_background_image", "font_family"
+                ]
+            }
         }
         
         # 为每个功能分类创建选择区域
@@ -1465,10 +1485,6 @@ class SettingsSelectionDialog(QDialog):
             "check_on_startup": "启动时检查更新", # 有
             "self_starting_enabled": "开机自启动", # 有
             "pumping_floating_enabled": "浮窗启用", # 有
-            "pumping_floating_side": "抽人侧边栏位置", # 有
-            "pumping_reward_side": "抽奖侧边栏位置", # 有
-            "main_window_side_switch": "主窗口侧边显示单词PK", # 有
-            "show_settings_icon": "显示设置图标", # 有
             "pumping_floating_transparency_mode": "浮窗透明度", # 有
             "main_window_focus_mode": "主窗口焦点模式", # 有
             "main_window_focus_time": "焦点检测时间", # 有
@@ -1554,6 +1570,60 @@ class SettingsSelectionDialog(QDialog):
             "foregroundsoftware_class": "前台软件类名", # 有
             "foregroundsoftware_title": "前台软件标题", # 有
             "foregroundsoftware_process": "前台软件进程名", # 有
+            # fixed_url设置
+            "enable_main_url": "主界面URL启用", # 有
+            "enable_settings_url": "设置界面URL启用", # 有
+            "enable_pumping_url": "抽人界面URL启用", # 有
+            "enable_reward_url": "抽奖界面URL启用", # 有
+            "enable_history_url": "历史记录界面URL启用", # 有
+            "enable_floating_url": "浮窗界面URL启用", # 有
+            "enable_about_url": "关于界面URL启用", # 有
+            "enable_direct_extraction_url": "直接抽取URL启用", # 有
+            "enable_pumping_action_url": "抽人操作URL启用", # 有
+            "enable_reward_action_url": "抽奖操作URL启用", # 有
+            "enable_about_action_url": "关于操作URL启用", # 有
+            "enable_plugin_settings_action_url": "插件设置操作URL启用", # 有
+            "enable_pumping_start_url": "抽人开始URL启用", # 有
+            "enable_pumping_stop_url": "抽人停止URL启用", # 有
+            "enable_pumping_reset_url": "抽人重置URL启用", # 有
+            "enable_reward_start_url": "抽奖开始URL启用", # 有
+            "enable_reward_stop_url": "抽奖停止URL启用", # 有
+            "enable_reward_reset_url": "抽奖重置URL启用", # 有
+            "enable_about_donation_url": "关于捐赠URL启用", # 有
+            "enable_about_contributor_url": "关于贡献者URL启用", # 有
+            "enable_plugin_settings_open_url": "插件设置打开URL启用", # 有
+            "main_url_notification": "主界面URL通知", # 有
+            "settings_url_notification": "设置界面URL通知", # 有
+            "pumping_url_notification": "抽人界面URL通知", # 有
+            "reward_url_notification": "抽奖界面URL通知", # 有
+            "history_url_notification": "历史记录界面URL通知", # 有
+            "floating_url_notification": "浮窗界面URL通知", # 有
+            "about_url_notification": "关于界面URL通知", # 有
+            "direct_extraction_url_notification": "直接抽取URL通知", # 有
+            "plugin_settings_url_notification": "插件设置URL通知", # 有
+            "pumping_start_url_notification": "抽人开始URL通知", # 有
+            "pumping_stop_url_notification": "抽人停止URL通知", # 有
+            "pumping_reset_url_notification": "抽人重置URL通知", # 有
+            "reward_start_url_notification": "抽奖开始URL通知", # 有
+            "reward_stop_url_notification": "抽奖停止URL通知", # 有
+            "reward_reset_url_notification": "抽奖重置URL通知", # 有
+            "about_donation_url_notification": "关于捐赠URL通知", # 有
+            "about_contributor_url_notification": "关于贡献者URL通知", # 有
+            "plugin_settings_open_url_notification": "插件设置打开URL通知", # 有
+            "settings_url_skip_security": "设置界面URL跳过安全检查", # 有
+            "floating_url_skip_security": "浮窗界面URL跳过安全检查", # 有
+            "plugin_settings_open_url_skip_security": "插件设置打开URL跳过安全检查", # 有
+            # personal设置
+            "enable_background_icon": "背景图标启用", # 有
+            "background_blur": "背景模糊度", # 有
+            "background_brightness": "背景亮度", # 有
+            "enable_main_background": "主界面背景启用", # 有
+            "enable_settings_background": "设置界面背景启用", # 有
+            "enable_flash_background": "闪屏背景启用", # 有
+            "main_background_image": "主界面背景图片", # 有
+            "settings_background_image": "设置界面背景图片", # 有
+            "flash_background_image": "闪屏背景图片", # 有
+            "font_family": "字体系列" # 有
         }
         return display_names.get(setting_name, setting_name)
     
