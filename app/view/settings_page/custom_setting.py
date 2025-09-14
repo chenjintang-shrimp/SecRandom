@@ -1,0 +1,210 @@
+from qfluentwidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+
+from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import load_custom_font
+
+from app.common.fixed_url_setting import fixed_url_SettinsCard
+# from app.common.user_defined_url_setting import user_defined_url_SettinsCard
+from app.common.theme_settings import theme_settingsCard
+from app.common.sidebar_settings import sidebar_settingsCard
+# from app.common.Program_functionality_settings import Program_functionality_settingsCard
+
+class custom_setting(QFrame):
+    def __init__(self, parent: QFrame = None):
+        super().__init__(parent=parent)
+        
+        # 创建SegmentedWidget导航栏
+        self.SegmentedWidget = SegmentedWidget(self)
+        self.stackedWidget = QStackedWidget(self)
+        
+        # 创建内容页面
+        self.fixed_url_page = QWidget()
+        self.user_defined_url_page = QWidget()
+        self.theme_settings_page = QWidget()
+        self.sidebar_settings_page = QWidget()
+        self.Program_functionality_settings_page = QWidget()
+        
+        # 添加子页面
+        self.addSubInterface(self.fixed_url_page, 'fixed_url_setting', '固定Url管理')
+        # self.addSubInterface(self.user_defined_url_page, 'user_defined_url', '自定义Url')
+        self.addSubInterface(self.theme_settings_page, 'theme_settings', '主题设置')
+        self.addSubInterface(self.sidebar_settings_page, 'sidebar_settings', '侧边栏管理')
+        # self.addSubInterface(self.Program_functionality_settings_page, 'Program_functionality_settings', '软件功能管理')
+
+        # 固定Url设置
+        # 创建滚动区域
+        fixed_url_scroll_area = SingleDirectionScrollArea(self.fixed_url_page)
+        fixed_url_scroll_area.setWidgetResizable(True)
+        # 设置样式表
+        fixed_url_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(fixed_url_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        fixed_url_inner_frame = QWidget(fixed_url_scroll_area)
+        fixed_url_inner_layout = QVBoxLayout(fixed_url_inner_frame)
+        fixed_url_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        fixed_url_scroll_area.setWidget(fixed_url_inner_frame)
+        # 固定Url设置卡片组
+        fixed_url_card = fixed_url_SettinsCard()
+        fixed_url_inner_layout.addWidget(fixed_url_card)
+        # 设置固定Url设置页面布局
+        fixed_url_layout = QVBoxLayout(self.fixed_url_page)
+        fixed_url_layout.addWidget(fixed_url_scroll_area)
+
+        # # 用户定义Url
+        # # 创建滚动区域
+        # user_defined_url_scroll_area = SingleDirectionScrollArea(self.user_defined_url_page)
+        # user_defined_url_scroll_area.setWidgetResizable(True)
+        # # 设置样式表
+        # user_defined_url_scroll_area.setStyleSheet("""
+        #     QScrollArea {
+        #         border: none;
+        #         background-color: transparent;
+        #     }
+        #     QScrollArea QWidget {
+        #         border: none;
+        #         background-color: transparent;
+        #     }
+        # """)
+        # # 启用鼠标滚轮
+        # QScroller.grabGesture(user_defined_url_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # # 创建内部框架
+        # user_defined_url_inner_frame = QWidget(user_defined_url_scroll_area)
+        # user_defined_url_inner_layout = QVBoxLayout(user_defined_url_inner_frame)
+        # user_defined_url_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        # user_defined_url_scroll_area.setWidget(user_defined_url_inner_frame)
+        # # 用户定义Url设置卡片组
+        # user_defined_url_card = user_defined_url_SettinsCard()
+        # user_defined_url_inner_layout.addWidget(user_defined_url_card)
+        # # 设置用户定义Url设置页面布局
+        # user_defined_url_layout = QVBoxLayout(self.user_defined_url_page)
+        # user_defined_url_layout.addWidget(user_defined_url_scroll_area)
+
+        # 主题设置
+        # 创建滚动区域
+        theme_settings_scroll_area = SingleDirectionScrollArea(self.theme_settings_page)
+        theme_settings_scroll_area.setWidgetResizable(True)
+        # 设置样式表
+        theme_settings_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(theme_settings_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        theme_settings_inner_frame = QWidget(theme_settings_scroll_area)
+        theme_settings_inner_layout = QVBoxLayout(theme_settings_inner_frame)
+        theme_settings_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        theme_settings_scroll_area.setWidget(theme_settings_inner_frame)
+        # 主题设置卡片组
+        theme_settings_card = theme_settingsCard()
+        theme_settings_inner_layout.addWidget(theme_settings_card)
+        # 设置主题设置页面布局
+        theme_settings_layout = QVBoxLayout(self.theme_settings_page)
+        theme_settings_layout.addWidget(theme_settings_scroll_area)
+
+        # 侧边栏设置
+        # 创建滚动区域
+        sidebar_settings_scroll_area = SingleDirectionScrollArea(self.sidebar_settings_page)
+        sidebar_settings_scroll_area.setWidgetResizable(True)
+        # 设置样式表
+        sidebar_settings_scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(sidebar_settings_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        sidebar_settings_inner_frame = QWidget(sidebar_settings_scroll_area)
+        sidebar_settings_inner_layout = QVBoxLayout(sidebar_settings_inner_frame)
+        sidebar_settings_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        sidebar_settings_scroll_area.setWidget(sidebar_settings_inner_frame)
+        # 侧边栏设置卡片组
+        sidebar_settings_card = sidebar_settingsCard()
+        sidebar_settings_inner_layout.addWidget(sidebar_settings_card)
+        # 设置侧边栏设置页面布局
+        sidebar_settings_layout = QVBoxLayout(self.sidebar_settings_page)
+        sidebar_settings_layout.addWidget(sidebar_settings_scroll_area)
+
+        # # 软件功能设置
+        # # 创建滚动区域
+        # Program_functionality_settings_scroll_area = SingleDirectionScrollArea(self.Program_functionality_settings_page)
+        # Program_functionality_settings_scroll_area.setWidgetResizable(True)
+        # # 设置样式表
+        # Program_functionality_settings_scroll_area.setStyleSheet("""
+        #     QScrollArea {
+        #         border: none;
+        #         background-color: transparent;
+        #     }
+        #     QScrollArea QWidget {
+        #         border: none;
+        #         background-color: transparent;
+        #     }
+        # """)
+        # # 启用鼠标滚轮
+        # QScroller.grabGesture(Program_functionality_settings_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
+        # # 创建内部框架
+        # Program_functionality_settings_inner_frame = QWidget(Program_functionality_settings_scroll_area)
+        # Program_functionality_settings_inner_layout = QVBoxLayout(Program_functionality_settings_inner_frame)
+        # Program_functionality_settings_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        # Program_functionality_settings_scroll_area.setWidget(Program_functionality_settings_inner_frame)
+        # # 软件功能设置卡片组
+        # Program_functionality_settings_card = Program_functionality_settingsCard()
+        # Program_functionality_settings_inner_layout.addWidget(Program_functionality_settings_card)
+        # # 设置软件功能设置页面布局
+        # Program_functionality_settings_layout = QVBoxLayout(self.Program_functionality_settings_page)
+        # Program_functionality_settings_layout.addWidget(Program_functionality_settings_scroll_area)
+        
+        # 设置主布局
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        main_layout.addWidget(self.SegmentedWidget, 0, Qt.AlignHCenter)
+        main_layout.addWidget(self.stackedWidget)
+        
+        self.stackedWidget.setCurrentWidget(self.fixed_url_page)
+        self.SegmentedWidget.setCurrentItem('fixed_url_setting')
+
+        self.__connectSignalToSlot()
+        
+    def addSubInterface(self, widget: QWidget, objectName: str, text: str):
+        widget.setObjectName(objectName)
+        self.stackedWidget.addWidget(widget)
+        
+        # 添加导航项
+        self.SegmentedWidget.addItem(
+            routeKey=objectName,
+            text=text,
+            onClick=lambda: self.stackedWidget.setCurrentWidget(widget)
+        )
+
+    def __connectSignalToSlot(self):
+        cfg.themeChanged.connect(setTheme)
+        self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
+        
+    def onCurrentIndexChanged(self, index):
+        widget = self.stackedWidget.widget(index)
+        self.SegmentedWidget.setCurrentItem(widget.objectName())
