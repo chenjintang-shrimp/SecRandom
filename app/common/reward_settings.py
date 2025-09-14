@@ -29,7 +29,6 @@ class reward_SettinsCard(GroupHeaderCardWidget):
         self.prize_pools_Button.setFont(QFont(load_custom_font(), 12))
         
         self.prize_pools_comboBox = ComboBox()
-        self.prize_pools_comboBox.setFixedWidth(250)
         self.prize_pools_comboBox.setPlaceholderText("选择一个需要设置奖品的奖池")
         self.prize_pools_comboBox.addItems([])
         self.prize_pools_comboBox.setFont(QFont(load_custom_font(), 12))
@@ -701,7 +700,6 @@ class ImportPrizeDialog(QDialog):
         # 🌟 星穹铁道白露：创建下拉框行 ~ (๑•̀ㅂ•́)ญ✧
         row_layout = QHBoxLayout()
         combo = self._create_combo_box()
-        combo.setFixedWidth(200)
         setattr(self, combo_attr, combo)
         row_layout.addWidget(combo)
         layout.addRow(label_text, row_layout)
@@ -710,7 +708,6 @@ class ImportPrizeDialog(QDialog):
         # 🌟 星穹铁道白露：创建带复选框的下拉框行 ~ (๑•̀ㅂ•́)ญ✧
         row_layout = QHBoxLayout()
         combo = self._create_combo_box()
-        combo.setFixedWidth(200)
         setattr(self, combo_attr, combo)
 
         check_box = CheckBox("包含")
