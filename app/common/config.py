@@ -148,27 +148,82 @@ def load_custom_font():
     font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
     return font_family
 
+class FluentSystemIcons(FluentFontIconBase):
+    """Fluent System Icons 字体图标类"""
+    
+    def __init__(self, char):
+        """初始化字体图标
+        
+        Args:
+            char: 图标字符
+        """
+        super().__init__(char)
+    
+    def path(self, theme=Theme.AUTO):
+        """返回字体文件路径"""
+        return str(path_manager.get_resource_path('assets', 'FluentSystemIcons-Filled.ttf'))
+    
+    def iconNameMapPath(self):
+        """返回图标名称到图标码点的映射表文件路径"""
+        return str(path_manager.get_resource_path('assets', 'FluentSystemIcons-Filled.json'))
+
+
 def get_theme_icon(icon_name):
+    """获取主题相关的图标
+    
+    Args:
+        icon_name: 图标名称或码点
+        
+    Returns:
+        QIcon: 图标对象
+    """
     try:
-        is_dark = is_dark_theme(qconfig) # True: 深色, False: 浅色
-        
-        prefix = "light" if is_dark else "dark"
-        suffix = "_light" if is_dark else "_dark"
-        
-        icon_path = path_manager.get_resource_path('assets', f'{prefix}/{icon_name}{suffix}.svg')
-        
-        if not icon_path.exists():
-            logger.warning(f"图标文件缺失: {icon_path}")
-            # 返回默认图标
-            default_path = path_manager.get_resource_path('assets', f'{prefix}/ic_fluent_info_20_filled{suffix}.svg')
-            if default_path.exists():
-                return QIcon(str(default_path))
-            return QIcon()
+        # 尝试使用名称获取图标
+        if isinstance(icon_name, str) and not icon_name.startswith('\\u'):
+            # 尝试从JSON文件中直接获取码点
+            try:
+                map_path = path_manager.get_resource_path('assets', 'FluentSystemIcons-Filled.json')
+                with open(map_path, 'r', encoding='utf-8') as f:
+                    icon_map = json.load(f)
+                
+                if icon_name in icon_map:
+                    # 获取图标码点并转换为字符串
+                    code_point = icon_map[icon_name]
+                    char = chr(code_point)
+                    icon = FluentSystemIcons(char)
+                    return icon
+                else:
+                    raise ValueError(f"图标名称 '{icon_name}' 未在图标映射表中找到")
+            except Exception as json_error:
+                logger.error(f"从JSON加载图标'{icon_name}'也失败: {str(json_error)}")
+                raise
+        else:
+            # 处理码点输入
+            if isinstance(icon_name, str) and icon_name.startswith('\\u'):
+                # 将Unicode字符串转换为字符
+                code_point = int(icon_name[2:], 16)
+                char = chr(code_point)
+                icon = FluentSystemIcons(char)
+            elif isinstance(icon_name, int):
+                # 将整数码点转换为字符
+                char = chr(icon_name)
+                icon = FluentSystemIcons(char)
+            else:
+                # 直接使用字符
+                icon = FluentSystemIcons(icon_name)
             
-        return QIcon(str(icon_path))
+        return icon
     except Exception as e:
         logger.error(f"加载图标{icon_name}出错: {str(e)}")
-        return QIcon()
+        # 返回默认图标
+        try:
+            # 尝试使用码点创建默认图标
+            default_char = chr(62634)  # 使用info图标的码点
+            return FluentSystemIcons(default_char)
+        except Exception as default_error:
+            logger.error(f"加载默认图标也失败: {str(default_error)}")
+            # 返回空的QIcon作为最后备选
+            return QIcon()
 
 def is_dark_theme(qconfig):
     if qconfig.theme == Theme.AUTO:
@@ -217,6 +272,8 @@ def restore_volume(volume_value):
 class Config(QConfig):
     dpiScale = OptionsConfigItem(
         "Window", "DpiScale", "Auto", OptionsValidator([1, 1.25, 1.5, 1.75, 2, "Auto"]), restart=True)
+    themeColor = ColorConfigItem(
+        "Theme", "Color", "#3AF2FF")
 
 YEAR = 2025
 MONTH = 4
@@ -239,3 +296,35 @@ config_file_path = get_config_file_path()
 # 确保配置目录存在
 path_manager.ensure_directory_exists(config_file_path.parent)
 qconfig.load(str(config_file_path), cfg)
+
+def setThemeColor(color):
+    """设置主题色
+    
+    Args:
+        color: 主题色，可以是 QColor、Qt.GlobalColor 或字符串（十六进制颜色或颜色名称）
+    """
+    if isinstance(color, QColor):
+        hex_color = color.name()
+    elif isinstance(color, Qt.GlobalColor):
+        hex_color = QColor(color).name()
+    elif isinstance(color, str):
+        # 检查是否是十六进制颜色
+        if color.startswith('#'):
+            hex_color = color
+        else:
+            # 尝试解析颜色名称
+            qcolor = QColor(color)
+            if qcolor.isValid():
+                hex_color = qcolor.name()
+            else:
+                logger.error(f"无效的颜色名称: {color}")
+                return
+    else:
+        logger.error(f"不支持的颜色类型: {type(color)}")
+        return
+    
+    # 设置主题色
+    cfg.themeColor.value = hex_color
+    # 保存配置
+    qconfig.save()
+    logger.info(f"主题色已设置为: {hex_color}")
