@@ -86,7 +86,7 @@ class UpdateNotification(QDialog):
 
         # 关闭按钮
         close_btn = PushButton("")
-        close_icon_path = path_manager.get_resource_path('assets', 'dark/ic_fluent_arrow_exit_20_filled_dark.svg')
+        close_icon_path = get_theme_icon("ic_fluent_arrow_exit_20_filled")
         close_btn.setIcon(QIcon(str(close_icon_path)))
         close_btn.setStyleSheet("background: transparent; border: none;")
         close_btn.clicked.connect(self.close_with_animation)
