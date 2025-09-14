@@ -14,6 +14,7 @@ if project_root not in sys.path:
 # ==================================================
 # 📚 第三方魔法书 (Third-Party Magic Books)
 # ==================================================
+from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtNetwork import *
@@ -57,7 +58,7 @@ def configure_logging():
     """(^・ω・^ ) 白露的日志魔法师登场！
     正在设置魔法日志卷轴，让程序运行轨迹变得清晰可见～
     日志会自动按大小(1MB)和时间切割，保存30天并压缩归档哦～ 📜✨"""
-    log_dir = "logs"
+    log_dir = os.path.join(project_root, "logs")
     if not path_manager.file_exists(log_dir):
         os.makedirs(log_dir)
         logger.info("白露魔法: 日志文件夹创建成功～ ")
@@ -301,6 +302,172 @@ SHARED_MEMORY_KEY = 'SecRandom'   # 共享内存密钥
 # ==================================================
 app = QApplication(sys.argv)
 logger.debug("白露创建: QApplication实例已创建～ ")
+
+def install_custom_font():
+    """安装自定义字体文件"""
+    try:
+        # 检查操作系统版本，HarmonyOS Sans SC字体不支持Windows 7及以下系统
+        import platform
+        system = platform.system()
+        if system == "Windows":
+            try:
+                # 获取Windows版本信息
+                import winreg
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
+                                   r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
+                current_version = winreg.QueryValueEx(key, "CurrentVersion")[0]
+                winreg.CloseKey(key)
+                
+                # Windows 7的版本号是6.1
+                if current_version and float(current_version) <= 6.1:
+                    logger.warning("检测到Windows 7或更早版本系统，HarmonyOS Sans SC字体不支持此系统，跳过字体安装")
+                    return
+            except Exception as e:
+                logger.warning(f"无法检测Windows版本: {e}，尝试继续安装字体")
+        
+        font_path = path_manager.get_font_path('HarmonyOS_Sans_SC_Bold.ttf')
+        
+        # 将Path对象转换为字符串
+        font_path_str = str(font_path)
+        
+        # 检查字体文件是否存在
+        if not os.path.exists(font_path_str):
+            logger.warning(f"字体文件不存在: {font_path_str}")
+            return
+        
+        # 检查字体是否已经安装
+        font_db = QFontDatabase()
+        
+        # 先尝试安装字体，获取实际的字体家族名称
+        font_id = QFontDatabase.addApplicationFont(font_path_str)
+        
+        if font_id == -1:
+            logger.error(f"字体安装失败: {font_path_str}")
+            return
+        
+        # 获取字体家族名称
+        installed_font_families = QFontDatabase.applicationFontFamilies(font_id)
+        if not installed_font_families:
+            logger.warning(f"字体安装成功但无法获取字体家族: {font_path_str}")
+            return
+        
+        target_font_family = installed_font_families[0]
+        
+        # 检查系统中是否已存在相同名称的字体
+        existing_families = font_db.families()
+        if target_font_family in existing_families:
+            # 如果字体已存在，移除刚刚添加的字体
+            QFontDatabase.removeApplicationFont(font_id)
+            logger.info(f"字体已安装: {target_font_family}")
+            return
+        
+        logger.info(f"字体安装成功: {font_path_str}, 字体家族: {target_font_family}")
+    except Exception as e:
+        logger.error(f"安装字体时发生错误: {e}")
+
+def initialize_font_settings():
+    """初始化字体设置，加载并应用保存的字体"""
+    try:
+        # 读取个人设置文件
+        settings_file = path_manager.get_settings_path('custom_settings.json')
+        ensure_dir(settings_file.parent)
+        
+        if file_exists(settings_file):
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                personal_settings = settings.get('personal', {})
+                font_family = personal_settings.get('font_family')
+                
+                if font_family:
+                    # 应用字体设置
+                    apply_font_to_application(font_family)
+                    logger.info(f"初始化字体设置: {font_family}")
+    except Exception as e:
+        logger.error(f"初始化字体设置失败: {e}")
+
+def apply_font_to_application(font_family):
+    """应用字体设置到整个应用程序
+    
+    Args:
+        font_family (str): 字体家族名称
+    """
+    try:
+        # 获取当前应用程序默认字体
+        current_font = QApplication.font()
+        
+        # 创建字体对象，只修改字体家族，保持原有字体大小
+        app_font = QFont(font_family)
+        app_font.setPointSize(current_font.pointSize())
+        
+        # 定义延迟更新函数
+        def delayed_font_update(font_to_apply):
+            global main_window
+            # 获取所有顶级窗口并更新它们的字体
+            widgets_updated = 0
+            for widget in QApplication.topLevelWidgets():
+                if isinstance(widget, QWidget):
+                    # widget_type = type(widget).__name__
+                    # widget_name = widget.objectName() or "未命名"
+                    # window_title = getattr(widget, 'windowTitle', lambda: "")() or "无标题"
+                    # logger.debug(f"更新控件字体: 类型={widget_type}, 名称={widget_name}, 标题={window_title}")
+                    update_widget_fonts(widget, font_to_apply)
+                    widgets_updated += 1
+                
+            logger.info(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件")
+        
+        # 使用QTimer延迟更新字体，确保设置已保存
+        QTimer.singleShot(100, lambda: delayed_font_update(app_font))
+    except Exception as e:
+        logger.error(f"应用字体失败: {e}")
+
+def update_widget_fonts(widget, font):
+    """递归更新控件及其子控件的字体
+    
+    Args:
+        widget: 要更新字体的控件
+        font: 要应用的字体
+    """
+    if widget is None:
+        return
+        
+    try:
+        # 获取控件当前字体
+        current_widget_font = widget.font()
+        
+        # 创建新字体，只修改字体家族，保持原有字体大小和其他属性
+        new_font = QFont(font.family(), current_widget_font.pointSize())
+        # 保持原有字体的粗体和斜体属性
+        new_font.setBold(current_widget_font.bold())
+        new_font.setItalic(current_widget_font.italic())
+        
+        # 更新当前控件的字体
+        widget.setFont(new_font)
+        
+        # 特殊处理某些控件类型
+        widget_type = type(widget).__name__
+        
+        # 对于按钮、标签等控件，确保字体更新
+        if widget_type:
+            widget.setFont(new_font)
+            widget.update()
+        
+        # 强制控件更新
+        widget.update()
+        widget.repaint()
+        
+        # 记录更新的控件信息
+        # widget_name = widget.objectName() or "未命名"
+        # logger.debug(f"已更新控件: 类型={widget_type}, 名称={widget_name}, 字体={font.family()}")
+        
+        # 如果控件有子控件，递归更新子控件的字体
+        if isinstance(widget, QWidget):
+            children = widget.children()
+            # logger.debug(f"控件 {widget_name} 有 {len(children)} 个子控件")
+            for child in children:
+                if isinstance(child, QWidget):
+                    update_widget_fonts(child, font)
+    except Exception as e:
+        logger.error(f"更新控件字体失败: {e}")
 
 def check_single_instance():
     """(ﾟДﾟ≡ﾟдﾟ) 星野的单实例守卫启动！
@@ -597,6 +764,12 @@ if __name__ == "__main__":
             if has_startup_thread:
                 startup_thread.set_step(9, "启动完成！")
                 QTimer.singleShot(500, startup_thread.close_window)
+    
+    # 安装自定义字体
+    install_custom_font()
+    
+    # 初始化字体设置
+    initialize_font_settings()
     
     # 使用QTimer延迟处理URL命令，确保主窗口完全初始化
     QTimer.singleShot(2000, delayed_url_processing)  # 延迟1秒处理URL
