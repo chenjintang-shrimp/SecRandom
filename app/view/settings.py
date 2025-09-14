@@ -2,6 +2,7 @@ from qfluentwidgets import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from PyQt5.QtWidgets import QGraphicsBlurEffect, QGraphicsScene, QGraphicsPixmapItem
 import os
 import json
 from loguru import logger
@@ -9,12 +10,14 @@ from loguru import logger
 from app.common.config import get_theme_icon, load_custom_font
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+import random
 
 # 导入子页面
 from app.view.settings_page.more_setting import more_setting
 from app.view.settings_page.Changeable_history_handoff_setting import changeable_history_handoff_setting
 from app.view.settings_page.password_setting import password_set
 from app.view.settings_page.about_setting import about
+from app.view.settings_page.custom_setting import custom_setting
 from app.view.settings_page.pumping_handoff_setting import pumping_handoff_setting
 from app.view.settings_page.voice_engine_setting import voice_engine_settings
 from app.view.plugins.plugin_settings import PluginSettingsWindow
@@ -48,6 +51,9 @@ class settings_Window(MSFluentWindow):
         self.setWindowTitle('SecRandom - 设置')
         self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png'))))
 
+        # 应用背景图片
+        self.apply_background_image()
+
         # 获取主屏幕
         screen = QApplication.primaryScreen()
         # 获取屏幕的可用几何信息
@@ -79,11 +85,30 @@ class settings_Window(MSFluentWindow):
             self.more_settingInterface = None
 
         try:
-            self.plugin_settingsInterface = PluginSettingsWindow(self)
-            self.plugin_settingsInterface.setObjectName("plugin_settingsInterface")
-            logger.debug("设置界面: 插件设置界面创建成功")
+            self.custom_settingInterface = custom_setting(self)
+            self.custom_settingInterface.setObjectName("custom_settingInterface")
+            logger.debug("设置界面: 自定义设置界面创建成功")
         except Exception as e:
-            logger.error(f"设置界面: 创建插件设置界面失败: {e}")
+            logger.error(f"设置界面: 创建自定义设置界面失败: {e}")
+            self.custom_settingInterface = None
+
+        # 根据设置决定是否创建"插件设置"界面
+        try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                plugin_settings_switch = sidebar_settings.get('show_plugin_settings_switch', 2)
+                
+                if plugin_settings_switch != 2:  # 不为"不显示"时才创建界面
+                    self.plugin_settingsInterface = PluginSettingsWindow(self)
+                    self.plugin_settingsInterface.setObjectName("plugin_settingsInterface")
+                    logger.debug("设置界面: 插件设置界面创建成功")
+                else:
+                    logger.debug("设置界面: '插件设置'界面已设置为不创建～ ")
+                    self.plugin_settingsInterface = None
+        except Exception as e:
+            logger.error(f"设置界面: 读取插件设置界面设置失败了呢～ {e}, 默认不创建界面")
             self.plugin_settingsInterface = None
 
         try:
@@ -94,13 +119,26 @@ class settings_Window(MSFluentWindow):
             logger.error(f"设置界面: 创建抽取设置界面失败: {e}")
             self.pumping_handoff_settingInterface = None
 
+        # 根据设置决定是否创建"历史记录设置"界面
         try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                history_settings_switch = sidebar_settings.get('show_history_settings_switch', 1)
+                
+                if history_settings_switch != 2:  # 不为"不显示"时才创建界面
+                    self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
+                    self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
+                    logger.debug("设置界面: 历史记录设置界面创建成功")
+                else:
+                    logger.debug("设置界面: '历史记录设置'界面已设置为不创建～ ")
+                    self.changeable_history_handoff_settingInterface = None
+        except Exception as e:
+            logger.error(f"设置界面: 读取历史记录设置界面设置失败了呢～ {e}, 默认创建界面")
             self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
             self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
             logger.debug("设置界面: 历史记录设置界面创建成功")
-        except Exception as e:
-            logger.error(f"设置界面: 创建历史记录设置界面失败: {e}")
-            self.changeable_history_handoff_settingInterface = None
 
         try:
             self.about_settingInterface = about(self)
@@ -110,21 +148,47 @@ class settings_Window(MSFluentWindow):
             logger.error(f"设置界面: 创建关于界面失败: {e}")
             self.about_settingInterface = None
 
+        # 根据设置决定是否创建"安全设置"界面
         try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                security_settings_switch = sidebar_settings.get('show_security_settings_switch', 1)
+                
+                if security_settings_switch != 2:  # 不为"不显示"时才创建界面
+                    self.password_setInterface = password_set(self)
+                    self.password_setInterface.setObjectName("password_setInterface")
+                    logger.debug("设置界面: 安全设置界面创建成功")
+                else:
+                    logger.debug("设置界面: '安全设置'界面已设置为不创建～ ")
+                    self.password_setInterface = None
+        except Exception as e:
+            logger.error(f"设置界面: 读取安全设置界面设置失败了呢～ {e}, 默认创建界面")
             self.password_setInterface = password_set(self)
             self.password_setInterface.setObjectName("password_setInterface")
             logger.debug("设置界面: 安全设置界面创建成功")
-        except Exception as e:
-            logger.error(f"设置界面: 创建安全设置界面失败: {e}")
-            self.password_setInterface = None
 
+        # 根据设置决定是否创建"语音设置"界面
         try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                voice_settings_switch = sidebar_settings.get('show_voice_settings_switch', 1)
+                
+                if voice_settings_switch != 2:  # 不为"不显示"时才创建界面
+                    self.voice_engine_settingsInterface = voice_engine_settings(self)
+                    self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
+                    logger.debug("设置界面: 语音设置界面创建成功")
+                else:
+                    logger.debug("设置界面: '语音设置'界面已设置为不创建～ ")
+                    self.voice_engine_settingsInterface = None
+        except Exception as e:
+            logger.error(f"设置界面: 读取语音设置界面设置失败了呢～ {e}, 默认创建界面")
             self.voice_engine_settingsInterface = voice_engine_settings(self)
             self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
             logger.debug("设置界面: 语音设置界面创建成功")
-        except Exception as e:
-            logger.error(f"设置界面: 创建语音设置界面失败: {e}")
-            self.voice_engine_settingsInterface = None
 
         self.initNavigation()
 
@@ -135,26 +199,121 @@ class settings_Window(MSFluentWindow):
         else:
             logger.error("设置界面导航: 抽取设置界面不存在，无法添加到导航栏")
 
-        if self.plugin_settingsInterface is not None:
-            self.addSubInterface(self.plugin_settingsInterface, get_theme_icon("ic_fluent_extensions_20_filled"), '插件', position=NavigationItemPosition.BOTTOM)
+        if self.custom_settingInterface is not None:
+            self.addSubInterface(self.custom_settingInterface, get_theme_icon("ic_fluent_person_20_filled"), '个性设置', position=NavigationItemPosition.TOP)
         else:
-            logger.error("设置界面导航: 插件设置界面不存在，无法添加到导航栏")
+            logger.error("设置界面导航: 自定义设置界面不存在，无法添加到导航栏")
 
-        if self.voice_engine_settingsInterface is not None:
-            self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
-        else:
-            logger.error("设置界面导航: 语音设置界面不存在，无法添加到导航栏")
+        # 添加插件设置导航项
+        try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                plugin_settings_switch = sidebar_settings.get('show_plugin_settings_switch', 2)
+                
+                if plugin_settings_switch == 1:
+                    if self.plugin_settingsInterface is not None:
+                        self.addSubInterface(self.plugin_settingsInterface, get_theme_icon("ic_fluent_database_plug_connected_20_filled"), '插件', position=NavigationItemPosition.BOTTOM)
+                        logger.debug("设置界面导航: '插件设置'导航项已放置在底部导航栏～ ")
+                    else:
+                        logger.debug("设置界面导航: '插件设置'界面未创建，无法添加到导航栏～ ")
+                elif plugin_settings_switch == 2:
+                    logger.debug("设置界面导航: '插件设置'导航项已设置为不显示～ ")
+                else:
+                    if self.plugin_settingsInterface is not None:
+                        self.addSubInterface(self.plugin_settingsInterface, get_theme_icon("ic_fluent_database_plug_connected_20_filled"), '插件', position=NavigationItemPosition.TOP)
+                        logger.debug("设置界面导航: '插件设置'导航项已放置在顶部导航栏～ ")
+                    else:
+                        logger.debug("设置界面导航: '插件设置'界面未创建，无法添加到导航栏～ ")
+        except Exception as e:
+            logger.error(f"设置界面导航出错: 加载插件设置导航项失败了呢～ {e}")
+            if self.plugin_settingsInterface is not None:
+                self.addSubInterface(self.plugin_settingsInterface, get_theme_icon("ic_fluent_database_plug_connected_20_filled"), '插件', position=NavigationItemPosition.BOTTOM)
 
-        if self.password_setInterface is not None:
-            self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
-        else:
-            logger.error("设置界面导航: 安全设置界面不存在，无法添加到导航栏")
+        # 添加语音设置导航项
+        try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                voice_settings_switch = sidebar_settings.get('show_voice_settings_switch', 1)
+                
+                if voice_settings_switch == 1:
+                    if self.voice_engine_settingsInterface is not None:
+                        self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
+                        logger.debug("设置界面导航: '语音设置'导航项已放置在底部导航栏～ ")
+                    else:
+                        logger.debug("设置界面导航: '语音设置'界面未创建，无法添加到导航栏～ ")
+                elif voice_settings_switch == 2:
+                    logger.debug("设置界面导航: '语音设置'导航项已设置为不显示～ ")
+                else:
+                    if self.voice_engine_settingsInterface is not None:
+                        self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.TOP)
+                        logger.debug("设置界面导航: '语音设置'导航项已放置在顶部导航栏～ ")
+                    else:
+                        logger.debug("设置界面导航: '语音设置'界面未创建，无法添加到导航栏～ ")
+        except Exception as e:
+            logger.error(f"设置界面导航出错: 加载语音设置导航项失败了呢～ {e}")
+            if self.voice_engine_settingsInterface is not None:
+                self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
 
-        if self.changeable_history_handoff_settingInterface is not None:
-            history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
-            history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
-        else:
-            logger.error("设置界面导航: 历史记录设置界面不存在，无法添加到导航栏")
+        # 添加安全设置导航项
+        try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                security_settings_switch = sidebar_settings.get('show_security_settings_switch', 1)
+                
+                if security_settings_switch == 1:
+                    if self.password_setInterface is not None:
+                        self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
+                        logger.debug("设置界面导航: '安全设置'导航项已放置在底部导航栏～ ")
+                    else:
+                        logger.debug("设置界面导航: '安全设置'界面未创建，无法添加到导航栏～ ")
+                elif security_settings_switch == 2:
+                    logger.debug("设置界面导航: '安全设置'导航项已设置为不显示～ ")
+                else:
+                    if self.password_setInterface is not None:
+                        self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.TOP)
+                        logger.debug("设置界面导航: '安全设置'导航项已放置在顶部导航栏～ ")
+                    else:
+                        logger.debug("设置界面导航: '安全设置'界面未创建，无法添加到导航栏～ ")
+        except Exception as e:
+            logger.error(f"设置界面导航出错: 加载安全设置导航项失败了呢～ {e}")
+            if self.password_setInterface is not None:
+                self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
+
+        # 添加历史记录设置导航项
+        try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                history_settings_switch = sidebar_settings.get('show_history_settings_switch', 1)
+                
+                if history_settings_switch == 1:
+                    if self.changeable_history_handoff_settingInterface is not None:
+                        history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+                        history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
+                        logger.debug("设置界面导航: '历史记录设置'导航项已放置在底部导航栏～ ")
+                    else:
+                        logger.debug("设置界面导航: '历史记录设置'界面未创建，无法添加到导航栏～ ")
+                elif history_settings_switch == 2:
+                    logger.debug("设置界面导航: '历史记录设置'导航项已设置为不显示～ ")
+                else:
+                    if self.changeable_history_handoff_settingInterface is not None:
+                        history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.TOP)
+                        history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
+                        logger.debug("设置界面导航: '历史记录设置'导航项已放置在顶部导航栏～ ")
+                    else:
+                        logger.debug("设置界面导航: '历史记录设置'界面未创建，无法添加到导航栏～ ")
+        except Exception as e:
+            logger.error(f"设置界面导航出错: 加载历史记录设置导航项失败了呢～ {e}")
+            if self.changeable_history_handoff_settingInterface is not None:
+                history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+                history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
 
         if self.about_settingInterface is not None:
             self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
@@ -180,7 +339,21 @@ class settings_Window(MSFluentWindow):
     def resizeEvent(self, event):
         # 调整大小时重启计时器，仅在停止调整后保存
         self.resize_timer.start(500)  # 500毫秒延迟
+        
+        # 调用原始的resizeEvent，确保布局正确更新
         super().resizeEvent(event)
+        
+        # 强制更新布局
+        self.updateGeometry()
+        self.update()
+        
+        # 处理窗口最大化状态
+        if self.isMaximized():
+            # 确保所有子控件适应最大化窗口
+            for child in self.findChildren(QWidget):
+                child.updateGeometry()
+            # 强制重新布局
+            QApplication.processEvents()
 
     def save_settings_window_size(self):
         if not self.isMaximized():
@@ -247,3 +420,183 @@ class settings_Window(MSFluentWindow):
                     logger.error(f"白露URL: 重新创建插件设置界面失败: {e}")
         except Exception as e:
             logger.error(f"白露URL: 打开插件设置界面时发生异常: {e}")
+
+    def apply_background_image(self):
+        """(^・ω・^ ) 白露的背景图片魔法！
+        检查设置中的 enable_settings_background，如果开启则应用设置界面背景图片～
+        让界面变得更加美观个性化，就像给房间贴上漂亮的壁纸一样！(๑•̀ㅂ•́)ow✧"""
+        try:
+            # 读取自定义设置
+            custom_settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(custom_settings_path, 'r', encoding='utf-8') as f:
+                custom_settings = json.load(f)
+                
+            # 检查是否启用了设置界面背景图标
+            personal_settings = custom_settings.get('personal', {})
+            enable_settings_background = personal_settings.get('enable_settings_background', True)
+            
+            if enable_settings_background:
+                # 获取设置界面背景图片设置
+                settings_background_image = personal_settings.get('settings_background_image', '')
+                
+                # 检查是否选择了背景图片
+                if settings_background_image and settings_background_image != "无背景图":
+                    # 获取背景图片文件夹路径
+                    background_dir = path_manager.get_resource_path('images', 'background')
+                    
+                    # 检查文件夹是否存在
+                    if background_dir.exists():
+                        # 构建图片完整路径
+                        image_path = background_dir / settings_background_image
+                        
+                        # 检查图片文件是否存在
+                        if image_path.exists():
+                            # 创建背景图片对象
+                            background_pixmap = QPixmap(str(image_path))
+                            
+                            # 如果图片加载成功，应用背景
+                            if not background_pixmap.isNull():
+                                # 获取模糊度和亮度设置
+                                blur_value = personal_settings.get('background_blur', 10)
+                                brightness_value = personal_settings.get('background_brightness', 30)
+                                
+                                # 应用模糊效果
+                                if blur_value > 0:
+                                    # 创建模糊效果
+                                    blur_effect = QGraphicsBlurEffect()
+                                    blur_effect.setBlurRadius(blur_value)
+                                    
+                                    # 创建临时场景和图形项来应用模糊效果
+                                    scene = QGraphicsScene()
+                                    item = QGraphicsPixmapItem(background_pixmap)
+                                    item.setGraphicsEffect(blur_effect)
+                                    scene.addItem(item)
+                                    
+                                    # 创建渲染图像
+                                    result_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
+                                    result_image.fill(Qt.transparent)
+                                    painter = QPainter(result_image)
+                                    scene.render(painter)
+                                    painter.end()
+                                    
+                                    # 更新背景图片
+                                    background_pixmap = QPixmap.fromImage(result_image)
+                                
+                                # 应用亮度效果
+                                if brightness_value != 100:
+                                    # 创建图像副本
+                                    brightness_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
+                                    brightness_image.fill(Qt.transparent)
+                                    painter = QPainter(brightness_image)
+                                    
+                                    # 计算亮度调整因子
+                                    brightness_factor = brightness_value / 100.0
+                                    
+                                    # 应用亮度调整
+                                    painter.setOpacity(brightness_factor)
+                                    painter.drawPixmap(0, 0, background_pixmap)
+                                    painter.end()
+                                    
+                                    # 更新背景图片
+                                    background_pixmap = QPixmap.fromImage(brightness_image)
+                                
+                                # 创建背景标签并设置样式
+                                self.background_label = QLabel(self)
+                                self.background_label.setGeometry(0, 0, self.width(), self.height())
+                                self.background_label.setPixmap(background_pixmap.scaled(
+                                    self.width(), self.height(), 
+                                    Qt.IgnoreAspectRatio, 
+                                    Qt.SmoothTransformation
+                                ))
+                                self.background_label.lower()  # 将背景标签置于底层
+                                
+                                # 保存原始图片，用于窗口大小调整时重新缩放
+                                self.original_background_pixmap = background_pixmap
+                                
+                                # 确保背景标签随窗口大小变化
+                                self.background_label.setAttribute(Qt.WA_StyledBackground, True)
+                                
+                                # 设置窗口属性，确保背景可见
+                                self.setAttribute(Qt.WA_TranslucentBackground)
+                                self.setStyleSheet("background: transparent;")
+                                
+                                # 保存原始的resizeEvent方法
+                                self.original_resizeEvent = self.resizeEvent
+                                
+                                # 重写resizeEvent方法，调整背景大小
+                                self.resizeEvent = self._on_resize_event
+                                
+                                logger.info(f"白露魔法: 已成功应用设置界面背景图片 {settings_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%～ ")
+                            else:
+                                logger.error(f"白露魔法出错: 设置界面背景图片 {settings_background_image} 加载失败～ ")
+                        else:
+                            logger.warning(f"白露提醒: 设置界面背景图片 {settings_background_image} 不存在～ ")
+                    else:
+                        logger.warning("白露提醒: 背景图片文件夹不存在～ ")
+                else:
+                    logger.debug("白露魔法: 未选择设置界面背景图片～ ")
+            else:
+                logger.debug("白露魔法: 设置界面背景图片功能未启用～ ")
+                
+        except FileNotFoundError:
+            logger.warning("白露提醒: 自定义设置文件不存在，使用默认设置～ ")
+        except Exception as e:
+            logger.error(f"白露魔法出错: 应用设置界面背景图片时发生异常～ {e}")
+    
+    def _on_resize_event(self, event):
+        """(^・ω・^ ) 白露的窗口大小调整魔法！
+        当窗口大小改变时，自动调整背景图片大小，确保背景始终填满整个窗口～
+        就像魔法地毯一样，无论房间多大都能完美铺满！(๑•̀ㅂ•́)ow✧"""
+        # 调用原始的resizeEvent，确保布局正确更新
+        if hasattr(self, 'original_resizeEvent'):
+            self.original_resizeEvent(event)
+        else:
+            super(settings_Window, self).resizeEvent(event)
+        
+        # 强制更新布局
+        self.updateGeometry()
+        self.update()
+        
+        # 如果存在背景标签，调整其大小
+        if hasattr(self, 'background_label') and self.background_label:
+            self.background_label.setGeometry(0, 0, self.width(), self.height())
+            # 使用保存的原始图片进行缩放，避免重复缩放导致的像素化
+            if hasattr(self, 'original_background_pixmap') and self.original_background_pixmap:
+                self.background_label.setPixmap(self.original_background_pixmap.scaled(
+                    self.width(), self.height(), 
+                    Qt.IgnoreAspectRatio, 
+                    Qt.SmoothTransformation
+                ))
+        
+        # 处理窗口最大化状态
+        if self.isMaximized():
+            self._handle_maximized_state()
+    
+    def _handle_maximized_state(self):
+        """(^・ω・^ ) 白露的窗口最大化处理魔法！
+        当窗口最大化时，确保所有控件正确适应新的窗口大小～
+        就像魔法变形术一样，让界面完美适应全屏状态！(๑•̀ㅂ•́)ow✧"""
+        # 确保所有子控件适应最大化窗口
+        for child in self.findChildren(QWidget):
+            child.updateGeometry()
+        
+        # 强制重新布局
+        QApplication.processEvents()
+        
+        # 延迟再次更新布局，确保所有控件都已适应
+        QTimer.singleShot(100, self._delayed_layout_update)
+    
+    def _delayed_layout_update(self):
+        """(^・ω・^ ) 白露的延迟布局更新魔法！
+        在窗口最大化后延迟执行布局更新，确保所有控件都已正确适应～
+        就像魔法延时术一样，给界面一些时间来完美调整！(๑•̀ㅂ•́)ow✧"""
+        # 再次强制更新布局
+        self.updateGeometry()
+        self.update()
+        
+        # 确保所有子控件再次更新
+        for child in self.findChildren(QWidget):
+            child.updateGeometry()
+        
+        # 最后一次强制重新布局
+        QApplication.processEvents()
