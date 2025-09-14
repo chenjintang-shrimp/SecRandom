@@ -394,7 +394,7 @@ class pumping_reward(QWidget):
 
                             # 根据label类型应用不同的样式设置
                             widget = None  # 初始化widget变量
-                            if isinstance(label, QWidget) and hasattr(label, 'layout'):
+                            if isinstance(label, QWidget) and hasattr(label, 'layout') and label.layout() is not None:
                                 # 如果是容器类型，对容器内的文本标签应用样式
                                 layout = label.layout()
                                 if layout:
@@ -404,14 +404,14 @@ class pumping_reward(QWidget):
                                         if isinstance(widget, BodyLabel):
                                             widget.setAlignment(Qt.AlignCenter)
                                             if animation_color == 1:
-                                                widget.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                                widget.setStyleSheet(f"color: {self._generate_vibrant_color()};")
                                             elif animation_color == 2:
                                                 widget.setStyleSheet(f"color: {_animation_color};")
                             else:
                                 # 如果是普通的BodyLabel，直接应用样式
                                 label.setAlignment(Qt.AlignCenter)
                                 if animation_color == 1:
-                                    label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                    label.setStyleSheet(f"color: {self._generate_vibrant_color()};")
                                 elif animation_color == 2:
                                     label.setStyleSheet(f"color: {_animation_color};")
 
@@ -981,7 +981,7 @@ class pumping_reward(QWidget):
 
                             widget = None  # 初始化widget变量
                             # 根据label类型应用不同的样式设置
-                            if isinstance(label, QWidget) and hasattr(label, 'layout'):
+                            if isinstance(label, QWidget) and hasattr(label, 'layout') and label.layout() is not None:
                                 # 如果是容器类型，对容器内的文本标签应用样式
                                 layout = label.layout()
                                 if layout:
@@ -989,20 +989,21 @@ class pumping_reward(QWidget):
                                         item = layout.itemAt(i)
                                         widget = item.widget()
                                         if isinstance(widget, BodyLabel):
+                                            widget.setAlignment(Qt.AlignCenter)
                                             if animation_color == 1:
-                                                widget.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                                widget.setStyleSheet(f"color: {self._generate_vibrant_color()};")
                                             elif animation_color == 2:
                                                 widget.setStyleSheet(f"color: {_result_color};")
                             else:
+                                label.setAlignment(Qt.AlignCenter)
                                 if animation_color == 1:
-                                    label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                    label.setStyleSheet(f"color: {self._generate_vibrant_color()};")
                                 elif animation_color == 2:
                                     label.setStyleSheet(f"color: {_result_color};")
 
                             # 为widget设置字体（如果widget存在）
                             if widget is not None:
                                 widget.setFont(QFont(load_custom_font(), font_size))
-                                widget.setAlignment(Qt.AlignCenter)
                             # 为label设置字体
                             label.setFont(QFont(load_custom_font(), font_size))
                             self.reward_labels.append(label)
@@ -1085,6 +1086,26 @@ class pumping_reward(QWidget):
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
             error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_grid.addWidget(error_label)
+
+    def _generate_vibrant_color(self):
+        """生成鲜艳的随机颜色
+        使用HSV色彩空间生成高饱和度和适中亮度的颜色，确保颜色鲜艳直观
+        返回格式为"rgb(r,g,b)"的字符串
+        """
+        import colorsys
+        # 随机生成色调 (0-1)
+        h = random.random()
+        # 高饱和度 (0.7-1.0) 确保颜色鲜艳
+        s = random.uniform(0.7, 1.0)
+        # 适中亮度 (0.7-1.0) 避免过暗或过亮
+        v = random.uniform(0.7, 1.0)
+        
+        # 将HSV转换为RGB
+        r, g, b = colorsys.hsv_to_rgb(h, s, v)
+        # 转换为0-255范围的整数
+        r, g, b = int(r * 255), int(g * 255), int(b * 255)
+        
+        return f"rgb({r},{g},{b})"
 
     # 清除旧布局和标签
     def clear_layout(self, layout):

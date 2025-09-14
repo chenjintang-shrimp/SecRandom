@@ -466,7 +466,7 @@ class pumping_people(QWidget):
 
                             widget = None  # 初始化widget变量
                             # 根据label类型应用不同的样式设置
-                            if isinstance(label, QWidget) and hasattr(label, 'layout'):
+                            if isinstance(label, QWidget) and hasattr(label, 'layout') and label.layout() is not None:
                                 # 如果是容器类型，对容器内的文本标签应用样式
                                 layout = label.layout()
                                 if layout:
@@ -476,14 +476,14 @@ class pumping_people(QWidget):
                                         if isinstance(widget, BodyLabel):
                                             widget.setAlignment(Qt.AlignCenter)
                                             if animation_color == 1:
-                                                widget.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                                widget.setStyleSheet(f"color: {self._generate_vibrant_color()};")
                                             elif animation_color == 2:
                                                 widget.setStyleSheet(f"color: {_animation_color};")
                             else:
                                 # 如果是普通的BodyLabel，直接应用样式
                                 label.setAlignment(Qt.AlignCenter)
                                 if animation_color == 1:
-                                    label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                    label.setStyleSheet(f"color: {self._generate_vibrant_color()};")
                                 elif animation_color == 2:
                                     label.setStyleSheet(f"color: {_animation_color};")
                             
@@ -1262,7 +1262,7 @@ class pumping_people(QWidget):
 
                             widget = None  # 初始化widget变量
                             # 根据label类型应用不同的样式设置
-                            if isinstance(label, QWidget) and hasattr(label, 'layout'):
+                            if isinstance(label, QWidget) and hasattr(label, 'layout') and label.layout() is not None:
                                 # 如果是容器类型，对容器内的文本标签应用样式
                                 layout = label.layout()
                                 if layout:
@@ -1270,21 +1270,22 @@ class pumping_people(QWidget):
                                         item = layout.itemAt(i)
                                         widget = item.widget()
                                         if isinstance(widget, BodyLabel):
+                                            widget.setAlignment(Qt.AlignCenter)
                                             if animation_color == 1:
-                                                widget.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                                widget.setStyleSheet(f"color: {self._generate_vibrant_color()};")
                                             elif animation_color == 2:
                                                 widget.setStyleSheet(f"color: {_result_color};")
                             else:
                                 # 如果是普通的BodyLabel，直接应用样式
+                                label.setAlignment(Qt.AlignCenter)
                                 if animation_color == 1:
-                                    label.setStyleSheet(f"color: rgb({random.randint(150,255)},{random.randint(150,255)},{random.randint(150,255)});")
+                                    label.setStyleSheet(f"color: {self._generate_vibrant_color()};")
                                 elif animation_color == 2:
                                     label.setStyleSheet(f"color: {_result_color};")
 
                             # 为widget设置字体（如果widget存在）
                             if widget is not None:
                                 widget.setFont(QFont(load_custom_font(), font_size))
-                                widget.setAlignment(Qt.AlignCenter)
                             # 为label设置字体
                             label.setFont(QFont(load_custom_font(), font_size))
                             self.student_labels.append(label)
@@ -1367,6 +1368,26 @@ class pumping_people(QWidget):
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
             error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_grid.addWidget(error_label)
+
+    def _generate_vibrant_color(self):
+        """生成鲜艳的随机颜色
+        使用HSV色彩空间生成高饱和度和适中亮度的颜色，确保颜色鲜艳直观
+        返回格式为"rgb(r,g,b)"的字符串
+        """
+        import colorsys
+        # 随机生成色调 (0-1)
+        h = random.random()
+        # 高饱和度 (0.7-1.0) 确保颜色鲜艳
+        s = random.uniform(0.7, 1.0)
+        # 适中亮度 (0.7-1.0) 避免过暗或过亮
+        v = random.uniform(0.7, 1.0)
+        
+        # 将HSV转换为RGB
+        r, g, b = colorsys.hsv_to_rgb(h, s, v)
+        # 转换为0-255范围的整数
+        r, g, b = int(r * 255), int(g * 255), int(b * 255)
+        
+        return f"rgb({r},{g},{b})"
 
     # 清除旧布局和标签
     def clear_layout(self, layout):
@@ -1593,6 +1614,23 @@ class pumping_people(QWidget):
 
     # 初始化UI
     def initUI(self): 
+        # 保存原始的resizeEvent方法
+        self.original_resizeEvent = self.resizeEvent
+        # 重写resizeEvent方法，调整背景大小
+        self.resizeEvent = self._on_resize_event
+        
+        # 创建背景标签
+        self.background_label = QLabel(self)
+        self.background_label.setGeometry(0, 0, self.width(), self.height())
+        self.background_label.lower()  # 将背景标签置于底层
+        
+        # 设置窗口属性，确保背景可见
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setStyleSheet("background: transparent;")
+        
+        # 尝试加载背景图片
+        self.apply_background_image()
+        
         # 主布局
         scroll_area = SingleDirectionScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -1659,3 +1697,183 @@ class pumping_people(QWidget):
 
         # 显示主布局
         self.setLayout(main_layout)
+    
+    def apply_background_image(self):
+        """(^・ω・^ ) 白露的背景图片魔法！
+        检查设置中的 enable_flash_background，如果开启则应用设置界面背景图片～
+        让界面变得更加美观个性化，就像给房间贴上漂亮的壁纸一样！(๑•̀ㅂ•́)ow✧"""
+        try:
+            # 读取自定义设置
+            custom_settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(custom_settings_path, 'r', encoding='utf-8') as f:
+                custom_settings = json.load(f)
+                
+            # 检查是否启用了设置界面背景图标
+            personal_settings = custom_settings.get('personal', {})
+            enable_flash_background = personal_settings.get('enable_flash_background', True)
+            
+            if enable_flash_background:
+                # 获取设置界面背景图片设置
+                flash_background_image = personal_settings.get('flash_background_image', '')
+                
+                # 检查是否选择了背景图片
+                if flash_background_image and flash_background_image != "无背景图":
+                    # 获取背景图片文件夹路径
+                    background_dir = path_manager.get_resource_path('images', 'background')
+                    
+                    # 检查文件夹是否存在
+                    if background_dir.exists():
+                        # 构建图片完整路径
+                        image_path = background_dir / flash_background_image
+                        
+                        # 检查图片文件是否存在
+                        if image_path.exists():
+                            # 创建背景图片对象
+                            background_pixmap = QPixmap(str(image_path))
+                            
+                            # 如果图片加载成功，应用背景
+                            if not background_pixmap.isNull():
+                                # 获取模糊度和亮度设置
+                                blur_value = personal_settings.get('background_blur', 10)
+                                brightness_value = personal_settings.get('background_brightness', 30)
+                                
+                                # 应用模糊效果
+                                if blur_value > 0:
+                                    # 创建模糊效果
+                                    blur_effect = QGraphicsBlurEffect()
+                                    blur_effect.setBlurRadius(blur_value)
+                                    
+                                    # 创建临时场景和图形项来应用模糊效果
+                                    scene = QGraphicsScene()
+                                    item = QGraphicsPixmapItem(background_pixmap)
+                                    item.setGraphicsEffect(blur_effect)
+                                    scene.addItem(item)
+                                    
+                                    # 创建渲染图像
+                                    result_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
+                                    result_image.fill(Qt.transparent)
+                                    painter = QPainter(result_image)
+                                    scene.render(painter)
+                                    painter.end()
+                                    
+                                    # 更新背景图片
+                                    background_pixmap = QPixmap.fromImage(result_image)
+                                
+                                # 应用亮度效果
+                                if brightness_value != 100:
+                                    # 创建图像副本
+                                    brightness_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
+                                    brightness_image.fill(Qt.transparent)
+                                    painter = QPainter(brightness_image)
+                                    
+                                    # 计算亮度调整因子
+                                    brightness_factor = brightness_value / 100.0
+                                    
+                                    # 应用亮度调整
+                                    painter.setOpacity(brightness_factor)
+                                    painter.drawPixmap(0, 0, background_pixmap)
+                                    painter.end()
+                                    
+                                    # 更新背景图片
+                                    background_pixmap = QPixmap.fromImage(brightness_image)
+                                
+                                # 创建背景标签并设置样式
+                                self.background_label = QLabel(self)
+                                self.background_label.setGeometry(0, 0, self.width(), self.height())
+                                self.background_label.setPixmap(background_pixmap.scaled(
+                                    self.width(), self.height(), 
+                                    Qt.IgnoreAspectRatio, 
+                                    Qt.SmoothTransformation
+                                ))
+                                self.background_label.lower()  # 将背景标签置于底层
+                                
+                                # 保存原始图片，用于窗口大小调整时重新缩放
+                                self.original_background_pixmap = background_pixmap
+                                
+                                # 确保背景标签随窗口大小变化
+                                self.background_label.setAttribute(Qt.WA_StyledBackground, True)
+                                
+                                # 设置窗口属性，确保背景可见
+                                self.setAttribute(Qt.WA_TranslucentBackground)
+                                self.setStyleSheet("background: transparent;")
+                                
+                                # 保存原始的resizeEvent方法
+                                self.original_resizeEvent = super(pumping_people, self).resizeEvent
+                                
+                                # 重写resizeEvent方法，调整背景大小
+                                self.resizeEvent = self._on_resize_event
+                                
+                                logger.info(f"白露魔法: 已成功应用设置界面背景图片 {flash_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%～ ")
+                            else:
+                                logger.error(f"白露魔法出错: 设置界面背景图片 {flash_background_image} 加载失败～ ")
+                        else:
+                            logger.warning(f"白露提醒: 设置界面背景图片 {flash_background_image} 不存在～ ")
+                    else:
+                        logger.warning("白露提醒: 背景图片文件夹不存在～ ")
+                else:
+                    logger.debug("白露魔法: 未选择设置界面背景图片～ ")
+            else:
+                logger.debug("白露魔法: 设置界面背景图片功能未启用～ ")
+                
+        except FileNotFoundError:
+            logger.warning("白露提醒: 自定义设置文件不存在，使用默认设置～ ")
+        except Exception as e:
+            logger.error(f"白露魔法出错: 应用设置界面背景图片时发生异常～ {e}")
+    
+    def _on_resize_event(self, event):
+        """(^・ω・^ ) 白露的窗口大小调整魔法！
+        当窗口大小改变时，自动调整背景图片大小，确保背景始终填满整个窗口～
+        就像魔法地毯一样，无论房间多大都能完美铺满！(๑•̀ㅂ•́)ow✧"""
+        # 调用原始的resizeEvent，确保布局正确更新
+        if hasattr(self, 'original_resizeEvent') and self.original_resizeEvent:
+            self.original_resizeEvent(event)
+        else:
+            super(pumping_people, self).resizeEvent(event)
+        
+        # 强制更新布局
+        self.updateGeometry()
+        self.update()
+        
+        # 如果存在背景标签，调整其大小
+        if hasattr(self, 'background_label') and self.background_label:
+            self.background_label.setGeometry(0, 0, self.width(), self.height())
+            # 使用保存的原始图片进行缩放，避免重复缩放导致的像素化
+            if hasattr(self, 'original_background_pixmap') and self.original_background_pixmap:
+                self.background_label.setPixmap(self.original_background_pixmap.scaled(
+                    self.width(), self.height(), 
+                    Qt.IgnoreAspectRatio, 
+                    Qt.SmoothTransformation
+                ))
+        
+        # 处理窗口最大化状态
+        if self.isMaximized():
+            self._handle_maximized_state()
+    
+    def _handle_maximized_state(self):
+        """(^・ω・^ ) 白露的窗口最大化处理魔法！
+        当窗口最大化时，确保所有控件正确适应新的窗口大小～
+        就像魔法变形术一样，让界面完美适应全屏状态！(๑•̀ㅂ•́)ow✧"""
+        # 确保所有子控件适应最大化窗口
+        for child in self.findChildren(QWidget):
+            child.updateGeometry()
+        
+        # 强制重新布局
+        QApplication.processEvents()
+        
+        # 延迟再次更新布局，确保所有控件都已适应
+        QTimer.singleShot(100, self._delayed_layout_update)
+    
+    def _delayed_layout_update(self):
+        """(^・ω・^ ) 白露的延迟布局更新魔法！
+        在窗口最大化后延迟执行布局更新，确保所有控件都已正确适应～
+        就像魔法延时术一样，给界面一些时间来完美调整！(๑•̀ㅂ•́)ow✧"""
+        # 再次强制更新布局
+        self.updateGeometry()
+        self.update()
+        
+        # 确保所有子控件再次更新
+        for child in self.findChildren(QWidget):
+            child.updateGeometry()
+        
+        # 最后一次强制重新布局
+        QApplication.processEvents()
