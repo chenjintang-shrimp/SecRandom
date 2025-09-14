@@ -48,34 +48,6 @@ class more_setting(QFrame):
         advanced_settings_Card = advanced_settingsCard()
         inner_layout_personal.addWidget(advanced_settings_Card)
 
-        # 创建个性化卡片组
-        self.themeAndZoomCard = SettingCardGroup("个性化", self)
-
-        # 主题设置卡片
-        self.themeCard = OptionsSettingCard(
-            cfg.themeMode,
-            get_theme_icon("ic_fluent_color_20_filled"),
-            self.tr("主题"),
-            self.tr("更改应用程序的主题(图标颜色需重启生效)"),
-            texts=["浅色", "深色", "跟随系统设置"]
-        )
-
-        # 界面缩放设置卡片
-        self.zoomCard = OptionsSettingCard(
-            cfg.dpiScale,
-            get_theme_icon("ic_fluent_zoom_fit_20_filled"),
-            self.tr("界面缩放"),
-            self.tr("更改界面和字体的大小"),
-            texts=["100%", "125%", "150%", "175%", "200%", self.tr("使用系统设置"),]
-        )
-        
-        # 添加组件到分组中
-        self.themeAndZoomCard.addSettingCard(self.themeCard)
-        self.themeAndZoomCard.addSettingCard(self.zoomCard)
-        
-        # 将卡片组添加到布局中
-        inner_layout_personal.addWidget(self.themeAndZoomCard)
-
         # 将内部的 QFrame 设置为 QScrollArea 的内容
         scroll_area_personal.setWidget(inner_frame_personal)
 
