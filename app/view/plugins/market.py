@@ -997,7 +997,7 @@ class PluginMarketPage(GroupHeaderCardWidget):
             # 显示无有效插件提示
             no_plugin_label = BodyLabel("暂无可用插件", self)
             no_plugin_label.setAlignment(Qt.AlignCenter)
-            self.addGroup(get_theme_icon("ic_fluent_extensions_20_filled"), "暂无可用插件", "插件市场中暂无可用插件", no_plugin_label)
+            self.addGroup(get_theme_icon("ic_fluent_database_plug_connected_20_filled"), "暂无可用插件", "插件市场中暂无可用插件", no_plugin_label)
             return
         
         # 一次性获取插件广场列表，避免重复请求

@@ -908,7 +908,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
             # 显示无插件提示组
             no_plugin_label = BodyLabel("暂无可用插件", self)
             no_plugin_label.setAlignment(Qt.AlignCenter)
-            self.addGroup(get_theme_icon("ic_fluent_extensions_20_filled"), "暂无可用插件", "暂无可用插件", no_plugin_label)
+            self.addGroup(get_theme_icon("ic_fluent_database_plug_connected_20_filled"), "暂无可用插件", "暂无可用插件", no_plugin_label)
         else:
             # 为每个插件创建按钮组
             for plugin in plugins:
@@ -918,7 +918,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
                 if get_plugin_icon:
                     icon = QIcon(get_plugin_icon)
                 else:
-                    icon = get_theme_icon("ic_fluent_extensions_20_filled")
+                    icon = get_theme_icon("ic_fluent_database_plug_connected_20_filled")
 
                 self.addGroup(icon, plugin["name"], f"版本: {plugin['version']} | 作者: {plugin['author']}", button_group)
 
