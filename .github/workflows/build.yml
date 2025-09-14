@@ -281,7 +281,7 @@ jobs:
         run: |
           cd release
           echo "" >> ../CHANGELOG.md
-          echo "Full Changelog: [v1.2.2.3...${{ github.ref_name }}](https://github.com/SECTL/SecRandom/compare/v1.2.2.3...${{ github.ref_name }})" >> ../CHANGELOG.md
+          echo "Full Changelog: [v1.2.5.6...${{ github.ref_name }}](https://github.com/SECTL/SecRandom/compare/v1.2.5.6...${{ github.ref_name }})" >> ../CHANGELOG.md
           echo "" >> ../CHANGELOG.md
           echo "**国内 下载链接**" >> ../CHANGELOG.md
           echo "| 平台/打包方式 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
@@ -290,7 +290,7 @@ jobs:
           echo "" >> ../CHANGELOG.md
           echo "**Github 镜像 下载链接**" >> ../CHANGELOG.md
           echo "| 镜像源 | 平台/打包方式 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
-          echo "| --- | --- | --- |" >> ../CHANGELOG.md
+          echo "| --- | --- | --- | --- |" >> ../CHANGELOG.md
           echo "| ghfast.top | Windows 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
           echo "| gh-proxy.com | Windows 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
           echo "" >> ../CHANGELOG.md
