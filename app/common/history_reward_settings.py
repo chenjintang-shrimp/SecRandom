@@ -27,7 +27,6 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         
         # 选择奖池的下拉框
         self.prize_pools_comboBox = ComboBox()
-        self.prize_pools_comboBox.setFixedWidth(250)
         self.prize_pools_comboBox.setPlaceholderText("选择一个需要查看历史记录的奖池")
         self.prize_pools_comboBox.addItems([])
         self.prize_pools_comboBox.setFont(QFont(load_custom_font(), 12))
@@ -35,7 +34,6 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
 
         # 选择奖品的下拉框
         self.reward_comboBox = ComboBox()
-        self.reward_comboBox.setFixedWidth(250)
         self.reward_comboBox.setPlaceholderText("选择需要查看历史记录的奖品")
         self.reward_comboBox.addItems([])
         self.reward_comboBox.setFont(QFont(load_custom_font(), 12))

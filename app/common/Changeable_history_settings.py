@@ -32,7 +32,6 @@ class history_SettinsCard(GroupHeaderCardWidget):
         
         # 选择班级的下拉框
         self.class_comboBox = ComboBox()
-        self.class_comboBox.setFixedWidth(250)
         self.class_comboBox.setPlaceholderText("选择一个需要查看历史记录的班级")
         self.class_comboBox.addItems([])
         self.class_comboBox.setFont(QFont(load_custom_font(), 12))
@@ -40,7 +39,6 @@ class history_SettinsCard(GroupHeaderCardWidget):
 
         # 选择同学的下拉框
         self.student_comboBox = ComboBox()
-        self.student_comboBox.setFixedWidth(250)
         self.student_comboBox.setPlaceholderText("选择需要查看历史记录的同学")
         self.student_comboBox.addItems([])
         self.student_comboBox.setFont(QFont(load_custom_font(), 12))
@@ -60,7 +58,6 @@ class history_SettinsCard(GroupHeaderCardWidget):
 
         # 权重还是概率
         self.probability_or_weight = ComboBox()
-        self.probability_or_weight.setFixedWidth(100)
         self.probability_or_weight.setPlaceholderText("选择权重|概率")
         self.probability_or_weight.addItems(["权重", "概率"])
         self.probability_or_weight.currentIndexChanged.connect(self.save_settings)

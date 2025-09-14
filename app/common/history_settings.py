@@ -28,7 +28,6 @@ class history_SettinsCard(GroupHeaderCardWidget):
         
         # 选择班级的下拉框
         self.class_comboBox = ComboBox()
-        self.class_comboBox.setFixedWidth(250)
         self.class_comboBox.setPlaceholderText("选择需要查看历史记录的班级")
         self.class_comboBox.addItems([])
         self.class_comboBox.setFont(QFont(load_custom_font(), 12))
@@ -36,7 +35,6 @@ class history_SettinsCard(GroupHeaderCardWidget):
 
         # 选择同学的下拉框
         self.student_comboBox = ComboBox()
-        self.student_comboBox.setFixedWidth(250)
         self.student_comboBox.setPlaceholderText("选择需要查看历史记录的同学")
         self.student_comboBox.addItems([])
         self.student_comboBox.setFont(QFont(load_custom_font(), 12))

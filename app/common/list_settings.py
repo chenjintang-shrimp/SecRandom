@@ -31,7 +31,6 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.class_Button.setFont(QFont(load_custom_font(), 12))
         
         self.class_comboBox = ComboBox()
-        self.class_comboBox.setFixedWidth(250)
         self.class_comboBox.setPlaceholderText("选择一个需要设置名单的班级")
         self.class_comboBox.addItems([])
         self.class_comboBox.setFont(QFont(load_custom_font(), 12))
@@ -792,7 +791,6 @@ class ImportStudentDialog(QDialog):
         # 🌟 星穹铁道白露：创建下拉框行 ~ (๑•̀ㅂ•́)ญ✧
         row_layout = QHBoxLayout()
         combo = self._create_combo_box()
-        combo.setFixedWidth(200)
         setattr(self, combo_attr, combo)
         row_layout.addWidget(combo)
         layout.addRow(label_text, row_layout)
@@ -801,7 +799,6 @@ class ImportStudentDialog(QDialog):
         # 🌟 星穹铁道白露：创建带复选框的下拉框行 ~ (๑•̀ㅂ•́)ญ✧
         row_layout = QHBoxLayout()
         combo = self._create_combo_box()
-        combo.setFixedWidth(200)
         setattr(self, combo_attr, combo)
 
         check_box = CheckBox("包含")

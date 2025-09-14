@@ -80,7 +80,6 @@ class PasswordDialog(QDialog):
         # 解锁方式选择 - 根据配置动态显示
         self.unlock_method = ComboBox()
         self.unlock_method.setFont(QFont(load_custom_font(), 12))
-        self.unlock_method.setFixedWidth(360)
         
         # 根据配置文件动态添加解锁方式
         self.update_unlock_methods()
@@ -91,7 +90,6 @@ class PasswordDialog(QDialog):
         self.password_input.setPlaceholderText("请输入密码")
         self.password_input.setEchoMode(QLineEdit.Password)
         self.password_input.setFont(QFont(load_custom_font(), 12))
-        self.password_input.setFixedWidth(360)
         # 回车确认
         self.password_input.returnPressed.connect(self.verify)
         content_layout.addWidget(self.password_input, 0, Qt.AlignCenter)
@@ -105,11 +103,9 @@ class PasswordDialog(QDialog):
         self.key_file_input = LineEdit()
         self.key_file_input.setPlaceholderText("请选择密钥文件")
         self.key_file_input.setFont(QFont(load_custom_font(), 12))
-        self.key_file_input.setFixedWidth(230)
         self.key_file_btn = PushButton("选择文件")
         self.key_file_btn.setFont(QFont(load_custom_font(), 12))
         self.key_file_btn.clicked.connect(self.select_key_file)
-        self.key_file_btn.setFixedWidth(110)
         # 自动验证 - 密钥文件输入框
         self.key_file_input.textChanged.connect(self.start_auto_verify)
         
@@ -123,14 +119,12 @@ class PasswordDialog(QDialog):
         self.username_input = LineEdit()
         self.username_input.setPlaceholderText("请输入用户名")
         self.username_input.setFont(QFont(load_custom_font(), 12))
-        self.username_input.setFixedWidth(360)
         content_layout.addWidget(self.username_input, 0, Qt.AlignCenter)
 
         # 2FA验证码
         self.totp_input = LineEdit()
         self.totp_input.setPlaceholderText("请输入2FA验证码")
         self.totp_input.setFont(QFont(load_custom_font(), 12))
-        self.totp_input.setFixedWidth(360)
         # 回车确认
         self.totp_input.returnPressed.connect(self.verify)
         content_layout.addWidget(self.totp_input, 0, Qt.AlignCenter)
@@ -149,7 +143,6 @@ class PasswordDialog(QDialog):
         self.usb_refresh_btn = PushButton("重新检测")
         self.usb_refresh_btn.setFont(QFont(load_custom_font(), 12))
         self.usb_refresh_btn.clicked.connect(self.check_usb_status)
-        self.usb_refresh_btn.setFixedWidth(100)
         usb_status_layout.addWidget(self.usb_refresh_btn, alignment=Qt.AlignCenter)
         
         content_layout.addWidget(self.usb_status_widget, 0, Qt.AlignCenter)
@@ -161,7 +154,6 @@ class PasswordDialog(QDialog):
         self.verify_btn = PushButton("验证")
         self.verify_btn.clicked.connect(self.verify)
         self.verify_btn.setFont(QFont(load_custom_font(), 12))
-        self.verify_btn.setFixedWidth(100)
         content_layout.addWidget(self.verify_btn, 0, Qt.AlignRight)
 
         # 根据选择显示不同控件
