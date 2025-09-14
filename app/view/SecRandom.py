@@ -9,16 +9,18 @@ import sys
 import time
 import subprocess
 import warnings
+import random
 from urllib3.exceptions import InsecureRequestWarning
 from pathlib import Path
 
 # 🧙‍♀️ 第三方魔法典籍 🧙‍♂️
 import loguru
 from loguru import logger
+from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import *
 from PyQt5.QtNetwork import *
+from PyQt5.QtWidgets import QGraphicsBlurEffect, QGraphicsScene, QGraphicsPixmapItem
 from qfluentwidgets import *
 
 # 🏰 应用内部魔法卷轴 🏰
@@ -475,6 +477,9 @@ class Window(MSFluentWindow):
         self.setWindowTitle('SecRandom')
         self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png'))))
 
+        # 应用背景图片
+        self.apply_background_image()
+
         # 检查更新
         check_startup = self.config_manager.get_foundation_setting('check_on_startup')
         if check_startup:
@@ -495,6 +500,186 @@ class Window(MSFluentWindow):
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint) # 取消置顶
 
         self._apply_window_visibility_settings()
+
+    def apply_background_image(self):
+        """(^・ω・^ ) 白露的背景图片魔法！
+        检查设置中的 enable_main_background，如果开启则应用主界面背景图片～
+        让界面变得更加美观个性化，就像给房间贴上漂亮的壁纸一样！(๑•̀ㅂ•́)ow✧"""
+        try:
+            # 读取自定义设置
+            custom_settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(custom_settings_path, 'r', encoding='utf-8') as f:
+                custom_settings = json.load(f)
+                
+            # 检查是否启用了主界面背景图标
+            personal_settings = custom_settings.get('personal', {})
+            enable_main_background = personal_settings.get('enable_main_background', True)
+            
+            if enable_main_background:
+                # 获取主界面背景图片设置
+                main_background_image = personal_settings.get('main_background_image', '')
+                
+                # 检查是否选择了背景图片
+                if main_background_image and main_background_image != "无背景图":
+                    # 获取背景图片文件夹路径
+                    background_dir = path_manager.get_resource_path('images', 'background')
+                    
+                    # 检查文件夹是否存在
+                    if background_dir.exists():
+                        # 构建图片完整路径
+                        image_path = background_dir / main_background_image
+                        
+                        # 检查图片文件是否存在
+                        if image_path.exists():
+                            # 创建背景图片对象
+                            background_pixmap = QPixmap(str(image_path))
+                            
+                            # 如果图片加载成功，应用背景
+                            if not background_pixmap.isNull():
+                                # 获取模糊度和亮度设置
+                                blur_value = personal_settings.get('background_blur', 10)
+                                brightness_value = personal_settings.get('background_brightness', 30)
+                                
+                                # 应用模糊效果
+                                if blur_value > 0:
+                                    # 创建模糊效果
+                                    blur_effect = QGraphicsBlurEffect()
+                                    blur_effect.setBlurRadius(blur_value)
+                                    
+                                    # 创建临时场景和图形项来应用模糊效果
+                                    scene = QGraphicsScene()
+                                    item = QGraphicsPixmapItem(background_pixmap)
+                                    item.setGraphicsEffect(blur_effect)
+                                    scene.addItem(item)
+                                    
+                                    # 创建渲染图像
+                                    result_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
+                                    result_image.fill(Qt.transparent)
+                                    painter = QPainter(result_image)
+                                    scene.render(painter)
+                                    painter.end()
+                                    
+                                    # 更新背景图片
+                                    background_pixmap = QPixmap.fromImage(result_image)
+                                
+                                # 应用亮度效果
+                                if brightness_value != 100:
+                                    # 创建图像副本
+                                    brightness_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
+                                    brightness_image.fill(Qt.transparent)
+                                    painter = QPainter(brightness_image)
+                                    
+                                    # 计算亮度调整因子
+                                    brightness_factor = brightness_value / 100.0
+                                    
+                                    # 应用亮度调整
+                                    painter.setOpacity(brightness_factor)
+                                    painter.drawPixmap(0, 0, background_pixmap)
+                                    painter.end()
+                                    
+                                    # 更新背景图片
+                                    background_pixmap = QPixmap.fromImage(brightness_image)
+                                
+                                # 创建背景标签并设置样式
+                                self.background_label = QLabel(self)
+                                self.background_label.setGeometry(0, 0, self.width(), self.height())
+                                self.background_label.setPixmap(background_pixmap.scaled(
+                                    self.width(), self.height(), 
+                                    Qt.IgnoreAspectRatio, 
+                                    Qt.SmoothTransformation
+                                ))
+                                self.background_label.lower()  # 将背景标签置于底层
+                                
+                                # 保存原始图片，用于窗口大小调整时重新缩放
+                                self.original_background_pixmap = background_pixmap
+                                
+                                # 确保背景标签随窗口大小变化
+                                self.background_label.setAttribute(Qt.WA_StyledBackground, True)
+                                
+                                # 设置窗口属性，确保背景可见
+                                self.setAttribute(Qt.WA_TranslucentBackground)
+                                self.setStyleSheet("background: transparent;")
+                                
+                                # 保存原始的resizeEvent方法
+                                self.original_resizeEvent = self.resizeEvent
+                                
+                                # 重写resizeEvent方法，调整背景大小
+                                self.resizeEvent = self._on_resize_event
+                                
+                                logger.info(f"白露魔法: 已成功应用主界面背景图片 {main_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%～ ")
+                            else:
+                                logger.error(f"白露魔法出错: 主界面背景图片 {main_background_image} 加载失败～ ")
+                        else:
+                            logger.warning(f"白露提醒: 主界面背景图片 {main_background_image} 不存在～ ")
+                    else:
+                        logger.warning("白露提醒: 背景图片文件夹不存在～ ")
+                else:
+                    logger.debug("白露魔法: 未选择主界面背景图片～ ")
+            else:
+                logger.debug("白露魔法: 主界面背景图片功能未启用～ ")
+                
+        except FileNotFoundError:
+            logger.warning("白露提醒: 自定义设置文件不存在，使用默认设置～ ")
+        except Exception as e:
+            logger.error(f"白露魔法出错: 应用主界面背景图片时发生异常～ {e}")
+    
+    def _on_resize_event(self, event):
+        """(^・ω・^ ) 白露的窗口大小调整魔法！
+        当窗口大小改变时，自动调整背景图片大小，确保背景始终填满整个窗口～
+        就像魔法地毯一样，无论房间多大都能完美铺满！(๑•̀ㅂ•́)ow✧"""
+        # 调用原始的resizeEvent，确保布局正确更新
+        if hasattr(self, 'original_resizeEvent'):
+            self.original_resizeEvent(event)
+        else:
+            super(Window, self).resizeEvent(event)
+        
+        # 强制更新布局
+        self.updateGeometry()
+        self.update()
+        
+        # 如果存在背景标签，调整其大小
+        if hasattr(self, 'background_label') and self.background_label:
+            self.background_label.setGeometry(0, 0, self.width(), self.height())
+            # 使用保存的原始图片进行缩放，避免重复缩放导致的像素化
+            if hasattr(self, 'original_background_pixmap') and self.original_background_pixmap:
+                self.background_label.setPixmap(self.original_background_pixmap.scaled(
+                    self.width(), self.height(), 
+                    Qt.IgnoreAspectRatio, 
+                    Qt.SmoothTransformation
+                ))
+        
+        # 处理窗口最大化状态
+        if self.isMaximized():
+            self._handle_maximized_state()
+    
+    def _handle_maximized_state(self):
+        """(^・ω・^ ) 白露的窗口最大化处理魔法！
+        当窗口最大化时，确保所有控件正确适应新的窗口大小～
+        就像魔法变形术一样，让界面完美适应全屏状态！(๑•̀ㅂ•́)ow✧"""
+        # 确保所有子控件适应最大化窗口
+        for child in self.findChildren(QWidget):
+            child.updateGeometry()
+        
+        # 强制重新布局
+        QApplication.processEvents()
+        
+        # 延迟再次更新布局，确保所有控件都已适应
+        QTimer.singleShot(100, self._delayed_layout_update)
+    
+    def _delayed_layout_update(self):
+        """(^・ω・^ ) 白露的延迟布局更新魔法！
+        在窗口最大化后延迟执行布局更新，确保所有控件都已正确适应～
+        就像魔法延时术一样，给界面一些时间来完美调整！(๑•̀ㅂ•́)ow✧"""
+        # 再次强制更新布局
+        self.updateGeometry()
+        self.update()
+        
+        # 确保所有子控件再次更新
+        for child in self.findChildren(QWidget):
+            child.updateGeometry()
+        
+        # 最后一次强制重新布局
+        QApplication.processEvents()
 
     def _position_window(self):
         """(^・ω・^ ) 白露的窗口定位魔法！
@@ -611,30 +796,100 @@ class Window(MSFluentWindow):
         self.settingInterface.setObjectName("settingInterface")
         logger.debug("白露建筑: 设置界面房间已建成～ ")
 
-        # 创建历史交接设置界面
-        self.history_handoff_settingInterface = history_handoff_setting(self)
-        self.history_handoff_settingInterface.setObjectName("history_handoff_settingInterface")
-        logger.debug("白露建筑: 历史交接设置界面房间已建成～ ")
-
-        # 创建抽人界面（主界面）
-        self.pumping_peopleInterface = pumping_people(self)
-        self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
-        logger.debug("白露建筑: 抽人界面房间已建成～ ")
-
         # 创建关于界面
         self.about_settingInterface = about(self)
         self.about_settingInterface.setObjectName("about_settingInterface")
         logger.debug("白露建筑: 关于界面房间已建成～ ")
-
-        # 创建抽奖界面
-        self.pumping_rewardInterface = pumping_reward(self)
-        self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
-        logger.debug("白露建筑: 抽奖界面房间已建成～ ")
         
-        # 创建背单词界面
-        self.vocabulary_learningInterface = vocabulary_learning(self)
-        self.vocabulary_learningInterface.setObjectName("vocabulary_learningInterface")
-        logger.debug("白露建筑: 背单词界面房间已建成～ ")
+        # 根据设置决定是否创建"历史交接设置"界面
+        try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                history_side = sidebar_settings.get('main_window_history_switch', 1)
+                
+                if history_side != 2:  # 不为"不显示"时才创建界面
+                    # 创建历史交接设置界面
+                    self.history_handoff_settingInterface = history_handoff_setting(self)
+                    self.history_handoff_settingInterface.setObjectName("history_handoff_settingInterface")
+                    logger.debug("白露建筑: 历史交接设置界面房间已建成～ ")
+                else:
+                    logger.debug("白露建筑: '历史交接设置'界面已设置为不创建～ ")
+                    self.history_handoff_settingInterface = None
+        except Exception as e:
+            logger.error(f"白露建筑出错: 读取历史交接设置界面设置失败了呢～ {e}, 默认创建界面")
+            # 创建历史交接设置界面
+            self.history_handoff_settingInterface = history_handoff_setting(self)
+            self.history_handoff_settingInterface.setObjectName("history_handoff_settingInterface")
+            logger.debug("白露建筑: 历史交接设置界面房间已建成～ ")
+        
+        # 根据设置决定是否创建"背单词"界面
+        try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                vocabulary_side = sidebar_settings.get('main_window_side_switch', 2)
+                
+                if vocabulary_side != 2:  # 不为"不显示"时才创建界面
+                    # 创建背单词界面
+                    self.vocabulary_learningInterface = vocabulary_learning(self)
+                    self.vocabulary_learningInterface.setObjectName("vocabulary_learningInterface")
+                    logger.debug("白露建筑: 背单词界面房间已建成～ ")
+                else:
+                    logger.debug("白露建筑: '背单词'界面已设置为不创建～ ")
+                    self.vocabulary_learningInterface = None
+        except Exception as e:
+            logger.error(f"白露建筑出错: 读取背单词界面设置失败了呢～ {e}, 默认不创建界面")
+            # 创建背单词界面
+            self.vocabulary_learningInterface = None
+
+        # 根据设置决定是否创建"抽人"界面
+        try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                pumping_floating_side = sidebar_settings.get('pumping_floating_side', 0)
+                
+                if pumping_floating_side != 2:  # 不为"不显示"时才创建界面
+                    # 创建抽人界面（主界面）
+                    self.pumping_peopleInterface = pumping_people(self)
+                    self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
+                    logger.debug("白露建筑: 抽人界面房间已建成～ ")
+                else:
+                    logger.debug("白露建筑: '抽人'界面已设置为不创建～ ")
+                    self.pumping_peopleInterface = None
+        except Exception as e:
+            logger.error(f"白露建筑出错: 读取抽人界面设置失败了呢～ {e}, 默认创建界面")
+            # 创建抽人界面（主界面）
+            self.pumping_peopleInterface = pumping_people(self)
+            self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
+            logger.debug("白露建筑: 抽人界面房间已建成～ ")
+
+        # 根据设置决定是否创建"抽奖"界面
+        try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                pumping_reward_side = sidebar_settings.get('pumping_reward_side', 0)
+                
+                if pumping_reward_side != 2:  # 不为"不显示"时才创建界面
+                    # 创建抽奖界面
+                    self.pumping_rewardInterface = pumping_reward(self)
+                    self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
+                    logger.debug("白露建筑: 抽奖界面房间已建成～ ")
+                else:
+                    logger.debug("白露建筑: '抽奖'界面已设置为不创建～ ")
+                    self.pumping_rewardInterface = None
+        except Exception as e:
+            logger.error(f"白露建筑出错: 读取抽奖界面设置失败了呢～ {e}, 默认创建界面")
+            # 创建抽奖界面
+            self.pumping_rewardInterface = pumping_reward(self)
+            self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
+            logger.debug("白露建筑: 抽奖界面房间已建成～ ")
 
         # 初始化导航系统
         self.initNavigation()
@@ -645,51 +900,111 @@ class Window(MSFluentWindow):
         根据用户设置构建个性化菜单导航～ 就像魔法地图一样清晰！
         确保每个功能模块都有明确路标，不会让用户迷路哦！🧭✨"""
         try:
-            settings_path = path_manager.get_settings_path('Settings.json')
+            settings_path = path_manager.get_settings_path('custom_settings.json')
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                foundation_settings = settings.get('foundation', {})
+                sidebar_settings = settings.get('sidebar', {})
                 logger.debug("白露导航: 已读取导航配置，准备构建个性化菜单～ ")
 
                 # 根据设置决定"抽人"界面位置
-                if foundation_settings.get('pumping_floating_side', 0) == 1:
-                    self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.BOTTOM)
-                    logger.debug("白露导航: '抽人'界面已放置在底部导航栏～ ")
+                pumping_floating_side = sidebar_settings.get('pumping_floating_side', 0)
+                if pumping_floating_side == 1:
+                    if self.pumping_peopleInterface is not None:
+                        self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.BOTTOM)
+                        logger.debug("白露导航: '抽人'界面已放置在底部导航栏～ ")
+                    else:
+                        logger.debug("白露导航: '抽人'界面未创建，无法添加到导航栏～ ")
+                elif pumping_floating_side == 2:
+                    logger.debug("白露导航: '抽人'界面已设置为不显示～ ")
                 else:
-                    self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
-                    logger.debug("白露导航: '抽人'界面已放置在顶部导航栏～ ")
+                    if self.pumping_peopleInterface is not None:
+                        self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
+                        logger.debug("白露导航: '抽人'界面已放置在顶部导航栏～ ")
+                    else:
+                        logger.debug("白露导航: '抽人'界面未创建，无法添加到导航栏～ ")
 
                 # 根据设置决定"抽奖"界面位置
-                if foundation_settings.get('pumping_reward_side', 0) == 1:
-                    self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.BOTTOM)
-                    logger.debug("白露导航: '抽奖'界面已放置在底部导航栏～ ")
+                pumping_reward_side = sidebar_settings.get('pumping_reward_side', 0)
+                if pumping_reward_side == 1:
+                    if self.pumping_rewardInterface is not None:
+                        self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.BOTTOM)
+                        logger.debug("白露导航: '抽奖'界面已放置在底部导航栏～ ")
+                    else:
+                        logger.debug("白露导航: '抽奖'界面未创建，无法添加到导航栏～ ")
+                elif pumping_reward_side == 2:
+                    logger.debug("白露导航: '抽奖'界面已设置为不显示～ ")
                 else:
-                    self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
-                    logger.debug("白露导航: '抽奖'界面已放置在顶部导航栏～ ")
+                    if self.pumping_rewardInterface is not None:
+                        self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
+                        logger.debug("白露导航: '抽奖'界面已放置在顶部导航栏～ ")
+                    else:
+                        logger.debug("白露导航: '抽奖'界面未创建，无法添加到导航栏～ ")
 
         except FileNotFoundError as e:
             logger.error(f"白露导航出错: 配置文件找不到啦～ {e}, 使用默认顶部导航布局")
-            self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
-            self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
+            if self.pumping_peopleInterface is not None:
+                self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
+            if self.pumping_rewardInterface is not None:
+                self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
 
         try:
             # 添加单词PK界面导航项
-            if foundation_settings.get('main_window_side_switch', True):
-                self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_group_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
+            vocabulary_side = sidebar_settings.get('main_window_side_switch', 2)
+            if vocabulary_side == 1:
+                if self.vocabulary_learningInterface is not None:
+                    self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
+                    logger.debug("白露导航: '单词PK'界面已放置在底部导航栏～ ")
+                else:
+                    logger.debug("白露导航: '单词PK'界面未创建，无法添加到导航栏～ ")
+            elif vocabulary_side == 2:
+                logger.debug("白露导航: '单词PK'界面已设置为不显示～ ")
+            else:
+                if self.vocabulary_learningInterface is not None:
+                    self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.TOP)
+                    logger.debug("白露导航: '单词PK'界面已放置在顶部导航栏～ ")
+                else:
+                    logger.debug("白露导航: '单词PK'界面未创建，无法添加到导航栏～ ")
         except Exception as e:
-            self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_group_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
+            if self.vocabulary_learningInterface is not None:
+                self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
             logger.error(f"白露导航出错: 加载单词PK界面导航项失败了呢～ {e}")
 
-        # 添加固定位置的导航项
-        # 为历史记录导航项添加点击事件处理器
-        history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
-        # 首次点击时加载数据
-        history_item.clicked.connect(lambda: self.history_handoff_settingInterface.pumping_people_card.load_data())
+        # 添加历史记录导航项
+        try:
+            history_side = sidebar_settings.get('main_window_history_switch', 1)
+            if history_side == 1:
+                if self.history_handoff_settingInterface is not None:
+                    # 为历史记录导航项添加点击事件处理器
+                    history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+                    # 点击历史记录导航项时切换到历史记录界面
+                    history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
+                    logger.debug("白露导航: '历史记录'导航项已放置在底部导航栏～ ")
+                else:
+                    logger.debug("白露导航: '历史记录'界面未创建，无法添加到导航栏～ ")
+            elif history_side == 2:
+                logger.debug("白露导航: '历史记录'导航项已设置为不显示～ ")
+            else:
+                if self.history_handoff_settingInterface is not None:
+                    # 为历史记录导航项添加点击事件处理器
+                    history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.TOP)
+                    # 点击历史记录导航项时切换到历史记录界面
+                    history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
+                    logger.debug("白露导航: '历史记录'导航项已放置在顶部导航栏～ ")
+                else:
+                    logger.debug("白露导航: '历史记录'界面未创建，无法添加到导航栏～ ")
+        except Exception as e:
+            logger.error(f"白露导航出错: 加载历史记录导航项失败了呢～ {e}")
+            # 默认添加到底部导航栏
+            if self.history_handoff_settingInterface is not None:
+                history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+                # 点击历史记录导航项时切换到历史记录界面
+                history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
 
         self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
 
         try:
-            if foundation_settings.get('show_settings_icon', True):
+            settings_side = sidebar_settings.get('show_settings_icon', 1)
+            if settings_side == 1:
                 # 创建一个空的设置界面占位符，用于导航栏
                 self.settings_placeholder = QWidget()
                 self.settings_placeholder.setObjectName("settings_placeholder")
@@ -697,15 +1012,28 @@ class Window(MSFluentWindow):
                 # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
+                logger.debug("白露导航: '设置'图标已放置在底部导航栏～ ")
+            elif settings_side == 2:
+                logger.debug("白露导航: '设置'图标已设置为不显示～ ")
+            else:
+                # 创建一个空的设置界面占位符，用于导航栏
+                self.settings_placeholder = QWidget()
+                self.settings_placeholder.setObjectName("settings_placeholder")
+                settings_item = self.addSubInterface(self.settings_placeholder, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.TOP)
+                # 为导航项添加点击事件处理器，调用show_setting_interface方法
+                settings_item.clicked.connect(self.show_setting_interface)
+                settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
+                logger.debug("白露导航: '设置'图标已放置在顶部导航栏～ ")
         except Exception as e:
             logger.error(f"白露导航出错: 加载设置图标失败了呢～ {e}")
-            # 创建一个空的设置界面占位符，用于导航栏
-            self.settings_placeholder = QWidget()
-            self.settings_placeholder.setObjectName("settings_placeholder")
-            settings_item = self.addSubInterface(self.settings_placeholder, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.BOTTOM)
-            # 为导航项添加点击事件处理器，调用show_setting_interface方法
-            settings_item.clicked.connect(self.show_setting_interface)
-            settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
+            if sidebar_settings.get('show_settings_icon', True):
+                # 创建一个空的设置界面占位符，用于导航栏
+                self.settings_placeholder = QWidget()
+                self.settings_placeholder.setObjectName("settings_placeholder")
+                settings_item = self.addSubInterface(self.settings_placeholder, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.BOTTOM)
+                # 为导航项添加点击事件处理器，调用show_setting_interface方法
+                settings_item.clicked.connect(self.show_setting_interface)
+                settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
         
         logger.info("白露导航: 所有导航项已布置完成，导航系统可以正常使用啦～ ")
 
@@ -1476,9 +1804,44 @@ class Window(MSFluentWindow):
     def show_settings_window(self):
         """(^・ω・^ ) 白露的设置界面召唤魔法！
         通过URL协议打开设置界面，让用户可以调整各种设置～
-        会进行安全验证，确保只有授权用户才能访问设置！🔒✨"""
+        会检查是否跳过安全验证，如果开启则直接打开设置界面！🔒✨"""
         logger.info("白露URL: 正在打开设置界面～")
-        self.show_setting_interface()
+        
+        # 检查是否跳过安全验证
+        skip_security = False
+        try:
+            settings_path = path_manager.get_settings_path('fixed_url_settings.json')
+            if path_manager.file_exists(settings_path):
+                with open_file(settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    fixed_url_settings = settings.get('fixed_url', {})
+                    skip_security = fixed_url_settings.get('settings_url_skip_security', False)
+        except Exception as e:
+            logger.error(f"读取跳过安全验证设置失败: {e}")
+        
+        # 如果没有设置跳过安全验证，则进行密码验证
+        if not skip_security:
+            self.show_setting_interface()
+        else:
+            # 跳过安全验证，直接创建并显示设置界面
+            if not hasattr(self, 'settingInterface') or not self.settingInterface:
+                from app.view.settings import settings_Window
+                self.settingInterface = settings_Window(self)
+
+            if self.settingInterface.isVisible() and not self.settingInterface.isMinimized():
+                self.settingInterface.showNormal() 
+                self.settingInterface.activateWindow()
+                self.settingInterface.raise_()
+            else:
+                if self.settingInterface.isMinimized():
+                    self.settingInterface.showNormal()
+                    self.settingInterface.activateWindow()
+                    self.settingInterface.raise_()
+                else:
+                    self.settingInterface.show()
+                    self.settingInterface.activateWindow()
+                    self.settingInterface.raise_()
+        
         logger.info("白露URL: 设置界面已成功打开～")
     
     def show_pumping_window(self):
@@ -1522,25 +1885,102 @@ class Window(MSFluentWindow):
     def show_floating_window(self):
         """(^・ω・^ ) 白露的浮窗界面召唤魔法！
         通过URL协议打开浮窗界面，让用户使用便捷的悬浮功能～
-        会切换浮窗的显示状态，让用户可以立即使用浮窗功能！🪟✨"""
+        会检查是否跳过安全验证，如果开启则直接切换浮窗状态！🪟✨"""
         logger.info("白露URL: 正在打开浮窗界面～")
-        self.toggle_levitation_window()
+        
+        # 检查是否跳过安全验证
+        skip_security = False
+        try:
+            settings_path = path_manager.get_settings_path('fixed_url_settings.json')
+            if path_manager.file_exists(settings_path):
+                with open_file(settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    fixed_url_settings = settings.get('fixed_url', {})
+                    skip_security = fixed_url_settings.get('floating_url_skip_security', False)
+        except Exception as e:
+            logger.error(f"读取跳过安全验证设置失败: {e}")
+        
+        # 如果没有设置跳过安全验证，则进行密码验证
+        if not skip_security:
+            self.toggle_levitation_window()
+        else:
+            # 跳过安全验证，直接切换浮窗状态
+            if not hasattr(self, 'levitation_window') or not self.levitation_window:
+                self.levitation_window.show()
+            elif self.levitation_window.isVisible():
+                self.levitation_window.hide()
+            else:
+                self.levitation_window.show()
+                self.levitation_window.activateWindow()
+                self.levitation_window.raise_()
+        
         logger.info("白露URL: 浮窗界面已成功打开～")
     
     def show_plugin_settings_window(self):
         """(^・ω・^ ) 白露的插件设置界面召唤魔法！
         通过URL协议打开插件设置界面，让用户可以管理插件相关设置～
-        会自动打开设置窗口并切换到插件设置界面！⚙️✨
+        会检查是否跳过安全验证，如果开启则直接打开插件设置界面！⚙️✨
         """
         logger.info(f"白露URL: 正在打开插件设置界面～")
         
-        # 确保设置窗口存在
-        if not hasattr(self, 'settingInterface') or not self.settingInterface:
-            from app.view.settings import settings_Window
-            self.settingInterface = settings_Window(self)
+        # 检查是否跳过安全验证
+        skip_security = False
+        try:
+            settings_path = path_manager.get_settings_path('fixed_url_settings.json')
+            if path_manager.file_exists(settings_path):
+                with open_file(settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    fixed_url_settings = settings.get('fixed_url', {})
+                    skip_security = fixed_url_settings.get('plugin_settings_open_url_skip_security', False)
+        except Exception as e:
+            logger.error(f"读取跳过安全验证设置失败: {e}")
         
-        # 调用设置窗口的插件设置界面方法
-        self.settingInterface.show_plugin_settings_interface()
+        # 如果没有设置跳过安全验证，则进行密码验证
+        if not skip_security:
+            # 确保设置窗口存在
+            if not hasattr(self, 'settingInterface') or not self.settingInterface:
+                from app.view.settings import settings_Window
+                self.settingInterface = settings_Window(self)
+            
+            # 调用设置窗口的插件设置界面方法
+            self.settingInterface.show_plugin_settings_interface()
+        else:
+            # 跳过安全验证，直接创建并显示设置窗口，然后切换到插件设置界面
+            if not hasattr(self, 'settingInterface') or not self.settingInterface:
+                from app.view.settings import settings_Window
+                self.settingInterface = settings_Window(self)
+            
+            # 确保设置窗口可见
+            if not self.settingInterface.isVisible():
+                self.settingInterface.show()
+                self.settingInterface.activateWindow()
+                self.settingInterface.raise_()
+            
+            # 如果窗口最小化，则恢复
+            if self.settingInterface.isMinimized():
+                self.settingInterface.showNormal()
+            
+            # 检查插件设置界面是否存在
+            if self.settingInterface.plugin_settingsInterface is not None:
+                # 切换到插件设置界面
+                self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.plugin_settingsInterface)
+                logger.info(f"白露URL: 插件设置界面已成功打开～")
+            else:
+                logger.error(f"白露URL: 插件设置界面不存在，无法打开～")
+                # 尝试重新创建插件设置界面
+                try:
+                    from app.view.plugins.plugin_settings import PluginSettingsWindow
+                    self.settingInterface.plugin_settingsInterface = PluginSettingsWindow(self.settingInterface)
+                    self.settingInterface.plugin_settingsInterface.setObjectName("plugin_settingsInterface")
+                    logger.debug("设置界面: 插件设置界面重新创建成功")
+                    # 重新初始化导航
+                    self.settingInterface.initNavigation()
+                    # 切换到插件设置界面
+                    self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.plugin_settingsInterface)
+                    logger.info(f"白露URL: 插件设置界面重新创建并成功打开～")
+                except Exception as e:
+                    logger.error(f"白露URL: 重新创建插件设置界面失败: {e}")
+        
         logger.info(f"白露URL: 插件设置界面已成功打开～")
     
     def start_pumping_selection(self):
@@ -1597,14 +2037,14 @@ class Window(MSFluentWindow):
         会检查当前界面并调用相应的重置方法！🔄✨"""
         logger.info("白露URL: 正在重置抽选状态～")
         try:
-            # 确保主窗口可见
-            if not self.isVisible():
-                self.show()
-                self.activateWindow()
-                self.raise_()
+            # # 确保主窗口可见
+            # if not self.isVisible():
+            #     self.show()
+            #     self.activateWindow()
+            #     self.raise_()
             
-            # 切换到抽人界面
-            self.switchTo(self.pumping_peopleInterface)
+            # # 切换到抽人界面
+            # self.switchTo(self.pumping_peopleInterface)
             
             # 尝试调用抽人界面的重置方法
             if hasattr(self.pumping_peopleInterface, '_reset_to_initial_state'):
@@ -1669,14 +2109,14 @@ class Window(MSFluentWindow):
         会检查当前界面并调用相应的重置方法！🔄✨"""
         logger.info("白露URL: 正在重置抽奖状态～")
         try:
-            # 确保主窗口可见
-            if not self.isVisible():
-                self.show()
-                self.activateWindow()
-                self.raise_()
+            # # 确保主窗口可见
+            # if not self.isVisible():
+            #     self.show()
+            #     self.activateWindow()
+            #     self.raise_()
             
-            # 切换到抽奖界面
-            self.switchTo(self.pumping_rewardInterface)
+            # # 切换到抽奖界面
+            # self.switchTo(self.pumping_rewardInterface)
             
             # 尝试调用抽奖界面的重置方法
             if hasattr(self.pumping_rewardInterface, '_reset_to_initial_state'):
