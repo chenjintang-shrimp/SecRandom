@@ -4,7 +4,7 @@ darkdetect==0.8.0
 asyncio~=3.4.3
 loguru==0.7.3
 pyttsx3==2.98
-PyQt-Fluent-Widgets~=1.7.7
+PyQt-Fluent-Widgets~=1.8.7
 PyQt5-Frameless-Window==0.6.0
 pyotp==2.9.0
 sip~=6.8.6
