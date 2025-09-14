@@ -172,20 +172,6 @@ class PathManager:
         """
         return self.get_absolute_path(f"app/resource/font/{filename}")
     
-    def get_icon_path(self, icon_name: str, theme: str = "dark") -> Path:
-        """获取图标文件路径
-        
-        Args:
-            icon_name: 图标名称
-            theme: 主题，'dark' 或 'light'
-            
-        Returns:
-            图标文件的绝对路径
-        """
-        suffix = "_light" if theme == "light" else "_dark"
-        prefix = "light" if theme == "light" else "dark"
-        return self.get_absolute_path(f"app/resource/assets/{prefix}/{icon_name}{suffix}.svg")
-    
     def file_exists(self, path: Union[str, Path]) -> bool:
         """检查文件是否存在
         
