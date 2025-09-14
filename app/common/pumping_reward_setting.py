@@ -48,13 +48,11 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_animation_auto_play_SpinBox = SpinBox()
         
         # 抽取模式下拉框
-        self.pumping_reward_Draw_comboBox.setFixedWidth(250)
         self.pumping_reward_Draw_comboBox.addItems(["重复抽取", "不重复抽取(直到软件重启)", "不重复抽取(直到抽完全部奖项)"])
         self.pumping_reward_Draw_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_reward_Draw_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 抽取方式下拉框
-        self.pumping_reward_mode_Draw_comboBox.setFixedWidth(250)
         self.pumping_reward_mode_Draw_comboBox.addItems(["可预测抽取", "不可预测抽取"])
         self.pumping_reward_mode_Draw_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_reward_mode_Draw_comboBox.setFont(QFont(load_custom_font(), 12))
@@ -68,7 +66,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_font_size_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 动画模式下拉框
-        self.pumping_reward_Animation_comboBox.setFixedWidth(250)
         self.pumping_reward_Animation_comboBox.addItems(["手动停止动画", "自动播放完整动画", "直接显示结果"])
         self.pumping_reward_Animation_comboBox.currentIndexChanged.connect(lambda: self.save_settings())
         self.pumping_reward_Animation_comboBox.setFont(QFont(load_custom_font(), 12))
@@ -90,7 +87,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_animation_auto_play_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 奖品量样式下拉框
-        self.pumping_reward_theme_comboBox.setFixedWidth(150)
         self.pumping_reward_theme_comboBox.addItems(["总数 | 剩余", "总数", "剩余"])
         self.pumping_reward_theme_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_reward_theme_comboBox.setFont(QFont(load_custom_font(), 12))
