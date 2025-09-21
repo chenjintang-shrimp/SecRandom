@@ -18,7 +18,8 @@ system_random = SystemRandom()
 from app.common.config import get_theme_icon, load_custom_font, restore_volume
 from app.common.path_utils import path_manager, open_file, remove_file
 from app.common.voice import TTSHandler
-class pumping_people(QWidget):
+
+class instant_draw(QWidget):
     # 抽取完成信号
     draw_finished = pyqtSignal()
     
@@ -26,8 +27,9 @@ class pumping_people(QWidget):
         super().__init__(parent)
         # 定义变量
         self.is_animating = False
-        self.draw_mode = "random"
+        self.max_draw_times_per_person = 1
         self.animation_timer = None
+        self.clear_timer = None  # 添加计时器变量，用于自动清除临时抽取记录
         # 音乐播放器初始化 ✧(◍˃̶ᗜ˂̶◍)✩ 感谢白露提供的播放器
         self.music_player = QMediaPlayer()
         self.draw_count = draw_count
@@ -42,20 +44,19 @@ class pumping_people(QWidget):
         try:
             with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                pumping_people_draw_mode = settings['pumping_people']['draw_mode']
-                pumping_people_animation_mode = settings['pumping_people']['animation_mode']
-                self.interval = settings['pumping_people']['animation_interval']
-                self.auto_play = settings['pumping_people']['animation_auto_play']
-                self.animation_music_enabled = settings['pumping_people']['animation_music_enabled']
-                self.result_music_enabled = settings['pumping_people']['result_music_enabled']
-                self.animation_music_volume = settings['pumping_people']['animation_music_volume']
-                self.result_music_volume = settings['pumping_people']['result_music_volume']
-                self.music_fade_in = settings['pumping_people']['music_fade_in']
-                self.music_fade_out = settings['pumping_people']['music_fade_out']
+                instant_draw_animation_mode = settings['instant_draw']['animation_mode']
+                self.interval = settings['instant_draw']['animation_interval']
+                self.auto_play = settings['instant_draw']['animation_auto_play']
+                self.animation_music_enabled = settings['instant_draw']['animation_music_enabled']
+                self.result_music_enabled = settings['instant_draw']['result_music_enabled']
+                self.animation_music_volume = settings['instant_draw']['animation_music_volume']
+                self.result_music_volume = settings['instant_draw']['result_music_volume']
+                self.music_fade_in = settings['instant_draw']['music_fade_in']
+                self.music_fade_out = settings['instant_draw']['music_fade_out']
+                self.max_draw_times_per_person = settings['instant_draw']['Draw_pumping']
                 
         except Exception as e:
-            pumping_people_draw_mode = 0
-            pumping_people_animation_mode = 0
+            instant_draw_animation_mode = 0
             self.interval = 100
             self.auto_play = 5
             self.animation_music_enabled = False
@@ -64,22 +65,47 @@ class pumping_people(QWidget):
             self.result_music_volume = 5
             self.music_fade_in = 300
             self.music_fade_out = 300
+            self.max_draw_times_per_person = 1
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
-        # 根据抽选模式执行不同逻辑
-        # 跟随全局设置
-        if pumping_people_draw_mode == 0:  # 重复随机
-            self.draw_mode = "random"
-        elif pumping_people_draw_mode == 1:  # 不重复抽取(直到软件重启)
-            self.draw_mode = "until_reboot"
-        elif pumping_people_draw_mode == 2:  # 不重复抽取(直到抽完全部人)
-            self.draw_mode = "until_all"
-            
-
-        if pumping_people_animation_mode in [0, 1]:  # 自动播放完整动画
+        if instant_draw_animation_mode == 0:  # 自动播放完整动画
             self._play_full_animation()
-        elif pumping_people_animation_mode == 2:  # 直接显示结果
+        elif instant_draw_animation_mode == 1:  # 直接显示结果
             self._show_result_directly()
+
+    def _start_clear_timer(self):
+        """启动计时器，在设置的时间后自动清除临时抽取记录"""
+        # 如果已有计时器在运行，先停止它
+        if self.clear_timer is not None:
+            self.clear_timer.stop()
+            self.clear_timer = None
+            
+        try:
+            # 读取设置中的定时清理时间
+            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                draw_mode = settings['instant_draw']['draw_mode']
+                clear_time = settings['instant_draw']['max_draw_count']
+
+            self.current_count = 1
+                
+            # 只有在"定时清临时记录"模式下才启动计时器
+            if draw_mode == 3 and clear_time > 0:  # 3是"定时清临时记录"选项的索引
+                self.clear_timer = QTimer()
+                self.clear_timer.setSingleShot(True)  # 单次触发
+                self.clear_timer.timeout.connect(lambda: self._clean_temp_files())
+                self.clear_timer.timeout.connect(lambda: self.clear_layout(self.result_grid))
+                self.clear_timer.start(clear_time * 1000)  # 转换为毫秒
+                logger.info(f"已启动计时器，将在{clear_time}秒后自动清除临时抽取记录")
+        except Exception as e:
+            logger.error(f"启动计时器时出错: {e}")
+    
+    def _stop_clear_timer(self):
+        """停止计时器"""
+        if self.clear_timer is not None:
+            self.clear_timer.stop()
+            self.clear_timer = None
+            logger.info("已停止计时器")
         
     def _show_random_student(self):
         """显示随机学生（用于动画效果）"""
@@ -90,39 +116,28 @@ class pumping_people(QWidget):
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
             student_file = path_manager.get_resource_path('list', f'{class_name}.json')
 
-            if self.draw_mode == "until_reboot":
-                if group_name == '抽取全班学生':
-                    draw_record_file = path_manager.get_temp_path(f'until_the_reboot_{class_name}_{group_name}_{genders}.json')
-                elif group_name == '抽取小组组号':
-                    draw_record_file = path_manager.get_temp_path(f'until_the_reboot_{class_name}_{group_name}.json')
-                else:
-                    draw_record_file = path_manager.get_temp_path(f'until_the_reboot_{class_name}_{group_name}_{genders}.json')
-            elif self.draw_mode == "until_all":
-                if group_name == '抽取全班学生':
-                    draw_record_file = path_manager.get_temp_path(f'until_all_draw_{class_name}_{group_name}_{genders}.json')
-                elif group_name == '抽取小组组号':
-                    draw_record_file = path_manager.get_temp_path(f'until_all_draw_{class_name}_{group_name}.json')
-                else:
-                    draw_record_file = path_manager.get_temp_path(f'until_all_draw_{class_name}_{group_name}_{genders}.json')
-            
-            if self.draw_mode in ["until_reboot", "until_all"]:
-                # 创建Temp目录如果不存在
-                os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
-                
-                # 初始化抽取记录文件
-                if not path_manager.file_exists(draw_record_file):
-                    with open_file(draw_record_file, 'w', encoding='utf-8') as f:
-                        json.dump([], f, ensure_ascii=False, indent=4)
-                
-                # 读取已抽取记录
-                record_data = []
-                with open_file(draw_record_file, 'r', encoding='utf-8') as f:
-                    try:
-                        record_data = json.load(f)
-                    except json.JSONDecodeError:
-                        record_data = []
+            if group_name == '抽取全班学生':    
+                draw_record_file = path_manager.get_temp_path(f'{class_name}_{group_name}_{genders}.json')
+            elif group_name == '抽取小组组号':
+                draw_record_file = path_manager.get_temp_path(f'{class_name}_{group_name}.json')
             else:
-                record_data = []
+                draw_record_file = path_manager.get_temp_path(f'{class_name}_{group_name}_{genders}.json')
+            
+            # 创建Temp目录如果不存在
+            os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
+            
+            # 初始化抽取记录文件
+            if not path_manager.file_exists(draw_record_file):
+                with open_file(draw_record_file, 'w', encoding='utf-8') as f:
+                    json.dump([], f, ensure_ascii=False, indent=4)
+            
+            # 读取已抽取记录
+            record_data = []
+            with open_file(draw_record_file, 'r', encoding='utf-8') as f:
+                try:
+                    record_data = json.load(f)
+                except json.JSONDecodeError:
+                    record_data = []
 
             if path_manager.file_exists(student_file):
                 with open_file(student_file, 'r', encoding='utf-8') as f:
@@ -188,8 +203,28 @@ class pumping_people(QWidget):
                     # 过滤学生信息的exist为False的学生
                     cleaned_data = list(filter(lambda x: x[2], cleaned_data))
 
-                    # 如果所有学生都已抽取过，则使用全部学生名单
-                    students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in record_data]] or cleaned_data
+                    # 如果设置了最大抽取次数，过滤掉已达到最大抽取次数的学生
+                    if self.max_draw_times_per_person > 0:
+                        # 创建一个集合，包含已达到最大抽取次数的学生
+                        maxed_out_students = set()
+                        for record in record_data:
+                            # 如果记录中包含次数信息（格式：姓名_次数）
+                            if '_' in record:
+                                record_name, record_count = record.rsplit('_', 1)
+                                try:
+                                    count = int(record_count)
+                                    # logger.debug(f"检查记录 {record}，姓名 {record_name}，次数 {count}，最大抽取次数 {self.max_draw_times_per_person}")
+                                    if count >= self.max_draw_times_per_person:
+                                        maxed_out_students.add(record_name)
+                                except ValueError:
+                                    # 如果次数解析失败，忽略这条记录
+                                    pass
+                        
+                        # 过滤掉已达到最大抽取次数的学生
+                        students = [s for s in cleaned_data if s[1].replace(' ', '') not in maxed_out_students and s[1].replace(' ', '') not in [x.replace(' ', '') for x in record_data if '_' not in x or x.rsplit('_', 1)[0] != s[1].replace(' ', '')]] or cleaned_data
+                    else:
+                        # 如果max_draw_times_per_person等于0，则允许重复抽取，不进行过滤
+                        students = cleaned_data
 
                     if students:
                         # 从self.current_count获取抽取人数
@@ -235,16 +270,16 @@ class pumping_people(QWidget):
                         try:
                             with open_file(settings_file, 'r', encoding='utf-8') as f:
                                 settings = json.load(f)
-                                pumping_people_student_id = settings['pumping_people']['student_id']
-                                pumping_people_student_name = settings['pumping_people']['student_name']
-                                display_format = settings['pumping_people']['display_format']
-                                font_size = settings['pumping_people']['font_size']
-                                animation_color = settings['pumping_people']['animation_color']
-                                _animation_color = settings['pumping_people'].get('_animation_color', '#ffffff')
-                                show_student_image = settings['pumping_people']['show_student_image']
+                                instant_draw_student_id = settings['instant_draw']['student_id']
+                                instant_draw_student_name = settings['instant_draw']['student_name']
+                                display_format = settings['instant_draw']['display_format']
+                                font_size = settings['instant_draw']['font_size']
+                                animation_color = settings['instant_draw']['animation_color']
+                                _animation_color = settings['instant_draw'].get('_animation_color', '#ffffff')
+                                show_student_image = settings['instant_draw']['show_student_image']
                         except Exception as e:
-                            pumping_people_student_id = 0
-                            pumping_people_student_name = 0
+                            instant_draw_student_id = 0
+                            instant_draw_student_name = 0
                             display_format = 0
                             font_size = 50
                             animation_color = 0
@@ -256,8 +291,8 @@ class pumping_people(QWidget):
                         # 创建新标签列表
                         self.student_labels = []
                         for num, selected, exist in selected_students:
-                            student_id_format = pumping_people_student_id
-                            student_name_format = pumping_people_student_name
+                            student_id_format = instant_draw_student_id
+                            student_name_format = instant_draw_student_name
                             # 为每个奖励单独查找对应的图片文件
                             current_image_path = None
                             if show_student_image:
@@ -336,8 +371,8 @@ class pumping_people(QWidget):
                                 try:
                                     with open_file(settings_file, 'r', encoding='utf-8') as f:
                                         settings = json.load(f)
-                                        show_random = settings['pumping_people'].get('show_random_member', False)
-                                        format_str = settings['pumping_people'].get('random_member_format', FORMAT_GROUP_SIMPLE)
+                                        show_random = settings['instant_draw'].get('show_random_member', False)
+                                        format_str = settings['instant_draw'].get('random_member_format', FORMAT_GROUP_SIMPLE)
                                 except (json.JSONDecodeError, IOError, KeyError) as e:
                                     show_random = False
                                     format_str = FORMAT_GROUP_SIMPLE
@@ -555,7 +590,7 @@ class pumping_people(QWidget):
             try:
                 with open_file(settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    font_size = settings['pumping_people']['font_size']
+                    font_size = settings['instant_draw']['font_size']
             except Exception as e:
                 font_size = 50
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
@@ -623,7 +658,7 @@ class pumping_people(QWidget):
         星野：恭喜你抽中啦！🎉 来听听胜利的音乐吧~
         白露：结果音乐和动画音乐是分开的呢~ 真有趣！"""
         try:
-            BGM_RESULT_PATH = path_manager.get_resource_path("music/pumping_people/result_music")
+            BGM_RESULT_PATH = path_manager.get_resource_path("music/instant_draw/result_music")
             # 检查音乐目录是否存在
             if not path_manager.file_exists(BGM_RESULT_PATH):
                 logger.warning(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
@@ -683,7 +718,7 @@ class pumping_people(QWidget):
     def _play_animation_music(self):
         """播放动画背景音乐 ～(￣▽￣)～* 星野和白露的音乐时间"""
         try:
-            BGM_ANIMATION_PATH = path_manager.get_resource_path("music/pumping_people/Animation_music")
+            BGM_ANIMATION_PATH = path_manager.get_resource_path("music/instant_draw/Animation_music")
             # 检查音乐目录是否存在
             if not path_manager.file_exists(BGM_ANIMATION_PATH):
                 logger.warning(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
@@ -775,39 +810,28 @@ class pumping_people(QWidget):
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
             student_file = path_manager.get_resource_path("list", f"{class_name}.json")
 
-            if self.draw_mode == "until_reboot":
-                if group_name == '抽取全班学生':
-                    draw_record_file = path_manager.get_temp_path(f"until_the_reboot_{class_name}_{group_name}_{genders}.json")
-                elif group_name == '抽取小组组号':
-                    draw_record_file = path_manager.get_temp_path(f"until_the_reboot_{class_name}_{group_name}.json")
-                else:
-                    draw_record_file = path_manager.get_temp_path(f"until_the_reboot_{class_name}_{group_name}_{genders}.json")
-            elif self.draw_mode == "until_all":
-                if group_name == '抽取全班学生':
-                    draw_record_file = path_manager.get_temp_path(f"until_all_draw_{class_name}_{group_name}_{genders}.json")
-                elif group_name == '抽取小组组号':
-                    draw_record_file = path_manager.get_temp_path(f"until_all_draw_{class_name}_{group_name}.json")
-                else:
-                    draw_record_file = path_manager.get_temp_path(f"until_all_draw_{class_name}_{group_name}_{genders}.json")
-            
-            if self.draw_mode in ["until_reboot", "until_all"]:
-                # 创建Temp目录如果不存在
-                path_manager.ensure_directory_exists(draw_record_file.parent)
-
-                # 初始化抽取记录文件
-                if not path_manager.file_exists(draw_record_file):
-                    with open_file(draw_record_file, 'w', encoding='utf-8') as f:
-                        json.dump([], f, ensure_ascii=False, indent=4)
-                
-                # 读取已抽取记录
-                record_data = []
-                with open_file(draw_record_file, 'r', encoding='utf-8') as f:
-                    try:
-                        record_data = json.load(f)
-                    except json.JSONDecodeError:
-                        record_data = []
+            if group_name == '抽取全班学生':
+                draw_record_file = path_manager.get_temp_path(f"{class_name}_{group_name}_{genders}.json")
+            elif group_name == '抽取小组组号':
+                draw_record_file = path_manager.get_temp_path(f"{class_name}_{group_name}.json")
             else:
-                record_data = []
+                draw_record_file = path_manager.get_temp_path(f"{class_name}_{group_name}_{genders}.json")
+       
+            # 创建Temp目录如果不存在
+            path_manager.ensure_directory_exists(draw_record_file.parent)
+
+            # 初始化抽取记录文件
+            if not path_manager.file_exists(draw_record_file):
+                with open_file(draw_record_file, 'w', encoding='utf-8') as f:
+                    json.dump([], f, ensure_ascii=False, indent=4)
+            
+            # 读取已抽取记录
+            record_data = []
+            with open_file(draw_record_file, 'r', encoding='utf-8') as f:
+                try:
+                    record_data = json.load(f)
+                except json.JSONDecodeError:
+                    record_data = []
             
             if path_manager.file_exists(student_file):
                 with open_file(student_file, 'r', encoding='utf-8') as f:
@@ -879,10 +903,24 @@ class pumping_people(QWidget):
                     cleaned_data = list(filter(lambda x: x[2], cleaned_data))
                     __cleaned_data = list(filter(lambda x: x[4], __cleaned_data))
 
-                    if self.draw_mode == "random":
+                    if self.max_draw_times_per_person == 0:
                         available_students = cleaned_data
-                    elif self.draw_mode == "until_reboot" or self.draw_mode == "until_all":
-                        available_students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in record_data]]
+                    elif self.max_draw_times_per_person != 0:
+                        # 解析记录数据，获取已达到最大抽取次数的学生
+                        maxed_out_students = set()
+                        for record in record_data:
+                            if '_' in record:
+                                name, times_str = record.rsplit('_', 1)
+                                try:
+                                    times = int(times_str)
+                                    if times >= self.max_draw_times_per_person:
+                                        maxed_out_students.add(name)
+                                except ValueError:
+                                    # 如果解析失败，默认为1次
+                                    pass
+                        
+                        # 过滤掉已达到最大抽取次数的学生
+                        available_students = [s for s in cleaned_data if s[1].replace(' ', '') not in [x.replace(' ', '') for x in record_data] and s[1] not in maxed_out_students]
 
                     if available_students:
                         # 从self.current_count获取抽取人数
@@ -913,7 +951,7 @@ class pumping_people(QWidget):
                             
                             for student_id, student_name, exist in available_students:
                                 # 获取学生历史记录
-                                student_history = history_data.get("pumping_people", {}).get(student_name, {
+                                student_history = history_data.get("instant_draw", {}).get(student_name, {
                                     "total_number_of_times": 0,
                                     "last_drawn_time": None,
                                     "rounds_missed": 0,
@@ -969,7 +1007,7 @@ class pumping_people(QWidget):
                                     'gender': gender_factor * 0.8                 # 性别平衡
                                 }
 
-                                if self.draw_mode in ['until_reboot', 'until_all'] and student_name in record_data:
+                                if self.max_draw_times_per_person != 0 and student_name in record_data:
                                     # 如果是不重复抽取模式，且该学生已被抽中，则权重为0
                                     comprehensive_weight = 0
                                 else:
@@ -1031,16 +1069,16 @@ class pumping_people(QWidget):
                         try:
                             with open_file(settings, 'r', encoding='utf-8') as f:
                                 settings = json.load(f)
-                                pumping_people_student_id = settings['pumping_people']['student_id']
-                                pumping_people_student_name = settings['pumping_people']['student_name']
-                                display_format = settings['pumping_people']['display_format']
-                                font_size = settings['pumping_people']['font_size']
-                                animation_color = settings['pumping_people']['animation_color']
-                                _result_color = settings['pumping_people'].get('_result_color', '#ffffff')
-                                show_student_image = settings['pumping_people']['show_student_image']
+                                instant_draw_student_id = settings['instant_draw']['student_id']
+                                instant_draw_student_name = settings['instant_draw']['student_name']
+                                display_format = settings['instant_draw']['display_format']
+                                font_size = settings['instant_draw']['font_size']
+                                animation_color = settings['instant_draw']['animation_color']
+                                _result_color = settings['instant_draw'].get('_result_color', '#ffffff')
+                                show_student_image = settings['instant_draw']['show_student_image']
                         except Exception as e:
-                            pumping_people_student_id = 0
-                            pumping_people_student_name = 0
+                            instant_draw_student_id = 0
+                            instant_draw_student_name = 0
                             display_format = 0
                             font_size = 50
                             animation_color = 0
@@ -1049,8 +1087,8 @@ class pumping_people(QWidget):
 
                         self.student_labels = []
                         for num, selected, exist in selected_students:
-                            student_id_format = pumping_people_student_id
-                            student_name_format = pumping_people_student_name
+                            student_id_format = instant_draw_student_id
+                            student_name_format = instant_draw_student_name
                             # 为每个奖励单独查找对应的图片文件
                             current_image_path = None
                             if show_student_image:
@@ -1130,8 +1168,8 @@ class pumping_people(QWidget):
                                     settings_path = path_manager.get_settings_path()
                                     with open_file(settings_path, 'r', encoding='utf-8') as f:
                                         settings_data = json.load(f)
-                                        show_random = settings_data['pumping_people'].get('show_random_member', False)
-                                        format_str = settings_data['pumping_people'].get('random_member_format', FORMAT_GROUP_SIMPLE)
+                                        show_random = settings_data['instant_draw'].get('show_random_member', False)
+                                        format_str = settings_data['instant_draw'].get('random_member_format', FORMAT_GROUP_SIMPLE)
                                 except (json.JSONDecodeError, IOError, KeyError) as e:
                                     show_random = False
                                     format_str = FORMAT_GROUP_SIMPLE
@@ -1328,15 +1366,50 @@ class pumping_people(QWidget):
                         
                         self.result_grid.addWidget(self.container)
                         
-                        if self.draw_mode in ["until_reboot", "until_all"]:
-                            # 更新抽取记录
-                            record_data.extend([s[1].replace(' ', '') for s in selected_students])
+                        if self.max_draw_times_per_person != 0:
+                            # 更新抽取记录，在学生名字后面添加抽取次数
+                            for student in selected_students:
+                                student_name = student[1].replace(' ', '')
+                                # 检查学生是否已在记录中
+                                found = False
+                                for i, record in enumerate(record_data):
+                                    # 如果记录中包含次数信息（格式：姓名_次数）
+                                    if '_' in record:
+                                        record_name, record_count = record.rsplit('_', 1)
+                                        if record_name == student_name:
+                                            # 增加抽取次数
+                                            try:
+                                                count = int(record_count) + 1
+                                                # 如果达到最大抽取次数，则不再添加到记录中
+                                                if self.max_draw_times_per_person > 0 and count > self.max_draw_times_per_person:
+                                                    continue
+                                                record_data[i] = f"{student_name}_{count}"
+                                                found = True
+                                                break
+                                            except ValueError:
+                                                # 如果次数解析失败，使用默认值1
+                                                record_data[i] = f"{student_name}_1"
+                                                found = True
+                                                break
+                                    # 如果记录中没有次数信息（旧格式）
+                                    elif record == student_name:
+                                        # 添加次数信息
+                                        record_data[i] = f"{student_name}_1"
+                                        found = True
+                                        break
+                                
+                                # 如果学生不在记录中，则添加新记录
+                                if not found:
+                                    record_data.append(f"{student_name}_1")
+                            
                             with open_file(draw_record_file, 'w', encoding='utf-8') as f:
                                 json.dump(record_data, f, ensure_ascii=False, indent=4)
 
+                        # 抽取完成后启动计时器
+                        self._start_clear_timer()
                         return
                     else:
-                        if self.draw_mode in ["until_reboot", "until_all"]:
+                        if self.max_draw_times_per_person != 0:
                             # 删除临时文件
                             if path_manager.file_exists(draw_record_file):
                                 os.remove(draw_record_file)
@@ -1362,7 +1435,7 @@ class pumping_people(QWidget):
             try:
                 with open_file(settings, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    font_size = settings['pumping_people']['font_size']
+                    font_size = settings['instant_draw']['font_size']
             except Exception as e:
                 font_size = 50
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
@@ -1404,7 +1477,7 @@ class pumping_people(QWidget):
         try:
             with open_file(settings, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                random_method = settings['pumping_people']['draw_pumping']
+                random_method = settings['instant_draw']['draw_pumping']
                 return random_method
         except Exception as e:
             logger.error(f"加载随机抽取方法设置时出错: {e}, 使用默认设置")
@@ -1437,8 +1510,8 @@ class pumping_people(QWidget):
                     history_data = {}
         
         # 初始化数据结构
-        if "pumping_people" not in history_data:
-            history_data["pumping_people"] = {}
+        if "instant_draw" not in history_data:
+            history_data["instant_draw"] = {}
         if "pumping_group" not in history_data:
             history_data["pumping_group"] = {}
         if "group_stats" not in history_data:
@@ -1494,7 +1567,7 @@ class pumping_people(QWidget):
                         "last_drawn_time": current_time,
                         "rounds_missed": 0,
                         "time": [{
-                            "draw_method": self.draw_mode,
+                            "draw_max": self.max_draw_times_per_person,
                             "draw_time": current_time,
                             "draw_people_numbers": self.current_count
                         }]
@@ -1504,20 +1577,20 @@ class pumping_people(QWidget):
                     history_data["pumping_group"][student_name]["last_drawn_time"] = current_time
                     history_data["pumping_group"][student_name]["rounds_missed"] = 0
                     history_data["pumping_group"][student_name]["time"].append({
-                        "draw_method": self.draw_mode,
+                        "draw_max": self.max_draw_times_per_person,
                         "draw_time": current_time,
                         "draw_people_numbers": self.current_count
                     })
             else:
-                if student_name not in history_data["pumping_people"]:
+                if student_name not in history_data["instant_draw"]:
                     if not genders or '抽取所有性别' in genders:
-                        history_data["pumping_people"][student_name] = {
+                        history_data["instant_draw"][student_name] = {
                             "total_number_of_times": 1,
                             "total_number_auxiliary": 0,
                             "last_drawn_time": current_time,
                             "rounds_missed": 0,
                             "time": [{
-                                "draw_method": self.draw_mode,
+                                "draw_max": self.max_draw_times_per_person,
                                 "draw_time": current_time,
                                 "draw_people_numbers": self.current_count,
                                 "draw_group": group_name,
@@ -1525,13 +1598,13 @@ class pumping_people(QWidget):
                             }]
                         }
                     else:
-                        history_data["pumping_people"][student_name] = {
+                        history_data["instant_draw"][student_name] = {
                             "total_number_of_times": 0,
                             "total_number_auxiliary": 1,
                             "last_drawn_time": current_time,
                             "rounds_missed": 0,
                             "time": [{
-                                "draw_method": self.draw_mode,
+                                "draw_max": self.max_draw_times_per_person,
                                 "draw_time": current_time,
                                 "draw_people_numbers": self.current_count,
                                 "draw_group": group_name,
@@ -1540,13 +1613,13 @@ class pumping_people(QWidget):
                         }
                 else:
                     if not genders or '抽取所有性别' in genders: 
-                        history_data["pumping_people"][student_name]["total_number_of_times"] += 1
+                        history_data["instant_draw"][student_name]["total_number_of_times"] += 1
                     else:
-                        history_data["pumping_people"][student_name]["total_number_auxiliary"] += 1
-                    history_data["pumping_people"][student_name]["last_drawn_time"] = current_time
-                    history_data["pumping_people"][student_name]["rounds_missed"] = 0
-                    history_data["pumping_people"][student_name]["time"].append({
-                        "draw_method": self.draw_mode,
+                        history_data["instant_draw"][student_name]["total_number_auxiliary"] += 1
+                    history_data["instant_draw"][student_name]["last_drawn_time"] = current_time
+                    history_data["instant_draw"][student_name]["rounds_missed"] = 0
+                    history_data["instant_draw"][student_name]["time"].append({
+                        "draw_max": self.max_draw_times_per_person,
                         "draw_time": current_time,
                         "draw_people_numbers": self.current_count,
                         "draw_group": group_name,
@@ -1566,8 +1639,8 @@ class pumping_people(QWidget):
         
         selected_names = {s[1] for s in selected_students}
         for student_name in all_students:
-            if student_name in history_data["pumping_people"] and student_name not in selected_names:
-                history_data["pumping_people"][student_name]["rounds_missed"] += 1
+            if student_name in history_data["instant_draw"] and student_name not in selected_names:
+                history_data["instant_draw"][student_name]["rounds_missed"] += 1
         
         # 保存历史记录
         with open_file(history_file, 'w', encoding='utf-8') as f:
@@ -1597,6 +1670,8 @@ class pumping_people(QWidget):
     # 恢复初始状态
     def _reset_to_initial_state(self):
         """恢复初始状态"""
+        # 停止计时器
+        self._stop_clear_timer()
         self._clean_temp_files()
         self.clear_layout(self.result_grid)
 
@@ -1605,12 +1680,19 @@ class pumping_people(QWidget):
         import glob
         temp_dir = path_manager.get_temp_path()
         if path_manager.file_exists(temp_dir):
-            for file in glob.glob(f"{temp_dir}/until_*.json"):
+            for file in glob.glob(f"{temp_dir}/*.json"):
                 try:
                     path_manager.remove_file(file)
                     logger.info(f"已清理临时抽取记录文件: {file}")
                 except Exception as e:
                     logger.error(f"清理临时抽取记录文件失败: {e}")
+
+    # 初始化UI
+    def __del__(self):
+        """析构函数，清理计时器资源"""
+        if hasattr(self, 'clear_timer') and self.clear_timer is not None:
+            self.clear_timer.stop()
+            self.clear_timer = None
 
     # 初始化UI
     def initUI(self): 
@@ -1654,15 +1736,18 @@ class pumping_people(QWidget):
 
         # 班级下拉框
         self.class_combo = ComboBox()
-        self.class_combo = self.class_name
+        self.class_combo.addItems([self.class_name])
+        self.class_combo.setCurrentText(self.class_name)
 
         # 小组下拉框
         self.group_combo = ComboBox()
-        self.group_combo = self.group_name
+        self.group_combo.addItems([self.group_name])
+        self.group_combo.setCurrentText(self.group_name)
 
         # 性别下拉框
         self.gender_combo = ComboBox()
-        self.gender_combo = self.gender_name
+        self.gender_combo.addItems([self.gender_name])
+        self.gender_combo.setCurrentText(self.gender_name)
         
         # 初始化抽取人数
         self.current_count = self.draw_count
@@ -1798,7 +1883,7 @@ class pumping_people(QWidget):
                                 self.setStyleSheet("background: transparent;")
                                 
                                 # 保存原始的resizeEvent方法
-                                self.original_resizeEvent = super(pumping_people, self).resizeEvent
+                                self.original_resizeEvent = super(instant_draw, self).resizeEvent
                                 
                                 # 重写resizeEvent方法，调整背景大小
                                 self.resizeEvent = self._on_resize_event
@@ -1828,7 +1913,7 @@ class pumping_people(QWidget):
         if hasattr(self, 'original_resizeEvent') and self.original_resizeEvent:
             self.original_resizeEvent(event)
         else:
-            super(pumping_people, self).resizeEvent(event)
+            super(instant_draw, self).resizeEvent(event)
         
         # 强制更新布局
         self.updateGeometry()

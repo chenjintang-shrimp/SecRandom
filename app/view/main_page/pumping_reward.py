@@ -1214,13 +1214,13 @@ class pumping_reward(QWidget):
         reward_name = self.reward_combo.currentText()
 
         try:
-            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_settings_path("custom_settings.json"), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                pumping_reward_reward_quantity = settings['pumping_reward']['reward_theme']
+                pumping_reward_reward_quantity = settings['reward']['reward_theme']
         except Exception:
             pumping_reward_reward_quantity = 0
 
-        if reward_name and reward_name not in ["你暂未添加奖池", "加载奖池列表失败"]:
+        if reward_name and reward_name not in ["你暂未添加奖池", "加载奖池列表失败"] and pumping_reward_reward_quantity != 3:
             reward_file = path_manager.get_resource_path("reward", f"{reward_name}.json")
             if path_manager.file_exists(reward_file):
                 cleaned_data = self._get_cleaned_data(reward_file)
@@ -1288,14 +1288,15 @@ class pumping_reward(QWidget):
 
     # 设置默认总奖数显示
     def _set_default_count(self, pumping_reward_reward_quantity):
-        if pumping_reward_reward_quantity == 1:
-            self.total_label.setText('总奖数: 0')
-        elif pumping_reward_reward_quantity == 2:
-            self.total_label.setText('剩余奖数: 0')
-        else:
-            self.total_label.setText('总奖数: 0 | 剩余奖数: 0')
-        self.max_count = 0
-        self._update_count_display()
+        if pumping_reward_reward_quantity != 3:
+            if pumping_reward_reward_quantity == 1:
+                self.total_label.setText('总奖数: 0')
+            elif pumping_reward_reward_quantity == 2:
+                self.total_label.setText('剩余奖数: 0')
+            else:
+                self.total_label.setText('总奖数: 0 | 剩余奖数: 0')
+            self.max_count = 0
+            self._update_count_display()
     
     # 增加抽取奖数
     def _increase_count(self):
@@ -1385,14 +1386,24 @@ class pumping_reward(QWidget):
     def initUI(self):
         # 加载设置
         try:
-            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
+            with open_file(path_manager.get_settings_path("custom_settings.json"), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                pumping_reward_reward_quantity = settings['pumping_reward']['reward_theme']
-                main_window_control_Switch = settings['foundation']['main_window_control_Switch']
+                main_window_control_Switch = settings['reward']['pumping_reward_control_Switch']
+                show_reset_button = settings['reward']['show_reset_button']
+                show_refresh_button = settings['reward']['show_refresh_button']
+                show_quantity_control = settings['reward']['show_quantity_control']
+                show_start_button = settings['reward']['show_start_button']
+                show_list_toggle = settings['reward']['show_list_toggle']
+                pumping_reward_reward_quantity = settings['reward']['reward_theme']
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
+            show_reset_button = True
+            show_refresh_button = True
+            show_quantity_control = True
+            show_list_toggle = True
+            show_start_button = True
+            main_window_control_Switch = True
             pumping_reward_reward_quantity = 0
-            main_window_control_Switch = False
 
         # 主布局
         scroll_area = SingleDirectionScrollArea()
@@ -1420,20 +1431,22 @@ class pumping_reward(QWidget):
         control_panel.setContentsMargins(10, 10, 10, 10)
 
         # 刷新按钮
-        self.refresh_button = PushButton('重置已抽取名单')
-        self.refresh_button.setFixedSize(180, 50)
-        self.refresh_button.setFont(QFont(load_custom_font(), 13))
-        self.refresh_button.clicked.connect(self._reset_to_initial_state)
-        self.refresh_button.clicked.connect(self.update_total_count)
-        control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
+        if show_reset_button:
+            self.refresh_button = PushButton('重置已抽取名单')
+            self.refresh_button.setFixedSize(180, 50)
+            self.refresh_button.setFont(QFont(load_custom_font(), 13))
+            self.refresh_button.clicked.connect(self._reset_to_initial_state)
+            self.refresh_button.clicked.connect(self.update_total_count)
+            control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 刷新按钮
-        self.refresh_button = PushButton('刷新奖品列表')
-        self.refresh_button.setFixedSize(180, 50)
-        self.refresh_button.setFont(QFont(load_custom_font(), 13))
-        self.refresh_button.clicked.connect(self.refresh_reward_list)
-        self.refresh_button.clicked.connect(self.update_total_count)
-        control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
+        if show_refresh_button:
+            self.refresh_button = PushButton('刷新奖品列表')
+            self.refresh_button.setFixedSize(180, 50)
+            self.refresh_button.setFont(QFont(load_custom_font(), 13))
+            self.refresh_button.clicked.connect(self.refresh_reward_list)
+            self.refresh_button.clicked.connect(self.update_total_count)
+            control_panel.addWidget(self.refresh_button, 0, Qt.AlignVCenter)
 
         # 创建一个水平布局
         horizontal_layout = QHBoxLayout()
@@ -1459,16 +1472,18 @@ class pumping_reward(QWidget):
         self.plus_button.clicked.connect(self._increase_count)
         horizontal_layout.addWidget(self.plus_button, 0, Qt.AlignLeft)
 
-        # 将水平布局添加到控制面板
-        control_panel.addLayout(horizontal_layout)
+        # 奖数控制开关
+        if show_quantity_control:
+            control_panel.addLayout(horizontal_layout)
 
         # 开始按钮
-        self.start_button = PrimaryPushButton('开始')
-        self.start_button.setObjectName("rewardButton")
-        self.start_button.setFixedSize(180, 50)
-        self.start_button.setFont(QFont(load_custom_font(), 15))
-        self.start_button.clicked.connect(self.start_draw)
-        control_panel.addWidget(self.start_button, 0, Qt.AlignVCenter)
+        if show_start_button:
+            self.start_button = PrimaryPushButton('开始')
+            self.start_button.setObjectName("rewardButton")
+            self.start_button.setFixedSize(180, 50)
+            self.start_button.setFont(QFont(load_custom_font(), 15))
+            self.start_button.clicked.connect(self.start_draw)
+            control_panel.addWidget(self.start_button, 0, Qt.AlignVCenter)
         
         # 奖池下拉框
         self.reward_combo = ComboBox()
@@ -1499,19 +1514,22 @@ class pumping_reward(QWidget):
             logger.error(f"加载奖池列表失败: {str(e)}")
             self.reward_combo.addItem("加载奖池列表失败")
         
-        control_panel.addWidget(self.reward_combo)
+        # 奖池选择开关
+        if show_list_toggle:
+            control_panel.addWidget(self.reward_combo)
         
         # 总奖数和剩余奖数显示
-        if pumping_reward_reward_quantity == 1:
-            self.total_label = BodyLabel('总奖数: 0')
-        elif pumping_reward_reward_quantity == 2:
-            self.total_label = BodyLabel('剩余奖数: 0')
-        else:
-            self.total_label = BodyLabel('总奖数: 0 | 剩余奖数: 0')
-        self.total_label.setFont(QFont(load_custom_font(), 11))
-        self.total_label.setAlignment(Qt.AlignCenter)
-        self.total_label.setFixedWidth(180)
-        control_panel.addWidget(self.total_label, 0, Qt.AlignLeft)
+        if pumping_reward_reward_quantity != 3:
+            if pumping_reward_reward_quantity == 1:
+                self.total_label = BodyLabel('总奖数: 0')
+            elif pumping_reward_reward_quantity == 2:
+                self.total_label = BodyLabel('剩余奖数: 0')
+            else:
+                self.total_label = BodyLabel('总奖数: 0 | 剩余奖数: 0')
+            self.total_label.setFont(QFont(load_custom_font(), 11))
+            self.total_label.setAlignment(Qt.AlignCenter)
+            self.total_label.setFixedWidth(180)
+            control_panel.addWidget(self.total_label, 0, Qt.AlignLeft)
         
         control_panel.addStretch(1)
         

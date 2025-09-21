@@ -37,34 +37,41 @@ class LevitationWindow(QWidget):
 
     def _load_settings(self):
         # 小鸟游星野：加载基础设置和透明度配置
-        settings_path = path_manager.get_settings_path()
+        settings_path = path_manager.get_settings_path("custom_settings.json")
         try:
             ensure_dir(settings_path.parent)
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                foundation_settings = settings.get('foundation', {})
-                self.transparency_mode = foundation_settings.get('pumping_floating_transparency_mode', 80)
-                self.floating_visible = foundation_settings.get('pumping_floating_visible', 3)
-                self.button_arrangement_mode = foundation_settings.get('button_arrangement_mode', 0)
-                self.floating_icon_mode = foundation_settings.get('floating_icon_mode', 0)
-                # 确保透明度值在有效范围内
-                self.transparency_mode = max(0, min(self.transparency_mode / 100, 1))
-                # 确保按钮排列方式值在有效范围内
-                self.button_arrangement_mode = max(0, min(self.button_arrangement_mode, 2))
-                # 确保图标显示模式值在有效范围内
-                self.floating_icon_mode = max(0, min(self.floating_icon_mode, 2))
-                # 添加边缘贴边隐藏功能开关，默认关闭
-                self.flash_window_side_switch = foundation_settings.get('flash_window_side_switch', False)
-                # 添加自定义收回秒数设置，默认5秒
-                self.custom_retract_time = foundation_settings.get('custom_retract_time', 5)
-                # 添加自定义显示方式设置，默认0（箭头）
-                self.custom_display_mode = foundation_settings.get('custom_display_mode', 0)
+                self.transparency_mode = settings['floating_window']['pumping_floating_transparency_mode']
+                self.floating_visible = settings['floating_window']['pumping_floating_visible']
+                self.button_arrangement_mode = settings['floating_window']['button_arrangement_mode']
+                self.floating_icon_mode = settings['floating_window']['floating_icon_mode']
+                self.flash_window_side_switch = settings['floating_window']['flash_window_side_switch']
+                self.custom_retract_time = settings['floating_window']['custom_retract_time']
+                self.custom_display_mode = settings['floating_window']['custom_display_mode']
+                self.custom_show_reset_button = settings['instant_draw']['show_reset_button']
+                self.custom_show_quantity_control = settings['instant_draw']['show_quantity_control']
+                self.custom_show_list_toggle = settings['instant_draw']['show_list_toggle']
+                self.custom_selection_range = settings['instant_draw']['selection_range']
+                self.custom_selection_gender = settings['instant_draw']['selection_gender']
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.transparency_mode = 0.8
             self.floating_visible = 3
             self.button_arrangement_mode = 0
             self.floating_icon_mode = 0
+            self.flash_window_side_switch = False
+            self.custom_retract_time = 5
+            self.custom_display_mode = 1
+            self.custom_show_reset_button = True
+            self.custom_show_quantity_control = True
+            self.custom_show_list_toggle = True
+            self.custom_selection_range = True
+            self.custom_selection_gender = True
             logger.error(f"加载基础设置失败: {e}")
+
+        self.transparency_mode = max(0, min(self.transparency_mode / 100, 1))
+        self.button_arrangement_mode = max(0, min(self.button_arrangement_mode, 2))
+        self.floating_icon_mode = max(0, min(self.floating_icon_mode, 2))
 
     def _load_plugin_settings(self):
         # 小鸟游星野：加载插件设置
@@ -78,6 +85,78 @@ class LevitationWindow(QWidget):
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.selected_plugin = '主窗口'
             logger.error(f"加载插件设置失败: {e}")
+
+    def _is_non_class_time(self):
+        """检测当前时间是否在非上课时间段
+        当'课间禁用'开关启用时，用于判断是否需要安全验证"""
+        try:
+            # 读取程序功能设置
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            if not path_manager.file_exists(settings_path):
+                return False
+                
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                
+            # 检查课间禁用开关是否启用
+            program_functionality = settings.get("program_functionality", {})
+            instant_draw_disable = program_functionality.get("instant_draw_disable", False)
+            
+            if not instant_draw_disable:
+                return False
+                
+            # 读取上课时间段设置
+            time_settings_path = path_manager.get_settings_path('time_settings.json')
+            if not path_manager.file_exists(time_settings_path):
+                return False
+                
+            with open_file(time_settings_path, 'r', encoding='utf-8') as f:
+                time_settings = json.load(f)
+                
+            # 获取非上课时间段
+            non_class_times = time_settings.get('non_class_times', {})
+            if not non_class_times:
+                return False
+                
+            # 获取当前时间
+            current_time = QDateTime.currentDateTime()
+            current_hour = current_time.time().hour()
+            current_minute = current_time.time().minute()
+            current_second = current_time.time().second()
+            
+            # 将当前时间转换为总秒数
+            current_total_seconds = current_hour * 3600 + current_minute * 60 + current_second
+            
+            # 检查当前时间是否在任何非上课时间段内
+            for time_range in non_class_times.values():
+                try:
+                    start_end = time_range.split('-')
+                    if len(start_end) != 2:
+                        continue
+                        
+                    start_time_str, end_time_str = start_end
+                    
+                    # 解析开始时间
+                    start_parts = list(map(int, start_time_str.split(':')))
+                    start_total_seconds = start_parts[0] * 3600 + start_parts[1] * 60 + (start_parts[2] if len(start_parts) > 2 else 0)
+                    
+                    # 解析结束时间
+                    end_parts = list(map(int, end_time_str.split(':')))
+                    end_total_seconds = end_parts[0] * 3600 + end_parts[1] * 60 + (end_parts[2] if len(end_parts) > 2 else 0)
+                    
+                    # 检查当前时间是否在该非上课时间段内
+                    if start_total_seconds <= current_total_seconds < end_total_seconds:
+                        return True
+                        
+                except Exception as e:
+                    logger.error(f"解析非上课时间段失败: {e}")
+                    continue
+                    
+            return False
+            
+        except Exception as e:
+            logger.error(f"检测非上课时间失败: {e}")
+            return False
 
     def _init_ui_components(self):
         # 白露：初始化所有UI组件 - 根据floating_visible值进行功能组合显示
@@ -406,7 +485,7 @@ class LevitationWindow(QWidget):
             self.people_label.setGraphicsEffect(opacity_effect)
             
         elif self.floating_icon_mode == 2:  # 仅文字模式
-            self.people_label = PushButton("抽人")
+            self.people_label = PushButton("点名")
             # 设置按钮固定大小和样式
             self.people_label.setFixedSize(50, 50)
             # 根据透明度模式设置按钮透明度
@@ -449,7 +528,7 @@ class LevitationWindow(QWidget):
                 logger.error(f"加载人物图标失败: {e}")
             
             # 添加文字
-            text_label = BodyLabel("抽人")
+            text_label = BodyLabel("点名")
             text_label.setFont(QFont(load_custom_font(), 10))
             text_label.setAlignment(Qt.AlignCenter)
             
@@ -732,9 +811,12 @@ class LevitationWindow(QWidget):
         self.instant_gender_combo.setFont(QFont(load_custom_font(), 10))
         
         # 添加标签和下拉框到选择布局
-        selection_layout.addWidget(self.instant_class_combo)
-        selection_layout.addWidget(self.instant_group_combo)
-        selection_layout.addWidget(self.instant_gender_combo)
+        if self.custom_show_list_toggle:
+            selection_layout.addWidget(self.instant_class_combo)
+        if self.custom_selection_range:
+            selection_layout.addWidget(self.instant_group_combo)
+        if self.custom_selection_gender:
+            selection_layout.addWidget(self.instant_gender_combo)
         
         # 初始化下拉框数据
         self._init_instant_combo_data()
@@ -805,17 +887,20 @@ class LevitationWindow(QWidget):
         if self.button_arrangement_mode == 1:  # 竖着排列
             # 竖排模式下使用垂直布局
             count_control_layout.addStretch()
-            count_control_layout.addWidget(self.increase_button)
-            count_control_layout.addWidget(self.count_label)
-            count_control_layout.addWidget(self.decrease_button)
-            count_control_layout.addWidget(self.reset_button)
+            if self.custom_show_quantity_control:
+                count_control_layout.addWidget(self.increase_button)
+                count_control_layout.addWidget(self.count_label)
+                count_control_layout.addWidget(self.decrease_button)
+            if self.custom_show_reset_button:
+                count_control_layout.addWidget(self.reset_button)
             count_control_layout.addStretch()
         else:
             # 其他模式使用水平布局
             count_control_layout.addStretch()
-            count_control_layout.addWidget(self.decrease_button)
-            count_control_layout.addWidget(self.count_label)
-            count_control_layout.addWidget(self.increase_button)
+            if self.custom_show_quantity_control:
+                count_control_layout.addWidget(self.decrease_button)
+                count_control_layout.addWidget(self.count_label)
+                count_control_layout.addWidget(self.increase_button)
             count_control_layout.addStretch()
 
         
@@ -828,8 +913,9 @@ class LevitationWindow(QWidget):
             # 其他模式使用水平布局
             button_layout = QHBoxLayout()
             button_layout.addWidget(self.instant_draw_button)
-            button_layout.addWidget(self.reset_button)
-        button_layout.setContentsMargins(0, 0, 0, 0)
+            if self.custom_show_reset_button:
+                button_layout.addWidget(self.reset_button)
+            button_layout.setContentsMargins(0, 0, 0, 0)
         
         # 创建按钮容器
         button_container = QWidget()
@@ -995,7 +1081,7 @@ class LevitationWindow(QWidget):
             self.people_label.mousePressEvent = self.on_people_press
             self.people_label.mouseReleaseEvent = self.on_people_release
 
-        # 小鸟游星野：闪抽按钮事件处理器 - 与抽人按钮相同的拖动功能 ✧(๑•̀ㅂ•́)๑
+        # 小鸟游星野：闪抽按钮事件处理器 - 与点名按钮相同的拖动功能 ✧(๑•̀ㅂ•́)๑
         if hasattr(self, 'flash_button') and self.flash_button is not None:
             self.flash_button.mousePressEvent = self.on_flash_press
             self.flash_button.mouseReleaseEvent = self.on_flash_release
@@ -1051,6 +1137,21 @@ class LevitationWindow(QWidget):
         self.click_timer.start(100)
         
     def on_instant_draw_button_release(self, event):
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+                
         if self.click_timer.isActive():
             # 短按：停止计时器并触发点击事件
             self.click_timer.stop()
@@ -1064,6 +1165,21 @@ class LevitationWindow(QWidget):
         self.click_timer.start(100)
         
     def on_reset_button_release(self, event):
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+
         if self.click_timer.isActive():
             # 短按：停止计时器并触发点击事件
             self.click_timer.stop()
@@ -1077,6 +1193,21 @@ class LevitationWindow(QWidget):
         self.click_timer.start(100)
         
     def on_increase_button_release(self, event):
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+
         if self.click_timer.isActive():
             # 短按：停止计时器并触发点击事件
             self.click_timer.stop()
@@ -1090,6 +1221,21 @@ class LevitationWindow(QWidget):
         self.click_timer.start(100)
         
     def on_decrease_button_release(self, event):
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+                
         if self.click_timer.isActive():
             # 短按：停止计时器并触发点击事件
             self.click_timer.stop()
@@ -1320,31 +1466,6 @@ class LevitationWindow(QWidget):
     def on_flash_clicked(self, event=None):
         # 小鸟游星野：闪抽按钮点击事件 - 显示直接抽取窗口 ✧(๑•̀ㅂ•́)๑
         self._show_direct_extraction_window()
-
-    def on_auxiliary_press(self, event):
-        # 小鸟游星野：辅窗按钮按下事件 - 记录拖动起始位置 ✧(๑•̀ㅂ•́)ow✧
-        self.drag_start_position = event.pos()
-        # 启动长按计时器（100毫秒 - 进一步优化响应速度）
-        self.click_timer.start(100)
-
-    def on_auxiliary_release(self, event):
-        # 星穹铁道白露：辅窗按钮释放事件处理 - 区分点击和拖动 (≧∇≦)ﾉ
-        was_dragging = getattr(self, 'is_dragging', False)
-        self.is_dragging = False
-        
-        if self.click_timer.isActive():
-            # 小鸟游星野：短按点击，触发辅窗窗口 ✧(๑•̀ㅂ•́)๑
-            self.click_timer.stop()
-            self.on_auxiliary_clicked()
-        elif was_dragging:
-            # 白露：拖动结束，保存新位置 (≧∇≦)ﾉ
-            self.save_position()
-        
-        event.accept()
-
-    def on_auxiliary_clicked(self, event=None):
-        # 小鸟游星野：辅窗按钮点击事件 - 显示辅窗窗口 ✧(๑•̀ㅂ•́)๑
-        self._show_auxiliary_window()
     
     def on_instant_draw_container_press(self, event):
         """处理即抽容器鼠标按下事件，支持拖动（仅空白区域）"""
@@ -1520,26 +1641,73 @@ class LevitationWindow(QWidget):
 
     def _show_direct_extraction_window(self, draw_count=1, class_name=None, group_name='抽取全班学生', gender_name='抽取所有性别'):
         # 小鸟游星野：显示直接抽取窗口 - 包含pumping_people功能 ✧(๑•̀ㅂ•́)๑
+        if self._is_non_class_time():
+            try:
+                from app.common.path_utils import path_manager, open_file
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+                
         try:
             # 导入pumping_people模块
-            from app.view.main_page.flash_pumping_people import pumping_people
+            from app.view.main_page.flash_pumping_people import instant_draw
             
             # 初始化当前抽取人数
             self.current_count = draw_count
 
             # 获取班级列表
             self._load_classes()
-            class_list = self.class_combo.currentText()
-
-            # 初始化班级、小组和性别
-            class_name = class_list
+            
+            # 检查instant_class_combo是否存在，如果不存在则创建
+            if not hasattr(self, 'instant_class_combo'):
+                self.instant_class_combo = ComboBox()
+                self.instant_class_combo.setFixedSize(130, 30)
+                if dark_mode:
+                    self.instant_class_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+                else:
+                    self.instant_class_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
+                self.instant_class_combo.setFont(QFont(load_custom_font(), 10))
+                
+                # 创建小组下拉框
+                self.instant_group_combo = ComboBox()
+                self.instant_group_combo.setFixedSize(130, 30)
+                if dark_mode:
+                    self.instant_group_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+                else:
+                    self.instant_group_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
+                self.instant_group_combo.setFont(QFont(load_custom_font(), 10))
+                
+                # 创建性别下拉框
+                self.instant_gender_combo = ComboBox()
+                self.instant_gender_combo.setFixedSize(130, 30)
+                if dark_mode:
+                    self.instant_gender_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+                else:
+                    self.instant_gender_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
+                self.instant_gender_combo.setFont(QFont(load_custom_font(), 10))
+                
+                # 初始化下拉框数据
+                self._init_instant_combo_data()
+            
+            # 如果class_name参数为None，则使用下拉框中的当前选择
+            if class_name is None:
+                class_name = self.instant_class_combo.currentText()
             group_name = group_name
             gender_name = gender_name
             
             # 创建自定义标题栏的对话框
             self.pumping_widget = QDialog()
             self.pumping_widget.setWindowFlags(Qt.FramelessWindowHint | Qt.Window | Qt.Tool | Qt.WindowStaysOnTopHint)
-            self.pumping_widget.setWindowTitle("SecRandom - 闪抽")
+            self.pumping_widget.setWindowTitle("SecRandom - 抽取")
             # self.pumping_widget.setSizeGripEnabled(True)
             
             # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
@@ -1569,7 +1737,7 @@ class LevitationWindow(QWidget):
             title_layout.addWidget(self.close_btn)
             
             # 创建pumping_people内容，并传递班级、小组和性别信息
-            self.pumping_content = pumping_people(draw_count=self.current_count, 
+            self.pumping_content = instant_draw(draw_count=self.current_count, 
                                                  class_name=class_name, 
                                                  group_name=group_name, 
                                                  gender_name=gender_name)
@@ -1613,10 +1781,39 @@ class LevitationWindow(QWidget):
                 scale_factor = 3.0
             else:
                 scale_factor = 3.5
+
+            try:
+                # 尝试获取学生数据以计算最大字数
+                from app.common.path_utils import path_manager, open_file
+                student_file = path_manager.get_resource_path('list', f'{class_name}.json')
+                if path_manager.file_exists(student_file):
+                    with open_file(student_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        # 计算所有学生名称的最大字数
+                        max_chars = 0
+                        for student_name in data.keys():
+                            # 去除【】符号后计算字数
+                            clean_name = student_name.replace('【', '').replace('】', '')
+                            max_chars = max(max_chars, len(clean_name))
+                        
+                        if max_chars > 3:
+                            # 根据最大字数和字体大小计算额外宽度，减去3个字的基准宽度
+                            char_width_bonus = int((max_chars - 3) * font_size * 0.6)
+                            # 确保额外宽度在合理范围内
+                            char_width_bonus = max(50, min(400, char_width_bonus))
+                        else:
+                            char_width_bonus = 50  # 3个字或更少时使用最小额外宽度
+                else:
+                    char_width_bonus = 100  # 默认值
+            except Exception as e:
+                logger.error(f"计算学生名称字数时出错: {e}, 使用默认值")
+                char_width_bonus = 100  # 默认值
             
             # 计算动态窗口大小，确保最小和最大尺寸限制，适配200字号
+            image_width_bonus = 0
+
             # 如果显示学生图片，需要增加窗口宽度
-            if show_student_image:
+            if show_student_image and self.current_count == 1:
                 # 显示图片时根据字体大小动态计算图片额外宽度
                 if font_size <= 30:
                     image_width_bonus = 170   # 小字体时的图片额外宽度
@@ -1632,26 +1829,24 @@ class LevitationWindow(QWidget):
                     image_width_bonus = 600  # 很大字体时的图片额外宽度
                 else:
                     image_width_bonus = 800  # 超大字体时的图片额外宽度
-                dynamic_width = max(150, min(1920, int((base_width + image_width_bonus) * scale_factor)))
-            elif self.current_count > 1:
-                # 显示更多人时根据字体大小动态计算额外宽度
+            elif show_student_image and self.current_count > 1:
+                # 显示图片时根据字体大小动态计算图片额外宽度
                 if font_size <= 30:
-                    dynamic_width_bonus = 150   # 小字体时的额外宽度
+                    image_width_bonus = 130   # 小字体时的图片额外宽度
                 elif font_size <= 50:
-                    dynamic_width_bonus = 150  # 中等字体时的额外宽度
+                    image_width_bonus = 130  # 中等字体时的图片额外宽度
                 elif font_size <= 80:
-                    dynamic_width_bonus = 220  # 较大字体时的额外宽度
+                    image_width_bonus = 200  # 较大字体时的图片额外宽度
                 elif font_size <= 120:
-                    dynamic_width_bonus = 300  # 大字体时的额外宽度
+                    image_width_bonus = 280  # 大字体时的图片额外宽度
                 elif font_size <= 150:
-                    dynamic_width_bonus = 430  # 很大字体时的额外宽度
+                    image_width_bonus = 410  # 很大字体时的图片额外宽度
                 elif font_size <= 180:
-                    dynamic_width_bonus = 580  # 很大字体时的额外宽度
+                    image_width_bonus = 560  # 很大字体时的图片额外宽度
                 else:
-                    dynamic_width_bonus = 780  # 超大字体时的额外宽度
-                dynamic_width = max(150, min(1920, int((base_width + dynamic_width_bonus) * scale_factor)))
-            else:
-                dynamic_width = max(150, min(1920, int(base_width * scale_factor)))
+                    image_width_bonus = 760  # 超大字体时的图片额外宽度
+
+            dynamic_width = max(150, min(1920, int((base_width + image_width_bonus + char_width_bonus) * scale_factor)))
             dynamic_height = max(170, min(1080, int(base_height * scale_factor)))
             
             self.pumping_widget.setFixedSize(dynamic_width, dynamic_height)
