@@ -37,18 +37,12 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.default_settings = {
             "check_on_startup": True,
             "self_starting_enabled": False,
-            "pumping_floating_enabled": True,
-            "pumping_floating_visible": 3,
-            "pumping_floating_transparency_mode": 80,
-            "flash_window_side_switch": False,
             "main_window_focus_mode": 0,
             "main_window_focus_time": 0,
             "main_window_mode": 0,
             "settings_window_mode": 0,
             "topmost_switch": False,
             "url_protocol_enabled": False,
-            "button_arrangement_mode": 0,
-            "main_window_control_Switch": False,
             "flash_window_auto_close": True,
             "flash_window_close_time": 2,
             "global_shortcut_enabled": False,
@@ -56,15 +50,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "global_shortcut_key": "",
             "local_pumping_shortcut_key": "",
             "local_reward_shortcut_key": "",
-            "show_startup_window_switch": True,
-            "floating_icon_mode": 0,
-            "custom_retract_time": 5,
-            "custom_display_mode": 1,
+            "show_startup_window_switch": False,
         }
 
         self.self_starting_switch = SwitchButton()
-        self.pumping_floating_switch = SwitchButton()
-        self.floating_icon_mode_comboBox = ComboBox()
         self.main_window_focus_comboBox = ComboBox()
         self.main_window_focus_time_comboBox = ComboBox()
         self.main_window_comboBox = ComboBox()
@@ -76,31 +65,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.self_starting_switch.setFont(QFont(load_custom_font(), 12))
         self.self_starting_switch.checkedChanged.connect(self.setting_startup)
 
-        # 浮窗显示/隐藏按钮
-        self.pumping_floating_switch.setOnText("显示")
-        self.pumping_floating_switch.setOffText("隐藏")
-        self.pumping_floating_switch.checkedChanged.connect(self.save_settings)
-        self.pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
-
         # 定时清理按钮
         self.cleanup_button = PushButton("设置定时清理")
         self.cleanup_button.clicked.connect(self.show_cleanup_dialog)
         self.cleanup_button.setFont(QFont(load_custom_font(), 12))
-
-        # 浮窗透明度设置下拉框
-        self.pumping_floating_transparency_SpinBox = SpinBox()
-        self.pumping_floating_transparency_SpinBox.setRange(0, 100)
-        self.pumping_floating_transparency_SpinBox.setValue(30)
-        self.pumping_floating_transparency_SpinBox.setSingleStep(10)
-        self.pumping_floating_transparency_SpinBox.setSuffix("%")
-        self.pumping_floating_transparency_SpinBox.valueChanged.connect(self.save_settings)
-        self.pumping_floating_transparency_SpinBox.setFont(QFont(load_custom_font(), 12))
-
-        # 浮窗图标显示模式设置下拉框
-        self.floating_icon_mode_comboBox.addItems(["图标+文字", "图标", "文字"])
-        self.floating_icon_mode_comboBox.setCurrentIndex(0)  # 默认选择"图标+文字"
-        self.floating_icon_mode_comboBox.currentIndexChanged.connect(self.save_settings)
-        self.floating_icon_mode_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 设置主窗口不是焦点时关闭延迟
         self.main_window_focus_comboBox.addItems(
@@ -143,54 +111,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.flash_window_auto_close_switch.setFont(QFont(load_custom_font(), 12))
         self.flash_window_auto_close_switch.checkedChanged.connect(self.save_settings)
 
-        # 浮窗贴边
-        self.flash_window_side_switch = SwitchButton()
-        self.flash_window_side_switch.setOnText("开启")
-        self.flash_window_side_switch.setOffText("关闭")
-        self.flash_window_side_switch.setFont(QFont(load_custom_font(), 12))
-        self.flash_window_side_switch.checkedChanged.connect(self.save_settings)
-
         # 闪抽窗口自动关闭时间设置
         self.flash_window_close_time_comboBox = ComboBox()
         self.flash_window_close_time_comboBox.addItems(["1秒", "2秒", "3秒", "5秒", "10秒", "15秒", "30秒"])
         self.flash_window_close_time_comboBox.currentIndexChanged.connect(self.save_settings)
         self.flash_window_close_time_comboBox.setFont(QFont(load_custom_font(), 12))
-
-        # 自定义收回秒数设置
-        self.custom_retract_time_spinBox = SpinBox()
-        self.custom_retract_time_spinBox.setRange(1, 60)  # 1-60秒
-        self.custom_retract_time_spinBox.setValue(5)  # 默认5秒
-        self.custom_retract_time_spinBox.setSingleStep(1)
-        self.custom_retract_time_spinBox.setSuffix("秒")
-        self.custom_retract_time_spinBox.valueChanged.connect(self.save_settings)
-        self.custom_retract_time_spinBox.setFont(QFont(load_custom_font(), 12))
-
-        # 自定义显示方式设置
-        self.custom_display_mode_comboBox = ComboBox()
-        self.custom_display_mode_comboBox.addItems(["箭头", "文字", "图标"])
-        self.custom_display_mode_comboBox.currentIndexChanged.connect(self.save_settings)
-        self.custom_display_mode_comboBox.setFont(QFont(load_custom_font(), 12))
-
-        self.left_pumping_floating_switch = ComboBox()
-        self.left_pumping_floating_switch.addItems([
-            # 单个功能
-            "显示 拖动",
-            "显示 主界面",
-            "显示 闪抽",
-            
-            # 两个功能组合
-            "显示 拖动+主界面",
-            "显示 拖动+闪抽",
-            "显示 主界面+闪抽",
-            
-            # 三个功能组合
-            "显示 拖动+主界面+闪抽",
-
-            # 即抽
-            "显示 即抽"
-        ])
-        self.left_pumping_floating_switch.setFont(QFont(load_custom_font(), 12))
-        self.left_pumping_floating_switch.currentIndexChanged.connect(self.save_settings)
 
         # 主界面置顶功能
         self.topmost_switch = SwitchButton()
@@ -198,23 +123,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.topmost_switch.setOffText("取消置顶")
         self.topmost_switch.setFont(QFont(load_custom_font(), 12))
         self.topmost_switch.checkedChanged.connect(self.save_settings)
-
-        # 主界面控制面板（抽奖 抽人）
-        self.main_window_control_Switch = SwitchButton()
-        self.main_window_control_Switch.setOnText("右侧")
-        self.main_window_control_Switch.setOffText("左侧")
-        self.main_window_control_Switch.setFont(QFont(load_custom_font(), 12))
-        self.main_window_control_Switch.checkedChanged.connect(self.save_settings)
-        
-        # 浮窗按钮排列方式
-        self.button_arrangement_comboBox = ComboBox()
-        self.button_arrangement_comboBox.addItems([
-            "矩形排列",
-            "竖向排列",
-            "横向排列"
-        ])
-        self.button_arrangement_comboBox.setFont(QFont(load_custom_font(), 12))
-        self.button_arrangement_comboBox.currentIndexChanged.connect(self.save_settings)
         
         # URL协议注册功能
         self.url_protocol_switch = SwitchButton()
@@ -240,7 +148,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         
         # 全局快捷键目标选择下拉框
         self.global_shortcut_target_comboBox = ComboBox()
-        self.global_shortcut_target_comboBox.addItems(["抽人界面", "闪抽界面", "抽奖界面"])
+        self.global_shortcut_target_comboBox.addItems(["点名界面", "闪抽界面", "抽奖界面"])
         self.global_shortcut_target_comboBox.setFont(QFont(load_custom_font(), 12))
         self.global_shortcut_target_comboBox.currentIndexChanged.connect(self.save_settings)
         
@@ -269,17 +177,17 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.global_shortcut_widget = QWidget()
         self.global_shortcut_widget.setLayout(self.global_shortcut_layout)
         
-        # 局部快捷键设置 - 抽人操作
-        self.local_pumping_shortcut_button = PushButton("设置抽人快捷键")
+        # 局部快捷键设置 - 点名操作
+        self.local_pumping_shortcut_button = PushButton("设置点名快捷键")
         self.local_pumping_shortcut_button.setFont(QFont(load_custom_font(), 12))
         self.local_pumping_shortcut_button.clicked.connect(self.set_pumping_shortcut)
         
-        # 抽人快捷键清除按钮
+        # 点名快捷键清除按钮
         self.local_pumping_shortcut_clear_button = PushButton("清除")
         self.local_pumping_shortcut_clear_button.setFont(QFont(load_custom_font(), 12))
         self.local_pumping_shortcut_clear_button.clicked.connect(self.clear_pumping_shortcut)
         
-        # 抽人快捷键显示标签
+        # 点名快捷键显示标签
         self.local_pumping_shortcut_label = BodyLabel("未设置")
         self.local_pumping_shortcut_label.setFont(QFont(load_custom_font(), 12))
         
@@ -332,7 +240,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "全局快捷键", "启用全局快捷键功能，快速访问指定界面", self.global_shortcut_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "快捷键目标", "选择全局快捷键触发时打开的界面", self.global_shortcut_target_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "全局快捷键", "设置用于快速打开指定界面的全局快捷键", self.global_shortcut_widget)
-        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "抽人快捷键", "设置抽人操作的开始/停止快捷键", self.local_pumping_shortcut_widget)
+        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "点名快捷键", "设置点名操作的开始/停止快捷键", self.local_pumping_shortcut_widget)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "抽奖快捷键", "设置抽奖操作的开始/停止快捷键", self.local_reward_shortcut_widget)
         
         # 窗口位置设置
@@ -340,18 +248,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "设置窗口位置", "设置设置窗口在屏幕上的默认显示位置", self.settings_window_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "主窗口置顶", "使主窗口始终显示在其他窗口之上(需重新打开窗口生效)", self.topmost_switch)
         
-        # 界面布局设置
-        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "主窗口控制面板", "配置主窗口控制面板的显示位置", self.main_window_control_Switch)
-        
-        # 浮窗功能设置
-        self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "浮窗显隐", "控制便捷抽人悬浮窗的显示和隐藏状态", self.pumping_floating_switch)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗贴边", "控制便捷抽人悬浮窗是否贴边", self.flash_window_side_switch)
-        self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "浮窗贴边收回秒数", "设置浮窗贴边自定义收回的秒数(1-60秒)", self.custom_retract_time_spinBox)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗贴边显示方式", "选择浮窗贴边的显示方式(箭头/文字)", self.custom_display_mode_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗按钮数量", "自定义悬浮窗中显示的功能按钮数量", self.left_pumping_floating_switch)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "按钮排列方式", "选择悬浮窗按钮的水平或垂直排列布局", self.button_arrangement_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗图标显示模式", "选择悬浮窗按钮的显示样式", self.floating_icon_mode_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗透明度", "调整悬浮窗的透明度以适应不同使用场景", self.pumping_floating_transparency_SpinBox)
+        # 闪抽设置
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽自动关闭", "启用后闪抽窗口将在完成操作后自动关闭", self.flash_window_auto_close_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽关闭时间", "设置闪抽窗口自动关闭的延迟时间", self.flash_window_close_time_comboBox)
 
@@ -488,18 +385,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     
                     # 优先使用保存的文字选项
                     self_starting_enabled = foundation_settings.get("self_starting_enabled", self.default_settings["self_starting_enabled"])
-
-                    pumping_floating_enabled = foundation_settings.get("pumping_floating_enabled", self.default_settings["pumping_floating_enabled"])
                         
                     main_window_mode = foundation_settings.get("main_window_mode", self.default_settings["main_window_mode"])
                     if main_window_mode < 0 or main_window_mode >= self.main_window_comboBox.count():
                         # 如果索引值无效，则使用默认值
                         main_window_mode = self.default_settings["main_window_mode"]
-
-                    pumping_floating_transparency_mode = foundation_settings.get("pumping_floating_transparency_mode", self.default_settings["pumping_floating_transparency_mode"])
-                    if pumping_floating_transparency_mode < 0 or pumping_floating_transparency_mode > 100:
-                        # 如果索引值无效，则使用默认值
-                        pumping_floating_transparency_mode = self.default_settings["pumping_floating_transparency_mode"]
 
                     main_window_focus_mode = foundation_settings.get("main_window_focus_mode", self.default_settings["main_window_focus_mode"])
                     if main_window_focus_mode < 0 or main_window_focus_mode >= self.main_window_focus_comboBox.count():
@@ -518,18 +408,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
                     check_on_startup = foundation_settings.get("check_on_startup", self.default_settings["check_on_startup"])
 
-                    pumping_floating_visible = foundation_settings.get("pumping_floating_visible", self.default_settings["pumping_floating_visible"])
-
                     topmost_switch = foundation_settings.get("topmost_switch", self.default_settings["topmost_switch"])
 
                     url_protocol_enabled = foundation_settings.get("url_protocol_enabled", self.default_settings["url_protocol_enabled"])
-
-                    button_arrangement_mode = foundation_settings.get("button_arrangement_mode", self.default_settings["button_arrangement_mode"])
-                    if button_arrangement_mode < 0 or button_arrangement_mode >= self.button_arrangement_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        button_arrangement_mode = self.default_settings["button_arrangement_mode"]
-
-                    main_window_control_Switch = foundation_settings.get("main_window_control_Switch", self.default_settings["main_window_control_Switch"])
 
                     # 闪抽窗口自动关闭设置
                     flash_window_auto_close = foundation_settings.get("flash_window_auto_close", self.default_settings["flash_window_auto_close"])
@@ -547,48 +428,21 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     global_shortcut_key = foundation_settings.get("global_shortcut_key", self.default_settings["global_shortcut_key"])
                     local_pumping_shortcut_key = foundation_settings.get("local_pumping_shortcut_key", self.default_settings["local_pumping_shortcut_key"])
                     local_reward_shortcut_key = foundation_settings.get("local_reward_shortcut_key", self.default_settings["local_reward_shortcut_key"])
-                    
-                    # 浮窗图标显示模式
-                    floating_icon_mode = foundation_settings.get("floating_icon_mode", self.default_settings["floating_icon_mode"])
-                    if floating_icon_mode < 0 or floating_icon_mode >= self.floating_icon_mode_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        floating_icon_mode = self.default_settings["floating_icon_mode"]
-
-                    # 浮窗贴边
-                    flash_window_side_switch = foundation_settings.get("flash_window_side_switch", self.default_settings["flash_window_side_switch"])
-                    
-                    # 自定义设置
-                    custom_retract_time = foundation_settings.get("custom_retract_time", self.default_settings["custom_retract_time"])
-                    custom_display_mode = foundation_settings.get("custom_display_mode", self.default_settings["custom_display_mode"])
-                    if custom_display_mode < 0 or custom_display_mode >= self.custom_display_mode_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        custom_display_mode = self.default_settings["custom_display_mode"]
 
                     # 显示启动窗口
                     show_startup_window_switch = foundation_settings.get("show_startup_window_switch", self.default_settings["show_startup_window_switch"])
                     
                     self.self_starting_switch.setChecked(self_starting_enabled)
-                    self.pumping_floating_switch.setChecked(pumping_floating_enabled)
-                    self.pumping_floating_transparency_SpinBox.setValue(pumping_floating_transparency_mode)
                     self.main_window_focus_comboBox.setCurrentIndex(main_window_focus_mode)
                     self.main_window_focus_time_comboBox.setCurrentIndex(main_window_focus_time)
                     self.main_window_comboBox.setCurrentIndex(main_window_mode)
                     self.settings_window_comboBox.setCurrentIndex(settings_window_mode)
                     self.check_on_startup.setChecked(check_on_startup)
-                    self.left_pumping_floating_switch.setCurrentIndex(pumping_floating_visible)
                     self.topmost_switch.setChecked(topmost_switch)
                     self.url_protocol_switch.setChecked(url_protocol_enabled)
-                    self.button_arrangement_comboBox.setCurrentIndex(button_arrangement_mode)
-                    self.main_window_control_Switch.setChecked(main_window_control_Switch)
                     self.flash_window_auto_close_switch.setChecked(flash_window_auto_close)
                     self.flash_window_close_time_comboBox.setCurrentIndex(flash_window_close_time)
-                    self.floating_icon_mode_comboBox.setCurrentIndex(floating_icon_mode)
-                    self.flash_window_side_switch.setChecked(flash_window_side_switch)
                     self.show_startup_window_switch.setChecked(show_startup_window_switch)
-                    
-                    # 设置自定义选项
-                    self.custom_retract_time_spinBox.setValue(custom_retract_time)
-                    self.custom_display_mode_comboBox.setCurrentIndex(custom_display_mode)
                     
                     # 更新快捷键设置
                     self.global_shortcut_switch.setChecked(global_shortcut_enabled)
@@ -604,27 +458,16 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
-                self.pumping_floating_switch.setChecked(self.default_settings["pumping_floating_enabled"])
-                self.pumping_floating_transparency_SpinBox.setValue(self.default_settings["pumping_floating_transparency_mode"])
                 self.main_window_focus_comboBox.setCurrentIndex(self.default_settings["main_window_focus_mode"])
                 self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
                 self.main_window_comboBox.setCurrentIndex(self.default_settings["main_window_mode"])
                 self.settings_window_comboBox.setCurrentIndex(self.default_settings["settings_window_mode"])
                 self.check_on_startup.setChecked(self.default_settings["check_on_startup"])
-                self.left_pumping_floating_switch.setCurrentIndex(self.default_settings["pumping_floating_visible"])
                 self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
                 self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
-                self.button_arrangement_comboBox.setCurrentIndex(self.default_settings["button_arrangement_mode"])
-                self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
                 self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
                 self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
-                self.floating_icon_mode_comboBox.setCurrentIndex(self.default_settings["floating_icon_mode"])
-                self.flash_window_side_switch.setChecked(self.default_settings["flash_window_side_switch"])
                 self.show_startup_window_switch.setChecked(self.default_settings["show_startup_window_switch"])
-                
-                # 设置自定义选项的默认值
-                self.custom_retract_time_spinBox.setValue(self.default_settings["custom_retract_time"])
-                self.custom_display_mode_comboBox.setCurrentIndex(self.default_settings["custom_display_mode"])
                 
                 # 加载快捷键设置的默认值
                 self.global_shortcut_switch.setChecked(self.default_settings["global_shortcut_enabled"])
@@ -636,27 +479,16 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
-            self.pumping_floating_switch.setChecked(self.default_settings["pumping_floating_enabled"])
-            self.pumping_floating_transparency_SpinBox.setValue(self.default_settings["pumping_floating_transparency_mode"])
             self.main_window_focus_comboBox.setCurrentIndex(self.default_settings["main_window_focus_mode"])
             self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
             self.main_window_comboBox.setCurrentIndex(self.default_settings["main_window_mode"])
             self.settings_window_comboBox.setCurrentIndex(self.default_settings["settings_window_mode"])
             self.check_on_startup.setChecked(self.default_settings["check_on_startup"])
-            self.left_pumping_floating_switch.setCurrentIndex(self.default_settings["pumping_floating_visible"])
             self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
             self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
-            self.button_arrangement_comboBox.setCurrentIndex(self.default_settings["button_arrangement_mode"])
-            self.main_window_control_Switch.setChecked(self.default_settings["main_window_control_Switch"])
             self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
             self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
-            self.floating_icon_mode_comboBox.setCurrentIndex(self.default_settings["floating_icon_mode"])
-            self.flash_window_side_switch.setChecked(self.default_settings["flash_window_side_switch"])
             self.show_startup_window_switch.setChecked(self.default_settings["show_startup_window_switch"])
-            
-            # 设置自定义选项的默认值
-            self.custom_retract_time_spinBox.setValue(self.default_settings["custom_retract_time"])
-            self.custom_display_mode_comboBox.setCurrentIndex(self.default_settings["custom_display_mode"])
             
             # 加载快捷键设置的默认值
             self.global_shortcut_switch.setChecked(self.default_settings["global_shortcut_enabled"])
@@ -688,28 +520,17 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings = existing_settings["foundation"]
         # 删除保存文字选项的代码
         foundation_settings["self_starting_enabled"] = self.self_starting_switch.isChecked()
-        foundation_settings["pumping_floating_enabled"] = self.pumping_floating_switch.isChecked()
-        foundation_settings["pumping_floating_transparency_mode"] = self.pumping_floating_transparency_SpinBox.value()
         foundation_settings["main_window_focus_mode"] = self.main_window_focus_comboBox.currentIndex()
         foundation_settings["main_window_focus_time"] = self.main_window_focus_time_comboBox.currentIndex()
         foundation_settings["main_window_mode"] = self.main_window_comboBox.currentIndex()
         foundation_settings["settings_window_mode"] = self.settings_window_comboBox.currentIndex()
         foundation_settings["check_on_startup"] = self.check_on_startup.isChecked()
-        foundation_settings["pumping_floating_visible"] = self.left_pumping_floating_switch.currentIndex()
         foundation_settings["topmost_switch"] = self.topmost_switch.isChecked()
         foundation_settings["url_protocol_enabled"] = self.url_protocol_switch.isChecked()
-        foundation_settings["button_arrangement_mode"] = self.button_arrangement_comboBox.currentIndex()
-        foundation_settings["main_window_control_Switch"] = self.main_window_control_Switch.isChecked()
         foundation_settings["flash_window_auto_close"] = self.flash_window_auto_close_switch.isChecked()
         foundation_settings["flash_window_close_time"] = self.flash_window_close_time_comboBox.currentIndex()
-        foundation_settings["floating_icon_mode"] = self.floating_icon_mode_comboBox.currentIndex()
-        foundation_settings["flash_window_side_switch"] = self.flash_window_side_switch.isChecked()
         # 显示启动窗口
         foundation_settings["show_startup_window_switch"] = self.show_startup_window_switch.isChecked()
-
-        # 保存自定义设置
-        foundation_settings["custom_retract_time"] = self.custom_retract_time_spinBox.value()
-        foundation_settings["custom_display_mode"] = self.custom_display_mode_comboBox.currentIndex()
         
         # 保存快捷键设置
         foundation_settings["global_shortcut_enabled"] = self.global_shortcut_switch.isChecked()
@@ -916,13 +737,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         dialog.cancelButton.clicked.connect(on_cancel)
     
     def set_pumping_shortcut(self):
-        """设置抽人操作快捷键"""
+        """设置点名操作快捷键"""
         # 获取当前快捷键
         current_shortcut = self.local_pumping_shortcut_label.text() if self.local_pumping_shortcut_label.text() != "未设置" else ""
         
         # 创建一个对话框来捕获快捷键
         dialog = MessageBoxBase(self)
-        dialog.setWindowTitle("设置抽人快捷键")
+        dialog.setWindowTitle("设置点名快捷键")
         dialog.yesButton.setText("确定")
         dialog.cancelButton.setText("取消")
         
@@ -964,7 +785,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 
                 InfoBar.success(
                     title='设置成功',
-                    content=f'抽人快捷键已设置为: {captured_shortcut}',
+                    content=f'点名快捷键已设置为: {captured_shortcut}',
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -1107,9 +928,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 logger.error("未找到主窗口实例")
                 return
             
-            if target_index == 0:  # 抽人界面
-                # 打开抽人界面
-                logger.info("通过全局快捷键打开抽人界面")
+            if target_index == 0:  # 点名界面
+                # 打开点名界面
+                logger.info("通过全局快捷键打开点名界面")
                 # 使用QMetaObject.invokeMethod确保在主线程中执行UI操作
                 QMetaObject.invokeMethod(main_window, "_show_pumping_interface_from_shortcut", Qt.QueuedConnection)
 
@@ -1129,12 +950,12 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             logger.error(f"触发全局快捷键失败: {str(e)}")
 
     def register_local_shortcuts(self):
-        """注册全局快捷键（抽人和抽奖）"""
+        """注册全局快捷键（点名和抽奖）"""
         try:
             # 导入keyboard库用于全局快捷键
             import keyboard
             
-            # 获取抽人和抽奖快捷键
+            # 获取点名和抽奖快捷键
             pumping_shortcut = self.local_pumping_shortcut_label.text()
             reward_shortcut = self.local_reward_shortcut_label.text()
             
@@ -1151,11 +972,11 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 except:
                     pass
             
-            # 注册抽人快捷键
+            # 注册点名快捷键
             if pumping_shortcut and pumping_shortcut != "未设置":
                 keyboard.add_hotkey(pumping_shortcut, lambda: self.trigger_local_shortcut('pumping'))
                 self._pumping_shortcut = pumping_shortcut
-                logger.info(f"注册抽人全局快捷键成功: {pumping_shortcut}")
+                logger.info(f"注册点名全局快捷键成功: {pumping_shortcut}")
             
             # 注册抽奖快捷键
             if reward_shortcut and reward_shortcut != "未设置":
@@ -1187,7 +1008,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             )
     
     def trigger_local_shortcut(self, shortcut_type):
-        """触发全局快捷键（抽人和抽奖）"""
+        """触发全局快捷键（点名和抽奖）"""
         if not self.global_shortcut_switch.isChecked():
             return
 
@@ -1204,8 +1025,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 return
             
             if shortcut_type == 'pumping':
-                # 触发抽人操作
-                logger.info("通过全局快捷键触发抽人操作")
+                # 触发点名操作
+                logger.info("通过全局快捷键触发点名操作")
                 
                 # 使用QMetaObject.invokeMethod确保在主线程中执行UI操作
                 QMetaObject.invokeMethod(main_window, "_trigger_pumping_from_shortcut", Qt.QueuedConnection)
@@ -1274,7 +1095,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             )
     
     def clear_pumping_shortcut(self):
-        """清除抽人快捷键"""
+        """清除点名快捷键"""
         try:
             # 导入keyboard库用于全局快捷键
             import keyboard
@@ -1284,9 +1105,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 try:
                     keyboard.remove_hotkey(self._pumping_shortcut)
                     self._pumping_shortcut = ""
-                    logger.info("抽人快捷键已清除")
+                    logger.info("点名快捷键已清除")
                 except Exception as e:
-                    logger.error(f"清除抽人快捷键失败: {str(e)}")
+                    logger.error(f"清除点名快捷键失败: {str(e)}")
             
             # 更新标签显示
             self.local_pumping_shortcut_label.setText("未设置")
@@ -1296,7 +1117,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             
             InfoBar.success(
                 title='清除成功',
-                content='抽人快捷键已清除',
+                content='点名快捷键已清除',
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -1304,10 +1125,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 parent=self
             )
         except ImportError:
-            logger.error("keyboard库未安装，无法清除抽人快捷键")
+            logger.error("keyboard库未安装，无法清除点名快捷键")
             InfoBar.warning(
                 title='缺少依赖',
-                content='keyboard库未安装，无法清除抽人快捷键',
+                content='keyboard库未安装，无法清除点名快捷键',
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -1315,10 +1136,10 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 parent=self
             )
         except Exception as e:
-            logger.error(f"清除抽人快捷键失败: {str(e)}")
+            logger.error(f"清除点名快捷键失败: {str(e)}")
             InfoBar.error(
                 title='清除失败',
-                content=f'清除抽人快捷键失败: {str(e)}',
+                content=f'清除点名快捷键失败: {str(e)}',
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -1532,86 +1353,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 except Exception as e:
                     logger.error(f"注册URL协议时发生未知错误: {str(e)}")
                     return False
-                
-            else:
-                # Linux平台使用.desktop文件和MIME类型
-                return self._register_linux_url_protocol(executable)
             
         except Exception as e:
             logger.error(f"注册URL协议失败: {str(e)}")
-            return False
-    
-    def _register_linux_url_protocol(self, executable):
-        """在Linux上注册URL协议"""
-        try:
-            import os
-            import subprocess
-            import stat
-            
-            # 获取用户主目录
-            home_dir = os.path.expanduser("~")
-            desktop_dir = os.path.join(home_dir, ".local", "share", "applications")
-            mime_dir = os.path.join(home_dir, ".local", "share", "mime")
-            
-            # 创建必要的目录
-            os.makedirs(desktop_dir, exist_ok=True)
-            os.makedirs(mime_dir, exist_ok=True)
-            
-            # 创建.desktop文件
-            desktop_file = os.path.join(desktop_dir, "secrandom.desktop")
-            desktop_content = f"""[Desktop Entry]
-            Version=1.0
-            Type=Application
-            Name=SecRandom
-            Comment=Secure Random Number Generator
-            Exec={executable} --url=%u
-            Icon=secrandom
-            Terminal=false
-            Categories=Utility;
-            MimeType=x-scheme-handler/secrandom;
-            StartupNotify=true
-            """
-            
-            with open_file(desktop_file, 'w', encoding='utf-8') as f:
-                f.write(desktop_content)
-            
-            # 设置.desktop文件权限
-            os.chmod(desktop_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
-            
-            # 创建MIME类型定义
-            mime_packages_dir = os.path.join(mime_dir, "packages")
-            os.makedirs(mime_packages_dir, exist_ok=True)
-            
-            mime_file = os.path.join(mime_packages_dir, "secrandom.xml")
-            mime_content = f"""<?xml version="1.0" encoding="UTF-8"?>
-            <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
-            <mime-type type="x-scheme-handler/secrandom">
-                <comment>SecRandom URL Protocol</comment>
-                <glob pattern="secrandom:*"/>
-            </mime-type>
-            </mime-info>
-            """
-            
-            with open_file(mime_file, 'w', encoding='utf-8') as f:
-                f.write(mime_content)
-            
-            # 更新桌面数据库
-            try:
-                subprocess.run(["update-desktop-database", desktop_dir], check=True, capture_output=True)
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                logger.warning("update-desktop-database 命令未找到或执行失败")
-            
-            # 更新MIME数据库
-            try:
-                subprocess.run(["update-mime-database", mime_dir], check=True, capture_output=True)
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                logger.warning("update-mime-database 命令未找到或执行失败")
-            
-            logger.info("Linux URL协议注册成功")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Linux URL协议注册失败: {str(e)}")
             return False
     
     def unregister_url_protocol(self):
@@ -1633,55 +1377,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 
                 logger.info(f"URL协议注销成功: {protocol_key}")
                 return True
-                
-            else:
-                # Linux平台删除.desktop文件和MIME类型定义
-                return self._unregister_linux_url_protocol()
             
         except Exception as e:
             logger.error(f"注销URL协议失败: {str(e)}")
-            return False
-    
-    def _unregister_linux_url_protocol(self):
-        """在Linux上注销URL协议"""
-        try:
-            import os
-            import subprocess
-            
-            # 获取用户主目录
-            home_dir = os.path.expanduser("~")
-            desktop_dir = os.path.join(home_dir, ".local", "share", "applications")
-            mime_dir = os.path.join(home_dir, ".local", "share", "mime")
-            
-            # 删除.desktop文件
-            desktop_file = os.path.join(desktop_dir, "secrandom.desktop")
-            if path_manager.file_exists(desktop_file):
-                os.remove(desktop_file)
-                logger.info("已删除 .desktop 文件")
-            
-            # 删除MIME类型定义
-            mime_file = os.path.join(mime_dir, "packages", "secrandom.xml")
-            if path_manager.file_exists(mime_file):
-                os.remove(mime_file)
-                logger.info("已删除 MIME 类型定义文件")
-            
-            # 更新桌面数据库
-            try:
-                subprocess.run(["update-desktop-database", desktop_dir], check=True, capture_output=True)
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                logger.warning("update-desktop-database 命令未找到或执行失败")
-            
-            # 更新MIME数据库
-            try:
-                subprocess.run(["update-mime-database", mime_dir], check=True, capture_output=True)
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                logger.warning("update-mime-database 命令未找到或执行失败")
-            
-            logger.info("Linux URL协议注销成功")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Linux URL协议注销失败: {str(e)}")
             return False
     
     def is_url_protocol_registered(self):
@@ -1691,44 +1389,76 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 protocol_key = "secrandom"
                 with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
                     return True
-            else:
-                # Linux平台检查.desktop文件和MIME类型定义
-                return self._is_linux_url_protocol_registered()
         except Exception:
             return False
     
-    def _is_linux_url_protocol_registered(self):
-        """在Linux上检查URL协议是否已注册"""
-        try:
-            import os
-            
-            # 获取用户主目录
-            home_dir = os.path.expanduser("~")
-            desktop_dir = os.path.join(home_dir, ".local", "share", "applications")
-            mime_dir = os.path.join(home_dir, ".local", "share", "mime")
-            
-            # 检查.desktop文件是否存在
-            desktop_file = os.path.join(desktop_dir, "secrandom.desktop")
-            if not path_manager.file_exists(desktop_file):
-                return False
-            
-            # 检查MIME类型定义是否存在
-            mime_file = os.path.join(mime_dir, "packages", "secrandom.xml")
-            if not path_manager.file_exists(mime_file):
-                return False
-            
-            # 检查.desktop文件内容是否正确
-            with open_file(desktop_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-                if "MimeType=x-scheme-handler/secrandom" not in content:
-                    return False
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"检查Linux URL协议注册状态失败: {str(e)}")
-            return False
+def register_url_protocol_on_startup():
+    """在应用程序启动时自动注册URL协议
     
+    该函数会在应用程序启动时自动调用，尝试注册SecRandom URL协议。
+    如果注册失败（通常是由于权限不足），会静默失败，不会影响程序正常启动。
+    """
+    try:
+        import sys
+        import os
+        import platform
+        import winreg
+        
+        # 获取当前程序路径
+        executable = sys.executable
+        if not executable:
+            logger.error("无法获取可执行文件路径")
+            return False
+        
+        if platform.system() == "Windows":
+            # Windows平台使用注册表
+            # 构建命令行参数，包含URL处理
+            command = f'"{executable}" --url="%1"'
+            
+            # 注册URL协议到注册表
+            protocol_key = "secrandom"
+            
+            # 检查是否已经注册
+            try:
+                with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, protocol_key):
+                    # 如果能打开键，说明已经注册
+                    logger.info(f"URL协议已注册: {protocol_key}")
+                    return True
+            except Exception:
+                # 键不存在，需要注册
+                pass
+            
+            # 尝试注册URL协议
+            try:
+                # 创建协议主键
+                with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
+                    winreg.SetValue(key, None, winreg.REG_SZ, "URL:SecRandom Protocol")
+                    winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
+                
+                # 创建默认图标
+                with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon") as key:
+                    winreg.SetValue(key, None, winreg.REG_SZ, executable)
+                
+                # 创建shell\open\command
+                with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command") as key:
+                    winreg.SetValue(key, None, winreg.REG_SZ, command)
+                
+                logger.info(f"URL协议注册成功: {protocol_key}")
+                return True
+            except PermissionError as e:
+                logger.warning(f"权限不足，无法注册URL协议: {str(e)}")
+                return False
+            except Exception as e:
+                logger.error(f"注册URL协议时发生未知错误: {str(e)}")
+                return False
+        
+        return False
+        
+    except Exception as e:
+        logger.error(f"注册URL协议失败: {str(e)}")
+        return False
+
+class FoundationSettingCard(ExpandGroupSettingCard):
     def handle_url_command(self, url):
         """处理URL命令，打开指定界面"""
         try:
