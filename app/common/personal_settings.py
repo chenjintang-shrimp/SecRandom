@@ -26,12 +26,12 @@ class personal_settingsCard(GroupHeaderCardWidget):
         self.setBorderRadius(8)
         self.settings_file = path_manager.get_settings_path('custom_settings.json')
         self.default_settings = {
-            "enable_background_icon": True,
+            "enable_background_icon": False,
             "background_blur": 10,
             "background_brightness": 30,
-            "enable_main_background": True,
-            "enable_settings_background": True,
-            "enable_flash_background": True,
+            "enable_main_background": False,
+            "enable_settings_background": False,
+            "enable_flash_background": False,
             "main_background_image": "",
             "settings_background_image": "",
             "flash_background_image": "",
