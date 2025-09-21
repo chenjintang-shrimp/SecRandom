@@ -88,6 +88,7 @@ class ConfigurationManager:
         """开启白露的配置魔法~ 初始化设置路径和默认值，并预加载设置"""
         self.app_dir = path_manager._app_root
         self.settings_path = path_manager.get_settings_path('Settings.json')  # 📜 普通设置文件路径
+        self.custom_settings_path = path_manager.get_settings_path('custom_settings.json')  # 📜 自定义设置文件路径
         self.enc_settings_path = path_manager.get_enc_set_path()  # 🔒 加密设置文件路径
         self.default_settings = {
             'foundation': {
@@ -105,6 +106,7 @@ class ConfigurationManager:
         }  # 📝 默认设置模板
         # 🌟 星穹铁道白露：预加载设置缓存，减少启动时IO操作
         self._settings_cache = None
+        self._custom_settings_cache = None
         self.load_settings()
 
     def load_settings(self):
@@ -122,6 +124,35 @@ class ConfigurationManager:
             logger.error(f"白露魔法出错: 加载设置文件失败了呢~ {e}")
             self._settings_cache = self.default_settings
             return self._settings_cache  # 返回默认设置作为后备方案
+
+    def load_custom_settings(self):
+        """(^・ω・^ ) 读取自定义配置文件的魔法
+        尝试打开自定义设置文件，如果失败就用空字典哦~ 不会让程序崩溃的！
+        使用缓存避免重复IO操作，就像记忆力超群的小精灵一样~ ✧*｡٩(ˊᗜˋ*)ow✧*｡"""
+        # if self._custom_settings_cache is not None:
+        #     return self._custom_settings_cache
+        try:
+            ensure_dir(self.custom_settings_path.parent)
+            with open_file(self.custom_settings_path, 'r', encoding='utf-8') as f:
+                self._custom_settings_cache = json.load(f)
+                return self._custom_settings_cache
+        except Exception as e:
+            logger.error(f"白露魔法出错: 加载自定义设置文件失败了呢~ {e}")
+            self._custom_settings_cache = {}
+            return self._custom_settings_cache  # 返回空字典作为后备方案
+
+    def get_floating_window_setting(self, key, default_value=None):
+        """(^・ω・^ ) 获取浮窗设置的小魔法
+        从自定义设置中找到对应的key值，如果找不到就用默认值哦~ 
+        像在魔法袋里找东西，总能找到需要的那个！✨"""
+        custom_settings = self.load_custom_settings()
+        floating_window_settings = custom_settings.get('floating_window', {})
+        
+        # 如果没有提供默认值，使用默认设置中的值
+        if default_value is None and key in self.default_settings['foundation']:
+            default_value = self.default_settings['foundation'][key]
+            
+        return floating_window_settings.get(key, default_value)
 
     def get_foundation_setting(self, key):
         """(^・ω・^ ) 获取基础设置的小魔法
@@ -491,7 +522,7 @@ class Window(MSFluentWindow):
         self.tray_manager.tray_icon.show()
         self.start_cleanup()
         self.levitation_window = LevitationWindow()
-        if self.config_manager.get_foundation_setting('pumping_floating_enabled'):
+        if self.config_manager.get_floating_window_setting('pumping_floating_enabled'):
             self.levitation_window.show()
 
         if self.config_manager.get_foundation_setting('topmost_switch'):
@@ -906,22 +937,22 @@ class Window(MSFluentWindow):
                 sidebar_settings = settings.get('sidebar', {})
                 logger.debug("白露导航: 已读取导航配置，准备构建个性化菜单～ ")
 
-                # 根据设置决定"抽人"界面位置
+                # 根据设置决定"点名"界面位置
                 pumping_floating_side = sidebar_settings.get('pumping_floating_side', 0)
                 if pumping_floating_side == 1:
                     if self.pumping_peopleInterface is not None:
-                        self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.BOTTOM)
-                        logger.debug("白露导航: '抽人'界面已放置在底部导航栏～ ")
+                        self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.BOTTOM)
+                        logger.debug("白露导航: '点名'界面已放置在底部导航栏～ ")
                     else:
-                        logger.debug("白露导航: '抽人'界面未创建，无法添加到导航栏～ ")
+                        logger.debug("白露导航: '点名'界面未创建，无法添加到导航栏～ ")
                 elif pumping_floating_side == 2:
-                    logger.debug("白露导航: '抽人'界面已设置为不显示～ ")
+                    logger.debug("白露导航: '点名'界面已设置为不显示～ ")
                 else:
                     if self.pumping_peopleInterface is not None:
-                        self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
-                        logger.debug("白露导航: '抽人'界面已放置在顶部导航栏～ ")
+                        self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.TOP)
+                        logger.debug("白露导航: '点名'界面已放置在顶部导航栏～ ")
                     else:
-                        logger.debug("白露导航: '抽人'界面未创建，无法添加到导航栏～ ")
+                        logger.debug("白露导航: '点名'界面未创建，无法添加到导航栏～ ")
 
                 # 根据设置决定"抽奖"界面位置
                 pumping_reward_side = sidebar_settings.get('pumping_reward_side', 0)
@@ -943,7 +974,7 @@ class Window(MSFluentWindow):
         except FileNotFoundError as e:
             logger.error(f"白露导航出错: 配置文件找不到啦～ {e}, 使用默认顶部导航布局")
             if self.pumping_peopleInterface is not None:
-                self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '抽人', position=NavigationItemPosition.TOP)
+                self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.TOP)
             if self.pumping_rewardInterface is not None:
                 self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
 
@@ -1131,10 +1162,98 @@ class Window(MSFluentWindow):
         super().focusInEvent(event)
         self.last_focus_time = QDateTime.currentDateTime()
 
+    def _is_non_class_time(self):
+        """检测当前时间是否在非上课时间段
+        当'课间禁用'开关启用时，用于判断是否需要安全验证"""
+        try:
+            # 读取程序功能设置
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            if not path_manager.file_exists(settings_path):
+                return False
+                
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                
+            # 检查课间禁用开关是否启用
+            program_functionality = settings.get("program_functionality", {})
+            instant_draw_disable = program_functionality.get("instant_draw_disable", False)
+            
+            if not instant_draw_disable:
+                return False
+                
+            # 读取上课时间段设置
+            time_settings_path = path_manager.get_settings_path('time_settings.json')
+            if not path_manager.file_exists(time_settings_path):
+                return False
+                
+            with open_file(time_settings_path, 'r', encoding='utf-8') as f:
+                time_settings = json.load(f)
+                
+            # 获取非上课时间段
+            non_class_times = time_settings.get('non_class_times', {})
+            if not non_class_times:
+                return False
+                
+            # 获取当前时间
+            current_time = QDateTime.currentDateTime()
+            current_hour = current_time.time().hour()
+            current_minute = current_time.time().minute()
+            current_second = current_time.time().second()
+            
+            # 将当前时间转换为总秒数
+            current_total_seconds = current_hour * 3600 + current_minute * 60 + current_second
+            
+            # 检查当前时间是否在任何非上课时间段内
+            for time_range in non_class_times.values():
+                try:
+                    start_end = time_range.split('-')
+                    if len(start_end) != 2:
+                        continue
+                        
+                    start_time_str, end_time_str = start_end
+                    
+                    # 解析开始时间
+                    start_parts = list(map(int, start_time_str.split(':')))
+                    start_total_seconds = start_parts[0] * 3600 + start_parts[1] * 60 + (start_parts[2] if len(start_parts) > 2 else 0)
+                    
+                    # 解析结束时间
+                    end_parts = list(map(int, end_time_str.split(':')))
+                    end_total_seconds = end_parts[0] * 3600 + end_parts[1] * 60 + (end_parts[2] if len(end_parts) > 2 else 0)
+                    
+                    # 检查当前时间是否在该非上课时间段内
+                    if start_total_seconds <= current_total_seconds < end_total_seconds:
+                        return True
+                        
+                except Exception as e:
+                    logger.error(f"解析非上课时间段失败: {e}")
+                    continue
+                    
+            return False
+            
+        except Exception as e:
+            logger.error(f"检测非上课时间失败: {e}")
+            return False
+
     def show_about_tab(self):
         """白露向导：
         正在导航到关于页面
         这里可以查看软件版本和作者信息哦～(>^ω^<)"""
+        # 检查是否在非上课时间且需要安全验证
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消打开关于界面操作")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+                
         if self.isMinimized():
             self.showNormal()
         else:
@@ -1151,20 +1270,22 @@ class Window(MSFluentWindow):
             settings_path = path_manager.get_settings_path('Settings.json')
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
+                max_draw_times_per_person = settings['pumping_people']['Draw_pumping']
                 pumping_people_draw_mode = settings['pumping_people']['draw_mode']
-                logger.debug(f"星野侦察: 抽选模式为{pumping_people_draw_mode}，准备执行对应清理方案～ ")
+                logger.debug(f"星野侦察: 抽选模式为{max_draw_times_per_person}，准备执行对应清理方案～ ")
 
         except Exception as e:
             pumping_people_draw_mode = 1
-            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}, 使用默认:不重复抽取(直到软件重启)模式")
+            max_draw_times_per_person = 1
+            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}, 使用默认:{max_draw_times_per_person}次模式")
 
         import glob
         temp_dir = path_manager.get_temp_path('')
         ensure_dir(temp_dir)
 
-        if pumping_people_draw_mode == 1:  # 不重复抽取(直到软件重启)
+        if max_draw_times_per_person != 0 and pumping_people_draw_mode not in [0,2]:  # 不重复抽取(直到软件重启)
             if path_manager.file_exists(temp_dir):
-                for file in glob.glob(f"{temp_dir}/until_the_reboot_*.json"):
+                for file in glob.glob(f"{temp_dir}/*.json"):
                     try:
                         os.remove(file)
                         logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")
@@ -1176,7 +1297,24 @@ class Window(MSFluentWindow):
     def toggle_window(self):
         """(^・ω・^ ) 白露的窗口切换魔法！
         显示→隐藏→显示，像捉迷藏一样好玩喵～
-        切换时会自动激活抽人界面，方便用户继续操作！"""  
+        切换时会自动激活点名界面，方便用户继续操作！"""
+        # 检查是否在非上课时间且需要安全验证
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消打开窗口切换操作")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+                
+        # 执行窗口切换逻辑
         if self.config_manager.get_foundation_setting('topmost_switch'):
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
         else:
@@ -1546,8 +1684,8 @@ class Window(MSFluentWindow):
 
     @pyqtSlot()
     def _show_pumping_interface_from_shortcut(self):
-        """抽人界面快捷键处理：
-        通过全局快捷键打开抽人界面！
+        """点名界面快捷键处理：
+        通过全局快捷键打开点名界面！
         确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
         try:
             # 确保主窗口可见
@@ -1556,11 +1694,11 @@ class Window(MSFluentWindow):
                 self.activateWindow()
                 self.raise_()
             
-            # 切换到抽人界面
+            # 切换到点名界面
             self.switchTo(self.pumping_peopleInterface)
-            logger.info("抽人界面: 通过快捷键成功打开抽人界面～ ")
+            logger.info("点名界面: 通过快捷键成功打开点名界面～ ")
         except Exception as e:
-            logger.error(f"抽人界面: 快捷键打开抽人界面失败喵～ {e}")
+            logger.error(f"点名界面: 快捷键打开点名界面失败喵～ {e}")
 
     @pyqtSlot()
     def _show_reward_interface_from_shortcut(self):
@@ -1582,8 +1720,8 @@ class Window(MSFluentWindow):
 
     @pyqtSlot()
     def _trigger_pumping_from_shortcut(self):
-        """抽人快捷键处理：
-        通过全局快捷键触发抽人操作！
+        """点名快捷键处理：
+        通过全局快捷键触发点名操作！
         确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
         try:
             # 确保主窗口可见
@@ -1592,14 +1730,14 @@ class Window(MSFluentWindow):
                 self.activateWindow()
                 self.raise_()
             
-            # 切换到抽人界面
+            # 切换到点名界面
             self.switchTo(self.pumping_peopleInterface)
             
-            # 触发抽人操作
+            # 触发点名操作
             self.pumping_peopleInterface.start_draw()
-            logger.info("抽人: 通过快捷键成功触发抽人操作～ ")
+            logger.info("点名: 通过快捷键成功触发点名操作～ ")
         except Exception as e:
-            logger.error(f"抽人: 快捷键触发抽人操作失败喵～ {e}")
+            logger.error(f"点名: 快捷键触发点名操作失败喵～ {e}")
 
     @pyqtSlot()
     def _trigger_reward_from_shortcut(self):
@@ -1656,75 +1794,13 @@ class Window(MSFluentWindow):
                 url_command = data[4:].strip()  # 移除'url:'前缀
                 logger.info(f"处理URL命令: {url_command}")
                 
-                # 解析URL命令并调用相应方法
-                if '://' in url_command:
-                    # 移除协议部分，如 'secrandom://settings' -> 'settings'
-                    path_part = url_command.split('://', 1)[1]
-                else:
-                    path_part = url_command
-                    
-                if '?' in path_part:
-                    # 有参数的情况，如 'settings?action=start'
-                    path, params_str = path_part.split('?', 1)
-                    params = {}
-                    for param in params_str.split('&'):
-                        if '=' in param:
-                            key, value = param.split('=', 1)
-                            params[key] = value
-                else:
-                    # 无参数的情况
-                    path = path_part
-                    params = {}
-                
-                # 根据路径调用对应的方法
-                method_map = {
-                    'main': 'show_main_window',
-                    'settings': 'show_settings_window',
-                    'pumping': 'show_pumping_window',
-                    'reward': 'show_reward_window',
-                    'history': 'show_history_window',
-                    'floating': 'show_floating_window',
-                    'about': 'show_about_window',
-                    'direct_extraction': 'show_direct_extraction',
-                    'plugin_settings': 'show_plugin_settings_window'
-                }
-                
-                # 去除路径末尾的斜杠，确保匹配正确
-                path = path.rstrip('/')
-                
-                if path in method_map:
-                    method_name = method_map[path]
-                    if hasattr(self, method_name):
-                        method = getattr(self, method_name)
-                        
-                        # 处理额外的action参数
-                        if 'action' in params:
-                            action = params['action']
-                            if action == 'start' and path == 'pumping':
-                                self.start_pumping_selection()
-                            elif action == 'stop' and path == 'pumping':
-                                self.stop_pumping_selection()
-                            elif action == 'reset' and path == 'pumping':
-                                self.reset_pumping_selection()
-                            elif action == 'start' and path == 'reward':
-                                self.start_reward_selection()
-                            elif action == 'stop' and path == 'reward':
-                                self.stop_reward_selection()
-                            elif action == 'reset' and path == 'reward':
-                                self.reset_reward_selection()
-                            elif action == 'donation' and path == 'about':
-                                self.show_donation_dialog()
-                            elif action == 'contributor' and path == 'about':
-                                self.show_contributor_dialog()
-                            elif action == 'open' and path == 'plugin_settings':
-                                self.show_plugin_settings_window()
-                        else:
-                            # 没有action参数时直接调用对应方法
-                            method()
-                    else:
-                        logger.warning(f"找不到方法: {method_name}")
-                else:
-                    logger.warning(f"未知的URL路径: {path}")
+                # 使用url_handler处理URL命令
+                from app.common.url_handler import get_url_handler
+                url_handler = get_url_handler()
+                # 设置URL命令
+                url_handler.url_command = url_command
+                # 处理URL命令，这会显示通知窗口（如果设置启用）
+                url_handler.process_url_command(self)
             else:
                 logger.warning(f"未知的IPC消息: {data}")
         except Exception as e:
@@ -1845,21 +1921,51 @@ class Window(MSFluentWindow):
         logger.info("白露URL: 设置界面已成功打开～")
     
     def show_pumping_window(self):
-        """(^・ω・^ ) 白露的抽人界面召唤魔法！
-        通过URL协议打开抽人界面，让用户可以开始随机选择～
-        会自动切换到抽人界面，方便用户立即开始使用！🎲✨"""
-        logger.info("白露URL: 正在打开抽人界面～")
+        """(^・ω・^ ) 白露的点名界面召唤魔法！
+        通过URL协议打开点名界面，让用户可以开始随机选择～
+        会自动切换到点名界面，方便用户立即开始使用！🎲✨"""
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+
+        logger.info("白露URL: 正在打开点名界面～")
         if not self.isVisible():
             self.show()
             self.activateWindow()
             self.raise_()
         self.switchTo(self.pumping_peopleInterface)
-        logger.info("白露URL: 抽人界面已成功打开～")
+        logger.info("白露URL: 点名界面已成功打开～")
     
     def show_reward_window(self):
         """(^・ω・^ ) 白露的抽奖界面召唤魔法！
         通过URL协议打开抽奖界面，让用户可以开始抽奖活动～
         会自动切换到抽奖界面，让用户立即开始抽奖！🎁✨"""
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+
         logger.info("白露URL: 正在打开抽奖界面～")
         if not self.isVisible():
             self.show()
@@ -1872,6 +1978,21 @@ class Window(MSFluentWindow):
         """(^・ω・^ ) 白露的历史记录界面召唤魔法！
         通过URL协议打开历史记录界面，让用户查看过往记录～
         会自动切换到历史记录界面，方便用户查看历史数据！📊✨"""
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+
         logger.info("白露URL: 正在打开历史记录界面～")
         if not self.isVisible():
             self.show()
@@ -1886,10 +2007,23 @@ class Window(MSFluentWindow):
         """(^・ω・^ ) 白露的浮窗界面召唤魔法！
         通过URL协议打开浮窗界面，让用户使用便捷的悬浮功能～
         会检查是否跳过安全验证，如果开启则直接切换浮窗状态！🪟✨"""
-        logger.info("白露URL: 正在打开浮窗界面～")
-        
         # 检查是否跳过安全验证
         skip_security = False
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+
         try:
             settings_path = path_manager.get_settings_path('fixed_url_settings.json')
             if path_manager.file_exists(settings_path):
@@ -1921,7 +2055,20 @@ class Window(MSFluentWindow):
         通过URL协议打开插件设置界面，让用户可以管理插件相关设置～
         会检查是否跳过安全验证，如果开启则直接打开插件设置界面！⚙️✨
         """
-        logger.info(f"白露URL: 正在打开插件设置界面～")
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
         
         # 检查是否跳过安全验证
         skip_security = False
@@ -1985,9 +2132,23 @@ class Window(MSFluentWindow):
     
     def start_pumping_selection(self):
         """(^・ω・^ ) 白露的抽选启动魔法！
-        通过URL参数启动抽选功能，让程序自动开始抽人～
+        通过URL参数启动抽选功能，让程序自动开始点名～
         会检查当前界面并调用相应的开始方法！🎯✨"""
-        logger.info("白露URL: 正在启动抽选功能～")
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+        
         try:
             # 确保主窗口可见
             if not self.isVisible():
@@ -1995,23 +2156,37 @@ class Window(MSFluentWindow):
                 self.activateWindow()
                 self.raise_()
             
-            # 切换到抽人界面
+            # 切换到点名界面
             self.switchTo(self.pumping_peopleInterface)
             
-            # 尝试调用抽人界面的开始方法
+            # 尝试调用点名界面的开始方法
             if hasattr(self.pumping_peopleInterface, 'start_draw'):
                 self.pumping_peopleInterface.start_draw()
                 logger.info("白露URL: 抽选功能已成功启动～")
             else:
-                logger.warning("白露URL: 抽人界面缺少start_draw方法～")
+                logger.warning("白露URL: 点名界面缺少start_draw方法～")
         except Exception as e:
             logger.error(f"白露URL: 启动抽选功能失败: {e}")
     
     def stop_pumping_selection(self):
         """(^・ω・^ ) 白露的抽选停止魔法！
-        通过URL参数停止抽选功能，让程序停止当前的抽人操作～
+        通过URL参数停止抽选功能，让程序停止当前的点名操作～
         会检查当前界面并调用相应的停止方法！🛑✨"""
-        logger.info("白露URL: 正在停止抽选功能～")
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+        
         try:
             # 确保主窗口可见
             if not self.isVisible():
@@ -2019,15 +2194,15 @@ class Window(MSFluentWindow):
                 self.activateWindow()
                 self.raise_()
             
-            # 切换到抽人界面
+            # 切换到点名界面
             self.switchTo(self.pumping_peopleInterface)
             
-            # 尝试调用抽人界面的停止方法
+            # 尝试调用点名界面的停止方法
             if hasattr(self.pumping_peopleInterface, '_stop_animation') and self.pumping_peopleInterface.is_animating:
                 self.pumping_peopleInterface._stop_animation()
                 logger.info("白露URL: 抽选功能已成功停止～")
             else:
-                logger.warning("白露URL: 抽人界面未在动画中或缺少_stop_animation方法～")
+                logger.warning("白露URL: 点名界面未在动画中或缺少_stop_animation方法～")
         except Exception as e:
             logger.error(f"白露URL: 停止抽选功能失败: {e}")
     
@@ -2043,15 +2218,15 @@ class Window(MSFluentWindow):
             #     self.activateWindow()
             #     self.raise_()
             
-            # # 切换到抽人界面
+            # # 切换到点名界面
             # self.switchTo(self.pumping_peopleInterface)
             
-            # 尝试调用抽人界面的重置方法
+            # 尝试调用点名界面的重置方法
             if hasattr(self.pumping_peopleInterface, '_reset_to_initial_state'):
                 self.pumping_peopleInterface._reset_to_initial_state()
                 logger.info("白露URL: 抽选状态已成功重置～")
             else:
-                logger.warning("白露URL: 抽人界面缺少_reset_to_initial_state方法～")
+                logger.warning("白露URL: 点名界面缺少_reset_to_initial_state方法～")
         except Exception as e:
             logger.error(f"白露URL: 重置抽选状态失败: {e}")
     
@@ -2059,7 +2234,21 @@ class Window(MSFluentWindow):
         """(^・ω・^ ) 白露的抽奖启动魔法！
         通过URL参数启动抽奖功能，让程序自动开始抽奖～
         会检查当前界面并调用相应的开始方法！🎁✨"""
-        logger.info("白露URL: 正在启动抽奖功能～")
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+        
         try:
             # 确保主窗口可见
             if not self.isVisible():
@@ -2083,7 +2272,21 @@ class Window(MSFluentWindow):
         """(^・ω・^ ) 白露的抽奖停止魔法！
         通过URL参数停止抽奖功能，让程序停止当前的抽奖操作～
         会检查当前界面并调用相应的停止方法！🛑✨"""
-        logger.info("白露URL: 正在停止抽奖功能～")
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+        
         try:
             # 确保主窗口可见
             if not self.isVisible():
@@ -2129,9 +2332,23 @@ class Window(MSFluentWindow):
 
     def show_direct_extraction(self):
         """(^・ω・^ ) 白露的闪抽召唤魔法！
-        通过URL参数直接打开抽人界面，让用户快速开始抽人操作～
-        会自动切换到抽人界面，方便用户开始抽人！✨"""
-        logger.info("白露URL: 正在打开闪抽界面～")
+        通过URL参数直接打开点名界面，让用户快速开始点名操作～
+        会自动切换到点名界面，方便用户开始点名！✨"""
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+        
         self.levitation_window._show_direct_extraction_window()
         logger.info("白露URL: 闪抽界面已成功打开～")
     
@@ -2139,7 +2356,21 @@ class Window(MSFluentWindow):
         """(^・ω・^ ) 白露的关于界面召唤魔法！
         通过URL协议打开关于界面，让用户查看软件信息～
         会自动切换到关于界面，方便用户查看版本和作者信息！ℹ️✨"""
-        logger.info("白露URL: 正在打开关于界面～")
+        if self._is_non_class_time():
+            try:
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.warning("用户取消在课间调用URL使用功能")
+                            return
+            except Exception as e:
+                logger.error(f"密码验证失败: {e}")
+                return
+        
         if not self.isVisible():
             self.show()
             self.activateWindow()
@@ -2151,16 +2382,15 @@ class Window(MSFluentWindow):
         """(^・ω・^ ) 白露的捐赠支持召唤魔法！
         通过URL参数打开捐赠支持对话框，让用户可以支持项目发展～
         会显示捐赠支持对话框，方便用户查看捐赠方式！💝✨"""
-        logger.info("白露URL: 正在打开捐赠支持对话框～")
         try:
-            # 确保主窗口可见
-            if not self.isVisible():
-                self.show()
-                self.activateWindow()
-                self.raise_()
+            # # 确保主窗口可见
+            # if not self.isVisible():
+            #     self.show()
+            #     self.activateWindow()
+            #     self.raise_()
             
-            # 切换到关于界面
-            self.switchTo(self.about_settingInterface)
+            # # 切换到关于界面
+            # self.switchTo(self.about_settingInterface)
             
             # 打开捐赠支持对话框
             donation_dialog = DonationDialog(self)
@@ -2173,16 +2403,15 @@ class Window(MSFluentWindow):
         """(^・ω・^ ) 白露的贡献者召唤魔法！
         通过URL参数打开贡献者对话框，让用户查看项目贡献者信息～
         会显示贡献者对话框，方便用户了解项目贡献者！👥✨"""
-        logger.info("白露URL: 正在打开贡献者对话框～")
         try:
-            # 确保主窗口可见
-            if not self.isVisible():
-                self.show()
-                self.activateWindow()
-                self.raise_()
+            # # 确保主窗口可见
+            # if not self.isVisible():
+            #     self.show()
+            #     self.activateWindow()
+            #     self.raise_()
             
-            # 切换到关于界面
-            self.switchTo(self.about_settingInterface)
+            # # 切换到关于界面
+            # self.switchTo(self.about_settingInterface)
             
             # 打开贡献者对话框
             contributor_dialog = ContributorDialog(self)
