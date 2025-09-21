@@ -24,10 +24,10 @@ class history_handoff_setting(QFrame):
         self.pumping_reward_page = QWidget()
         
         # 添加子页面
-        self.addSubInterface(self.pumping_people_page, 'pumping_People_history', '抽人记录')
+        self.addSubInterface(self.pumping_people_page, 'pumping_People_history', '点名记录')
         self.addSubInterface(self.pumping_reward_page, 'pumping_Reward_history', '抽奖记录')
 
-        # 抽人历史记录
+        # 点名历史记录
         # 创建滚动区域
         pumping_people_scroll_area_personal = SingleDirectionScrollArea(self.pumping_people_page)
         pumping_people_scroll_area_personal.setWidgetResizable(True)
@@ -49,10 +49,10 @@ class history_handoff_setting(QFrame):
         pumping_people_inner_layout_personal = QVBoxLayout(pumping_people_inner_frame_personal)
         pumping_people_inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         pumping_people_scroll_area_personal.setWidget(pumping_people_inner_frame_personal)
-        # 抽人历史记录卡片组
+        # 点名历史记录卡片组
         self.pumping_people_card = history(load_on_init=False)
         pumping_people_inner_layout_personal.addWidget(self.pumping_people_card)
-        # 设置抽人历史记录页面布局
+        # 设置点名历史记录页面布局
         pumping_people_layout = QVBoxLayout(self.pumping_people_page)
         pumping_people_layout.addWidget(pumping_people_scroll_area_personal)
 

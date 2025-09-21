@@ -75,9 +75,9 @@ def _clean_history(history_type, settings_key, retention_days_key, history_dir, 
         logger.error(f"清理过期{history_type}历史记录时出错: {e}")
 
 def clean_expired_history():
-    """清理过期的抽人/抽组历史记录"""
+    """清理过期的点名/抽组历史记录"""
     _clean_history(
-        history_type="抽人/抽组",
+        history_type="点名/抽组",
         settings_key="history",
         retention_days_key="history_days",
         history_dir="app/resource/history",

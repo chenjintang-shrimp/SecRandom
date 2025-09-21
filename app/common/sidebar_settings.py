@@ -37,7 +37,7 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
             "show_history_settings_switch": 1,
         }
 
-        # 抽人选项侧边栏位置设置
+        # 点名选项侧边栏位置设置
         self.pumping_floating_side_comboBox = ComboBox()
         self.pumping_floating_side_comboBox.addItems(["顶部", "底部", "不显示"])
         self.pumping_floating_side_comboBox.currentIndexChanged.connect(self.save_settings)
@@ -92,7 +92,7 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
         self.show_history_settings_switch.currentIndexChanged.connect(self.save_settings)
 
         # 添加个性化设置组
-        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "抽人选项侧边栏位置", "调整抽人功能侧边栏的显示位置", self.pumping_floating_side_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "点名选项侧边栏位置", "调整点名功能侧边栏的显示位置", self.pumping_floating_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_reward_20_filled"), "抽奖选项侧边栏位置", "调整抽奖功能侧边栏的显示位置", self.pumping_reward_side_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_text_whole_word_20_filled"), "主窗口侧边显示单词PK", "控制主窗口侧边栏中单词PK的显示状态", self.main_window_side_switch)
         self.addGroup(get_theme_icon("ic_fluent_chat_history_20_filled"), "主窗口侧边显示历史记录", "控制主窗口侧边栏中历史记录的显示状态", self.main_window_history_switch)

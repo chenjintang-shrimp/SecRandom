@@ -21,7 +21,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
     refresh_signal = pyqtSignal()
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle("抽人名单")
+        self.setTitle("点名名单")
         self.setBorderRadius(8)
         # 获取应用根目录并构建设置文件路径
         self.settings_file = path_manager.get_settings_path()
