@@ -6,6 +6,7 @@ from app.common.config import cfg, AUTHOR, VERSION, YEAR
 from app.common.config import load_custom_font
 
 from app.common.pumping_people_setting import pumping_people_SettinsCard
+from app.common.instant_draw_setting import instant_draw_SettinsCard
 from app.common.list_settings import list_SettinsCard
 from app.common.pumping_reward_setting import pumping_reward_SettinsCard
 from app.common.reward_settings import reward_SettinsCard  
@@ -20,17 +21,19 @@ class pumping_handoff_setting(QFrame):
         
         # 创建内容页面
         self.pumping_people_page = QWidget()
+        self.instant_draw_page = QWidget()
         self.pumping_people_list_page = QWidget()
         self.pumping_reward_page = QWidget()
         self.pumping_reward_list_page = QWidget()
         
         # 添加子页面
-        self.addSubInterface(self.pumping_people_page, 'pumping_People_setting', '抽人设置')
-        self.addSubInterface(self.pumping_people_list_page, 'pumping_People_list', '抽人名单')
+        self.addSubInterface(self.pumping_people_page, 'pumping_People_setting', '点名设置')
+        self.addSubInterface(self.instant_draw_page, 'instant_Draw_setting', '闪抽设置')
+        self.addSubInterface(self.pumping_people_list_page, 'pumping_People_list', '点名名单')
         self.addSubInterface(self.pumping_reward_page, 'pumping_Reward_setting', '抽奖设置')
         self.addSubInterface(self.pumping_reward_list_page, 'pumping_Reward_list', '抽奖名单')
 
-        # 抽人设置
+        # 点名设置
         # 创建滚动区域
         pumping_people_scroll_area_personal = SingleDirectionScrollArea(self.pumping_people_page)
         pumping_people_scroll_area_personal.setWidgetResizable(True)
@@ -52,14 +55,46 @@ class pumping_handoff_setting(QFrame):
         pumping_people_inner_layout_personal = QVBoxLayout(pumping_people_inner_frame_personal)
         pumping_people_inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         pumping_people_scroll_area_personal.setWidget(pumping_people_inner_frame_personal)
-        # 抽人设置卡片组
+        # 点名设置卡片组
         pumping_people_card = pumping_people_SettinsCard()
         pumping_people_inner_layout_personal.addWidget(pumping_people_card)
-        # 设置抽人设置页面布局
+        # 设置点名设置页面布局
         pumping_people_layout = QVBoxLayout(self.pumping_people_page)
         pumping_people_layout.addWidget(pumping_people_scroll_area_personal)
 
-        # 抽人名单
+        # 闪抽设置
+        # 创建滚动区域
+        instant_draw_scroll_area_personal = SingleDirectionScrollArea(self.instant_draw_page)
+        instant_draw_scroll_area_personal.setWidgetResizable(True)
+        # 设置样式表
+        instant_draw_scroll_area_personal.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollArea QWidget {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+        # 启用鼠标滚轮
+        QScroller.grabGesture(instant_draw_scroll_area_personal.viewport(), QScroller.LeftMouseButtonGesture)
+        # 创建内部框架
+        instant_draw_inner_frame_personal = QWidget(instant_draw_scroll_area_personal)
+        instant_draw_inner_layout_personal = QVBoxLayout(instant_draw_inner_frame_personal)
+        instant_draw_inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        instant_draw_scroll_area_personal.setWidget(instant_draw_inner_frame_personal)
+        # 闪抽设置卡片组
+        instant_draw_card = instant_draw_SettinsCard()
+        instant_draw_inner_layout_personal.addWidget(instant_draw_card)
+        # 设置闪抽设置页面布局  
+        instant_draw_layout = QVBoxLayout(self.instant_draw_page)
+        instant_draw_layout.addWidget(instant_draw_scroll_area_personal)
+        
+        # 连接信号：当pumping_people设置更新时，通知instant_draw刷新UI
+        pumping_people_card.settings_updated.connect(instant_draw_card.on_pumping_people_settings_updated)
+
+        # 点名名单
         # 创建滚动区域
         pumping_people_list_scroll_area_personal = SingleDirectionScrollArea(self.pumping_people_list_page)
         pumping_people_list_scroll_area_personal.setWidgetResizable(True)
@@ -81,10 +116,10 @@ class pumping_handoff_setting(QFrame):
         pumping_people_list_inner_layout_personal = QVBoxLayout(pumping_people_list_inner_frame_personal)
         pumping_people_list_inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         pumping_people_list_scroll_area_personal.setWidget(pumping_people_list_inner_frame_personal)
-        # 抽人名单设置卡片组
+        # 点名名单设置卡片组
         pumping_people_list_card = list_SettinsCard()
         pumping_people_list_inner_layout_personal.addWidget(pumping_people_list_card)
-        # 设置抽人名单设置页面布局
+        # 设置点名名单设置页面布局
         pumping_people_list_layout = QVBoxLayout(self.pumping_people_list_page)
         pumping_people_list_layout.addWidget(pumping_people_list_scroll_area_personal)
 
