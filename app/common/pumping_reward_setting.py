@@ -25,7 +25,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             "draw_mode": 0,
             "draw_pumping": 0,
             "animation_mode": 0,
-            "reward_theme": 0,
             "animation_interval": 100,
             "animation_auto_play": 5,
             "animation_music_enabled": False,
@@ -42,7 +41,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_Draw_comboBox = ComboBox()
         self.pumping_reward_mode_Draw_comboBox = ComboBox()
         self.pumping_reward_Animation_comboBox = ComboBox()
-        self.pumping_reward_theme_comboBox = ComboBox()
         self.pumping_reward_font_size_SpinBox = DoubleSpinBox()
         self.pumping_reward_animation_interval_SpinBox = SpinBox()
         self.pumping_reward_animation_auto_play_SpinBox = SpinBox()
@@ -85,11 +83,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_animation_auto_play_SpinBox.setSuffix("次")
         self.pumping_reward_animation_auto_play_SpinBox.valueChanged.connect(self.save_settings)
         self.pumping_reward_animation_auto_play_SpinBox.setFont(QFont(load_custom_font(), 12))
-
-        # 奖品量样式下拉框
-        self.pumping_reward_theme_comboBox.addItems(["总数 | 剩余", "总数", "剩余"])
-        self.pumping_reward_theme_comboBox.currentIndexChanged.connect(self.save_settings)
-        self.pumping_reward_theme_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 动画音乐开关
         self.pumping_reward_Animation_music_switch = SwitchButton()
@@ -202,7 +195,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         
         # ===== 显示格式设置 =====
         self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "调整抽取结果显示的字体大小", self.pumping_reward_font_size_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品量", "设置抽取结果的显示样式", self.pumping_reward_theme_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "显示格式", "配置抽取结果的展示格式", self.pumping_reward_display_format_comboBox)
         
         # ===== 颜色设置 =====
@@ -257,8 +249,8 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         pumping_reward_result_color_fixed_dialog.show()
 
     def open_music_path(self, button):
-        bgm_animation_path = path_manager.get_resource_path('music/pumping_people', 'Animation_music')
-        bgm_result_path = path_manager.get_resource_path('music/pumping_people', 'result_music')
+        bgm_animation_path = path_manager.get_resource_path('music/pumping_reward', 'Animation_music')
+        bgm_result_path = path_manager.get_resource_path('music/pumping_reward', 'result_music')
         ensure_dir(bgm_animation_path)
         ensure_dir(bgm_result_path)
         # 星野引导：根据按钮选择打开对应的音乐文件夹 (๑•̀ㅂ•́)و✧
@@ -270,7 +262,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             self.open_folder(str(bgm_result_path))
 
     def open_image_path(self):
-        image_path = path_manager.get_resource_path('images/pumping_people', 'rewards')
+        image_path = path_manager.get_resource_path('images/pumping_reward', 'rewards')
         ensure_dir(image_path)
         # 星野守护：使用跨平台方式打开文件夹～
         self.open_folder(str(image_path))
@@ -361,11 +353,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                         logger.warning(f"无效的动画模式索引: {animation_mode}")
                         animation_mode = self.default_settings["animation_mode"]
 
-                    reward_theme = pumping_reward_settings.get("reward_theme", self.default_settings["reward_theme"])
-                    if reward_theme < 0 or reward_theme >= self.pumping_reward_theme_comboBox.count():
-                        logger.warning(f"无效的人数/组数样式索引: {reward_theme}")
-                        reward_theme = self.default_settings["reward_theme"]
-
                     animation_interval = pumping_reward_settings.get("animation_interval", self.default_settings["animation_interval"])
                     animation_auto_play = pumping_reward_settings.get("animation_auto_play", self.default_settings["animation_auto_play"])
 
@@ -396,7 +383,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(draw_pumping)
                     self.pumping_reward_font_size_SpinBox.setValue(font_size)
                     self.pumping_reward_Animation_comboBox.setCurrentIndex(animation_mode)
-                    self.pumping_reward_theme_comboBox.setCurrentIndex(reward_theme)
                     self.pumping_reward_animation_interval_SpinBox.setValue(animation_interval)
                     self.pumping_reward_animation_auto_play_SpinBox.setValue(animation_auto_play)
                     self.pumping_reward_Animation_music_switch.setChecked(animation_music_enabled)
@@ -413,7 +399,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                 self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
                 self.pumping_reward_font_size_SpinBox.setValue(self.default_settings["font_size"])
                 self.pumping_reward_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
-                self.pumping_reward_theme_comboBox.setCurrentIndex(self.default_settings["reward_theme"])
                 self.pumping_reward_animation_interval_SpinBox.setValue(self.default_settings["animation_interval"])
                 self.pumping_reward_animation_auto_play_SpinBox.setValue(self.default_settings["animation_auto_play"])
                 self.pumping_reward_Animation_music_switch.setChecked(self.default_settings["animation_music_enabled"])
@@ -433,7 +418,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
             self.pumping_reward_font_size_SpinBox.setValue(self.default_settings["font_size"])
             self.pumping_reward_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
-            self.pumping_reward_theme_comboBox.setCurrentIndex(self.default_settings["reward_theme"])
             self.pumping_reward_animation_interval_SpinBox.setValue(self.default_settings["animation_interval"])
             self.pumping_reward_animation_auto_play_SpinBox.setValue(self.default_settings["animation_auto_play"])
             self.pumping_reward_Animation_music_switch.setChecked(self.default_settings["animation_music_enabled"])
@@ -467,7 +451,6 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         pumping_reward_settings["draw_mode"] = self.pumping_reward_Draw_comboBox.currentIndex()
         pumping_reward_settings["draw_pumping"] = self.pumping_reward_mode_Draw_comboBox.currentIndex()
         pumping_reward_settings["animation_mode"] = self.pumping_reward_Animation_comboBox.currentIndex()
-        pumping_reward_settings["reward_theme"] = self.pumping_reward_theme_comboBox.currentIndex()
         pumping_reward_settings["animation_interval"] = self.pumping_reward_animation_interval_SpinBox.value()
         pumping_reward_settings["animation_auto_play"] = self.pumping_reward_animation_auto_play_SpinBox.value()
         pumping_reward_settings["animation_music_enabled"] = self.pumping_reward_Animation_music_switch.isChecked()

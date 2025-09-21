@@ -16,19 +16,23 @@ from app.view.main_page import pumping_people
 
 
 class pumping_people_SettinsCard(GroupHeaderCardWidget):
+    # 定义信号，用于通知设置已更新
+    settings_updated = pyqtSignal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle("抽人设置")
+        self.setTitle("点名设置")
         self.setBorderRadius(8)
         self.settings_file = path_manager.get_settings_path()
         self.default_settings = {
             "font_size": 50,
+            "max_draw_count": 0,
+            "Draw_pumping": 1,
             "draw_mode": 0,
             "draw_pumping": 0,
             "animation_mode": 0,
             "student_id": 0,
             "student_name": 0,
-            "people_theme": 0,
             "show_random_member": False,
             "random_member_format": 2,
             "animation_interval": 100,
@@ -49,16 +53,33 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_Animation_comboBox = ComboBox()
         self.pumping_people_student_id_comboBox = ComboBox()
         self.pumping_people_student_name_comboBox = ComboBox()
-        self.pumping_people_theme_comboBox = ComboBox()
         self.pumping_people_font_size_SpinBox = DoubleSpinBox()
         self.show_random_member_checkbox = SwitchButton()
         self.pumping_people_Animation_interval_SpinBox = SpinBox()
         self.pumping_people_Animation_auto_play_SpinBox = SpinBox()
         
         # 抽取模式下拉框
-        self.pumping_people_Draw_comboBox.addItems(["重复抽取", "不重复抽取(直到软件重启)", "不重复抽取(直到抽完全部人)"])
+        self.pumping_people_Draw_comboBox.addItems(["重复抽取", "重启清临时记录", "保留临时记录", "定时+重启 清记录"])
         self.pumping_people_Draw_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_people_Draw_comboBox.setFont(QFont(load_custom_font(), 12))
+
+        # 定时清理临时记录时间
+        self.pumping_people_auto_play_count_SpinBox = SpinBox()
+        self.pumping_people_auto_play_count_SpinBox.setRange(0, 86400)
+        self.pumping_people_auto_play_count_SpinBox.setValue(self.default_settings["max_draw_count"])
+        self.pumping_people_auto_play_count_SpinBox.setSingleStep(1)
+        self.pumping_people_auto_play_count_SpinBox.setSuffix("秒")
+        self.pumping_people_auto_play_count_SpinBox.valueChanged.connect(self.save_settings)
+        self.pumping_people_auto_play_count_SpinBox.setFont(QFont(load_custom_font(), 12))
+
+        # 不重复抽取模式下的数字一个人的最多重复次数
+        self.Draw_pumping_SpinBox = SpinBox()
+        self.Draw_pumping_SpinBox.setRange(0, 100)
+        self.Draw_pumping_SpinBox.setValue(self.default_settings["Draw_pumping"])
+        self.Draw_pumping_SpinBox.setSingleStep(1)
+        self.Draw_pumping_SpinBox.setSuffix("次")
+        self.Draw_pumping_SpinBox.valueChanged.connect(self.save_settings)
+        self.Draw_pumping_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 抽取方式下拉框
         self.pumping_Draw_comboBox.addItems(["可预测抽取", "不可预测抽取", "公平可预测抽取", "公平不可预测抽取"])
@@ -103,11 +124,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_student_name_comboBox.addItems(["⌈张  三⌋", "⌈ 张三 ⌋"])
         self.pumping_people_student_name_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_people_student_name_comboBox.setFont(QFont(load_custom_font(), 12))
-
-        # 人数/组数样式下拉框
-        self.pumping_people_theme_comboBox.addItems(["总数 | 剩余", "总数", "剩余"])
-        self.pumping_people_theme_comboBox.currentIndexChanged.connect(self.save_settings)
-        self.pumping_people_theme_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 随机组员显示设置
         self.show_random_member_checkbox.setOnText("开启")
@@ -234,7 +250,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
 
         # 添加组件到分组中
         # 抽取模式设置
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "配置抽取人员的基本模式", self.pumping_people_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "清理临时记录", "配置临时记录清理方式", self.pumping_people_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_timer_off_20_filled"), "清理时间", "配置临时记录清理时间(0-86400)(0为不自动清理)", self.pumping_people_auto_play_count_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_week_numbers_20_filled"), "抽取次数", "一轮中抽取最大次数(0为重复模式)", self.Draw_pumping_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "选择具体的抽取执行方式", self.pumping_Draw_comboBox)
         
         # 显示格式设置
@@ -244,7 +262,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "显示格式", "选择抽取结果的展示格式", self.pumping_people_display_format_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "显示随机组员", "抽取小组时是否同步显示组员信息", self.show_random_member_checkbox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "组员显示格式", "配置随机组员信息的显示格式", self.random_member_format_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "班级人|组数", "设置人数或组数的显示样式", self.pumping_people_theme_comboBox)
         
         # 颜色设置
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画/结果颜色", "配置动画和结果的字体颜色主题", self.pumping_people_student_name_color_comboBox)
@@ -388,7 +405,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     if draw_mode < 0 or draw_mode >= self.pumping_people_Draw_comboBox.count():
                         logger.warning(f"无效的抽取模式索引: {draw_mode}")
                         draw_mode = self.default_settings["draw_mode"]
-
+                        
                     draw_pumping = pumping_people_settings.get("draw_pumping", self.default_settings["draw_pumping"])
                     if draw_pumping < 0 or draw_pumping >= self.pumping_Draw_comboBox.count():
                         logger.warning(f"无效的抽取方式索引: {draw_pumping}")
@@ -409,14 +426,15 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                         logger.warning(f"无效的姓名格式索引: {student_name}")
                         student_name = self.default_settings["student_name"]
 
-                    people_theme = pumping_people_settings.get("people_theme", self.default_settings["people_theme"])
-                    if people_theme < 0 or people_theme >= self.pumping_people_theme_comboBox.count():
-                        logger.warning(f"无效的人数/组数样式索引: {people_theme}")
-                        people_theme = self.default_settings["people_theme"]
-
                     # 加载随机组员显示设置
                     show_random_member = pumping_people_settings.get("show_random_member", self.default_settings["show_random_member"])
                     random_member_format = pumping_people_settings.get("random_member_format", self.default_settings["random_member_format"])
+
+                    # 不重复抽取模式下的数字一个人的最多重复次数
+                    Draw_pumping = pumping_people_settings.get("Draw_pumping", self.default_settings["Draw_pumping"])
+
+                    # 最大抽取次数设置
+                    max_draw_count = pumping_people_settings.get("max_draw_count", self.default_settings["max_draw_count"])
 
                     # 加载动画设置
                     animation_interval = pumping_people_settings.get("animation_interval", self.default_settings["animation_interval"])
@@ -446,12 +464,13 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     show_student_image = pumping_people_settings.get("show_student_image", self.default_settings["show_student_image"])
 
                     self.pumping_people_Draw_comboBox.setCurrentIndex(draw_mode)
+                    self.pumping_people_auto_play_count_SpinBox.setValue(max_draw_count)
+                    self.Draw_pumping_SpinBox.setValue(Draw_pumping)
                     self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
                     self.pumping_people_font_size_SpinBox.setValue(font_size)
                     self.pumping_people_Animation_comboBox.setCurrentIndex(animation_mode)
                     self.pumping_people_student_id_comboBox.setCurrentIndex(student_id)
                     self.pumping_people_student_name_comboBox.setCurrentIndex(student_name)
-                    self.pumping_people_theme_comboBox.setCurrentIndex(people_theme)
                     self.show_random_member_checkbox.setChecked(show_random_member)
                     self.random_member_format_comboBox.setCurrentIndex(random_member_format)
                     self.pumping_people_Animation_interval_SpinBox.setValue(animation_interval)
@@ -467,12 +486,13 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_people_show_image_switch.setChecked(show_student_image)
             else:
                 self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
+                self.pumping_people_auto_play_count_SpinBox.setValue(self.default_settings["max_draw_count"])
+                self.Draw_pumping_SpinBox.setValue(self.default_settings["Draw_pumping"])
                 self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
                 self.pumping_people_font_size_SpinBox.setValue(self.default_settings["font_size"])
                 self.pumping_people_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
                 self.pumping_people_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
                 self.pumping_people_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
-                self.pumping_people_theme_comboBox.setCurrentIndex(self.default_settings["people_theme"])
                 self.show_random_member_checkbox.setChecked(self.default_settings["show_random_member"])
                 self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
                 self.pumping_people_Animation_interval_SpinBox.setValue(self.default_settings["animation_interval"])
@@ -490,12 +510,13 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
+            self.pumping_people_auto_play_count_SpinBox.setValue(self.default_settings["max_draw_count"])
+            self.Draw_pumping_SpinBox.setValue(self.default_settings["Draw_pumping"])
             self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
             self.pumping_people_font_size_SpinBox.setValue(self.default_settings["font_size"])
             self.pumping_people_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
             self.pumping_people_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
             self.pumping_people_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
-            self.pumping_people_theme_comboBox.setCurrentIndex(self.default_settings["people_theme"])
             self.show_random_member_checkbox.setChecked(self.default_settings["show_random_member"])
             self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
             self.pumping_people_Animation_interval_SpinBox.setValue(self.default_settings["animation_interval"])
@@ -528,11 +549,12 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         pumping_people_settings = existing_settings["pumping_people"]
         # 只保存索引值
         pumping_people_settings["draw_mode"] = self.pumping_people_Draw_comboBox.currentIndex()
+        pumping_people_settings["max_draw_count"] = self.pumping_people_auto_play_count_SpinBox.value()
+        pumping_people_settings["Draw_pumping"] = self.Draw_pumping_SpinBox.value()
         pumping_people_settings["draw_pumping"] = self.pumping_Draw_comboBox.currentIndex()
         pumping_people_settings["animation_mode"] = self.pumping_people_Animation_comboBox.currentIndex()
         pumping_people_settings["student_id"] = self.pumping_people_student_id_comboBox.currentIndex()
         pumping_people_settings["student_name"] = self.pumping_people_student_name_comboBox.currentIndex()
-        pumping_people_settings["people_theme"] = self.pumping_people_theme_comboBox.currentIndex()
         pumping_people_settings["show_random_member"] = self.show_random_member_checkbox.isChecked()
         pumping_people_settings["random_member_format"] = self.random_member_format_comboBox.currentIndex()
         pumping_people_settings["animation_interval"] = self.pumping_people_Animation_interval_SpinBox.value()
@@ -558,9 +580,57 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             # logger.warning(f"无效的字体大小输入: {self.pumping_people_font_size_edit.text()}")
             pass
         
+        # 检查是否需要同步到instant_draw设置
+        sync_to_instant_draw = False
+        if "instant_draw" in existing_settings:
+            instant_draw_settings = existing_settings["instant_draw"]
+            # 检查是否开启了跟随点名设置
+            if instant_draw_settings.get("follow_roll_call", False):
+                sync_to_instant_draw = True
+        
+        # 如果需要同步，则更新instant_draw设置
+        if sync_to_instant_draw:
+            if "instant_draw" not in existing_settings:
+                existing_settings["instant_draw"] = {}
+                
+            instant_draw_settings = existing_settings["instant_draw"]
+            
+            # 定义需要同步的键值映射
+            sync_mapping = {
+                "draw_mode": "draw_mode",
+                "draw_pumping": "draw_pumping",
+                "animation_mode": "animation_mode",
+                "student_id": "student_id",
+                "student_name": "student_name",
+                "show_random_member": "show_random_member",
+                "random_member_format": "random_member_format",
+                "animation_interval": "animation_interval",
+                "animation_auto_play": "animation_auto_play",
+                "animation_music_enabled": "animation_music_enabled",
+                "result_music_enabled": "result_music_enabled",
+                "animation_music_volume": "animation_music_volume",
+                "result_music_volume": "result_music_volume",
+                "music_fade_in": "music_fade_in",
+                "music_fade_out": "music_fade_out",
+                "display_format": "display_format",
+                "animation_color": "animation_color",
+                "show_student_image": "show_student_image",
+                "font_size": "font_size",
+                "max_draw_count": "max_draw_count"
+            }
+            
+            # 从pumping_people同步设置到instant_draw
+            for pumping_key, instant_key in sync_mapping.items():
+                if pumping_key in pumping_people_settings:
+                    instant_draw_settings[instant_key] = pumping_people_settings[pumping_key]
+        
         ensure_dir(Path(self.settings_file).parent)
         with open_file(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)
+            
+        # 如果同步了设置到instant_draw，则触发信号通知刷新UI
+        if sync_to_instant_draw:
+            self.settings_updated.emit()
 
     # 读取颜色设置
     def load_color_settings(self):
