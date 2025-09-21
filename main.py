@@ -189,9 +189,10 @@ class StartupWindow(QDialog):
             ("加载配置文件", 40),
             ("清理历史记录", 50),
             ("检查插件设置", 60),
-            ("创建主窗口", 70),
-            ("初始化界面组件", 80),
-            ("处理URL命令", 90),
+            ("注册URL协议", 70),
+            ("创建主窗口", 80),
+            ("初始化界面组件", 90),
+            ("处理URL命令", 95),
             ("启动完成", 100)
         ]
         
@@ -655,7 +656,7 @@ if __name__ == "__main__":
             with open_file(settings_file, 'r') as f:
                 settings = json.load(f)
                 foundation_settings = settings.get('foundation', {})
-                show_startup_window = foundation_settings.get('show_startup_window_switch', True)
+                show_startup_window = foundation_settings.get('show_startup_window_switch', False)
     except Exception as e:
         logger.warning(f"白露警告: 读取启动窗口设置失败，使用默认显示启动窗口: {e}")
     
@@ -713,17 +714,31 @@ if __name__ == "__main__":
         startup_thread.set_step(5, "正在检查插件设置...")
     check_plugin_settings()
 
+    # 自动注册URL协议
+    if startup_thread:
+        startup_thread.set_step(6, "正在注册URL协议...")
+    try:
+        from app.common.foundation_settings import register_url_protocol_on_startup
+        register_url_protocol_on_startup()
+        logger.info("白露URL: URL协议自动注册完成～")
+        if startup_thread:
+            startup_thread.update_progress(detail="URL协议自动注册完成")
+    except Exception as e:
+        logger.error(f"白露URL: URL协议自动注册失败: {e}")
+        if startup_thread:
+            startup_thread.update_progress(detail=f"URL协议自动注册失败: {e}")
+
     # 检查是否有启动窗口线程
     has_startup_thread = startup_thread is not None and startup_thread.isRunning()
 
     # 创建主窗口实例
     if has_startup_thread:
-        startup_thread.set_step(6, "正在创建主窗口...")
+        startup_thread.set_step(7, "正在创建主窗口...")
 
     create_main_window_async()
 
     if has_startup_thread:
-        startup_thread.set_step(7, "正在初始化界面组件...")
+        startup_thread.set_step(8, "正在初始化界面组件...")
 
     app.setQuitOnLastWindowClosed(False)
 
@@ -736,7 +751,7 @@ if __name__ == "__main__":
         has_startup_thread = 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning()
         
         if has_startup_thread:
-            startup_thread.set_step(8, "正在处理URL命令...")
+            startup_thread.set_step(9, "正在初始化界面组件...")
         
         try:
             logger.info("白露URL: 延迟检查是否有URL命令需要处理～")
@@ -762,7 +777,7 @@ if __name__ == "__main__":
         finally:
             # 启动完成，关闭启动窗口
             if has_startup_thread:
-                startup_thread.set_step(9, "启动完成！")
+                startup_thread.set_step(10, "启动完成！")
                 QTimer.singleShot(500, startup_thread.close_window)
     
     # 安装自定义字体
