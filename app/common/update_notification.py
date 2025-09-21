@@ -101,12 +101,22 @@ class UpdateNotification(QDialog):
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(10)
 
+        try:
+            theme_color = themeColor()
+            # 如果themeColor()返回的是QColor对象，需要转换为十六进制字符串
+            if hasattr(theme_color, 'name'):
+                theme_color = theme_color.name()
+        except:
+            theme_color = "#3AF2FF"
+            
+        font_color = "black"
+
         # 官网
         manual_update_btn = PushButton("     官网 下载更新")
         manual_update_btn.setIcon(QIcon(str(icon_path)))
-        manual_update_btn.setStyleSheet(""
-            "QPushButton {background-color: #4a6cf7; color: white; border-radius: 8px; padding: 8px 16px; font-weight: 500; border: none;}"
-            "QPushButton:hover {background-color: #3a5bdb;}"
+        manual_update_btn.setStyleSheet(f""
+            f"QPushButton {{background-color: {theme_color}; color: {font_color}; border-radius: 8px; padding: 8px 16px; font-weight: 500; border: none;}}"
+            f"QPushButton:hover {{background-color: {theme_color};}}"
 
         )
         manual_update_btn.setFont(QFont(load_custom_font(), 12))
