@@ -40,7 +40,7 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             "enable_reward_action_url": True,
             "enable_about_action_url": True,
             "enable_plugin_settings_action_url": True,
-            # 抽人Action参数URL独立开关
+            # 点名Action参数URL独立开关
             "enable_pumping_start_url": True,
             "enable_pumping_stop_url": True,
             "enable_pumping_reset_url": True,
@@ -53,25 +53,25 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             "enable_about_contributor_url": True,
             # 插件设置Action参数URL独立开关
             "enable_plugin_settings_open_url": True,
-            # 弹窗提醒设置(disabled, notify_only, confirm, confirm_with_security)
-            "main_url_notification": "disabled",
-            "settings_url_notification": "disabled",
-            "pumping_url_notification": "disabled",
-            "reward_url_notification": "disabled",
-            "history_url_notification": "disabled",
-            "floating_url_notification": "disabled",
-            "about_url_notification": "disabled",
-            "direct_extraction_url_notification": "disabled",
-            "plugin_settings_url_notification": "disabled",
-            "pumping_start_url_notification": "disabled",
-            "pumping_stop_url_notification": "disabled",
-            "pumping_reset_url_notification": "disabled",
-            "reward_start_url_notification": "disabled",
-            "reward_stop_url_notification": "disabled",
-            "reward_reset_url_notification": "disabled",
-            "about_donation_url_notification": "disabled",
-            "about_contributor_url_notification": "disabled",
-            "plugin_settings_open_url_notification": "disabled",
+            # 弹窗提醒设置(0=disabled, 1=notify_only, 2=confirm, 3=confirm_with_security)
+            "main_url_notification": 0,
+            "settings_url_notification": 0,
+            "pumping_url_notification": 0,
+            "reward_url_notification": 0,
+            "history_url_notification": 0,
+            "floating_url_notification": 0,
+            "about_url_notification": 0,
+            "direct_extraction_url_notification": 0,
+            "plugin_settings_url_notification": 0,
+            "pumping_start_url_notification": 0,
+            "pumping_stop_url_notification": 0,
+            "pumping_reset_url_notification": 0,
+            "reward_start_url_notification": 0,
+            "reward_stop_url_notification": 0,
+            "reward_reset_url_notification": 0,
+            "about_donation_url_notification": 0,
+            "about_contributor_url_notification": 0,
+            "plugin_settings_open_url_notification": 0,
             # 跳过安全验证设置
             "settings_url_skip_security": False,
             "floating_url_skip_security": False,
@@ -92,7 +92,7 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.settings_url_switch.setFont(QFont(load_custom_font(), 12))
         self.settings_url_switch.checkedChanged.connect(self.save_settings)
         
-        # 创建抽人界面URL开关
+        # 创建点名界面URL开关
         self.pumping_url_switch = SwitchButton()
         self.pumping_url_switch.setOnText("开启")
         self.pumping_url_switch.setOffText("关闭")
@@ -135,14 +135,14 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.direct_extraction_url_switch.checkedChanged.connect(self.save_settings)
 
         # 创建Action参数URL开关
-        # 抽人Action参数URL开关
+        # 点名Action参数URL开关
         self.pumping_action_url_switch = SwitchButton()
         self.pumping_action_url_switch.setOnText("开启")
         self.pumping_action_url_switch.setOffText("关闭")
         self.pumping_action_url_switch.setFont(QFont(load_custom_font(), 12))
         self.pumping_action_url_switch.checkedChanged.connect(self.save_settings)
         
-        # 抽人Action参数URL独立开关
+        # 点名Action参数URL独立开关
         self.pumping_start_url_switch = SwitchButton()
         self.pumping_start_url_switch.setOnText("开启")
         self.pumping_start_url_switch.setOffText("关闭")
@@ -225,127 +225,127 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.main_url_notification_combo = ComboBox()
         self.main_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.main_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.main_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("main_url_notification", text)
+        self.main_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("main_url_notification", index)
         )
 
         self.settings_url_notification_combo = ComboBox()
         self.settings_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.settings_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.settings_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("settings_url_notification", text)
+        self.settings_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("settings_url_notification", index)
         )
 
         self.pumping_url_notification_combo = ComboBox()
         self.pumping_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.pumping_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.pumping_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("pumping_url_notification", text)
+        self.pumping_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("pumping_url_notification", index)
         )
 
         self.reward_url_notification_combo = ComboBox()
         self.reward_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.reward_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.reward_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("reward_url_notification", text)
+        self.reward_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("reward_url_notification", index)
         )
 
         self.history_url_notification_combo = ComboBox()
         self.history_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.history_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.history_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("history_url_notification", text)
+        self.history_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("history_url_notification", index)
         )
 
         self.floating_url_notification_combo = ComboBox()
         self.floating_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.floating_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.floating_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("floating_url_notification", text)
+        self.floating_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("floating_url_notification", index)
         )
 
         self.about_url_notification_combo = ComboBox()
         self.about_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.about_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.about_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("about_url_notification", text)
+        self.about_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("about_url_notification", index)
         )
 
         self.direct_extraction_url_notification_combo = ComboBox()
         self.direct_extraction_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.direct_extraction_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.direct_extraction_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("direct_extraction_url_notification", text)
+        self.direct_extraction_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("direct_extraction_url_notification", index)
         )
 
         self.plugin_settings_url_notification_combo = ComboBox()
         self.plugin_settings_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.plugin_settings_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.plugin_settings_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("plugin_settings_url_notification", text)
+        self.plugin_settings_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("plugin_settings_url_notification", index)
         )
 
         self.pumping_start_url_notification_combo = ComboBox()
         self.pumping_start_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.pumping_start_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.pumping_start_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("pumping_start_url_notification", text)
+        self.pumping_start_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("pumping_start_url_notification", index)
         )
 
         self.pumping_stop_url_notification_combo = ComboBox()
         self.pumping_stop_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.pumping_stop_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.pumping_stop_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("pumping_stop_url_notification", text)
+        self.pumping_stop_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("pumping_stop_url_notification", index)
         )
 
         self.pumping_reset_url_notification_combo = ComboBox()
         self.pumping_reset_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.pumping_reset_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.pumping_reset_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("pumping_reset_url_notification", text)
+        self.pumping_reset_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("pumping_reset_url_notification", index)
         )
 
         self.reward_start_url_notification_combo = ComboBox()
         self.reward_start_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.reward_start_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.reward_start_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("reward_start_url_notification", text)
+        self.reward_start_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("reward_start_url_notification", index)
         )
 
         self.reward_stop_url_notification_combo = ComboBox()
         self.reward_stop_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.reward_stop_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.reward_stop_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("reward_stop_url_notification", text)
+        self.reward_stop_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("reward_stop_url_notification", index)
         )
 
         self.reward_reset_url_notification_combo = ComboBox()
         self.reward_reset_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.reward_reset_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.reward_reset_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("reward_reset_url_notification", text)
+        self.reward_reset_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("reward_reset_url_notification", index)
         )
 
         self.about_donation_url_notification_combo = ComboBox()
         self.about_donation_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.about_donation_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.about_donation_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("about_donation_url_notification", text)
+        self.about_donation_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("about_donation_url_notification", index)
         )
 
         self.about_contributor_url_notification_combo = ComboBox()
         self.about_contributor_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.about_contributor_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.about_contributor_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("about_contributor_url_notification", text)
+        self.about_contributor_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("about_contributor_url_notification", index)
         )
 
         self.plugin_settings_open_url_notification_combo = ComboBox()
         self.plugin_settings_open_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.plugin_settings_open_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.plugin_settings_open_url_notification_combo.currentTextChanged.connect(
-            lambda text: self.on_notification_changed("plugin_settings_open_url_notification", text)
+        self.plugin_settings_open_url_notification_combo.currentIndexChanged.connect(
+            lambda index: self.on_notification_changed("plugin_settings_open_url_notification", index)
         )
 
         # 创建跳过安全验证开关
@@ -375,8 +375,8 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "设置界面URL弹窗提醒", "选择通过URL协议打开设置界面时的弹窗提醒方式", self.settings_url_notification_combo)
         self.addGroup(get_theme_icon("ic_fluent_shield_20_filled"), "设置界面跳过安全验证", "通过URL协议打开设置界面时是否跳过安全验证", self.settings_url_skip_security_switch)
         
-        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "抽人界面URL", "secrandom://pumping - 打开抽人界面", self.pumping_url_switch)
-        self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "抽人界面URL弹窗提醒", "选择通过URL协议打开抽人界面时的弹窗提醒方式", self.pumping_url_notification_combo)
+        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "点名界面URL", "secrandom://pumping - 打开点名界面", self.pumping_url_switch)
+        self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "点名界面URL弹窗提醒", "选择通过URL协议打开点名界面时的弹窗提醒方式", self.pumping_url_notification_combo)
         
         self.addGroup(get_theme_icon("ic_fluent_reward_20_filled"), "抽奖界面URL", "secrandom://reward - 打开抽奖界面", self.reward_url_switch)
         self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "抽奖界面URL弹窗提醒", "选择通过URL协议打开抽奖界面时的弹窗提醒方式", self.reward_url_notification_combo)
@@ -395,14 +395,14 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "闪抽界面URL弹窗提醒", "选择通过URL协议打开闪抽界面时的弹窗提醒方式", self.direct_extraction_url_notification_combo)
         
         # 添加Action参数URL设置组
-        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "开始抽人URL", "secrandom://pumping?action=start - 自动切换到抽人界面并开始抽选操作", self.pumping_start_url_switch)
-        self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "开始抽人URL弹窗提醒", "选择通过URL协议开始抽人操作时的弹窗提醒方式", self.pumping_start_url_notification_combo)
+        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "开始点名URL", "secrandom://pumping?action=start - 自动切换到点名界面并开始抽选操作", self.pumping_start_url_switch)
+        self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "开始点名URL弹窗提醒", "选择通过URL协议开始点名操作时的弹窗提醒方式", self.pumping_start_url_notification_combo)
         
-        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "停止抽人URL", "secrandom://pumping?action=stop - 自动切换到抽人界面并停止当前的抽人操作", self.pumping_stop_url_switch)
-        self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "停止抽人URL弹窗提醒", "选择通过URL协议停止抽人操作时的弹窗提醒方式", self.pumping_stop_url_notification_combo)
+        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "停止点名URL", "secrandom://pumping?action=stop - 自动切换到点名界面并停止当前的点名操作", self.pumping_stop_url_switch)
+        self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "停止点名URL弹窗提醒", "选择通过URL协议停止点名操作时的弹窗提醒方式", self.pumping_stop_url_notification_combo)
         
-        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "重置抽人URL", "secrandom://pumping?action=reset - 自动切换到抽人界面并清空当前的抽选结果", self.pumping_reset_url_switch)
-        self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "重置抽人URL弹窗提醒", "选择通过URL协议重置抽人操作时的弹窗提醒方式", self.pumping_reset_url_notification_combo)
+        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "重置点名URL", "secrandom://pumping?action=reset - 自动切换到点名界面并清空当前的抽选结果", self.pumping_reset_url_switch)
+        self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "重置点名URL弹窗提醒", "选择通过URL协议重置点名操作时的弹窗提醒方式", self.pumping_reset_url_notification_combo)
         
         self.addGroup(get_theme_icon("ic_fluent_reward_20_filled"), "开始抽奖URL", "secrandom://reward?action=start - 自动切换到抽奖界面并开始抽奖操作", self.reward_start_url_switch)
         self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "开始抽奖URL弹窗提醒", "选择通过URL协议开始抽奖操作时的弹窗提醒方式", self.reward_start_url_notification_combo)
@@ -440,7 +440,7 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
                     # 加载设置界面URL设置
                     self.settings_url_switch.setChecked(fixed_url_settings.get("enable_settings_url", self.default_settings["enable_settings_url"]))
                     
-                    # 加载抽人界面URL设置
+                    # 加载点名界面URL设置
                     self.pumping_url_switch.setChecked(fixed_url_settings.get("enable_pumping_url", self.default_settings["enable_pumping_url"]))
                     
                     # 加载抽奖界面URL设置
@@ -464,7 +464,7 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
                     self.about_action_url_switch.setChecked(fixed_url_settings.get("enable_about_action_url", self.default_settings["enable_about_action_url"]))
                     self.plugin_settings_action_url_switch.setChecked(fixed_url_settings.get("enable_plugin_settings_action_url", self.default_settings["enable_plugin_settings_action_url"]))
                     
-                    # 加载抽人Action参数URL独立开关
+                    # 加载点名Action参数URL独立开关
                     self.pumping_start_url_switch.setChecked(fixed_url_settings.get("enable_pumping_start_url", self.default_settings["enable_pumping_start_url"]))
                     self.pumping_stop_url_switch.setChecked(fixed_url_settings.get("enable_pumping_stop_url", self.default_settings["enable_pumping_stop_url"]))
                     self.pumping_reset_url_switch.setChecked(fixed_url_settings.get("enable_pumping_reset_url", self.default_settings["enable_pumping_reset_url"]))
@@ -482,24 +482,24 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
                     self.plugin_settings_open_url_switch.setChecked(fixed_url_settings.get("enable_plugin_settings_open_url", self.default_settings["enable_plugin_settings_open_url"]))
                     
                     # 加载弹窗提醒设置
-                    self.main_url_notification_combo.setCurrentText(fixed_url_settings.get("main_url_notification", self.default_settings["main_url_notification"]))
-                    self.settings_url_notification_combo.setCurrentText(fixed_url_settings.get("settings_url_notification", self.default_settings["settings_url_notification"]))
-                    self.pumping_url_notification_combo.setCurrentText(fixed_url_settings.get("pumping_url_notification", self.default_settings["pumping_url_notification"]))
-                    self.reward_url_notification_combo.setCurrentText(fixed_url_settings.get("reward_url_notification", self.default_settings["reward_url_notification"]))
-                    self.history_url_notification_combo.setCurrentText(fixed_url_settings.get("history_url_notification", self.default_settings["history_url_notification"]))
-                    self.floating_url_notification_combo.setCurrentText(fixed_url_settings.get("floating_url_notification", self.default_settings["floating_url_notification"]))
-                    self.about_url_notification_combo.setCurrentText(fixed_url_settings.get("about_url_notification", self.default_settings["about_url_notification"]))
-                    self.direct_extraction_url_notification_combo.setCurrentText(fixed_url_settings.get("direct_extraction_url_notification", self.default_settings["direct_extraction_url_notification"]))
-                    self.plugin_settings_url_notification_combo.setCurrentText(fixed_url_settings.get("plugin_settings_url_notification", self.default_settings["plugin_settings_url_notification"]))
-                    self.pumping_start_url_notification_combo.setCurrentText(fixed_url_settings.get("pumping_start_url_notification", self.default_settings["pumping_start_url_notification"]))
-                    self.pumping_stop_url_notification_combo.setCurrentText(fixed_url_settings.get("pumping_stop_url_notification", self.default_settings["pumping_stop_url_notification"]))
-                    self.pumping_reset_url_notification_combo.setCurrentText(fixed_url_settings.get("pumping_reset_url_notification", self.default_settings["pumping_reset_url_notification"]))
-                    self.reward_start_url_notification_combo.setCurrentText(fixed_url_settings.get("reward_start_url_notification", self.default_settings["reward_start_url_notification"]))
-                    self.reward_stop_url_notification_combo.setCurrentText(fixed_url_settings.get("reward_stop_url_notification", self.default_settings["reward_stop_url_notification"]))
-                    self.reward_reset_url_notification_combo.setCurrentText(fixed_url_settings.get("reward_reset_url_notification", self.default_settings["reward_reset_url_notification"]))
-                    self.about_donation_url_notification_combo.setCurrentText(fixed_url_settings.get("about_donation_url_notification", self.default_settings["about_donation_url_notification"]))
-                    self.about_contributor_url_notification_combo.setCurrentText(fixed_url_settings.get("about_contributor_url_notification", self.default_settings["about_contributor_url_notification"]))
-                    self.plugin_settings_open_url_notification_combo.setCurrentText(fixed_url_settings.get("plugin_settings_open_url_notification", self.default_settings["plugin_settings_open_url_notification"]))
+                    self.main_url_notification_combo.setCurrentIndex(fixed_url_settings.get("main_url_notification", self.default_settings["main_url_notification"]))
+                    self.settings_url_notification_combo.setCurrentIndex(fixed_url_settings.get("settings_url_notification", self.default_settings["settings_url_notification"]))
+                    self.pumping_url_notification_combo.setCurrentIndex(fixed_url_settings.get("pumping_url_notification", self.default_settings["pumping_url_notification"]))
+                    self.reward_url_notification_combo.setCurrentIndex(fixed_url_settings.get("reward_url_notification", self.default_settings["reward_url_notification"]))
+                    self.history_url_notification_combo.setCurrentIndex(fixed_url_settings.get("history_url_notification", self.default_settings["history_url_notification"]))
+                    self.floating_url_notification_combo.setCurrentIndex(fixed_url_settings.get("floating_url_notification", self.default_settings["floating_url_notification"]))
+                    self.about_url_notification_combo.setCurrentIndex(fixed_url_settings.get("about_url_notification", self.default_settings["about_url_notification"]))
+                    self.direct_extraction_url_notification_combo.setCurrentIndex(fixed_url_settings.get("direct_extraction_url_notification", self.default_settings["direct_extraction_url_notification"]))
+                    self.plugin_settings_url_notification_combo.setCurrentIndex(fixed_url_settings.get("plugin_settings_url_notification", self.default_settings["plugin_settings_url_notification"]))
+                    self.pumping_start_url_notification_combo.setCurrentIndex(fixed_url_settings.get("pumping_start_url_notification", self.default_settings["pumping_start_url_notification"]))
+                    self.pumping_stop_url_notification_combo.setCurrentIndex(fixed_url_settings.get("pumping_stop_url_notification", self.default_settings["pumping_stop_url_notification"]))
+                    self.pumping_reset_url_notification_combo.setCurrentIndex(fixed_url_settings.get("pumping_reset_url_notification", self.default_settings["pumping_reset_url_notification"]))
+                    self.reward_start_url_notification_combo.setCurrentIndex(fixed_url_settings.get("reward_start_url_notification", self.default_settings["reward_start_url_notification"]))
+                    self.reward_stop_url_notification_combo.setCurrentIndex(fixed_url_settings.get("reward_stop_url_notification", self.default_settings["reward_stop_url_notification"]))
+                    self.reward_reset_url_notification_combo.setCurrentIndex(fixed_url_settings.get("reward_reset_url_notification", self.default_settings["reward_reset_url_notification"]))
+                    self.about_donation_url_notification_combo.setCurrentIndex(fixed_url_settings.get("about_donation_url_notification", self.default_settings["about_donation_url_notification"]))
+                    self.about_contributor_url_notification_combo.setCurrentIndex(fixed_url_settings.get("about_contributor_url_notification", self.default_settings["about_contributor_url_notification"]))
+                    self.plugin_settings_open_url_notification_combo.setCurrentIndex(fixed_url_settings.get("plugin_settings_open_url_notification", self.default_settings["plugin_settings_open_url_notification"]))
                     
                     # 加载跳过安全验证设置
                     self.settings_url_skip_security_switch.setChecked(fixed_url_settings.get("settings_url_skip_security", self.default_settings["settings_url_skip_security"]))
@@ -539,7 +539,7 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
                 self.about_action_url_switch.setChecked(self.default_settings["enable_about_action_url"])
                 self.plugin_settings_action_url_switch.setChecked(self.default_settings["enable_plugin_settings_action_url"])
                 
-                # 加载抽人Action参数URL独立开关
+                # 加载点名Action参数URL独立开关
                 self.pumping_start_url_switch.setChecked(self.default_settings["enable_pumping_start_url"])
                 self.pumping_stop_url_switch.setChecked(self.default_settings["enable_pumping_stop_url"])
                 self.pumping_reset_url_switch.setChecked(self.default_settings["enable_pumping_reset_url"])
@@ -557,24 +557,24 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
                 self.plugin_settings_open_url_switch.setChecked(self.default_settings["enable_plugin_settings_open_url"])
 
                 # 加载弹窗提醒设置
-                self.main_url_notification_combo.setCurrentText(self.default_settings["main_url_notification"])
-                self.settings_url_notification_combo.setCurrentText(self.default_settings["settings_url_notification"])
-                self.pumping_url_notification_combo.setCurrentText(self.default_settings["pumping_url_notification"])
-                self.reward_url_notification_combo.setCurrentText(self.default_settings["reward_url_notification"])
-                self.history_url_notification_combo.setCurrentText(self.default_settings["history_url_notification"])
-                self.floating_url_notification_combo.setCurrentText(self.default_settings["floating_url_notification"])
-                self.about_url_notification_combo.setCurrentText(self.default_settings["about_url_notification"])
-                self.direct_extraction_url_notification_combo.setCurrentText(self.default_settings["direct_extraction_url_notification"])
-                self.plugin_settings_url_notification_combo.setCurrentText(self.default_settings["plugin_settings_url_notification"])
-                self.pumping_start_url_notification_combo.setCurrentText(self.default_settings["pumping_start_url_notification"])
-                self.pumping_stop_url_notification_combo.setCurrentText(self.default_settings["pumping_stop_url_notification"])
-                self.pumping_reset_url_notification_combo.setCurrentText(self.default_settings["pumping_reset_url_notification"])
-                self.reward_start_url_notification_combo.setCurrentText(self.default_settings["reward_start_url_notification"])
-                self.reward_stop_url_notification_combo.setCurrentText(self.default_settings["reward_stop_url_notification"])
-                self.reward_reset_url_notification_combo.setCurrentText(self.default_settings["reward_reset_url_notification"])
-                self.about_donation_url_notification_combo.setCurrentText(self.default_settings["about_donation_url_notification"])
-                self.about_contributor_url_notification_combo.setCurrentText(self.default_settings["about_contributor_url_notification"])
-                self.plugin_settings_open_url_notification_combo.setCurrentText(self.default_settings["plugin_settings_open_url_notification"])
+                self.main_url_notification_combo.setCurrentIndex(self.default_settings["main_url_notification"])
+                self.settings_url_notification_combo.setCurrentIndex(self.default_settings["settings_url_notification"])
+                self.pumping_url_notification_combo.setCurrentIndex(self.default_settings["pumping_url_notification"])
+                self.reward_url_notification_combo.setCurrentIndex(self.default_settings["reward_url_notification"])
+                self.history_url_notification_combo.setCurrentIndex(self.default_settings["history_url_notification"])
+                self.floating_url_notification_combo.setCurrentIndex(self.default_settings["floating_url_notification"])
+                self.about_url_notification_combo.setCurrentIndex(self.default_settings["about_url_notification"])
+                self.direct_extraction_url_notification_combo.setCurrentIndex(self.default_settings["direct_extraction_url_notification"])
+                self.plugin_settings_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_url_notification"])
+                self.pumping_start_url_notification_combo.setCurrentIndex(self.default_settings["pumping_start_url_notification"])
+                self.pumping_stop_url_notification_combo.setCurrentIndex(self.default_settings["pumping_stop_url_notification"])
+                self.pumping_reset_url_notification_combo.setCurrentIndex(self.default_settings["pumping_reset_url_notification"])
+                self.reward_start_url_notification_combo.setCurrentIndex(self.default_settings["reward_start_url_notification"])
+                self.reward_stop_url_notification_combo.setCurrentIndex(self.default_settings["reward_stop_url_notification"])
+                self.reward_reset_url_notification_combo.setCurrentIndex(self.default_settings["reward_reset_url_notification"])
+                self.about_donation_url_notification_combo.setCurrentIndex(self.default_settings["about_donation_url_notification"])
+                self.about_contributor_url_notification_combo.setCurrentIndex(self.default_settings["about_contributor_url_notification"])
+                self.plugin_settings_open_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_open_url_notification"])
                 
                 # 加载跳过安全验证设置
                 self.settings_url_skip_security_switch.setChecked(self.default_settings["settings_url_skip_security"])
@@ -597,7 +597,7 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             self.about_action_url_switch.setChecked(self.default_settings["enable_about_action_url"])
             self.plugin_settings_action_url_switch.setChecked(self.default_settings["enable_plugin_settings_action_url"])
             
-            # 加载抽人Action参数URL独立开关
+            # 加载点名Action参数URL独立开关
             self.pumping_start_url_switch.setChecked(self.default_settings["enable_pumping_start_url"])
             self.pumping_stop_url_switch.setChecked(self.default_settings["enable_pumping_stop_url"])
             self.pumping_reset_url_switch.setChecked(self.default_settings["enable_pumping_reset_url"])
@@ -615,24 +615,24 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             self.plugin_settings_open_url_switch.setChecked(self.default_settings["enable_plugin_settings_open_url"])
 
             # 加载弹窗提醒设置
-            self.main_url_notification_combo.setCurrentText(self.default_settings["main_url_notification"])
-            self.settings_url_notification_combo.setCurrentText(self.default_settings["settings_url_notification"])
-            self.pumping_url_notification_combo.setCurrentText(self.default_settings["pumping_url_notification"])
-            self.reward_url_notification_combo.setCurrentText(self.default_settings["reward_url_notification"])
-            self.history_url_notification_combo.setCurrentText(self.default_settings["history_url_notification"])
-            self.floating_url_notification_combo.setCurrentText(self.default_settings["floating_url_notification"])
-            self.about_url_notification_combo.setCurrentText(self.default_settings["about_url_notification"])
-            self.direct_extraction_url_notification_combo.setCurrentText(self.default_settings["direct_extraction_url_notification"])
-            self.plugin_settings_url_notification_combo.setCurrentText(self.default_settings["plugin_settings_url_notification"])
-            self.pumping_start_url_notification_combo.setCurrentText(self.default_settings["pumping_start_url_notification"])
-            self.pumping_stop_url_notification_combo.setCurrentText(self.default_settings["pumping_stop_url_notification"])
-            self.pumping_reset_url_notification_combo.setCurrentText(self.default_settings["pumping_reset_url_notification"])
-            self.reward_start_url_notification_combo.setCurrentText(self.default_settings["reward_start_url_notification"])
-            self.reward_stop_url_notification_combo.setCurrentText(self.default_settings["reward_stop_url_notification"])
-            self.reward_reset_url_notification_combo.setCurrentText(self.default_settings["reward_reset_url_notification"])
-            self.about_donation_url_notification_combo.setCurrentText(self.default_settings["about_donation_url_notification"])
-            self.about_contributor_url_notification_combo.setCurrentText(self.default_settings["about_contributor_url_notification"])
-            self.plugin_settings_open_url_notification_combo.setCurrentText(self.default_settings["plugin_settings_open_url_notification"])
+            self.main_url_notification_combo.setCurrentIndex(self.default_settings["main_url_notification"])
+            self.settings_url_notification_combo.setCurrentIndex(self.default_settings["settings_url_notification"])
+            self.pumping_url_notification_combo.setCurrentIndex(self.default_settings["pumping_url_notification"])
+            self.reward_url_notification_combo.setCurrentIndex(self.default_settings["reward_url_notification"])
+            self.history_url_notification_combo.setCurrentIndex(self.default_settings["history_url_notification"])
+            self.floating_url_notification_combo.setCurrentIndex(self.default_settings["floating_url_notification"])
+            self.about_url_notification_combo.setCurrentIndex(self.default_settings["about_url_notification"])
+            self.direct_extraction_url_notification_combo.setCurrentIndex(self.default_settings["direct_extraction_url_notification"])
+            self.plugin_settings_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_url_notification"])
+            self.pumping_start_url_notification_combo.setCurrentIndex(self.default_settings["pumping_start_url_notification"])
+            self.pumping_stop_url_notification_combo.setCurrentIndex(self.default_settings["pumping_stop_url_notification"])
+            self.pumping_reset_url_notification_combo.setCurrentIndex(self.default_settings["pumping_reset_url_notification"])
+            self.reward_start_url_notification_combo.setCurrentIndex(self.default_settings["reward_start_url_notification"])
+            self.reward_stop_url_notification_combo.setCurrentIndex(self.default_settings["reward_stop_url_notification"])
+            self.reward_reset_url_notification_combo.setCurrentIndex(self.default_settings["reward_reset_url_notification"])
+            self.about_donation_url_notification_combo.setCurrentIndex(self.default_settings["about_donation_url_notification"])
+            self.about_contributor_url_notification_combo.setCurrentIndex(self.default_settings["about_contributor_url_notification"])
+            self.plugin_settings_open_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_open_url_notification"])
         
             # 加载跳过安全验证设置
             self.settings_url_skip_security_switch.setChecked(self.default_settings["settings_url_skip_security"])
@@ -661,7 +661,7 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         # 保存设置界面URL设置
         fixed_url_settings["enable_settings_url"] = self.settings_url_switch.isChecked()
         
-        # 保存抽人界面URL设置
+        # 保存点名界面URL设置
         fixed_url_settings["enable_pumping_url"] = self.pumping_url_switch.isChecked()
         
         # 保存抽奖界面URL设置
@@ -685,7 +685,7 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         fixed_url_settings["enable_about_action_url"] = self.about_action_url_switch.isChecked()
         fixed_url_settings["enable_plugin_settings_action_url"] = self.plugin_settings_action_url_switch.isChecked()
         
-        # 保存抽人Action参数URL独立开关
+        # 保存点名Action参数URL独立开关
         fixed_url_settings["enable_pumping_start_url"] = self.pumping_start_url_switch.isChecked()
         fixed_url_settings["enable_pumping_stop_url"] = self.pumping_stop_url_switch.isChecked()
         fixed_url_settings["enable_pumping_reset_url"] = self.pumping_reset_url_switch.isChecked()
@@ -706,25 +706,25 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         fixed_url_settings["settings_url_skip_security"] = self.settings_url_skip_security_switch.isChecked()
         fixed_url_settings["plugin_settings_open_url_skip_security"] = self.plugin_settings_open_url_skip_security_switch.isChecked()
         
-        # 保存弹窗提醒设置
-        fixed_url_settings["main_url_notification"] = self.main_url_notification_combo.currentText()
-        fixed_url_settings["settings_url_notification"] = self.settings_url_notification_combo.currentText()
-        fixed_url_settings["pumping_url_notification"] = self.pumping_url_notification_combo.currentText()
-        fixed_url_settings["reward_url_notification"] = self.reward_url_notification_combo.currentText()
-        fixed_url_settings["history_url_notification"] = self.history_url_notification_combo.currentText()
-        fixed_url_settings["floating_url_notification"] = self.floating_url_notification_combo.currentText()
-        fixed_url_settings["about_url_notification"] = self.about_url_notification_combo.currentText()
-        fixed_url_settings["direct_extraction_url_notification"] = self.direct_extraction_url_notification_combo.currentText()
-        fixed_url_settings["plugin_settings_url_notification"] = self.plugin_settings_url_notification_combo.currentText()
-        fixed_url_settings["pumping_start_url_notification"] = self.pumping_start_url_notification_combo.currentText()
-        fixed_url_settings["pumping_stop_url_notification"] = self.pumping_stop_url_notification_combo.currentText()
-        fixed_url_settings["pumping_reset_url_notification"] = self.pumping_reset_url_notification_combo.currentText()
-        fixed_url_settings["reward_start_url_notification"] = self.reward_start_url_notification_combo.currentText()
-        fixed_url_settings["reward_stop_url_notification"] = self.reward_stop_url_notification_combo.currentText()
-        fixed_url_settings["reward_reset_url_notification"] = self.reward_reset_url_notification_combo.currentText()
-        fixed_url_settings["about_donation_url_notification"] = self.about_donation_url_notification_combo.currentText()
-        fixed_url_settings["about_contributor_url_notification"] = self.about_contributor_url_notification_combo.currentText()
-        fixed_url_settings["plugin_settings_open_url_notification"] = self.plugin_settings_open_url_notification_combo.currentText()
+        # 保存弹窗提醒设置 (0=disabled, 1=notify_only, 2=confirm, 3=confirm_with_security)
+        fixed_url_settings["main_url_notification"] = self.main_url_notification_combo.currentIndex()
+        fixed_url_settings["settings_url_notification"] = self.settings_url_notification_combo.currentIndex()
+        fixed_url_settings["pumping_url_notification"] = self.pumping_url_notification_combo.currentIndex()
+        fixed_url_settings["reward_url_notification"] = self.reward_url_notification_combo.currentIndex()
+        fixed_url_settings["history_url_notification"] = self.history_url_notification_combo.currentIndex()
+        fixed_url_settings["floating_url_notification"] = self.floating_url_notification_combo.currentIndex()
+        fixed_url_settings["about_url_notification"] = self.about_url_notification_combo.currentIndex()
+        fixed_url_settings["direct_extraction_url_notification"] = self.direct_extraction_url_notification_combo.currentIndex()
+        fixed_url_settings["plugin_settings_url_notification"] = self.plugin_settings_url_notification_combo.currentIndex()
+        fixed_url_settings["pumping_start_url_notification"] = self.pumping_start_url_notification_combo.currentIndex()
+        fixed_url_settings["pumping_stop_url_notification"] = self.pumping_stop_url_notification_combo.currentIndex()
+        fixed_url_settings["pumping_reset_url_notification"] = self.pumping_reset_url_notification_combo.currentIndex()
+        fixed_url_settings["reward_start_url_notification"] = self.reward_start_url_notification_combo.currentIndex()
+        fixed_url_settings["reward_stop_url_notification"] = self.reward_stop_url_notification_combo.currentIndex()
+        fixed_url_settings["reward_reset_url_notification"] = self.reward_reset_url_notification_combo.currentIndex()
+        fixed_url_settings["about_donation_url_notification"] = self.about_donation_url_notification_combo.currentIndex()
+        fixed_url_settings["about_contributor_url_notification"] = self.about_contributor_url_notification_combo.currentIndex()
+        fixed_url_settings["plugin_settings_open_url_notification"] = self.plugin_settings_open_url_notification_combo.currentIndex()
         
         # 保存跳过安全验证设置
         fixed_url_settings["settings_url_skip_security"] = self.settings_url_skip_security_switch.isChecked()
@@ -736,13 +736,13 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             json.dump(existing_settings, f, indent=4)
     
     def on_pumping_url_changed(self):
-        """抽人界面URL开关状态变化处理"""
-        # 如果抽人界面URL关闭，则关闭并禁用对应的Action参数URL
+        """点名界面URL开关状态变化处理"""
+        # 如果点名界面URL关闭，则关闭并禁用对应的Action参数URL
         if not self.pumping_url_switch.isChecked():
-            # 关闭并禁用抽人Action参数URL总开关
+            # 关闭并禁用点名Action参数URL总开关
             self.pumping_action_url_switch.setChecked(False)
             self.pumping_action_url_switch.setEnabled(False)
-            # 关闭并禁用所有抽人Action参数URL独立开关
+            # 关闭并禁用所有点名Action参数URL独立开关
             self.pumping_start_url_switch.setChecked(False)
             self.pumping_start_url_switch.setEnabled(False)
             self.pumping_stop_url_switch.setChecked(False)
@@ -750,7 +750,7 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             self.pumping_reset_url_switch.setChecked(False)
             self.pumping_reset_url_switch.setEnabled(False)
         else:
-            # 如果抽人界面URL开启，则启用对应的Action参数URL开关
+            # 如果点名界面URL开启，则启用对应的Action参数URL开关
             self.pumping_action_url_switch.setEnabled(True)
             self.pumping_start_url_switch.setEnabled(True)
             self.pumping_stop_url_switch.setEnabled(True)
@@ -799,7 +799,12 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.save_settings()
     
     def on_notification_changed(self, setting_key, value):
-        """弹窗提醒设置变化处理"""
+        """弹窗提醒设置变化处理
+        
+        Args:
+            setting_key: 设置键名
+            value: 下拉框索引值 (0=disabled, 1=notify_only, 2=confirm, 3=confirm_with_security)
+        """
         try:
             # 保存设置
             existing_settings = {}
