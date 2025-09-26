@@ -682,6 +682,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             
             # 设置Draw_pumping_SpinBox为0并禁用
             self.Draw_pumping_SpinBox.setEnabled(False)
+            self.Draw_pumping_SpinBox.setRange(0, 100)
             self.Draw_pumping_SpinBox.setValue(0)
             
         else:  # 不重复抽取模式或半重复抽取模式
@@ -704,6 +705,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             if draw_mode_index == 1:  # 不重复抽取模式
                 # 设置Draw_pumping_SpinBox为1并禁用
                 self.Draw_pumping_SpinBox.setEnabled(False)
+                self.Draw_pumping_SpinBox.setRange(0, 100)
                 self.Draw_pumping_SpinBox.setValue(1)
             else:  # 半重复抽取模式（索引2）
                 # 设置Draw_pumping_SpinBox为2-100范围并启用
