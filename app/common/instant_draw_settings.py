@@ -22,7 +22,7 @@ is_dark = is_dark_theme(qconfig)
 class instant_draw_settingsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle("点名界面管理")
+        self.setTitle("闪抽/即抽窗口管理")
         self.setBorderRadius(8)
         self.settings_file = path_manager.get_settings_path('custom_settings.json')
         self.default_settings = {

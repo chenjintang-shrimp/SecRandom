@@ -354,6 +354,14 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     if pumping_key in pumping_people_settings:
                         old_value = instant_draw_settings.get(instant_key)
                         new_value = pumping_people_settings[pumping_key]
+                        
+                        # 特殊处理animation_mode的同步规则：0和1同步为0，2同步为1
+                        if pumping_key == "animation_mode":
+                            if new_value in [0, 1]:
+                                new_value = 0
+                            elif new_value == 2:
+                                new_value = 1
+                        
                         if old_value != new_value:
                             instant_draw_settings[instant_key] = new_value
                             updated = True

@@ -6,7 +6,6 @@ from app.common.config import cfg, AUTHOR, VERSION, YEAR
 from app.common.config import load_custom_font
 
 from app.common.fixed_url_setting import fixed_url_SettinsCard
-# from app.common.user_defined_url_setting import user_defined_url_SettinsCard
 from app.common.theme_settings import theme_settingsCard
 from app.common.sidebar_settings import sidebar_settingsCard
 from app.common.floating_window_settings import floating_window_settingsCard
@@ -37,7 +36,6 @@ class custom_setting(QFrame):
         self.addSubInterface(self.sidebar_settings_page, 'sidebar_settings', '侧边栏设置')
         self.addSubInterface(self.floating_window_page, 'floating_window', '浮窗管理设置')
         self.addSubInterface(self.fixed_url_page, 'fixed_url_setting', '固定Url管理')
-        # self.addSubInterface(self.user_defined_url_page, 'user_defined_url', '自定义Url')
         self.addSubInterface(self.theme_settings_page, 'theme_settings', '主题设置')
         self.addSubInterface(self.Program_functionality_settings_page, 'Program_functionality_settings', '软件功能管理')
 
@@ -69,35 +67,6 @@ class custom_setting(QFrame):
         # 设置固定Url设置页面布局
         fixed_url_layout = QVBoxLayout(self.fixed_url_page)
         fixed_url_layout.addWidget(fixed_url_scroll_area)
-
-        # # 用户定义Url
-        # # 创建滚动区域
-        # user_defined_url_scroll_area = SingleDirectionScrollArea(self.user_defined_url_page)
-        # user_defined_url_scroll_area.setWidgetResizable(True)
-        # # 设置样式表
-        # user_defined_url_scroll_area.setStyleSheet("""
-        #     QScrollArea {
-        #         border: none;
-        #         background-color: transparent;
-        #     }
-        #     QScrollArea QWidget {
-        #         border: none;
-        #         background-color: transparent;
-        #     }
-        # """)
-        # # 启用鼠标滚轮
-        # QScroller.grabGesture(user_defined_url_scroll_area.viewport(), QScroller.LeftMouseButtonGesture)
-        # # 创建内部框架
-        # user_defined_url_inner_frame = QWidget(user_defined_url_scroll_area)
-        # user_defined_url_inner_layout = QVBoxLayout(user_defined_url_inner_frame)
-        # user_defined_url_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
-        # user_defined_url_scroll_area.setWidget(user_defined_url_inner_frame)
-        # # 用户定义Url设置卡片组
-        # user_defined_url_card = user_defined_url_SettinsCard()
-        # user_defined_url_inner_layout.addWidget(user_defined_url_card)
-        # # 设置用户定义Url设置页面布局
-        # user_defined_url_layout = QVBoxLayout(self.user_defined_url_page)
-        # user_defined_url_layout.addWidget(user_defined_url_scroll_area)
 
         # 主题设置
         # 创建滚动区域
