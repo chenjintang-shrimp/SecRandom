@@ -26,7 +26,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.settings_file = path_manager.get_settings_path()
         self.default_settings = {
             "font_size": 50,
-            "max_draw_count": 0,
+            "max_draw_count": 5,
             "Draw_pumping": 1,
             "draw_mode": 1,
             "clear_mode": 0,
@@ -67,7 +67,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
 
         # 清除抽取记录方式下拉框
         self.pumping_people_Clear_comboBox = ComboBox()
-        self.pumping_people_Clear_comboBox.addItems(["重启抽清除", "直到全部抽取完", "无需清除"])
+        self.pumping_people_Clear_comboBox.addItems(["重启后清除", "直到全部抽取完", "无需清除"])
         self.pumping_people_Clear_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_people_Clear_comboBox.setFont(QFont(load_custom_font(), 12))
 
@@ -513,6 +513,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             else:
                 self.pumping_people_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
                 self.pumping_people_Clear_comboBox.setCurrentIndex(self.default_settings["clear_mode"])
+                self.Draw_pumping_SpinBox.setValue(self.default_settings["Draw_pumping"])
                 
                 # 加载默认设置后应用抽取模式逻辑
                 self.on_draw_mode_changed()
@@ -673,6 +674,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         if draw_mode_index == 0:  # 重复抽取模式
             # 禁用清除抽取记录方式下拉框
             self.pumping_people_Clear_comboBox.setEnabled(False)
+            # 清空当前选项
+            self.pumping_people_Clear_comboBox.clear()
+            self.pumping_people_Clear_comboBox.addItems(["重启后清除", "直到全部抽取完", "无需清除"])
             # 强制设置为"无需清除"（索引2）
             self.pumping_people_Clear_comboBox.setCurrentIndex(2)
             
@@ -680,24 +684,34 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             self.Draw_pumping_SpinBox.setEnabled(False)
             self.Draw_pumping_SpinBox.setValue(0)
             
-        elif draw_mode_index == 1:  # 不重复抽取模式
+        else:  # 不重复抽取模式或半重复抽取模式
             # 启用清除抽取记录方式下拉框
             self.pumping_people_Clear_comboBox.setEnabled(True)
             
-            # 设置Draw_pumping_SpinBox为1并禁用
-            self.Draw_pumping_SpinBox.setEnabled(False)
-            self.Draw_pumping_SpinBox.setValue(1)
+            # 动态调整清除抽取记录方式下拉框的选项
+            current_index = self.pumping_people_Clear_comboBox.currentIndex()
             
-        else:  # 半重复抽取模式（索引2）
-            # 启用清除抽取记录方式下拉框
-            self.pumping_people_Clear_comboBox.setEnabled(True)
+            # 清空当前选项
+            self.pumping_people_Clear_comboBox.clear()
             
-            # 设置Draw_pumping_SpinBox为2-100范围并启用
-            self.Draw_pumping_SpinBox.setEnabled(True)
-            self.Draw_pumping_SpinBox.setRange(2, 100)
-            # 如果当前值小于2，则设置为2
-            if self.Draw_pumping_SpinBox.value() < 2:
-                self.Draw_pumping_SpinBox.setValue(2)
+            # 添加前两个选项（不包含"无需清除"）
+            self.pumping_people_Clear_comboBox.addItems(["重启后清除", "直到全部抽取完"])
+            
+            # 设置默认选择第一个选项
+            self.pumping_people_Clear_comboBox.setCurrentIndex(0)
+            
+            # 根据具体模式设置Draw_pumping_SpinBox
+            if draw_mode_index == 1:  # 不重复抽取模式
+                # 设置Draw_pumping_SpinBox为1并禁用
+                self.Draw_pumping_SpinBox.setEnabled(False)
+                self.Draw_pumping_SpinBox.setValue(1)
+            else:  # 半重复抽取模式（索引2）
+                # 设置Draw_pumping_SpinBox为2-100范围并启用
+                self.Draw_pumping_SpinBox.setEnabled(True)
+                self.Draw_pumping_SpinBox.setRange(2, 100)
+                # 如果当前值小于2，则设置为2
+                if self.Draw_pumping_SpinBox.value() < 2:
+                    self.Draw_pumping_SpinBox.setValue(2)
         
         # 保存设置
         self.save_settings()
