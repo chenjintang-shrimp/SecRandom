@@ -35,6 +35,9 @@ class pumping_reward(QWidget):
         # 音乐播放器初始化 ✧(◍˃̶ᗜ˂̶◍)✩ 感谢白露提供的播放器
         self.music_player = QMediaPlayer()
         self.initUI()
+        
+        # 连接清理信号
+        self._connect_cleanup_signal()
     
     def start_draw(self):
         """开始抽选奖品"""
@@ -1114,6 +1117,41 @@ class pumping_reward(QWidget):
             widget = item.widget()
             if widget:
                 widget.deleteLater()
+    
+    def _connect_cleanup_signal(self):
+        """连接清理信号"""
+        try:
+            # 查找主窗口实例
+            parent = self.parent()
+            while parent is not None:
+                if hasattr(parent, 'cleanup_signal'):
+                    # 连接主窗口的清理信号
+                    parent.cleanup_signal.connect(self._on_cleanup_signal)
+                    logger.info("星野连接: 抽奖界面已连接到主窗口清理信号～")
+                    return
+                parent = parent.parent()
+            
+            # 如果没找到，尝试通过应用程序查找主窗口
+            for widget in QApplication.topLevelWidgets():
+                if hasattr(widget, 'cleanup_signal'):
+                    widget.cleanup_signal.connect(self._on_cleanup_signal)
+                    logger.info("星野连接: 已通过应用程序查找连接主窗口清理信号～")
+                    return
+            
+            logger.warning("星野警告: 未找到主窗口实例，清理信号连接失败～")
+        except Exception as e:
+            logger.error(f"星野连接失败: 连接清理信号时出错喵～ {e}")
+    
+    def _on_cleanup_signal(self):
+        """处理清理信号，清除标签"""
+        try:
+            # 清除结果区域的标签
+            self.clear_layout(self.result_grid)
+            # 更新总奖数显示
+            self.update_total_count()
+            logger.info("星野清理: 抽奖界面已清除所有标签～")
+        except Exception as e:
+            logger.error(f"星野清理失败: 清除抽奖界面标签时出错喵～ {e}")
 
     # 获取随机抽取方法的设置
     def get_random_method_setting(self):

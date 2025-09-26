@@ -20,6 +20,9 @@ from app.common.path_utils import open_file, ensure_dir
 is_dark = is_dark_theme(qconfig)
 
 class Program_functionality_settingsCard(GroupHeaderCardWidget):
+    # 定义清理信号
+    cleanup_signal = pyqtSignal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTitle("软件功能管理")
@@ -67,9 +70,11 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         
         # 初始化计时器，设置为单次触发模式
         self.cleanup_timer = QTimer(self)
-        self.cleanup_timer.setSingleShot(True)
         self.cleanup_timer.timeout.connect(self.check_cleanup_time)
         self.cleanup_timer.setInterval(500)
+        
+        # 清理状态管理：记录每个上课时间段的清理状态
+        self.cleanup_status = {}  # 格式: {时间段: 是否已清理}
         
         # 加载设置
         self.load_settings()
@@ -378,12 +383,34 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                     
                     # 如果时间差小于等于设置的时间，则清理抽取记录
                     if 0 < time_diff <= cleanup_seconds:
-                        self._cleanup_draw_records()
-                        logger.info(f"距离上课还有{int(time_diff)}秒，已清理抽取记录")
+                        # 检查是否已经清理过这个时间段
+                        time_key = f"{class_start_time_str}_{time_range_value}"
+                        if not self.cleanup_status.get(time_key, False):
+                            self._cleanup_draw_records()
+                            self.cleanup_status[time_key] = True  # 标记为已清理
+                            logger.info(f"距离上课还有{int(time_diff)}秒，已清理抽取记录（时间段: {time_range_value}）")
                         break
+                    else:
+                        # 如果时间差不在清理范围内，重置清理状态
+                        time_key = f"{class_start_time_str}_{time_range_value}"
+                        if self.cleanup_status.get(time_key, False):
+                            self.cleanup_status[time_key] = False  # 重置清理状态
+                            logger.debug(f"重置清理状态: {time_range_value}")
         except Exception as e:
             logger.error(f"检查清理时间时出错: {e}")
     
+    def _get_main_window(self):
+        """获取主窗口实例"""
+        try:
+            for widget in QApplication.topLevelWidgets():
+                # 通过特征识别主窗口
+                if hasattr(widget, 'cleanup_signal'):
+                    return widget
+            return None
+        except Exception as e:
+            logger.error(f"获取主窗口失败: {str(e)}")
+            return None
+
     def _cleanup_draw_records(self):
         """清理抽取记录"""
         try:
@@ -411,6 +438,14 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                         logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")
                     except Exception as e:
                         logger.error(f"星野清理失败: 删除临时文件出错喵～ {e}")
+        
+        # 通过主窗口发送清理信号，通知抽奖和抽人界面清除标签
+        main_window = self._get_main_window()
+        if main_window:
+            main_window.cleanup_signal.emit()
+            logger.info("星野广播: 已通过主窗口发送清理信号，通知抽奖和抽人界面清除标签～")
+        else:
+            logger.warning("星野警告: 未找到主窗口实例，无法发送清理信号～")
     
     def _seconds_to_time_string(self, seconds):
         """将秒数转换为HH:MM:SS格式的时间字符串"""
