@@ -1771,6 +1771,7 @@ class pumping_people(QWidget):
     def _get_drawn_count(self, class_name, group_name, genders):
         # 如果max_draw_times_per_person等于0，则是重复抽取模式，返回0
         if self.max_draw_times_per_person == 0:
+            logger.info(f"重复抽取模式，已抽取人数: 0")
             return 0
         
         if group_name == '抽取全班学生':
@@ -1779,13 +1780,13 @@ class pumping_people(QWidget):
             draw_record_file = f"app/resource/Temp/{class_name}_{group_name}.json"
         else:
             draw_record_file = f"app/resource/Temp/{class_name}_{group_name}_{genders}.json"
+        logger.info(f"获取已抽取人数，文件路径: {draw_record_file}")
         if path_manager.file_exists(draw_record_file):
             try:
                 with open_file(draw_record_file, 'r', encoding='utf-8') as f:
                     record_data = json.load(f)
                     # 计算未被抽取的学生人数，考虑最大抽取次数限制
                     drawn_count = 0
-                    maxed_out_students = set()  # 存储已达到最大抽取次数的学生
                     
                     # 首先遍历记录，找出已达到最大抽取次数的学生
                     for record in record_data:
@@ -1796,25 +1797,9 @@ class pumping_people(QWidget):
                                 count = int(record_count)
                                 # 如果设置了最大抽取次数且已达到，则加入maxed_out_students集合
                                 if self.max_draw_times_per_person > 0 and count >= self.max_draw_times_per_person:
-                                    maxed_out_students.add(record_name)
-                            except ValueError:
-                                # 如果次数解析失败，忽略这条记录
-                                pass
-                    
-                    # 然后计算实际已抽取人数（未达到最大次数限制的）
-                    for record in record_data:
-                        if '_' in record:
-                            # 新格式：姓名_次数
-                            record_name, record_count = record.rsplit('_', 1)
-                            try:
-                                count = int(record_count)
-                                # 如果设置了最大抽取次数，只计算未达到限制的抽取次数
-                                if self.max_draw_times_per_person > 0 and record_name in maxed_out_students:
-                                    drawn_count += count
-                                elif self.max_draw_times_per_person == 0:
-                                    drawn_count += count
+                                    drawn_count += 1
                                 else:
-                                    drawn_count = 0
+                                    drawn_count += 0
                             except ValueError:
                                 # 如果次数解析失败，默认为1
                                 drawn_count += 1
