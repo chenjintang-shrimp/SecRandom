@@ -24,10 +24,11 @@ from loguru import logger
 # ==================================================
 # 📜 内部魔法卷轴 (Internal Magic Scrolls)
 # ==================================================
-from app.common.config import cfg, VERSION
+from app.common.config import cfg, VERSION, load_custom_font
 from app.view.SecRandom import Window
 from app.common.url_handler import process_url_if_exists
 from app.common.path_utils import path_manager, ensure_dir, open_file, file_exists
+from qfluentwidgets import qconfig, Theme
 
 def send_ipc_message(url_command=None):
     """(^・ω・^ ) 白露的IPC信使魔法！
@@ -109,14 +110,16 @@ class StartupWindow(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("SecRandom 启动中...")
-        self.setFixedSize(400, 200)
+        self.setFixedSize(260, 135)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.NoFocus | Qt.Popup)
+        
+        # 移除透明背景属性，使窗口不透明
         self.setAttribute(Qt.WA_TranslucentBackground)
         
-        # 添加透明化效果
-        self.opacity_effect = QGraphicsOpacityEffect()
-        self.opacity_effect.setOpacity(0.8)
-        self.setGraphicsEffect(self.opacity_effect)
+        # 移除透明化效果
+        # self.opacity_effect = QGraphicsOpacityEffect()
+        # self.opacity_effect.setOpacity(0.8)
+        # self.setGraphicsEffect(self.opacity_effect)
 
         # 创建主布局
         main_layout = QVBoxLayout(self)
@@ -126,30 +129,70 @@ class StartupWindow(QDialog):
         # 创建背景容器
         self.background_widget = QWidget()
         self.background_widget.setObjectName("backgroundWidget")
-        self.background_widget.setStyleSheet("""
-            #backgroundWidget {
-                background-color: #2D2D30;
-                border-radius: 15px;
-                border: 1px solid #3E3E42;
-            }
-        """)
+        
+        # 根据主题设置背景颜色
+        self.update_background_theme()
         
         # 创建内容布局
         content_layout = QVBoxLayout(self.background_widget)
         content_layout.setSpacing(15)
         content_layout.setContentsMargins(20, 20, 20, 20)
         
-        # 创建标题标签
-        self.title_label = BodyLabel("SecRandom 正在启动...")
-        self.title_label.setAlignment(Qt.AlignCenter)
-        self.title_label.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px; color: white;")
-        content_layout.addWidget(self.title_label)
+        # 创建顶部水平布局，用于放置图标和标题
+        top_layout = QHBoxLayout()
+        top_layout.setContentsMargins(0, 0, 0, 10)
+        top_layout.setSpacing(10)  # 设置图标和标题之间的间距为10像素
         
-        # 创建步骤标签
-        self.step_label = BodyLabel("正在初始化...")
-        self.step_label.setAlignment(Qt.AlignCenter)
-        self.step_label.setStyleSheet("font-size: 14px; font-weight: bold; margin-bottom: 10px; color: white;")
-        content_layout.addWidget(self.step_label)
+        # 添加软件图标到左上角
+        try:
+            icon_path = str(path_manager.get_resource_path('icon', 'SecRandom.png'))
+            if os.path.exists(icon_path):
+                icon_label = QLabel()
+                pixmap = QPixmap(icon_path)
+                # 缩放图标到合适大小
+                scaled_pixmap = pixmap.scaled(52, 52, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                icon_label.setPixmap(scaled_pixmap)
+                icon_label.setFixedSize(52, 52)
+                top_layout.addWidget(icon_label)
+            else:
+                logger.warning(f"软件图标文件不存在: {icon_path}")
+        except Exception as e:
+            logger.error(f"加载软件图标失败: {e}")
+        
+        # 创建垂直布局容器，用于放置标题和版本号
+        title_version_layout = QVBoxLayout()
+        title_version_layout.setSpacing(2)  # 设置标题和版本号之间的间距
+        title_version_layout.setContentsMargins(0, 0, 0, 0)
+        
+        # 添加标题标签
+        self.title_label = BodyLabel("SecRandom")
+        self.title_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.title_label.setFont(QFont(load_custom_font(), 16))
+        title_version_layout.addWidget(self.title_label)
+        
+        # 添加版本号标签到标题下方
+        self.version_label = BodyLabel(f"{VERSION}")
+        self.version_label.setAlignment(Qt.AlignLeft)
+        self.version_label.setFont(QFont(load_custom_font(), 10))
+        title_version_layout.addWidget(self.version_label)
+        
+        # 将标题和版本号布局添加到水平布局
+        top_layout.addLayout(title_version_layout)
+        
+        # 添加弹性空间，使图标和标题靠左对齐
+        top_layout.addStretch(1)
+        
+        # 添加顶部布局到内容布局
+        content_layout.addLayout(top_layout)
+
+        # 创建详细信息标签
+        self.detail_label = BodyLabel("准备启动...")
+        self.detail_label.setAlignment(Qt.AlignCenter)
+        self.detail_label.setFont(QFont(load_custom_font(), 9))
+        content_layout.addWidget(self.detail_label)
+        
+        # 添加弹性空间，使进度条能够贴底显示
+        content_layout.addStretch(1)
         
         # 创建进度条
         self.progress_bar = ProgressBar()
@@ -160,10 +203,10 @@ class StartupWindow(QDialog):
         self.progress_bar.setStyleSheet("""
             QProgressBar {
                 border: none;
-                background-color: #3E3E42;
+                background-color: #F0F0F0;
                 border-radius: 5px;
                 text-align: center;
-                color: white;
+                color: #333333;
             }
             QProgressBar::chunk {
                 background-color: #0078D7;
@@ -171,12 +214,6 @@ class StartupWindow(QDialog):
             }
         """)
         content_layout.addWidget(self.progress_bar)
-        
-        # 创建详细信息标签
-        self.detail_label = BodyLabel("准备启动...")
-        self.detail_label.setAlignment(Qt.AlignCenter)
-        self.detail_label.setStyleSheet("font-size: 12px; color: #CCCCCC;")
-        content_layout.addWidget(self.detail_label)
         
         # 将背景容器添加到主布局
         main_layout.addWidget(self.background_widget)
@@ -200,9 +237,6 @@ class StartupWindow(QDialog):
         
     def update_progress(self, step_name=None, progress=None, detail=None):
         """更新启动进度"""
-        if step_name:
-            self.step_label.setText(step_name)
-        
         if progress is not None:
             self.progress_bar.setValue(progress)
         
@@ -229,6 +263,40 @@ class StartupWindow(QDialog):
             self.current_step = step_index + 1
             return True
         return False
+    
+    def update_background_theme(self):
+        """根据当前主题更新背景颜色"""
+        # 检测当前主题
+        if qconfig.theme == Theme.AUTO:
+            lightness = QApplication.palette().color(QPalette.Window).lightness()
+            is_dark = lightness <= 127
+        else:
+            is_dark = qconfig.theme == Theme.DARK
+        
+        # 根据主题设置颜色
+        if is_dark:
+            # 深色主题
+            bg_color = "#111116"
+            border_color = "#3E3E42"
+            text_color = "#F5F5F5"
+            progress_bg = "#2D2D30"
+            progress_text = "#F5F5F5"
+        else:
+            # 浅色主题
+            bg_color = "#F5F5F5"
+            border_color = "#CCCCCC"
+            text_color = "#111116"
+            progress_bg = "#F0F0F0"
+            progress_text = "#333333"
+        
+        # 设置背景容器样式
+        self.background_widget.setStyleSheet(f"""
+            #backgroundWidget {{
+                background-color: {bg_color};
+                border-radius: 15px;
+                border: 1px solid {border_color};
+            }}
+        """)
         
     def close_startup(self):
         """关闭启动窗口"""
