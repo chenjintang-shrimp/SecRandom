@@ -1698,8 +1698,18 @@ class LevitationWindow(QWidget):
                 # 初始化下拉框数据
                 self._init_instant_combo_data()
             
-            # 如果class_name参数为None，则使用下拉框中的当前选择
-            if class_name is None:
+            try:
+                from app.common.path_utils import path_manager, open_file
+                with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    fixed_default_list = settings.get('instant_draw', {}).get('fixed_default_list', '')
+                    # 如果设置了固定默认名单且名单文件存在，则使用该名单
+                    if fixed_default_list and fixed_default_list != "":
+                        list_file = path_manager.get_resource_path('list', f'{fixed_default_list}.json')
+                        if path_manager.file_exists(list_file):
+                            class_name = fixed_default_list
+            except Exception as e:
+                logger.error(f"加载固定默认名单设置时出错: {e}")
                 class_name = self.instant_class_combo.currentText()
             group_name = group_name
             gender_name = gender_name

@@ -106,6 +106,24 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.pumping_Draw_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_Draw_comboBox.setFont(QFont(load_custom_font(), 12))
 
+        # 固定默认选择名单下拉框
+        self.fixed_default_list = ComboBox()
+        self.fixed_default_list.setPlaceholderText("请选择默认名单")
+        
+        # 加载list文件夹中的名单文件
+        list_folder = path_manager.get_resource_path('list', '')
+        list_files = []
+        if list_folder.exists():
+            for file_path in list_folder.iterdir():
+                if file_path.is_file() and file_path.suffix.lower() == '.json':
+                    list_files.append(file_path.stem)  # 只取文件名（不含扩展名）
+        
+        # 按字母顺序排序名单文件
+        list_files.sort()
+        self.fixed_default_list.addItems(list_files)
+        self.fixed_default_list.currentIndexChanged.connect(lambda: self.save_settings())
+        self.fixed_default_list.setFont(QFont(load_custom_font(), 12))
+
         # 字体大小
         self.instant_draw_font_size_SpinBox.setRange(30, 200)
         self.instant_draw_font_size_SpinBox.setValue(50)
@@ -277,6 +295,9 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_calendar_week_numbers_20_filled"), "半重复抽取次数", "一轮中抽取最大次数", self.Draw_pumping_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_timer_off_20_filled"), "抽取后定时清除时间", "配置临时记录清理时间(0-86400)(0表示禁用该功能)", self.instant_draw_auto_play_count_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_drawer_play_20_filled"), "抽取方式", "选择具体的抽取执行方式", self.pumping_Draw_comboBox)
+        
+        # 固定默认名单
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "固定默认名单", "选择一个班级作为默认名单", self.fixed_default_list)
         
         # 显示格式设置
         self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "调整抽取结果显示的字体大小", self.instant_draw_font_size_SpinBox)
@@ -714,6 +735,9 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
 
                     # 加载学生图片开关
                     show_student_image = instant_draw_settings.get("show_student_image", self.default_settings["show_student_image"])
+                    
+                    # 加载固定默认名单名称
+                    fixed_default_list = instant_draw_settings.get("fixed_default_list", "")
 
                     self.follow_roll_call_checkbox.setChecked(follow_roll_call)
                     self.Draw_pumping_SpinBox.setValue(Draw_pumping)
@@ -739,6 +763,12 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     self.instant_draw_display_format_comboBox.setCurrentIndex(display_format)
                     self.instant_draw_student_name_color_comboBox.setCurrentIndex(animation_color)
                     self.instant_draw_show_image_switch.setChecked(show_student_image)
+                    
+                    # 设置固定默认名单
+                    if fixed_default_list:
+                        index = self.fixed_default_list.findText(fixed_default_list)
+                        if index >= 0:
+                            self.fixed_default_list.setCurrentIndex(index)
 
                     self.on_draw_mode_changed
             else:
@@ -837,6 +867,10 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         instant_draw_settings["display_format"] = self.instant_draw_display_format_comboBox.currentIndex()
         instant_draw_settings["animation_color"] = self.instant_draw_student_name_color_comboBox.currentIndex()
         instant_draw_settings["show_student_image"] = self.instant_draw_show_image_switch.isChecked()
+        
+        # 保存固定默认名单名称
+        fixed_default_list_name = self.fixed_default_list.currentText()
+        instant_draw_settings["fixed_default_list"] = fixed_default_list_name
 
         # 保存字体大小
         try:
