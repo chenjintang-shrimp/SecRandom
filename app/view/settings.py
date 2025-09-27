@@ -24,6 +24,9 @@ from app.view.plugins.plugin_settings import PluginSettingsWindow
 
 
 class settings_Window(MSFluentWindow):
+    # 定义个性化设置变化信号
+    personal_settings_changed = pyqtSignal()
+    
     def __init__(self, parent=None):
         super().__init__()
         self.app_dir = path_manager._app_root
@@ -422,9 +425,10 @@ class settings_Window(MSFluentWindow):
             logger.error(f"白露URL: 打开插件设置界面时发生异常: {e}")
 
     def apply_background_image(self):
-        """(^・ω・^ ) 白露的背景图片魔法！
-        检查设置中的 enable_settings_background，如果开启则应用设置界面背景图片～
-        让界面变得更加美观个性化，就像给房间贴上漂亮的壁纸一样！(๑•̀ㅂ•́)ow✧"""
+        """(^・ω・^ ) 白露的背景图片和颜色魔法！
+        检查设置中的 enable_settings_background 和 enable_settings_background_color，
+        如果开启则应用设置界面背景图片或背景颜色～
+        让界面变得更加美观个性化，就像给房间贴上漂亮的壁纸或涂上漂亮的颜色一样！(๑•̀ㅂ•́)ow✧"""
         try:
             # 读取自定义设置
             custom_settings_path = path_manager.get_settings_path('custom_settings.json')
@@ -434,8 +438,32 @@ class settings_Window(MSFluentWindow):
             # 检查是否启用了设置界面背景图标
             personal_settings = custom_settings.get('personal', {})
             enable_settings_background = personal_settings.get('enable_settings_background', True)
+            enable_settings_background_color = personal_settings.get('enable_settings_background_color', False)
             
-            if enable_settings_background:
+            # 优先应用背景颜色（如果启用）
+            if enable_settings_background_color:
+                settings_background_color = personal_settings.get('settings_background_color', '#FFFFFF')
+                
+                # 创建背景颜色标签并设置样式（使用标签方式，与图片保持一致）
+                self.background_label = QLabel(self)
+                self.background_label.setGeometry(0, 0, self.width(), self.height())
+                self.background_label.setStyleSheet(f"background-color: {settings_background_color};")
+                self.background_label.lower()  # 将背景标签置于底层
+                
+                # 设置窗口属性，确保背景可见
+                self.setAttribute(Qt.WA_TranslucentBackground)
+                self.setStyleSheet("background: transparent;")
+                
+                # 保存原始的resizeEvent方法
+                self.original_resizeEvent = self.resizeEvent
+                
+                # 重写resizeEvent方法，调整背景大小
+                self.resizeEvent = self._on_resize_event
+                
+                logger.info(f"白露魔法: 已成功应用设置界面背景颜色 {settings_background_color}～ ")
+                
+            # 如果背景颜色未启用，但背景图片启用了，则应用背景图片
+            elif enable_settings_background:
                 # 获取设置界面背景图片设置
                 settings_background_image = personal_settings.get('settings_background_image', '')
                 
@@ -536,12 +564,25 @@ class settings_Window(MSFluentWindow):
                 else:
                     logger.debug("白露魔法: 未选择设置界面背景图片～ ")
             else:
-                logger.debug("白露魔法: 设置界面背景图片功能未启用～ ")
+                # 如果两者都未启用，则使用默认背景
+                self.setStyleSheet("background: transparent;")
+                
+                # 清除可能存在的背景图片标签
+                if hasattr(self, 'background_label') and self.background_label:
+                    self.background_label.deleteLater()
+                    delattr(self, 'background_label')
+                
+                # 恢复原始的resizeEvent方法
+                if hasattr(self, 'original_resizeEvent'):
+                    self.resizeEvent = self.original_resizeEvent
+                    delattr(self, 'original_resizeEvent')
+                
+                logger.debug("白露魔法: 设置界面背景图片和颜色功能均未启用，使用默认背景～ ")
                 
         except FileNotFoundError:
             logger.warning("白露提醒: 自定义设置文件不存在，使用默认设置～ ")
         except Exception as e:
-            logger.error(f"白露魔法出错: 应用设置界面背景图片时发生异常～ {e}")
+            logger.error(f"白露魔法出错: 应用设置界面背景图片或颜色时发生异常～ {e}")
     
     def _on_resize_event(self, event):
         """(^・ω・^ ) 白露的窗口大小调整魔法！

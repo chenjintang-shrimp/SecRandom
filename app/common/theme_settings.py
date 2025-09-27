@@ -14,6 +14,9 @@ from app.common.personal_settings import personal_settingsCard
 
 
 class theme_settingsCard(QFrame):
+    # 背景设置变化信号
+    background_settings_changed = pyqtSignal()
+    
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
 
@@ -40,8 +43,8 @@ class theme_settingsCard(QFrame):
         inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
 
         # 个性化设置卡片组
-        personal_settings_Card = personal_settingsCard()
-        inner_layout_personal.addWidget(personal_settings_Card)
+        self.personal_settings_Card = personal_settingsCard()
+        inner_layout_personal.addWidget(self.personal_settings_Card)
 
         # 创建个性化卡片组
         self.themeAndZoomCard = SettingCardGroup("UI库の个性化", self)
@@ -93,3 +96,11 @@ class theme_settingsCard(QFrame):
     def __connectSignalToSlot(self):
         cfg.themeChanged.connect(setTheme)
         cfg.themeColorChanged.connect(setThemeColor)
+        # 连接个性化设置卡片的背景设置变化信号
+        self.personal_settings_Card.background_settings_changed.connect(self.on_background_settings_changed)
+
+    def on_background_settings_changed(self):
+        """处理背景设置变化信号"""
+        # 发送信号给上层设置界面
+        if hasattr(self, 'background_settings_changed'):
+            self.background_settings_changed.emit()

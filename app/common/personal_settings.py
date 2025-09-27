@@ -20,6 +20,9 @@ from app.common.path_utils import open_file, ensure_dir
 is_dark = is_dark_theme(qconfig)
 
 class personal_settingsCard(GroupHeaderCardWidget):
+    # 定义背景设置变化信号
+    background_settings_changed = pyqtSignal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTitle("个性化")
@@ -35,7 +38,14 @@ class personal_settingsCard(GroupHeaderCardWidget):
             "main_background_image": "",
             "settings_background_image": "",
             "flash_background_image": "",
-            "font_family": "HarmonyOS Sans SC"
+            "font_family": "HarmonyOS Sans SC",
+            "enable_background_color": False,
+            "enable_main_background_color": False,
+            "enable_settings_background_color": False,
+            "enable_flash_background_color": False,
+            "main_background_color": "#FFFFFF",
+            "settings_background_color": "#FFFFFF",
+            "flash_background_color": "#FFFFFF"
         }
 
         # 背景图标开关
@@ -110,6 +120,49 @@ class personal_settingsCard(GroupHeaderCardWidget):
             self.font_combo.addItem(font)
         self.font_combo.currentIndexChanged.connect(self.save_settings)
 
+        # 背景颜色开关
+        self.background_color_switch = SwitchButton()
+        self.background_color_switch.setOnText("开启")
+        self.background_color_switch.setOffText("关闭")
+        self.background_color_switch.setFont(QFont(load_custom_font(), 12))
+        self.background_color_switch.checkedChanged.connect(self.on_background_color_switch_changed)
+        
+        # 主界面背景颜色开关
+        self.main_background_color_switch = SwitchButton()
+        self.main_background_color_switch.setOnText("开启")
+        self.main_background_color_switch.setOffText("关闭")
+        self.main_background_color_switch.setFont(QFont(load_custom_font(), 12))
+        self.main_background_color_switch.checkedChanged.connect(self.on_main_background_color_switch_changed)
+        
+        # 设置界面背景颜色开关
+        self.settings_background_color_switch = SwitchButton()
+        self.settings_background_color_switch.setOnText("开启")
+        self.settings_background_color_switch.setOffText("关闭")
+        self.settings_background_color_switch.setFont(QFont(load_custom_font(), 12))
+        self.settings_background_color_switch.checkedChanged.connect(self.on_settings_background_color_switch_changed)
+        
+        # 闪抽界面背景颜色开关
+        self.flash_background_color_switch = SwitchButton()
+        self.flash_background_color_switch.setOnText("开启")
+        self.flash_background_color_switch.setOffText("关闭")
+        self.flash_background_color_switch.setFont(QFont(load_custom_font(), 12))
+        self.flash_background_color_switch.checkedChanged.connect(self.on_flash_background_color_switch_changed)
+        
+        # 主界面背景颜色选择器
+        self.main_background_color_button = PushButton("主界面背景颜色")
+        self.main_background_color_button.setFont(QFont(load_custom_font(), 12))
+        self.main_background_color_button.clicked.connect(lambda: self.on_background_color_dialog("main"))
+        
+        # 设置界面背景颜色选择器
+        self.settings_background_color_button = PushButton("设置界面背景颜色")
+        self.settings_background_color_button.setFont(QFont(load_custom_font(), 12))
+        self.settings_background_color_button.clicked.connect(lambda: self.on_background_color_dialog("settings"))
+        
+        # 闪抽界面背景颜色选择器
+        self.flash_background_color_button = PushButton("闪抽界面背景颜色")
+        self.flash_background_color_button.setFont(QFont(load_custom_font(), 12))
+        self.flash_background_color_button.clicked.connect(lambda: self.on_background_color_dialog("flash"))
+
         # 添加个性化设置组
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "界面背景图", "是否启用界面背景图", self.background_icon_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "选择背景图", "点击选择自定义背景图", self.background_icon_button)
@@ -126,9 +179,23 @@ class personal_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "闪抽界面背景图", "是否启用闪抽界面背景图", self.flash_background_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "闪抽界面背景图选择", "选择闪抽界面使用的背景图片", self.flash_background_combo)
         
+        # 添加背景颜色设置组
+        self.addGroup(get_theme_icon("ic_fluent_paint_brush_20_filled"), "界面背景颜色", "是否启用界面背景颜色", self.background_color_switch)
+        self.addGroup(get_theme_icon("ic_fluent_paint_brush_20_filled"), "主界面背景颜色", "是否启用主界面背景颜色", self.main_background_color_switch)
+        self.addGroup(get_theme_icon("ic_fluent_paint_brush_20_filled"), "主界面背景颜色选择", "选择主界面使用的背景颜色", self.main_background_color_button)
+        self.addGroup(get_theme_icon("ic_fluent_paint_brush_20_filled"), "设置界面背景颜色", "是否启用设置界面背景颜色", self.settings_background_color_switch)
+        self.addGroup(get_theme_icon("ic_fluent_paint_brush_20_filled"), "设置界面背景颜色选择", "选择设置界面使用的背景颜色", self.settings_background_color_button)
+        self.addGroup(get_theme_icon("ic_fluent_paint_brush_20_filled"), "闪抽界面背景颜色", "是否启用闪抽界面背景颜色", self.flash_background_color_switch)
+        self.addGroup(get_theme_icon("ic_fluent_paint_brush_20_filled"), "闪抽界面背景颜色选择", "选择闪抽界面使用的背景颜色", self.flash_background_color_button)
+        
         # 添加字体设置组
         self.addGroup(get_theme_icon("ic_fluent_text_font_20_filled"), "字体设置", "选择应用程序使用的字体(重启生效)", self.font_combo)
 
+        # 初始化背景颜色属性
+        self.main_background_color = self.default_settings["main_background_color"]
+        self.settings_background_color = self.default_settings["settings_background_color"]
+        self.flash_background_color = self.default_settings["flash_background_color"]
+        
         # 加载设置
         self.load_settings()
         self.save_settings()
@@ -141,7 +208,18 @@ class personal_settingsCard(GroupHeaderCardWidget):
                     personal_settings = settings.get("personal", {})
                     
                     # 加载背景图标开关状态
-                    self.background_icon_switch.setChecked(personal_settings.get("enable_background_icon", self.default_settings["enable_background_icon"]))
+                    background_icon_enabled = personal_settings.get("enable_background_icon", self.default_settings["enable_background_icon"])
+                    
+                    # 加载背景颜色开关状态
+                    background_color_enabled = personal_settings.get("enable_background_color", self.default_settings["enable_background_color"])
+                    
+                    # 检查互斥性：如果两者都启用，则禁用背景颜色开关
+                    if background_icon_enabled and background_color_enabled:
+                        background_color_enabled = False
+                    
+                    # 设置开关状态
+                    self.background_icon_switch.setChecked(background_icon_enabled)
+                    self.background_color_switch.setChecked(background_color_enabled)
                     
                     # 加载背景模糊度设置
                     self.blur_spinbox.setValue(personal_settings.get("background_blur", self.default_settings["background_blur"]))
@@ -180,6 +258,27 @@ class personal_settingsCard(GroupHeaderCardWidget):
                     font_family = personal_settings.get("font_family", self.default_settings["font_family"])
                     if font_family and font_family in [self.font_combo.itemText(i) for i in range(self.font_combo.count())]:
                         self.font_combo.setCurrentText(font_family)
+                    
+                    # 加载主界面背景颜色开关状态
+                    self.main_background_color_switch.setChecked(personal_settings.get("enable_main_background_color", self.default_settings["enable_main_background_color"]))
+                    
+                    # 加载设置界面背景颜色开关状态
+                    self.settings_background_color_switch.setChecked(personal_settings.get("enable_settings_background_color", self.default_settings["enable_settings_background_color"]))
+                    
+                    # 加载闪抽界面背景颜色开关状态
+                    self.flash_background_color_switch.setChecked(personal_settings.get("enable_flash_background_color", self.default_settings["enable_flash_background_color"]))
+                    
+                    # 加载主界面背景颜色
+                    main_bg_color = personal_settings.get("main_background_color", self.default_settings["main_background_color"])
+                    self.main_background_color = main_bg_color
+                    
+                    # 加载设置界面背景颜色
+                    settings_bg_color = personal_settings.get("settings_background_color", self.default_settings["settings_background_color"])
+                    self.settings_background_color = settings_bg_color
+                    
+                    # 加载闪抽界面背景颜色
+                    flash_bg_color = personal_settings.get("flash_background_color", self.default_settings["flash_background_color"])
+                    self.flash_background_color = flash_bg_color
 
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
@@ -189,6 +288,13 @@ class personal_settingsCard(GroupHeaderCardWidget):
                 self.main_background_switch.setChecked(self.default_settings["enable_main_background"])
                 self.settings_background_switch.setChecked(self.default_settings["enable_settings_background"])
                 self.flash_background_switch.setChecked(self.default_settings["enable_flash_background"])
+                self.background_color_switch.setChecked(self.default_settings["enable_background_color"])
+                self.main_background_color_switch.setChecked(self.default_settings["enable_main_background_color"])
+                self.settings_background_color_switch.setChecked(self.default_settings["enable_settings_background_color"])
+                self.flash_background_color_switch.setChecked(self.default_settings["enable_flash_background_color"])
+                self.main_background_color = self.default_settings["main_background_color"]
+                self.settings_background_color = self.default_settings["settings_background_color"]
+                self.flash_background_color = self.default_settings["flash_background_color"]
                 
                 self.save_settings()
         except Exception as e:
@@ -199,9 +305,17 @@ class personal_settingsCard(GroupHeaderCardWidget):
             self.main_background_switch.setChecked(self.default_settings["enable_main_background"])
             self.settings_background_switch.setChecked(self.default_settings["enable_settings_background"])
             self.flash_background_switch.setChecked(self.default_settings["enable_flash_background"])
+            self.background_color_switch.setChecked(self.default_settings["enable_background_color"])
+            self.main_background_color_switch.setChecked(self.default_settings["enable_main_background_color"])
+            self.settings_background_color_switch.setChecked(self.default_settings["enable_settings_background_color"])
+            self.flash_background_color_switch.setChecked(self.default_settings["enable_flash_background_color"])
+            self.main_background_color = self.default_settings["main_background_color"]
+            self.settings_background_color = self.default_settings["settings_background_color"]
+            self.flash_background_color = self.default_settings["flash_background_color"]
         
         # 根据总开关状态设置子开关的启用/禁用状态
         self.on_background_icon_switch_changed()
+        self.on_background_color_switch_changed()
 
     def save_settings(self):
         # 先读取现有设置
@@ -219,8 +333,17 @@ class personal_settingsCard(GroupHeaderCardWidget):
             
         personal_settings = existing_settings["personal"]
         
+        # 检查互斥性：背景图标和背景颜色不能同时启用
+        background_icon_enabled = self.background_icon_switch.isChecked()
+        background_color_enabled = self.background_color_switch.isChecked()
+        
+        if background_icon_enabled and background_color_enabled:
+            # 如果两者都启用，则禁用背景颜色开关
+            self.background_color_switch.setChecked(False)
+            background_color_enabled = False
+        
         # 保存背景图标开关状态
-        personal_settings["enable_background_icon"] = self.background_icon_switch.isChecked()
+        personal_settings["enable_background_icon"] = background_icon_enabled
         
         # 保存背景模糊度设置
         personal_settings["background_blur"] = self.blur_spinbox.value()
@@ -252,6 +375,27 @@ class personal_settingsCard(GroupHeaderCardWidget):
             # 只有当字体确实发生变化时才更新设置
             if "font_family" not in personal_settings or personal_settings["font_family"] != new_font:
                 personal_settings["font_family"] = new_font
+        
+        # 保存背景颜色开关状态
+        personal_settings["enable_background_color"] = background_color_enabled
+        
+        # 保存主界面背景颜色开关状态
+        personal_settings["enable_main_background_color"] = self.main_background_color_switch.isChecked()
+        
+        # 保存设置界面背景颜色开关状态
+        personal_settings["enable_settings_background_color"] = self.settings_background_color_switch.isChecked()
+        
+        # 保存闪抽界面背景颜色开关状态
+        personal_settings["enable_flash_background_color"] = self.flash_background_color_switch.isChecked()
+        
+        # 保存主界面背景颜色
+        personal_settings["main_background_color"] = self.main_background_color
+        
+        # 保存设置界面背景颜色
+        personal_settings["settings_background_color"] = self.settings_background_color
+        
+        # 保存闪抽界面背景颜色
+        personal_settings["flash_background_color"] = self.flash_background_color
 
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open_file(self.settings_file, 'w', encoding='utf-8') as f:
@@ -261,6 +405,10 @@ class personal_settingsCard(GroupHeaderCardWidget):
         """处理背景图标总开关变化"""
         # 获取总开关状态
         is_enabled = self.background_icon_switch.isChecked()
+        
+        # 如果背景图标开关打开，则关闭背景颜色开关
+        if is_enabled:
+            self.background_color_switch.setChecked(False)
         
         # 如果总开关关闭，则关闭所有子开关并禁用它们
         if not is_enabled:
@@ -284,6 +432,125 @@ class personal_settingsCard(GroupHeaderCardWidget):
             self.main_background_combo.setEnabled(True)
             self.settings_background_combo.setEnabled(True)
             self.flash_background_combo.setEnabled(True)
+        
+        # 保存设置
+        self.save_settings()
+    
+    def on_main_background_color_switch_changed(self):
+        """处理主界面背景颜色开关变化"""
+        # 获取主界面开关状态
+        is_enabled = self.main_background_color_switch.isChecked()
+        
+        # 根据开关状态启用/禁用颜色选择器
+        self.main_background_color_button.setEnabled(is_enabled)
+        
+        # 保存设置
+        self.save_settings()
+    
+    def on_settings_background_color_switch_changed(self):
+        """处理设置界面背景颜色开关变化"""
+        # 获取设置界面开关状态
+        is_enabled = self.settings_background_color_switch.isChecked()
+        
+        # 根据开关状态启用/禁用颜色选择器
+        self.settings_background_color_button.setEnabled(is_enabled)
+        
+        # 保存设置
+        self.save_settings()
+    
+    def on_flash_background_color_switch_changed(self):
+        """处理闪抽界面背景颜色开关变化"""
+        # 获取闪抽界面开关状态
+        is_enabled = self.flash_background_color_switch.isChecked()
+        
+        # 根据开关状态启用/禁用颜色选择器
+        self.flash_background_color_button.setEnabled(is_enabled)
+        
+        # 保存设置
+        self.save_settings()
+
+    def on_background_color_dialog(self, color_type):
+        """处理背景颜色选择对话框
+        
+        Args:
+            color_type: 颜色类型，可以是 "main"、"settings" 或 "flash"
+        """
+        # 根据颜色类型确定默认颜色和标题
+        if color_type == "main":
+            default_color = QColor(self.default_settings["main_background_color"])
+            dialog_title = "主界面背景颜色"
+            current_color = QColor(self.main_background_color)
+        elif color_type == "settings":
+            default_color = QColor(self.default_settings["settings_background_color"])
+            dialog_title = "设置界面背景颜色"
+            current_color = QColor(self.settings_background_color)
+        elif color_type == "flash":
+            default_color = QColor(self.default_settings["flash_background_color"])
+            dialog_title = "闪抽界面背景颜色"
+            current_color = QColor(self.flash_background_color)
+        else:
+            return
+        
+        # 创建颜色选择对话框
+        color_dialog = ColorDialog(current_color, dialog_title, self, enableAlpha=False)
+        color_dialog.setModal(False)
+        color_dialog.colorChanged.connect(lambda color: self.save_background_color_settings(color.name(), color_type))
+        color_dialog.setFont(QFont(load_custom_font(), 12))
+        color_dialog.show()
+
+    def save_background_color_settings(self, color_value, color_type):
+        """保存背景颜色设置
+        
+        Args:
+            color_value: 颜色值（十六进制字符串）
+            color_type: 颜色类型，可以是 "main"、"settings" 或 "flash"
+        """
+        # 根据颜色类型设置对应的颜色值
+        if color_type == "main":
+            self.main_background_color = color_value
+        elif color_type == "settings":
+            self.settings_background_color = color_value
+        elif color_type == "flash":
+            self.flash_background_color = color_value
+        
+        # 保存设置
+        self.save_settings()
+    
+    def on_background_color_switch_changed(self):
+        """处理背景颜色总开关变化"""
+        # 获取总开关状态
+        is_enabled = self.background_color_switch.isChecked()
+        
+        # 如果背景颜色开关打开，则关闭背景图标开关
+        if is_enabled:
+            self.background_icon_switch.setChecked(False)
+        
+        # 如果总开关关闭，则关闭所有子开关并禁用它们
+        if not is_enabled:
+            # 关闭页面开关
+            self.main_background_color_switch.setChecked(False)
+            self.settings_background_color_switch.setChecked(False)
+            self.flash_background_color_switch.setChecked(False)
+            
+            # 禁用页面开关
+            self.main_background_color_switch.setEnabled(False)
+            self.settings_background_color_switch.setEnabled(False)
+            self.flash_background_color_switch.setEnabled(False)
+            
+            # 禁用颜色选择器
+            self.main_background_color_button.setEnabled(False)
+            self.settings_background_color_button.setEnabled(False)
+            self.flash_background_color_button.setEnabled(False)
+        else:
+            # 启用页面开关
+            self.main_background_color_switch.setEnabled(True)
+            self.settings_background_color_switch.setEnabled(True)
+            self.flash_background_color_switch.setEnabled(True)
+            
+            # 根据各个页面开关的状态启用/禁用颜色选择器
+            self.main_background_color_button.setEnabled(self.main_background_color_switch.isChecked())
+            self.settings_background_color_button.setEnabled(self.settings_background_color_switch.isChecked())
+            self.flash_background_color_button.setEnabled(self.flash_background_color_switch.isChecked())
         
         # 保存设置
         self.save_settings()

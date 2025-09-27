@@ -536,9 +536,10 @@ class Window(MSFluentWindow):
         self._apply_window_visibility_settings()
 
     def apply_background_image(self):
-        """(^・ω・^ ) 白露的背景图片魔法！
-        检查设置中的 enable_main_background，如果开启则应用主界面背景图片～
-        让界面变得更加美观个性化，就像给房间贴上漂亮的壁纸一样！(๑•̀ㅂ•́)ow✧"""
+        """(^・ω・^ ) 白露的背景图片和颜色魔法！
+        检查设置中的 enable_main_background 和 enable_main_background_color，
+        如果开启则应用主界面背景图片或背景颜色～
+        让界面变得更加美观个性化，就像给房间贴上漂亮的壁纸或涂上漂亮的颜色一样！(๑•̀ㅂ•́)ow✧"""
         try:
             # 读取自定义设置
             custom_settings_path = path_manager.get_settings_path('custom_settings.json')
@@ -548,8 +549,35 @@ class Window(MSFluentWindow):
             # 检查是否启用了主界面背景图标
             personal_settings = custom_settings.get('personal', {})
             enable_main_background = personal_settings.get('enable_main_background', True)
+            enable_main_background_color = personal_settings.get('enable_main_background_color', False)
             
-            if enable_main_background:
+            # 优先应用背景颜色（如果启用）
+            if enable_main_background_color:
+                main_background_color = personal_settings.get('main_background_color', '#FFFFFF')
+                
+                # 创建背景颜色标签（使用QLabel实现，与背景图片保持一致）
+                self.background_label = QLabel(self)
+                self.background_label.setGeometry(0, 0, self.width(), self.height())
+                self.background_label.setStyleSheet(f"background-color: {main_background_color};")
+                self.background_label.lower()  # 将背景标签置于底层
+                
+                # 确保背景标签随窗口大小变化
+                self.background_label.setAttribute(Qt.WA_StyledBackground, True)
+                
+                # 设置窗口属性，确保背景可见
+                self.setAttribute(Qt.WA_TranslucentBackground)
+                self.setStyleSheet("background: transparent;")
+                
+                # 保存原始的resizeEvent方法
+                self.original_resizeEvent = self.resizeEvent
+                
+                # 重写resizeEvent方法，调整背景大小
+                self.resizeEvent = self._on_resize_event
+                
+                logger.info(f"白露魔法: 已成功应用主界面背景颜色 {main_background_color}～ ")
+                
+            # 如果背景颜色未启用，但背景图片启用了，则应用背景图片
+            elif enable_main_background:
                 # 获取主界面背景图片设置
                 main_background_image = personal_settings.get('main_background_image', '')
                 
@@ -650,12 +678,25 @@ class Window(MSFluentWindow):
                 else:
                     logger.debug("白露魔法: 未选择主界面背景图片～ ")
             else:
-                logger.debug("白露魔法: 主界面背景图片功能未启用～ ")
+                # 如果两者都未启用，则使用默认背景
+                self.setStyleSheet("background: transparent;")
+                
+                # 清除可能存在的背景图片标签
+                if hasattr(self, 'background_label') and self.background_label:
+                    self.background_label.deleteLater()
+                    delattr(self, 'background_label')
+                
+                # 恢复原始的resizeEvent方法
+                if hasattr(self, 'original_resizeEvent'):
+                    self.resizeEvent = self.original_resizeEvent
+                    delattr(self, 'original_resizeEvent')
+                
+                logger.debug("白露魔法: 主界面背景图片和颜色功能均未启用，使用默认背景～ ")
                 
         except FileNotFoundError:
             logger.warning("白露提醒: 自定义设置文件不存在，使用默认设置～ ")
         except Exception as e:
-            logger.error(f"白露魔法出错: 应用主界面背景图片时发生异常～ {e}")
+            logger.error(f"白露魔法出错: 应用主界面背景图片或颜色时发生异常～ {e}")
     
     def _on_resize_event(self, event):
         """(^・ω・^ ) 白露的窗口大小调整魔法！
@@ -1273,22 +1314,32 @@ class Window(MSFluentWindow):
             settings_path = path_manager.get_settings_path('Settings.json')
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                max_draw_times_per_person = settings['pumping_people']['Draw_pumping']
-                pumping_people_draw_mode = settings['pumping_people']['draw_mode']
-                logger.debug(f"星野侦察: 抽选模式为{max_draw_times_per_person}，准备执行对应清理方案～ ")
+                clear_mode = settings['pumping_people']['clear_mode']
+                instant_clear_mode = settings['instant_draw']['clear_mode']
+                instant_clear = settings['instant_draw']['instant_clear']
+                logger.debug(f"星野侦察: 准备执行对应清理方案～ ")
 
         except Exception as e:
-            pumping_people_draw_mode = 1
-            max_draw_times_per_person = 1
-            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}, 使用默认:{max_draw_times_per_person}次模式")
+            clear_mode = 1
+            instant_clear_mode = 1
+            instant_clear = False
+            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}")
 
         import glob
         temp_dir = path_manager.get_temp_path('')
         ensure_dir(temp_dir)
 
-        if max_draw_times_per_person != 0 and pumping_people_draw_mode not in [0,2]:  # 不重复抽取(直到软件重启)
+        if (clear_mode != 1 or instant_clear_mode != 1) and not instant_clear:
             if path_manager.file_exists(temp_dir):
                 for file in glob.glob(f"{temp_dir}/*.json"):
+                    try:
+                        os.remove(file)
+                        logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")
+                    except Exception as e:
+                        logger.error(f"星野清理失败: 删除临时文件出错喵～ {e}")
+        elif (clear_mode != 1 or instant_clear_mode != 1) and instant_clear:
+            if path_manager.file_exists(temp_dir):
+                for file in glob.glob(f"{temp_dir}/*_instant.json"):
                     try:
                         os.remove(file)
                         logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")

@@ -15,6 +15,9 @@ from app.common.instant_draw_settings import instant_draw_settingsCard
 from app.common.Program_functionality_settings import Program_functionality_settingsCard
 
 class custom_setting(QFrame):
+    # 背景设置变化信号
+    background_settings_changed = pyqtSignal()
+    
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
         
@@ -91,8 +94,10 @@ class custom_setting(QFrame):
         theme_settings_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         theme_settings_scroll_area.setWidget(theme_settings_inner_frame)
         # 主题设置卡片组
-        theme_settings_card = theme_settingsCard()
-        theme_settings_inner_layout.addWidget(theme_settings_card)
+        self.theme_settings_card = theme_settingsCard()
+        theme_settings_inner_layout.addWidget(self.theme_settings_card)
+        # 连接主题设置卡片的背景设置变化信号
+        self.theme_settings_card.background_settings_changed.connect(self.on_background_settings_changed)
         # 设置主题设置页面布局
         theme_settings_layout = QVBoxLayout(self.theme_settings_page)
         theme_settings_layout.addWidget(theme_settings_scroll_area)
@@ -266,3 +271,8 @@ class custom_setting(QFrame):
     def onCurrentIndexChanged(self, index):
         widget = self.stackedWidget.widget(index)
         self.SegmentedWidget.setCurrentItem(widget.objectName())
+    
+    def on_background_settings_changed(self):
+        """处理背景设置变化信号"""
+        # 发送信号给上层设置界面
+        self.background_settings_changed.emit()
