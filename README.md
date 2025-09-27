@@ -82,8 +82,6 @@
 - **GitHub 镜像源(ghfast.top)** - 国内加速镜像，速度快且稳定
 - **GitHub 镜像源(gh-proxy.com)** - 国内加速镜像，适合网络环境特殊的用户
 
-#### 社区支持
-- **cloudreve分流** - 感谢Lotus大佬提供的分流，如有兴趣欢迎[去看看Lotus的主页](https://github.com/SummerLotus520/)或[进入荷花的小群](https://qm.qq.com/q/pj7Q9Tmh9K)
 
 ## 📸 软件截图(v1.1.0.1)
 <details>
