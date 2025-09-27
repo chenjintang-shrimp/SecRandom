@@ -321,23 +321,68 @@ class TrayIconManager(QObject):
         
         logger.info("白露魔法: 托盘精灵已唤醒！")
 
+    def _get_tray_settings(self):
+        """(^・ω・^ ) 获取托盘设置的小魔法
+        从自定义设置中读取托盘菜单项的显示设置～
+        就像查看魔法配方一样，确保每个菜单项都按配方显示！✨"""
+        try:
+            # 默认设置
+            default_settings = {
+                "show_main_window": True,
+                "show_floating_window": True,
+                "restart": True,
+                "exit": True,
+                "flash": False,
+            }
+            
+            # 从自定义设置中读取托盘设置
+            custom_settings = self.main_window.config_manager.load_custom_settings()
+            tray_settings = custom_settings.get("tray", {})
+            
+            # 合并默认设置和用户设置
+            for key, default_value in default_settings.items():
+                tray_settings[key] = tray_settings.get(key, default_value)
+                
+            logger.debug(f"白露魔法: 托盘设置已加载 - {tray_settings}")
+            return tray_settings
+            
+        except Exception as e:
+            logger.error(f"白露魔法出错: 加载托盘设置失败了呢~ {e}")
+            return default_settings
+
     def _create_menu(self):
         """(^・ω・^ ) 制作托盘菜单魔法！
         精心设计的右键菜单，包含各种常用功能～ 
         就像准备了一桌丰盛的点心，总有一款适合你！🍰✨"""
         self.tray_menu = RoundMenu(parent=self.main_window)
-        # 关于SecRandom
+        tray_settings = self._get_tray_settings()
+        
+        # 关于SecRandom（始终显示）
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_info_20_filled"), '关于SecRandom', triggered=self.main_window.show_about_tab))
         self.tray_menu.addSeparator()
+        
         # 主界面控制
-        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_power_20_filled"), '暂时显示/隐藏主界面', triggered=self.main_window.toggle_window))
-        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.main_window.toggle_levitation_window))
-        # self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_inprivate_20_filled"), '切换窗口置顶', triggered=self.main_window.toggle_window_topmost))
+        if tray_settings.get("show_main_window", True):
+            self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_power_20_filled"), '暂时显示/隐藏主界面', triggered=self.main_window.toggle_window))
+        
+        if tray_settings.get("show_floating_window", True):
+            self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_window_ad_20_filled"), '暂时显示/隐藏浮窗', triggered=self.main_window.toggle_levitation_window))
+        
+        # 闪抽功能
+        if tray_settings.get("flash", False):
+            self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_lightning_20_filled"), '闪抽', triggered=self.main_window._show_direct_extraction_window_from_shortcut))
+        
+        # 打开设置界面（始终显示）
         self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_settings_20_filled"), '打开设置界面', triggered=self.main_window.show_setting_interface))
         self.tray_menu.addSeparator()
+        
         # 系统操作
-        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.main_window.restart_app))
-        self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_exit_20_filled"), '退出', triggered=self.main_window.close_window_secrandom))
+        if tray_settings.get("restart", True):
+            self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_sync_20_filled"), '重启', triggered=self.main_window.restart_app))
+        
+        if tray_settings.get("exit", True):
+            self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_exit_20_filled"), '退出', triggered=self.main_window.close_window_secrandom))
+            
         logger.info("白露魔法: 托盘菜单已准备就绪！")
 
     def _on_tray_activated(self, reason):

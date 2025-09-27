@@ -8,6 +8,7 @@ from app.common.config import load_custom_font
 from app.common.fixed_url_setting import fixed_url_SettinsCard
 from app.common.theme_settings import theme_settingsCard
 from app.common.sidebar_settings import sidebar_settingsCard
+from app.common.tray_settings import tray_settingsCard
 from app.common.floating_window_settings import floating_window_settingsCard
 from app.common.roll_call_settings import roll_call_settingsCard
 from app.common.rewards_settings import reward_settingsCard
@@ -35,12 +36,12 @@ class custom_setting(QFrame):
         self.Program_functionality_settings_page = QWidget()
         
         # 添加子页面
-        self.addSubInterface(self.extraction_management_page, 'extraction_management', '抽取管理设置')
-        self.addSubInterface(self.sidebar_settings_page, 'sidebar_settings', '侧边栏设置')
-        self.addSubInterface(self.floating_window_page, 'floating_window', '浮窗管理设置')
-        self.addSubInterface(self.fixed_url_page, 'fixed_url_setting', '固定Url管理')
+        self.addSubInterface(self.extraction_management_page, 'extraction_management', '抽取设置')
+        self.addSubInterface(self.sidebar_settings_page, 'sidebar_settings', '侧边/托盘设置')
+        self.addSubInterface(self.floating_window_page, 'floating_window', '浮窗设置')
+        self.addSubInterface(self.fixed_url_page, 'fixed_url_setting', 'Url管理')
         self.addSubInterface(self.theme_settings_page, 'theme_settings', '主题设置')
-        self.addSubInterface(self.Program_functionality_settings_page, 'Program_functionality_settings', '软件功能管理')
+        self.addSubInterface(self.Program_functionality_settings_page, 'Program_functionality_settings', '软件功能设置')
 
         # 固定Url设置
         # 创建滚动区域
@@ -124,9 +125,22 @@ class custom_setting(QFrame):
         sidebar_settings_inner_layout = QVBoxLayout(sidebar_settings_inner_frame)
         sidebar_settings_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         sidebar_settings_scroll_area.setWidget(sidebar_settings_inner_frame)
+        
+        # 创建分隔线
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        separator.setStyleSheet("background-color: rgba(0, 0, 0, 0.1); margin: 10px 0;")
+        
         # 侧边栏设置卡片组
         sidebar_settings_card = sidebar_settingsCard()
         sidebar_settings_inner_layout.addWidget(sidebar_settings_card)
+        sidebar_settings_inner_layout.addWidget(separator)
+        
+        # 系统托盘设置卡片组
+        tray_settings_card = tray_settingsCard()
+        sidebar_settings_inner_layout.addWidget(tray_settings_card)
+        
         # 设置侧边栏设置页面布局
         sidebar_settings_layout = QVBoxLayout(self.sidebar_settings_page)
         sidebar_settings_layout.addWidget(sidebar_settings_scroll_area)
