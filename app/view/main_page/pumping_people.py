@@ -705,24 +705,29 @@ class pumping_people(QWidget):
             self.fade_in_animation.setEasingCurve(QEasingCurve.InOutQuad)
             self.fade_in_animation.start()
 
-            if self.music_player.state() == QMediaPlayer.PlayingState:
-                # 创建音量渐出动画
-                fade_out_animation = QPropertyAnimation(self.music_player, b"volume")
-                fade_out_animation.setDuration(self.music_fade_out)
-                fade_out_animation.setStartValue(self.music_player.volume())
-                fade_out_animation.setEndValue(0)
-                fade_out_animation.setEasingCurve(QEasingCurve.InOutQuad)
-
-                # 动画结束后停止播放并重置音量
-                def final_stop():
-                    self.music_player.stop()
-                    self.music_player.setVolume(self.result_music_volume)
-
-                fade_out_animation.finished.connect(final_stop)
-                fade_out_animation.start()
+            # 延迟一段时间后再开始音量渐出动画，确保音乐能正常播放
+            QTimer.singleShot(self.music_fade_in + 1000, self._start_fade_out_animation)
 
         except Exception as e:
             logger.error(f"播放结果音乐时出错: {e}")
+
+    def _start_fade_out_animation(self):
+        """开始音量渐出动画"""
+        if self.music_player.state() == QMediaPlayer.PlayingState:
+            # 创建音量渐出动画
+            fade_out_animation = QPropertyAnimation(self.music_player, b"volume")
+            fade_out_animation.setDuration(self.music_fade_out)
+            fade_out_animation.setStartValue(self.music_player.volume())
+            fade_out_animation.setEndValue(0)
+            fade_out_animation.setEasingCurve(QEasingCurve.InOutQuad)
+
+            # 动画结束后停止播放并重置音量
+            def final_stop():
+                self.music_player.stop()
+                self.music_player.setVolume(self.result_music_volume)
+
+            fade_out_animation.finished.connect(final_stop)
+            fade_out_animation.start()
 
     def _play_animation_music(self):
         """播放动画背景音乐 ～(￣▽￣)～* 星野和白露的音乐时间"""

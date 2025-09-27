@@ -695,6 +695,15 @@ class instant_draw(QWidget):
             self.fade_in_animation.setEasingCurve(QEasingCurve.InOutQuad)
             self.fade_in_animation.start()
 
+            # 延迟1秒后开始音量渐出动画，让音乐能正常播放一段时间
+            QTimer.singleShot(self.music_fade_in + 1000, self._start_fade_out_animation)
+
+        except Exception as e:
+            logger.error(f"播放音乐时出错: {e}")
+
+    def _start_fade_out_animation(self):
+        """开始音量渐出动画，让音乐逐渐淡出"""
+        try:
             if self.music_player.state() == QMediaPlayer.PlayingState:
                 # 创建音量渐出动画
                 fade_out_animation = QPropertyAnimation(self.music_player, b"volume")
@@ -710,9 +719,15 @@ class instant_draw(QWidget):
 
                 fade_out_animation.finished.connect(final_stop)
                 fade_out_animation.start()
-
+            else:
+                # 如果音乐没有在播放，直接停止并重置音量
+                self.music_player.stop()
+                self.music_player.setVolume(self.result_music_volume)
         except Exception as e:
-            logger.error(f"播放结果音乐时出错: {e}")
+            logger.error(f"音量渐出动画出错: {e}")
+            # 出错时确保停止播放并重置音量
+            self.music_player.stop()
+            self.music_player.setVolume(self.result_music_volume)
 
     def _play_animation_music(self):
         """播放动画背景音乐 ～(￣▽￣)～* 星野和白露的音乐时间"""
