@@ -116,6 +116,9 @@ class personal_settingsCard(GroupHeaderCardWidget):
         self.font_combo = ComboBox()
         self.font_combo.setFont(QFont(load_custom_font(), 12))
         # 添加字体到下拉框
+        # 首先添加 HarmonyOS Sans SC 字体选项
+        self.font_combo.addItem("HarmonyOS Sans SC")
+        # 然后添加系统字体
         for font in sorted(QFontDatabase().families()):
             self.font_combo.addItem(font)
         self.font_combo.currentIndexChanged.connect(self.save_settings)

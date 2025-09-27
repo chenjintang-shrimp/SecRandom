@@ -140,13 +140,54 @@ def check_for_updates(channel=None):
         return False, None
 
 def load_custom_font():
-    font_path = path_manager.get_resource_path('font', 'HarmonyOS_Sans_SC_Bold.ttf')
-    font_id = QFontDatabase.addApplicationFont(str(font_path))
-    if font_id < 0:
-        logger.error(f"加载自定义字体失败: {font_path}")
-        return None
-    font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
-    return font_family
+    """加载自定义字体，根据用户设置决定是否加载 HarmonyOS Sans SC 字体
+    
+    Returns:
+        str: 字体家族名称，如果加载失败则返回 None
+    """
+    # 读取自定义设置文件
+    try:
+        custom_settings_path = path_manager.get_settings_path('custom_settings.json')
+        if custom_settings_path.exists():
+            with open_file(custom_settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+            
+            # 获取字体配置
+            font_family_setting = settings.get('personal', {}).get('font_family', 'HarmonyOS Sans SC')
+            
+            # 如果字体设置为 HarmonyOS Sans SC，则加载自定义字体
+            if font_family_setting == "HarmonyOS Sans SC":
+                font_path = path_manager.get_resource_path('font', 'HarmonyOS_Sans_SC_Bold.ttf')
+                font_id = QFontDatabase.addApplicationFont(str(font_path))
+                if font_id < 0:
+                    logger.error(f"加载自定义字体失败: {font_path}")
+                    return None
+                font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
+                # logger.info(f"成功加载自定义字体: {font_family}")
+                return font_family
+            else:
+                # logger.info(f"使用系统默认字体: {font_family_setting}")
+                return font_family_setting
+        else:
+            # 如果自定义设置文件不存在，默认加载 HarmonyOS Sans SC 字体
+            font_path = path_manager.get_resource_path('font', 'HarmonyOS_Sans_SC_Bold.ttf')
+            font_id = QFontDatabase.addApplicationFont(str(font_path))
+            if font_id < 0:
+                logger.error(f"加载自定义字体失败: {font_path}")
+                return None
+            font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
+            logger.info(f"成功加载默认字体: {font_family}")
+            return font_family
+    except Exception as e:
+        logger.error(f"读取自定义设置失败，使用默认字体: {e}")
+        # 出错时默认加载 HarmonyOS Sans SC 字体
+        font_path = path_manager.get_resource_path('font', 'HarmonyOS_Sans_SC_Bold.ttf')
+        font_id = QFontDatabase.addApplicationFont(str(font_path))
+        if font_id < 0:
+            logger.error(f"加载自定义字体失败: {font_path}")
+            return None
+        font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
+        return font_family
 
 class FluentSystemIcons(FluentFontIconBase):
     """Fluent System Icons 字体图标类"""
