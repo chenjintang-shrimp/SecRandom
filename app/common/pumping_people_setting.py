@@ -26,12 +26,11 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.settings_file = path_manager.get_settings_path()
         self.default_settings = {
             "font_size": 50,
-            "max_draw_count": 5,
+            "max_draw_count": 0,
             "Draw_pumping": 1,
             "draw_mode": 1,
             "clear_mode": 0,
             "draw_pumping": 0,
-            "pumping_people_auto_clear": False,
             "animation_mode": 0,
             "student_id": 0,
             "student_name": 0,
@@ -71,16 +70,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_Clear_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_people_Clear_comboBox.setFont(QFont(load_custom_font(), 12))
 
-        # 抽取后定时清除开关
-        self.pumping_people_auto_clear_checkbox = SwitchButton()
-        self.pumping_people_auto_clear_checkbox.setOnText("开启")
-        self.pumping_people_auto_clear_checkbox.setOffText("关闭")
-        self.pumping_people_auto_clear_checkbox.checkedChanged.connect(self.save_settings)
-        self.pumping_people_auto_clear_checkbox.setFont(QFont(load_custom_font(), 12))
-
         # 定时清理临时记录时间
         self.pumping_people_auto_play_count_SpinBox = SpinBox()
-        self.pumping_people_auto_play_count_SpinBox.setRange(1, 86400)
+        self.pumping_people_auto_play_count_SpinBox.setRange(0, 86400)
         self.pumping_people_auto_play_count_SpinBox.setValue(self.default_settings["max_draw_count"])
         self.pumping_people_auto_play_count_SpinBox.setSingleStep(1)
         self.pumping_people_auto_play_count_SpinBox.setSuffix("秒")
@@ -265,12 +257,11 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
 
         # 添加组件到分组中
         # 抽取模式设置
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取模式", "选择抽取模式", self.pumping_people_Draw_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "清除抽取记录方式", "配置临时记录清理方式", self.pumping_people_Clear_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_document_bullet_list_cube_20_filled"), "抽取模式", "选择抽取模式", self.pumping_people_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_text_clear_formatting_20_filled"), "清除抽取记录方式", "配置临时记录清理方式", self.pumping_people_Clear_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_week_numbers_20_filled"), "半重复抽取次数", "一轮中抽取最大次数", self.Draw_pumping_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_timer_off_20_filled"), "抽取后定时清除", "抽取后是否自动清除临时记录", self.pumping_people_auto_clear_checkbox) 
-        self.addGroup(get_theme_icon("ic_fluent_timer_off_20_filled"), "抽取后定时清除时间", "配置临时记录清理时间(1-86400)", self.pumping_people_auto_play_count_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "选择具体的抽取执行方式", self.pumping_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_timer_off_20_filled"), "抽取后定时清除时间", "配置临时记录清理时间(0-86400)(0表示禁用该功能)", self.pumping_people_auto_play_count_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_drawer_play_20_filled"), "抽取方式", "选择具体的抽取执行方式", self.pumping_Draw_comboBox)
         
         # 显示格式设置
         self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "调整抽取结果显示的字体大小", self.pumping_people_font_size_SpinBox)
@@ -655,7 +646,15 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             # 从pumping_people同步设置到instant_draw
             for pumping_key, instant_key in sync_mapping.items():
                 if pumping_key in pumping_people_settings:
-                    instant_draw_settings[instant_key] = pumping_people_settings[pumping_key]
+                    # 特殊处理animation_mode的同步规则：0和1同步为0，2同步为1
+                    if pumping_key == "animation_mode":
+                        new_value = pumping_people_settings[pumping_key]
+                        if new_value in [0, 1]:
+                            instant_draw_settings[instant_key] = 0
+                        elif new_value == 2:
+                            instant_draw_settings[instant_key] = 1
+                    else:
+                        instant_draw_settings[instant_key] = pumping_people_settings[pumping_key]
         
         ensure_dir(Path(self.settings_file).parent)
         with open_file(self.settings_file, 'w', encoding='utf-8') as f:
@@ -682,7 +681,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             
             # 设置Draw_pumping_SpinBox为0并禁用
             self.Draw_pumping_SpinBox.setEnabled(False)
-            self.Draw_pumping_SpinBox.setRange(0, 100)
+            self.Draw_pumping_SpinBox.setRange(0, 0)
             self.Draw_pumping_SpinBox.setValue(0)
             
         else:  # 不重复抽取模式或半重复抽取模式
@@ -705,7 +704,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             if draw_mode_index == 1:  # 不重复抽取模式
                 # 设置Draw_pumping_SpinBox为1并禁用
                 self.Draw_pumping_SpinBox.setEnabled(False)
-                self.Draw_pumping_SpinBox.setRange(0, 100)
+                self.Draw_pumping_SpinBox.setRange(1, 1)
                 self.Draw_pumping_SpinBox.setValue(1)
             else:  # 半重复抽取模式（索引2）
                 # 设置Draw_pumping_SpinBox为2-100范围并启用

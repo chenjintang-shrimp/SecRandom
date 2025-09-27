@@ -94,13 +94,12 @@ class pumping_people(QWidget):
             # 读取设置中的定时清理时间
             with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                draw_mode = settings['pumping_people']['draw_mode']
                 clear_time = settings['pumping_people']['max_draw_count']
 
             self.current_count = 1
                 
             # 只有在"定时清临时记录"模式下才启动计时器
-            if draw_mode == 3 and clear_time > 0:  # 3是"定时清临时记录"选项的索引
+            if clear_time > 0:  # 3是"定时清临时记录"选项的索引
                 self.clear_timer = QTimer()
                 self.clear_timer.setSingleShot(True)  # 单次触发
                 self.clear_timer.timeout.connect(lambda: self._clean_temp_files())
@@ -1808,7 +1807,6 @@ class pumping_people(QWidget):
     def _get_drawn_count(self, class_name, group_name, genders):
         # 如果max_draw_times_per_person等于0，则是重复抽取模式，返回0
         if self.max_draw_times_per_person == 0:
-            logger.info(f"重复抽取模式，已抽取人数: 0")
             return 0
         
         if group_name == '抽取全班学生':
@@ -1817,7 +1815,6 @@ class pumping_people(QWidget):
             draw_record_file = f"app/resource/Temp/{class_name}_{group_name}.json"
         else:
             draw_record_file = f"app/resource/Temp/{class_name}_{group_name}_{genders}.json"
-        logger.info(f"获取已抽取人数，文件路径: {draw_record_file}")
         if path_manager.file_exists(draw_record_file):
             try:
                 with open_file(draw_record_file, 'r', encoding='utf-8') as f:

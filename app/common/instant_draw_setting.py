@@ -25,6 +25,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
             "font_size": 50,
             "max_draw_count": 0,
             "draw_mode": 0,
+            "clear_mode": 0, 
+            "instant_clear": False,
             "Draw_pumping": 1,
             "draw_pumping": 0,
             "animation_mode": 0,
@@ -64,9 +66,22 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.follow_roll_call_checkbox.setFont(QFont(load_custom_font(), 12))
         
         # 抽取模式下拉框
-        self.instant_draw_Draw_comboBox.addItems(["重复抽取", "重启清临时记录", "保留临时记录", "定时+重启 清记录"])
-        self.instant_draw_Draw_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.instant_draw_Draw_comboBox.addItems(["重复抽取", "不重复抽取", "半重复抽取"])
+        self.instant_draw_Draw_comboBox.currentIndexChanged.connect(self.on_draw_mode_changed)
         self.instant_draw_Draw_comboBox.setFont(QFont(load_custom_font(), 12))
+
+        # 是否隔离点名页面抽取的已抽取名单
+        self.instant_draw_isolate_checkbox = SwitchButton()
+        self.instant_draw_isolate_checkbox.setOnText("开启")
+        self.instant_draw_isolate_checkbox.setOffText("关闭")
+        self.instant_draw_isolate_checkbox.checkedChanged.connect(self.save_settings)
+        self.instant_draw_isolate_checkbox.setFont(QFont(load_custom_font(), 12))
+
+        # 清除抽取记录方式下拉框
+        self.instant_draw_Clear_comboBox = ComboBox()
+        self.instant_draw_Clear_comboBox.addItems(["重启后清除", "直到全部抽取完", "无需清除"])
+        self.instant_draw_Clear_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.instant_draw_Clear_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 定时清理临时记录时间
         self.instant_draw_auto_play_count_SpinBox = SpinBox()
@@ -256,10 +271,12 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         # 添加组件到分组中
         # 抽取模式设置
         self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "是否跟随点名", "是否跟随点名设置同步", self.follow_roll_call_checkbox)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "清理临时记录", "配置临时记录清理方式", self.instant_draw_Draw_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_timer_off_20_filled"), "清理时间", "配置临时记录清理时间(0为不自动清理)", self.instant_draw_auto_play_count_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_week_numbers_20_filled"), "抽取次数", "一轮中抽取最大次数(0为重复模式)", self.Draw_pumping_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), "抽取方式", "选择具体的抽取执行方式", self.pumping_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_clipboard_bullet_list_20_filled"), "是否隔离点名页面记录", "是否隔离点名界面的已抽取记录", self.instant_draw_isolate_checkbox) 
+        self.addGroup(get_theme_icon("ic_fluent_document_bullet_list_cube_20_filled"), "抽取模式", "选择抽取模式", self.instant_draw_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_text_clear_formatting_20_filled"), "清除抽取记录方式", "配置临时记录清理方式", self.instant_draw_Clear_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_week_numbers_20_filled"), "半重复抽取次数", "一轮中抽取最大次数", self.Draw_pumping_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_timer_off_20_filled"), "抽取后定时清除时间", "配置临时记录清理时间(0-86400)(0表示禁用该功能)", self.instant_draw_auto_play_count_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_drawer_play_20_filled"), "抽取方式", "选择具体的抽取执行方式", self.pumping_Draw_comboBox)
         
         # 显示格式设置
         self.addGroup(get_theme_icon("ic_fluent_text_font_size_20_filled"), "字体大小", "调整抽取结果显示的字体大小", self.instant_draw_font_size_SpinBox)
@@ -327,6 +344,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                 sync_mapping = {
                     "draw_mode": "draw_mode",
                     "Draw_pumping": "Draw_pumping",
+                    "clear_mode": "clear_mode", 
                     "draw_pumping": "draw_pumping",
                     "animation_mode": "animation_mode",
                     "student_id": "student_id",
@@ -357,12 +375,14 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                         
                         # 特殊处理animation_mode的同步规则：0和1同步为0，2同步为1
                         if pumping_key == "animation_mode":
-                            if new_value in [0, 1]:
-                                new_value = 0
-                            elif new_value == 2:
-                                new_value = 1
-                        
-                        if old_value != new_value:
+                            if old_value != new_value and new_value in [0, 1]:
+                                instant_draw_settings[instant_key] = 0
+                                updated = True
+                            elif old_value != new_value and new_value == 2:
+                                instant_draw_settings[instant_key] = 1
+                                updated = True
+                        # 处理其他设置的同步
+                        elif old_value != new_value and pumping_key != "animation_mode":
                             instant_draw_settings[instant_key] = new_value
                             updated = True
                 
@@ -375,7 +395,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     
                     # 刷新UI控件
                     self.refresh_ui_from_settings()
-                    
+
                     # 显示同步成功提示
                     InfoBar.success(
                         title='同步成功',
@@ -444,6 +464,11 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     random_member_format = self.default_settings["random_member_format"]
                 self.random_member_format_comboBox.setCurrentIndex(random_member_format)
                 
+                clear_mode = instant_draw_settings.get("clear_mode", self.default_settings["clear_mode"])
+                if clear_mode < 0 or clear_mode >= self.instant_draw_Clear_comboBox.count():
+                    clear_mode = self.default_settings["clear_mode"]
+                self.instant_draw_Clear_comboBox.setCurrentIndex(clear_mode)
+
                 animation_interval = instant_draw_settings.get("animation_interval", self.default_settings["animation_interval"])
                 self.instant_draw_Animation_interval_SpinBox.setValue(animation_interval)
                 
@@ -488,6 +513,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                 self.instant_draw_auto_play_count_SpinBox.setValue(max_draw_count)
                 
                 # 保存设置以确保一致性
+                self.on_draw_mode_changed()
                 self.save_settings()
         except Exception as e:
             logger.error(f"刷新UI时出错: {e}")
@@ -642,6 +668,16 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                         logger.warning(f"无效的姓名格式索引: {student_name}")
                         student_name = self.default_settings["student_name"]
 
+                    # 清除抽取记录方式下拉框
+                    clear_mode = instant_draw_settings.get("clear_mode", self.default_settings["clear_mode"])
+                    if clear_mode < 0 or clear_mode >= self.instant_draw_Clear_comboBox.count():
+                        logger.warning(f"无效的清除模式索引: {clear_mode}")
+                        clear_mode = self.default_settings["clear_mode"]
+                        
+                    # 是否隔离点名页面抽取的已抽取名单
+                    instant_clear = instant_draw_settings.get("instant_clear", self.default_settings["instant_clear"])
+                    self.instant_draw_isolate_checkbox.setChecked(instant_clear)
+                    
                     # 加载随机组员显示设置
                     show_random_member = instant_draw_settings.get("show_random_member", self.default_settings["show_random_member"])
                     random_member_format = instant_draw_settings.get("random_member_format", self.default_settings["random_member_format"])
@@ -681,6 +717,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
 
                     self.follow_roll_call_checkbox.setChecked(follow_roll_call)
                     self.Draw_pumping_SpinBox.setValue(Draw_pumping)
+                    self.instant_draw_Clear_comboBox.setCurrentIndex(clear_mode)
+                    self.instant_draw_isolate_checkbox.setChecked(instant_clear)
                     self.instant_draw_Draw_comboBox.setCurrentIndex(draw_mode)
                     self.instant_draw_auto_play_count_SpinBox.setValue(max_draw_count)
                     self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
@@ -701,10 +739,16 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     self.instant_draw_display_format_comboBox.setCurrentIndex(display_format)
                     self.instant_draw_student_name_color_comboBox.setCurrentIndex(animation_color)
                     self.instant_draw_show_image_switch.setChecked(show_student_image)
+
+                    self.on_draw_mode_changed
             else:
+                self.on_draw_mode_changed
+
                 self.follow_roll_call_checkbox.setChecked(self.default_settings["follow_roll_call"])
                 self.Draw_pumping_SpinBox.setValue(self.default_settings["Draw_pumping"])
                 self.instant_draw_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
+                self.instant_draw_Clear_comboBox.setCurrentIndex(self.default_settings["clear_mode"])
+                self.instant_draw_isolate_checkbox.setChecked(self.default_settings["instant_clear"])
                 self.instant_draw_auto_play_count_SpinBox.setValue(self.default_settings["max_draw_count"])
                 self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
                 self.instant_draw_font_size_SpinBox.setValue(self.default_settings["font_size"])
@@ -730,9 +774,11 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
             self.follow_roll_call_checkbox.setChecked(self.default_settings["follow_roll_call"])
             self.Draw_pumping_SpinBox.setValue(self.default_settings["Draw_pumping"])
             self.instant_draw_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
+            self.instant_draw_Clear_comboBox.setCurrentIndex(self.default_settings["clear_mode"])   
             self.instant_draw_auto_play_count_SpinBox.setValue(self.default_settings["max_draw_count"])
             self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
             self.instant_draw_font_size_SpinBox.setValue(self.default_settings["font_size"])
+            self.instant_draw_isolate_checkbox.setChecked(self.default_settings["instant_clear"])
             self.instant_draw_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
             self.instant_draw_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
             self.instant_draw_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
@@ -770,8 +816,10 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         # 保存是否跟随点名设置
         instant_draw_settings["follow_roll_call"] = self.follow_roll_call_checkbox.isChecked()
         instant_draw_settings["Draw_pumping"] = self.Draw_pumping_SpinBox.value()
+        instant_draw_settings["clear_mode"] = self.instant_draw_Clear_comboBox.currentIndex()
         instant_draw_settings["draw_mode"] = self.instant_draw_Draw_comboBox.currentIndex()
         instant_draw_settings["max_draw_count"] = self.instant_draw_auto_play_count_SpinBox.value()
+        instant_draw_settings["instant_clear"] = self.instant_draw_isolate_checkbox.isChecked()
         instant_draw_settings["draw_pumping"] = self.pumping_Draw_comboBox.currentIndex()
         instant_draw_settings["animation_mode"] = self.instant_draw_Animation_comboBox.currentIndex()
         instant_draw_settings["student_id"] = self.instant_draw_student_id_comboBox.currentIndex()
@@ -804,6 +852,59 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         ensure_dir(Path(self.settings_file).parent)
         with open_file(self.settings_file, 'w', encoding='utf-8') as f:
             json.dump(existing_settings, f, indent=4)
+
+    def on_draw_mode_changed(self):
+        """当抽取模式改变时的处理逻辑"""
+        # 获取当前抽取模式索引
+        draw_mode_index = self.instant_draw_Draw_comboBox.currentIndex()
+        
+        # 根据抽取模式设置不同的控制逻辑
+        if draw_mode_index == 0:  # 重复抽取模式
+            # 禁用清除抽取记录方式下拉框
+            self.instant_draw_Clear_comboBox.setEnabled(False)
+            # 清空当前选项
+            self.instant_draw_Clear_comboBox.clear()
+            self.instant_draw_Clear_comboBox.addItems(["重启后清除", "直到全部抽取完", "无需清除"])
+            # 强制设置为"无需清除"（索引2）
+            self.instant_draw_Clear_comboBox.setCurrentIndex(2)
+            
+            # 设置Draw_pumping_SpinBox为0并禁用
+            self.Draw_pumping_SpinBox.setEnabled(False)
+            self.Draw_pumping_SpinBox.setRange(0, 0)
+            self.Draw_pumping_SpinBox.setValue(0)
+            
+        else:  # 不重复抽取模式或半重复抽取模式
+            # 启用清除抽取记录方式下拉框
+            self.instant_draw_Clear_comboBox.setEnabled(True)
+            
+            # 动态调整清除抽取记录方式下拉框的选项
+            current_index = self.instant_draw_Clear_comboBox.currentIndex()
+            
+            # 清空当前选项
+            self.instant_draw_Clear_comboBox.clear()
+            
+            # 添加前两个选项（不包含"无需清除"）
+            self.instant_draw_Clear_comboBox.addItems(["重启后清除", "直到全部抽取完"])
+            
+            # 设置默认选择第一个选项
+            self.instant_draw_Clear_comboBox.setCurrentIndex(0)
+            
+            # 根据具体模式设置Draw_pumping_SpinBox
+            if draw_mode_index == 1:  # 不重复抽取模式
+                # 设置Draw_pumping_SpinBox为1并禁用
+                self.Draw_pumping_SpinBox.setEnabled(False)
+                self.Draw_pumping_SpinBox.setRange(1, 1)
+                self.Draw_pumping_SpinBox.setValue(1)
+            else:  # 半重复抽取模式（索引2）
+                # 设置Draw_pumping_SpinBox为2-100范围并启用
+                self.Draw_pumping_SpinBox.setEnabled(True)
+                self.Draw_pumping_SpinBox.setRange(2, 100)
+                # 如果当前值小于2，则设置为2
+                if self.Draw_pumping_SpinBox.value() < 2:
+                    self.Draw_pumping_SpinBox.setValue(2)
+        
+        # 保存设置
+        self.save_settings()
 
     # 读取颜色设置
     def load_color_settings(self):
