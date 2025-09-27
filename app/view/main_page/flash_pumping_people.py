@@ -84,13 +84,12 @@ class instant_draw(QWidget):
             # 读取设置中的定时清理时间
             with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                draw_mode = settings['instant_draw']['draw_mode']
                 clear_time = settings['instant_draw']['max_draw_count']
 
             self.current_count = 1
                 
             # 只有在"定时清临时记录"模式下才启动计时器
-            if draw_mode == 3 and clear_time > 0:  # 3是"定时清临时记录"选项的索引
+            if clear_time > 0:
                 self.clear_timer = QTimer()
                 self.clear_timer.setSingleShot(True)  # 单次触发
                 self.clear_timer.timeout.connect(lambda: self._clean_temp_files())
@@ -650,8 +649,8 @@ class instant_draw(QWidget):
             self._play_result_music()
         self.random()
         self.voice_play()
-        # 发射抽取完成信号
-        self.draw_finished.emit()
+        # 延迟1秒后发射抽取完成信号
+        QTimer.singleShot(1000, self.draw_finished.emit)
 
     def _play_result_music(self):
         """播放结果音乐
