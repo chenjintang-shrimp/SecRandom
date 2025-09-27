@@ -50,7 +50,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "global_shortcut_key": "",
             "local_pumping_shortcut_key": "",
             "local_reward_shortcut_key": "",
-            "show_startup_window_switch": False,
+            "show_startup_window_switch": True,
         }
 
         self.self_starting_switch = SwitchButton()
