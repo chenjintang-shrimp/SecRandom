@@ -12,7 +12,6 @@ from app.common.tray_settings import tray_settingsCard
 from app.common.floating_window_settings import floating_window_settingsCard
 from app.common.roll_call_settings import roll_call_settingsCard
 from app.common.rewards_settings import reward_settingsCard
-from app.common.instant_draw_settings import instant_draw_settingsCard
 from app.common.Program_functionality_settings import Program_functionality_settingsCard
 
 class custom_setting(QFrame):
@@ -217,10 +216,6 @@ class custom_setting(QFrame):
         reward_card = reward_settingsCard()
         extraction_management_inner_layout.addWidget(reward_card)
         extraction_management_inner_layout.addWidget(separator2)
-        
-        # 即抽管理设置卡片组
-        instant_draw_card = instant_draw_settingsCard()
-        extraction_management_inner_layout.addWidget(instant_draw_card)
         
         # 设置抽取管理设置页面布局
         extraction_management_layout = QVBoxLayout(self.extraction_management_page)
