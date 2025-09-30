@@ -112,15 +112,31 @@ class instant_draw(QWidget):
         group_name = self.group_name
         genders = self.gender_name
 
+        try:
+            settings_path = path_manager.get_settings_path('Settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                instant_clear = settings['instant_draw']['instant_clear']
+                logger.debug(f"星野侦察: 准备执行对应清理方案～ ")
+
+        except Exception as e:
+            instant_clear = False
+            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}")
+
+        if instant_clear:
+            instant_clear = '_instant'
+        else:
+            instant_clear = ''
+
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
             student_file = path_manager.get_resource_path('list', f'{class_name}.json')
 
             if group_name == '抽取全班学生':    
-                draw_record_file = path_manager.get_temp_path(f'{class_name}_{group_name}_{genders}.json')
+                draw_record_file = path_manager.get_temp_path(f'{class_name}_{group_name}_{genders}{instant_clear}.json')
             elif group_name == '抽取小组组号':
-                draw_record_file = path_manager.get_temp_path(f'{class_name}_{group_name}.json')
+                draw_record_file = path_manager.get_temp_path(f'{class_name}_{group_name}{instant_clear}.json')
             else:
-                draw_record_file = path_manager.get_temp_path(f'{class_name}_{group_name}_{genders}.json')
+                draw_record_file = path_manager.get_temp_path(f'{class_name}_{group_name}_{genders}{instant_clear}.json')
             
             # 创建Temp目录如果不存在
             os.makedirs(os.path.dirname(draw_record_file), exist_ok=True)
@@ -820,16 +836,32 @@ class instant_draw(QWidget):
         class_name = self.class_name
         group_name = self.group_name
         genders = self.gender_name
+
+        try:
+            settings_path = path_manager.get_settings_path('Settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                instant_clear = settings['instant_draw']['instant_clear']
+                logger.debug(f"星野侦察: 准备执行对应清理方案～ ")
+
+        except Exception as e:
+            instant_clear = False
+            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}")
+
+        if instant_clear:
+            instant_clear = '_instant'
+        else:
+            instant_clear = ''
         
         if class_name and class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"] and group_name and group_name not in ["你暂未添加小组", "加载小组列表失败"]:
             student_file = path_manager.get_resource_path("list", f"{class_name}.json")
 
             if group_name == '抽取全班学生':
-                draw_record_file = path_manager.get_temp_path(f"{class_name}_{group_name}_{genders}.json")
+                draw_record_file = path_manager.get_temp_path(f"{class_name}_{group_name}_{genders}{instant_clear}.json")
             elif group_name == '抽取小组组号':
-                draw_record_file = path_manager.get_temp_path(f"{class_name}_{group_name}.json")
+                draw_record_file = path_manager.get_temp_path(f"{class_name}_{group_name}{instant_clear}.json")
             else:
-                draw_record_file = path_manager.get_temp_path(f"{class_name}_{group_name}_{genders}.json")
+                draw_record_file = path_manager.get_temp_path(f"{class_name}_{group_name}_{genders}{instant_clear}.json")
        
             # 创建Temp目录如果不存在
             path_manager.ensure_directory_exists(draw_record_file.parent)
