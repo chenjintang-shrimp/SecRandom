@@ -372,68 +372,6 @@ SHARED_MEMORY_KEY = 'SecRandom'   # 共享内存密钥
 app = QApplication(sys.argv)
 logger.debug("白露创建: QApplication实例已创建～ ")
 
-def install_custom_font():
-    """安装自定义字体文件"""
-    try:
-        # 检查操作系统版本，HarmonyOS Sans SC字体不支持Windows 7及以下系统
-        import platform
-        system = platform.system()
-        if system == "Windows":
-            try:
-                # 获取Windows版本信息
-                import winreg
-                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, 
-                                   r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
-                current_version = winreg.QueryValueEx(key, "CurrentVersion")[0]
-                winreg.CloseKey(key)
-                
-                # Windows 7的版本号是6.1
-                if current_version and float(current_version) <= 6.1:
-                    logger.warning("检测到Windows 7或更早版本系统，HarmonyOS Sans SC字体不支持此系统，跳过字体安装")
-                    return
-            except Exception as e:
-                logger.warning(f"无法检测Windows版本: {e}，尝试继续安装字体")
-        
-        font_path = path_manager.get_font_path('HarmonyOS_Sans_SC_Bold.ttf')
-        
-        # 将Path对象转换为字符串
-        font_path_str = str(font_path)
-        
-        # 检查字体文件是否存在
-        if not os.path.exists(font_path_str):
-            logger.warning(f"字体文件不存在: {font_path_str}")
-            return
-        
-        # 检查字体是否已经安装
-        font_db = QFontDatabase()
-        
-        # 先尝试安装字体，获取实际的字体家族名称
-        font_id = QFontDatabase.addApplicationFont(font_path_str)
-        
-        if font_id == -1:
-            logger.error(f"字体安装失败: {font_path_str}")
-            return
-        
-        # 获取字体家族名称
-        installed_font_families = QFontDatabase.applicationFontFamilies(font_id)
-        if not installed_font_families:
-            logger.warning(f"字体安装成功但无法获取字体家族: {font_path_str}")
-            return
-        
-        target_font_family = installed_font_families[0]
-        
-        # 检查系统中是否已存在相同名称的字体
-        existing_families = font_db.families()
-        if target_font_family in existing_families:
-            # 如果字体已存在，移除刚刚添加的字体
-            QFontDatabase.removeApplicationFont(font_id)
-            logger.info(f"字体已安装: {target_font_family}")
-            return
-        
-        logger.info(f"字体安装成功: {font_path_str}, 字体家族: {target_font_family}")
-    except Exception as e:
-        logger.error(f"安装字体时发生错误: {e}")
-
 def initialize_font_settings():
     """初始化字体设置，加载并应用保存的字体"""
     try:
@@ -451,8 +389,18 @@ def initialize_font_settings():
                     # 应用字体设置
                     apply_font_to_application(font_family)
                     logger.info(f"初始化字体设置: {font_family}")
+                else:
+                    logger.info("初始化字体设置: 未指定字体家族，使用默认字体")
+                    apply_font_to_application('HarmonyOS Sans SC')  
+        else:
+            # 如果设置文件不存在，使用默认字体
+            logger.info("初始化字体设置: 设置文件不存在，使用默认字体")
+            apply_font_to_application('HarmonyOS Sans SC')
     except Exception as e:
         logger.error(f"初始化字体设置失败: {e}")
+        # 发生错误时使用默认字体
+        logger.info("初始化字体设置: 发生错误，使用默认字体")
+        apply_font_to_application('HarmonyOS Sans SC')
 
 def apply_font_to_application(font_family):
     """应用字体设置到整个应用程序
@@ -467,6 +415,24 @@ def apply_font_to_application(font_family):
         # 创建字体对象，只修改字体家族，保持原有字体大小
         app_font = QFont(font_family)
         app_font.setPointSize(current_font.pointSize())
+        
+        # 如果是HarmonyOS Sans SC字体，使用特定的字体文件路径
+        if font_family == "HarmonyOS Sans SC":
+            font_path = path_manager.get_font_path('HarmonyOS_Sans_SC_Bold.ttf')
+            if font_path and path_manager.file_exists(font_path):
+                font_id = QFontDatabase.addApplicationFont(str(font_path))
+                if font_id >= 0:
+                    font_families = QFontDatabase.applicationFontFamilies(font_id)
+                    if font_families:
+                        app_font = QFont(font_families[0])
+                        app_font.setPointSize(current_font.pointSize())
+                        logger.info(f"已加载HarmonyOS Sans SC字体文件: {font_path}")
+                    else:
+                        logger.warning(f"无法从字体文件获取字体家族: {font_path}")
+                else:
+                    logger.warning(f"无法加载字体文件: {font_path}")
+            else:
+                logger.warning(f"HarmonyOS Sans SC字体文件不存在: {font_path}")
         
         # 定义延迟更新函数
         def delayed_font_update(font_to_apply):
@@ -847,9 +813,6 @@ if __name__ == "__main__":
             if has_startup_thread:
                 startup_thread.set_step(10, "启动完成！")
                 QTimer.singleShot(500, startup_thread.close_window)
-    
-    # 安装自定义字体
-    install_custom_font()
     
     # 初始化字体设置
     initialize_font_settings()
