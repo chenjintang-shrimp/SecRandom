@@ -771,86 +771,129 @@ class LevitationWindow(QWidget):
 
     def _init_instant_draw_button(self):
         # 小鸟游星野：初始化即抽按钮和人数调节功能
-        # 创建主容器 - 紧凑的两层布局
+        # 创建主容器 - 优化的两层布局
         self.instant_draw_container = QWidget()
         main_layout = QVBoxLayout(self.instant_draw_container)
         main_layout.setContentsMargins(8, 8, 8, 8)
-        main_layout.setSpacing(8)
+        main_layout.setSpacing(6)
         
-        # 第一层：人数调节布局
-        count_control_container = QWidget()
-        count_control_layout = QHBoxLayout(count_control_container)
-        count_control_layout.setContentsMargins(0, 0, 0, 0)
-        count_control_layout.setSpacing(5)
+        # 第一层：标题和人数调节布局
+        first_layer_container = QWidget()
+        first_layer_layout = QHBoxLayout(first_layer_container)
+        first_layer_layout.setContentsMargins(0, 0, 0, 0)
+        first_layer_layout.setSpacing(4)
+        
+        # 添加"即抽"标题
+        self.instant_draw_title = BodyLabel(" 即抽")
+        self.instant_draw_title.setAlignment(Qt.AlignCenter)
+        self.instant_draw_title.setFixedSize(34, 30)
+        if dark_mode:
+            self.instant_draw_title.setStyleSheet('color: #ffffff; font-weight: bold;')
+        else:
+            self.instant_draw_title.setStyleSheet('color: #333333; font-weight: bold;')
+        
+        # 创建融合式人数调节控件
+        self.count_widget = QWidget()
+        self.count_widget.setFixedSize(90, 30)  # 整体宽度减小
+        count_widget_layout = QHBoxLayout(self.count_widget)
+        count_widget_layout.setContentsMargins(0, 0, 0, 0)
+        count_widget_layout.setSpacing(0)
         
         # 左侧：减人数按钮
         self.decrease_button = PushButton("-")
-        self.decrease_button.setFixedSize(35, 30)
+        self.decrease_button.setFixedSize(28, 30)  # 宽度减小
         if dark_mode:
-            self.decrease_button.setStyleSheet('border: 1px solid #555555; border-radius: 4px; background: #2a2a2a; color: #ffffff;')
+            self.decrease_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #2a2a2a; color: #ffffff;')
         else:
-            self.decrease_button.setStyleSheet('border: 1px solid #cccccc; border-radius: 4px; background: #f5f5f5; color: #000000;')
+            self.decrease_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #f5f5f5; color: #000000;')
         
         # 中间：当前抽取人数显示
         self.count_label = BodyLabel("1")
         self.count_label.setAlignment(Qt.AlignCenter)
-        self.count_label.setFixedSize(50, 30)
+        self.count_label.setFixedSize(34, 30)  # 宽度减小
         if dark_mode:
-            self.count_label.setStyleSheet('border: 1px solid #555555; border-radius: 4px; background: #2a2a2a; color: #ffffff; font-weight: bold;')
+            self.count_label.setStyleSheet('border-left: none; border-right: none; background: #2a2a2a; color: #ffffff;')
         else:
-            self.count_label.setStyleSheet('border: 1px solid #cccccc; border-radius: 4px; background: #f5f5f5; color: #000000; font-weight: bold;')
+            self.count_label.setStyleSheet('border-left: none; border-right: none; background: #f5f5f5; color: #000000;')
         
         # 右侧：加人数按钮
         self.increase_button = PushButton("+")
-        self.increase_button.setFixedSize(35, 30)
+        self.increase_button.setFixedSize(28, 30)  # 宽度减小
         if dark_mode:
-            self.increase_button.setStyleSheet('border: 1px solid #555555; border-radius: 4px; background: #2a2a2a; color: #ffffff;')
+            self.increase_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #2a2a2a; color: #ffffff;')
         else:
-            self.increase_button.setStyleSheet('border: 1px solid #cccccc; border-radius: 4px; background: #f5f5f5; color: #000000;')
+            self.increase_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #f5f5f5; color: #000000;')
         
-        # 添加控件到第一层布局
-        count_control_layout.addWidget(self.decrease_button)
-        count_control_layout.addWidget(self.count_label)
-        count_control_layout.addWidget(self.increase_button)
+        # 添加控件到融合式布局
+        count_widget_layout.addWidget(self.decrease_button)
+        count_widget_layout.addWidget(self.count_label)
+        count_widget_layout.addWidget(self.increase_button)
         
-        # 第二层：功能按钮布局
+        # 将标题和人数调节控件添加到第一层布局
+        first_layer_layout.addWidget(self.instant_draw_title)
+        first_layer_layout.addWidget(self.count_widget)
+        
+        # 第二层：功能按钮布局 - 融合三个按钮为一个紧凑控件
         button_control_container = QWidget()
         button_control_layout = QHBoxLayout(button_control_container)
         button_control_layout.setContentsMargins(0, 0, 0, 0)
-        button_control_layout.setSpacing(5)
+        button_control_layout.setSpacing(0)
         
-        # 左侧：点名按钮
-        self.instant_draw_button = PushButton("点名")
-        self.instant_draw_button.setFixedSize(60, 30)
+        # 创建融合式功能按钮控件
+        self.function_widget = QWidget()
+        self.function_widget.setFixedSize(135, 30)  # 整体宽度
+        function_widget_layout = QHBoxLayout(self.function_widget)
+        function_widget_layout.setContentsMargins(0, 0, 0, 0)
+        function_widget_layout.setSpacing(0)
+        
+        # 最左侧：重置按钮
+        self.reset_button = PushButton("重置")
+        self.reset_button.setFixedSize(45, 30)
         if dark_mode:
-            self.instant_draw_button.setStyleSheet('border: 1px solid #555555; border-radius: 4px; background: #2a2a2a; color: #ffffff;')
+            self.reset_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #2a2a2a; color: #ffffff;')
         else:
-            self.instant_draw_button.setStyleSheet('border: 1px solid #cccccc; border-radius: 4px; background: #f5f5f5; color: #000000;')
+            self.reset_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #f5f5f5; color: #000000;')
+        
+        # 中间：点名按钮
+        self.instant_draw_button = PushButton("点名")
+        self.instant_draw_button.setFixedSize(45, 30)
+        if dark_mode:
+            self.instant_draw_button.setStyleSheet('border-left: none; border-right: none; background: #2a2a2a; color: #ffffff;')
+        else:
+            self.instant_draw_button.setStyleSheet('border-left: none; border-right: none; background: #f5f5f5; color: #000000;')
         
         # 右侧：设置按钮（打开小浮窗界面）
         self.settings_button = PushButton("设置")
-        self.settings_button.setFixedSize(60, 30)
+        self.settings_button.setFixedSize(45, 30)
         if dark_mode:
-            self.settings_button.setStyleSheet('border: 1px solid #555555; border-radius: 4px; background: #2a2a2a; color: #ffffff;')
+            self.settings_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #2a2a2a; color: #ffffff;')
         else:
-            self.settings_button.setStyleSheet('border: 1px solid #cccccc; border-radius: 4px; background: #f5f5f5; color: #000000;')
+            self.settings_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #f5f5f5; color: #000000;')
         
-        # 添加控件到第二层布局
-        button_control_layout.addWidget(self.instant_draw_button)
-        button_control_layout.addWidget(self.settings_button)
+        # 添加控件到融合式布局
+        function_widget_layout.addWidget(self.reset_button)
+        function_widget_layout.addWidget(self.instant_draw_button)
+        function_widget_layout.addWidget(self.settings_button)
+        
+        # 将融合式控件添加到第二层布局
+        button_control_layout.addWidget(self.function_widget)
         
         # 将两层布局添加到主布局
-        main_layout.addWidget(count_control_container)
+        main_layout.addWidget(first_layer_container)
         main_layout.addWidget(button_control_container)
         
         # 设置字体
+        self.reset_button.setFont(QFont(load_custom_font(), 10))
         self.instant_draw_button.setFont(QFont(load_custom_font(), 10))
         self.increase_button.setFont(QFont(load_custom_font(), 10))
         self.decrease_button.setFont(QFont(load_custom_font(), 10))
         self.settings_button.setFont(QFont(load_custom_font(), 10))
         self.count_label.setFont(QFont(load_custom_font(), 10))
+        self.instant_draw_title.setFont(QFont(load_custom_font(), 12))
         
         # 连接信号
+        if hasattr(self.reset_button, 'clicked'):
+            self.reset_button.clicked.connect(self._reset_instant_draw)
         if hasattr(self.instant_draw_button, 'clicked'):
             self.instant_draw_button.clicked.connect(self._show_instant_draw_window)
         if hasattr(self.increase_button, 'clicked'):
@@ -889,83 +932,10 @@ class LevitationWindow(QWidget):
         else:
             self.container_button.layout().addWidget(self.instant_draw_container)
 
-    def _init_instant_combo_data(self):
-        """初始化即抽下拉框数据"""
-        try:
-            # 加载班级列表
-            list_folder = path_manager.get_resource_path("list")
-            if path_manager.file_exists(list_folder) and os.path.isdir(list_folder):
-                files = os.listdir(list_folder)
-                classes = []
-                for file in files:
-                    if file.endswith('.json'):
-                        class_name = os.path.splitext(file)[0]
-                        classes.append(class_name)
-                
-                self.instant_class_combo.clear()
-                if classes:
-                    self.instant_class_combo.addItems(classes)
-                    # 设置当前班级
-                    if hasattr(self, 'class_combo') and self.class_combo:
-                        current_class = self.class_combo.currentText()
-                        index = self.instant_class_combo.findText(current_class)
-                        if index >= 0:
-                            self.instant_class_combo.setCurrentIndex(index)
-                else:
-                    logger.error("你暂未添加班级")
-                    self.instant_class_combo.addItem("你暂未添加班级")
-            else:
-                logger.error("你暂未添加班级")
-                self.instant_class_combo.addItem("你暂未添加班级")
-                
-            # 初始化小组列表
-            self._update_instant_group_list()
-            
-            # 初始化性别列表
-            self._update_instant_gender_list()
-            
-        except Exception as e:
-            logger.error(f"初始化即抽下拉框数据失败: {str(e)}")
-            self.instant_class_combo.addItem("加载班级列表失败")
-            self.instant_class_combo.clear()
-            self.instant_class_combo.addItem("你暂未添加班级")
-            self.instant_group_combo.clear()
-            self.instant_group_combo.addItem("你暂未添加小组")
-            self.instant_gender_combo.clear()
-            self.instant_gender_combo.addItem("你暂未添加性别")
-        except Exception as e:
-            logger.error(f"初始化即抽下拉框数据失败: {str(e)}")
-            self.instant_class_combo.clear()
-            self.instant_class_combo.addItem("加载班级列表失败")
-            self.instant_group_combo.clear()
-            self.instant_group_combo.addItem("加载小组列表失败")
-            self.instant_gender_combo.clear()
-            self.instant_gender_combo.addItem("加载性别列表失败")
-    
-    def _on_instant_class_changed(self, index):
-        """班级下拉框变化事件处理"""
-        # 更新小组列表
-        self._update_instant_group_list()
-        # 更新性别列表
-        self._update_instant_gender_list()
-        # 更新pumping_content的选择
-        self._update_pumping_content_selection()
-    
-    def _on_instant_group_changed(self, index):
-        """小组下拉框变化事件处理"""
-        # 更新性别列表
-        self._update_instant_gender_list()
-        # 更新pumping_content的选择
-        self._update_pumping_content_selection()
-    
-    def _on_instant_gender_changed(self, index):
-        """性别下拉框变化事件处理"""
-        # 更新pumping_content的选择
-        self._update_pumping_content_selection()
-
     def _apply_window_styles(self):
         # 白露：应用窗口样式和标志
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.NoFocus | Qt.Popup)
+        # 移除完全透明背景设置，使用样式表设置背景透明度
         self.setAttribute(Qt.WA_TranslucentBackground)
         try:
             opacity = self.transparency_mode
@@ -1041,6 +1011,38 @@ class LevitationWindow(QWidget):
             self.on_people_clicked()
             # 长按：计时器已触发拖动，不执行点击
             
+    def on_reset_button_press(self, event):
+        """重置按钮按下事件 - 支持长按拖动"""
+        if event.button() == Qt.LeftButton:
+            self._press_start_time = QDateTime.currentMSecsSinceEpoch()
+            self._drag_start_pos = event.globalPos()
+            self._original_window_pos = self.pos()
+            self._long_press_triggered = False
+            self._was_dragging = False  # 重置拖动标志
+            
+            # 启动长按检测计时器
+            if hasattr(self, '_long_press_timer') and self._long_press_timer:
+                self._long_press_timer.start(self._long_press_duration)
+    
+    def on_reset_button_release(self, event):
+        """重置按钮释放事件 - 区分点击和拖动"""
+        if event.button() == Qt.LeftButton:
+            # 先保存拖动状态，然后再重置
+            was_dragging = self._was_dragging
+            
+            # 重置拖动状态
+            self._was_dragging = False
+            self._long_press_triggered = False
+            
+            # 停止长按计时器
+            if hasattr(self, '_long_press_timer') and self._long_press_timer:
+                self._long_press_timer.stop()
+            
+            # 如果没有拖动，则视为点击事件
+            if not was_dragging:
+                # 调用重置功能
+                self._reset_instant_draw()
+
     def on_instant_draw_button_press(self, event):
         # 即抽按钮按下事件 - 支持长按拖动
         self.drag_start_position = event.pos()
@@ -1402,9 +1404,10 @@ class LevitationWindow(QWidget):
         self.is_dragging = False
         
         if hasattr(self, 'click_timer') and self.click_timer.isActive():
-            # 短按点击容器空白区域，触发即抽窗口
+            # 短按点击容器空白区域，不执行任何操作
             self.click_timer.stop()
-            self._show_instant_draw_window()
+            # 注释掉下面这行，使点击空白区域不触发即抽窗口
+            # self._show_instant_draw_window()
         elif was_dragging:
             # 拖动结束，保存新位置
             self.save_position()
@@ -1454,6 +1457,10 @@ class LevitationWindow(QWidget):
     
     def _animate_count_change(self, new_count):
         """人数变化动画效果"""
+        # 检查count_label是否存在，只有在即抽模式下才存在
+        if not hasattr(self, 'count_label') or self.count_label is None:
+            return
+            
         # 使用定时器实现简单的淡入淡出效果
         original_style = self.count_label.styleSheet()
         
@@ -1578,37 +1585,6 @@ class LevitationWindow(QWidget):
             # 获取班级列表
             self._load_classes()
             
-            # 检查instant_class_combo是否存在，如果不存在则创建
-            if not hasattr(self, 'instant_class_combo'):
-                self.instant_class_combo = ComboBox()
-                self.instant_class_combo.setFixedSize(130, 30)
-                if dark_mode:
-                    self.instant_class_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
-                else:
-                    self.instant_class_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
-                self.instant_class_combo.setFont(QFont(load_custom_font(), 10))
-                
-                # 创建小组下拉框
-                self.instant_group_combo = ComboBox()
-                self.instant_group_combo.setFixedSize(130, 30)
-                if dark_mode:
-                    self.instant_group_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
-                else:
-                    self.instant_group_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
-                self.instant_group_combo.setFont(QFont(load_custom_font(), 10))
-                
-                # 创建性别下拉框
-                self.instant_gender_combo = ComboBox()
-                self.instant_gender_combo.setFixedSize(130, 30)
-                if dark_mode:
-                    self.instant_gender_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
-                else:
-                    self.instant_gender_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
-                self.instant_gender_combo.setFont(QFont(load_custom_font(), 10))
-                
-                # 初始化下拉框数据
-                self._init_instant_combo_data()
-            
             try:
                 from app.common.path_utils import path_manager, open_file
                 with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
@@ -1621,7 +1597,7 @@ class LevitationWindow(QWidget):
                             class_name = fixed_default_list
             except Exception as e:
                 logger.error(f"加载固定默认名单设置时出错: {e}")
-                class_name = self.instant_class_combo.currentText()
+                class_name = self.class_combo.currentText()
             group_name = group_name
             gender_name = gender_name
             
@@ -1858,137 +1834,6 @@ class LevitationWindow(QWidget):
             error_dialog.cancelButton.hide()
             error_dialog.buttonLayout.insertStretch(1)
             error_dialog.exec()
-            
-    def _update_instant_group_list(self):
-        """更新即抽窗口中的小组列表"""
-        try:
-            class_name = self.instant_class_combo.currentText()
-            if class_name in ["你暂未添加班级", "加载班级列表失败"]:
-                return
-                
-            pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
-            if path_manager.file_exists(pumping_people_file):
-                with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    groups = set()
-                    for student_name, student_info in data.items():
-                        if isinstance(student_info, dict) and 'id' in student_info:
-                            id = student_info.get('id', '')
-                            name = student_name.replace('【', '').replace('】', '')
-                            gender = student_info.get('gender', '')
-                            group = student_info.get('group', '')
-                            if group:  # 只添加非空小组
-                                groups.add(group)
-                    cleaned_data = sorted(list(groups), key=lambda x: self._sort_key(str(x)))
-                    
-                    # 保存当前选择
-                    current_group = self.instant_group_combo.currentText()
-                    
-                    # 清空并重新添加选项
-                    self.instant_group_combo.clear()
-                    self.instant_group_combo.addItem('抽取全班学生')
-                    
-                    if groups:
-                        self.instant_group_combo.addItem('抽取小组组号')
-                        self.instant_group_combo.addItems(cleaned_data)
-                    else:
-                        logger.error("你暂未添加小组")
-                        self.instant_group_combo.addItem("你暂未添加小组")
-                    
-                    # 恢复之前的选择（如果存在）
-                    index = self.instant_group_combo.findText(current_group)
-                    if index >= 0:
-                        self.instant_group_combo.setCurrentIndex(index)
-            else:
-                logger.error("你暂未添加小组")
-                self.instant_group_combo.clear()
-                self.instant_group_combo.addItem('抽取全班学生')
-                self.instant_group_combo.addItem("你暂未添加小组")
-        except Exception as e:
-            logger.error(f"更新小组列表失败: {str(e)}")
-            self.instant_group_combo.clear()
-            self.instant_group_combo.addItem('抽取全班学生')
-            self.instant_group_combo.addItem("加载小组列表失败")
-    
-    def _update_instant_gender_list(self):
-        """更新即抽窗口中的性别列表"""
-        try:
-            class_name = self.instant_class_combo.currentText()
-            if class_name in ["你暂未添加班级", "加载班级列表失败"]:
-                return
-                
-            pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
-            if path_manager.file_exists(pumping_people_file):
-                with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    genders = set()
-                    for student_name, student_info in data.items():
-                        if isinstance(student_info, dict) and 'id' in student_info:
-                            id = student_info.get('id', '')
-                            name = student_name.replace('【', '').replace('】', '')
-                            gender = student_info.get('gender', '')
-                            group = student_info.get('group', '')
-                            
-                            # 根据小组选择过滤性别
-                            group_name = self.instant_group_combo.currentText()
-                            if group_name != '抽取全班学生' and group_name != '抽取小组组号' and group != group_name:
-                                continue
-                                
-                            if gender:  # 只添加非空性别
-                                genders.add(gender)
-                    cleaned_data = sorted(list(genders), key=lambda x: self._sort_key(str(x)))
-                    
-                    # 保存当前选择
-                    current_gender = self.instant_gender_combo.currentText()
-                    
-                    # 清空并重新添加选项
-                    self.instant_gender_combo.clear()
-                    self.instant_gender_combo.addItem('抽取所有性别')
-                    
-                    if genders:
-                        self.instant_gender_combo.addItems(cleaned_data)
-                    else:
-                        logger.error("你暂未添加性别")
-                        self.instant_gender_combo.addItem("你暂未添加性别")
-                    
-                    # 恢复之前的选择（如果存在）
-                    index = self.instant_gender_combo.findText(current_gender)
-                    if index >= 0:
-                        self.instant_gender_combo.setCurrentIndex(index)
-            else:
-                logger.error("你暂未添加性别")
-                self.instant_gender_combo.clear()
-                self.instant_gender_combo.addItem('抽取所有性别')
-                self.instant_gender_combo.addItem("你暂未添加性别")
-        except Exception as e:
-            logger.error(f"更新性别列表失败: {str(e)}")
-            self.instant_gender_combo.clear()
-            self.instant_gender_combo.addItem('抽取所有性别')
-            self.instant_gender_combo.addItem("加载性别列表失败")
-    
-    def _update_pumping_content_selection(self):
-        """更新pumping_content的选择"""
-        if hasattr(self, 'pumping_content') and self.pumping_content:
-            # 更新班级选择
-            if hasattr(self.pumping_content, 'class_combo'):
-                current_class = self.instant_class_combo.currentText()
-                index = self.pumping_content.class_combo.findText(current_class)
-                if index >= 0:
-                    self.pumping_content.class_combo.setCurrentIndex(index)
-            
-            # 更新小组选择
-            if hasattr(self.pumping_content, 'group_combo'):
-                current_group = self.instant_group_combo.currentText()
-                index = self.pumping_content.group_combo.findText(current_group)
-                if index >= 0:
-                    self.pumping_content.group_combo.setCurrentIndex(index)
-            
-            # 更新性别选择
-            if hasattr(self.pumping_content, 'gender_combo'):
-                current_gender = self.instant_gender_combo.currentText()
-                index = self.pumping_content.gender_combo.findText(current_gender)
-                if index >= 0:
-                    self.pumping_content.gender_combo.setCurrentIndex(index)
     
     def _sort_key(self, group):
         """将小组名称转换为排序键"""
@@ -2327,28 +2172,33 @@ class LevitationWindow(QWidget):
     # 更新人数显示        
     def _update_count_display(self):
         """更新人数显示"""
-        self.count_label.setText(str(self.current_count))
-        
-        # 根据当前人数启用/禁用按钮
-        self.increase_button.setEnabled(self.current_count < self.max_count)
-        self.decrease_button.setEnabled(self.current_count > 1)
-        
-        # 只有在不在抽取过程中时才根据人数条件启用/禁用即抽按钮
-        if not self.is_drawing:
-            self.instant_draw_button.setEnabled(self.current_count <= self.max_count and self.current_count > 0)
-        # 如果正在抽取，保持按钮禁用状态
-        
-        # 如果当前人数超过最大人数，自动调整到最大人数
-        if self.current_count > self.max_count:
-            self.current_count = self.max_count
+        # 检查count_label是否存在，只有在即抽模式下才存在
+        if hasattr(self, 'count_label') and self.count_label is not None:
             self.count_label.setText(str(self.current_count))
-            self._animate_count_change(self.current_count)
-            # 重新更新按钮状态
+        
+        # 检查按钮是否存在，只有在即抽模式下才存在
+        if hasattr(self, 'increase_button') and self.increase_button is not None and hasattr(self, 'decrease_button') and self.decrease_button is not None:
+            # 根据当前人数启用/禁用按钮
             self.increase_button.setEnabled(self.current_count < self.max_count)
             self.decrease_button.setEnabled(self.current_count > 1)
+            
             # 只有在不在抽取过程中时才根据人数条件启用/禁用即抽按钮
-            if not self.is_drawing:
+            if not self.is_drawing and hasattr(self, 'instant_draw_button') and self.instant_draw_button is not None:
                 self.instant_draw_button.setEnabled(self.current_count <= self.max_count and self.current_count > 0)
+            # 如果正在抽取，保持按钮禁用状态
+            
+            # 如果当前人数超过最大人数，自动调整到最大人数
+            if self.current_count > self.max_count:
+                self.current_count = self.max_count
+                if hasattr(self, 'count_label') and self.count_label is not None:
+                    self.count_label.setText(str(self.current_count))
+                self._animate_count_change(self.current_count)
+                # 重新更新按钮状态
+                self.increase_button.setEnabled(self.current_count < self.max_count)
+                self.decrease_button.setEnabled(self.current_count > 1)
+                # 只有在不在抽取过程中时才根据人数条件启用/禁用即抽按钮
+                if not self.is_drawing and hasattr(self, 'instant_draw_button') and self.instant_draw_button is not None:
+                    self.instant_draw_button.setEnabled(self.current_count <= self.max_count and self.current_count > 0)
     
     def _reset_count(self):
         # 小鸟游星野：重置抽取人数和已抽取名单 ✧(๑•̀ㅂ•́)๑
@@ -2358,6 +2208,28 @@ class LevitationWindow(QWidget):
         self._clean_temp_files()
 
     # 清理临时文件
+    def _reset_instant_draw(self):
+        """重置即抽功能状态"""
+        # 重置抽取人数为1
+        self.current_count = 1
+        self._animate_count_change(self.current_count)
+        self._update_count_display()
+        
+        # 清理临时抽取记录文件
+        self._clean_temp_files()
+        
+        # 重置抽取状态
+        self.is_drawing = False
+        
+        # 重新启用按钮
+        if hasattr(self, 'instant_draw_button') and self.instant_draw_button is not None:
+            self.instant_draw_button.setEnabled(True)
+        
+        if hasattr(self, 'flash_button') and self.flash_button is not None:
+            self.flash_button.setEnabled(True)
+            
+        logger.info("即抽功能已重置")
+
     def _clean_temp_files(self):
         import glob
         temp_dir = path_manager.get_temp_path()
@@ -2372,8 +2244,9 @@ class LevitationWindow(QWidget):
     def _load_classes(self):
         # 初始化班级下拉框
         self.class_combo = ComboBox()
-        self.class_combo.setFixedSize(180, 50)
-        self.class_combo.setFont(QFont(load_custom_font(), 13))
+        self.class_combo.setFixedSize(130, 24)
+        self.class_combo.setFont(QFont(load_custom_font(), 10))
+        self.class_combo.currentIndexChanged.connect(self.update_total_count)
         # 加载班级列表
         try:
             list_folder = path_manager.get_resource_path("list")
@@ -2401,8 +2274,8 @@ class LevitationWindow(QWidget):
     def _load_groups(self):
         # 小组下拉框
         self.group_combo = ComboBox()
-        self.group_combo.setFixedSize(180, 50)
-        self.group_combo.setFont(QFont(load_custom_font(), 13))
+        self.group_combo.setFixedSize(130, 24)
+        self.group_combo.setFont(QFont(load_custom_font(), 10))
         self.group_combo.addItem('抽取全班学生')
         self.group_combo.currentIndexChanged.connect(self.update_total_count)
 
@@ -2414,38 +2287,44 @@ class LevitationWindow(QWidget):
             return
             
         pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
-        try:
-            if path_manager.file_exists(pumping_people_file):
-                with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    groups = set()
-                    for student_name, student_info in data.items():
-                        if isinstance(student_info, dict) and 'id' in student_info:
-                            id = student_info.get('id', '')
-                            name = student_name.replace('【', '').replace('】', '')
-                            gender = student_info.get('gender', '')
-                            group = student_info.get('group', '')
-                            if group:  # 只添加非空小组
-                                groups.add(group)
-                    cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
-                    if groups:
-                        self.group_combo.addItem('抽取小组组号')
-                        self.group_combo.addItems(cleaned_data)
-                    else:
-                        logger.error("你暂未添加小组")
-                        self.group_combo.addItem("你暂未添加小组")
-            else:
-                logger.error("你暂未添加小组")
-                self.group_combo.addItem("你暂未添加小组")
-        except Exception as e:
-            logger.error(f"加载小组列表失败: {str(e)}")
-            self.group_combo.addItem("加载小组列表失败")
+        if class_name not in ["你暂未添加班级", "加载班级列表失败", "你暂未添加小组", "加载小组列表失败"]:
+            pumping_people_file = path_manager.get_resource_path("list", f"{class_name}.json")
+            try:
+                if path_manager.file_exists(pumping_people_file):
+                    with open_file(pumping_people_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        groups = set()
+                        for student_name, student_info in data.items():
+                            if isinstance(student_info, dict) and 'id' in student_info:
+                                id = student_info.get('id', '')
+                                name = student_name.replace('【', '').replace('】', '')
+                                gender = student_info.get('gender', '')
+                                group = student_info.get('group', '')
+                                if group:  # 只添加非空小组
+                                    groups.add(group)
+                        cleaned_data = sorted(list(groups), key=lambda x: self.sort_key(str(x)))
+                        self.group_combo.clear()
+                        self.group_combo.addItem('抽取全班学生')
+                        if groups:
+                            self.group_combo.addItem('抽取小组组号')
+                            self.group_combo.addItems(cleaned_data)
+                        else:
+                            logger.error("你暂未添加小组")
+                            self.group_combo.addItem("你暂未添加小组")
+                else:
+                    logger.error("你暂未添加小组")
+                    self.group_combo.addItem("你暂未添加小组")
+            except Exception as e:
+                logger.error(f"加载小组列表失败: {str(e)}")
+                self.group_combo.addItem("加载小组列表失败")
+        else:
+            logger.error("请先选择有效的班级")
         
     def _load_genders(self):
         # 性别下拉框
         self.gender_combo = ComboBox()
-        self.gender_combo.setFixedSize(180, 50)
-        self.gender_combo.setFont(QFont(load_custom_font(), 13))
+        self.gender_combo.setFixedSize(130, 24)
+        self.gender_combo.setFont(QFont(load_custom_font(), 10))
         self.gender_combo.addItem('抽取所有性别')
         self.gender_combo.currentIndexChanged.connect(self.update_total_count)
 
@@ -2506,9 +2385,13 @@ class LevitationWindow(QWidget):
 
     def update_total_count(self):
         """更新总人数"""
-        self._load_classes()
-        self._load_groups()
-        self._load_genders()
+        # 只在下拉框不存在时才创建它们
+        if not hasattr(self, 'class_combo') or self.class_combo is None:
+            self._load_classes()
+        if not hasattr(self, 'group_combo') or self.group_combo is None:
+            self._load_groups()
+        if not hasattr(self, 'gender_combo') or self.gender_combo is None:
+            self._load_genders()
             
         class_name = self.class_combo.currentText()
         group_name = self.group_combo.currentText()
@@ -2517,6 +2400,7 @@ class LevitationWindow(QWidget):
         # 检查是否选择了有效的班级
         if class_name == "你暂未添加班级" or class_name == "加载班级列表失败":
             self.max_count = 0
+            self._update_count_display()  # 更新按钮状态
             return
             
         student_file = path_manager.get_resource_path("list", f"{class_name}.json")
@@ -2524,11 +2408,13 @@ class LevitationWindow(QWidget):
         # 检查文件是否存在
         if not path_manager.file_exists(student_file):
             self.max_count = 0
+            self._update_count_display()  # 更新按钮状态
             return
 
         cleaned_data = self._get_cleaned_data(student_file, group_name, gender_name)
 
         self.max_count = len(cleaned_data)
+        self._update_count_display()  # 更新按钮状态
     
     def _show_instant_draw_window(self):
         # 小鸟游星野：显示即抽窗口 - 使用_show_direct_extraction_window传递抽取人数、班级、小组和性别 ✧(๑•̀ㅂ•́)๑
@@ -2540,9 +2426,9 @@ class LevitationWindow(QWidget):
             self.update_total_count()
             
             # 获取当前选择的班级、小组和性别
-            class_name = self.instant_class_combo.currentText()
-            group_name = self.instant_group_combo.currentText()
-            gender_name = self.instant_gender_combo.currentText()
+            class_name = self.class_combo.currentText()
+            group_name = self.group_combo.currentText()
+            gender_name = self.gender_combo.currentText()
             
             # 调用直接抽取窗口方法，传递抽取人数、班级、小组和性别
             self._show_direct_extraction_window(self.current_count, class_name, group_name, gender_name)
@@ -2556,7 +2442,15 @@ class LevitationWindow(QWidget):
             error_dialog.exec()
     
     def _check_edge_proximity(self):
-        """检测窗口是否靠近屏幕边缘，并实现贴边隐藏功能"""
+        """检测窗口是否靠近屏幕边缘，并实现贴边隐藏功能（带动画效果）"""
+        # 如果设置窗口存在，先关闭它
+        if hasattr(self, 'settings_window') and self.settings_window:
+            self._close_settings_window()
+            
+        # 如果有正在进行的动画，先停止它
+        if hasattr(self, 'animation') and self.animation.state() == QPropertyAnimation.Running:
+            self.animation.stop()
+        
         # 获取屏幕尺寸
         screen = QApplication.desktop().screenGeometry()
         
@@ -2567,20 +2461,52 @@ class LevitationWindow(QWidget):
         
         # 定义边缘阈值（像素）
         edge_threshold = 5
+        hidden_width = 10  # 隐藏后露出的宽度
         
         # 检测左边缘
         if window_pos.x() <= edge_threshold:
-            # 将窗口完全移出屏幕左侧
-            self.move(-window_width, window_pos.y())
-            # 创建向右箭头按钮
-            self._create_arrow_button('right', 0, window_pos.y() + window_height // 2 - 15)
+            # 创建动画效果
+            self.animation = QPropertyAnimation(self, b"geometry")
+            # 设置动画持续时间
+            self.animation.setDuration(300)
+            # 设置缓动曲线
+            self.animation.setEasingCurve(QEasingCurve.Type.OutQuad)
+            
+            # 设置动画起始值（当前位置）
+            self.animation.setStartValue(self.geometry())
+            
+            # 设置动画结束值（隐藏位置）
+            end_rect = QRect(-window_width + hidden_width, window_pos.y(), window_width, window_height)
+            self.animation.setEndValue(end_rect)
+            
+            # 启动动画
+            self.animation.start()
+            
+            # 动画结束后创建箭头按钮
+            self.animation.finished.connect(lambda: self._create_arrow_button('right', 0, window_pos.y() + window_height // 2 - 15))
             return
+            
         # 检测右边缘
         elif window_pos.x() + window_width >= screen.width() - edge_threshold:
-            # 将窗口完全移出屏幕右侧
-            self.move(screen.width(), window_pos.y())
-            # 创建向左箭头按钮
-            self._create_arrow_button('left', screen.width() - 30, window_pos.y() + window_height // 2 - 15)
+            # 创建动画效果
+            self.animation = QPropertyAnimation(self, b"geometry")
+            # 设置动画持续时间
+            self.animation.setDuration(300)
+            # 设置缓动曲线
+            self.animation.setEasingCurve(QEasingCurve.Type.OutQuad)
+            
+            # 设置动画起始值（当前位置）
+            self.animation.setStartValue(self.geometry())
+            
+            # 设置动画结束值（隐藏位置）
+            end_rect = QRect(screen.width() - hidden_width, window_pos.y(), window_width, window_height)
+            self.animation.setEndValue(end_rect)
+            
+            # 启动动画
+            self.animation.start()
+            
+            # 动画结束后创建箭头按钮
+            self.animation.finished.connect(lambda: self._create_arrow_button('left', screen.width() - 30, window_pos.y() + window_height // 2 - 15))
             return
         
         # 保存新位置
@@ -2704,7 +2630,11 @@ class LevitationWindow(QWidget):
         self.arrow_widget.setFocus()
         
     def _show_hidden_window(self, direction):
-        """显示隐藏的窗口"""
+        """显示隐藏的窗口（带动画效果）"""
+        # 如果有正在进行的动画，先停止它
+        if hasattr(self, 'animation') and self.animation.state() == QPropertyAnimation.Running:
+            self.animation.stop()
+        
         # 获取屏幕尺寸
         screen = QApplication.desktop().screenGeometry()
         
@@ -2732,23 +2662,30 @@ class LevitationWindow(QWidget):
         elif window_y + window_height > screen.height():
             window_y = screen.height() - window_height
         
-        # 根据方向显示窗口
+        # 创建动画效果
+        self.animation = QPropertyAnimation(self, b"geometry")
+        # 设置动画持续时间
+        self.animation.setDuration(300)
+        # 设置缓动曲线
+        self.animation.setEasingCurve(QEasingCurve.Type.OutQuad)
+        
+        # 设置动画起始值（当前位置）
+        self.animation.setStartValue(self.geometry())
+        
+        # 设置动画结束值（显示位置）
         if direction == 'right':
             # 从左侧显示窗口
-            self.move(0, window_y)
+            end_rect = QRect(0, window_y, window_width, window_height)
         else:  # left
             # 从右侧显示窗口
-            self.move(screen.width() - window_width, window_y)
-            
-        # 删除箭头按钮容器
-        if hasattr(self, 'arrow_widget') and self.arrow_widget:
-            self.arrow_widget.deleteLater()
-            self.arrow_widget = None
-            
-        # 删除箭头按钮
-        if hasattr(self, 'arrow_button') and self.arrow_button:
-            self.arrow_button.deleteLater()
-            self.arrow_button = None
+            end_rect = QRect(screen.width() - window_width, window_y, window_width, window_height)
+        
+        self.animation.setEndValue(end_rect)
+        
+        # 启动动画
+        self.animation.start()
+
+        self._delete_arrow_button()
             
         # 保存新位置
         self.save_position()
@@ -2760,13 +2697,347 @@ class LevitationWindow(QWidget):
         # 根据自定义收回秒数设置延迟后自动隐藏窗口
         retract_time = getattr(self, 'custom_retract_time', 5) * 1000  # 转换为毫秒
         QTimer.singleShot(retract_time, self._auto_hide_window)
+    
+    def _delete_arrow_button(self):
+        """实际删除箭头按钮的辅助方法"""
+        # 删除箭头按钮容器
+        if hasattr(self, 'arrow_widget') and self.arrow_widget:
+            self.arrow_widget.deleteLater()
+            self.arrow_widget = None
+            
+        # 删除箭头按钮
+        if hasattr(self, 'arrow_button') and self.arrow_button:
+            self.arrow_button.deleteLater()
+            self.arrow_button = None
         
     def _auto_hide_window(self):
         """自动隐藏窗口"""
+        # 如果设置窗口存在，先关闭它
+        if hasattr(self, 'settings_window') and self.settings_window:
+            self._close_settings_window()
+            
         # 检查是否启用了边缘贴边隐藏功能
         if hasattr(self, 'flash_window_side_switch') and self.flash_window_side_switch:
             # 调用边缘检测方法隐藏窗口
             self._check_edge_proximity()
+    
+    def _show_settings_window(self):
+        """显示简洁美观的设置小浮窗，支持上下左右智能定位"""
+        try:
+            # 如果设置窗口已经存在，先关闭它
+            if hasattr(self, 'settings_window') and self.settings_window:
+                self._close_settings_window()
+                return  # 直接返回，不再创建新窗口
+            
+            # 创建设置窗口
+            self.settings_window = QWidget()
+            self.settings_window.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.NoFocus | Qt.Popup)
+            self.settings_window.setAttribute(Qt.WA_TranslucentBackground)
+            
+            # 设置简洁小巧的窗口大小
+            self.settings_window.setFixedSize(160, 90)
+            
+            # 智能位置计算 - 支持上下左右四个方向
+            main_window_pos = self.pos()
+            main_window_size = self.size()
+            
+            # 获取屏幕尺寸
+            screen_geometry = QApplication.desktop().screenGeometry()
+            screen_width = screen_geometry.width()
+            screen_height = screen_geometry.height()
+            
+            # 计算四个方向的位置选项
+            positions = {
+                'right': {  # 右侧
+                    'x': main_window_pos.x() + main_window_size.width() + 8,
+                    'y': main_window_pos.y() + (main_window_size.height() - 90) // 2
+                },
+                'left': {  # 左侧
+                    'x': main_window_pos.x() - 160 - 8,
+                    'y': main_window_pos.y() + (main_window_size.height() - 90) // 2
+                },
+                'top': {  # 上方
+                    'x': main_window_pos.x() + (main_window_size.width() - 160) // 2,
+                    'y': main_window_pos.y() - 90 - 8
+                },
+                'bottom': {  # 下方
+                    'x': main_window_pos.x() + (main_window_size.width() - 160) // 2,
+                    'y': main_window_pos.y() + main_window_size.height() + 8
+                }
+            }
+            
+            # 按优先级选择最佳位置（下→上→左→右）
+            best_position = None
+            for direction in ['bottom', 'top', 'left', 'right']:
+                pos = positions[direction]
+                # 检查是否超出屏幕边界
+                if (pos['x'] >= 0 and pos['y'] >= 0 and 
+                    pos['x'] + 160 <= screen_width and 
+                    pos['y'] + 90 <= screen_height):
+                    best_position = pos
+                    break
+            
+            # 如果所有预设位置都不可用，使用备用位置
+            if best_position is None:
+                # 优先尝试下方，如果不行就上方
+                if positions['bottom']['y'] + 90 <= screen_height:
+                    best_position = positions['bottom']
+                elif positions['top']['y'] >= 0:
+                    best_position = positions['top']
+                else:
+                    best_position = {
+                        'x': max(5, screen_width - 160 - 5),
+                        'y': max(5, min(positions['bottom']['y'], screen_height - 90 - 5))
+                    }
+            
+            self.settings_window.move(best_position['x'], best_position['y'])
+            
+            # 设置美观的渐变背景样式
+            if dark_mode:
+                bg_gradient_start = 'rgba(60, 60, 60, 0.98)'
+                bg_gradient_end = 'rgba(40, 40, 40, 0.95)'
+                border_color = '#555555'
+                text_color = '#ffffff'
+            else:
+                bg_gradient_start = 'rgba(255, 255, 255, 0.99)'
+                bg_gradient_end = 'rgba(245, 245, 245, 0.98)'
+                border_color = '#d0d0d0'
+                text_color = '#2c2c2c'
+            
+            self.settings_window.setStyleSheet(f'''
+                QWidget {{
+                    color: {text_color};
+                }}
+            ''')
+            
+            # 创建背景标签，用于显示背景样式
+            background_label = BodyLabel(self.settings_window)
+            background_label.setObjectName("backgroundLabel")
+            background_label.setStyleSheet(f'''
+                BodyLabel#backgroundLabel {{
+                    border: 1px solid {border_color};
+                    border-radius: 12px;
+                    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                               stop: 0 {bg_gradient_start}, stop: 0.5 {bg_gradient_start}, stop: 1 {bg_gradient_end});
+                }}
+            ''')
+            
+            # 创建紧凑主布局
+            main_layout = QVBoxLayout(background_label)
+            main_layout.setContentsMargins(8, 6, 8, 6)
+            main_layout.setSpacing(4)
+            
+            # 创建窗口主布局，用于放置背景标签
+            window_layout = QVBoxLayout(self.settings_window)
+            window_layout.setContentsMargins(0, 0, 0, 0)
+            window_layout.addWidget(background_label)
+            
+            # 创建设置项布局（紧凑设计）
+            # 名单设置
+            class_layout = QHBoxLayout()
+            class_layout.setSpacing(6)
+            
+            # 小组设置
+            group_layout = QHBoxLayout()
+            group_layout.setSpacing(6)
+            
+            # 性别设置
+            gender_layout = QHBoxLayout()
+            gender_layout.setSpacing(6)
+            
+            # 添加设置项到主布局
+            main_layout.addLayout(class_layout)
+            main_layout.addLayout(group_layout)
+            main_layout.addLayout(gender_layout)
+            
+            # 添加小箭头指示器（可选，根据位置方向显示）
+            self._add_direction_indicator(best_position, main_window_pos, main_window_size) if hasattr(self, '_add_direction_indicator') else None
+            
+            # 初始化下拉框数据
+            self._load_classes()
+            self._load_groups()
+            self._load_genders()
+            
+            # 恢复之前保存的选择
+            if hasattr(self, 'saved_class') and self.saved_class:
+                index = self.class_combo.findText(self.saved_class)
+                if index >= 0:
+                    self.class_combo.setCurrentIndex(index)
+            
+            if hasattr(self, 'saved_group') and self.saved_group:
+                index = self.group_combo.findText(self.saved_group)
+                if index >= 0:
+                    self.group_combo.setCurrentIndex(index)
+            
+            if hasattr(self, 'saved_gender') and self.saved_gender:
+                index = self.gender_combo.findText(self.saved_gender)
+                if index >= 0:
+                    self.gender_combo.setCurrentIndex(index)
+            
+            # 将下拉框添加到布局中
+            class_layout.addWidget(self.class_combo)
+            group_layout.addWidget(self.group_combo)
+            gender_layout.addWidget(self.gender_combo)
+            
+            # 连接下拉框信号
+            if hasattr(self, 'class_combo') and self.class_combo:
+                self.class_combo.currentIndexChanged.connect(self.update_total_count)
+            if hasattr(self, 'group_combo') and self.group_combo:
+                self.group_combo.currentIndexChanged.connect(self.update_total_count)
+            if hasattr(self, 'gender_combo') and self.gender_combo:
+                self.gender_combo.currentIndexChanged.connect(self.update_total_count)
+            
+            # 显示窗口
+            self.settings_window.show()
+            
+            # 为设置窗口添加点击外部关闭功能
+            self.settings_window.installEventFilter(self)
+            
+            # 安装全局事件过滤器，以便捕获应用程序全局的鼠标点击事件
+            QApplication.instance().installEventFilter(self)
+            
+            # 添加10秒无操作自动关闭功能
+            self.settings_close_timer = QTimer(self)
+            self.settings_close_timer.setSingleShot(True)
+            self.settings_close_timer.timeout.connect(self._close_settings_window)
+            self.settings_close_timer.start(10000)  # 10秒后自动关闭
+            
+        except Exception as e:
+            logger.error(f"创建设置窗口失败: {e}")
+    
+    def _close_settings_window(self):
+        """关闭设置窗口"""
+        if hasattr(self, 'settings_window') and self.settings_window:
+            # 保存当前选择
+            if hasattr(self, 'class_combo') and self.class_combo:
+                self.saved_class = self.class_combo.currentText()
+            if hasattr(self, 'group_combo') and self.group_combo:
+                self.saved_group = self.group_combo.currentText()
+            if hasattr(self, 'gender_combo') and self.gender_combo:
+                self.saved_gender = self.gender_combo.currentText()
+            
+            # 移除全局事件过滤器
+            QApplication.instance().removeEventFilter(self)
+            
+            # 断开所有信号连接
+            if hasattr(self, 'class_combo') and self.class_combo:
+                try:
+                    self.class_combo.currentIndexChanged.disconnect(self.update_total_count)
+                except:
+                    pass  # 忽略断开连接时的错误
+            
+            if hasattr(self, 'group_combo') and self.group_combo:
+                try:
+                    self.group_combo.currentIndexChanged.disconnect(self.update_total_count)
+                except:
+                    pass  # 忽略断开连接时的错误
+            
+            if hasattr(self, 'gender_combo') and self.gender_combo:
+                try:
+                    self.gender_combo.currentIndexChanged.disconnect(self.update_total_count)
+                except:
+                    pass  # 忽略断开连接时的错误
+            
+            # 关闭窗口
+            self.settings_window.close()
+            self.settings_window = None
+            
+        if hasattr(self, 'settings_close_timer') and self.settings_close_timer:
+            self.settings_close_timer.stop()
+    
+    def _add_direction_indicator(self, settings_pos, main_pos, main_size):
+        """添加方向指示器，显示设置窗口相对于主窗口的方向"""
+        try:
+            # 计算相对位置
+            settings_x = settings_pos['x']
+            settings_y = settings_pos['y']
+            
+            # 确定方向
+            if settings_x > main_pos.x() + main_size.width():
+                direction = 'right'  # 右侧
+            elif settings_x + 160 < main_pos.x():
+                direction = 'left'   # 左侧
+            elif settings_y > main_pos.y() + main_size.height():
+                direction = 'bottom' # 下方
+            else:
+                direction = 'top'    # 上方
+            
+            # 创建指示器标签
+            indicator = QLabel(self.settings_window)
+            
+            # 设置指示器样式 - 使用三角形箭头设计
+            if dark_mode:
+                indicator_color = '#4a9eff'  # 亮蓝色
+            else:
+                indicator_color = '#2196f3'  # 蓝色
+            
+            # 根据方向定位指示器并设置箭头形状
+            if direction == 'right':
+                indicator.setFixedSize(16, 16)  # 左箭头
+                indicator.move(-8, 37)  # 向左偏移
+                # 使用CSS创建左箭头
+                indicator.setStyleSheet(f'''
+                    QLabel {{
+                        background-color: {indicator_color};
+                        border: none;
+                        border-radius: 2px;
+                    }}
+                ''')
+            elif direction == 'left':
+                indicator.setFixedSize(16, 16)  # 右箭头
+                indicator.move(152, 37)  # 向右偏移
+                # 使用CSS创建右箭头
+                indicator.setStyleSheet(f'''
+                    QLabel {{
+                        background-color: {indicator_color};
+                        border: none;
+                        border-radius: 2px;
+                    }}
+                ''')
+            elif direction == 'bottom':
+                indicator.setFixedSize(16, 16)  # 上箭头
+                indicator.move(72, -8)  # 向上偏移
+                # 使用CSS创建上箭头
+                indicator.setStyleSheet(f'''
+                    QLabel {{
+                        background-color: {indicator_color};
+                        border: none;
+                        border-radius: 2px;
+                    }}
+                ''')
+            else:  # top
+                indicator.setFixedSize(16, 16)  # 下箭头
+                indicator.move(72, 88)  # 向下偏移
+                # 使用CSS创建下箭头
+                indicator.setStyleSheet(f'''
+                    QLabel {{
+                        background-color: {indicator_color};
+                        border: none;
+                        border-radius: 2px;
+                    }}
+                ''')
+                
+            indicator.show()
+            
+        except Exception as e:
+            logger.debug(f"添加方向指示器失败: {e}")
+
+
+    def eventFilter(self, obj, event):
+        """事件过滤器，用于点击设置窗口外部时关闭窗口"""
+        # 处理设置窗口的点击事件
+        if obj == self.settings_window:
+            # 如果是鼠标按下事件
+            if event.type() == QEvent.MouseButtonPress:
+                # 如果是窗口内部点击，重置计时器
+                if hasattr(self, 'settings_close_timer') and self.settings_close_timer:
+                    self.settings_close_timer.stop()
+                    self.settings_close_timer.start(10000)  # 重置为10秒
+            # 如果是键盘事件，也重置计时器
+            elif event.type() == QEvent.KeyPress and hasattr(self, 'settings_close_timer') and self.settings_close_timer:
+                self.settings_close_timer.stop()
+                self.settings_close_timer.start(10000)  # 重置为10秒
+        return False
         
 class DraggableWidget(QWidget):
     """可垂直拖动的窗口部件"""
@@ -2845,7 +3116,6 @@ class DraggableWidget(QWidget):
             
             # 如果没有触发长按且移动距离很小，则视为点击
             if not self._long_press_triggered and abs(event.globalY() - self._drag_start_y) < 5 and not was_dragging:
-                # 这里可以添加点击事件处理
                 pass
     
     def enterEvent(self, event):
