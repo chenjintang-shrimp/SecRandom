@@ -771,184 +771,95 @@ class LevitationWindow(QWidget):
 
     def _init_instant_draw_button(self):
         # 小鸟游星野：初始化即抽按钮和人数调节功能
-        # 创建主容器
+        # 创建主容器 - 紧凑的两层布局
         self.instant_draw_container = QWidget()
         main_layout = QVBoxLayout(self.instant_draw_container)
-        main_layout.setContentsMargins(5, 5, 5, 5)
-        main_layout.setSpacing(5)
+        main_layout.setContentsMargins(8, 8, 8, 8)
+        main_layout.setSpacing(8)
         
-        # 创建选择容器 - 添加班级、小组和性别选择
-        selection_container = QWidget()
-        selection_layout = QVBoxLayout(selection_container)
-        selection_layout.setContentsMargins(0, 0, 0, 0)
-        selection_layout.setSpacing(5)
-        
-        # 创建班级下拉框
-        self.instant_class_combo = ComboBox()
-        self.instant_class_combo.setFixedSize(130, 30)
-        if dark_mode:
-            self.instant_class_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
-        else:
-            self.instant_class_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
-        self.instant_class_combo.setFont(QFont(load_custom_font(), 10))
-        
-        # 创建小组下拉框
-        self.instant_group_combo = ComboBox()
-        self.instant_group_combo.setFixedSize(130, 30)
-        if dark_mode:
-            self.instant_group_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
-        else:
-            self.instant_group_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
-        self.instant_group_combo.setFont(QFont(load_custom_font(), 10))
-        
-        # 创建性别下拉框
-        self.instant_gender_combo = ComboBox()
-        self.instant_gender_combo.setFixedSize(130, 30)
-        if dark_mode:
-            self.instant_gender_combo.setStyleSheet('border: none; background: transparent; color: #ffffff;')
-        else:
-            self.instant_gender_combo.setStyleSheet('border: none; background: transparent; color: #000000;')
-        self.instant_gender_combo.setFont(QFont(load_custom_font(), 10))
-        
-        # 添加标签和下拉框到选择布局
-        if self.custom_show_list_toggle:
-            selection_layout.addWidget(self.instant_class_combo)
-        if self.custom_selection_range:
-            selection_layout.addWidget(self.instant_group_combo)
-        if self.custom_selection_gender:
-            selection_layout.addWidget(self.instant_gender_combo)
-        
-        # 初始化下拉框数据
-        self._init_instant_combo_data()
-        
-        # 创建抽取按钮 - 增大尺寸并居中
-        self.instant_draw_button = PushButton("抽取")
-        self.instant_draw_button.setFixedSize(65, 30)
-        if dark_mode:
-            self.instant_draw_button.setStyleSheet('border: none; background: transparent; color: #ffffff;')
-        else:
-            self.instant_draw_button.setStyleSheet('border: none; background: transparent; color: #000000;')
-        
-        # 创建人数调节容器 - 优化布局
+        # 第一层：人数调节布局
         count_control_container = QWidget()
-        # 根据排列模式决定水平或垂直布局
-        if self.button_arrangement_mode == 1:  # 竖着排列
-            # 竖排模式下使用垂直布局
-            count_control_layout = QVBoxLayout(count_control_container)
-        else:
-            # 其他模式使用水平布局
-            count_control_layout = QHBoxLayout(count_control_container)
+        count_control_layout = QHBoxLayout(count_control_container)
         count_control_layout.setContentsMargins(0, 0, 0, 0)
         count_control_layout.setSpacing(5)
         
-        # 创建-按钮
+        # 左侧：减人数按钮
         self.decrease_button = PushButton("-")
-        # 竖排模式下宽度为60，其他模式保持原尺寸
-        if self.button_arrangement_mode == 1:  # 竖着排列
-            self.decrease_button.setFixedSize(65, 30)
-        else:
-            self.decrease_button.setFixedSize(41, 30)
-
+        self.decrease_button.setFixedSize(35, 30)
         if dark_mode:
-            self.decrease_button.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+            self.decrease_button.setStyleSheet('border: 1px solid #555555; border-radius: 4px; background: #2a2a2a; color: #ffffff;')
         else:
-            self.decrease_button.setStyleSheet('border: none; background: transparent; color: #000000;')
+            self.decrease_button.setStyleSheet('border: 1px solid #cccccc; border-radius: 4px; background: #f5f5f5; color: #000000;')
         
-        # 创建当前人数显示文本 - 增大并美化
+        # 中间：当前抽取人数显示
         self.count_label = BodyLabel("1")
         self.count_label.setAlignment(Qt.AlignCenter)
-        # 竖排模式下宽度为60，其他模式保持原尺寸
-        if self.button_arrangement_mode == 1:  # 竖着排列
-            self.count_label.setFixedSize(65, 30)
+        self.count_label.setFixedSize(50, 30)
+        if dark_mode:
+            self.count_label.setStyleSheet('border: 1px solid #555555; border-radius: 4px; background: #2a2a2a; color: #ffffff; font-weight: bold;')
         else:
-            self.count_label.setFixedSize(43, 30)
+            self.count_label.setStyleSheet('border: 1px solid #cccccc; border-radius: 4px; background: #f5f5f5; color: #000000; font-weight: bold;')
         
-        # 创建+按钮
+        # 右侧：加人数按钮
         self.increase_button = PushButton("+")
-        # 竖排模式下宽度为60，其他模式保持原尺寸
-        if self.button_arrangement_mode == 1:  # 竖着排列
-            self.increase_button.setFixedSize(65, 30)
-        else:
-            self.increase_button.setFixedSize(41, 30)
-
+        self.increase_button.setFixedSize(35, 30)
         if dark_mode:
-            self.increase_button.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+            self.increase_button.setStyleSheet('border: 1px solid #555555; border-radius: 4px; background: #2a2a2a; color: #ffffff;')
         else:
-            self.increase_button.setStyleSheet('border: none; background: transparent; color: #000000;')
+            self.increase_button.setStyleSheet('border: 1px solid #cccccc; border-radius: 4px; background: #f5f5f5; color: #000000;')
         
-        # 创建重置按钮 - 调整大小
-        self.reset_button = PushButton("重置")
-        self.reset_button.setFixedSize(65, 30)
+        # 添加控件到第一层布局
+        count_control_layout.addWidget(self.decrease_button)
+        count_control_layout.addWidget(self.count_label)
+        count_control_layout.addWidget(self.increase_button)
+        
+        # 第二层：功能按钮布局
+        button_control_container = QWidget()
+        button_control_layout = QHBoxLayout(button_control_container)
+        button_control_layout.setContentsMargins(0, 0, 0, 0)
+        button_control_layout.setSpacing(5)
+        
+        # 左侧：点名按钮
+        self.instant_draw_button = PushButton("点名")
+        self.instant_draw_button.setFixedSize(60, 30)
         if dark_mode:
-            self.reset_button.setStyleSheet('border: none; background: transparent; color: #ffffff;')
+            self.instant_draw_button.setStyleSheet('border: 1px solid #555555; border-radius: 4px; background: #2a2a2a; color: #ffffff;')
         else:
-            self.reset_button.setStyleSheet('border: none; background: transparent; color: #000000;')
+            self.instant_draw_button.setStyleSheet('border: 1px solid #cccccc; border-radius: 4px; background: #f5f5f5; color: #000000;')
         
-        if self.button_arrangement_mode == 1:  # 竖着排列
-            # 竖排模式下使用垂直布局
-            count_control_layout.addStretch()
-            if self.custom_show_quantity_control:
-                count_control_layout.addWidget(self.increase_button)
-                count_control_layout.addWidget(self.count_label)
-                count_control_layout.addWidget(self.decrease_button)
-            if self.custom_show_reset_button:
-                count_control_layout.addWidget(self.reset_button)
-            count_control_layout.addStretch()
+        # 右侧：设置按钮（打开小浮窗界面）
+        self.settings_button = PushButton("设置")
+        self.settings_button.setFixedSize(60, 30)
+        if dark_mode:
+            self.settings_button.setStyleSheet('border: 1px solid #555555; border-radius: 4px; background: #2a2a2a; color: #ffffff;')
         else:
-            # 其他模式使用水平布局
-            count_control_layout.addStretch()
-            if self.custom_show_quantity_control:
-                count_control_layout.addWidget(self.decrease_button)
-                count_control_layout.addWidget(self.count_label)
-                count_control_layout.addWidget(self.increase_button)
-            count_control_layout.addStretch()
-
+            self.settings_button.setStyleSheet('border: 1px solid #cccccc; border-radius: 4px; background: #f5f5f5; color: #000000;')
         
-        # 为抽取按钮和重置按钮创建布局 - 根据排列模式决定水平或垂直
-        if self.button_arrangement_mode == 1:  # 竖着排列
-            # 竖排模式下使用垂直布局
-            button_layout = QVBoxLayout()
-            button_layout.addWidget(self.instant_draw_button)
-        else:
-            # 其他模式使用水平布局
-            button_layout = QHBoxLayout()
-            button_layout.addWidget(self.instant_draw_button)
-            if self.custom_show_reset_button:
-                button_layout.addWidget(self.reset_button)
-            button_layout.setContentsMargins(0, 0, 0, 0)
+        # 添加控件到第二层布局
+        button_control_layout.addWidget(self.instant_draw_button)
+        button_control_layout.addWidget(self.settings_button)
         
-        # 创建按钮容器
-        button_container = QWidget()
-        button_container.setLayout(button_layout)
+        # 将两层布局添加到主布局
+        main_layout.addWidget(count_control_container)
+        main_layout.addWidget(button_control_container)
         
-        # 将选择容器、按钮容器和人数调节容器添加到主布局 - 居中对齐
-        main_layout.addStretch()
-        main_layout.addWidget(button_container, 0, Qt.AlignCenter)
-        main_layout.addWidget(count_control_container, 0, Qt.AlignCenter)
-        main_layout.addWidget(selection_container, 0, Qt.AlignCenter)
-        main_layout.addStretch()
+        # 设置字体
+        self.instant_draw_button.setFont(QFont(load_custom_font(), 10))
+        self.increase_button.setFont(QFont(load_custom_font(), 10))
+        self.decrease_button.setFont(QFont(load_custom_font(), 10))
+        self.settings_button.setFont(QFont(load_custom_font(), 10))
+        self.count_label.setFont(QFont(load_custom_font(), 10))
         
-        self.instant_draw_button.setFont(QFont(load_custom_font(), 12))
-        self.increase_button.setFont(QFont(load_custom_font(), 12))
-        self.decrease_button.setFont(QFont(load_custom_font(), 12))
-        self.reset_button.setFont(QFont(load_custom_font(), 12))
-        self.count_label.setFont(QFont(load_custom_font(), 12))
-        
-        # 连接信号 - 仅PushButton有clicked信号
+        # 连接信号
         if hasattr(self.instant_draw_button, 'clicked'):
             self.instant_draw_button.clicked.connect(self._show_instant_draw_window)
         if hasattr(self.increase_button, 'clicked'):
             self.increase_button.clicked.connect(self._increase_count)
         if hasattr(self.decrease_button, 'clicked'):
             self.decrease_button.clicked.connect(self._decrease_count)
-        if hasattr(self.reset_button, 'clicked'):
-            self.reset_button.clicked.connect(self._reset_count)
+        if hasattr(self.settings_button, 'clicked'):
+            self.settings_button.clicked.connect(self._show_settings_window)
             
-        # 连接下拉框信号
-        self.instant_class_combo.currentIndexChanged.connect(self._on_instant_class_changed)
-        self.instant_group_combo.currentIndexChanged.connect(self._on_instant_group_changed)
-        self.instant_gender_combo.currentIndexChanged.connect(self._on_instant_gender_changed)
-        
         # 初始化当前抽取人数
         self.current_count = 1
         
