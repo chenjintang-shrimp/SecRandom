@@ -15,10 +15,14 @@ from loguru import logger
 from random import SystemRandom
 system_random = SystemRandom()
 
-from app.common.config import get_theme_icon, load_custom_font, restore_volume
-from app.common.path_utils import path_manager, open_file, remove_file
+from app.common.config import get_theme_icon, load_custom_font, restore_volume, is_dark_theme
+from app.common.path_utils import path_manager, open_file, remove_file, ensure_dir
 from app.common.voice import TTSHandler
+
+is_dark = is_dark_theme(qconfig)
+
 class pumping_people(QWidget):
+    refresh_signal = pyqtSignal()
     def __init__(self, parent=None):
         super().__init__(parent)
         # 设置对象名称，用于快捷键功能识别
@@ -95,8 +99,6 @@ class pumping_people(QWidget):
             with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 clear_time = settings['pumping_people']['max_draw_count']
-
-            self.current_count = 1
                 
             # 只有在"定时清临时记录"模式下才启动计时器
             if clear_time > 0:  # 3是"定时清临时记录"选项的索引
@@ -2024,33 +2026,75 @@ class pumping_people(QWidget):
 
     # 清理临时文件
     def _clean_temp_files(self):
+        try:
+            settings_path = path_manager.get_settings_path('Settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                instant_clear_mode = settings['instant_draw']['clear_mode']
+                instant_clear = settings['instant_draw']['instant_clear']
+                logger.debug(f"星野侦察: 准备执行对应清理方案～ ")
+
+        except Exception as e:
+            instant_clear_mode = 1
+            instant_clear = False
+            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}")
+
         import glob
-        temp_dir = path_manager.get_temp_path()
-        if path_manager.file_exists(temp_dir):
-            for file in glob.glob(f"{temp_dir}/*.json"):
-                try:
-                    path_manager.remove_file(file)
-                    logger.info(f"已清理临时抽取记录文件: {file}")
-                    InfoBar.success(
-                        title='清理完成',
-                        content="已清理临时抽取记录文件!",
-                        orient=Qt.Horizontal,
-                        parent=self,
-                        isClosable=True,
-                        duration=3000,
-                        position=InfoBarPosition.TOP
-                    )
-                except Exception as e:
-                    logger.error(f"清理临时抽取记录文件失败: {e}")
-                    InfoBar.error(
-                        title='清理失败',
-                        content=f"清理临时抽取记录文件失败: {e}",
-                        orient=Qt.Horizontal,
-                        parent=self,
-                        isClosable=True,
-                        duration=3000,
-                        position=InfoBarPosition.TOP
-                    )
+        temp_dir = path_manager.get_temp_path('')
+        ensure_dir(temp_dir)
+
+        if instant_clear_mode != 1 and not instant_clear:
+            if path_manager.file_exists(temp_dir):
+                for file in glob.glob(f"{temp_dir}/*.json"):
+                    try:
+                        os.remove(file)
+                        logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")
+                        InfoBar.success(
+                            title='清理完成',
+                            content="已清理临时抽取记录文件!",
+                            orient=Qt.Horizontal,
+                            parent=self,
+                            isClosable=True,
+                            duration=3000,
+                            position=InfoBarPosition.TOP
+                        )
+                    except Exception as e:
+                        logger.error(f"星野清理失败: 删除临时文件出错喵～ {e}")
+                        InfoBar.error(
+                            title='清理失败',
+                            content=f"清理临时抽取记录文件失败: {e}",
+                            orient=Qt.Horizontal,
+                            parent=self,
+                            isClosable=True,
+                            duration=3000,
+                            position=InfoBarPosition.TOP
+                        )
+        elif instant_clear_mode != 1 and instant_clear:
+            if path_manager.file_exists(temp_dir):
+                for file in glob.glob(f"{temp_dir}/*_instant.json"):
+                    try:
+                        os.remove(file)
+                        logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")
+                        InfoBar.success(
+                            title='清理完成',
+                            content="已清理临时抽取记录文件!",
+                            orient=Qt.Horizontal,
+                            parent=self,
+                            isClosable=True,
+                            duration=3000,
+                            position=InfoBarPosition.TOP
+                        )
+                    except Exception as e:
+                        logger.error(f"星野清理失败: 删除临时文件出错喵～ {e}")
+                        InfoBar.error(
+                            title='清理失败',
+                            content=f"清理临时抽取记录文件失败: {e}",
+                            orient=Qt.Horizontal,
+                            parent=self,
+                            isClosable=True,
+                            duration=3000,
+                            position=InfoBarPosition.TOP
+                        )
 
     # 初始化UI
     def __del__(self):
@@ -2065,6 +2109,7 @@ class pumping_people(QWidget):
             with open_file(path_manager.get_settings_path("custom_settings.json"), 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 main_window_control_Switch = settings['roll_call']['pumping_people_control_Switch']
+                modify_button_switch = settings['roll_call']['modify_button_switch']
                 show_reset_button = settings['roll_call']['show_reset_button']
                 show_refresh_button = settings['roll_call']['show_refresh_button']
                 show_quantity_control = settings['roll_call']['show_quantity_control']
@@ -2076,6 +2121,7 @@ class pumping_people(QWidget):
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             main_window_control_Switch = True
+            modify_button_switch = False
             show_reset_button = True
             show_refresh_button = True
             show_quantity_control = True
@@ -2109,6 +2155,14 @@ class pumping_people(QWidget):
         # 控制面板
         control_panel = QVBoxLayout()
         control_panel.setContentsMargins(10, 10, 10, 10) # 左、上、右、下   
+
+        # 修改班级名单按钮
+        if modify_button_switch:
+            self.modify_button = PushButton('修改班级名单')
+            self.modify_button.setFixedSize(180, 50)
+            self.modify_button.setFont(QFont(load_custom_font(), 13))
+            self.modify_button.clicked.connect(self.modify_name_settings)
+            control_panel.addWidget(self.modify_button, 0, Qt.AlignVCenter)
 
         # 刷新按钮
         if show_reset_button:
@@ -2334,3 +2388,295 @@ class pumping_people(QWidget):
 
         # 显示主布局
         self.setLayout(main_layout)
+
+    def modify_name_settings(self):
+        """修改班级名单"""
+        class_name = self.class_combo.currentText()
+        
+        # 检查是否选择了有效的班级
+        if not class_name or class_name in ["你暂未添加班级", "加载班级列表失败"]:
+            InfoBar.warning(
+                title='提示',
+                content="请先选择一个有效的班级！",
+                orient=Qt.Horizontal,
+                parent=self,
+                isClosable=True,
+                duration=3000,
+                position=InfoBarPosition.TOP
+            )
+            return
+        
+        # 获取班级文件路径
+        class_file = path_manager.get_resource_path("list", f"{class_name}.json")
+        
+        # 检查班级文件是否存在
+        if not path_manager.file_exists(class_file):
+            InfoBar.warning(
+                title='提示',
+                content=f"班级文件不存在：{class_name}.json",
+                orient=Qt.Horizontal,
+                parent=self,
+                isClosable=True,
+                duration=3000,
+                position=InfoBarPosition.TOP
+            )
+            return
+        
+        dialog = StudentInputDialog(self)
+        if dialog.exec():
+            student_text = dialog.getText()
+            selected_class = self.class_combo.currentText()
+            if selected_class:
+                try:
+                    students = [line.strip() for line in student_text.split('\n') if line.strip()]
+                    
+                    list_folder = path_manager.get_resource_path('list', '')
+                    ensure_dir(list_folder)
+                    
+                    student_file = path_manager.get_resource_path('list', f'{selected_class}.json')
+                    student_data = {}
+                    
+                    if path_manager.file_exists(student_file):
+                        with open_file(student_file, 'r', encoding='utf-8') as f:
+                            student_data = json.load(f)
+                    
+                    # 先删除不在新名单中的学生
+                    # ✨ 小鸟游星野：保留原始键名处理特殊字符
+                    existing_students = {name for name in student_data.keys()}
+                    new_students_cleaned = {student.strip().replace('【', '').replace('】', '') for student in students if student.strip()}
+                    
+                    # 找出需要删除的学生（原始键名）
+                    students_to_remove = []
+                    for name in existing_students:
+                        cleaned_name = name.replace('【', '').replace('】', '')
+                        if cleaned_name not in new_students_cleaned:
+                            students_to_remove.append(name)
+                    
+                    for student_to_remove in students_to_remove:
+                        del student_data[student_to_remove]
+                    
+                    # 更新或添加新学生
+                    # 重新生成学生顺序，确保按输入顺序存储
+                    new_student_data = {}
+                    for idx, student in enumerate(students, start=1):
+                        student_name = student.strip()
+                        exist_status = False if '【' in student_name and '】' in student_name else True
+                        # 确保保留原有的性别和小组信息
+                        cleaned_name = student_name.replace('【', '').replace('】', '')
+                        if cleaned_name in {k.replace('【', '').replace('】', '') for k in student_data.keys()}: 
+                            original_info = next((student_data[k] for k in student_data if k.replace('【', '').replace('】', '') == cleaned_name), {})
+                        else:
+                            original_info = {}
+                        new_student_data[student_name] = {
+                            "id": idx,
+                            "exist": exist_status,
+                            "gender": original_info.get("gender", ""),
+                            "group": original_info.get("group", "")
+                        }
+                    student_data = new_student_data
+                    
+                    with open_file(student_file, 'w', encoding='utf-8') as f:
+                        json.dump(student_data, f, ensure_ascii=False, indent=4)
+                    
+                    self.refresh_signal.emit()
+                    logger.info(f"学生名单保存成功！")
+                except Exception as e:
+                    logger.error(f"保存失败: {str(e)}")
+
+
+
+
+class StudentInputDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("输入学生姓名")
+        self.setMinimumSize(400, 635)  # 设置最小大小而不是固定大小
+        self.saved = False
+        self.dragging = False
+        
+        # 设置无边框窗口
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+        # 创建标题栏
+        self.title_bar = QWidget()
+        self.title_bar.setObjectName("CustomTitleBar")
+        self.title_bar.setFixedHeight(35)
+        # 标题栏布局
+        title_layout = QHBoxLayout(self.title_bar)
+        title_layout.setContentsMargins(10, 0, 10, 0)
+        # 标题标签
+        self.title_label = QLabel("输入学生姓名")
+        self.title_label.setObjectName("TitleLabel")
+        self.title_label.setFont(QFont(load_custom_font(), 12, QFont.Bold))
+        # 关闭按钮
+        self.close_button = QPushButton("✕")
+        self.close_button.setObjectName("CloseButton")
+        self.close_button.setFixedSize(25, 25)
+        self.close_button.clicked.connect(self.close)
+        # 添加到布局
+        title_layout.addWidget(self.title_label)
+        title_layout.addStretch(1)
+        title_layout.addWidget(self.close_button)
+
+        self.text_label = BodyLabel('请输入学生姓名，每行一个\n在输入已经不在当前班级的学生时\n请在姓名前后加上“【】”')
+        self.text_label.setFont(QFont(load_custom_font(), 12))
+
+        self.update_theme_style()
+        qconfig.themeChanged.connect(self.update_theme_style)
+        
+        self.textEdit = PlainTextEdit()
+        self.textEdit.setPlaceholderText("请输入学生姓名，每行一个")
+        self.textEdit.setFont(QFont(load_custom_font(), 12))
+        
+        self.setFont(QFont(load_custom_font(), 12))
+        
+        class_name = self.parent().class_combo.currentText()
+        try:
+            student_file = path_manager.get_resource_path('list', f'{class_name}.json')
+            with open_file(student_file, 'r', encoding='utf-8') as f:
+                file_content = f.read()
+                if not file_content.strip():
+                    # 处理空文件情况
+                    logger.warning(f"JSON文件为空: {student_file}")
+                    return
+                
+                try:
+                    data = json.loads(file_content)
+                    if not isinstance(data, dict):
+                        raise ValueError("JSON格式不正确，应为字典类型")
+                    
+                    name_list = []
+                    for student_name in data:
+                        name_list.append(student_name)
+                    self.textEdit.setPlainText("\n".join(name_list))
+                except json.JSONDecodeError as e:
+                    logger.error(f"JSON解析错误: {str(e)}")
+                except ValueError as e:
+                    logger.error(f"数据格式错误: {str(e)}")
+        except FileNotFoundError:
+            logger.error(f"文件未找到: {student_file}")
+        except json.JSONDecodeError:
+            logger.error("JSON文件格式错误，请检查文件内容")
+        
+        self.saveButton = PrimaryPushButton("保存")
+        self.cancelButton = PushButton("取消")
+        self.saveButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+        self.saveButton.setFont(QFont(load_custom_font(), 12))
+        self.cancelButton.setFont(QFont(load_custom_font(), 12))
+        
+
+        # 创建主布局
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        # 添加标题栏到主布局
+        layout.addWidget(self.title_bar)
+        
+        # 创建内容区域布局
+        content_layout = QVBoxLayout()
+        content_layout.setContentsMargins(10, 10, 10, 10)
+        content_layout.setSpacing(10)
+        
+        # 添加UI元素到内容布局
+        content_layout.addWidget(self.text_label)
+        content_layout.addWidget(self.textEdit)
+        
+        # 创建按钮布局
+        buttonLayout = QHBoxLayout()
+        buttonLayout.addStretch(1)
+        buttonLayout.addWidget(self.cancelButton)
+        buttonLayout.addWidget(self.saveButton)
+        
+        # 将按钮布局添加到内容布局
+        content_layout.addLayout(buttonLayout)
+        
+        # 将内容布局添加到主布局
+        layout.addLayout(content_layout)
+        
+        # 设置主布局
+        self.setLayout(layout)
+
+    def update_theme_style(self):
+        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
+        self.setStyleSheet(f"""
+            QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
+            #CustomTitleBar {{ background-color: {colors['title_bg']}; }}
+            #TitleLabel {{ color: {colors['text']}; font-weight: bold; padding: 5px; }}
+            #CloseButton {{ 
+                background-color: transparent; 
+                color: {colors['text']}; 
+                border-radius: 4px; 
+                font-weight: bold; 
+            }}
+            #CloseButton:hover {{ background-color: #ff4d4d; color: white; }}
+            QLabel, QPushButton, QTextEdit {{ color: {colors['text']}; }}
+        """)
+        
+        # 设置标题栏颜色以匹配背景色（仅Windows系统）
+        if os.name == 'nt':
+            try:
+                import ctypes
+                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
+                hwnd = int(self.winId())  # 转换为整数句柄
+                
+                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
+                bg_color = colors['bg'].lstrip('#')
+                # 转换为ARGB格式（添加不透明通道）
+                rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
+                
+                # 设置窗口标题栏颜色
+                ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    ctypes.c_int(hwnd),  # 窗口句柄（整数类型）
+                    35,  # DWMWA_CAPTION_COLOR
+                    ctypes.byref(ctypes.c_uint(rgb_color)),  # 颜色值指针
+                    ctypes.sizeof(ctypes.c_uint)  # 数据大小
+                )
+            except Exception as e:
+                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+
+    def mousePressEvent(self, event):
+        # 标题栏拖动
+        if event.button() == Qt.LeftButton and self.title_bar.geometry().contains(event.pos()):
+            self.dragging = True
+            self.drag_start_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        # 窗口拖动
+        if self.dragging and event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self.drag_start_position)
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        # 结束拖动
+        if self.dragging and event.button() == Qt.LeftButton:
+            self.dragging = False
+            event.accept()
+        else:
+            super().mouseReleaseEvent(event)
+        
+    def closeEvent(self, event):
+        if not self.saved:
+            w = Dialog('未保存内容', '确定要关闭吗？', self)
+            w.setFont(QFont(load_custom_font(), 12))
+            w.yesButton.setText("确定")
+            w.cancelButton.setText("取消")
+            w.yesButton = PrimaryPushButton('确定')
+            w.cancelButton = PushButton('取消')
+            
+            if w.exec():
+                self.reject
+                return
+            else:
+                event.ignore()
+                return
+        event.accept()
+    
+    def getText(self):
+        return self.textEdit.toPlainText()
