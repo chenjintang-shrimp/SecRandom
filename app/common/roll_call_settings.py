@@ -27,6 +27,7 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
         self.settings_file = path_manager.get_settings_path('custom_settings.json')
         self.default_settings = {
             "pumping_people_control_Switch": True,
+            "modify_button_switch": False,
             "show_reset_button": True,
             "show_refresh_button": True,
             "show_quantity_control": True,
@@ -43,6 +44,13 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
         self.pumping_people_control_Switch.setOffText("左侧")
         self.pumping_people_control_Switch.setFont(QFont(load_custom_font(), 12))
         self.pumping_people_control_Switch.checkedChanged.connect(self.save_settings)
+
+        # 修改班级名单按钮是否显示
+        self.modify_button_switch = SwitchButton()
+        self.modify_button_switch.setOnText("显示")
+        self.modify_button_switch.setOffText("隐藏")
+        self.modify_button_switch.setFont(QFont(load_custom_font(), 12))
+        self.modify_button_switch.checkedChanged.connect(self.save_settings)
 
         # 重置已抽取名单按钮是否显示
         self.reset_button_switch = SwitchButton()
@@ -101,6 +109,7 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
 
         # 添加个性化设置组
         self.addGroup(get_theme_icon("ic_fluent_window_ad_20_filled"), "点名控制面板", "配置点名控制面板的显示位置", self.pumping_people_control_Switch)
+        self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "姓名设置按钮", "显隐'姓名设置'按钮", self.modify_button_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrow_reset_20_filled"), "重置已抽取名单按钮", "显隐'重置已抽取名单'按钮", self.reset_button_switch)
         self.addGroup(get_theme_icon("ic_fluent_people_community_20_filled"), "刷新学生列表按钮", "显隐'刷新学生列表'按钮", self.refresh_button_switch)
         self.addGroup(get_theme_icon("ic_fluent_arrows_bidirectional_20_filled"), "增加/减少抽取数量控制条", "显隐'增加/减少抽取数量'控制条", self.quantity_control_switch)
@@ -122,6 +131,7 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
                     roll_call_settings = settings.get("roll_call", {})
 
                     self.pumping_people_control_Switch.setChecked(roll_call_settings.get("pumping_people_control_Switch", self.default_settings.get("pumping_people_control_Switch", True)))
+                    self.modify_button_switch.setChecked(roll_call_settings.get("modify_button_switch", self.default_settings.get("modify_button_switch", True)))   
                     self.reset_button_switch.setChecked(roll_call_settings.get("show_reset_button", self.default_settings.get("show_reset_button", True)))
                     self.refresh_button_switch.setChecked(roll_call_settings.get("show_refresh_button", self.default_settings.get("show_refresh_button", True)))
                     self.quantity_control_switch.setChecked(roll_call_settings.get("show_quantity_control", self.default_settings.get("show_quantity_control", True)))
@@ -135,6 +145,7 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
                 logger.warning(f"设置文件不存在: {self.settings_file}")
 
                 self.pumping_people_control_Switch.setChecked(self.default_settings.get("pumping_people_control_Switch", True))
+                self.modify_button_switch.setChecked(self.default_settings.get("modify_button_switch", True))
                 self.reset_button_switch.setChecked(self.default_settings.get("show_reset_button", True))
                 self.refresh_button_switch.setChecked(self.default_settings.get("show_refresh_button", True))
                 self.quantity_control_switch.setChecked(self.default_settings.get("show_quantity_control", True))
@@ -148,6 +159,7 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
             logger.error(f"加载设置时出错: {e}")
 
             self.pumping_people_control_Switch.setChecked(self.default_settings.get("pumping_people_control_Switch", True))
+            self.modify_button_switch.setChecked(self.default_settings.get("modify_button_switch", True))
             self.reset_button_switch.setChecked(self.default_settings.get("show_reset_button", True))
             self.refresh_button_switch.setChecked(self.default_settings.get("show_refresh_button", True))
             self.quantity_control_switch.setChecked(self.default_settings.get("show_quantity_control", True))
@@ -174,6 +186,7 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
         roll_call_settings = existing_settings["roll_call"]
 
         roll_call_settings["pumping_people_control_Switch"] = self.pumping_people_control_Switch.isChecked()
+        roll_call_settings["modify_button_switch"] = self.modify_button_switch.isChecked()
         roll_call_settings["show_reset_button"] = self.reset_button_switch.isChecked()
         roll_call_settings["show_refresh_button"] = self.refresh_button_switch.isChecked()
         roll_call_settings["show_quantity_control"] = self.quantity_control_switch.isChecked()

@@ -493,7 +493,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
         
         if file_name in ["foundation", "pumping_people", "instant_draw", "pumping_reward", "history", "channel", "position"]:
             return os.path.join(settings_dir, "Settings.json")
-        elif file_name in ["fixed_url", "personal", "floating_window", "roll_call", "reward", "instant_draw", "program_functionality"]:
+        elif file_name in ["fixed_url", "personal", "floating_window", "roll_call", "reward", "program_functionality"]:
             return os.path.join(settings_dir, "custom_settings.json")
         else:
             return os.path.join(settings_dir, f"{file_name}.json")
@@ -516,7 +516,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                 self._update_cleanup_times_settings(current_settings, imported_settings)
             elif file_name == "ForegroundSoftware":
                 self._update_foreground_software_settings(settings, current_settings, imported_settings)
-            elif file_name in ["fixed_url", "personal", "floating_window", "roll_call", "reward", "instant_draw", "program_functionality"]:
+            elif file_name in ["fixed_url", "personal", "floating_window", "roll_call", "reward", "program_functionality"]:
                 self._update_generic_settings(file_name, settings, current_settings, imported_settings)
     
     def _update_settings_json_categories(self, file_name, settings, current_settings, imported_settings):
@@ -645,7 +645,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
         # 特殊处理：所有设置项实际上都在Settings.json文件中
         if file_name in ["foundation", "pumping_people", "instant_draw", "pumping_reward", "history", "channel", "position"]:
             return os.path.join(settings_dir, "Settings.json")
-        elif file_name == ["fixed_url", "personal", "sidebar", "floating_window", "roll_call", "reward", "instant_draw", "program_functionality"]:
+        elif file_name == ["fixed_url", "personal", "sidebar", "floating_window", "roll_call", "reward", "program_functionality"]:
             return os.path.join(settings_dir, "custom_settings.json")
         else:
             return os.path.join(settings_dir, f"{file_name}.json")
@@ -1086,20 +1086,15 @@ class SettingsSelectionDialog(QDialog):
                 ],
             },
             "roll_call": {
-                "基础设置": [
-                    "pumping_people_control_Switch", "show_reset_button", "show_refresh_button", "show_quantity_control",
+                "点名界面管理": [
+                    "pumping_people_control_Switch", "modify_button_switch", "show_reset_button", "show_refresh_button", "show_quantity_control",
                     "show_start_button", "show_list_toggle", "selection_range", "selection_gender", "people_theme"
                 ]
             },
             "reward": {
-                "基础设置": [
+                "抽奖界面管理": [
                     "pumping_reward_control_Switch", "show_reset_button", "show_refresh_button", "show_quantity_control",
                     "show_list_toggle", "reward_theme", "show_start_button"
-                ]
-            },
-            "instant_draw": {
-                "基础设置": [
-                    "show_reset_button", "show_quantity_control", "show_list_toggle", "selection_range", "selection_gender"
                 ]
             },
             "program_functionality": {
@@ -1311,7 +1306,7 @@ class SettingsSelectionDialog(QDialog):
             "flash_window_side_switch": "浮窗窗口贴边", # 有
             "custom_retract_time": "自定义收起时间", # 有
             "custom_display_mode": "自定义显示模式", # 有
-            # roll_call 和 reward 和 instant_draw的相同设置
+            # roll_call 和 reward 的相同设置
             "pumping_people_control_Switch": "点名控制面板位置",
             "show_reset_button": "重置按钮显隐",
             "show_refresh_button": "刷新按钮显隐",
@@ -1321,6 +1316,8 @@ class SettingsSelectionDialog(QDialog):
             "selection_range": "选择范围下拉框显隐",
             "selection_gender": "选择性别下拉框显隐",
             "people_theme": "显示剩余数量显隐",
+            # roll_call设置
+            "modify_button_switch": "修改姓名设置按钮显隐",
             # reward设置
             "pumping_reward_control_Switch": "抽奖控制面板位置",
             "reward_theme": "显示剩余数量",
