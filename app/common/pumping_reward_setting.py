@@ -69,7 +69,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.pumping_reward_Animation_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 动画间隔
-        self.pumping_reward_animation_interval_SpinBox.setRange(50, 1000)
+        self.pumping_reward_animation_interval_SpinBox.setRange(0, 2000)
         self.pumping_reward_animation_interval_SpinBox.setValue(100)
         self.pumping_reward_animation_interval_SpinBox.setSingleStep(10)
         self.pumping_reward_animation_interval_SpinBox.setSuffix("ms")
@@ -201,15 +201,15 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画/结果颜色", "设置动画和结果的字体颜色", self.pumping_reward_student_name_color_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画颜色", "自定义动画过程的字体颜色", self.pumping_reward_animation_color_fixed_dialog_button)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "结果颜色", "自定义最终结果的字体颜色", self.pumping_reward_result_color_fixed_dialog_button)
-        
-        # ===== 图片显示设置 =====
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品图片", "控制是否显示奖品图片", self.pumping_reward_show_image_switch)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品图片文件夹", "打开奖品图片目录(图片名需与奖品名对应，无图则显示首字)", self.pumping_reward_image_path_button)
-        
+
         # ===== 动画设置 =====
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "选择抽取时的动画播放模式", self.pumping_reward_Animation_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "调整动画播放的时间间隔(50-2000ms，适用于1、2号动画)", self.pumping_reward_animation_interval_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置动画自动播放的次数(1-200次，仅适用于2号动画)", self.pumping_reward_animation_auto_play_SpinBox)
+        
+        # ===== 图片显示设置 =====
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品图片", "控制是否显示奖品图片", self.pumping_reward_show_image_switch)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "奖品图片文件夹", "打开奖品图片目录(图片名需与奖品名对应，无图则显示首字)", self.pumping_reward_image_path_button)
         
         # ===== 音乐设置 =====
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐", "开启或关闭抽取动画的背景音乐", self.pumping_reward_Animation_music_switch)

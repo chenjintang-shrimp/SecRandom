@@ -107,7 +107,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.pumping_people_Animation_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 结果动画间隔（毫秒）
-        self.pumping_people_Animation_interval_SpinBox.setRange(50, 2000)
+        self.pumping_people_Animation_interval_SpinBox.setRange(1, 2000)
         self.pumping_people_Animation_interval_SpinBox.setValue(100)
         self.pumping_people_Animation_interval_SpinBox.setSingleStep(10) 
         self.pumping_people_Animation_interval_SpinBox.setSuffix("ms")
@@ -270,6 +270,11 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "显示格式", "选择抽取结果的展示格式", self.pumping_people_display_format_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_person_20_filled"), "显示随机组员", "抽取小组时是否同步显示组员信息", self.show_random_member_checkbox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "组员显示格式", "配置随机组员信息的显示格式", self.random_member_format_comboBox)
+
+        # 动画设置
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "选择抽取过程的动画播放模式", self.pumping_people_Animation_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "调整动画播放的速度间隔（适用于1、2号模式）", self.pumping_people_Animation_interval_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置动画自动重复播放的次数（适用于2号模式）", self.pumping_people_Animation_auto_play_SpinBox)
         
         # 颜色设置
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画/结果颜色", "配置动画和结果的字体颜色主题", self.pumping_people_student_name_color_comboBox)
@@ -279,11 +284,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         # 图片显示设置
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "学生图片", "是否在抽取时显示学生照片", self.pumping_people_show_image_switch)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "学生图片文件夹", "管理学生照片目录（图片名需与学生姓名对应）", self.pumping_people_image_path_button)
-        
-        # 动画设置
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "选择抽取过程的动画播放模式", self.pumping_people_Animation_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "调整动画播放的速度间隔（适用于1、2号模式）", self.pumping_people_Animation_interval_SpinBox)
-        self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置动画自动重复播放的次数（适用于2号模式）", self.pumping_people_Animation_auto_play_SpinBox)
         
         # 音乐设置
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐", "启用抽取动画的背景音乐播放", self.pumping_people_Animation_music_switch)
