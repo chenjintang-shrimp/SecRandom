@@ -49,11 +49,6 @@ class LevitationWindow(QWidget):
                 self.flash_window_side_switch = settings['floating_window']['flash_window_side_switch']
                 self.custom_retract_time = settings['floating_window']['custom_retract_time']
                 self.custom_display_mode = settings['floating_window']['custom_display_mode']
-                self.custom_show_reset_button = settings['instant_draw']['show_reset_button']
-                self.custom_show_quantity_control = settings['instant_draw']['show_quantity_control']
-                self.custom_show_list_toggle = settings['instant_draw']['show_list_toggle']
-                self.custom_selection_range = settings['instant_draw']['selection_range']
-                self.custom_selection_gender = settings['instant_draw']['selection_gender']
         except (FileNotFoundError, json.JSONDecodeError) as e:
             self.transparency_mode = 0.8
             self.floating_visible = 3
@@ -62,11 +57,6 @@ class LevitationWindow(QWidget):
             self.flash_window_side_switch = False
             self.custom_retract_time = 5
             self.custom_display_mode = 1
-            self.custom_show_reset_button = True
-            self.custom_show_quantity_control = True
-            self.custom_show_list_toggle = True
-            self.custom_selection_range = True
-            self.custom_selection_gender = True
             logger.error(f"加载基础设置失败: {e}")
 
         self.transparency_mode = max(0, min(self.transparency_mode / 100, 1))
