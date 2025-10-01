@@ -175,7 +175,7 @@ def load_custom_font():
                 logger.error(f"加载自定义字体失败: {font_path}")
                 return None
             font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
-            logger.info(f"成功加载默认字体: {font_family}")
+            # logger.info(f"成功加载默认字体: {font_family}")
             return font_family
     except Exception as e:
         logger.error(f"读取自定义设置失败，使用默认字体: {e}")

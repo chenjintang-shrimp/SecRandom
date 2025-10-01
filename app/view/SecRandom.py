@@ -48,7 +48,6 @@ warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 # 设置目录
 settings_dir = path_manager.get_settings_path().parent
 ensure_dir(settings_dir)
-logger.info("已创建设置目录")
 
 def show_update_notification(latest_version):
     """显示自定义更新通知窗口"""
@@ -100,7 +99,7 @@ class ConfigurationManager:
                 'pumping_reward_side': 0,
                 'main_window_mode': 0,
                 'check_on_startup': True,
-                'topmost_switch': False
+                'topmost_switch': False,
             }
         }  # 默认设置模板
         # 预加载设置缓存，减少启动时IO操作
@@ -326,7 +325,7 @@ class TrayIconManager(QObject):
             for key, default_value in default_settings.items():
                 tray_settings[key] = tray_settings.get(key, default_value)
                 
-            logger.debug(f"托盘设置已加载 - {tray_settings}")
+            logger.debug(f"托盘设置已加载")
             return tray_settings
             
         except Exception as e:
