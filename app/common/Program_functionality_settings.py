@@ -10,7 +10,7 @@ import os
 import sys
 import platform
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from loguru import logger
 import winreg
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
@@ -76,10 +76,19 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         # 清理状态管理：记录每个上课时间段的清理状态
         self.cleanup_status = {}  # 格式: {时间段: 是否已清理}
         
+        # 缓存时间设置，减少文件读取次数
+        self.time_settings_cache = None
+        self.time_settings_file = path_manager.get_settings_path('time_settings.json')
+        
         # 加载设置
         self.load_settings()
         self.save_settings()
         
+        # 延迟启动计时器，避免阻塞页面初始化
+        QTimer.singleShot(1000, self._delayed_timer_init)
+    
+    def _delayed_timer_init(self):
+        """延迟初始化计时器，避免阻塞页面加载"""
         # 根据设置状态启动或停止计时器
         if self.clear_draw_records_switch.isChecked():
             self.cleanup_timer.start()
@@ -158,6 +167,8 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
     def show_cleanup_dialog(self):
         dialog = TimeSettingsDialog(self)
         if dialog.exec():
+            # 清除时间设置缓存，确保下次使用最新设置
+            self.time_settings_cache = None
             time_settings = dialog.textEdit.toPlainText()
             try:
                 # 确保Settings目录存在
@@ -301,6 +312,8 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                 
                 with open_file(time_settings_file, 'w', encoding='utf-8') as f:
                     json.dump(settings, f, ensure_ascii=False, indent=4)
+                    # 更新缓存
+                    self.time_settings_cache = settings
                     logger.info(f"成功保存{len(time_list)}个上课时间段设置，生成了{len(non_class_times_list)}个清理时间段")
                     InfoBar.success(
                         title='设置成功',
@@ -333,16 +346,15 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
             # 获取设置的时间（秒）
             cleanup_seconds = self.clear_draw_records_time_SpinBox.value()
             
-            # 将秒转换为时间格式
-            cleanup_time_str = self._seconds_to_time_string(cleanup_seconds)
+            # 使用缓存的时间设置，减少文件读取次数
+            if self.time_settings_cache is None:
+                if not path_manager.file_exists(self.time_settings_file):
+                    return
+                    
+                with open_file(self.time_settings_file, 'r', encoding='utf-8') as f:
+                    self.time_settings_cache = json.load(f)
             
-            # 获取上课时间段设置
-            time_settings_file = path_manager.get_settings_path('time_settings.json')
-            if not path_manager.file_exists(time_settings_file):
-                return
-                
-            with open_file(time_settings_file, 'r', encoding='utf-8') as f:
-                time_settings = json.load(f)
+            time_settings = self.time_settings_cache
                 
             # 检查是否有非上课时间段设置
             if "non_class_times" not in time_settings or not time_settings["non_class_times"]:
@@ -363,22 +375,26 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                     
                 start_time_str, end_time_str = time_parts
                 
-                # 比较时间字符串
+                # 优化时间比较：直接比较字符串，避免频繁的时间转换
                 if start_time_str <= current_time_str <= end_time_str:
                     # 当前时间在非上课时间段内，检查是否需要清理
                     # 计算距离上课开始的时间
                     class_start_time_str = end_time_str  # 非上课时间结束就是上课时间开始
                     
-                    # 将时间字符串转换为datetime.time对象
                     # 处理特殊情况：24:00:00 应该视为 00:00:00（午夜）
                     if class_start_time_str == "24:00:00":
                         class_start_time_str = "00:00:00"
                     
+                    # 优化时间差计算：只在需要时才转换为datetime对象
+                    now = datetime.now()
                     class_start_time = datetime.strptime(class_start_time_str, "%H:%M:%S").time()
                     
-                    # 计算当前时间距离上课开始的时间差（秒）
-                    now = datetime.now()
+                    # 处理跨天情况
                     class_start_datetime = datetime.combine(now.date(), class_start_time)
+                    if class_start_time < current_time:
+                        # 如果上课时间是第二天，加一天
+                        class_start_datetime = datetime.combine((now.date() + timedelta(days=1)), class_start_time)
+                    
                     time_diff = (class_start_datetime - now).total_seconds()
                     
                     # 如果时间差小于等于设置的时间，则清理抽取记录
