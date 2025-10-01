@@ -29,6 +29,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
             "instant_clear": False,
             "Draw_pumping": 1,
             "draw_pumping": 0,
+            "use_cwci_display": False,
+            "use_cwci_display_time": 3,
             "animation_mode": 0,
             "student_id": 0,
             "student_name": 0,
@@ -106,6 +108,23 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.pumping_Draw_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_Draw_comboBox.setFont(QFont(load_custom_font(), 12))
 
+        # 是否使用cw/ci显示结果
+        self.use_cwci_display_checkbox = SwitchButton()
+        self.use_cwci_display_checkbox.setOnText("开启")
+        self.use_cwci_display_checkbox.setOffText("关闭")
+        self.use_cwci_display_checkbox.setChecked(self.default_settings["use_cwci_display"])
+        self.use_cwci_display_checkbox.checkedChanged.connect(self.save_settings)
+        self.use_cwci_display_checkbox.setFont(QFont(load_custom_font(), 12))
+
+        # 自定显示使用ci/cw的通知显示时间
+        self.use_cwci_display_time_SpinBox = SpinBox()
+        self.use_cwci_display_time_SpinBox.setRange(1, 60)
+        self.use_cwci_display_time_SpinBox.setValue(self.default_settings["use_cwci_display_time"])
+        self.use_cwci_display_time_SpinBox.setSingleStep(1)
+        self.use_cwci_display_time_SpinBox.setSuffix("秒")
+        self.use_cwci_display_time_SpinBox.valueChanged.connect(self.save_settings)
+        self.use_cwci_display_time_SpinBox.setFont(QFont(load_custom_font(), 12))
+
         # 固定默认选择名单下拉框
         self.fixed_default_list = ComboBox()
         self.fixed_default_list.setPlaceholderText("请选择默认名单")
@@ -138,7 +157,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.instant_draw_Animation_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 结果动画间隔（毫秒）
-        self.instant_draw_Animation_interval_SpinBox.setRange(50, 2000)
+        self.instant_draw_Animation_interval_SpinBox.setRange(1, 2000)
         self.instant_draw_Animation_interval_SpinBox.setValue(100)
         self.instant_draw_Animation_interval_SpinBox.setSingleStep(10) 
         self.instant_draw_Animation_interval_SpinBox.setSuffix("ms")
@@ -311,15 +330,19 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画/结果颜色", "配置动画和结果的字体颜色主题", self.instant_draw_student_name_color_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "动画颜色", "自定义动画播放时的字体颜色", self.instant_draw_animation_color_fixed_dialog_button)
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "结果颜色", "自定义抽取结果展示的字体颜色", self.instant_draw_result_color_fixed_dialog_button)
-        
-        # 图片显示设置
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "学生图片", "是否在抽取时显示学生照片", self.instant_draw_show_image_switch)
-        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "学生图片文件夹", "管理学生照片目录（图片名需与学生姓名对应）", self.instant_draw_image_path_button)
-        
+
         # 动画设置
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "选择抽取过程的动画播放模式", self.instant_draw_Animation_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "调整动画播放的速度间隔", self.instant_draw_Animation_interval_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置动画自动重复播放的次数", self.instant_draw_Animation_auto_play_SpinBox)
+
+        # 是否使用cw/ci显示结果
+        self.addGroup(get_theme_icon("ic_fluent_comment_note_20_filled"), "是否使用ci/cw显示结果", "是否在抽取结果中显示cw/ci", self.use_cwci_display_checkbox)
+        self.addGroup(get_theme_icon("ic_fluent_time_picker_20_filled"), "自定显示使用ci/cw的通知显示时间", "设置cw/ci通知显示的持续时间", self.use_cwci_display_time_SpinBox)
+        
+        # 图片显示设置
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "学生图片", "是否在抽取时显示学生照片", self.instant_draw_show_image_switch)
+        self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "学生图片文件夹", "管理学生照片目录（图片名需与学生姓名对应）", self.instant_draw_image_path_button)
         
         # 音乐设置
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画音乐", "启用抽取动画的背景音乐播放", self.instant_draw_Animation_music_switch)
@@ -701,6 +724,14 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     show_random_member = instant_draw_settings.get("show_random_member", self.default_settings["show_random_member"])
                     random_member_format = instant_draw_settings.get("random_member_format", self.default_settings["random_member_format"])
 
+                    # 加载是否使用ci/cw显示结果
+                    use_cwci_display = instant_draw_settings.get("use_cwci_display", self.default_settings["use_cwci_display"])
+                    self.use_cwci_display_checkbox.setChecked(use_cwci_display)
+                    
+                    # 加载自定显示使用ci/cw的通知显示时间
+                    use_cwci_display_time = instant_draw_settings.get("use_cwci_display_time", self.default_settings["use_cwci_display_time"])
+                    self.use_cwci_display_time_SpinBox.setValue(use_cwci_display_time)
+
                     # 最大抽取次数设置
                     max_draw_count = instant_draw_settings.get("max_draw_count", self.default_settings["max_draw_count"])
 
@@ -745,6 +776,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     self.instant_draw_auto_play_count_SpinBox.setValue(max_draw_count)
                     self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
                     self.instant_draw_font_size_SpinBox.setValue(font_size)
+                    self.use_cwci_display_checkbox.setChecked(use_cwci_display)
+                    self.use_cwci_display_time_SpinBox.setValue(use_cwci_display_time)
                     self.instant_draw_Animation_comboBox.setCurrentIndex(animation_mode)
                     self.instant_draw_student_id_comboBox.setCurrentIndex(student_id)
                     self.instant_draw_student_name_comboBox.setCurrentIndex(student_name)
@@ -780,6 +813,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                 self.instant_draw_auto_play_count_SpinBox.setValue(self.default_settings["max_draw_count"])
                 self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
                 self.instant_draw_font_size_SpinBox.setValue(self.default_settings["font_size"])
+                self.use_cwci_display_checkbox.setChecked(self.default_settings["use_cwci_display"])
+                self.use_cwci_display_time_SpinBox.setValue(self.default_settings["use_cwci_display_time"])
                 self.instant_draw_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
                 self.instant_draw_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
                 self.instant_draw_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
@@ -806,6 +841,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
             self.instant_draw_auto_play_count_SpinBox.setValue(self.default_settings["max_draw_count"])
             self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
             self.instant_draw_font_size_SpinBox.setValue(self.default_settings["font_size"])
+            self.use_cwci_display_checkbox.setChecked(self.default_settings["use_cwci_display"])
+            self.use_cwci_display_time_SpinBox.setValue(self.default_settings["use_cwci_display_time"])
             self.instant_draw_isolate_checkbox.setChecked(self.default_settings["instant_clear"])
             self.instant_draw_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
             self.instant_draw_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
@@ -848,6 +885,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         instant_draw_settings["draw_mode"] = self.instant_draw_Draw_comboBox.currentIndex()
         instant_draw_settings["max_draw_count"] = self.instant_draw_auto_play_count_SpinBox.value()
         instant_draw_settings["instant_clear"] = self.instant_draw_isolate_checkbox.isChecked()
+        instant_draw_settings["use_cwci_display"] = self.use_cwci_display_checkbox.isChecked()
+        instant_draw_settings["use_cwci_display_time"] = self.use_cwci_display_time_SpinBox.value()
         instant_draw_settings["draw_pumping"] = self.pumping_Draw_comboBox.currentIndex()
         instant_draw_settings["animation_mode"] = self.instant_draw_Animation_comboBox.currentIndex()
         instant_draw_settings["student_id"] = self.instant_draw_student_id_comboBox.currentIndex()

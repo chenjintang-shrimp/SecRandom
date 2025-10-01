@@ -18,6 +18,7 @@ system_random = SystemRandom()
 from app.common.config import get_theme_icon, load_custom_font, restore_volume
 from app.common.path_utils import path_manager, open_file, remove_file, ensure_dir
 from app.common.voice import TTSHandler
+from app.common.message_sender import message_sender
 
 class instant_draw(QWidget):
     # 抽取完成信号
@@ -54,6 +55,8 @@ class instant_draw(QWidget):
                 self.music_fade_in = settings['instant_draw']['music_fade_in']
                 self.music_fade_out = settings['instant_draw']['music_fade_out']
                 self.max_draw_times_per_person = settings['instant_draw']['Draw_pumping']
+                self.use_cwci_display = settings['instant_draw']['use_cwci_display']
+                self.use_cwci_display_time = settings['instant_draw']['use_cwci_display_time']
                 
         except Exception as e:
             instant_draw_animation_mode = 0
@@ -66,6 +69,8 @@ class instant_draw(QWidget):
             self.music_fade_in = 300
             self.music_fade_out = 300
             self.max_draw_times_per_person = 1
+            self.use_cwci_display = False
+            self.use_cwci_display_time = 3
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
 
         if instant_draw_animation_mode == 0:  # 自动播放完整动画
@@ -1446,6 +1451,25 @@ class instant_draw(QWidget):
                             
                             with open_file(draw_record_file, 'w', encoding='utf-8') as f:
                                 json.dump(record_data, f, ensure_ascii=False, indent=4)
+
+                        # 发送抽选结果消息
+                        try:
+                            if self.use_cwci_display:
+                                # 从selected_students中提取学生姓名并用逗号分隔
+                                student_names = []
+                                for student in selected_students:
+                                    # student是元组(num, selected, exist)，其中selected是学生姓名
+                                    student_name = student[1].replace(' ', '') if isinstance(student[1], str) else str(student[1])
+                                    student_names.append(student_name)
+                                
+                                # 将学生姓名用逗号连接成一个字符串
+                                names_str = ",".join(student_names)
+                            
+                                # 发送抽选结果
+                                message_sender.send_selection_result_json(selected_name=names_str, use_cwci_display_time=self.use_cwci_display_time)
+                                logger.info(f"已发送抽选结果消息")
+                        except Exception as e:
+                            logger.error(f"发送抽选结果消息失败: {e}")
 
                         # 抽取完成后启动计时器
                         self._start_clear_timer()

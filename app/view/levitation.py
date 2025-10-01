@@ -1580,6 +1580,7 @@ class LevitationWindow(QWidget):
                 with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
                     settings = json.load(f)
                     fixed_default_list = settings.get('instant_draw', {}).get('fixed_default_list', '')
+                    self.use_cwci_display = settings.get('instant_draw', {}).get('use_cwci_display', False)
                     # 如果设置了固定默认名单且名单文件存在，则使用该名单
                     if fixed_default_list and fixed_default_list != "":
                         list_file = path_manager.get_resource_path('list', f'{fixed_default_list}.json')
@@ -1782,9 +1783,10 @@ class LevitationWindow(QWidget):
             y = (screen.height() - self.pumping_widget.height()) // 2
             self.pumping_widget.move(QPoint(x, y))
             
-            # 直接显示窗口
-            self.pumping_widget.show()
-            logger.info("直接抽取窗口已打开")
+            if not self.use_cwci_display:
+                # 直接显示窗口
+                self.pumping_widget.show()
+                logger.info("直接抽取窗口已打开")
             
             # 禁用闪抽按钮，防止重复点击
             if hasattr(self, 'flash_button') and self.flash_button is not None:
@@ -1895,6 +1897,10 @@ class LevitationWindow(QWidget):
             
             close_time = close_time_mapping.get(close_time_setting, 3)  # 默认值为3秒
             
+            if self.use_cwci_display:
+                self.pumping_widget.reject()
+                return
+
             if auto_close_enabled:
                 # 初始化倒计时
                 self.remaining_time = close_time

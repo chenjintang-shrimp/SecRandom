@@ -983,6 +983,9 @@ class SettingsSelectionDialog(QDialog):
                 "动画设置": [
                     "animation_mode", "animation_interval", "animation_auto_play"
                 ],
+                "联动设置": [
+                    "use_cwci_display", "use_cwci_display_time"
+                ],
                 "音效设置": [
                     "animation_music_enabled", "result_music_enabled",
                     "animation_music_volume", "result_music_volume",
@@ -1182,6 +1185,8 @@ class SettingsSelectionDialog(QDialog):
             "show_student_image": "显示学生图片", # 有
             # instant_draw设置
             "follow_roll_call": "跟随点名设置", # 有
+            "use_cwci_display": "使用cw/ci显示结果", # 有
+            "use_cwci_display_time": "使用cw/ci显示结果时间", # 有
             # pumping_reward设置（跟pumping_people设置有重复的不计入）
             "reward_theme": "主题", # 有
             "show_reward_image": "显示奖品图片", # 有
