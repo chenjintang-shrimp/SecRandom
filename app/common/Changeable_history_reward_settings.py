@@ -221,7 +221,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         try:
             with open_file(self.settings_file, 'w', encoding='utf-8') as f:
                 json.dump(existing_settings, f, ensure_ascii=False, indent=4)
-            logger.info("白露魔法: 保存了抽奖历史记录设置哦～ ✧*｡٩(ˊᗜˋ*)و✧*｡")
+            logger.info("保存了抽奖历史记录设置")
         except Exception as e:
             logger.error(f"保存设置时出错: {e}")
             InfoBar.error(

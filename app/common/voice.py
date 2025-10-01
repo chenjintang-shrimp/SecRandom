@@ -29,10 +29,10 @@ class VoicePlaybackSystem:
         self._play_thread = None
         self._load_balancer = LoadBalancer()
         self._is_playing = False  # 播放状态标志
-        self._volume = 1.0  # 星野：默认音量值100%~ 🔊
+        self._volume = 1.0  # 默认音量值100%
         
     def set_volume(self, volume):
-        # 白露：设置播放音量~ 🔉 范围0.0-1.0
+        # 设置播放音量，范围0.0-1.0
         self._volume = max(0.0, min(1.0, volume))
         
     def start(self):
@@ -91,9 +91,9 @@ class VoicePlaybackSystem:
                 if self._stop_flag.is_set():
                     break
                 chunk = data[i:i + chunk_size]
-                # 星野：应用音量控制~ 🔊 将数据乘以音量系数
+                # 应用音量控制，将数据乘以音量系数
                 chunk = chunk * self._volume
-                # 星野：数据类型转换中~ float64→float32，完美适配~ ✨
+                # 数据类型转换中，float64→float32，完美适配
                 stream.write(chunk.astype(np.float32))
             self._is_playing = False  # 播放结束
                 
@@ -111,14 +111,14 @@ class VoicePlaybackSystem:
             return False
     
     def stop(self):
-        # 星野：停止所有播放~ 🛑
+        # 停止所有播放
         self._stop_flag.set()
         if self._play_thread:
             self._play_thread.join()  # 等待播放线程完全结束
         self._clear_queue()
     
     def _clear_queue(self):
-        # 白露：清空播放队列~ 🧹
+        # 清空播放队列
         while not self.play_queue.empty():
             try:
                 self.play_queue.get_nowait()
@@ -126,7 +126,7 @@ class VoicePlaybackSystem:
                 break
 
 class VoiceCacheManager:
-    # 星野：智能语音缓存系统登场~ 💾
+    # 智能语音缓存系统
     
     def __init__(self, cache_dir=None):
         self.cache_dir = cache_dir if cache_dir else path_manager.get_cache_path('voices')
@@ -136,7 +136,7 @@ class VoiceCacheManager:
     
     @lru_cache(maxsize=100)  # 内存缓存最近100个
     def get_voice(self, text, voice, speed):
-        # 白露：获取语音数据（自动缓存）~ 🔊
+        # 获取语音数据（自动缓存）
         # 1. 检查内存缓存
         cache_key = self._generate_cache_key(text, voice, speed)
         if cache_key in self._memory_cache:
@@ -166,7 +166,7 @@ class VoiceCacheManager:
         return data, fs
     
     async def _generate_voice(self, text, voice, speed):
-        # 星野：生成语音核心方法~ 🎤
+        # 生成语音核心方法
         communicate = edge_tts.Communicate(
             text=text,
             voice=voice,
@@ -181,11 +181,11 @@ class VoiceCacheManager:
         return sf.read(audio_buffer)
     
     def _generate_cache_key(self, text, voice, speed):
-        # 星野：生成缓存键~ 🔑
+        # 生成缓存键
         return f"{voice}_{speed}_{text}"
     
     def _get_cache_file_path(self, text, voice, speed):
-        # 白露：获取缓存文件路径~ 🗂️
+        # 获取缓存文件路径
         filename = f"{voice}_{speed}_{text}.wav"
         return os.path.join(self.cache_dir, filename)
     
@@ -198,11 +198,11 @@ class VoiceCacheManager:
             logger.error(f"保存缓存失败: {e}")
 
 class LoadBalancer:
-    """系统负载均衡器 - 星野和白露的智能负载调节系统~ 🚀"""
-    # 星野：基础队列大小设置~ 🔧
+    """系统负载均衡器"""
+    # 基础队列大小设置
     BASE_QUEUE_SIZE = 3  # 基础队列大小(最低3人)
     
-    # 白露：CPU负载阈值与对应的队列大小增量~ 📊
+    # CPU负载阈值与对应的队列大小增量
     CPU_THRESHOLDS = [
         (90, 0),            # CPU > 90%: 不增加
         (80, 2),            # 80% < CPU ≤ 90%: 增加2人
@@ -216,7 +216,7 @@ class LoadBalancer:
         (0, 20)             # CPU ≤ 10%: 增加20人
     ]
     
-    # 星野：内存负载阈值与对应的队列大小增量~ 📊
+    # 内存负载阈值与对应的队列大小增量
     MEMORY_THRESHOLDS = [
         (0.5, 0),           # 内存 < 0.5GB: 不增加
         (1, 5),             # 0.5GB ≤ 内存 < 1GB: 增加5人
@@ -230,43 +230,43 @@ class LoadBalancer:
     ]
     
     def get_optimal_queue_size(self):
-        """根据系统负载动态调整队列大小 - 白露的聪明算法~ 🧠"""
+        """根据系统负载动态调整队列大小"""
         try:
-            # 星野：获取系统负载情况~ 🔍
+            # 获取系统负载情况
             cpu_percent = psutil.cpu_percent()
             mem_available = psutil.virtual_memory().available / (1024 ** 3)  # GB(可用内存)
             
-            # 白露：参数有效性检查~ ✅
+            # 参数有效性检查
             if not isinstance(cpu_percent, (int, float)) or cpu_percent < 0 or cpu_percent > 100:
-                logger.warning("星野：CPU使用率异常，使用基础队列大小~ ⚠️")
+                logger.warning("CPU使用率异常，使用基础队列大小")
                 return self.BASE_QUEUE_SIZE
             
             if not isinstance(mem_available, (int, float)) or mem_available < 0:
-                logger.warning("白露：内存信息异常，使用基础队列大小~ ⚠️")
+                logger.warning("内存信息异常，使用基础队列大小")
                 return self.BASE_QUEUE_SIZE
             
-            # 星野：根据CPU使用率确定增量~ 📊
+            # 根据CPU使用率确定增量
             cpu_bonus = 0
             for threshold, bonus in self.CPU_THRESHOLDS:
                 if cpu_percent >= threshold:
                     cpu_bonus = bonus
                     break
             
-            # 白露：根据可用内存确定增量~ 📊
+            # 根据可用内存确定增量
             mem_bonus = 0
             for threshold, bonus in self.MEMORY_THRESHOLDS:
                 if mem_available <= threshold:
                     mem_bonus = bonus
                     break
             
-            # 星野和白露：计算最终队列大小~ 🔢
+            # 计算最终队列大小
             queue_size = self.BASE_QUEUE_SIZE + cpu_bonus + mem_bonus
             
-            logger.debug(f"星野和白露：系统负载 (CPU:{cpu_percent}%, 内存:{mem_available:.2f}GB)，队列大小设为{queue_size}~ 🏃")
+            logger.debug(f"系统负载 (CPU:{cpu_percent}%, 内存:{mem_available:.2f}GB)，队列大小设为{queue_size}")
             return queue_size
         except Exception as e:
-            # 白露：异常处理，确保方法总是返回有效值~ 🛡️
-            logger.error(f"星野：获取系统负载信息失败: {e}，使用基础队列大小~ ⚠️")
+            # 异常处理，确保方法总是返回有效值
+            logger.error(f"获取系统负载信息失败: {e}，使用基础队列大小")
             return self.BASE_QUEUE_SIZE
 
 class TTSHandler:
@@ -276,7 +276,7 @@ class TTSHandler:
         self.cache_manager = VoiceCacheManager()
         self.playback_system.start()
         self.voice_engine = None
-        self.system_tts_lock = threading.Lock()  # 星野：系统TTS线程锁，防止冲突~ 🔒
+        self.system_tts_lock = threading.Lock()  # 系统TTS线程锁，防止冲突
         
         # 跨平台TTS引擎初始化
         self._init_tts_engine()
@@ -354,7 +354,7 @@ class TTSHandler:
             engine.setProperty('volume', config['voice_volume'] / 100.0)
             engine.setProperty('rate', int(200 * (config['voice_speed'] / 100)))
             
-            # 星野：语音模型设置时间~ 🔊
+            # 语音模型设置
             voices = engine.getProperty('voices')
             voice_found = False
             for voice in voices:
@@ -375,9 +375,9 @@ class TTSHandler:
             return None
     
     def _handle_edge_tts(self, student_names, config, voice_name):
-        # 白露：Edge TTS处理模块启动~ 🚀
+        # Edge TTS处理模块启动
         def prepare_and_play():
-            # 星野：设置播放音量~ 🔊
+            # 设置播放音量
             self.playback_system.set_volume(config['voice_volume'])
             
             for name in student_names:
@@ -393,7 +393,7 @@ class TTSHandler:
                 except Exception as e:
                     logger.error(f"处理{name}失败: {e}")
             
-            # 星野：等待所有语音播放完毕~ ⏳
+            # 等待所有语音播放完毕
             while not self.playback_system.play_queue.empty() or self.playback_system._is_playing:
                 time.sleep(0.1)
 
@@ -407,5 +407,5 @@ class TTSHandler:
         ).start()
     
     def stop(self):
-        # 星野：停止所有播放~ 🛑
+        # 停止所有播放
         self.playback_system.stop()

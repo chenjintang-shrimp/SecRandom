@@ -15,7 +15,7 @@ from app.common.password_settings import is_usb_bound, get_usb_drives
 class PasswordDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 🌟 星穹铁道白露：设置无边框窗口样式并解决屏幕设置冲突~ 
+        # 设置无边框窗口样式并解决屏幕设置冲突 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window | Qt.Tool | Qt.WindowStaysOnTopHint)
         self.setWindowTitle("密码验证")
         self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png'))))
@@ -30,7 +30,7 @@ class PasswordDialog(QDialog):
         self.auto_verify_timer.timeout.connect(self.auto_verify)
         self.auto_verify_delay = 1000  # 1秒延迟，避免频繁验证
         
-        # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
+        # 创建自定义标题栏
         self.title_bar = QWidget()
         self.title_bar.setObjectName("CustomTitleBar")
         self.title_bar.setFixedHeight(35)
@@ -205,7 +205,7 @@ class PasswordDialog(QDialog):
             self.unlock_method.addItems(["密码解锁", "密钥文件解锁", "2FA验证", "U盘解锁"])
 
     def mousePressEvent(self, event):
-        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+        # 窗口拖动功能
         if event.button() == Qt.LeftButton and self.title_bar.underMouse():
             self.dragging = True
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
@@ -220,7 +220,7 @@ class PasswordDialog(QDialog):
         self.dragging = False
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        # 主题样式更新
         is_dark = is_dark_theme(qconfig)
         title_bar_bg = '#2D2D30' if is_dark else '#F0F0F0'
         title_text_color = '#FFFFFF' if is_dark else '#000000'
@@ -292,10 +292,10 @@ class PasswordDialog(QDialog):
         if os.name == 'nt':
             try:
                 import ctypes
-                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
+                # 修复参数类型错误，将窗口ID转换为整数句柄
                 hwnd = int(self.winId())  # 转换为整数句柄
                 
-                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
+                # 颜色格式要改成ARGB，添加透明度通道
                 bg_color = title_bar_bg.lstrip('#')
                 # 转换为ARGB格式（添加不透明通道）
                 rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
@@ -311,7 +311,7 @@ class PasswordDialog(QDialog):
                 logger.warning(f"设置标题栏颜色失败: {str(e)}")
 
     def mousePressEvent(self, event):
-        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+        # 窗口拖动功能
         if event.button() == Qt.LeftButton and self.title_bar.underMouse():
             self.dragging = True
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()

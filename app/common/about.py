@@ -55,7 +55,7 @@ class aboutCard(GroupHeaderCardWidget):
         self.check_update_button.clicked.connect(self.check_updates_async)
         self.check_update_button.setFont(QFont(load_custom_font(), 12))
 
-        # 🌟 小鸟游星野：官网链接按钮 ~ (๑•̀ㅂ•́)ญ✧
+        # 官网链接按钮
         self.about_website_Button = HyperlinkButton(FIF.GLOBE, "https://secrandom.netlify.app/", 'SecRandom 官网')
         self.about_website_Button.setFont(QFont(load_custom_font(), 12))
 
@@ -150,7 +150,7 @@ class ContributorDialog(QDialog):
     """ 贡献者信息对话框 """
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 🌟 星穹铁道白露：设置无边框窗口样式并解决屏幕设置冲突~ 
+        # 设置无边框窗口样式并解决屏幕设置冲突
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle('贡献人员')
         self.setMinimumSize(900, 600)
@@ -165,7 +165,7 @@ class ContributorDialog(QDialog):
         if parent is not None:
             self.setParent(parent)
         
-        # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
+        # 创建自定义标题栏
         self.title_bar = QWidget()
         self.title_bar.setObjectName("CustomTitleBar")
         self.title_bar.setFixedHeight(35)
@@ -264,13 +264,13 @@ class ContributorDialog(QDialog):
             },
         ]
         
-        # 星野和白露的可爱注释：计算所有职责文本的行数，让它们变得整齐划一~ ✨
+        # 计算所有职责文本的行数，让它们变得整齐划一
         font = QFont(load_custom_font(), 12)  # 使用和职责文本相同的字体设置
         fm = QFontMetrics(font)
         max_lines = 0
         role_lines = []
 
-        # 第一步：找出最长的职责文本有多少行 (｡•̀ᴗ-)✧
+        # 第一步：找出最长的职责文本有多少行
         for contributor in contributors:
             role_text = contributor['role']
             # 计算文本在500像素宽度下的行数（和UI显示保持一致）
@@ -280,15 +280,15 @@ class ContributorDialog(QDialog):
             if line_count > max_lines:
                 max_lines = line_count
 
-        # 第二步：为每个职责文本添加换行符，确保行数相同 ٩(๑•̀ω•́๑)۶
+        # 第二步：为每个职责文本添加换行符，确保行数相同
         for i, contributor in enumerate(contributors):
             current_lines = role_lines[i]
             if current_lines < max_lines:
-                # 添加缺少的换行符~ (星野：这里要小心，别加太多啦~)
+                # 添加缺少的换行符
                 contributor['role'] += '\n' * (max_lines - current_lines)
 
         self.cards = []
-        # 添加贡献者卡片 (白露：所有卡片现在都整齐啦！)
+        # 添加贡献者卡片
         for contributor in contributors:
             card = self.addContributorCard(contributor)
             self.cards.append(card)
@@ -331,7 +331,7 @@ class ContributorDialog(QDialog):
         super().resizeEvent(event)
 
     def mousePressEvent(self, event):
-        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+        # 窗口拖动功能
         if event.button() == Qt.LeftButton and self.title_bar.underMouse():
             self.dragging = True
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
@@ -354,7 +354,7 @@ class ContributorDialog(QDialog):
         else:
             is_dark = qconfig.theme == Theme.DARK
         
-        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        # 主题样式更新
         colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if  is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
@@ -401,10 +401,10 @@ class ContributorDialog(QDialog):
         if os.name == 'nt':
             try:
                 import ctypes
-                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
+                # 修复参数类型错误
                 hwnd = int(self.winId())  # 转换为整数句柄
                 
-                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
+                # 颜色格式要改成ARGB格式
                 bg_color = colors['bg'].lstrip('#')
                 # 转换为ARGB格式（添加不透明通道）
                 rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
@@ -444,7 +444,7 @@ class ContributorDialog(QDialog):
             is_dark = lightness <= 127
         else:
             is_dark = qconfig.theme == Theme.DARK
-        # 🌟 星穹铁道白露：主题样式更新 ~ 这里用不上自定义标题栏哦~
+        # 主题样式更新
         colors = {'bg': '#111116'} if is_dark else {'bg': '#F5F5F5'}
         card.setStyleSheet(f'''
             QWidget#contributorCard {{
@@ -627,7 +627,7 @@ class DonationDialog(QDialog):
         self.download_worker.start()
     
     def on_image_download_complete(self, filename, success):
-        """ 🌟 小鸟游星野 - 图片下载完成后的回调函数 """
+        """ 图片下载完成后的回调函数 """
         if success:
             logger.info(f"图片下载完成: {filename}")
             # 下载成功后刷新界面
@@ -636,7 +636,7 @@ class DonationDialog(QDialog):
             logger.error(f"图片下载失败: {filename}")
     
     def refresh_donation_cards(self):
-        """ 🌟 小鸟游星野 - 刷新捐赠卡片以重新加载图片 """
+        """ 刷新捐赠卡片以重新加载图片 """
         # 清除现有的捐赠卡片
         if hasattr(self, 'cards_layout'):
             # 清除布局中的所有组件
@@ -666,7 +666,7 @@ class DonationDialog(QDialog):
             logger.info("捐赠卡片已刷新，图片重新加载")
     
     class DownloadWorker(QThread):
-        """ 🌟 小鸟游星野 - 图片下载工作线程 """
+        """ 图片下载工作线程 """
         finished = pyqtSignal()
         
         def __init__(self, dialog):
@@ -792,7 +792,7 @@ class DonationDialog(QDialog):
                 return False
 
     def create_donation_card(self, title, image_path, description):
-        """ 🌟 小鸟游星野 - 创建捐赠卡片 """
+        """ 创建捐赠卡片 """
         card = QWidget()
         card.setObjectName('donationCard')
         self.update_card_theme_style(card)
@@ -915,7 +915,7 @@ class DonationDialog(QDialog):
                 logger.warning(f"设置标题栏颜色失败: {str(e)}")
 
     def update_card_theme_style(self, card):
-        """ 🌟 小鸟游星野 - 根据当前主题更新卡片样式 """
+        """ 根据当前主题更新卡片样式 """
         if qconfig.theme == Theme.AUTO:
             lightness = QApplication.palette().color(QPalette.Window).lightness()
             is_dark = lightness <= 127

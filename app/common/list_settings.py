@@ -109,18 +109,18 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.table.itemChanged.connect(self.save_table_data)
         self.layout().addWidget(self.table)
 
-    # 🌟 小鸟游星野：学生名单导入功能 ~ (๑•̀ㅂ•́)ญ✧
+    # 学生名单导入功能
     def import_student_list(self):
         # 创建导入对话框
         dialog = ImportStudentDialog(self)
         if dialog.exec():
-            # 🌟 星穹铁道白露：直接获取对话框处理好的数据 ~ (◍•ᴗ•◍)
+            # 直接获取对话框处理好的数据
             student_data, class_name = dialog.get_processed_data()
             if not class_name or not student_data:
                 return
 
             try:
-                # 🌟 小鸟游星野：确保目录存在并写入数据 ~ (๑•̀ㅂ•́)ญ✧
+                # 确保目录存在并写入数据
                 student_file = path_manager.get_resource_path('list', f'{class_name}.json')
                 ensure_dir(os.path.dirname(student_file))
                 with open_file(student_file, 'w', encoding='utf-8') as f:
@@ -131,7 +131,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
             except Exception as e:
                 logger.error(f"导入失败: {str(e)}")
 
-    # 🌟 小鸟游星野：学生名单导出功能 ~ (๑•̀ㅂ•́)ญ✧
+    # 学生名单导出功能
     def export_student_list(self):
         class_name = self.class_comboBox.currentText()
         if not class_name:
@@ -305,7 +305,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
                         if item:
                             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                             item.setFont(QFont(load_custom_font(), 12))
-                            # 🌟 小鸟游星野：学号和姓名列不可编辑哦 ~ (๑•̀ㅂ•́)ญ✧
+                            # 学号和姓名列不可编辑
                             if j in (0, 1):  # 学号列(0)和姓名列(1)不可编辑
                                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                 self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组'])
@@ -399,7 +399,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
                             student_data = json.load(f)
                     
                     # 先删除不在新名单中的学生
-                    # ✨ 小鸟游星野：保留原始键名处理特殊字符
+                    # 保留原始键名处理特殊字符
                     existing_students = {name for name in student_data.keys()}
                     new_students_cleaned = {student.strip().replace('【', '').replace('】', '') for student in students if student.strip()}
                     
@@ -507,7 +507,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
                 except Exception as e:
                     logger.error(f"保存失败: {str(e)}")
                     
-    # 🌟 小鸟游星野：保存表格编辑的数据 ~ (๑•̀ㅂ•́)ญ✧
+    # 保存表格编辑的数据
     def save_table_data(self, item):
         # 获取当前选中的班级
         class_name = self.class_comboBox.currentText()
@@ -563,10 +563,10 @@ class list_SettinsCard(GroupHeaderCardWidget):
             item.setText(str(original_value))
 
 class ImportStudentDialog(QDialog):
-    # 🌟 小鸟游星野：学生名单导入对话框 ~ (๑•̀ㅂ•́)ญ✧
+    # 学生名单导入对话框
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 🌟 星穹铁道白露：设置无边框但可调整大小的窗口样式并解决屏幕设置冲突~ 
+        # 设置无边框但可调整大小的窗口样式并解决屏幕设置冲突 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("导入学生名单")
         self.setMinimumSize(600, 535)  # 设置最小大小而不是固定大小
@@ -578,7 +578,7 @@ class ImportStudentDialog(QDialog):
         if parent is not None:
             self.setParent(parent)
         
-        # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
+        # 创建自定义标题栏
         self.title_bar = QWidget()
         self.title_bar.setObjectName("CustomTitleBar")
         self.title_bar.setFixedHeight(35)
@@ -611,7 +611,7 @@ class ImportStudentDialog(QDialog):
         if parent is not None:
             self.setParent(parent)
         
-        # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
+        # 创建自定义标题栏
         self.title_bar = QWidget()
         self.title_bar.setObjectName("CustomTitleBar")
         self.title_bar.setFixedHeight(35)
@@ -640,7 +640,7 @@ class ImportStudentDialog(QDialog):
         self.file_type = 'excel'
         self.column_mapping = {'学号': -1, '姓名': -1, '性别': -1, '小组': -1}
         self.include_columns = {'性别': True, '小组': True}
-        # 🌟 小鸟游星野：初始化处理后的数据和班级名称 ~ (๑•̀ㅂ•́)ญ✧
+        # 初始化处理后的数据和班级名称
         self.processed_data = None
         self.class_name = None
 
@@ -649,7 +649,7 @@ class ImportStudentDialog(QDialog):
         self.init_ui()
 
     def mousePressEvent(self, event):
-        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+        # 窗口拖动功能，按住标题栏就能移动
         if event.button() == Qt.LeftButton and self.title_bar.underMouse():
             self.dragging = True
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
@@ -664,7 +664,7 @@ class ImportStudentDialog(QDialog):
         self.dragging = False
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        # 主题样式更新，现在包含自定义标题栏
         colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog, QDialog * {{
@@ -695,10 +695,10 @@ class ImportStudentDialog(QDialog):
         if os.name == 'nt':
             try:
                 import ctypes
-                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
+                # 修复参数类型错误，现在要把窗口ID转成整数才行
                 hwnd = int(self.winId())  # 转换为整数句柄
                 
-                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
+                # 颜色格式要改成ARGB才行，添加透明度通道
                 bg_color = colors['bg'].lstrip('#')
                 # 转换为ARGB格式（添加不透明通道）
                 rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
@@ -781,14 +781,14 @@ class ImportStudentDialog(QDialog):
         self.setLayout(layout)
 
     def _create_combo_box(self):
-        # 🌟 小鸟游星野：创建下拉框 ~ (๑•̀ㅂ•́)ญ✧
+        # 创建下拉框
         combo = ComboBox()
         combo.setFont(QFont(load_custom_font(), 12))
         combo.addItem('请选择')
         return combo
 
     def _create_combo_row(self, layout, combo_attr, label_text):
-        # 🌟 星穹铁道白露：创建下拉框行 ~ (๑•̀ㅂ•́)ญ✧
+        # 创建下拉框行
         row_layout = QHBoxLayout()
         combo = self._create_combo_box()
         setattr(self, combo_attr, combo)
@@ -796,7 +796,7 @@ class ImportStudentDialog(QDialog):
         layout.addRow(label_text, row_layout)
 
     def _create_checkable_combo_row(self, layout, combo_attr, check_attr, label_text, column_name):
-        # 🌟 星穹铁道白露：创建带复选框的下拉框行 ~ (๑•̀ㅂ•́)ญ✧
+        # 创建带复选框的下拉框行
         row_layout = QHBoxLayout()
         combo = self._create_combo_box()
         setattr(self, combo_attr, combo)
@@ -812,7 +812,7 @@ class ImportStudentDialog(QDialog):
         layout.addRow(label_text, row_layout)
 
     def change_file_type(self, index):
-        # 🌟 星穹铁道白露：切换文件类型并更新UI状态 ~ (๑•̀ㅂ•́)ญ✧
+        # 切换文件类型并更新UI状态
         types = ['excel', 'csv', 'namepicker']
         self.file_type = types[index]
         
@@ -823,7 +823,7 @@ class ImportStudentDialog(QDialog):
 
     def browse_file(self):
         filters = {
-            # 🌟 星穹铁道白露：支持xls和xlsx格式的Excel文件 ~ (๑•̀ㅂ•́)ญ✧
+            # 支持xls和xlsx格式的Excel文件
             'excel': "Excel Files (*.xls *.xlsx)",
             'csv': "CSV Files (*.csv)",
             'namepicker': "NamePicker Files (*.csv)"
@@ -836,21 +836,21 @@ class ImportStudentDialog(QDialog):
             self.load_columns()
 
     def clear_columns(self):
-        # 🌟 小鸟游星野：清空列选择控件 ~ (๑•̀ㅂ•́)ญ✧
+        # 清空列选择控件
         for combo in [self.id_combo, self.name_combo, self.gender_combo, self.group_combo]:
             combo.clear()
             combo.addItem('请选择')
         self.update_mapping()
 
     def load_columns(self):
-        # 🌟 白露：加载文件列名中~ 请稍等一下哦 (๑•̀ㅂ•́)ญ✧
+        # 加载文件列名
         try:
             if self.file_type == 'excel':
                 self._load_excel_columns()
             elif self.file_type == 'csv' or self.file_type == 'namepicker':
                 self._load_csv_columns()
         except Warning as w:
-            # 🌟 小鸟游星野：处理提示性警告，不清除文件路径 ~ (๑•̀ㅂ•́)ญ✧
+            # 处理提示性警告，不清除文件路径
             logger.warning(f"列选择提示: {str(w)}")
             msg_box = MessageBox("列选择提示", str(w), self)
             msg_box.yesButton.setText("确定")
@@ -859,7 +859,7 @@ class ImportStudentDialog(QDialog):
             msg_box.exec_()
         except Exception as e:
             logger.error(f"加载文件列失败: {str(e)}")
-            # 🌟 小鸟游星野：文件加载失败提示 ~ (๑•̀ㅂ•́)ญ✧
+            # 文件加载失败提示
             w = MessageBox("加载失败", f"无法读取文件: {str(e)}", self)
             w.yesButton.setText("确定")
             w.cancelButton.hide()
@@ -869,7 +869,7 @@ class ImportStudentDialog(QDialog):
             self.file_path_edit.clear()
 
     def _init_combo_boxes(self, columns):
-        # 🌟 小鸟游星野：初始化所有下拉框 ~ (๑•̀ㅂ•́)ญ✧
+        # 初始化所有下拉框
         column_items = ['请选择'] + [str(col) for col in columns]
         for combo in [self.id_combo, self.name_combo, self.gender_combo, self.group_combo]:
             combo.clear()
@@ -878,7 +878,7 @@ class ImportStudentDialog(QDialog):
         self.update_mapping()
 
     def _auto_select_columns(self, columns):
-        # 🌟 星穹铁道白露：智能列匹配 ~ (๑•̀ㅂ•́)ญ✧
+        # 智能列匹配
         fields = [
             (self.id_combo, ['id', '学号', 'studentid', 'no', 'number'], True, '学号'),
             (self.name_combo, ['name', '姓名', 'studentname', 'nickname'], True, '姓名'),
@@ -921,7 +921,7 @@ class ImportStudentDialog(QDialog):
         self._validate_mandatory_columns()
 
     def _validate_required_column(self, combo, is_required, field_name, columns):
-        # 🌟 小鸟游星野：必选列验证 ~ (๑•̀ㅂ•́)ญ✧
+        # 必选列验证
         if is_required and combo.currentIndex() == 0:  # 0表示"请选择"
             if columns:
                 combo.setCurrentIndex(1)  # 选择第一列数据
@@ -930,28 +930,28 @@ class ImportStudentDialog(QDialog):
                 raise Exception(f"必须选择{field_name}对应的列")
 
     def _validate_mandatory_columns(self):
-        # 🌟 星穹铁道白露：验证用户选择 ~ (๑•̀ㅂ•́)ญ✧
+        # 验证用户选择
         if self.column_mapping['学号'] == -1:
             raise Exception("必须选择学号对应的列")
         if self.column_mapping['姓名'] == -1:
             raise Exception("必须选择姓名对应的列")
 
     def _load_excel_columns(self):
-        # 🌟 星穹铁道白露：加载Excel列并智能匹配 ~ (๑•̀ㅂ•́)ญ✧
+        # 加载Excel列并智能匹配
         df = pd.read_excel(self.file_path)
         columns = list(df.columns)
         self._init_combo_boxes(columns)
         self._auto_select_columns(columns)
 
     def _load_csv_columns(self):
-        # 🌟 星穹铁道白露：加载CSV列并智能匹配 ~ (๑•̀ㅂ•́)ญ✧
+        # 加载CSV列并智能匹配
         df = self._read_csv_file(self.file_path)
         columns = list(df.columns)
         self._init_combo_boxes(columns)
         self._auto_select_columns(columns)
 
     def update_mapping(self):
-        # 🌟 白露：更新列映射，确保索引正确计算~ (๑•̀ㅂ•́)ญ✧
+        # 更新列映射，确保索引正确计算
         self.column_mapping['学号'] = self.id_combo.currentIndex() - 1 if self.id_combo.currentIndex() > 0 else -1
         self.column_mapping['姓名'] = self.name_combo.currentIndex() - 1 if self.name_combo.currentIndex() > 0 else -1
         self.column_mapping['性别'] = self.gender_combo.currentIndex() - 1 if (self.gender_check.isChecked() and self.gender_combo.currentIndex() > 0) else -1
@@ -962,7 +962,7 @@ class ImportStudentDialog(QDialog):
         self.update_mapping()
 
     def accept(self):
-        # 🌟 小鸟游星野：检查必要条件是否满足并执行导入~ (๑•̀ㅂ•́)ญ✧
+        # 检查必要条件是否满足并执行导入
         self.update_mapping()
         if not self.file_path:
             self._show_error_message("文件未选择", "请先选择导入文件！")
@@ -984,7 +984,7 @@ class ImportStudentDialog(QDialog):
                 raise Exception("无法获取班级信息，请确保主界面已正确加载")
             self.class_name = self.parent().class_comboBox.currentText()
             
-            # 🌟 传递最新列映射给导入方法 ~ (๑•̀ㅂ•́)ญ✧
+            # 传递最新列映射给导入方法
             self.processed_data = self._import_data()
             self._show_success_message("导入成功", f"学生名单导入成功！\n共导入 {len(self.processed_data)} 条记录")
             super().accept()
@@ -993,13 +993,13 @@ class ImportStudentDialog(QDialog):
             self._show_error_message("导入失败", f"导入过程中出错: {str(e)}")
 
     def _read_csv_file(self, file_path):
-        # 小鸟游星野: 智能读取CSV文件的专用方法 ~ (｡•̀ᴗ-)✧
+        # 智能读取CSV文件的专用方法
         encodings = ['utf-8', 'gbk', 'gb2312', 'latin-1', 'iso-8859-1', 'cp936']
         found_encoding = None
         found_sep = None
         df = None
         
-        # 星穹铁道白露: 尝试不同编码和分隔符组合~ (๑•̀ㅂ•́)ญ✧
+        # 尝试不同编码和分隔符组合
         for encoding in encodings:
             try:
                 for sep in [',', ';', '\t']:
@@ -1021,8 +1021,8 @@ class ImportStudentDialog(QDialog):
         return pd.read_csv(file_path, encoding=found_encoding, sep=found_sep)
 
     def _import_data(self):
-        # 🌟 星穹铁道白露：执行学生数据导入并返回处理后的数据 ~ (◍•ᴗ•◍)
-        # 小鸟游星野: 根据文件类型选择合适的读取方式 ~ (｡•̀ᴗ-)✧
+        # 执行学生数据导入并返回处理后的数据
+        # 根据文件类型选择合适的读取方式
         file_ext = os.path.splitext(self.file_path)[1].lower()
         
         # 根据扩展名选择读取方法
@@ -1062,14 +1062,14 @@ class ImportStudentDialog(QDialog):
                 'id': int(student_id) if student_id.isdigit() else index + 1,
                 'gender': gender_value,
                 'group': str(row.iloc[group_col]) if group_col != -1 and not pd.isna(row.iloc[group_col]) else '',
-                # 🌟 小鸟游星野：根据名字是否包含【】判断学生是否存在 ~ (๑•̀ㅂ•́)ญ✧
+                # 根据名字是否包含【】判断学生是否存在
                 'exist': False if '【' in student_name or '】' in student_name else True
             }
 
         return student_data
 
     def _show_error_message(self, title, message):
-        # 🌟 小鸟游星野：统一错误提示对话框 ~ (๑•̀ㅂ•́)ญ✧
+        # 统一错误提示对话框
         w = MessageBox(title, message, self)
         w.yesButton.setText("确定")
         w.cancelButton.hide()
@@ -1077,7 +1077,7 @@ class ImportStudentDialog(QDialog):
         w.exec_()
 
     def _show_success_message(self, title, message):
-        # 🌟 小鸟游星野：统一成功提示对话框 ~ (๑•̀ㅂ•́)ญ✧
+        # 统一成功提示对话框
         w = MessageBox(title, message, self)
         w.yesButton.setText("确定")
         w.cancelButton.hide()
@@ -1085,7 +1085,7 @@ class ImportStudentDialog(QDialog):
         w.exec_()
 
     def _validate_excel(self):
-        # 🌟 星穹铁道白露：Excel文件验证 ~ (๑•̀ㅂ•́)ญ✧
+        # Excel文件验证
         if self.id_combo.currentIndex() <= 0:
             self._show_error_message("学号列未选择", "请选择有效的学号列！")
             return False
@@ -1119,7 +1119,7 @@ class ImportStudentDialog(QDialog):
         return True
 
     def _validate_csv_json(self):
-        # 🌟 星穹铁道白露：CSV/JSON文件验证 ~ (๑•̀ㅂ•́)ญ✧
+        # CSV/JSON文件验证
         if self.id_combo.currentIndex() <= 0:
             self._show_error_message("验证失败", "文件缺少必要的学号列！")
             return False
@@ -1153,7 +1153,7 @@ class ImportStudentDialog(QDialog):
         return True
 
     def get_processed_data(self):
-        # 🌟 星穹铁道白露：返回处理后的学生数据和班级名称 ~ (◍•ᴗ•◍)
+        # 返回处理后的学生数据和班级名称
         return self.processed_data, self.class_name
 
     def get_result(self):
@@ -1256,7 +1256,7 @@ class ClassInputDialog(QDialog):
         self.setLayout(layout)
     
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        # 主题样式更新，现在包含自定义标题栏
         colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
@@ -1276,10 +1276,10 @@ class ClassInputDialog(QDialog):
         if os.name == 'nt':
             try:
                 import ctypes
-                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
+                # 修复参数类型错误，现在要把窗口ID转成整数才行
                 hwnd = int(self.winId())  # 转换为整数句柄
                 
-                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
+                # 颜色格式要改成ARGB才行，添加透明度通道
                 bg_color = colors['bg'].lstrip('#')
                 # 转换为ARGB格式（添加不透明通道）
                 rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
@@ -1451,7 +1451,6 @@ class StudentInputDialog(QDialog):
         self.setLayout(layout)
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
         colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
@@ -1471,10 +1470,8 @@ class StudentInputDialog(QDialog):
         if os.name == 'nt':
             try:
                 import ctypes
-                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
                 hwnd = int(self.winId())  # 转换为整数句柄
                 
-                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
                 bg_color = colors['bg'].lstrip('#')
                 # 转换为ARGB格式（添加不透明通道）
                 rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
@@ -1642,7 +1639,6 @@ class GenderInputDialog(QDialog):
         self.setLayout(layout)
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
         colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
@@ -1662,10 +1658,8 @@ class GenderInputDialog(QDialog):
         if os.name == 'nt':
             try:
                 import ctypes
-                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
                 hwnd = int(self.winId())  # 转换为整数句柄
                 
-                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
                 bg_color = colors['bg'].lstrip('#')
                 # 转换为ARGB格式（添加不透明通道）
                 rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
@@ -1833,7 +1827,6 @@ class GroupInputDialog(QDialog):
         self.setLayout(layout)
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
         colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
@@ -1853,10 +1846,8 @@ class GroupInputDialog(QDialog):
         if os.name == 'nt':
             try:
                 import ctypes
-                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
                 hwnd = int(self.winId())  # 转换为整数句柄
                 
-                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
                 bg_color = colors['bg'].lstrip('#')
                 # 转换为ARGB格式（添加不透明通道）
                 rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)

@@ -1,8 +1,8 @@
-# ================================================== ✧*｡٩(ˊᗜˋ*)و✧*｡
-# 魔法导入水晶球 🔮
-# ================================================== ✧*｡٩(ˊᗜˋ*)و✧*｡
+# ==================================================
+# 系统导入
+# ==================================================
 
-# ✨ 系统自带魔法道具 ✨
+# 系统模块
 import json
 import os
 import sys
@@ -13,7 +13,7 @@ import random
 from urllib3.exceptions import InsecureRequestWarning
 from pathlib import Path
 
-# 🧙‍♀️ 第三方魔法典籍 🧙‍♂️
+# 第三方库
 import loguru
 from loguru import logger
 from PyQt5.QtWidgets import *
@@ -23,7 +23,7 @@ from PyQt5.QtNetwork import *
 from PyQt5.QtWidgets import QGraphicsBlurEffect, QGraphicsScene, QGraphicsPixmapItem
 from qfluentwidgets import *
 
-# 🏰 应用内部魔法卷轴 🏰
+# 内部模块
 from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, get_update_channel
 from app.common.path_utils import path_manager
@@ -38,17 +38,17 @@ from app.view.settings_page.about_setting import about
 from app.common.about import ContributorDialog, DonationDialog
 from app.common.password_settings import check_and_delete_pending_usb
 
-# ================================================== (^・ω・^ )
-# 白露的初始化魔法阵 ⭐
-# ================================================== (^・ω・^ )
+# ==================================================
+# 初始化
+# ==================================================
 
-# 🔮 忽略那些烦人的不安全请求警告
+# 忽略不安全请求警告
 warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
-# 星野导航：使用跨平台路径定位设置目录 ✧*｡٩(ˊᗜˋ*)ow✧*｡
+# 设置目录
 settings_dir = path_manager.get_settings_path().parent
 ensure_dir(settings_dir)
-logger.info("白露魔法: 创建了设置目录哦~ ✧*｡٩(ˊᗜˋ*)ow✧*｡")
+logger.info("已创建设置目录")
 
 def show_update_notification(latest_version):
     """显示自定义更新通知窗口"""
@@ -80,16 +80,15 @@ def show_update_notification(latest_version):
 # 配置管理类
 # ==================================================
 class ConfigurationManager:
-    """(^・ω・^ ) 白露的配置管理魔法书
-    负责保管所有设置的小管家哦~ 会把重要的配置都藏在安全的地方！
-    还会自动缓存设置，减少不必要的IO操作，是不是很聪明呀？(๑•̀ㅂ•́)ow✧"""
+    """配置管理类
+    负责管理所有设置，自动缓存设置以减少IO操作"""
 
     def __init__(self):
-        """开启白露的配置魔法~ 初始化设置路径和默认值，并预加载设置"""
+        """初始化设置路径和默认值，并预加载设置"""
         self.app_dir = path_manager._app_root
-        self.settings_path = path_manager.get_settings_path('Settings.json')  # 📜 普通设置文件路径
-        self.custom_settings_path = path_manager.get_settings_path('custom_settings.json')  # 📜 自定义设置文件路径
-        self.enc_settings_path = path_manager.get_enc_set_path()  # 🔒 加密设置文件路径
+        self.settings_path = path_manager.get_settings_path('Settings.json')  # 普通设置文件路径
+        self.custom_settings_path = path_manager.get_settings_path('custom_settings.json')  # 自定义设置文件路径
+        self.enc_settings_path = path_manager.get_enc_set_path()  # 加密设置文件路径
         self.default_settings = {
             'foundation': {
                 'main_window_focus_mode': 0,
@@ -103,48 +102,43 @@ class ConfigurationManager:
                 'check_on_startup': True,
                 'topmost_switch': False
             }
-        }  # 📝 默认设置模板
-        # 🌟 星穹铁道白露：预加载设置缓存，减少启动时IO操作
+        }  # 默认设置模板
+        # 预加载设置缓存，减少启动时IO操作
         self._settings_cache = None
         self._custom_settings_cache = None
         self.load_settings()
 
     def load_settings(self):
-        """(^・ω・^ ) 读取配置文件的魔法
-        尝试打开设置文件，如果失败就用默认设置哦~ 不会让程序崩溃的！
-        使用缓存避免重复IO操作，就像记忆力超群的小精灵一样~ ✧*｡٩(ˊᗜˋ*)ow✧*｡"""
-        # if self._settings_cache is not None:
-        #     return self._settings_cache
+        """读取配置文件
+        尝试打开设置文件，如果失败就用默认设置
+        使用缓存避免重复IO操作"""
         try:
             ensure_dir(self.settings_path.parent)
             with open_file(self.settings_path, 'r', encoding='utf-8') as f:
                 self._settings_cache = json.load(f)
                 return self._settings_cache
         except Exception as e:
-            logger.error(f"白露魔法出错: 加载设置文件失败了呢~ {e}")
+            logger.error(f"加载设置文件失败: {e}")
             self._settings_cache = self.default_settings
             return self._settings_cache  # 返回默认设置作为后备方案
 
     def load_custom_settings(self):
-        """(^・ω・^ ) 读取自定义配置文件的魔法
-        尝试打开自定义设置文件，如果失败就用空字典哦~ 不会让程序崩溃的！
-        使用缓存避免重复IO操作，就像记忆力超群的小精灵一样~ ✧*｡٩(ˊᗜˋ*)ow✧*｡"""
-        # if self._custom_settings_cache is not None:
-        #     return self._custom_settings_cache
+        """读取自定义配置文件
+        尝试打开自定义设置文件，如果失败就用空字典
+        使用缓存避免重复IO操作"""
         try:
             ensure_dir(self.custom_settings_path.parent)
             with open_file(self.custom_settings_path, 'r', encoding='utf-8') as f:
                 self._custom_settings_cache = json.load(f)
                 return self._custom_settings_cache
         except Exception as e:
-            logger.error(f"白露魔法出错: 加载自定义设置文件失败了呢~ {e}")
+            logger.error(f"加载自定义设置文件失败: {e}")
             self._custom_settings_cache = {}
             return self._custom_settings_cache  # 返回空字典作为后备方案
 
     def get_floating_window_setting(self, key, default_value=None):
-        """(^・ω・^ ) 获取浮窗设置的小魔法
-        从自定义设置中找到对应的key值，如果找不到就用默认值哦~ 
-        像在魔法袋里找东西，总能找到需要的那个！✨"""
+        """获取浮窗设置
+        从自定义设置中找到对应的key值，如果找不到就用默认值"""
         custom_settings = self.load_custom_settings()
         floating_window_settings = custom_settings.get('floating_window', {})
         
@@ -155,18 +149,16 @@ class ConfigurationManager:
         return floating_window_settings.get(key, default_value)
 
     def get_foundation_setting(self, key):
-        """(^・ω・^ ) 获取基础设置的小魔法
-        从设置中找到对应的key值，如果找不到就用默认值哦~ 
-        像在魔法袋里找东西，总能找到需要的那个！✨"""
+        """获取基础设置
+        从设置中找到对应的key值，如果找不到就用默认值"""
         settings = self.load_settings()
         return settings.get('foundation', {}).get(key, self.default_settings['foundation'][key])
 
     def save_window_size(self, width, height):
-        """(^・ω・^ ) 保存窗口大小的魔法咒语
-        确保窗口不会太小（至少600x400），然后把新尺寸记下来~ 
-        就像整理房间一样，要保持整洁又实用呢！(๑•̀ㅂ•́)ow✧"""
-        if width < 600 or height < 400:  # 太小的窗口可不行哦~ 
-            logger.warning("白露提醒: 窗口尺寸太小啦，不保存哦~ ")
+        """保存窗口大小
+        确保窗口不会太小（至少600x400），然后把新尺寸记下来"""
+        if width < 600 or height < 400:  # 太小的窗口不行
+            logger.warning("窗口尺寸太小，不保存")
             return
 
         try:
@@ -179,39 +171,36 @@ class ConfigurationManager:
             ensure_dir(self.settings_path.parent)
             with open_file(self.settings_path, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=4)
-            logger.info(f"白露魔法成功: 窗口大小已保存为 {width}x{height} ✨")
+            logger.info(f"窗口大小已保存为 {width}x{height}")
         except Exception as e:
-            logger.error(f"白露魔法出错: 保存窗口大小失败了呢~ {e}")
+            logger.error(f"保存窗口大小失败: {e}")
 
 
 # ==================================================
 # 更新检查类
 # ==================================================
 class UpdateChecker(QObject):
-    """(ﾟДﾟ≡ﾟдﾟ) 星野的更新巡逻队！
-    负责监视有没有新版本发布，发现时会发出警报信号喵！
-    就像太空巡逻兵一样，保护软件安全又新鲜！🚀✨"""
+    """更新检查类
+    负责检查是否有新版本发布，发现新版本时发出信号"""
 
-    update_available = pyqtSignal(str)  # 🚨 发现新版本时发射的信号
+    update_available = pyqtSignal(str)  # 发现新版本时发射的信号
 
     def __init__(self, parent=None):
-        """启动星野的更新检查系统！准备好监视版本变化喵！"""
+        """初始化更新检查系统"""
         super().__init__(parent)
 
     def check_for_updates(self):
-        """(ﾟДﾟ≡ﾟдﾟ) 启动更新检查任务！
-        派出 Worker 小分队去执行秘密任务，不会打扰主线程喵！
-        就像派出侦察机一样，悄悄地收集情报～ 🕵️‍♂️✨"""
+        """启动更新检查任务
+        派出Worker线程在后台执行检查，不会阻塞主线程"""
         self.worker = self.UpdateCheckWorker()
         self.worker.result_ready.connect(self.on_update_result)
         self.worker.start()
-        logger.info("星野指令: 更新检查小分队已出发！")
+        logger.info("更新检查任务已启动")
 
     class UpdateCheckWorker(QThread):
-        """(ﾟдﾟ≡ﾟдﾟ) 更新检查特工队！
-        在后台默默工作的线程，专门负责版本侦察任务喵！
-        绝对不会打扰UI主线程的工作，非常专业！💪"""
-        result_ready = pyqtSignal(bool, str)  # 📡 发送侦察结果的信号
+        """更新检查工作线程
+        在后台执行版本检查任务，不会阻塞UI主线程"""
+        result_ready = pyqtSignal(bool, str)  # 发送检查结果的信号
         
         def __init__(self):
             super().__init__()
@@ -219,12 +208,12 @@ class UpdateChecker(QObject):
             self._force_stop = False
         
         def stop(self):
-            """停止特工队行动！"""
+            """停止线程执行"""
             self._is_running = False
             self._force_stop = True
         
         def run(self):
-            """特工队行动开始！连接服务器获取最新版本信息！"""
+            """执行更新检查任务"""
             try:
                 # 设置线程为可终止
                 self.setTerminationEnabled(True)
@@ -235,22 +224,20 @@ class UpdateChecker(QObject):
                     if self._is_running and not self._force_stop:
                         self.result_ready.emit(update_available, latest_version)
             except Exception as e:
-                logger.error(f"星野侦察失败: 更新检查过程中出错喵～ {e}")
+                logger.error(f"更新检查过程中出错: {e}")
                 if self._is_running and not self._force_stop:
                     self.result_ready.emit(False, "")
 
     def on_update_result(self, update_available, latest_version):
-        """(ﾟдﾟ≡ﾟдﾟ) 收到侦察报告！
-        如果发现新版本，立刻拉响警报发射信号喵！
-        绝不让用户错过任何重要更新！🚨✨"""
+        """处理更新检查结果
+        如果发现新版本，发射信号通知"""
         if update_available and latest_version:
-            logger.info(f"星野警报: 发现新版本 {latest_version}！准备通知用户！")
+            logger.info(f"发现新版本 {latest_version}！准备通知用户")
             self.update_available.emit(latest_version)  # 发射新版本信号
     
     def stop_checking(self):
-        """(ﾟдﾟ≡ﾟдﾟ) 停止更新检查任务！
-        确保worker线程安全停止，不会造成线程销毁错误喵！
-        就像让特工队安全撤退一样重要！🛡️✨"""
+        """停止更新检查任务
+        确保worker线程安全停止，避免线程销毁错误"""
         try:
             if hasattr(self, 'worker') and self.worker:
                 # 立即设置强制停止标志
@@ -267,20 +254,20 @@ class UpdateChecker(QObject):
                     # 首先尝试优雅退出
                     self.worker.quit()
                     if not self.worker.wait(2000):  # 等待最多2秒
-                        logger.warning("星野撤退: 线程优雅退出失败，准备强制终止～ ")
+                        logger.warning("线程优雅退出失败，准备强制终止")
                         # 如果优雅退出失败，强制终止
                         self.worker.terminate()
                         self.worker.wait(1000)  # 再等待1秒
                         
                         # 如果还在运行，记录警告
                         if self.worker.isRunning():
-                            logger.error("星野撤退: 线程仍然在运行，可能存在资源泄漏！")
+                            logger.error("线程仍然在运行，可能存在资源泄漏")
                 
                 # 清理引用
                 self.worker = None
-                logger.info("星野撤退: 更新检查任务已安全停止～ ")
+                logger.info("更新检查任务已安全停止")
         except Exception as e:
-            logger.error(f"星野撤退失败: 停止更新检查时出错喵～ {e}")
+            logger.error(f"停止更新检查时出错: {e}")
     
     def __del__(self):
         """析构函数，确保资源正确释放"""
@@ -294,20 +281,17 @@ class UpdateChecker(QObject):
 # 托盘图标管理器类
 # ==================================================
 class TrayIconManager(QObject):
-    """(^・ω・^ ) 白露的系统托盘精灵！
-    负责管理可爱的托盘图标和菜单，右键点击会有惊喜哦～
-    就像藏在任务栏里的小助手，随时待命呢！(๑•̀ㅂ•́)ow✧"""
+    """系统托盘图标管理器
+    负责管理托盘图标和菜单，提供右键菜单功能"""
 
     def __init__(self, main_window):
-        """(^・ω・^ ) 唤醒托盘精灵！
-        初始化系统托盘图标，设置好图标和提示文字～ 
-        让它在任务栏安营扎寨，随时准备为用户服务！🏕️✨"""
+        """初始化系统托盘图标，设置图标和提示文字"""
         super().__init__(main_window)
         self.main_window = main_window
         self.tray_icon = QSystemTrayIcon(main_window)
         self.tray_icon.setIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png')))) 
         self.tray_icon.setToolTip('SecRandom')  # 鼠标放上去会显示的文字
-        self._create_menu()  # 创建魔法菜单
+        self._create_menu()  # 创建菜单
         self.tray_icon.activated.connect(self._on_tray_activated)  # 连接点击事件
         
         # 初始化菜单自动关闭定时器
@@ -319,12 +303,11 @@ class TrayIconManager(QObject):
         self.tray_menu.installEventFilter(self)
         QApplication.instance().installEventFilter(self)
         
-        logger.info("白露魔法: 托盘精灵已唤醒！")
+        logger.info("托盘图标管理器已初始化")
 
     def _get_tray_settings(self):
-        """(^・ω・^ ) 获取托盘设置的小魔法
-        从自定义设置中读取托盘菜单项的显示设置～
-        就像查看魔法配方一样，确保每个菜单项都按配方显示！✨"""
+        """获取托盘设置
+        从自定义设置中读取托盘菜单项的显示设置"""
         try:
             # 默认设置
             default_settings = {
@@ -343,17 +326,16 @@ class TrayIconManager(QObject):
             for key, default_value in default_settings.items():
                 tray_settings[key] = tray_settings.get(key, default_value)
                 
-            logger.debug(f"白露魔法: 托盘设置已加载 - {tray_settings}")
+            logger.debug(f"托盘设置已加载 - {tray_settings}")
             return tray_settings
             
         except Exception as e:
-            logger.error(f"白露魔法出错: 加载托盘设置失败了呢~ {e}")
+            logger.error(f"加载托盘设置失败: {e}")
             return default_settings
 
     def _create_menu(self):
-        """(^・ω・^ ) 制作托盘菜单魔法！
-        精心设计的右键菜单，包含各种常用功能～ 
-        就像准备了一桌丰盛的点心，总有一款适合你！🍰✨"""
+        """创建托盘菜单
+        创建右键菜单，包含各种常用功能"""
         self.tray_menu = RoundMenu(parent=self.main_window)
         tray_settings = self._get_tray_settings()
         
@@ -383,12 +365,11 @@ class TrayIconManager(QObject):
         if tray_settings.get("exit", True):
             self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_exit_20_filled"), '退出', triggered=self.main_window.close_window_secrandom))
             
-        logger.info("白露魔法: 托盘菜单已准备就绪！")
+        logger.info("托盘菜单已创建")
 
     def _on_tray_activated(self, reason):
-        """(^・ω・^ ) 托盘精灵响应事件！
-        当用户点击托盘图标时，显示精心准备的菜单～ 
-        就像有人敲门时，立刻开门迎接客人一样热情！(๑•̀ㅂ•́)ow✧"""
+        """处理托盘图标点击事件
+        当用户点击托盘图标时，显示菜单"""
         if reason in (QSystemTrayIcon.Trigger, QSystemTrayIcon.Context):
             pos = QCursor.pos()  # 获取鼠标位置
             
@@ -418,20 +399,18 @@ class TrayIconManager(QObject):
             
             # 启动5秒自动关闭定时器
             self.menu_timer.start(5000)  # 5秒后自动关闭
-            logger.debug("白露魔法: 托盘菜单已显示给用户～ ")
+            logger.debug("托盘菜单已显示")
     
     def _on_menu_timeout(self):
-        """(^・ω・^ ) 菜单超时自动关闭！
-        当用户5秒内没有操作菜单时，自动关闭菜单～
-        就像害羞的小精灵，等待太久就会悄悄离开呢！(๑•̀ㅂ•́)ow✧"""
+        """菜单超时自动关闭
+        当用户5秒内没有操作菜单时，自动关闭菜单"""
         if self.tray_menu.isVisible():
             self.tray_menu.close()
-            logger.debug("白露魔法: 托盘菜单因超时自动关闭～ ")
+            logger.debug("托盘菜单因超时自动关闭")
     
     def eventFilter(self, obj, event):
-        """(^・ω・^ ) 事件过滤器魔法！
-        监听菜单相关事件，当用户点击菜单外部时自动关闭菜单～
-        就像敏锐的守护者，时刻关注着用户的一举一动！(๑•̀ㅂ•́)ow✧"""
+        """事件过滤器
+        监听菜单相关事件，当用户点击菜单外部时自动关闭菜单"""
         if obj == self.tray_menu:
             # 如果是菜单被点击，停止定时器（用户正在操作）
             if event.type() == event.MouseButtonPress:
@@ -450,7 +429,7 @@ class TrayIconManager(QObject):
             if not menu_rect.contains(click_pos):
                 self.tray_menu.close()
                 self.menu_timer.stop()
-                logger.debug("白露魔法: 托盘菜单因点击外部而关闭～ ")
+                logger.debug("托盘菜单因点击外部而关闭")
                 return True
         
         return super().eventFilter(obj, event)
@@ -460,12 +439,11 @@ class TrayIconManager(QObject):
 # 主窗口类
 # ==================================================
 class Window(MSFluentWindow):
-    """(ﾟДﾟ≡ﾟдﾟ) 星野的主窗口司令部！
-    这里是程序的核心指挥中心喵！所有重要操作都从这里发起～
-    不要随便修改这里的核心逻辑，会导致系统崩溃喵！(๑•̀ㅂ•́)ow✧"""
+    """主窗口类
+    程序的核心控制中心，所有重要操作都从这里发起"""
 
     # ==============================
-    # 星野的魔法常量库 ✨
+    # 常量定义
     # ==============================
     
     # 定义清理信号
@@ -474,21 +452,21 @@ class Window(MSFluentWindow):
         0, 0, 3000, 5000, 10000, 15000, 30000, 60000, 120000, 180000, 300000, 600000, 1800000,
         2700000, 3600000, 7200000, 10800000, 21600000, 43200000
     ]
-    """(ﾟДﾟ≡ﾟдﾟ) 星野的焦点超时魔法数组！
-    存储不同模式下窗口自动隐藏的时间阈值（毫秒）喵～
-    0=不隐藏，1=立即隐藏，其他值按索引对应不同时长！"""
+    """焦点超时时间数组
+    存储不同模式下窗口自动隐藏的时间阈值（毫秒）
+    0=不隐藏，1=立即隐藏，其他值按索引对应不同时长"""
 
     FOCUS_TIMEOUT_TIME = [
         0, 1000, 2000, 3000, 5000, 10000, 15000, 30000, 60000, 300000, 600000, 900000, 1800000,
         3600000, 7200000, 10800000, 21600000, 43200000
     ]
-    """(ﾟДﾟ≡ﾟдﾟ) 星野的检查间隔魔法数组！
-    存储焦点检查的时间间隔（毫秒）喵～
-    不同索引对应不同的检查频率，数值越小检查越频繁！"""
+    """焦点检查间隔数组
+    存储焦点检查的时间间隔（毫秒）
+    不同索引对应不同的检查频率，数值越小检查越频繁"""
 
     MINIMUM_WINDOW_SIZE = (600, 400)
-    """(^・ω・^ ) 白露的窗口尺寸保护魔法！
-    窗口最小不能小于这个尺寸哦～ 太小了会看不清内容的！(๑•̀ㅂ•́)ow✧"""
+    """窗口最小尺寸
+    窗口最小不能小于这个尺寸，否则会影响界面显示"""
 
     # ==============================
     # 初始化与生命周期方法
@@ -540,11 +518,11 @@ class Window(MSFluentWindow):
             self.focus_time = 1
 
         # 启动焦点计时器
-        # ✨ 小鸟游星野：修复CPU占用过高问题，设置最低计时器间隔为200ms
+        # 修复CPU占用过高问题，设置最低计时器间隔为200ms
         if self.focus_time == 0:
             pass
         else:
-            # 🌟 星穹铁道白露：确保计时器间隔不小于200ms
+            # 确保计时器间隔不小于200ms
             interval = max(self.FOCUS_TIMEOUT_TIME[self.focus_time], 200)
             self.focus_timer.start(interval)
 
@@ -581,10 +559,9 @@ class Window(MSFluentWindow):
         self._apply_window_visibility_settings()
 
     def apply_background_image(self):
-        """(^・ω・^ ) 白露的背景图片和颜色魔法！
+        """应用背景图片和颜色
         检查设置中的 enable_main_background 和 enable_main_background_color，
-        如果开启则应用主界面背景图片或背景颜色～
-        让界面变得更加美观个性化，就像给房间贴上漂亮的壁纸或涂上漂亮的颜色一样！(๑•̀ㅂ•́)ow✧"""
+        如果开启则应用主界面背景图片或背景颜色"""
         try:
             # 读取自定义设置
             custom_settings_path = path_manager.get_settings_path('custom_settings.json')
@@ -619,7 +596,7 @@ class Window(MSFluentWindow):
                 # 重写resizeEvent方法，调整背景大小
                 self.resizeEvent = self._on_resize_event
                 
-                logger.info(f"白露魔法: 已成功应用主界面背景颜色 {main_background_color}～ ")
+                logger.info(f"已成功应用主界面背景颜色 {main_background_color}")
                 
             # 如果背景颜色未启用，但背景图片启用了，则应用背景图片
             elif enable_main_background:
@@ -713,15 +690,15 @@ class Window(MSFluentWindow):
                                 # 重写resizeEvent方法，调整背景大小
                                 self.resizeEvent = self._on_resize_event
                                 
-                                logger.info(f"白露魔法: 已成功应用主界面背景图片 {main_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%～ ")
+                                logger.info(f"已成功应用主界面背景图片 {main_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%")
                             else:
-                                logger.error(f"白露魔法出错: 主界面背景图片 {main_background_image} 加载失败～ ")
+                                logger.error(f"主界面背景图片 {main_background_image} 加载失败")
                         else:
-                            logger.warning(f"白露提醒: 主界面背景图片 {main_background_image} 不存在～ ")
+                            logger.warning(f"主界面背景图片 {main_background_image} 不存在")
                     else:
-                        logger.warning("白露提醒: 背景图片文件夹不存在～ ")
+                        logger.warning("背景图片文件夹不存在")
                 else:
-                    logger.debug("白露魔法: 未选择主界面背景图片～ ")
+                    logger.debug("未选择主界面背景图片")
             else:
                 # 如果两者都未启用，则使用默认背景
                 self.setStyleSheet("background: transparent;")
@@ -736,17 +713,16 @@ class Window(MSFluentWindow):
                     self.resizeEvent = self.original_resizeEvent
                     delattr(self, 'original_resizeEvent')
                 
-                logger.debug("白露魔法: 主界面背景图片和颜色功能均未启用，使用默认背景～ ")
+                logger.debug("主界面背景图片和颜色功能均未启用，使用默认背景")
                 
         except FileNotFoundError:
-            logger.warning("白露提醒: 自定义设置文件不存在，使用默认设置～ ")
+            logger.warning("自定义设置文件不存在，使用默认设置")
         except Exception as e:
-            logger.error(f"白露魔法出错: 应用主界面背景图片或颜色时发生异常～ {e}")
+            logger.error(f"应用主界面背景图片或颜色时发生异常: {e}")
     
     def _on_resize_event(self, event):
-        """(^・ω・^ ) 白露的窗口大小调整魔法！
-        当窗口大小改变时，自动调整背景图片大小，确保背景始终填满整个窗口～
-        就像魔法地毯一样，无论房间多大都能完美铺满！(๑•̀ㅂ•́)ow✧"""
+        """窗口大小调整处理
+        当窗口大小改变时，自动调整背景图片大小，确保背景始终填满整个窗口"""
         # 调用原始的resizeEvent，确保布局正确更新
         if hasattr(self, 'original_resizeEvent'):
             self.original_resizeEvent(event)
@@ -773,9 +749,8 @@ class Window(MSFluentWindow):
             self._handle_maximized_state()
     
     def _handle_maximized_state(self):
-        """(^・ω・^ ) 白露的窗口最大化处理魔法！
-        当窗口最大化时，确保所有控件正确适应新的窗口大小～
-        就像魔法变形术一样，让界面完美适应全屏状态！(๑•̀ㅂ•́)ow✧"""
+        """窗口最大化处理
+        当窗口最大化时，确保所有控件正确适应新的窗口大小"""
         # 确保所有子控件适应最大化窗口
         for child in self.findChildren(QWidget):
             child.updateGeometry()
@@ -787,9 +762,8 @@ class Window(MSFluentWindow):
         QTimer.singleShot(100, self._delayed_layout_update)
     
     def _delayed_layout_update(self):
-        """(^・ω・^ ) 白露的延迟布局更新魔法！
-        在窗口最大化后延迟执行布局更新，确保所有控件都已正确适应～
-        就像魔法延时术一样，给界面一些时间来完美调整！(๑•̀ㅂ•́)ow✧"""
+        """延迟布局更新
+        在窗口最大化后延迟执行布局更新，确保所有控件都已正确适应"""
         # 再次强制更新布局
         self.updateGeometry()
         self.update()
@@ -802,9 +776,8 @@ class Window(MSFluentWindow):
         QApplication.processEvents()
 
     def _position_window(self):
-        """(^・ω・^ ) 白露的窗口定位魔法！
-        根据屏幕尺寸和用户设置自动计算最佳位置～
-        确保窗口出现在最舒服的视觉位置，不会让眼睛疲劳哦！(๑•̀ㅂ•́)ow✧"""
+        """窗口定位
+        根据屏幕尺寸和用户设置自动计算最佳位置"""
         import platform
         
         screen = QApplication.primaryScreen()
@@ -829,12 +802,11 @@ class Window(MSFluentWindow):
             # Windows和其他系统使用标准方法
             self.move(target_x, target_y)
             
-        logger.debug(f"白露魔法: 窗口已定位到({self.x()}, {self.y()})位置～ ")
+        logger.debug(f"窗口已定位到({self.x()}, {self.y()})位置")
     
     def _position_window_linux(self, target_x, target_y):
-        """(^・ω・^ ) 白露的Linux窗口定位魔法！
-        专门为Linux系统优化的窗口定位方法，处理各种窗口管理器兼容性问题～
-        确保在GNOME、KDE、XFCE等桌面环境下都能正常工作哦！(๑•̀ㅂ•́)ow✧"""
+        """Linux窗口定位
+        专门为Linux系统优化的窗口定位方法，处理各种窗口管理器兼容性问题"""
         try:
             # 确保窗口已经显示
             if not self.isVisible():
@@ -858,19 +830,18 @@ class Window(MSFluentWindow):
                 QTimer.singleShot(100, lambda: self._delayed_position_linux(target_x, target_y))
                 
         except Exception as e:
-            logger.error(f"白露魔法出错: Linux窗口定位失败了呢～ {e}")
+            logger.error(f"Linux窗口定位失败: {e}")
             # 最后的备用方案：强制设置几何形状
             try:
                 window_width = self.width() if self.width() > 0 else 800
                 window_height = self.height() if self.height() > 0 else 600
                 self.setGeometry(target_x, target_y, window_width, window_height)
             except Exception as e2:
-                logger.error(f"白露魔法出错: Linux窗口定位备用方案也失败了呢～ {e2}")
+                logger.error(f"Linux窗口定位备用方案也失败: {e2}")
     
     def _delayed_position_linux(self, target_x, target_y):
-        """(^・ω・^ ) 白露的Linux延迟定位魔法！
-        给窗口管理器一些时间处理后，再次尝试定位窗口～
-        这是Linux环境下的最后保障哦！(๑•̀ㅂ•́)ow✧"""
+        """Linux延迟定位
+        给窗口管理器一些时间处理后，再次尝试定位窗口"""
         try:
             # 再次尝试move
             self.move(target_x, target_y)
@@ -883,43 +854,40 @@ class Window(MSFluentWindow):
                 window_height = self.height() if self.height() > 0 else 600
                 self.setGeometry(target_x, target_y, window_width, window_height)
                 
-            logger.debug(f"白露魔法: Linux延迟定位完成，当前位置({self.x()}, {self.y()})～ ")
+            logger.debug(f"Linux延迟定位完成，当前位置({self.x()}, {self.y()})")
             
         except Exception as e:
-            logger.error(f"白露魔法出错: Linux延迟定位失败了呢～ {e}")
+            logger.error(f"Linux延迟定位失败: {e}")
     
     def _apply_window_visibility_settings(self):
-        """(^・ω・^ ) 白露的窗口显示魔法！
-        根据用户保存的设置决定窗口是否自动显示～
-        如果上次设置为显示，启动时就会自动出现哦！(๑•̀ㅂ•́)ow✧"""
+        """应用窗口显示设置
+        根据用户保存的设置决定窗口是否自动显示"""
         try:
             settings = self.config_manager.load_settings()
             if settings.get('toggle_window') == 'show':
                 self.show()
-                logger.info("白露魔法: 根据设置自动显示主窗口～ ")
+                logger.info("根据设置自动显示主窗口")
         except Exception as e:
-            logger.error(f"白露魔法出错: 加载窗口显示设置失败了呢～ {e}")
+            logger.error(f"加载窗口显示设置失败: {e}")
 
     def check_updates_async(self):
-        """(ﾟДﾟ≡ﾟдﾟ) 星野的太空巡逻队出发！
-        正在异步执行版本侦察任务喵～ 不会阻塞主线程哦！
-        发现新版本时会立刻拉响警报通知用户喵！🚀✨"""
+        """异步检查更新
+        异步执行版本检查任务，不会阻塞主线程"""
         self.update_checker.check_for_updates()
-        logger.info("星野指令: 更新检查任务已安排，开始扫描宇宙寻找新版本～ ")
+        logger.info("更新检查任务已启动")
 
     def createSubInterface(self):
-        """(^・ω・^ ) 白露的魔法建筑师开工啦！
-        正在搭建子界面导航系统，就像建造一座功能齐全的魔法城堡～
-        每个功能模块都是城堡的房间，马上就能入住使用啦！🏰✨"""
+        """创建子界面
+        搭建子界面导航系统"""
         # 创建设置界面
         self.settingInterface = settings_Window(self)
         self.settingInterface.setObjectName("settingInterface")
-        logger.debug("白露建筑: 设置界面房间已建成～ ")
+        logger.debug("设置界面已创建")
 
         # 创建关于界面
         self.about_settingInterface = about(self)
         self.about_settingInterface.setObjectName("about_settingInterface")
-        logger.debug("白露建筑: 关于界面房间已建成～ ")
+        logger.debug("关于界面已创建")
         
         # 根据设置决定是否创建"历史交接设置"界面
         try:
@@ -933,16 +901,16 @@ class Window(MSFluentWindow):
                     # 创建历史交接设置界面
                     self.history_handoff_settingInterface = history_handoff_setting(self)
                     self.history_handoff_settingInterface.setObjectName("history_handoff_settingInterface")
-                    logger.debug("白露建筑: 历史交接设置界面房间已建成～ ")
+                    logger.debug("历史交接设置界面已创建")
                 else:
-                    logger.debug("白露建筑: '历史交接设置'界面已设置为不创建～ ")
+                    logger.debug("'历史交接设置'界面已设置为不创建")
                     self.history_handoff_settingInterface = None
         except Exception as e:
-            logger.error(f"白露建筑出错: 读取历史交接设置界面设置失败了呢～ {e}, 默认创建界面")
+            logger.error(f"读取历史交接设置界面设置失败: {e}, 默认创建界面")
             # 创建历史交接设置界面
             self.history_handoff_settingInterface = history_handoff_setting(self)
             self.history_handoff_settingInterface.setObjectName("history_handoff_settingInterface")
-            logger.debug("白露建筑: 历史交接设置界面房间已建成～ ")
+            logger.debug("历史交接设置界面已创建")
         
         # 根据设置决定是否创建"背单词"界面
         try:
@@ -956,12 +924,12 @@ class Window(MSFluentWindow):
                     # 创建背单词界面
                     self.vocabulary_learningInterface = vocabulary_learning(self)
                     self.vocabulary_learningInterface.setObjectName("vocabulary_learningInterface")
-                    logger.debug("白露建筑: 背单词界面房间已建成～ ")
+                    logger.debug("背单词界面已创建")
                 else:
-                    logger.debug("白露建筑: '背单词'界面已设置为不创建～ ")
+                    logger.debug("'背单词'界面已设置为不创建")
                     self.vocabulary_learningInterface = None
         except Exception as e:
-            logger.error(f"白露建筑出错: 读取背单词界面设置失败了呢～ {e}, 默认不创建界面")
+            logger.error(f"读取背单词界面设置失败: {e}, 默认不创建界面")
             # 创建背单词界面
             self.vocabulary_learningInterface = None
 
@@ -977,16 +945,16 @@ class Window(MSFluentWindow):
                     # 创建抽人界面（主界面）
                     self.pumping_peopleInterface = pumping_people(self)
                     self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
-                    logger.debug("白露建筑: 抽人界面房间已建成～ ")
+                    logger.debug("抽人界面已创建")
                 else:
-                    logger.debug("白露建筑: '抽人'界面已设置为不创建～ ")
+                    logger.debug("'抽人'界面已设置为不创建")
                     self.pumping_peopleInterface = None
         except Exception as e:
-            logger.error(f"白露建筑出错: 读取抽人界面设置失败了呢～ {e}, 默认创建界面")
+            logger.error(f"读取抽人界面设置失败: {e}, 默认创建界面")
             # 创建抽人界面（主界面）
             self.pumping_peopleInterface = pumping_people(self)
             self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
-            logger.debug("白露建筑: 抽人界面房间已建成～ ")
+            logger.debug("抽人界面已创建")
 
         # 根据设置决定是否创建"抽奖"界面
         try:
@@ -1000,68 +968,67 @@ class Window(MSFluentWindow):
                     # 创建抽奖界面
                     self.pumping_rewardInterface = pumping_reward(self)
                     self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
-                    logger.debug("白露建筑: 抽奖界面房间已建成～ ")
+                    logger.debug("抽奖界面已创建")
                 else:
-                    logger.debug("白露建筑: '抽奖'界面已设置为不创建～ ")
+                    logger.debug("'抽奖'界面已设置为不创建")
                     self.pumping_rewardInterface = None
         except Exception as e:
-            logger.error(f"白露建筑出错: 读取抽奖界面设置失败了呢～ {e}, 默认创建界面")
+            logger.error(f"读取抽奖界面设置失败: {e}, 默认创建界面")
             # 创建抽奖界面
             self.pumping_rewardInterface = pumping_reward(self)
             self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
-            logger.debug("白露建筑: 抽奖界面房间已建成～ ")
+            logger.debug("抽奖界面已创建")
 
         # 初始化导航系统
         self.initNavigation()
-        logger.info("白露建筑: 所有子界面和导航系统已完工！城堡可以正式对外开放啦～ ")
+        logger.info("所有子界面和导航系统已初始化完成")
 
     def initNavigation(self):
-        """(^・ω・^ ) 白露的魔法导航系统启动！
-        根据用户设置构建个性化菜单导航～ 就像魔法地图一样清晰！
-        确保每个功能模块都有明确路标，不会让用户迷路哦！🧭✨"""
+        """初始化导航系统
+        根据用户设置构建个性化菜单导航"""
         try:
             settings_path = path_manager.get_settings_path('custom_settings.json')
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 sidebar_settings = settings.get('sidebar', {})
-                logger.debug("白露导航: 已读取导航配置，准备构建个性化菜单～ ")
+                logger.debug("已读取导航配置，准备构建个性化菜单")
 
                 # 根据设置决定"点名"界面位置
                 pumping_floating_side = sidebar_settings.get('pumping_floating_side', 0)
                 if pumping_floating_side == 1:
                     if self.pumping_peopleInterface is not None:
                         self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.BOTTOM)
-                        logger.debug("白露导航: '点名'界面已放置在底部导航栏～ ")
+                        logger.debug("'点名'界面已放置在底部导航栏")
                     else:
-                        logger.debug("白露导航: '点名'界面未创建，无法添加到导航栏～ ")
+                        logger.debug("'点名'界面未创建，无法添加到导航栏")
                 elif pumping_floating_side == 2:
-                    logger.debug("白露导航: '点名'界面已设置为不显示～ ")
+                    logger.debug("'点名'界面已设置为不显示")
                 else:
                     if self.pumping_peopleInterface is not None:
                         self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.TOP)
-                        logger.debug("白露导航: '点名'界面已放置在顶部导航栏～ ")
+                        logger.debug("'点名'界面已放置在顶部导航栏")
                     else:
-                        logger.debug("白露导航: '点名'界面未创建，无法添加到导航栏～ ")
+                        logger.debug("'点名'界面未创建，无法添加到导航栏")
 
                 # 根据设置决定"抽奖"界面位置
                 pumping_reward_side = sidebar_settings.get('pumping_reward_side', 0)
                 if pumping_reward_side == 1:
                     if self.pumping_rewardInterface is not None:
                         self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.BOTTOM)
-                        logger.debug("白露导航: '抽奖'界面已放置在底部导航栏～ ")
+                        logger.debug("'抽奖'界面已放置在底部导航栏")
                     else:
-                        logger.debug("白露导航: '抽奖'界面未创建，无法添加到导航栏～ ")
+                        logger.debug("'抽奖'界面未创建，无法添加到导航栏")
                 elif pumping_reward_side == 2:
-                    logger.debug("白露导航: '抽奖'界面已设置为不显示～ ")
+                    logger.debug("'抽奖'界面已设置为不显示")
                 else:
                     if self.pumping_rewardInterface is not None:
                         self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
-                        logger.debug("白露导航: '抽奖'界面已放置在顶部导航栏～ ")
+                        logger.debug("'抽奖'界面已放置在顶部导航栏")
                     else:
-                        logger.debug("白露导航: '抽奖'界面未创建，无法添加到导航栏～ ")
+                        logger.debug("'抽奖'界面未创建，无法添加到导航栏")
 
         except FileNotFoundError as e:
-            logger.error(f"白露导航出错: 配置文件找不到啦～ {e}, 使用默认顶部导航布局")
+            logger.error(f"配置文件找不到: {e}, 使用默认顶部导航布局")
             if self.pumping_peopleInterface is not None:
                 self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.TOP)
             if self.pumping_rewardInterface is not None:
@@ -1073,21 +1040,21 @@ class Window(MSFluentWindow):
             if vocabulary_side == 1:
                 if self.vocabulary_learningInterface is not None:
                     self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
-                    logger.debug("白露导航: '单词PK'界面已放置在底部导航栏～ ")
+                    logger.debug("'单词PK'界面已放置在底部导航栏")
                 else:
-                    logger.debug("白露导航: '单词PK'界面未创建，无法添加到导航栏～ ")
+                    logger.debug("'单词PK'界面未创建，无法添加到导航栏")
             elif vocabulary_side == 2:
-                logger.debug("白露导航: '单词PK'界面已设置为不显示～ ")
+                logger.debug("'单词PK'界面已设置为不显示")
             else:
                 if self.vocabulary_learningInterface is not None:
                     self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.TOP)
-                    logger.debug("白露导航: '单词PK'界面已放置在顶部导航栏～ ")
+                    logger.debug("'单词PK'界面已放置在顶部导航栏")
                 else:
-                    logger.debug("白露导航: '单词PK'界面未创建，无法添加到导航栏～ ")
+                    logger.debug("'单词PK'界面未创建，无法添加到导航栏")
         except Exception as e:
             if self.vocabulary_learningInterface is not None:
                 self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
-            logger.error(f"白露导航出错: 加载单词PK界面导航项失败了呢～ {e}")
+            logger.error(f"加载单词PK界面导航项失败: {e}")
 
         # 添加历史记录导航项
         try:
@@ -1098,22 +1065,22 @@ class Window(MSFluentWindow):
                     history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
                     # 点击历史记录导航项时切换到历史记录界面
                     history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
-                    logger.debug("白露导航: '历史记录'导航项已放置在底部导航栏～ ")
+                    logger.debug("'历史记录'导航项已放置在底部导航栏")
                 else:
-                    logger.debug("白露导航: '历史记录'界面未创建，无法添加到导航栏～ ")
+                    logger.debug("'历史记录'界面未创建，无法添加到导航栏")
             elif history_side == 2:
-                logger.debug("白露导航: '历史记录'导航项已设置为不显示～ ")
+                logger.debug("'历史记录'导航项已设置为不显示")
             else:
                 if self.history_handoff_settingInterface is not None:
                     # 为历史记录导航项添加点击事件处理器
                     history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.TOP)
                     # 点击历史记录导航项时切换到历史记录界面
                     history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
-                    logger.debug("白露导航: '历史记录'导航项已放置在顶部导航栏～ ")
+                    logger.debug("'历史记录'导航项已放置在顶部导航栏")
                 else:
-                    logger.debug("白露导航: '历史记录'界面未创建，无法添加到导航栏～ ")
+                    logger.debug("'历史记录'界面未创建，无法添加到导航栏")
         except Exception as e:
-            logger.error(f"白露导航出错: 加载历史记录导航项失败了呢～ {e}")
+            logger.error(f"加载历史记录导航项失败: {e}")
             # 默认添加到底部导航栏
             if self.history_handoff_settingInterface is not None:
                 history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
@@ -1132,9 +1099,9 @@ class Window(MSFluentWindow):
                 # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
-                logger.debug("白露导航: '设置'图标已放置在底部导航栏～ ")
+                logger.debug("'设置'图标已放置在底部导航栏")
             elif settings_side == 2:
-                logger.debug("白露导航: '设置'图标已设置为不显示～ ")
+                logger.debug("'设置'图标已设置为不显示")
             else:
                 # 创建一个空的设置界面占位符，用于导航栏
                 self.settings_placeholder = QWidget()
@@ -1143,9 +1110,9 @@ class Window(MSFluentWindow):
                 # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
-                logger.debug("白露导航: '设置'图标已放置在顶部导航栏～ ")
+                logger.debug("'设置'图标已放置在顶部导航栏")
         except Exception as e:
-            logger.error(f"白露导航出错: 加载设置图标失败了呢～ {e}")
+            logger.error(f"加载设置图标失败: {e}")
             if sidebar_settings.get('show_settings_icon', True):
                 # 创建一个空的设置界面占位符，用于导航栏
                 self.settings_placeholder = QWidget()
@@ -1155,99 +1122,81 @@ class Window(MSFluentWindow):
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
         
-        logger.info("白露导航: 所有导航项已布置完成，导航系统可以正常使用啦～ ")
+        logger.info("所有导航项已布置完成，导航系统可以正常使用")
 
     def closeEvent(self, event):
-        """(ﾟДﾟ≡ﾟдﾟ) 星野的安全防御系统启动！
-        检测到窗口关闭事件！已成功拦截喵～ 
-        程序将撤退到系统托盘继续潜伏运行喵！(=｀ω´=)"""
+        """窗口关闭事件处理
+        拦截窗口关闭事件，隐藏窗口并保存窗口大小"""
         self.hide()
         event.ignore()
         self.save_window_size()
-        logger.info("星野防御: 窗口关闭事件已拦截，程序已转入后台运行～ ")
+        logger.info("窗口关闭事件已拦截，程序已转入后台运行")
 
     def resizeEvent(self, event):
-        """(ﾟДﾟ≡ﾟдﾟ) 星野的尺寸感应系统触发！
-        检测到窗口大小变化喵～ 正在启动尺寸记录倒计时！
-        500毫秒内如果不再变化就会自动保存新尺寸喵～(=｀ω´=)"""
+        """窗口大小变化事件处理
+        检测窗口大小变化并启动尺寸记录倒计时"""
         self.resize_timer.start(500)
         super().resizeEvent(event)
 
     def save_window_size(self):
-        """(^・ω・^ ) 白露的尺寸保管员上线！
-        正在用魔法记录当前窗口尺寸～ 就像用相机拍照存档一样！
-        下次启动时会自动恢复到这个大小，不用重新调整啦～ ✨"""
+        """保存窗口大小
+        记录当前窗口尺寸，下次启动时自动恢复"""
         if not self.isMaximized():
             self.config_manager.save_window_size(self.width(), self.height())
-            logger.info(f"白露存档: 已保存窗口尺寸为{self.width()}x{self.height()}像素～ ")
+            logger.info(f"已保存窗口尺寸为{self.width()}x{self.height()}像素")
 
     def update_focus_mode(self, mode):
-        """(^・ω・^ ) 白露的焦点模式调节器！
-        已成功切换到{mode}档魔法模式～ 就像调节台灯亮度一样简单！
-        不同档位会触发不同的自动隐藏魔法，数值越大隐藏速度越快哦～ ✨"""
+        """更新焦点模式
+        切换到不同的焦点模式，触发不同的自动隐藏行为"""
         self.focus_mode = mode
         self.last_focus_time = QDateTime.currentDateTime()
-        # logger.debug(f"白露调节: 焦点模式已切换到{mode}档～ ")
 
         if mode < len(self.FOCUS_TIMEOUT_MAP):
             self.focus_timeout = self.FOCUS_TIMEOUT_MAP[mode]
-            # logger.debug(f"白露调节: 自动隐藏阈值已设置为{self.focus_timeout}毫秒～ ")
 
     def update_focus_time(self, time):
-        """(^・ω・^ ) 白露的时间魔法更新！
-        焦点检查时间间隔已调整为{time}档～ 就像给闹钟设置新的提醒周期！
-        现在每{self.FOCUS_TIMEOUT_TIME[time] if time < len(self.FOCUS_TIMEOUT_TIME) else 0}毫秒检查一次窗口焦点哦～ ⏰"""
+        """更新焦点检查时间间隔
+        调整窗口焦点检查的时间间隔"""
         self.focus_time = time
         self.last_focus_time = QDateTime.currentDateTime()
-        # logger.debug(f"白露计时: 焦点检查时间已更新到{time}档～ ")
 
         if time < len(self.FOCUS_TIMEOUT_TIME):
             self.focus_timeout = self.FOCUS_TIMEOUT_TIME[time]
             self.focus_timer.start(self.focus_timeout)
-            # logger.debug(f"白露计时: 检查间隔已设置为{self.focus_timeout}毫秒～ ")
         else:
             self.focus_timer.start(0)
-            # logger.debug(f"白露计时: 检查间隔已设置为连续模式～ ")
 
     def check_focus_timeout(self):
-        """(ﾟДﾟ≡ﾟдﾟ) 星野的焦点监视器启动！
-        正在扫描窗口焦点状态喵～ {self.focus_timeout}毫秒无操作将触发自动隐藏魔法！
-        不要走开太久哦，否则我会躲起来喵～(=｀ω´=)"""
+        """检查焦点超时
+        监控窗口焦点状态，超时无操作则自动隐藏窗口"""
         if self.focus_mode == 0:  # 不关闭模式
             return
 
         if not self.isActiveWindow() and not self.isMinimized():
             elapsed = self.last_focus_time.msecsTo(QDateTime.currentDateTime())
             timeout = self.FOCUS_TIMEOUT_MAP[self.focus_mode]
-            # logger.debug(f"星野监视: 窗口已闲置{elapsed}毫秒，阈值为{timeout}毫秒～ ")
 
             if self.focus_mode == 1:  # 直接关闭模式
                 self.hide()
-                # logger.info("星野行动: 焦点模式1触发，窗口已自动隐藏～ ")
             elif elapsed >= timeout:
                 self.hide()
-                # logger.info(f"星野行动: 窗口闲置超过{timeout}毫秒，已自动隐藏～ ")
         else:
             self.last_focus_time = QDateTime.currentDateTime()
-            # logger.debug("星野监视: 检测到用户活动，重置闲置计时器～ ")
 
     def stop_focus_timer(self):
-        """星野守卫：
-        焦点检测计时器已停止！
-        窗口不会自动隐藏啦喵～(=｀ω´=)"""
+        """停止焦点计时器
+        禁用窗口自动隐藏功能"""
         self.focus_timer.stop()
 
     def showEvent(self, event):
-        """白露唤醒：
-        窗口显示时重置焦点时间
-        开始监控用户活动哦～(>^ω^<)"""
+        """窗口显示事件处理
+        窗口显示时重置焦点时间，开始监控用户活动"""
         super().showEvent(event)
         self.last_focus_time = QDateTime.currentDateTime()
 
     def focusInEvent(self, event):
-        """星野注意：
-        窗口获得焦点！
-        重置闲置计时器喵～(ฅ´ω`ฅ)"""
+        """窗口获得焦点事件处理
+        窗口获得焦点时重置闲置计时器"""
         super().focusInEvent(event)
         self.last_focus_time = QDateTime.currentDateTime()
 
@@ -1324,9 +1273,8 @@ class Window(MSFluentWindow):
             return False
 
     def show_about_tab(self):
-        """白露向导：
-        正在导航到关于页面
-        这里可以查看软件版本和作者信息哦～(>^ω^<)"""
+        """显示关于标签页
+        导航到关于页面，可查看软件版本和作者信息"""
         # 检查是否在非上课时间且需要安全验证
         if self._is_non_class_time():
             try:
@@ -1352,9 +1300,8 @@ class Window(MSFluentWindow):
         self.switchTo(self.about_settingInterface)
 
     def start_cleanup(self):
-        """(^・ω・^ ) 白露的启动清理魔法！
-        软件启动时清理上次遗留的临时抽取记录文件喵～
-        根据抽选模式决定是否需要清理，保持系统整洁！"""
+        """启动清理
+        软件启动时清理上次遗留的临时抽取记录文件"""
         try:
             settings_path = path_manager.get_settings_path('Settings.json')
             with open_file(settings_path, 'r', encoding='utf-8') as f:
@@ -1362,13 +1309,13 @@ class Window(MSFluentWindow):
                 clear_mode = settings['pumping_people']['clear_mode']
                 instant_clear_mode = settings['instant_draw']['clear_mode']
                 instant_clear = settings['instant_draw']['instant_clear']
-                logger.debug(f"星野侦察: 准备执行对应清理方案～ ")
+                logger.debug("准备执行对应清理方案")
 
         except Exception as e:
             clear_mode = 1
             instant_clear_mode = 1
             instant_clear = False
-            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}")
+            logger.error(f"加载抽选模式设置失败: {e}")
 
         import glob
         temp_dir = path_manager.get_temp_path('')
@@ -1379,24 +1326,21 @@ class Window(MSFluentWindow):
                 for file in glob.glob(f"{temp_dir}/*.json"):
                     try:
                         os.remove(file)
-                        logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")
+                        logger.info(f"已删除临时抽取记录文件: {file}")
                     except Exception as e:
-                        logger.error(f"星野清理失败: 删除临时文件出错喵～ {e}")
+                        logger.error(f"删除临时文件出错: {e}")
         elif (clear_mode != 1 or instant_clear_mode != 1) and instant_clear:
             if path_manager.file_exists(temp_dir):
                 for file in glob.glob(f"{temp_dir}/*_instant.json"):
                     try:
                         os.remove(file)
-                        logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")
+                        logger.info(f"已删除临时抽取记录文件: {file}")
                     except Exception as e:
-                        logger.error(f"星野清理失败: 删除临时文件出错喵～ {e}")
-
-
+                        logger.error(f"删除临时文件出错: {e}")
 
     def toggle_window(self):
-        """(^・ω・^ ) 白露的窗口切换魔法！
-        显示→隐藏→显示，像捉迷藏一样好玩喵～
-        切换时会自动激活点名界面，方便用户继续操作！"""
+        """切换窗口显示状态
+        在显示和隐藏状态之间切换窗口，切换时自动激活点名界面"""
         # 检查是否在非上课时间且需要安全验证
         if self._is_non_class_time():
             try:
@@ -1421,7 +1365,7 @@ class Window(MSFluentWindow):
 
         if self.isVisible():
             self.hide()
-            logger.info("星野魔法: 主窗口已隐藏～ ")
+            logger.info("主窗口已隐藏")
             if self.isMinimized():
                 self.showNormal()
                 self.activateWindow()
@@ -1435,13 +1379,12 @@ class Window(MSFluentWindow):
                 self.show()
                 self.activateWindow()
                 self.raise_()
-            logger.info("星野魔法: 主窗口已显示～ ")
+            logger.info("主窗口已显示")
         self.switchTo(self.pumping_peopleInterface)
 
     def calculate_menu_position(self, menu):
-        """白露定位系统：
-        正在计算托盘菜单最佳显示位置
-        确保菜单不会超出屏幕边界哦～(๑•̀ㅂ•́)ow✧"""
+        """计算托盘菜单位置
+        计算托盘菜单的最佳显示位置，确保菜单不会超出屏幕边界"""
         screen = QApplication.primaryScreen().availableGeometry()
         menu_size = menu.sizeHint()
 
@@ -1458,50 +1401,49 @@ class Window(MSFluentWindow):
         return QPoint(x, y)
 
     def close_window_secrandom(self):
-        """(^・ω・^ ) 白露的终极安全检查！
-        检测到退出请求！需要通过密码验证才能离开基地喵！
-        这是最高级别的安全防御，不能让坏人随便入侵喵！🔒✨"""
+        """关闭窗口
+        执行安全验证后关闭程序，释放所有资源"""
         try:
             enc_settings_path = path_manager.get_enc_set_path()
             with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                logger.debug("星野安检: 正在读取安全设置，准备执行退出验证～ ")
+                logger.debug("正在读取安全设置，准备执行退出验证")
 
                 if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
                     if settings.get('hashed_set', {}).get('exit_verification_enabled', False) == True:
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("星野安检: 用户取消退出程序操作，安全防御已解除～ ")
+                            logger.warning("用户取消退出程序操作")
                             return
         except Exception as e:
-            logger.error(f"星野安检失败: 密码验证系统出错喵～ {e}")
+            logger.error(f"密码验证系统出错: {e}")
             return
 
-        logger.info("星野撤退: 安全验证通过，开始执行完全退出程序流程～ ")
+        logger.info("安全验证通过，开始执行完全退出程序流程")
         self.hide()
         if hasattr(self, 'levitation_window'):
             self.levitation_window.hide()
-            logger.debug("星野撤退: 悬浮窗已隐藏～ ")
+            logger.debug("悬浮窗已隐藏")
             
         if hasattr(self, 'focus_timer'):
             self.stop_focus_timer()
-            logger.debug("星野撤退: 焦点计时器已停止～ ")
+            logger.debug("焦点计时器已停止")
 
         if hasattr(self, 'usb_detection_timer'):
             self.usb_detection_timer.stop()
-            logger.debug("星野撤退: USB绑定已关闭～ ")
+            logger.debug("USB绑定已关闭")
 
         # 停止resize_timer以优化CPU占用
         if hasattr(self, 'resize_timer') and self.resize_timer.isActive():
             self.resize_timer.stop()
-            logger.debug("星野撤退: resize_timer已停止～ ")
+            logger.debug("resize_timer已停止")
 
         # 停止托盘菜单定时器
         if hasattr(self, 'tray_manager') and hasattr(self.tray_manager, 'menu_timer'):
             if self.tray_manager.menu_timer.isActive():
                 self.tray_manager.menu_timer.stop()
-                logger.debug("星野撤退: 托盘菜单定时器已停止～ ")
+                logger.debug("托盘菜单定时器已停止")
 
         # 停止USB监控线程
         if hasattr(self, 'settingInterface') and self.settingInterface:
@@ -1514,16 +1456,16 @@ class Window(MSFluentWindow):
                 if self.settingInterface.usb_monitor_thread.isRunning():
                     self.settingInterface.usb_monitor_thread.wait(500)  # 等待最多500ms
                 self.settingInterface.usb_monitor_thread = None
-                logger.debug("星野撤退: USB监控线程已停止～ ")
+                logger.debug("USB监控线程已停止")
 
         if hasattr(self, 'server'):
             self.server.close()
-            logger.debug("星野撤退: IPC服务器已关闭～ ")
+            logger.debug("IPC服务器已关闭")
 
         # 停止更新检查
         if hasattr(self, 'update_checker') and self.update_checker:
             self.update_checker.stop_checking()
-            logger.debug("星野撤退: 更新检查已停止～ ")
+            logger.debug("更新检查已停止")
             
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
@@ -1531,25 +1473,27 @@ class Window(MSFluentWindow):
                 self.shared_memory.detach()
                 if self.shared_memory.isAttached():
                     self.shared_memory.detach()
-                logger.debug("星野撤退: 共享内存已完全释放～ ")
+                logger.debug("共享内存已完全释放")
             except Exception as e:
-                logger.error(f"星野撤退: 共享内存释放出错喵～ {e}")
+                logger.error(f"共享内存释放出错: {e}")
 
-        logger.debug("星野撤退: 所有资源已成功释放，程序即将退出～ ")
+        logger.debug("所有资源已成功释放，程序即将退出")
         
         # 正确关闭日志系统
         try:
             # 移除所有日志处理器
             loguru.logger.remove()
-            logger.info("星野撤退: 日志系统已安全关闭～ ")
+            logger.info("日志系统已安全关闭")
         except Exception as e:
-            logger.error(f"星野撤退: 日志系统关闭出错喵～ {e}")
+            logger.error(f"日志系统关闭出错: {e}")
 
         # 确保完全退出应用程序
         QApplication.quit()
         sys.exit(0)
 
     def restart_app(self):
+        """重启应用程序
+        执行安全验证后重启程序，清理所有资源"""
         try:
             enc_settings_path = path_manager.get_enc_set_path()
             with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
@@ -1565,13 +1509,13 @@ class Window(MSFluentWindow):
             logger.error(f"密码验证过程出错: {e}")
             return
 
-        logger.info("星野重启: 安全验证通过，开始执行完全重启程序流程～ ")
+        logger.info("安全验证通过，开始执行完全重启程序流程")
         
         # 隐藏所有窗口
         self.hide()
         if hasattr(self, 'levitation_window'):
             self.levitation_window.hide()
-            logger.debug("星野重启: 悬浮窗已隐藏～ ")
+            logger.debug("悬浮窗已隐藏")
         
         # 彻底清理设置界面，防止重启后嵌套问题
         if hasattr(self, 'settingInterface') and self.settingInterface:
@@ -1583,30 +1527,30 @@ class Window(MSFluentWindow):
                 # 关闭设置界面
                 self.settingInterface.close()
                 self.settingInterface = None
-                logger.debug("星野重启: 设置界面已完全清理～ ")
+                logger.debug("设置界面已完全清理")
             except Exception as e:
-                logger.error(f"星野重启: 清理设置界面时出错喵～ {e}")
+                logger.error(f"清理设置界面时出错: {e}")
         
         # 停止所有计时器
         if hasattr(self, 'focus_timer'):
             self.stop_focus_timer()
-            logger.debug("星野重启: 焦点计时器已停止～ ")
+            logger.debug("焦点计时器已停止")
     
         # 停止USB检测计时器
         if hasattr(self, 'usb_detection_timer'):
             self.usb_detection_timer.stop()
-            logger.debug("星野重启: USB绑定已关闭～ ")
+            logger.debug("USB绑定已关闭")
 
         # 停止resize_timer以优化CPU占用
         if hasattr(self, 'resize_timer') and self.resize_timer.isActive():
             self.resize_timer.stop()
-            logger.debug("星野重启: resize_timer已停止～ ")
+            logger.debug("resize_timer已停止")
 
         # 停止托盘菜单定时器
         if hasattr(self, 'tray_manager') and hasattr(self.tray_manager, 'menu_timer'):
             if self.tray_manager.menu_timer.isActive():
                 self.tray_manager.menu_timer.stop()
-                logger.debug("星野重启: 托盘菜单定时器已停止～ ")
+                logger.debug("托盘菜单定时器已停止")
                 
         # 停止USB监控线程
         if hasattr(self, 'settingInterface') and self.settingInterface:
@@ -1619,17 +1563,17 @@ class Window(MSFluentWindow):
                 if self.settingInterface.usb_monitor_thread.isRunning():
                     self.settingInterface.usb_monitor_thread.wait(500)  # 等待最多500ms
                 self.settingInterface.usb_monitor_thread = None
-                logger.debug("星野重启: USB监控线程已停止～ ")
+                logger.debug("USB监控线程已停止")
         
         # 关闭IPC服务器
         if hasattr(self, 'server'):
             self.server.close()
-            logger.debug("星野重启: IPC服务器已关闭～ ")
+            logger.debug("IPC服务器已关闭")
         
         # 停止更新检查
         if hasattr(self, 'update_checker') and self.update_checker:
             self.update_checker.stop_checking()
-            logger.debug("星野重启: 更新检查已停止～ ")
+            logger.debug("更新检查已停止")
 
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
@@ -1637,9 +1581,9 @@ class Window(MSFluentWindow):
                 self.shared_memory.detach()
                 if self.shared_memory.isAttached():
                     self.shared_memory.detach()
-                logger.info("星野重启: 共享内存已完全释放～ ")
+                logger.info("共享内存已完全释放")
             except Exception as e:
-                logger.error(f"星野重启: 共享内存释放出错喵～ {e}")
+                logger.error(f"共享内存释放出错: {e}")
         
         # 重置密码验证状态，防止重启后打不开设置
         try:
@@ -1650,9 +1594,9 @@ class Window(MSFluentWindow):
                 settings['hashed_set']['verification_start'] = False
                 with open_file(enc_settings_path, 'w', encoding='utf-8') as f:
                     json.dump(settings, f, ensure_ascii=False, indent=4)
-                logger.debug("星野重启: 密码验证状态已重置～ ")
+                logger.debug("密码验证状态已重置")
         except Exception as e:
-            logger.error(f"星野重启: 重置密码验证状态时出错喵～ {e}")
+            logger.error(f"重置密码验证状态时出错: {e}")
         
         # 给系统更多时间清理资源
         time.sleep(1.0)
@@ -1676,27 +1620,26 @@ class Window(MSFluentWindow):
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
                 startupinfo=startup_info
             )
-            logger.info("星野重启: 新进程已成功启动～ ")
+            logger.info("新进程已成功启动")
         except Exception as e:
-            logger.error(f"星野重启: 启动新进程失败喵～ {e}")
+            logger.error(f"启动新进程失败: {e}")
             return
 
         # 正确关闭日志系统
         try:
             # 移除所有日志处理器
             loguru.logger.remove()
-            logger.info("星野重启: 日志系统已安全关闭～ ")
+            logger.info("日志系统已安全关闭")
         except Exception as e:
-            logger.error(f"星野重启: 日志系统关闭出错喵～ {e}")
+            logger.error(f"日志系统关闭出错: {e}")
         
         # 完全退出当前应用程序
         QApplication.quit()
         sys.exit(0)
 
     def show_setting_interface(self):
-        """白露设置向导：
-        正在打开设置界面
-        小心不要乱动高级选项哦～(^・ω・^ )"""
+        """显示设置界面
+        打开程序设置界面，需要密码验证"""
         try:
             enc_settings_path = path_manager.get_enc_set_path()
             with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
@@ -1738,9 +1681,8 @@ class Window(MSFluentWindow):
                 self.settingInterface.raise_()
 
     def toggle_levitation_window(self):
-        """星野悬浮控制：
-        浮窗显示状态切换中！
-        注意不要让它挡住重要内容喵～(ฅ´ω`ฅ)"""
+        """切换悬浮窗显示状态
+        在显示和隐藏状态之间切换悬浮窗口"""
         try:
             enc_settings_path = path_manager.get_enc_set_path()
             with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
@@ -1767,9 +1709,8 @@ class Window(MSFluentWindow):
 
     @pyqtSlot()
     def _show_direct_extraction_window_from_shortcut(self):
-        """星野闪抽快捷键处理：
-        通过全局快捷键触发闪抽界面！
-        确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
+        """通过快捷键显示闪抽界面
+        通过全局快捷键触发闪抽界面，确保在主线程中执行UI操作"""
         try:
             # 检查levitation_window是否存在，不存在则创建
             if not hasattr(self, 'levitation_window') or not self.levitation_window:
@@ -1777,15 +1718,14 @@ class Window(MSFluentWindow):
             
             # 调用LevitationWindow的_show_direct_extraction_window方法
             self.levitation_window._show_direct_extraction_window()
-            logger.info("星野闪抽: 通过快捷键成功触发闪抽界面～ ")
+            logger.info("通过快捷键成功触发闪抽界面")
         except Exception as e:
-            logger.error(f"星野闪抽: 快捷键触发闪抽界面失败喵～ {e}")
+            logger.error(f"快捷键触发闪抽界面失败: {e}")
 
     @pyqtSlot()
     def _show_pumping_interface_from_shortcut(self):
-        """点名界面快捷键处理：
-        通过全局快捷键打开点名界面！
-        确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
+        """通过快捷键显示点名界面
+        通过全局快捷键打开点名界面，确保在主线程中执行UI操作"""
         try:
             # 确保主窗口可见
             if not self.isVisible():
@@ -1795,15 +1735,14 @@ class Window(MSFluentWindow):
             
             # 切换到点名界面
             self.switchTo(self.pumping_peopleInterface)
-            logger.info("点名界面: 通过快捷键成功打开点名界面～ ")
+            logger.info("通过快捷键成功打开点名界面")
         except Exception as e:
-            logger.error(f"点名界面: 快捷键打开点名界面失败喵～ {e}")
+            logger.error(f"快捷键打开点名界面失败: {e}")
 
     @pyqtSlot()
     def _show_reward_interface_from_shortcut(self):
-        """抽奖界面快捷键处理：
-        通过全局快捷键打开抽奖界面！
-        确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
+        """通过快捷键显示抽奖界面
+        通过全局快捷键打开抽奖界面，确保在主线程中执行UI操作"""
         try:
             # 确保主窗口可见
             if not self.isVisible():
@@ -1813,15 +1752,14 @@ class Window(MSFluentWindow):
             
             # 切换到抽奖界面
             self.switchTo(self.pumping_rewardInterface)
-            logger.info("抽奖界面: 通过快捷键成功打开抽奖界面～ ")
+            logger.info("通过快捷键成功打开抽奖界面")
         except Exception as e:
-            logger.error(f"抽奖界面: 快捷键打开抽奖界面失败喵～ {e}")
+            logger.error(f"快捷键打开抽奖界面失败: {e}")
 
     @pyqtSlot()
     def _trigger_pumping_from_shortcut(self):
-        """点名快捷键处理：
-        通过全局快捷键触发点名操作！
-        确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
+        """通过快捷键触发点名操作
+        通过全局快捷键触发点名操作，确保在主线程中执行UI操作"""
         try:
             # 确保主窗口可见
             if not self.isVisible():
@@ -1834,15 +1772,14 @@ class Window(MSFluentWindow):
             
             # 触发点名操作
             self.pumping_peopleInterface.start_draw()
-            logger.info("点名: 通过快捷键成功触发点名操作～ ")
+            logger.info("通过快捷键成功触发点名操作")
         except Exception as e:
-            logger.error(f"点名: 快捷键触发点名操作失败喵～ {e}")
+            logger.error(f"快捷键触发点名操作失败: {e}")
 
     @pyqtSlot()
     def _trigger_reward_from_shortcut(self):
-        """抽奖快捷键处理：
-        通过全局快捷键触发抽奖操作！
-        确保在主线程中执行UI操作喵～(ฅ´ω`ฅ)"""
+        """通过快捷键触发抽奖操作
+        通过全局快捷键触发抽奖操作，确保在主线程中执行UI操作"""
         try:
             # 确保主窗口可见
             if not self.isVisible():
@@ -1855,9 +1792,9 @@ class Window(MSFluentWindow):
             
             # 触发抽奖操作
             self.pumping_rewardInterface.start_draw()
-            logger.info("抽奖: 通过快捷键成功触发抽奖操作～ ")
+            logger.info("通过快捷键成功触发抽奖操作")
         except Exception as e:
-            logger.error(f"抽奖: 快捷键触发抽奖操作失败喵～ {e}")
+            logger.error(f"快捷键触发抽奖操作失败: {e}")
 
     def handle_new_connection(self):
         client_connection = self.server.nextPendingConnection()
@@ -1969,18 +1906,16 @@ class Window(MSFluentWindow):
     # URL协议支持方法
     # ==================================================
     def show_main_window(self):
-        """(^・ω・^ ) 白露的主界面召唤魔法！
-        通过URL协议打开主界面，让用户开始他们的随机选择冒险～
-        会自动显示并激活窗口，确保用户能立即看到界面！✨"""
-        logger.info("白露URL: 正在打开主界面～")
+        """通过URL协议显示主窗口
+        通过URL协议打开主界面，自动显示并激活窗口"""
+        logger.info("正在打开主界面")
         self.toggle_window()
-        logger.info("白露URL: 主界面已成功打开～")
+        logger.info("主界面已成功打开")
     
     def show_settings_window(self):
-        """(^・ω・^ ) 白露的设置界面召唤魔法！
-        通过URL协议打开设置界面，让用户可以调整各种设置～
-        会检查是否跳过安全验证，如果开启则直接打开设置界面！🔒✨"""
-        logger.info("白露URL: 正在打开设置界面～")
+        """通过URL协议显示设置窗口
+        通过URL协议打开设置界面，检查是否跳过安全验证"""
+        logger.info("正在打开设置界面")
         
         # 检查是否跳过安全验证
         skip_security = False
@@ -2017,12 +1952,11 @@ class Window(MSFluentWindow):
                     self.settingInterface.activateWindow()
                     self.settingInterface.raise_()
         
-        logger.info("白露URL: 设置界面已成功打开～")
+        logger.info("设置界面已成功打开")
     
     def show_pumping_window(self):
-        """(^・ω・^ ) 白露的点名界面召唤魔法！
-        通过URL协议打开点名界面，让用户可以开始随机选择～
-        会自动切换到点名界面，方便用户立即开始使用！🎲✨"""
+        """通过URL协议显示点名窗口
+        通过URL协议打开点名界面，自动切换到点名界面"""
         if self._is_non_class_time():
             try:
                 enc_settings_path = path_manager.get_enc_set_path()
@@ -2038,18 +1972,17 @@ class Window(MSFluentWindow):
                 logger.error(f"密码验证失败: {e}")
                 return
 
-        logger.info("白露URL: 正在打开点名界面～")
+        logger.info("正在打开点名界面")
         if not self.isVisible():
             self.show()
             self.activateWindow()
             self.raise_()
         self.switchTo(self.pumping_peopleInterface)
-        logger.info("白露URL: 点名界面已成功打开～")
+        logger.info("点名界面已成功打开")
     
     def show_reward_window(self):
-        """(^・ω・^ ) 白露的抽奖界面召唤魔法！
-        通过URL协议打开抽奖界面，让用户可以开始抽奖活动～
-        会自动切换到抽奖界面，让用户立即开始抽奖！🎁✨"""
+        """通过URL协议显示抽奖窗口
+        通过URL协议打开抽奖界面，自动切换到抽奖界面"""
         if self._is_non_class_time():
             try:
                 enc_settings_path = path_manager.get_enc_set_path()
@@ -2065,18 +1998,17 @@ class Window(MSFluentWindow):
                 logger.error(f"密码验证失败: {e}")
                 return
 
-        logger.info("白露URL: 正在打开抽奖界面～")
+        logger.info("正在打开抽奖界面")
         if not self.isVisible():
             self.show()
             self.activateWindow()
             self.raise_()
         self.switchTo(self.pumping_rewardInterface)
-        logger.info("白露URL: 抽奖界面已成功打开～")
+        logger.info("抽奖界面已成功打开")
     
     def show_history_window(self):
-        """(^・ω・^ ) 白露的历史记录界面召唤魔法！
-        通过URL协议打开历史记录界面，让用户查看过往记录～
-        会自动切换到历史记录界面，方便用户查看历史数据！📊✨"""
+        """通过URL协议显示历史记录窗口
+        通过URL协议打开历史记录界面，自动切换到历史记录界面"""
         if self._is_non_class_time():
             try:
                 enc_settings_path = path_manager.get_enc_set_path()
@@ -2092,7 +2024,7 @@ class Window(MSFluentWindow):
                 logger.error(f"密码验证失败: {e}")
                 return
 
-        logger.info("白露URL: 正在打开历史记录界面～")
+        logger.info("正在打开历史记录界面")
         if not self.isVisible():
             self.show()
             self.activateWindow()
@@ -2100,12 +2032,11 @@ class Window(MSFluentWindow):
         self.switchTo(self.history_handoff_settingInterface)
         # 触发历史记录数据加载
         self.history_handoff_settingInterface.pumping_people_card.load_data()
-        logger.info("白露URL: 历史记录界面已成功打开～")
+        logger.info("历史记录界面已成功打开")
     
     def show_floating_window(self):
-        """(^・ω・^ ) 白露的浮窗界面召唤魔法！
-        通过URL协议打开浮窗界面，让用户使用便捷的悬浮功能～
-        会检查是否跳过安全验证，如果开启则直接切换浮窗状态！🪟✨"""
+        """通过URL协议显示浮窗
+        通过URL协议打开浮窗界面，检查是否跳过安全验证"""
         # 检查是否跳过安全验证
         skip_security = False
         if self._is_non_class_time():
@@ -2147,13 +2078,11 @@ class Window(MSFluentWindow):
                 self.levitation_window.activateWindow()
                 self.levitation_window.raise_()
         
-        logger.info("白露URL: 浮窗界面已成功打开～")
+        logger.info("浮窗界面已成功打开")
     
     def show_plugin_settings_window(self):
-        """(^・ω・^ ) 白露的插件设置界面召唤魔法！
-        通过URL协议打开插件设置界面，让用户可以管理插件相关设置～
-        会检查是否跳过安全验证，如果开启则直接打开插件设置界面！⚙️✨
-        """
+        """通过URL协议显示插件设置窗口
+        通过URL协议打开插件设置界面，检查是否跳过安全验证"""
         if self._is_non_class_time():
             try:
                 enc_settings_path = path_manager.get_enc_set_path()
@@ -2210,9 +2139,9 @@ class Window(MSFluentWindow):
             if self.settingInterface.plugin_settingsInterface is not None:
                 # 切换到插件设置界面
                 self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.plugin_settingsInterface)
-                logger.info(f"白露URL: 插件设置界面已成功打开～")
+                logger.info("插件设置界面已成功打开")
             else:
-                logger.error(f"白露URL: 插件设置界面不存在，无法打开～")
+                logger.error("插件设置界面不存在，无法打开")
                 # 尝试重新创建插件设置界面
                 try:
                     from app.view.plugins.plugin_settings import PluginSettingsWindow
@@ -2223,16 +2152,15 @@ class Window(MSFluentWindow):
                     self.settingInterface.initNavigation()
                     # 切换到插件设置界面
                     self.settingInterface.stackedWidget.setCurrentWidget(self.settingInterface.plugin_settingsInterface)
-                    logger.info(f"白露URL: 插件设置界面重新创建并成功打开～")
+                    logger.info("插件设置界面重新创建并成功打开")
                 except Exception as e:
-                    logger.error(f"白露URL: 重新创建插件设置界面失败: {e}")
+                    logger.error(f"重新创建插件设置界面失败: {e}")
         
-        logger.info(f"白露URL: 插件设置界面已成功打开～")
+        logger.info("插件设置界面已成功打开")
     
     def start_pumping_selection(self):
-        """(^・ω・^ ) 白露的抽选启动魔法！
-        通过URL参数启动抽选功能，让程序自动开始点名～
-        会检查当前界面并调用相应的开始方法！🎯✨"""
+        """通过URL参数启动抽选功能
+        通过URL参数启动抽选功能，检查当前界面并调用相应的开始方法"""
         if self._is_non_class_time():
             try:
                 enc_settings_path = path_manager.get_enc_set_path()
@@ -2261,16 +2189,15 @@ class Window(MSFluentWindow):
             # 尝试调用点名界面的开始方法
             if hasattr(self.pumping_peopleInterface, 'start_draw'):
                 self.pumping_peopleInterface.start_draw()
-                logger.info("白露URL: 抽选功能已成功启动～")
+                logger.info("抽选功能已成功启动")
             else:
-                logger.warning("白露URL: 点名界面缺少start_draw方法～")
+                logger.warning("点名界面缺少start_draw方法")
         except Exception as e:
-            logger.error(f"白露URL: 启动抽选功能失败: {e}")
+            logger.error(f"启动抽选功能失败: {e}")
     
     def stop_pumping_selection(self):
-        """(^・ω・^ ) 白露的抽选停止魔法！
-        通过URL参数停止抽选功能，让程序停止当前的点名操作～
-        会检查当前界面并调用相应的停止方法！🛑✨"""
+        """通过URL参数停止抽选功能
+        通过URL参数停止抽选功能，检查当前界面并调用相应的停止方法"""
         if self._is_non_class_time():
             try:
                 enc_settings_path = path_manager.get_enc_set_path()
@@ -2299,17 +2226,16 @@ class Window(MSFluentWindow):
             # 尝试调用点名界面的停止方法
             if hasattr(self.pumping_peopleInterface, '_stop_animation') and self.pumping_peopleInterface.is_animating:
                 self.pumping_peopleInterface._stop_animation()
-                logger.info("白露URL: 抽选功能已成功停止～")
+                logger.info("抽选功能已成功停止")
             else:
-                logger.warning("白露URL: 点名界面未在动画中或缺少_stop_animation方法～")
+                logger.warning("点名界面未在动画中或缺少_stop_animation方法")
         except Exception as e:
-            logger.error(f"白露URL: 停止抽选功能失败: {e}")
+            logger.error(f"停止抽选功能失败: {e}")
     
     def reset_pumping_selection(self):
-        """(^・ω・^ ) 白露的抽选重置魔法！
-        通过URL参数重置抽选状态，让程序清空当前的抽选结果～
-        会检查当前界面并调用相应的重置方法！🔄✨"""
-        logger.info("白露URL: 正在重置抽选状态～")
+        """通过URL参数重置抽选状态
+        通过URL参数重置抽选状态，检查当前界面并调用相应的重置方法"""
+        logger.info("正在重置抽选状态")
         try:
             # # 确保主窗口可见
             # if not self.isVisible():
@@ -2323,16 +2249,15 @@ class Window(MSFluentWindow):
             # 尝试调用点名界面的重置方法
             if hasattr(self.pumping_peopleInterface, '_reset_to_initial_state'):
                 self.pumping_peopleInterface._reset_to_initial_state()
-                logger.info("白露URL: 抽选状态已成功重置～")
+                logger.info("抽选状态已成功重置")
             else:
-                logger.warning("白露URL: 点名界面缺少_reset_to_initial_state方法～")
+                logger.warning("点名界面缺少_reset_to_initial_state方法")
         except Exception as e:
-            logger.error(f"白露URL: 重置抽选状态失败: {e}")
+            logger.error(f"重置抽选状态失败: {e}")
     
     def start_reward_selection(self):
-        """(^・ω・^ ) 白露的抽奖启动魔法！
-        通过URL参数启动抽奖功能，让程序自动开始抽奖～
-        会检查当前界面并调用相应的开始方法！🎁✨"""
+        """通过URL参数启动抽奖功能
+        通过URL参数启动抽奖功能，检查当前界面并调用相应的开始方法"""
         if self._is_non_class_time():
             try:
                 enc_settings_path = path_manager.get_enc_set_path()
@@ -2361,16 +2286,15 @@ class Window(MSFluentWindow):
             # 尝试调用抽奖界面的开始方法
             if hasattr(self.pumping_rewardInterface, 'start_draw'):
                 self.pumping_rewardInterface.start_draw()
-                logger.info("白露URL: 抽奖功能已成功启动～")
+                logger.info("抽奖功能已成功启动")
             else:
-                logger.warning("白露URL: 抽奖界面缺少start_draw方法～")
+                logger.warning("抽奖界面缺少start_draw方法")
         except Exception as e:
-            logger.error(f"白露URL: 启动抽奖功能失败: {e}")
+            logger.error(f"启动抽奖功能失败: {e}")
     
     def stop_reward_selection(self):
-        """(^・ω・^ ) 白露的抽奖停止魔法！
-        通过URL参数停止抽奖功能，让程序停止当前的抽奖操作～
-        会检查当前界面并调用相应的停止方法！🛑✨"""
+        """通过URL参数停止抽奖功能
+        通过URL参数停止抽奖功能，检查当前界面并调用相应的停止方法"""
         if self._is_non_class_time():
             try:
                 enc_settings_path = path_manager.get_enc_set_path()
@@ -2399,17 +2323,16 @@ class Window(MSFluentWindow):
             # 尝试调用抽奖界面的停止方法
             if hasattr(self.pumping_rewardInterface, '_stop_animation') and self.pumping_rewardInterface.is_animating:
                 self.pumping_rewardInterface._stop_animation()
-                logger.info("白露URL: 抽奖功能已成功停止～")
+                logger.info("抽奖功能已成功停止")
             else:
-                logger.warning("白露URL: 抽奖界面未在动画中或缺少_stop_animation方法～")
+                logger.warning("抽奖界面未在动画中或缺少_stop_animation方法")
         except Exception as e:
-            logger.error(f"白露URL: 停止抽奖功能失败: {e}")
+            logger.error(f"停止抽奖功能失败: {e}")
     
     def reset_reward_selection(self):
-        """(^・ω・^ ) 白露的抽奖重置魔法！
-        通过URL参数重置抽奖状态，让程序清空当前的抽奖结果～
-        会检查当前界面并调用相应的重置方法！🔄✨"""
-        logger.info("白露URL: 正在重置抽奖状态～")
+        """通过URL参数重置抽奖状态
+        通过URL参数重置抽奖状态，检查当前界面并调用相应的重置方法"""
+        logger.info("正在重置抽奖状态")
         try:
             # # 确保主窗口可见
             # if not self.isVisible():
@@ -2423,16 +2346,15 @@ class Window(MSFluentWindow):
             # 尝试调用抽奖界面的重置方法
             if hasattr(self.pumping_rewardInterface, '_reset_to_initial_state'):
                 self.pumping_rewardInterface._reset_to_initial_state()
-                logger.info("白露URL: 抽奖状态已成功重置～")
+                logger.info("抽奖状态已成功重置")
             else:
-                logger.warning("白露URL: 抽奖界面缺少_reset_to_initial_state方法～")
+                logger.warning("抽奖界面缺少_reset_to_initial_state方法")
         except Exception as e:
-            logger.error(f"白露URL: 重置抽奖状态失败: {e}")
+            logger.error(f"重置抽奖状态失败: {e}")
 
     def show_direct_extraction(self):
-        """(^・ω・^ ) 白露的闪抽召唤魔法！
-        通过URL参数直接打开点名界面，让用户快速开始点名操作～
-        会自动切换到点名界面，方便用户开始点名！✨"""
+        """通过URL参数直接打开点名界面
+        通过URL参数直接打开点名界面，自动切换到点名界面"""
         if self._is_non_class_time():
             try:
                 enc_settings_path = path_manager.get_enc_set_path()
@@ -2449,12 +2371,11 @@ class Window(MSFluentWindow):
                 return
         
         self.levitation_window._show_direct_extraction_window()
-        logger.info("白露URL: 闪抽界面已成功打开～")
+        logger.info("闪抽界面已成功打开")
     
     def show_about_window(self):
-        """(^・ω・^ ) 白露的关于界面召唤魔法！
-        通过URL协议打开关于界面，让用户查看软件信息～
-        会自动切换到关于界面，方便用户查看版本和作者信息！ℹ️✨"""
+        """通过URL协议打开关于界面
+        通过URL协议打开关于界面，自动切换到关于界面"""
         if self._is_non_class_time():
             try:
                 enc_settings_path = path_manager.get_enc_set_path()
@@ -2475,12 +2396,11 @@ class Window(MSFluentWindow):
             self.activateWindow()
             self.raise_()
         self.switchTo(self.about_settingInterface)
-        logger.info("白露URL: 关于界面已成功打开～")
+        logger.info("关于界面已成功打开")
     
     def show_donation_dialog(self):
-        """(^・ω・^ ) 白露的捐赠支持召唤魔法！
-        通过URL参数打开捐赠支持对话框，让用户可以支持项目发展～
-        会显示捐赠支持对话框，方便用户查看捐赠方式！💝✨"""
+        """通过URL参数打开捐赠支持对话框
+        通过URL参数打开捐赠支持对话框，显示捐赠支持对话框"""
         try:
             # # 确保主窗口可见
             # if not self.isVisible():
@@ -2494,14 +2414,13 @@ class Window(MSFluentWindow):
             # 打开捐赠支持对话框
             donation_dialog = DonationDialog(self)
             donation_dialog.exec_()
-            logger.info("白露URL: 捐赠支持对话框已成功打开～")
+            logger.info("捐赠支持对话框已成功打开")
         except Exception as e:
-            logger.error(f"白露URL: 打开捐赠支持对话框失败: {e}")
+            logger.error(f"打开捐赠支持对话框失败: {e}")
     
     def show_contributor_dialog(self):
-        """(^・ω・^ ) 白露的贡献者召唤魔法！
-        通过URL参数打开贡献者对话框，让用户查看项目贡献者信息～
-        会显示贡献者对话框，方便用户了解项目贡献者！👥✨"""
+        """通过URL参数打开贡献者对话框
+        通过URL参数打开贡献者对话框，显示贡献者对话框"""
         try:
             # # 确保主窗口可见
             # if not self.isVisible():
@@ -2515,6 +2434,6 @@ class Window(MSFluentWindow):
             # 打开贡献者对话框
             contributor_dialog = ContributorDialog(self)
             contributor_dialog.exec_()
-            logger.info("白露URL: 贡献者对话框已成功打开～")
+            logger.info("贡献者对话框已成功打开")
         except Exception as e:
-            logger.error(f"白露URL: 打开贡献者对话框失败: {e}")
+            logger.error(f"打开贡献者对话框失败: {e}")

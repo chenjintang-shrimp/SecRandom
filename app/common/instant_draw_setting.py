@@ -553,9 +553,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
     def on_instant_draw_Voice_switch_changed(self, checked):
         self.save_settings()
 
-    # 🌟 小鸟游星野：动画颜色选择器 ⭐
+    # 动画颜色选择器
     def on_color_animation_dialog(self):
-        # ✨ 星穹铁道白露：让颜色选择器在新窗口飞翔 ~
         color_type = "animation"
         self.load_color_settings()
         instant_draw_animation_color_fixed_dialog = ColorDialog(QColor(self.instant_draw_animation_color_fixed), "动画颜色", self, enableAlpha=False)
@@ -565,7 +564,6 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         instant_draw_animation_color_fixed_dialog.show()
 
     def on_color_result_dialog(self):
-        # ✨ 星穹铁道白露：结果颜色选择器也需要自由 ~
         color_type = "result"
         self.load_color_settings()
         instant_draw_result_color_fixed_dialog = ColorDialog(QColor(self.instant_draw_result_color_fixed), "结果颜色", self, enableAlpha=False)
@@ -579,18 +577,18 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         bgm_result_path = path_manager.get_resource_path('music/instant_draw', 'result_music')
         ensure_dir(bgm_animation_path)
         ensure_dir(bgm_result_path)
-        # 星野引导：根据按钮选择打开对应的音乐文件夹 (๑•̀ㅂ•́)و✧
+        # 根据按钮选择打开对应的音乐文件夹
         if button == 'Animation_music':
-            # 白露提示：确保路径是文件夹格式再打开哦～
+            # 确保路径是文件夹格式再打开
             self.open_folder(str(bgm_animation_path))
         elif button == 'result_music':
-            # 星野守护：用绝对路径确保文件夹正确打开～
+            # 用绝对路径确保文件夹正确打开
             self.open_folder(str(bgm_result_path))
 
     def open_image_path(self):
         image_path = path_manager.get_resource_path('images', 'students')
         ensure_dir(image_path)
-        # 星野守护：用绝对路径确保文件夹正确打开～
+        # 用绝对路径确保文件夹正确打开
         self.open_folder(str(image_path))
 
     def open_folder(self, path):

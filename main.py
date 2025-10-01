@@ -441,10 +441,6 @@ def apply_font_to_application(font_family):
             widgets_updated = 0
             for widget in QApplication.topLevelWidgets():
                 if isinstance(widget, QWidget):
-                    # widget_type = type(widget).__name__
-                    # widget_name = widget.objectName() or "未命名"
-                    # window_title = getattr(widget, 'windowTitle', lambda: "")() or "无标题"
-                    # logger.debug(f"更新控件字体: 类型={widget_type}, 名称={widget_name}, 标题={window_title}")
                     update_widget_fonts(widget, font_to_apply)
                     widgets_updated += 1
                 
@@ -490,14 +486,9 @@ def update_widget_fonts(widget, font):
         widget.update()
         widget.repaint()
         
-        # 记录更新的控件信息
-        # widget_name = widget.objectName() or "未命名"
-        # logger.debug(f"已更新控件: 类型={widget_type}, 名称={widget_name}, 字体={font.family()}")
-        
         # 如果控件有子控件，递归更新子控件的字体
         if isinstance(widget, QWidget):
             children = widget.children()
-            # logger.debug(f"控件 {widget_name} 有 {len(children)} 个子控件")
             for child in children:
                 if isinstance(child, QWidget):
                     update_widget_fonts(child, font)
@@ -505,9 +496,7 @@ def update_widget_fonts(widget, font):
         logger.error(f"更新控件字体失败: {e}")
 
 def check_single_instance():
-    """(ﾟДﾟ≡ﾟдﾟ) 星野的单实例守卫启动！
-    正在执行魔法结界检查，禁止多个程序副本同时运行喵！
-    这是为了防止魔法冲突和资源争夺，保证程序稳定运行哦～ 🔒✨"""
+    """检查单实例，防止多个程序副本同时运行"""
     # 检查是否有启动窗口线程
     has_startup_thread = 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning()
     
@@ -516,7 +505,7 @@ def check_single_instance():
     
     shared_memory = QSharedMemory(SHARED_MEMORY_KEY)
     if not shared_memory.create(1):
-        logger.debug('星野警报: 检测到已有 SecRandom 实例正在运行喵！')
+        logger.debug('检测到已有 SecRandom 实例正在运行')
 
         # 获取URL命令（如果存在）
         url_command = None
@@ -525,19 +514,19 @@ def check_single_instance():
             url_handler = get_url_handler()
             if url_handler.has_url_command():
                 url_command = url_handler.get_url_command()
-                logger.info(f'星野通讯: 检测到URL命令，将传递给已有实例喵～ {url_command}')
+                logger.info(f'检测到URL命令，将传递给已有实例: {url_command}')
                 if has_startup_thread:
                     startup_thread.next_step(detail="检测到URL命令，将传递给已有实例")
         except Exception as e:
-            logger.error(f'星野错误: 获取URL命令失败喵～ {e}')
+            logger.error(f'获取URL命令失败: {e}')
             if has_startup_thread:
                 startup_thread.next_step(detail=f"获取URL命令失败: {e}")
 
-        # 🌟 星穹铁道白露：异步发送IPC消息，避免阻塞启动流程
+        # 异步发送IPC消息，避免阻塞启动流程
         def async_wakeup():
             # 尝试直接发送IPC消息唤醒已有实例
             if send_ipc_message(url_command):
-                logger.info('星野通讯: 成功唤醒已有实例，当前实例将退出喵～')
+                logger.info('成功唤醒已有实例，当前实例将退出')
                 if has_startup_thread:
                     startup_thread.update_progress(detail="成功唤醒已有实例，当前实例将退出")
                 sys.exit()
@@ -548,8 +537,8 @@ def check_single_instance():
                 )
 
         def retry_ipc():
-            """(ﾟДﾟ≡ﾟдﾟ) 星野的重试魔法！再次尝试连接已有实例喵～"""
-            logger.error("星野错误: 无法连接到已有实例，程序将退出喵～")
+            """重试连接已有实例"""
+            logger.error("无法连接到已有实例，程序将退出")
             if has_startup_thread:
                 startup_thread.update_progress(detail="无法连接到已有实例，程序将退出")
             sys.exit()
@@ -560,19 +549,18 @@ def check_single_instance():
         QApplication.processEvents()
         sys.exit()
     
-    logger.info('星野结界: 单实例检查通过，可以安全启动程序喵～')
+    logger.info('单实例检查通过，可以安全启动程序')
     if has_startup_thread:
         startup_thread.update_progress(detail="单实例检查通过，可以安全启动程序")
     
     return shared_memory
 
 def log_software_info():
-    """(^・ω・^ ) 白露的软件信息记录仪式！
-    记录软件启动成功信息和相关元信息，就像记录魔法书的标题一样～ ✨"""
+    """记录软件启动成功信息和相关元信息"""
     # 打印分隔线，增强日志可读性
     logger.debug("=" * 50)
     # 记录软件启动成功信息
-    logger.info("白露启动: 软件启动成功～ ")
+    logger.info("软件启动成功")
     # 记录软件相关元信息
     software_info = {
         "作者": "lzy98276",
@@ -580,20 +568,17 @@ def log_software_info():
         "版本": VERSION
     }
     for key, value in software_info.items():
-        logger.info(f"白露启动: 软件{key}: {value}")
+        logger.info(f"软件{key}: {value}")
 
 def clean_expired_data():
-    """(^・ω・^ ) 白露的历史清理仪式！
-    清理过期历史记录，保持魔法空间整洁～"""
-    # 清理过期历史记录，保持魔法空间整洁～
+    """清理过期历史记录"""
     from app.common.history_cleaner import clean_expired_history, clean_expired_reward_history
     clean_expired_history()
     clean_expired_reward_history()
-    logger.debug("白露清理: 已清理过期历史记录～ ")
+    logger.debug("已清理过期历史记录")
 
 def check_plugin_settings():
-    """🌟 小鸟游星野：检查插件自启动设置 ~ (๑•̀ㅂ•́)ญ✧
-    检查插件设置文件，决定是否启动自启动插件功能"""
+    """检查插件自启动设置"""
     # 检查是否有启动窗口线程
     has_startup_thread = 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning()
     
@@ -610,25 +595,24 @@ def check_plugin_settings():
                     from app.view.plugins.management import PluginManagementPage
                     plugin_manager = PluginManagementPage()
                     plugin_manager.start_autostart_plugins()
-                    logger.info("白露插件: 自启动插件功能已启动～ ")
+                    logger.info("自启动插件功能已启动")
                     if has_startup_thread:
                         startup_thread.update_progress(detail="自启动插件功能已启动")
                 else:
-                    logger.info("白露插件: 插件自启动功能已禁用～ ")
+                    logger.info("插件自启动功能已禁用")
                     if has_startup_thread:
                         startup_thread.update_progress(detail="插件自启动功能已禁用")
         else:
-            logger.warning("白露警告: 插件设置文件不存在，跳过插件自启动～ ")
+            logger.warning("插件设置文件不存在，跳过插件自启动")
             if has_startup_thread:
                 startup_thread.update_progress(detail="插件设置文件不存在，跳过插件自启动")
     except Exception as e:
-        logger.error(f"白露错误: 检查插件自启动设置失败: {e}")
+        logger.error(f"检查插件自启动设置失败: {e}")
         if has_startup_thread:
             startup_thread.update_progress(detail=f"检查插件自启动设置失败: {e}")
 
 def create_main_window_async():
-    """(^・ω・^ ) 白露的异步主窗口创建仪式！
-    异步创建主窗口实例并根据设置决定是否显示窗口～"""
+    """异步创建主窗口实例并根据设置决定是否显示窗口"""
     # 检查是否有启动窗口线程
     has_startup_thread = 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning()
     
@@ -650,20 +634,20 @@ def create_main_window_async():
                 
                 # 显示窗口
                 sec.show()
-                logger.info("白露展示: 主窗口已显示～ ")
+                logger.info("主窗口已显示")
                 
                 # 如果是开机自启动，则在短暂延迟后隐藏窗口
                 if self_starting_enabled:
                     sec.hide()
-                    logger.info("白露隐藏: 开机自启动模式，窗口已隐藏～ ")
+                    logger.info("开机自启动模式，窗口已隐藏")
         except FileNotFoundError:
-            logger.error("白露错误: 加载设置时出错 - 文件不存在, 使用默认显示主窗口")
+            logger.error("加载设置时出错 - 文件不存在, 使用默认显示主窗口")
             sec.show()
         except KeyError:
-            logger.error("白露错误: 设置文件中缺少foundation键, 使用默认显示主窗口")
+            logger.error("设置文件中缺少foundation键, 使用默认显示主窗口")
             sec.show()
         except Exception as e:
-            logger.error(f"白露错误: 加载设置时出错: {e}, 使用默认显示主窗口")
+            logger.error(f"加载设置时出错: {e}, 使用默认显示主窗口")
             sec.show()
         
         # 将创建的主窗口保存到全局变量
@@ -675,7 +659,7 @@ def create_main_window_async():
 
 
 # ==================================================
-# 🎬 魔法冒险开始 (Main Adventure Starts)
+# 主程序入口 (Main Program Entry)
 # ==================================================
 if __name__ == "__main__":
     # 全局变量，用于存储主窗口实例
@@ -692,7 +676,7 @@ if __name__ == "__main__":
                 foundation_settings = settings.get('foundation', {})
                 show_startup_window = foundation_settings.get('show_startup_window_switch', False)
     except Exception as e:
-        logger.warning(f"白露警告: 读取启动窗口设置失败，使用默认显示启动窗口: {e}")
+        logger.warning(f"读取启动窗口设置失败，使用默认显示启动窗口: {e}")
     
     # 根据设置决定是否创建启动窗口
     if show_startup_window:
@@ -710,7 +694,7 @@ if __name__ == "__main__":
         # 不显示启动窗口，创建空的启动窗口线程对象以避免错误
         startup_window = None
         startup_thread = None
-        logger.info("白露提示: 启动窗口已禁用，跳过启动窗口显示")
+        logger.info("启动窗口已禁用，跳过启动窗口显示")
     
     # 设置工作目录为程序所在目录，解决URL协议唤醒时工作目录错误的问题
     if getattr(sys, 'frozen', False):
@@ -728,7 +712,7 @@ if __name__ == "__main__":
     # 更改当前工作目录
     if os.getcwd() != program_dir:
         os.chdir(program_dir)
-        logger.info(f"白露目录: 工作目录已设置为: {program_dir}")
+        logger.info(f"工作目录已设置为: {program_dir}")
     
     # 检查单实例并创建共享内存
     if startup_thread:
@@ -754,11 +738,11 @@ if __name__ == "__main__":
     try:
         from app.common.foundation_settings import register_url_protocol_on_startup
         register_url_protocol_on_startup()
-        logger.info("白露URL: URL协议自动注册完成～")
+        logger.info("URL协议自动注册完成")
         if startup_thread:
             startup_thread.update_progress(detail="URL协议自动注册完成")
     except Exception as e:
-        logger.error(f"白露URL: URL协议自动注册失败: {e}")
+        logger.error(f"URL协议自动注册失败: {e}")
         if startup_thread:
             startup_thread.update_progress(detail=f"URL协议自动注册失败: {e}")
 
@@ -778,9 +762,7 @@ if __name__ == "__main__":
 
     # 延迟处理URL命令，确保主窗口完全初始化
     def delayed_url_processing():
-        """(ﾟДﾟ≡ﾟдﾟ) 星野的URL命令处理魔法！
-        延迟处理URL命令，避免阻塞启动流程喵～
-        这是为了确保主界面完全加载后再处理URL命令哦～ 🌐✨"""
+        """延迟处理URL命令，避免阻塞启动流程"""
         # 检查是否有启动窗口线程
         has_startup_thread = 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning()
         
@@ -788,24 +770,24 @@ if __name__ == "__main__":
             startup_thread.set_step(9, "正在初始化界面组件...")
         
         try:
-            logger.info("白露URL: 延迟检查是否有URL命令需要处理～")
+            logger.info("延迟检查是否有URL命令需要处理")
             # 检查主窗口是否已创建
             global main_window
             if 'main_window' in globals() and main_window:
                 if process_url_if_exists(main_window):
-                    logger.info("白露URL: URL命令处理成功～")
+                    logger.info("URL命令处理成功")
                     if has_startup_thread:
                         startup_thread.update_progress(detail="URL命令处理成功")
                 else:
-                    logger.info("白露URL: 没有URL命令需要处理～")
+                    logger.info("没有URL命令需要处理")
                     if has_startup_thread:
                         startup_thread.update_progress(detail="没有URL命令需要处理")
             else:
-                logger.warning("白露URL: 主窗口尚未创建，跳过URL命令处理～")
+                logger.warning("主窗口尚未创建，跳过URL命令处理")
                 if has_startup_thread:
                     startup_thread.update_progress(detail="主窗口尚未创建，跳过URL命令处理")
         except Exception as e:
-            logger.error(f"白露URL: 处理URL命令失败: {e}")
+            logger.error(f"处理URL命令失败: {e}")
             if has_startup_thread:
                 startup_thread.update_progress(detail=f"处理URL命令失败: {e}")
         finally:
@@ -822,11 +804,11 @@ if __name__ == "__main__":
 
     # 启动应用程序事件循环
     try:
-        logger.info("星野通知: 应用程序事件循环启动喵～")
+        logger.info("应用程序事件循环启动")
         app.exec_()
     finally:
         shared_memory.detach()
-        logger.info("星野通知: 共享内存已释放，程序完全退出喵～")
+        logger.info("共享内存已释放，程序完全退出")
         # 确保启动窗口线程已退出
     if startup_thread and startup_thread.isRunning():
         startup_thread.close_window()

@@ -475,7 +475,6 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
 class TimeSettingsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 🌟 星穹铁道白露：设置无边框但可调整大小的窗口样式并解决屏幕设置冲突~ 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("上课时间段设置")
         self.setMinimumSize(400, 335)  # 设置最小大小而不是固定大小
@@ -487,7 +486,6 @@ class TimeSettingsDialog(QDialog):
         if parent is not None:
             self.setParent(parent)
         
-        # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
         self.title_bar = QWidget()
         self.title_bar.setObjectName("CustomTitleBar")
         self.title_bar.setFixedHeight(35)
@@ -568,7 +566,6 @@ class TimeSettingsDialog(QDialog):
         self.setLayout(layout)
 
     def mousePressEvent(self, event):
-        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
         if event.button() == Qt.LeftButton and self.title_bar.underMouse():
             self.dragging = True
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
@@ -603,10 +600,8 @@ class TimeSettingsDialog(QDialog):
         if os.name == 'nt':
             try:
                 import ctypes
-                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
                 hwnd = int(self.winId())  # 转换为整数句柄
                 
-                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
                 bg_color = colors['bg'].lstrip('#')
                 # 转换为ARGB格式（添加不透明通道）
                 rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)

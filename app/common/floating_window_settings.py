@@ -259,7 +259,6 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
     class ForegroundSoftwareDialog(QDialog):
         def __init__(self, parent=None, current_software_mode=None):
             super().__init__(parent)
-            # 🌟 星穹铁道白露：设置无边框但可调整大小的窗口样式并解决屏幕设置冲突~ 
             self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
             if current_software_mode == 'class':
                 self.setWindowTitle("输入前台窗口类名")
@@ -277,7 +276,7 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
             if parent is not None:
                 self.setParent(parent)
             
-            # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
+            # 创建自定义标题栏
             self.title_bar = QWidget()
             self.title_bar.setObjectName("CustomTitleBar")
             self.title_bar.setFixedHeight(35)
@@ -379,7 +378,7 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
             self.setLayout(layout)
 
         def mousePressEvent(self, event):
-            # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+            # 窗口拖动功能 按住标题栏就能移动
             if event.button() == Qt.LeftButton and self.title_bar.underMouse():
                 self.dragging = True
                 self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
@@ -394,7 +393,6 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
             self.dragging = False
 
         def update_theme_style(self):
-            # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
             colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark_theme else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
             self.setStyleSheet(f"""
                 QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
@@ -414,10 +412,9 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
             if os.name == 'nt':
                 try:
                     import ctypes
-                    # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
                     hwnd = int(self.winId())  # 转换为整数句柄
                     
-                    # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
+                    # 颜色格式要改成ARGB 添加透明度通道
                     bg_color = colors['bg'].lstrip('#')
                     # 转换为ARGB格式（添加不透明通道）
                     rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)

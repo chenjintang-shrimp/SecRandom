@@ -117,11 +117,11 @@ class instant_draw(QWidget):
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 instant_clear = settings['instant_draw']['instant_clear']
-                logger.debug(f"星野侦察: 准备执行对应清理方案～ ")
+                logger.debug(f"准备执行对应清理方案")
 
         except Exception as e:
             instant_clear = False
-            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}")
+            logger.error(f"加载抽选模式设置失败: {e}")
 
         if instant_clear:
             instant_clear = '_instant'
@@ -190,7 +190,7 @@ class instant_draw(QWidget):
                                 exist = student_info.get('exist', True)
                                 if group:  # 只添加非空小组
                                     groups.add((id, group, exist))
-                        # 星穹铁道白露：过滤掉已经抽取过的小组~❄️
+                        # 过滤掉已经抽取过的小组
                         filtered_groups = [g for g in groups if g[1] not in record_data]
                         cleaned_data = sorted(list(filtered_groups), key=lambda x: self.sort_key(str(x)))
                     else:
@@ -617,7 +617,7 @@ class instant_draw(QWidget):
         """停止动画并显示最终结果"""
         self.animation_timer.stop()
         if self.animation_music_enabled:
-            # 创建音量渐出动画 ～(￣▽￣)～* 白露负责温柔收尾
+            # 创建音量渐出动画
             self.fade_out_animation = QPropertyAnimation(self.music_player, b"volume")
             self.fade_out_animation.setDuration(self.music_fade_out)
             self.fade_out_animation.setStartValue(self.music_player.volume())
@@ -642,9 +642,7 @@ class instant_draw(QWidget):
         self.draw_finished.emit()
     
     def _play_full_animation(self):
-        """播放完整动画（快速显示n个随机学生后显示最终结果）
-        星野：动画开始啦~ 让我们看看谁是幸运儿！🎡
-        白露：背景音乐和动画会同步播放哦~ 🎵"""
+        """播放完整动画（快速显示n个随机学生后显示最终结果）🎵"""
         self.is_animating = True
         self.animation_timer = QTimer()
         self.animation_timer.timeout.connect(self._show_random_student)
@@ -669,9 +667,7 @@ class instant_draw(QWidget):
         QTimer.singleShot(1000, self.draw_finished.emit)
 
     def _play_result_music(self):
-        """播放结果音乐
-        星野：恭喜你抽中啦！🎉 来听听胜利的音乐吧~
-        白露：结果音乐和动画音乐是分开的呢~ 真有趣！"""
+        """播放结果音乐"""
         try:
             BGM_RESULT_PATH = path_manager.get_resource_path("music/instant_draw/result_music")
             # 检查音乐目录是否存在
@@ -679,7 +675,7 @@ class instant_draw(QWidget):
                 logger.warning(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
                 return
 
-            # 获取所有支持的音乐文件 (｡･ω･｡)ﾉ♡
+            # 获取所有支持的音乐文件
             music_extensions = ['*.mp3', '*.wav', '*.ogg', '*.flac']
             music_files = []
             for ext in music_extensions:
@@ -689,11 +685,11 @@ class instant_draw(QWidget):
                 logger.warning(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
                 return
 
-            # 随机选择一首音乐 ♪(^∇^*)
+            # 随机选择一首音乐
             selected_music = random.choice(music_files)
             logger.info(f"正在播放结果音乐: {selected_music}")
 
-            # 设置并播放音乐，准备渐入效果 ✧*｡٩(ˊᗜˋ*)و✧*｡
+            # 设置并播放音乐，准备渐入效果
             self.music_player.setMedia(QMediaContent(QUrl.fromLocalFile(selected_music)))
             if self.music_player.mediaStatus() == QMediaPlayer.InvalidMedia:
                 logger.error(f"无效的媒体文件: {selected_music}")
@@ -703,7 +699,7 @@ class instant_draw(QWidget):
             # 连接错误信号
             self.music_player.error.connect(self.handle_media_error)
             
-            # 创建音量渐入动画 ～(￣▽￣)～* 星野的魔法音量调节
+            # 创建音量渐入动画
             self.fade_in_animation = QPropertyAnimation(self.music_player, b"volume")
             self.fade_in_animation.setDuration(self.music_fade_in)
             self.fade_in_animation.setStartValue(0)
@@ -746,7 +742,7 @@ class instant_draw(QWidget):
             self.music_player.setVolume(self.result_music_volume)
 
     def _play_animation_music(self):
-        """播放动画背景音乐 ～(￣▽￣)～* 星野和白露的音乐时间"""
+        """播放动画背景音乐"""
         try:
             BGM_ANIMATION_PATH = path_manager.get_resource_path("music/instant_draw/Animation_music")
             # 检查音乐目录是否存在
@@ -778,7 +774,7 @@ class instant_draw(QWidget):
             # 连接错误信号
             self.music_player.error.connect(self.handle_media_error)
             
-            # 创建音量渐入动画 ～(￣▽￣)～* 星野的魔法音量调节
+            # 创建音量渐入动画
             self.fade_in_animation = QPropertyAnimation(self.music_player, b"volume")
             self.fade_in_animation.setDuration(self.music_fade_in)
             self.fade_in_animation.setStartValue(0)
@@ -789,7 +785,7 @@ class instant_draw(QWidget):
             logger.error(f"播放音乐时出错: {e}")
 
     def handle_media_error(self, error):
-        """处理媒体播放错误 ～(T_T)～ 星野的音乐播放失败了"""
+        """处理媒体播放错误"""
         error_str = self.music_player.errorString()
         logger.error(f"媒体播放错误: {error_str} (错误代码: {error})")
         self.music_player.stop()
@@ -842,11 +838,11 @@ class instant_draw(QWidget):
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 instant_clear = settings['instant_draw']['instant_clear']
-                logger.debug(f"星野侦察: 准备执行对应清理方案～ ")
+                logger.debug(f"准备执行对应清理方案")
 
         except Exception as e:
             instant_clear = False
-            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}")
+            logger.error(f"加载抽选模式设置失败: {e}")
 
         if instant_clear:
             instant_clear = '_instant'
@@ -1710,8 +1706,8 @@ class instant_draw(QWidget):
         except ValueError:
             pass
         
-        # 🌟 星穹铁道白露：自定义组名直接使用中文排序啦~
-        return (3, group) # ✨ 小鸟游星野：类型3: 其他名称组，保持排序功能不变
+        # 自定义组名直接使用中文排序
+        return (3, group) # 其他名称组，保持排序功能不变
     
     # 恢复初始状态
     def _reset_to_initial_state(self):
@@ -1745,17 +1741,17 @@ class instant_draw(QWidget):
                 for file in glob.glob(f"{temp_dir}/*.json"):
                     try:
                         os.remove(file)
-                        logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")
+                        logger.info(f"已删除临时抽取记录文件: {file}")
                     except Exception as e:
-                        logger.error(f"星野清理失败: 删除临时文件出错喵～ {e}")
+                        logger.error(f"删除临时文件出错: {e}")
         elif instant_clear_mode != 1 and instant_clear:
             if path_manager.file_exists(temp_dir):
                 for file in glob.glob(f"{temp_dir}/*_instant.json"):
                     try:
                         os.remove(file)
-                        logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")
+                        logger.info(f"已删除临时抽取记录文件: {file}")
                     except Exception as e:
-                        logger.error(f"星野清理失败: 删除临时文件出错喵～ {e}")
+                        logger.error(f"删除临时文件出错: {e}")
 
     # 初始化UI
     def __del__(self):
@@ -1854,10 +1850,10 @@ class instant_draw(QWidget):
         self.setLayout(main_layout)
     
     def apply_background_image(self):
-        """(^・ω・^ ) 白露的背景图片和颜色魔法！
+        """
         检查设置中的 enable_flash_background 和 enable_flash_background_color，
-        如果开启则应用闪抽界面背景图片或背景颜色～
-        让界面变得更加美观个性化，就像给房间贴上漂亮的壁纸或涂上漂亮的颜色一样！(๑•̀ㅂ•́)ow✧"""
+        如果开启则应用闪抽界面背景图片或背景颜色
+        让界面变得更加美观个性化，就像给房间贴上漂亮的壁纸或涂上漂亮的颜色一样！"""
         try:
             # 读取自定义设置
             custom_settings_path = path_manager.get_settings_path('custom_settings.json')
@@ -1889,7 +1885,7 @@ class instant_draw(QWidget):
                 # 重写resizeEvent方法，调整背景大小
                 self.resizeEvent = self._on_resize_event
                 
-                logger.info(f"白露魔法: 已成功应用闪抽界面背景颜色 {flash_background_color}～ ")
+                logger.info(f"已成功应用闪抽界面背景颜色 {flash_background_color}")
                 
             # 如果背景颜色未启用，但背景图片启用了，则应用背景图片
             elif enable_flash_background:
@@ -1983,15 +1979,15 @@ class instant_draw(QWidget):
                                 # 重写resizeEvent方法，调整背景大小
                                 self.resizeEvent = self._on_resize_event
                                 
-                                logger.info(f"白露魔法: 已成功应用闪抽界面背景图片 {flash_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%～ ")
+                                logger.info(f"已成功应用闪抽界面背景图片 {flash_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%")
                             else:
-                                logger.error(f"白露魔法出错: 闪抽界面背景图片 {flash_background_image} 加载失败～ ")
+                                logger.error(f"闪抽界面背景图片 {flash_background_image} 加载失败")
                         else:
-                            logger.warning(f"白露提醒: 闪抽界面背景图片 {flash_background_image} 不存在～ ")
+                            logger.warning(f"闪抽界面背景图片 {flash_background_image} 不存在")
                     else:
-                        logger.warning("白露提醒: 背景图片文件夹不存在～ ")
+                        logger.warning("背景图片文件夹不存在")
                 else:
-                    logger.debug("白露魔法: 未选择闪抽界面背景图片～ ")
+                    logger.debug("未选择闪抽界面背景图片")
             else:
                 # 如果两者都未启用，则使用默认背景
                 self.setStyleSheet("background: transparent;")
@@ -2006,17 +2002,17 @@ class instant_draw(QWidget):
                     self.resizeEvent = self.original_resizeEvent
                     delattr(self, 'original_resizeEvent')
                 
-                logger.debug("白露魔法: 闪抽界面背景图片和颜色功能均未启用，使用默认背景～ ")
+                logger.debug("闪抽界面背景图片和颜色功能均未启用，使用默认背景")
                 
         except FileNotFoundError:
-            logger.warning("白露提醒: 自定义设置文件不存在，使用默认设置～ ")
+            logger.warning("自定义设置文件不存在，使用默认设置")
         except Exception as e:
-            logger.error(f"白露魔法出错: 应用闪抽界面背景图片或颜色时发生异常～ {e}")
+            logger.error(f"应用闪抽界面背景图片或颜色时发生异常: {e}")
     
     def _on_resize_event(self, event):
-        """(^・ω・^ ) 白露的窗口大小调整魔法！
-        当窗口大小改变时，自动调整背景图片大小，确保背景始终填满整个窗口～
-        就像魔法地毯一样，无论房间多大都能完美铺满！(๑•̀ㅂ•́)ow✧"""
+        """
+        当窗口大小改变时，自动调整背景图片大小，确保背景始终填满整个窗口
+        就像魔法地毯一样，无论房间多大都能完美铺满！"""
         # 调用原始的resizeEvent，确保布局正确更新
         if hasattr(self, 'original_resizeEvent') and self.original_resizeEvent:
             self.original_resizeEvent(event)
@@ -2043,9 +2039,9 @@ class instant_draw(QWidget):
             self._handle_maximized_state()
     
     def _handle_maximized_state(self):
-        """(^・ω・^ ) 白露的窗口最大化处理魔法！
-        当窗口最大化时，确保所有控件正确适应新的窗口大小～
-        就像魔法变形术一样，让界面完美适应全屏状态！(๑•̀ㅂ•́)ow✧"""
+        """
+        当窗口最大化时，确保所有控件正确适应新的窗口大小
+        就像魔法变形术一样，让界面完美适应全屏状态！"""
         # 确保所有子控件适应最大化窗口
         for child in self.findChildren(QWidget):
             child.updateGeometry()
@@ -2057,9 +2053,9 @@ class instant_draw(QWidget):
         QTimer.singleShot(100, self._delayed_layout_update)
     
     def _delayed_layout_update(self):
-        """(^・ω・^ ) 白露的延迟布局更新魔法！
-        在窗口最大化后延迟执行布局更新，确保所有控件都已正确适应～
-        就像魔法延时术一样，给界面一些时间来完美调整！(๑•̀ㅂ•́)ow✧"""
+        """
+        在窗口最大化后延迟执行布局更新，确保所有控件都已正确适应
+        就像魔法延时术一样，给界面一些时间来完美调整！"""
         # 再次强制更新布局
         self.updateGeometry()
         self.update()

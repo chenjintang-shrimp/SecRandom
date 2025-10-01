@@ -105,16 +105,16 @@ class advanced_settingsCard(GroupHeaderCardWidget):
             enc_set_file = path_manager.get_enc_set_path()
             with open_file(enc_set_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                logger.debug("正在读取安全设置，准备执行导出诊断数据验证～ ")
+                logger.debug("正在读取安全设置，准备执行导出诊断数据验证")
 
                 if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
                     from app.common.password_dialog import PasswordDialog
                     dialog = PasswordDialog(self)
                     if dialog.exec_() != QDialog.Accepted:
-                        logger.warning("用户取消导出诊断数据操作，安全防御已解除～ ")
+                        logger.warning("用户取消导出诊断数据操作，安全防御已解除")
                         return
         except Exception as e:
-            logger.error(f"密码验证系统出错喵～ {e}")
+            logger.error(f"密码验证系统出错: {e}")
             return
             
         try:

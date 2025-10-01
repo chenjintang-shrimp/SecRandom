@@ -78,9 +78,8 @@ def set_update_channel(channel):
 
 
 def check_for_updates(channel=None):
-    """(^・ω・^ ) 白露的更新检查魔法！
-    偷偷摸摸在后台检查更新，不会打扰到用户哦～ ✨
-    支持稳定通道(stable)和测试通道(beta)，就像有两个不同的魔法口袋！"""
+    """检查应用程序更新
+    在后台检查更新，支持稳定通道(stable)和测试通道(beta)"""
     # 如果未指定通道，使用配置中的默认通道
     if channel is None:
         channel = get_update_channel()
@@ -91,7 +90,7 @@ def check_for_updates(channel=None):
         else:
             url = "https://api.github.com/repos/SECTL/SecRandom/releases"
 
-        # (ﾟДﾟ≡ﾟдﾟ) 星野的requests网络请求魔法！
+        # 发送网络请求
         headers = {
             'User-Agent': 'SecRandom-Updater'
         }
@@ -124,19 +123,19 @@ def check_for_updates(channel=None):
 
         latest_version = latest_version_tag.lstrip('v')
         if Version(latest_version) > Version(current_version):
-            logger.info(f"(^・ω・^ ) 白露发现新版本: 当前版本 {current_version}, 最新版本 {latest_version_tag}，准备通知用户～")
+            logger.info(f"发现新版本: 当前版本 {current_version}, 最新版本 {latest_version_tag}")
             return True, latest_version_tag
         else:
-            logger.info(f"(ﾟДﾟ≡ﾟдﾟ) 星野报告: 当前版本 {current_version} 已经是最新的啦，不需要更新喵～")
+            logger.info(f"当前版本 {current_version} 已经是最新版本")
             return False, None
     except requests.exceptions.RequestException as e:
-        logger.error(f"(×﹏×) 白露出错: 网络请求失败了呢～ {e}")
+        logger.error(f"网络请求失败: {e}")
         return False, None
     except json.JSONDecodeError as e:
-        logger.error(f"(×﹏×) 白露出错: API响应格式不对哦～ {e}")
+        logger.error(f"API响应格式错误: {e}")
         return False, None
     except Exception as e:
-        logger.error(f"(×﹏×) 白露出错: 检查更新失败了～ {e}")
+        logger.error(f"检查更新失败: {e}")
         return False, None
 
 def load_custom_font():

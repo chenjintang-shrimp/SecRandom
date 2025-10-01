@@ -15,7 +15,6 @@ from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 from app.common.path_utils import path_manager, ensure_dir, open_file
 
 class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
-    # 星穹铁道白露：在初始化时启动任务~🌟
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTitle("语音引擎")
@@ -106,9 +105,7 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
         self.load_settings()
         self.save_settings()
 
-    # 星穹铁道白露：处理语音引擎更改~🌟
     def on_voice_engine_changed(self, index):
-        # 小鸟游星野：根据语音引擎启用或禁用语音名称选择~🔮
         self.edge_tts_voiceComboBox.setEnabled(index == 1)
 
     async def _get_edge_tts_voices(self):
@@ -118,9 +115,7 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
         
         for attempt in range(max_retries):
             try:
-                # 星穹铁道白露：捕获中日英韩四语言的Edge Neural语音~🌐
                 voices = await edge_tts.list_voices()
-                # 星穹铁道白露：调试语音列表长度~📊 {len(voices)}
                 filtered_voices = [{
                     "name": v['FriendlyName'],
                     "id": v['ShortName'] if not v['Locale'].startswith('zh-CN') else f"zh-CN-{v['FriendlyName'].split()[1]}Neural",
@@ -136,7 +131,6 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
                 else:
                     logger.error(f"Edge TTS服务连接失败，已重试{max_retries}次: {str(e)!r}")
             except KeyError as e:
-                # 小鸟游星野：星轨数据字段丢失！{e}不存在~🚨
                 logger.error(f"Edge TTS语音解析失败: {str(e)!r}")
                 break
             except Exception as e:
@@ -145,7 +139,6 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
                     await asyncio.sleep(retry_delay)
                     continue
                 else:
-                    # 小鸟游星野：星轨数据丢失！启动备用方案~🚨
                     logger.error(f"Edge TTS语音解析失败: {str(e)!r}")
         
         # 所有尝试都失败后，返回默认语音列表

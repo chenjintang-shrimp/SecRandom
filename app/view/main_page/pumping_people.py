@@ -67,7 +67,7 @@ class pumping_people(QWidget):
             self.music_fade_in = 300
             self.music_fade_out = 300
             self.max_draw_times_per_person = 1
-            logger.error(f"加载设置时出错: {e}, 使用默认设置")
+            logger.error(f"加载设置失败: {e}, 使用默认设置")
             
         # 根据动画模式执行不同逻辑
         if pumping_people_animation_mode == 0:  # 手动停止动画
@@ -187,7 +187,6 @@ class pumping_people(QWidget):
                                 exist = student_info.get('exist', True)
                                 if group:  # 只添加非空小组
                                     groups.add((id, group, exist))
-                        # 星穹铁道白露：过滤掉已经抽取过的小组~❄️
                         filtered_groups = [g for g in groups if g[1] not in record_data]
                         cleaned_data = sorted(list(filtered_groups), key=lambda x: self.sort_key(str(x)))
                     else:
@@ -603,7 +602,7 @@ class pumping_people(QWidget):
                     font_size = settings['pumping_people']['font_size']
             except Exception as e:
                 font_size = 50
-                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                logger.error(f"加载字体设置失败: {e}, 使用默认设置")
             error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_grid.addWidget(error_label)
     
@@ -1451,7 +1450,7 @@ class pumping_people(QWidget):
                     font_size = settings['pumping_people']['font_size']
             except Exception as e:
                 font_size = 50
-                logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
+                logger.error(f"加载字体设置失败: {e}, 使用默认设置")
             error_label.setFont(QFont(load_custom_font(), font_size))
             self.result_grid.addWidget(error_label)
 
@@ -1497,7 +1496,7 @@ class pumping_people(QWidget):
             while parent is not None:
                 if hasattr(parent, 'cleanup_signal'):
                     parent.cleanup_signal.connect(self._on_cleanup_signal)
-                    logger.info("星野连接: 抽人界面已连接到主窗口清理信号～")
+                    logger.info("抽人界面已连接到主窗口清理信号")
                     return
                 parent = parent.parent()
             
@@ -1505,12 +1504,12 @@ class pumping_people(QWidget):
             for widget in QApplication.topLevelWidgets():
                 if hasattr(widget, 'cleanup_signal'):
                     widget.cleanup_signal.connect(self._on_cleanup_signal)
-                    logger.info("星野连接: 抽人界面已连接到主窗口清理信号～")
+                    logger.info("抽人界面已连接到主窗口清理信号")
                     return
             
-            logger.warning("星野警告: 未找到主窗口实例，清理信号连接失败～")
+            logger.warning("未找到主窗口实例，清理信号连接失败")
         except Exception as e:
-            logger.error(f"星野连接失败: 连接清理信号时出错喵～ {e}")
+            logger.error(f"连接清理信号时出错: {e}")
     
     def _on_cleanup_signal(self):
         """处理清理信号，清除标签"""
@@ -1519,9 +1518,9 @@ class pumping_people(QWidget):
             self.clear_layout(self.result_grid)
             # 更新总人数显示
             self.update_total_count()
-            logger.info("星野清理: 抽人界面已清除所有标签～")
+            logger.info("抽人界面已清除所有标签")
         except Exception as e:
-            logger.error(f"星野清理失败: 清除抽人界面标签时出错喵～ {e}")
+            logger.error(f"清除抽人界面标签时出错: {e}")
 
     # 获取随机抽取方法的设置
     def get_random_method_setting(self):
@@ -1532,7 +1531,7 @@ class pumping_people(QWidget):
                 random_method = settings['pumping_people']['draw_pumping']
                 return random_method
         except Exception as e:
-            logger.error(f"加载随机抽取方法设置时出错: {e}, 使用默认设置")
+            logger.error(f"加载随机抽取方法设置失败: {e}, 使用默认设置")
             return 0
 
     # 更新历史记录
@@ -1544,7 +1543,7 @@ class pumping_people(QWidget):
                 history_enabled = settings['history']['history_enabled']
         except Exception as e:
             history_enabled = False
-            logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
+            logger.error(f"加载历史记录设置失败: {e}, 使用默认设置")
         
         if not history_enabled:
             logger.info("历史记录功能已被禁用。")
@@ -1851,7 +1850,7 @@ class pumping_people(QWidget):
                     return drawn_count
             except Exception as e:
                 # 处理加载文件出错的情况，返回 0
-                logger.error(f"加载抽取记录文件 {draw_record_file} 出错: {e}")
+                logger.error(f"加载抽取记录文件失败: {draw_record_file}, 错误: {e}")
                 return 0
         else:
             return 0
@@ -2032,12 +2031,12 @@ class pumping_people(QWidget):
                 settings = json.load(f)
                 instant_clear_mode = settings['instant_draw']['clear_mode']
                 instant_clear = settings['instant_draw']['instant_clear']
-                logger.debug(f"星野侦察: 准备执行对应清理方案～ ")
+                logger.debug("准备执行对应清理方案")
 
         except Exception as e:
             instant_clear_mode = 1
             instant_clear = False
-            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}")
+            logger.error(f"加载抽选模式设置失败: {e}")
 
         import glob
         temp_dir = path_manager.get_temp_path('')
@@ -2048,7 +2047,7 @@ class pumping_people(QWidget):
                 for file in glob.glob(f"{temp_dir}/*.json"):
                     try:
                         os.remove(file)
-                        logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")
+                        logger.info(f"已删除临时抽取记录文件: {file}")
                         InfoBar.success(
                             title='清理完成',
                             content="已清理临时抽取记录文件!",
@@ -2059,7 +2058,7 @@ class pumping_people(QWidget):
                             position=InfoBarPosition.TOP
                         )
                     except Exception as e:
-                        logger.error(f"星野清理失败: 删除临时文件出错喵～ {e}")
+                        logger.error(f"删除临时文件出错: {e}")
                         InfoBar.error(
                             title='清理失败',
                             content=f"清理临时抽取记录文件失败: {e}",
@@ -2074,7 +2073,7 @@ class pumping_people(QWidget):
                 for file in glob.glob(f"{temp_dir}/*_instant.json"):
                     try:
                         os.remove(file)
-                        logger.info(f"星野清理: 已删除临时抽取记录文件: {file}")
+                        logger.info(f"已删除临时抽取记录文件: {file}")
                         InfoBar.success(
                             title='清理完成',
                             content="已清理临时抽取记录文件!",
@@ -2085,7 +2084,7 @@ class pumping_people(QWidget):
                             position=InfoBarPosition.TOP
                         )
                     except Exception as e:
-                        logger.error(f"星野清理失败: 删除临时文件出错喵～ {e}")
+                        logger.error(f"删除临时文件出错: {e}")
                         InfoBar.error(
                             title='清理失败',
                             content=f"清理临时抽取记录文件失败: {e}",
@@ -2119,7 +2118,7 @@ class pumping_people(QWidget):
                 selection_gender = settings['roll_call']['selection_gender']
                 pumping_people_student_quantity = settings['roll_call']['people_theme']
         except Exception as e:
-            logger.error(f"加载设置时出错: {e}, 使用默认设置")
+            logger.error(f"加载设置失败: {e}, 使用默认设置")
             main_window_control_Switch = True
             modify_button_switch = False
             show_reset_button = True
@@ -2634,7 +2633,7 @@ class StudentInputDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.warning(f"标题栏颜色设置失败: {str(e)}")
 
     def mousePressEvent(self, event):
         # 标题栏拖动

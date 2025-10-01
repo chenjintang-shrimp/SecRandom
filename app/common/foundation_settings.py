@@ -1536,7 +1536,6 @@ class FoundationSettingCard(ExpandGroupSettingCard):
 class CleanupTimeDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 🌟 星穹铁道白露：设置无边框但可调整大小的窗口样式并解决屏幕设置冲突~ 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
         self.setWindowTitle("输入定时清理记录时间")
         self.setMinimumSize(400, 335)  # 设置最小大小而不是固定大小
@@ -1548,7 +1547,7 @@ class CleanupTimeDialog(QDialog):
         if parent is not None:
             self.setParent(parent)
         
-        # 🐦 小鸟游星野：创建自定义标题栏啦~ (≧∇≦)ﾉ
+        # 创建自定义标题栏
         self.title_bar = QWidget()
         self.title_bar.setObjectName("CustomTitleBar")
         self.title_bar.setFixedHeight(35)
@@ -1630,7 +1629,7 @@ class CleanupTimeDialog(QDialog):
         self.setLayout(layout)
 
     def mousePressEvent(self, event):
-        # 🐦 小鸟游星野：窗口拖动功能~ 按住标题栏就能移动啦 (๑•̀ㅂ•́)و✧
+        # 窗口拖动功能 按住标题栏就能移动
         if event.button() == Qt.LeftButton and self.title_bar.underMouse():
             self.dragging = True
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
@@ -1645,7 +1644,7 @@ class CleanupTimeDialog(QDialog):
         self.dragging = False
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        # 主题样式更新 包含自定义标题栏
         colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog {{ background-color: {colors['bg']}; border-radius: 5px; }}
@@ -1665,10 +1664,8 @@ class CleanupTimeDialog(QDialog):
         if os.name == 'nt':
             try:
                 import ctypes
-                # 🌟 星穹铁道白露：修复参数类型错误~ 现在要把窗口ID转成整数才行哦！
                 hwnd = int(self.winId())  # 转换为整数句柄
                 
-                # 🐦 小鸟游星野：颜色格式要改成ARGB才行呢~ 添加透明度通道(๑•̀ㅂ•́)و✧
                 bg_color = colors['bg'].lstrip('#')
                 # 转换为ARGB格式（添加不透明通道）
                 rgb_color = int(f'FF{bg_color}', 16) if len(bg_color) == 6 else int(bg_color, 16)
