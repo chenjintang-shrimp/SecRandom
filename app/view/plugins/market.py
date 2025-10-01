@@ -958,11 +958,11 @@ class PluginMarketPage(GroupHeaderCardWidget):
         return button_group
     
     def load_market_plugins(self):
-        """🌟 小鸟游星野 - 加载插件市场中的插件列表"""
-        # 🌟 小鸟游星野 - 检查是否需要在启动时获取插件列表
+        """加载插件市场中的插件列表"""
+        # 检查是否需要在启动时获取插件列表
         plugin_settings = self.load_plugin_settings()
         if not plugin_settings.get("fetch_plugin_list_on_startup", False):
-            logger.info("🌟 小鸟游星野 - 根据设置，跳过获取插件列表")
+            logger.info("根据设置，跳过获取插件列表")
             # 显示跳过获取插件列表的提示
             no_plugin_label = BodyLabel("根据设置，跳过获取插件列表", self)
             no_plugin_label.setAlignment(Qt.AlignCenter)
