@@ -16,12 +16,14 @@ import winreg
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+from app.common.message_receiver import init_message_receiver
 
 is_dark = is_dark_theme(qconfig)
 
 class Program_functionality_settingsCard(GroupHeaderCardWidget):
     # 定义清理信号
     cleanup_signal = pyqtSignal()
+    json_message_received = pyqtSignal(dict)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -31,6 +33,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         self.default_settings = {
             "instant_draw_disable": False,
             "clear_draw_records_switch": False,
+            "use_cwci_confirm_switch": False,
             "clear_draw_records_time": 120,
         }
 
@@ -57,6 +60,13 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         self.clear_draw_records_time_SpinBox.valueChanged.connect(self.save_settings)
         self.clear_draw_records_time_SpinBox.setFont(QFont(load_custom_font(), 12))
 
+        # 是否使用通过 CI 插件确认上课时间
+        self.use_cwci_confirm_switch = SwitchButton()
+        self.use_cwci_confirm_switch.setOnText("启用")
+        self.use_cwci_confirm_switch.setOffText("禁用")
+        self.use_cwci_confirm_switch.setFont(QFont(load_custom_font(), 12))
+        self.use_cwci_confirm_switch.checkedChanged.connect(self.save_settings)
+
         # 设置上课时间段按钮
         self.set_class_time_button = PushButton("设置上课时间段")
         self.set_class_time_button.clicked.connect(self.show_cleanup_dialog)
@@ -66,6 +76,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_drawer_dismiss_20_filled"), "课间禁用", "在课间打开主页面需要安全验证", self.instant_draw_disable_switch)
         self.addGroup(get_theme_icon("ic_fluent_timer_off_20_filled"), "抽取记录清理开关", "启用或禁用上课前抽取记录自动清理功能", self.clear_draw_records_switch)
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "抽取记录清理时间", "设置上课前多少秒自动清理抽取记录（1-1800秒）", self.clear_draw_records_time_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_plug_connected_checkmark_20_filled"), "通过 CI 插件确认上课时间", "启用后将使用 CI 传递的信息来确认上课时间", self.use_cwci_confirm_switch)
         self.addGroup(get_theme_icon("ic_fluent_time_picker_20_filled"), "上课时间段", "设置上课时间段", self.set_class_time_button)
         
         # 初始化计时器，设置为单次触发模式
@@ -80,15 +91,30 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         self.time_settings_cache = None
         self.time_settings_file = path_manager.get_settings_path('time_settings.json')
         
+        # 存储从消息接收器获取的信息
+        self.ci_info = {
+            "current_subject": "",          # string 当前所处时间点的科目名称
+            "next_subject": "",            # string 下一节课的科目名称
+            "current_state": "",           # string 当前时间点状态的字符串表示
+            "is_class_plan_enabled": False, # bool 是否启用课表
+            "is_class_plan_loaded": False,  # bool 是否已加载课表
+            "is_lesson_confirmed": False,   # bool 是否已确定当前时间点
+            "on_class_left_time": 0,        # double 距离上课剩余时间（秒）
+            "on_breaking_time_left": 0      # double 距下课剩余时间（秒）
+        }
+        
         # 加载设置
         self.load_settings()
         self.save_settings()
+
+        # 延迟连接消息接收器信号，避免阻塞页面初始化
+        QTimer.singleShot(1000, self.connect_message_receiver)
         
-        # 延迟启动计时器，避免阻塞页面初始化
-        QTimer.singleShot(1000, self._delayed_timer_init)
+        # 延迟启动计时器和连接消息接收器信号，避免阻塞页面初始化
+        QTimer.singleShot(1000, self._delayed_init)
     
-    def _delayed_timer_init(self):
-        """延迟初始化计时器，避免阻塞页面加载"""
+    def _delayed_init(self):
+        """延迟初始化计时器和消息接收器连接，避免阻塞页面加载"""
         # 根据设置状态启动或停止计时器
         if self.clear_draw_records_switch.isChecked():
             self.cleanup_timer.start()
@@ -96,6 +122,23 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         else:
             self.cleanup_timer.stop()
             logger.info("已停止上课前清理抽取记录计时器")
+        
+    def connect_message_receiver(self):
+        # 连接消息接收器信号
+        try:
+            # 初始化消息接收器
+            message_receiver = init_message_receiver()
+            if message_receiver is not None:
+                message_receiver.json_message_received.connect(self._handle_ci_message)
+                logger.info("成功连接消息接收器信号")
+            else:
+                logger.warning("消息接收器初始化失败，将延迟连接")
+                # 延迟尝试连接
+                QTimer.singleShot(2000, self.connect_message_receiver)
+        except Exception as e:
+            logger.error(f"连接消息接收器信号失败: {e}")
+            # 延迟尝试连接
+            QTimer.singleShot(2000, self.connect_message_receiver)
 
     def load_settings(self):
         try:
@@ -107,12 +150,14 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                     self.instant_draw_disable_switch.setChecked(program_functionality_settings.get("instant_draw_disable", self.default_settings.get("instant_draw_disable", False)))
                     self.clear_draw_records_switch.setChecked(program_functionality_settings.get("clear_draw_records_switch", self.default_settings.get("clear_draw_records_switch", False)))
                     self.clear_draw_records_time_SpinBox.setValue(program_functionality_settings.get("clear_draw_records_time", self.default_settings.get("clear_draw_records_time", 120)))
+                    self.use_cwci_confirm_switch.setChecked(program_functionality_settings.get("use_cwci_confirm_switch", self.default_settings.get("use_cwci_confirm_switch", False)))
             else:
                 logger.warning(f"设置文件不存在: {self.settings_file}")
 
                 self.instant_draw_disable_switch.setChecked(self.default_settings.get("instant_draw_disable", False))
                 self.clear_draw_records_switch.setChecked(self.default_settings.get("clear_draw_records_switch", False))
                 self.clear_draw_records_time_SpinBox.setValue(self.default_settings.get("clear_draw_records_time", 120))
+                self.use_cwci_confirm_switch.setChecked(self.default_settings.get("use_cwci_confirm_switch", False))
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
@@ -120,6 +165,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
             self.instant_draw_disable_switch.setChecked(self.default_settings.get("instant_draw_disable", False))
             self.clear_draw_records_switch.setChecked(self.default_settings.get("clear_draw_records_switch", False))
             self.clear_draw_records_time_SpinBox.setValue(self.default_settings.get("clear_draw_records_time", 120))
+            self.use_cwci_confirm_switch.setChecked(self.default_settings.get("use_cwci_confirm_switch", False))
 
     def save_settings(self):
         # 先读取现有设置
@@ -139,10 +185,12 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
 
         # 保存旧的状态，用于比较是否发生变化
         old_clear_draw_records_switch = program_functionality_settings.get("clear_draw_records_switch", False)
+        old_use_cwci_confirm_switch = program_functionality_settings.get("use_cwci_confirm_switch", False)
         
         program_functionality_settings["instant_draw_disable"] = self.instant_draw_disable_switch.isChecked()
         program_functionality_settings["clear_draw_records_switch"] = self.clear_draw_records_switch.isChecked()
         program_functionality_settings["clear_draw_records_time"] = self.clear_draw_records_time_SpinBox.value()
+        program_functionality_settings["use_cwci_confirm_switch"] = self.use_cwci_confirm_switch.isChecked()
 
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open_file(self.settings_file, 'w', encoding='utf-8') as f:
@@ -162,6 +210,15 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
             # 如果开关是开启状态但计时器未运行，启动计时器
             self.cleanup_timer.start()
             logger.info("已启动上课前清理抽取记录计时器")
+        
+        # 检查 CI 确认开关状态是否发生变化
+        if old_use_cwci_confirm_switch != self.use_cwci_confirm_switch.isChecked():
+            if self.use_cwci_confirm_switch.isChecked():
+                logger.info("已启用 CI 插件确认上课时间")
+            else:
+                logger.info("已禁用 CI 插件确认上课时间")
+                # 重置清理状态，避免影响原有时间检测方式
+                self.cleanup_status = {}
 
 
     def show_cleanup_dialog(self):
@@ -339,12 +396,62 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
     def check_cleanup_time(self):
         """检查当前时间是否需要清理抽取记录"""
         try:
+            # 获取设置的时间（秒）
+            cleanup_seconds = self.clear_draw_records_time_SpinBox.value()
+            
+            # 检查是否使用 CI 插件确认上课时间
+            if self.use_cwci_confirm_switch.isChecked():
+                # 使用 CI 插件信息进行检测
+                self._check_cleanup_time_with_ci(cleanup_seconds)
+            else:
+                # 使用原有的时间检测方式
+                self._check_cleanup_time_with_timer(cleanup_seconds)
+        except Exception as e:
+            logger.error(f"检查清理时间时出错: {e}")
+    
+    def _check_cleanup_time_with_ci(self, cleanup_seconds: int):
+        """使用 CI 插件信息检查是否需要清理抽取记录"""
+        try:
+            # 检查是否启用课表、已加载课表、已确定当前时间点
+            if not (self.ci_info["is_class_plan_enabled"] and 
+                    self.ci_info["is_class_plan_loaded"] and 
+                    self.ci_info["is_lesson_confirmed"]):
+                # 如果 CI 信息不完整，不进行清理
+                return
+            
+            # 检查当前状态是否为课间
+            if self.ci_info["current_state"] != "Breaking":
+                # 如果不是课间，不进行清理
+                return
+            
+            # 检查距离上课剩余时间
+            on_class_left_time = self.ci_info["on_class_left_time"]
+            
+            # 如果距离上课时间在设定范围内，则清理抽取记录
+            if 0 < on_class_left_time <= cleanup_seconds:
+                # 生成唯一的时间键，避免重复清理
+                time_key = f"ci_{self.ci_info['next_subject']}"
+                
+                # 检查是否已经清理过这个时间段
+                if not self.cleanup_status.get(time_key, False):
+                    self._cleanup_draw_records()
+                    self.cleanup_status[time_key] = True  # 标记为已清理
+                    logger.info(f"CI 信息检测：距离上课还有{int(on_class_left_time)}秒，已清理抽取记录（下一节课: {self.ci_info['next_subject']}）")
+            else:
+                # 如果时间差不在清理范围内，重置清理状态
+                time_key = f"ci_{self.ci_info['next_subject']}_{on_class_left_time}"
+                if self.cleanup_status.get(time_key, False):
+                    self.cleanup_status[time_key] = False  # 重置清理状态
+                    logger.debug(f"CI 信息检测：重置清理状态: {self.ci_info['next_subject']}")
+        except Exception as e:
+            logger.error(f"CI 信息检查清理时间时出错: {e}")
+    
+    def _check_cleanup_time_with_timer(self, cleanup_seconds: int):
+        """使用原有的时间检测方式检查是否需要清理抽取记录"""
+        try:
             # 获取当前时间
             current_time = datetime.now().time()
             current_time_str = current_time.strftime("%H:%M:%S")
-            
-            # 获取设置的时间（秒）
-            cleanup_seconds = self.clear_draw_records_time_SpinBox.value()
             
             # 使用缓存的时间设置，减少文件读取次数
             if self.time_settings_cache is None:
@@ -362,7 +469,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                 
             # 检查当前时间是否在非上课时间段内
             # non_class_times 是一个字典，需要遍历其值而不是键值对
-            for time_range_key, time_range_value in time_settings["non_class_times"].items():
+            for self._time_range_value, time_range_value in time_settings["non_class_times"].items():
                 # 确保时间范围格式正确
                 if "-" not in time_range_value:
                     logger.warning(f"时间范围格式不正确，缺少'-'分隔符: {time_range_value}")
@@ -379,15 +486,15 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                 if start_time_str <= current_time_str <= end_time_str:
                     # 当前时间在非上课时间段内，检查是否需要清理
                     # 计算距离上课开始的时间
-                    class_start_time_str = end_time_str  # 非上课时间结束就是上课时间开始
+                    self._class_start_time_str = end_time_str  # 非上课时间结束就是上课时间开始
                     
                     # 处理特殊情况：24:00:00 应该视为 00:00:00（午夜）
-                    if class_start_time_str == "24:00:00":
-                        class_start_time_str = "00:00:00"
+                    if self._class_start_time_str == "24:00:00":
+                        self._class_start_time_str = "00:00:00"
                     
                     # 优化时间差计算：只在需要时才转换为datetime对象
                     now = datetime.now()
-                    class_start_time = datetime.strptime(class_start_time_str, "%H:%M:%S").time()
+                    class_start_time = datetime.strptime(self._class_start_time_str, "%H:%M:%S").time()
                     
                     # 处理跨天情况
                     class_start_datetime = datetime.combine(now.date(), class_start_time)
@@ -400,21 +507,41 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                     # 如果时间差小于等于设置的时间，则清理抽取记录
                     if 0 < time_diff <= cleanup_seconds:
                         # 检查是否已经清理过这个时间段
-                        time_key = f"{class_start_time_str}_{time_range_value}"
+                        time_key = f"{self._class_start_time_str}_{self._time_range_value}"
                         if not self.cleanup_status.get(time_key, False):
                             self._cleanup_draw_records()
                             self.cleanup_status[time_key] = True  # 标记为已清理
-                            logger.info(f"距离上课还有{int(time_diff)}秒，已清理抽取记录（时间段: {time_range_value}）")
+                            # logger.info(f"距离上课还有{int(time_diff)}秒，已清理抽取记录（时间段: {self._time_range_value}）")
                         break
                     else:
                         # 如果时间差不在清理范围内，重置清理状态
-                        time_key = f"{class_start_time_str}_{time_range_value}"
+                        time_key = f"{self._class_start_time_str}_{self._time_range_value}"
                         if self.cleanup_status.get(time_key, False):
                             self.cleanup_status[time_key] = False  # 重置清理状态
-                            logger.debug(f"重置清理状态: {time_range_value}")
+                            logger.debug(f"重置清理状态: {self._time_range_value}")
         except Exception as e:
             logger.error(f"检查清理时间时出错: {e}")
     
+    def _handle_ci_message(self, data: dict):
+        """处理来自 CI 插件的消息"""
+        try:
+            # 检查消息类型
+            message_type = data.get("type", "")
+            
+            if message_type == "class_status":
+                # 更新 CI 信息
+                ci_data = data.get("data", {})
+                self.ci_info["current_subject"] = ci_data.get("current_subject", "")
+                self.ci_info["next_subject"] = ci_data.get("next_subject", "")
+                self.ci_info["current_state"] = ci_data.get("current_state", "")
+                self.ci_info["is_class_plan_enabled"] = ci_data.get("is_class_plan_enabled", False)
+                self.ci_info["is_class_plan_loaded"] = ci_data.get("is_class_plan_loaded", False)
+                self.ci_info["is_lesson_confirmed"] = ci_data.get("is_lesson_confirmed", False)
+                self.ci_info["on_class_left_time"] = ci_data.get("on_class_left_time", 0)
+                self.ci_info["on_breaking_time_left"] = ci_data.get("on_breaking_time_left", 0)
+        except Exception as e:
+            logger.error(f"处理 CI 消息失败: {e}")
+
     def _get_main_window(self):
         """获取主窗口实例"""
         try:
@@ -469,6 +596,134 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         minutes = (seconds % 3600) // 60
         seconds = seconds % 60
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    def _is_non_class_time_with_ci(self):
+        """使用 CI 插件信息判断是否为非上课时间"""
+        try:
+            # 读取程序功能设置
+            instant_draw_disable = program_functionality.get("instant_draw_disable", False)
+            
+            if not instant_draw_disable:
+                return False
+                
+            # 检查CI信息是否可用
+            if not hasattr(self, 'ci_info') or not self.ci_info:
+                # 如果CI信息不可用，回退到原有的时间检测方式
+                logger.warning("CI信息不可用，回退到原有时间检测方式")
+                return self._is_non_class_time_with_timer()
+                
+            # 检查是否启用课表、已加载课表、已确定当前时间点
+            if not (self.ci_info.get("is_class_plan_enabled", False) and 
+                    self.ci_info.get("is_class_plan_loaded", False) and 
+                    self.ci_info.get("is_lesson_confirmed", False)):
+                # 如果 CI 信息不完整，回退到原有的时间检测方式
+                logger.warning("CI信息不完整，回退到原有时间检测方式")
+                return self._is_non_class_time_with_timer()
+            
+            # 检查当前状态是否为课间
+            current_state = self.ci_info.get("current_state", "")
+            if current_state == "Breaking":
+                # 如果是课间，返回True（表示是非上课时间）
+                return True
+            elif current_state in ["BeforeClass", "InClass", "AfterClass"]:
+                # 如果是上课前、上课中或下课后，返回False（表示不是非上课时间）
+                return False
+            else:
+                # 如果状态未知，回退到原有的时间检测方式
+                logger.warning(f"未知的CI状态: {current_state}，回退到原有时间检测方式")
+                return self._is_non_class_time_with_timer()
+                
+        except Exception as e:
+            logger.error(f"使用CI插件检测非上课时间失败: {e}")
+            # 如果CI插件检测失败，回退到原有的时间检测方式
+            logger.warning("CI插件检测失败，回退到原有时间检测方式")
+            return self._is_non_class_time_with_timer()
+
+    def _is_non_class_time_with_timer(self):
+        """使用原有的时间检测方式判断是否为非上课时间"""
+        try:
+            # 读取程序功能设置
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            if not path_manager.file_exists(settings_path):
+                return False
+                
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                
+            # 检查课间禁用开关是否启用
+            program_functionality = settings.get("program_functionality", {})
+            instant_draw_disable = program_functionality.get("instant_draw_disable", False)
+            
+            if not instant_draw_disable:
+                return False
+                
+            # 读取上课时间段设置
+            time_settings_path = path_manager.get_settings_path('time_settings.json')
+            if not path_manager.file_exists(time_settings_path):
+                return False
+                
+            with open_file(time_settings_path, 'r', encoding='utf-8') as f:
+                time_settings = json.load(f)
+                
+            # 获取非上课时间段
+            non_class_times = time_settings.get('non_class_times', {})
+            if not non_class_times:
+                return False
+                
+            # 获取当前时间
+            current_time = QDateTime.currentDateTime()
+            current_hour = current_time.time().hour()
+            current_minute = current_time.time().minute()
+            current_second = current_time.time().second()
+            
+            # 将当前时间转换为总秒数
+            current_total_seconds = current_hour * 3600 + current_minute * 60 + current_second
+            
+            # 检查当前时间是否在任何非上课时间段内
+            for time_range in non_class_times.values():
+                try:
+                    start_end = time_range.split('-')
+                    if len(start_end) != 2:
+                        continue
+                        
+                    start_time_str, end_time_str = start_end
+                    
+                    # 解析开始时间
+                    start_parts = list(map(int, start_time_str.split(':')))
+                    start_total_seconds = start_parts[0] * 3600 + start_parts[1] * 60 + (start_parts[2] if len(start_parts) > 2 else 0)
+                    
+                    # 解析结束时间
+                    end_parts = list(map(int, end_time_str.split(':')))
+                    end_total_seconds = end_parts[0] * 3600 + end_parts[1] * 60 + (end_parts[2] if len(end_parts) > 2 else 0)
+                    
+                    # 检查当前时间是否在该非上课时间段内
+                    if start_total_seconds <= current_total_seconds < end_total_seconds:
+                        return True
+                        
+                except Exception as e:
+                    logger.error(f"解析非上课时间段失败: {e}")
+                    continue
+                    
+            return False
+            
+        except Exception as e:
+            logger.error(f"检测非上课时间失败: {e}")
+            return False
+
+    def is_non_class_time(self):
+        """检测当前时间是否在非上课时间段
+        当'课间禁用'开关启用时，用于判断是否需要安全验证"""
+        try:
+            # 检查是否使用 CI 插件确认上课时间
+            if hasattr(self, 'use_cwci_confirm_switch') and self.use_cwci_confirm_switch.isChecked():
+                # 使用 CI 插件信息进行检测
+                return self._is_non_class_time_with_ci()
+            else:
+                # 使用原有的时间检测方式
+                return self._is_non_class_time_with_timer()
+        except Exception as e:
+            logger.error(f"检测非上课时间失败: {e}")
+            return False
 
 
 

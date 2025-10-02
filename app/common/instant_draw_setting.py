@@ -337,8 +337,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置动画自动重复播放的次数", self.instant_draw_Animation_auto_play_SpinBox)
 
         # 是否使用cw/ci显示结果
-        self.addGroup(get_theme_icon("ic_fluent_comment_note_20_filled"), "是否使用ci/cw显示结果", "是否在抽取结果中显示cw/ci", self.use_cwci_display_checkbox)
-        self.addGroup(get_theme_icon("ic_fluent_time_picker_20_filled"), "自定显示使用ci/cw的通知显示时间", "设置cw/ci通知显示的持续时间", self.use_cwci_display_time_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_alert_on_20_filled"), "是否使用 CI/CW 显示结果", "是否使用 CI/CW 展示抽取结果", self.use_cwci_display_checkbox)
+        self.addGroup(get_theme_icon("ic_fluent_time_picker_20_filled"), "CI/CW 通知显示时长", "设置 CI/CW 通知的显示持续时间", self.use_cwci_display_time_SpinBox)
         
         # 图片显示设置
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "学生图片", "是否在抽取时显示学生照片", self.instant_draw_show_image_switch)
