@@ -5,6 +5,7 @@ import os
 import sys
 import json
 import time
+import asyncio
 
 # 添加项目根目录到Python路径
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -100,6 +101,18 @@ else:
     logger.debug(f"白露调节: DPI缩放已设置为{cfg.get(cfg.dpiScale)}倍～ ")
 
 # ==================================================
+# 🧙‍♀️ 应用实例创建 (Application Instance Creation)
+# ==================================================
+# 首先创建QApplication实例，确保在任何QWidget创建之前
+app = QApplication(sys.argv)
+logger.debug("白露创建: QApplication实例已创建～ ")
+
+# 初始化消息接收器
+from app.common.message_receiver import init_message_receiver
+init_message_receiver()
+logger.debug("白露创建: MessageReceiver实例已初始化～ ")
+
+# ==================================================
 # 🚀 启动窗口魔法 (Startup Window Magic)
 # ==================================================
 class StartupWindow(QDialog):
@@ -145,7 +158,7 @@ class StartupWindow(QDialog):
         
         # 添加软件图标到左上角
         try:
-            icon_path = str(path_manager.get_resource_path('icon', 'SecRandom.png'))
+            icon_path = str(path_manager.get_resource_path('icon', 'secrandom-icon-v2.png'))
             if os.path.exists(icon_path):
                 icon_label = QLabel()
                 pixmap = QPixmap(icon_path)
@@ -366,13 +379,7 @@ except Exception as e:
 IPC_SERVER_NAME = 'SecRandomIPC'  # IPC通讯服务器名称
 SHARED_MEMORY_KEY = 'SecRandom'   # 共享内存密钥
 
-# ==================================================
-# 🧙‍♀️ 应用实例创建 (Application Instance Creation)
-# ==================================================
-app = QApplication(sys.argv)
-logger.debug("白露创建: QApplication实例已创建～ ")
-
-def initialize_font_settings():
+async def initialize_font_settings():
     """初始化字体设置，加载并应用保存的字体"""
     try:
         # 读取个人设置文件
@@ -387,22 +394,22 @@ def initialize_font_settings():
                 
                 if font_family:
                     # 应用字体设置
-                    apply_font_to_application(font_family)
+                    await apply_font_to_application(font_family)
                     logger.info(f"初始化字体设置: {font_family}")
                 else:
                     logger.info("初始化字体设置: 未指定字体家族，使用默认字体")
-                    apply_font_to_application('HarmonyOS Sans SC')  
+                    await apply_font_to_application('HarmonyOS Sans SC')  
         else:
             # 如果设置文件不存在，使用默认字体
             logger.info("初始化字体设置: 设置文件不存在，使用默认字体")
-            apply_font_to_application('HarmonyOS Sans SC')
+            await apply_font_to_application('HarmonyOS Sans SC')
     except Exception as e:
         logger.error(f"初始化字体设置失败: {e}")
         # 发生错误时使用默认字体
         logger.info("初始化字体设置: 发生错误，使用默认字体")
-        apply_font_to_application('HarmonyOS Sans SC')
+        await apply_font_to_application('HarmonyOS Sans SC')
 
-def apply_font_to_application(font_family):
+async def apply_font_to_application(font_family):
     """应用字体设置到整个应用程序
     
     Args:
@@ -434,20 +441,17 @@ def apply_font_to_application(font_family):
             else:
                 logger.warning(f"HarmonyOS Sans SC字体文件不存在: {font_path}")
         
-        # 定义延迟更新函数
-        def delayed_font_update(font_to_apply):
-            global main_window
-            # 获取所有顶级窗口并更新它们的字体
-            widgets_updated = 0
-            for widget in QApplication.topLevelWidgets():
-                if isinstance(widget, QWidget):
-                    update_widget_fonts(widget, font_to_apply)
-                    widgets_updated += 1
-                
-            logger.info(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件")
+        # 移除延迟更新字体，避免UI卡顿
+        # await asyncio.sleep(0.1)
         
-        # 使用QTimer延迟更新字体，确保设置已保存
-        QTimer.singleShot(100, lambda: delayed_font_update(app_font))
+        # 获取所有顶级窗口并更新它们的字体
+        widgets_updated = 0
+        for widget in QApplication.topLevelWidgets():
+            if isinstance(widget, QWidget):
+                update_widget_fonts(widget, app_font)
+                widgets_updated += 1
+            
+        logger.info(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件")
     except Exception as e:
         logger.error(f"应用字体失败: {e}")
 
@@ -495,7 +499,7 @@ def update_widget_fonts(widget, font):
     except Exception as e:
         logger.error(f"更新控件字体失败: {e}")
 
-def check_single_instance():
+async def check_single_instance():
     """检查单实例，防止多个程序副本同时运行"""
     # 检查是否有启动窗口线程
     has_startup_thread = 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning()
@@ -523,31 +527,20 @@ def check_single_instance():
                 startup_thread.next_step(detail=f"获取URL命令失败: {e}")
 
         # 异步发送IPC消息，避免阻塞启动流程
-        def async_wakeup():
-            # 尝试直接发送IPC消息唤醒已有实例
-            if send_ipc_message(url_command):
-                logger.info('成功唤醒已有实例，当前实例将退出')
-                if has_startup_thread:
-                    startup_thread.update_progress(detail="成功唤醒已有实例，当前实例将退出")
-                sys.exit()
-            else:
-                # IPC连接失败，短暂延迟后重试一次
-                QTimer.singleShot(300, lambda:
-                    retry_ipc() if not send_ipc_message(url_command) else None
-                )
-
-        def retry_ipc():
-            """重试连接已有实例"""
-            logger.error("无法连接到已有实例，程序将退出")
+        # 尝试直接发送IPC消息唤醒已有实例
+        if send_ipc_message(url_command):
+            logger.info('成功唤醒已有实例，当前实例将退出')
             if has_startup_thread:
-                startup_thread.update_progress(detail="无法连接到已有实例，程序将退出")
+                startup_thread.update_progress(detail="成功唤醒已有实例，当前实例将退出")
             sys.exit()
-
-        # 立即异步执行唤醒操作
-        QTimer.singleShot(0, async_wakeup)
-        # 等待异步操作完成
-        QApplication.processEvents()
-        sys.exit()
+        else:
+            # IPC连接失败，短暂延迟后重试一次
+            await asyncio.sleep(0.3)
+            if not send_ipc_message(url_command):
+                logger.error("无法连接到已有实例，程序将退出")
+                if has_startup_thread:
+                    startup_thread.update_progress(detail="无法连接到已有实例，程序将退出")
+                sys.exit()
     
     logger.info('单实例检查通过，可以安全启动程序')
     if has_startup_thread:
@@ -611,7 +604,7 @@ def check_plugin_settings():
         if has_startup_thread:
             startup_thread.update_progress(detail=f"检查插件自启动设置失败: {e}")
 
-def create_main_window_async():
+async def create_main_window_async():
     """异步创建主窗口实例并根据设置决定是否显示窗口"""
     # 检查是否有启动窗口线程
     has_startup_thread = 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning()
@@ -620,50 +613,196 @@ def create_main_window_async():
     if has_startup_thread:
         startup_thread.set_step(6, "正在创建主窗口...")
     
-    # 使用QTimer异步创建主窗口
-    def async_create_window():
-        sec = Window()
-        
-        try:
-            settings_file = path_manager.get_settings_path()
-            ensure_dir(settings_file.parent)
-            with open_file(settings_file, 'r') as f:
-                settings = json.load(f)
-                foundation_settings = settings.get('foundation', {})
-                self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
-                
-                # 显示窗口
-                sec.show()
-                logger.info("主窗口已显示")
-                
-                # 如果是开机自启动，则在短暂延迟后隐藏窗口
-                if self_starting_enabled:
-                    sec.hide()
-                    logger.info("开机自启动模式，窗口已隐藏")
-        except FileNotFoundError:
-            logger.error("加载设置时出错 - 文件不存在, 使用默认显示主窗口")
-            sec.show()
-        except KeyError:
-            logger.error("设置文件中缺少foundation键, 使用默认显示主窗口")
-            sec.show()
-        except Exception as e:
-            logger.error(f"加载设置时出错: {e}, 使用默认显示主窗口")
-            sec.show()
-        
-        # 将创建的主窗口保存到全局变量
-        global main_window
-        main_window = sec
-    
     # 延迟50ms后异步创建主窗口
-    QTimer.singleShot(100, async_create_window)
+    await asyncio.sleep(0.1)
+    
+    sec = Window()
+    
+    # 等待所有子界面加载完成
+    if has_startup_thread:
+        startup_thread.update_progress(detail="正在等待所有子界面加载完成...")
+    
+    # 等待子界面和UI组件加载完成
+    await asyncio.sleep(0.5)  # 给予足够的时间让异步任务完成
+    
+    try:
+        settings_file = path_manager.get_settings_path()
+        ensure_dir(settings_file.parent)
+        with open_file(settings_file, 'r') as f:
+            settings = json.load(f)
+            foundation_settings = settings.get('foundation', {})
+            self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
+            
+            # 显示窗口
+            sec.show()
+            logger.info("主窗口已显示")
+            
+            # 如果是开机自启动，则在短暂延迟后隐藏窗口
+            if self_starting_enabled:
+                sec.hide()
+                logger.info("开机自启动模式，窗口已隐藏")
+    except FileNotFoundError:
+        logger.error("加载设置时出错 - 文件不存在, 使用默认显示主窗口")
+        sec.show()
+    except KeyError:
+        logger.error("设置文件中缺少foundation键, 使用默认显示主窗口")
+        sec.show()
+    except Exception as e:
+        logger.error(f"加载设置时出错: {e}, 使用默认显示主窗口")
+        sec.show()
+    
+    # 将创建的主窗口保存到全局变量
+    global main_window
+    main_window = sec
 
+
+# 异步初始化应用程序函数
+async def async_initialize_app():
+    """异步初始化应用程序，使用asyncio避免阻塞主线程"""
+    # 首先配置日志系统
+    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+        startup_thread.next_step("正在配置日志系统...")
+    configure_logging()
+    
+    # 设置工作目录为程序所在目录，解决URL协议唤醒时工作目录错误的问题
+    if getattr(sys, 'frozen', False):
+        # 打包后的可执行文件
+        program_dir = os.path.dirname(sys.executable)
+    else:
+        # 开发环境
+        program_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # 更改当前工作目录
+    if os.getcwd() != program_dir:
+        os.chdir(program_dir)
+        logger.info(f"工作目录已设置为: {program_dir}")
+    
+    # 异步执行检查单实例
+    await async_check_single_instance()
+
+async def async_check_single_instance():
+    """异步检查单实例"""
+    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+        startup_thread.next_step("正在检查单实例...")
+    global shared_memory
+    shared_memory = await check_single_instance()
+    
+    # 异步执行初始化应用程序
+    await async_init_application()
+
+async def async_init_application():
+    """异步初始化应用程序"""
+    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+        startup_thread.next_step("正在加载配置文件...")
+    log_software_info()
+
+    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+        startup_thread.set_step(4, "正在清理历史记录...")
+    clean_expired_data()
+
+    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+        startup_thread.set_step(5, "正在检查插件设置...")
+    check_plugin_settings()
+
+    # 异步执行注册URL协议
+    await async_register_url_protocol()
+
+async def async_register_url_protocol():
+    """异步注册URL协议"""
+    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+        startup_thread.set_step(6, "正在注册URL协议...")
+    try:
+        from app.common.foundation_settings import register_url_protocol_on_startup
+        register_url_protocol_on_startup()
+        logger.info("URL协议自动注册完成")
+        if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+            startup_thread.set_step(7, "正在创建主窗口...")
+    except Exception as e:
+        logger.error(f"URL协议注册失败: {e}")
+        if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+            startup_thread.set_step(7, "正在创建主窗口...")
+    
+    # 异步执行创建主窗口
+    await create_main_window_async()
+    
+    # 异步执行延迟URL处理
+    await async_delayed_url_processing()
+
+async def async_delayed_url_processing():
+    """异步延迟URL处理"""
+    # 异步处理URL命令
+    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+        startup_thread.set_step(9, "正在处理URL命令...")
+    
+    # 处理URL命令
+    process_url_if_exists()
+    
+    # 完成启动
+    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+        startup_thread.set_step(10, "启动完成")
+        startup_thread.update_progress(100)
+        
+        # 延迟关闭启动窗口
+        await asyncio.sleep(0.5)
+        startup_thread.close_window()
+
+# 异步创建启动窗口函数
+async def async_create_startup_window():
+    """异步创建启动窗口"""
+    # 创建启动窗口
+    global startup_window, startup_thread
+    startup_window = StartupWindow()
+    startup_window.show()
+    
+    # 强制处理事件，确保启动窗口立即显示
+    QApplication.processEvents()
+    
+    # 创建启动窗口线程并启动
+    startup_thread = StartupWindowThread(startup_window)
+    startup_thread.start()
+    
+    # 更新启动窗口进度
+    startup_thread.next_step("正在初始化应用程序环境...")
+    
+    # 给启动窗口一些时间显示和更新
+    await asyncio.sleep(0.1)
+    
+    # 异步初始化应用程序
+    await async_initialize_app()
 
 # ==================================================
 # 主程序入口 (Main Program Entry)
 # ==================================================
+async def main_async():
+    """异步主函数，使用asyncio实现异步初始化"""
+    # 全局变量已经在程序入口点初始化
+    
+    # 检查是否需要初始化应用程序
+    if startup_window is None:
+        # 不显示启动窗口，直接初始化应用程序
+        await async_initialize_app()
+    else:
+        # 启动窗口已经创建，继续初始化应用程序
+        await async_initialize_app()
+    
+    # 初始化字体设置
+    logger.info("初始化字体设置...")
+    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+        startup_thread.next_step(detail="初始化字体设置...")
+    await initialize_font_settings()
+
 if __name__ == "__main__":
+    # 创建新的事件循环
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
     # 全局变量，用于存储主窗口实例
+    global main_window, startup_window, startup_thread, shared_memory
+    
     main_window = None
+    startup_window = None
+    startup_thread = None
+    shared_memory = None
     
     # 检查是否显示启动窗口
     show_startup_window = True  # 默认显示启动窗口
@@ -680,9 +819,12 @@ if __name__ == "__main__":
     
     # 根据设置决定是否创建启动窗口
     if show_startup_window:
-        # 在主线程中创建启动窗口
+        # 立即创建启动窗口，不使用异步函数
         startup_window = StartupWindow()
         startup_window.show()
+        
+        # 强制处理事件，确保启动窗口立即显示
+        QApplication.processEvents()
         
         # 创建启动窗口线程并启动
         startup_thread = StartupWindowThread(startup_window)
@@ -690,127 +832,29 @@ if __name__ == "__main__":
         
         # 更新启动窗口进度
         startup_thread.next_step("正在初始化应用程序环境...")
-    else:
-        # 不显示启动窗口，创建空的启动窗口线程对象以避免错误
-        startup_window = None
-        startup_thread = None
-        logger.info("启动窗口已禁用，跳过启动窗口显示")
-    
-    # 设置工作目录为程序所在目录，解决URL协议唤醒时工作目录错误的问题
-    if getattr(sys, 'frozen', False):
-        # 打包后的可执行文件
-        program_dir = os.path.dirname(sys.executable)
-    else:
-        # 开发环境
-        program_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # 配置日志系统
-    if startup_thread:
-        startup_thread.next_step("正在配置日志系统...")
-    configure_logging()
-
-    # 更改当前工作目录
-    if os.getcwd() != program_dir:
-        os.chdir(program_dir)
-        logger.info(f"工作目录已设置为: {program_dir}")
-    
-    # 检查单实例并创建共享内存
-    if startup_thread:
-        startup_thread.next_step("正在检查单实例...")
-    shared_memory = check_single_instance()
-    
-    # 初始化应用程序并创建主窗口
-    if startup_thread:
-        startup_thread.next_step("正在加载配置文件...")
-    log_software_info()
-
-    if startup_thread:
-        startup_thread.set_step(4, "正在清理历史记录...")
-    clean_expired_data()
-
-    if startup_thread:
-        startup_thread.set_step(5, "正在检查插件设置...")
-    check_plugin_settings()
-
-    # 自动注册URL协议
-    if startup_thread:
-        startup_thread.set_step(6, "正在注册URL协议...")
-    try:
-        from app.common.foundation_settings import register_url_protocol_on_startup
-        register_url_protocol_on_startup()
-        logger.info("URL协议自动注册完成")
-        if startup_thread:
-            startup_thread.update_progress(detail="URL协议自动注册完成")
-    except Exception as e:
-        logger.error(f"URL协议自动注册失败: {e}")
-        if startup_thread:
-            startup_thread.update_progress(detail=f"URL协议自动注册失败: {e}")
-
-    # 检查是否有启动窗口线程
-    has_startup_thread = startup_thread is not None and startup_thread.isRunning()
-
-    # 创建主窗口实例
-    if has_startup_thread:
-        startup_thread.set_step(7, "正在创建主窗口...")
-
-    create_main_window_async()
-
-    if has_startup_thread:
-        startup_thread.set_step(8, "正在初始化界面组件...")
-
-    app.setQuitOnLastWindowClosed(False)
-
-    # 延迟处理URL命令，确保主窗口完全初始化
-    def delayed_url_processing():
-        """延迟处理URL命令，避免阻塞启动流程"""
-        # 检查是否有启动窗口线程
-        has_startup_thread = 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning()
         
-        if has_startup_thread:
-            startup_thread.set_step(9, "正在初始化界面组件...")
-        
-        try:
-            logger.info("延迟检查是否有URL命令需要处理")
-            # 检查主窗口是否已创建
-            global main_window
-            if 'main_window' in globals() and main_window:
-                if process_url_if_exists(main_window):
-                    logger.info("URL命令处理成功")
-                    if has_startup_thread:
-                        startup_thread.update_progress(detail="URL命令处理成功")
-                else:
-                    logger.info("没有URL命令需要处理")
-                    if has_startup_thread:
-                        startup_thread.update_progress(detail="没有URL命令需要处理")
-            else:
-                logger.warning("主窗口尚未创建，跳过URL命令处理")
-                if has_startup_thread:
-                    startup_thread.update_progress(detail="主窗口尚未创建，跳过URL命令处理")
-        except Exception as e:
-            logger.error(f"处理URL命令失败: {e}")
-            if has_startup_thread:
-                startup_thread.update_progress(detail=f"处理URL命令失败: {e}")
-        finally:
-            # 启动完成，关闭启动窗口
-            if has_startup_thread:
-                startup_thread.set_step(10, "启动完成！")
-                QTimer.singleShot(500, startup_thread.close_window)
+        # 给启动窗口一些时间显示和更新
+        QApplication.processEvents()
     
-    # 初始化字体设置
-    initialize_font_settings()
-    
-    # 使用QTimer延迟处理URL命令，确保主窗口完全初始化
-    QTimer.singleShot(2000, delayed_url_processing)  # 延迟1秒处理URL
-
-    # 启动应用程序事件循环
     try:
+        # 启动异步主函数
+        loop.run_until_complete(main_async())
+        # 启动Qt事件循环
         logger.info("应用程序事件循环启动")
         app.exec_()
+    except Exception as e:
+        logger.error(f"程序启动失败: {e}")
     finally:
-        shared_memory.detach()
-        logger.info("共享内存已释放，程序完全退出")
+        # 确保共享内存已释放
+        if 'shared_memory' in globals() and shared_memory is not None:
+            shared_memory.detach()
+            logger.info("共享内存已释放，程序完全退出")
+        
         # 确保启动窗口线程已退出
-    if startup_thread and startup_thread.isRunning():
-        startup_thread.close_window()
-        startup_thread.wait(1000)  # 等待最多1秒
+        if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
+            startup_thread.close_window()
+            startup_thread.wait(1000)  # 等待最多1秒
+        
+        # 关闭事件循环
+        loop.close()
         sys.exit()

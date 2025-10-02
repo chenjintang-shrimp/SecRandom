@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from qfluentwidgets import *
-from app.common.config import get_theme_icon, load_custom_font, check_for_updates, VERSION, is_dark_theme
+from app.common.config import get_theme_icon, load_custom_font, check_for_updates, VERSION, is_dark_theme, themeColor
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
 from app.common.update_notification import UpdateNotification
@@ -526,7 +526,7 @@ class URLNotification(QDialog):
 
         # 更新图标
         icon_label = QLabel()
-        icon_path = path_manager.get_resource_path('icon', 'SecRandom.png')
+        icon_path = path_manager.get_resource_path('icon', 'secrandom-icon-v2.png')
         icon_label.setPixmap(QIcon(str(icon_path)).pixmap(55, 55))
         icon_label.setStyleSheet("background: transparent; border: none;")
 

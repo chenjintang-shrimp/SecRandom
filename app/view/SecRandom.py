@@ -20,7 +20,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtNetwork import *
-from PyQt5.QtWidgets import QGraphicsBlurEffect, QGraphicsScene, QGraphicsPixmapItem
 from qfluentwidgets import *
 
 # 内部模块
@@ -288,7 +287,7 @@ class TrayIconManager(QObject):
         super().__init__(main_window)
         self.main_window = main_window
         self.tray_icon = QSystemTrayIcon(main_window)
-        self.tray_icon.setIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png')))) 
+        self.tray_icon.setIcon(QIcon(str(path_manager.get_resource_path('icon', 'secrandom-icon-v2.png')))) 
         self.tray_icon.setToolTip('SecRandom')  # 鼠标放上去会显示的文字
         self._create_menu()  # 创建菜单
         self.tray_icon.activated.connect(self._on_tray_activated)  # 连接点击事件
@@ -531,7 +530,7 @@ class Window(MSFluentWindow):
         self.resize(window_width, window_height)
         self.setMinimumSize(self.MINIMUM_WINDOW_SIZE[0], self.MINIMUM_WINDOW_SIZE[1])
         self.setWindowTitle('SecRandom')
-        self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png'))))
+        self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'secrandom-icon-v2.png'))))
 
         # 应用背景图片
         self.apply_background_image()

@@ -18,7 +18,7 @@ class PasswordDialog(QDialog):
         # 设置无边框窗口样式并解决屏幕设置冲突 
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window | Qt.Tool | Qt.WindowStaysOnTopHint)
         self.setWindowTitle("密码验证")
-        self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'SecRandom.png'))))
+        self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'secrandom-icon-v2.png'))))
         self.setFixedSize(400, 300)
 
         self.dragging = False
