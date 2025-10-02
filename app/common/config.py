@@ -313,7 +313,7 @@ class Config(QConfig):
     dpiScale = OptionsConfigItem(
         "Window", "DpiScale", "Auto", OptionsValidator([1, 1.25, 1.5, 1.75, 2, "Auto"]), restart=True)
     themeColor = ColorConfigItem(
-        "Theme", "Color", "#3AF2FF")
+        "Theme", "Color", "#0078D4")  # Windows系统默认蓝色
 
 YEAR = 2025
 MONTH = 4
@@ -368,3 +368,17 @@ def setThemeColor(color):
     # 保存配置
     qconfig.save()
     logger.info(f"主题色已设置为: {hex_color}")
+
+def themeColor():
+    """获取当前主题色
+    
+    Returns:
+        str: 十六进制格式的主题色
+    """
+    try:
+        # 获取当前主题色
+        return cfg.themeColor.value
+    except Exception as e:
+        logger.error(f"获取主题色失败: {e}")
+        # 返回默认主题色
+        return "#3AF2FF"
