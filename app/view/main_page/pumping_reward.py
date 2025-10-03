@@ -1140,7 +1140,7 @@ class pumping_reward(QWidget):
                 if hasattr(parent, 'cleanup_signal'):
                     # 连接主窗口的清理信号
                     parent.cleanup_signal.connect(self._on_cleanup_signal)
-                    logger.info("星野连接: 抽奖界面已连接到主窗口清理信号～")
+                    # logger.debug("星野连接: 抽奖界面已连接到主窗口清理信号～")
                     return
                 parent = parent.parent()
             
@@ -1148,7 +1148,7 @@ class pumping_reward(QWidget):
             for widget in QApplication.topLevelWidgets():
                 if hasattr(widget, 'cleanup_signal'):
                     widget.cleanup_signal.connect(self._on_cleanup_signal)
-                    logger.info("星野连接: 已通过应用程序查找连接主窗口清理信号～")
+                    # logger.debug("星野连接: 已通过应用程序查找连接主窗口清理信号～")
                     return
             
             logger.error("星野警告: 未找到主窗口实例，清理信号连接失败～")

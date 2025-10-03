@@ -949,14 +949,14 @@ class Window(MSFluentWindow):
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 sidebar_settings = settings.get('sidebar', {})
-                logger.info("已读取导航配置，准备构建个性化菜单")
+                # logger.info("已读取导航配置，准备构建个性化菜单")
 
                 # 根据设置决定"点名"界面位置
                 pumping_floating_side = sidebar_settings.get('pumping_floating_side', 0)
                 if pumping_floating_side == 1:
                     if self.pumping_peopleInterface is not None:
                         self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.BOTTOM)
-                        logger.info("'点名'界面已放置在底部导航栏")
+                        # logger.info("'点名'界面已放置在底部导航栏")
                     else:
                         logger.error("'点名'界面未创建，无法添加到导航栏")
                 elif pumping_floating_side == 2:
@@ -964,7 +964,7 @@ class Window(MSFluentWindow):
                 else:
                     if self.pumping_peopleInterface is not None:
                         self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.TOP)
-                        logger.info("'点名'界面已放置在顶部导航栏")
+                        # logger.info("'点名'界面已放置在顶部导航栏")
                     else:
                         logger.error("'点名'界面未创建，无法添加到导航栏")
 
@@ -973,7 +973,7 @@ class Window(MSFluentWindow):
                 if pumping_reward_side == 1:
                     if self.pumping_rewardInterface is not None:
                         self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.BOTTOM)
-                        logger.info("'抽奖'界面已放置在底部导航栏")
+                        # logger.info("'抽奖'界面已放置在底部导航栏")
                     else:
                         logger.error("'抽奖'界面未创建，无法添加到导航栏")
                 elif pumping_reward_side == 2:
@@ -981,7 +981,7 @@ class Window(MSFluentWindow):
                 else:
                     if self.pumping_rewardInterface is not None:
                         self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
-                        logger.info("'抽奖'界面已放置在顶部导航栏")
+                        # logger.info("'抽奖'界面已放置在顶部导航栏")
                     else:
                         logger.error("'抽奖'界面未创建，无法添加到导航栏")
 
@@ -998,7 +998,7 @@ class Window(MSFluentWindow):
             if vocabulary_side == 1:
                 if self.vocabulary_learningInterface is not None:
                     self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
-                    logger.info("'单词PK'界面已放置在底部导航栏")
+                    # logger.info("'单词PK'界面已放置在底部导航栏")
                 else:
                     logger.error("'单词PK'界面未创建，无法添加到导航栏")
             elif vocabulary_side == 2:
@@ -1006,7 +1006,7 @@ class Window(MSFluentWindow):
             else:
                 if self.vocabulary_learningInterface is not None:
                     self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.TOP)
-                    logger.info("'单词PK'界面已放置在顶部导航栏")
+                    # logger.info("'单词PK'界面已放置在顶部导航栏")
                 else:
                     logger.error("'单词PK'界面未创建，无法添加到导航栏")
         except Exception as e:
@@ -1023,7 +1023,7 @@ class Window(MSFluentWindow):
                     history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
                     # 点击历史记录导航项时切换到历史记录界面
                     history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
-                    logger.info("'历史记录'导航项已放置在底部导航栏")
+                    # logger.info("'历史记录'导航项已放置在底部导航栏")
                 else:
                     logger.error("'历史记录'界面未创建，无法添加到导航栏")
             elif history_side == 2:
@@ -1034,7 +1034,7 @@ class Window(MSFluentWindow):
                     history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.TOP)
                     # 点击历史记录导航项时切换到历史记录界面
                     history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
-                    logger.info("'历史记录'导航项已放置在顶部导航栏")
+                    # logger.info("'历史记录'导航项已放置在顶部导航栏")
                 else:
                     logger.error("'历史记录'界面未创建，无法添加到导航栏")
         except Exception as e:
@@ -1057,7 +1057,7 @@ class Window(MSFluentWindow):
                 # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
-                logger.info("'设置'图标已放置在底部导航栏")
+                # logger.info("'设置'图标已放置在底部导航栏")
             elif settings_side == 2:
                 logger.info("'设置'图标已设置为不显示")
             else:
@@ -1068,7 +1068,7 @@ class Window(MSFluentWindow):
                 # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
-                logger.info("'设置'图标已放置在顶部导航栏")
+                # logger.info("'设置'图标已放置在顶部导航栏")
         except Exception as e:
             logger.error(f"加载设置图标失败: {e}")
             if sidebar_settings.get('show_settings_icon', True):
@@ -1080,7 +1080,7 @@ class Window(MSFluentWindow):
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
         
-        logger.info("所有导航项已布置完成，导航系统可以正常使用")
+        # logger.info("所有导航项已布置完成，导航系统可以正常使用")
 
     def closeEvent(self, event):
         """窗口关闭事件处理

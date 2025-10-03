@@ -1496,7 +1496,7 @@ class pumping_people(QWidget):
             while parent is not None:
                 if hasattr(parent, 'cleanup_signal'):
                     parent.cleanup_signal.connect(self._on_cleanup_signal)
-                    logger.info("抽人界面已连接到主窗口清理信号")
+                    # logger.debug("抽人界面已连接到主窗口清理信号")
                     return
                 parent = parent.parent()
             
@@ -1504,7 +1504,7 @@ class pumping_people(QWidget):
             for widget in QApplication.topLevelWidgets():
                 if hasattr(widget, 'cleanup_signal'):
                     widget.cleanup_signal.connect(self._on_cleanup_signal)
-                    logger.info("抽人界面已连接到主窗口清理信号")
+                    # logger.debug("抽人界面已连接到主窗口清理信号")
                     return
             
             logger.error("未找到主窗口实例，清理信号连接失败")

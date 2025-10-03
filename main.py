@@ -97,12 +97,12 @@ else:
 # ==================================================
 # 首先创建QApplication实例，确保在任何QWidget创建之前
 app = QApplication(sys.argv)
-logger.debug("QApplication实例已创建")
+logger.info("QApplication实例已创建")
 
 # 初始化消息接收器
 from app.common.message_receiver import init_message_receiver
 init_message_receiver()
-logger.debug("MessageReceiver实例已初始化")
+logger.info("MessageReceiver实例已初始化")
 
 # ==================================================
 # 启动窗口
@@ -378,8 +378,8 @@ async def initialize_font_settings():
                 
                 if font_family:
                     # 应用字体设置
-                    await apply_font_to_application(font_family)
                     logger.info(f"初始化字体设置: {font_family}")
+                    await apply_font_to_application(font_family)
                 else:
                     logger.info("初始化字体设置: 未指定字体家族，使用默认字体")
                     await apply_font_to_application('HarmonyOS Sans SC')  
@@ -417,7 +417,7 @@ async def apply_font_to_application(font_family):
                     if font_families:
                         app_font = QFont(font_families[0])
                         app_font.setPointSize(current_font.pointSize())
-                        logger.info(f"已加载HarmonyOS Sans SC字体文件: {font_path}")
+                        # logger.debug(f"已加载HarmonyOS Sans SC字体文件: {font_path}")
                     else:
                         logger.error(f"无法从字体文件获取字体家族: {font_path}")
                 else:
@@ -432,7 +432,7 @@ async def apply_font_to_application(font_family):
                 update_widget_fonts(widget, app_font)
                 widgets_updated += 1
             
-        logger.info(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件")
+        # logger.debug(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件字体")
     except Exception as e:
         logger.error(f"应用字体失败: {e}")
 
@@ -766,7 +766,7 @@ async def main_async():
         await async_initialize_app()
     
     # 初始化字体设置
-    logger.info("初始化字体设置...")
+    # logger.info("初始化字体设置...")
     if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
         startup_thread.next_step(detail="初始化字体设置...")
     await initialize_font_settings()

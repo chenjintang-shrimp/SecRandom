@@ -78,7 +78,6 @@ class settings_Window(MSFluentWindow):
         self.createSubInterface()
 
     def createSubInterface(self):
-
         try:
             self.more_settingInterface = more_setting(self)
             self.more_settingInterface.setObjectName("more_settingInterface")
@@ -218,7 +217,7 @@ class settings_Window(MSFluentWindow):
                 if plugin_settings_switch == 1:
                     if self.plugin_settingsInterface is not None:
                         self.addSubInterface(self.plugin_settingsInterface, get_theme_icon("ic_fluent_database_plug_connected_20_filled"), '插件', position=NavigationItemPosition.BOTTOM)
-                        logger.info("插件设置导航项已放置在底部导航栏")
+                        # logger.info("插件设置导航项已放置在底部导航栏")
                     else:
                         logger.error("插件设置界面未创建，无法添加到导航栏")
                 elif plugin_settings_switch == 2:
@@ -226,7 +225,7 @@ class settings_Window(MSFluentWindow):
                 else:
                     if self.plugin_settingsInterface is not None:
                         self.addSubInterface(self.plugin_settingsInterface, get_theme_icon("ic_fluent_database_plug_connected_20_filled"), '插件', position=NavigationItemPosition.TOP)
-                        logger.info("插件设置导航项已放置在顶部导航栏")
+                        # logger.info("插件设置导航项已放置在顶部导航栏")
                     else:
                         logger.error("插件设置界面未创建，无法添加到导航栏")
         except Exception as e:
@@ -245,7 +244,7 @@ class settings_Window(MSFluentWindow):
                 if voice_settings_switch == 1:
                     if self.voice_engine_settingsInterface is not None:
                         self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
-                        logger.info("语音设置导航项已放置在底部导航栏")
+                        # logger.info("语音设置导航项已放置在底部导航栏")
                     else:
                         logger.error("语音设置界面未创建，无法添加到导航栏")
                 elif voice_settings_switch == 2:
@@ -253,7 +252,7 @@ class settings_Window(MSFluentWindow):
                 else:
                     if self.voice_engine_settingsInterface is not None:
                         self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.TOP)
-                        logger.info("语音设置导航项已放置在顶部导航栏")
+                        # logger.info("语音设置导航项已放置在顶部导航栏")
                     else:
                         logger.error("语音设置界面未创建，无法添加到导航栏")
         except Exception as e:
@@ -272,7 +271,7 @@ class settings_Window(MSFluentWindow):
                 if security_settings_switch == 1:
                     if self.password_setInterface is not None:
                         self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
-                        logger.info("安全设置导航项已放置在底部导航栏")
+                        # logger.info("安全设置导航项已放置在底部导航栏")
                     else:
                         logger.error("安全设置界面未创建，无法添加到导航栏")
                 elif security_settings_switch == 2:
@@ -280,7 +279,7 @@ class settings_Window(MSFluentWindow):
                 else:
                     if self.password_setInterface is not None:
                         self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.TOP)
-                        logger.info("安全设置导航项已放置在顶部导航栏")
+                        # logger.info("安全设置导航项已放置在顶部导航栏")
                     else:
                         logger.error("安全设置界面未创建，无法添加到导航栏")
         except Exception as e:
@@ -300,7 +299,7 @@ class settings_Window(MSFluentWindow):
                     if self.changeable_history_handoff_settingInterface is not None:
                         history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
                         history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
-                        logger.info("历史记录设置导航项已放置在底部导航栏")
+                        # logger.info("历史记录设置导航项已放置在底部导航栏")
                     else:
                         logger.error("历史记录设置界面未创建，无法添加到导航栏")
                 elif history_settings_switch == 2:
@@ -309,7 +308,7 @@ class settings_Window(MSFluentWindow):
                     if self.changeable_history_handoff_settingInterface is not None:
                         history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.TOP)
                         history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
-                        logger.info("历史记录设置导航项已放置在顶部导航栏")
+                        # logger.info("历史记录设置导航项已放置在顶部导航栏")
                     else:
                         logger.error("历史记录设置界面未创建，无法添加到导航栏")
         except Exception as e:

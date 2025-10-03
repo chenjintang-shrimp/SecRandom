@@ -201,22 +201,23 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
             if self.clear_draw_records_switch.isChecked():
                 # 开启计时器
                 self.cleanup_timer.start()
-                logger.info("已启动上课前清理抽取记录计时器")
+                # logger.info("已启动上课前清理抽取记录计时器")
             else:
                 # 停止计时器
                 self.cleanup_timer.stop()
-                logger.info("已停止上课前清理抽取记录计时器")
+                # logger.info("已停止上课前清理抽取记录计时器")
         elif self.clear_draw_records_switch.isChecked() and not self.cleanup_timer.isActive():
             # 如果开关是开启状态但计时器未运行，启动计时器
             self.cleanup_timer.start()
-            logger.info("已启动上课前清理抽取记录计时器")
+            # logger.info("已启动上课前清理抽取记录计时器")
         
         # 检查 CI 确认开关状态是否发生变化
         if old_use_cwci_confirm_switch != self.use_cwci_confirm_switch.isChecked():
             if self.use_cwci_confirm_switch.isChecked():
-                logger.info("已启用 CI 插件确认上课时间")
+                # logger.info("已启用 CI 插件确认上课时间")
+                self.cleanup_status = {}
             else:
-                logger.info("已禁用 CI 插件确认上课时间")
+                # logger.info("已禁用 CI 插件确认上课时间")
                 # 重置清理状态，避免影响原有时间检测方式
                 self.cleanup_status = {}
 
