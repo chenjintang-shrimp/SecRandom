@@ -605,96 +605,90 @@ class Window(MSFluentWindow):
                 if main_background_image and main_background_image != "无背景图":
                     # 获取背景图片文件夹路径
                     background_dir = path_manager.get_resource_path('images', 'background')
-                    
-                    # 检查文件夹是否存在
-                    if background_dir.exists():
-                        # 构建图片完整路径
-                        image_path = background_dir / main_background_image
+                    image_path = background_dir / main_background_image
                         
-                        # 检查图片文件是否存在
-                        if image_path.exists():
-                            # 创建背景图片对象
-                            background_pixmap = QPixmap(str(image_path))
+                    # 检查图片文件是否存在
+                    if image_path.exists():
+                        # 创建背景图片对象
+                        background_pixmap = QPixmap(str(image_path))
+                        
+                        # 如果图片加载成功，应用背景
+                        if not background_pixmap.isNull():
+                            # 获取模糊度和亮度设置
+                            blur_value = personal_settings.get('background_blur', 10)
+                            brightness_value = personal_settings.get('background_brightness', 30)
                             
-                            # 如果图片加载成功，应用背景
-                            if not background_pixmap.isNull():
-                                # 获取模糊度和亮度设置
-                                blur_value = personal_settings.get('background_blur', 10)
-                                brightness_value = personal_settings.get('background_brightness', 30)
+                            # 应用模糊效果
+                            if blur_value > 0:
+                                # 创建模糊效果
+                                blur_effect = QGraphicsBlurEffect()
+                                blur_effect.setBlurRadius(blur_value)
                                 
-                                # 应用模糊效果
-                                if blur_value > 0:
-                                    # 创建模糊效果
-                                    blur_effect = QGraphicsBlurEffect()
-                                    blur_effect.setBlurRadius(blur_value)
-                                    
-                                    # 创建临时场景和图形项来应用模糊效果
-                                    scene = QGraphicsScene()
-                                    item = QGraphicsPixmapItem(background_pixmap)
-                                    item.setGraphicsEffect(blur_effect)
-                                    scene.addItem(item)
-                                    
-                                    # 创建渲染图像
-                                    result_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
-                                    result_image.fill(Qt.transparent)
-                                    painter = QPainter(result_image)
-                                    scene.render(painter)
-                                    painter.end()
-                                    
-                                    # 更新背景图片
-                                    background_pixmap = QPixmap.fromImage(result_image)
+                                # 创建临时场景和图形项来应用模糊效果
+                                scene = QGraphicsScene()
+                                item = QGraphicsPixmapItem(background_pixmap)
+                                item.setGraphicsEffect(blur_effect)
+                                scene.addItem(item)
                                 
-                                # 应用亮度效果
-                                if brightness_value != 100:
-                                    # 创建图像副本
-                                    brightness_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
-                                    brightness_image.fill(Qt.transparent)
-                                    painter = QPainter(brightness_image)
-                                    
-                                    # 计算亮度调整因子
-                                    brightness_factor = brightness_value / 100.0
-                                    
-                                    # 应用亮度调整
-                                    painter.setOpacity(brightness_factor)
-                                    painter.drawPixmap(0, 0, background_pixmap)
-                                    painter.end()
-                                    
-                                    # 更新背景图片
-                                    background_pixmap = QPixmap.fromImage(brightness_image)
+                                # 创建渲染图像
+                                result_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
+                                result_image.fill(Qt.transparent)
+                                painter = QPainter(result_image)
+                                scene.render(painter)
+                                painter.end()
                                 
-                                # 创建背景标签并设置样式
-                                self.background_label = QLabel(self)
-                                self.background_label.setGeometry(0, 0, self.width(), self.height())
-                                self.background_label.setPixmap(background_pixmap.scaled(
-                                    self.width(), self.height(), 
-                                    Qt.IgnoreAspectRatio, 
-                                    Qt.SmoothTransformation
-                                ))
-                                self.background_label.lower()  # 将背景标签置于底层
+                                # 更新背景图片
+                                background_pixmap = QPixmap.fromImage(result_image)
+                            
+                            # 应用亮度效果
+                            if brightness_value != 100:
+                                # 创建图像副本
+                                brightness_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
+                                brightness_image.fill(Qt.transparent)
+                                painter = QPainter(brightness_image)
                                 
-                                # 保存原始图片，用于窗口大小调整时重新缩放
-                                self.original_background_pixmap = background_pixmap
+                                # 计算亮度调整因子
+                                brightness_factor = brightness_value / 100.0
                                 
-                                # 确保背景标签随窗口大小变化
-                                self.background_label.setAttribute(Qt.WA_StyledBackground, True)
+                                # 应用亮度调整
+                                painter.setOpacity(brightness_factor)
+                                painter.drawPixmap(0, 0, background_pixmap)
+                                painter.end()
                                 
-                                # 设置窗口属性，确保背景可见
-                                self.setAttribute(Qt.WA_TranslucentBackground)
-                                self.setStyleSheet("background: transparent;")
-                                
-                                # 保存原始的resizeEvent方法
-                                self.original_resizeEvent = self.resizeEvent
-                                
-                                # 重写resizeEvent方法，调整背景大小
-                                self.resizeEvent = self._on_resize_event
-                                
-                                logger.info(f"已成功应用主界面背景图片 {main_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%")
-                            else:
-                                logger.error(f"主界面背景图片 {main_background_image} 加载失败")
+                                # 更新背景图片
+                                background_pixmap = QPixmap.fromImage(brightness_image)
+                            
+                            # 创建背景标签并设置样式
+                            self.background_label = QLabel(self)
+                            self.background_label.setGeometry(0, 0, self.width(), self.height())
+                            self.background_label.setPixmap(background_pixmap.scaled(
+                                self.width(), self.height(), 
+                                Qt.IgnoreAspectRatio, 
+                                Qt.SmoothTransformation
+                            ))
+                            self.background_label.lower()  # 将背景标签置于底层
+                            
+                            # 保存原始图片，用于窗口大小调整时重新缩放
+                            self.original_background_pixmap = background_pixmap
+                            
+                            # 确保背景标签随窗口大小变化
+                            self.background_label.setAttribute(Qt.WA_StyledBackground, True)
+                            
+                            # 设置窗口属性，确保背景可见
+                            self.setAttribute(Qt.WA_TranslucentBackground)
+                            self.setStyleSheet("background: transparent;")
+                            
+                            # 保存原始的resizeEvent方法
+                            self.original_resizeEvent = self.resizeEvent
+                            
+                            # 重写resizeEvent方法，调整背景大小
+                            self.resizeEvent = self._on_resize_event
+                            
+                            logger.info(f"已成功应用主界面背景图片 {main_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%")
                         else:
-                            logger.warning(f"主界面背景图片 {main_background_image} 不存在")
+                            logger.error(f"主界面背景图片 {main_background_image} 加载失败")
                     else:
-                        logger.warning("背景图片文件夹不存在")
+                        logger.warning(f"主界面背景图片 {main_background_image} 不存在")
                 else:
                     logger.debug("未选择主界面背景图片")
             else:
@@ -887,95 +881,61 @@ class Window(MSFluentWindow):
         self.about_settingInterface.setObjectName("about_settingInterface")
         logger.debug("关于界面已创建")
         
-        # 根据设置决定是否创建"历史交接设置"界面
-        try:
+        # 通用界面创建函数
+        def _create_interface(attr_name, class_type, sidebar_key, default_value, default_on_error=None, object_name=None, create_on_value_not=2, log_name=None, create_on_error=True):
             settings_path = path_manager.get_settings_path('custom_settings.json')
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 sidebar_settings = settings.get('sidebar', {})
-                history_side = sidebar_settings.get('main_window_history_switch', 1)
-                
-                if history_side != 2:  # 不为"不显示"时才创建界面
-                    # 创建历史交接设置界面
-                    self.history_handoff_settingInterface = history_handoff_setting(self)
-                    self.history_handoff_settingInterface.setObjectName("history_handoff_settingInterface")
-                    logger.debug("历史交接设置界面已创建")
+                value = sidebar_settings.get(sidebar_key, default_value)
+                if value != create_on_value_not:
+                    setattr(self, attr_name, class_type(self))
+                    if object_name:
+                        getattr(self, attr_name).setObjectName(object_name)
+                    logger.debug(f"{log_name or attr_name}界面已创建")
                 else:
-                    logger.debug("'历史交接设置'界面已设置为不创建")
-                    self.history_handoff_settingInterface = None
-        except Exception as e:
-            logger.error(f"读取历史交接设置界面设置失败: {e}, 默认创建界面")
-            # 创建历史交接设置界面
-            self.history_handoff_settingInterface = history_handoff_setting(self)
-            self.history_handoff_settingInterface.setObjectName("history_handoff_settingInterface")
-            logger.debug("历史交接设置界面已创建")
-        
-        # 根据设置决定是否创建"背单词"界面
-        try:
-            settings_path = path_manager.get_settings_path('custom_settings.json')
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                sidebar_settings = settings.get('sidebar', {})
-                vocabulary_side = sidebar_settings.get('main_window_side_switch', 2)
-                
-                if vocabulary_side != 2:  # 不为"不显示"时才创建界面
-                    # 创建背单词界面
-                    self.vocabulary_learningInterface = vocabulary_learning(self)
-                    self.vocabulary_learningInterface.setObjectName("vocabulary_learningInterface")
-                    logger.debug("背单词界面已创建")
-                else:
-                    logger.debug("'背单词'界面已设置为不创建")
-                    self.vocabulary_learningInterface = None
-        except Exception as e:
-            logger.error(f"读取背单词界面设置失败: {e}, 默认不创建界面")
-            # 创建背单词界面
-            self.vocabulary_learningInterface = None
+                    logger.debug(f"'{log_name or attr_name}'界面已设置为不创建")
+                    setattr(self, attr_name, None)
 
-        # 根据设置决定是否创建"抽人"界面
-        try:
-            settings_path = path_manager.get_settings_path('custom_settings.json')
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                sidebar_settings = settings.get('sidebar', {})
-                pumping_floating_side = sidebar_settings.get('pumping_floating_side', 0)
-                
-                if pumping_floating_side != 2:  # 不为"不显示"时才创建界面
-                    # 创建抽人界面（主界面）
-                    self.pumping_peopleInterface = pumping_people(self)
-                    self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
-                    logger.debug("抽人界面已创建")
-                else:
-                    logger.debug("'抽人'界面已设置为不创建")
-                    self.pumping_peopleInterface = None
-        except Exception as e:
-            logger.error(f"读取抽人界面设置失败: {e}, 默认创建界面")
-            # 创建抽人界面（主界面）
-            self.pumping_peopleInterface = pumping_people(self)
-            self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
-            logger.debug("抽人界面已创建")
-
-        # 根据设置决定是否创建"抽奖"界面
-        try:
-            settings_path = path_manager.get_settings_path('custom_settings.json')
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                sidebar_settings = settings.get('sidebar', {})
-                pumping_reward_side = sidebar_settings.get('pumping_reward_side', 0)
-                
-                if pumping_reward_side != 2:  # 不为"不显示"时才创建界面
-                    # 创建抽奖界面
-                    self.pumping_rewardInterface = pumping_reward(self)
-                    self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
-                    logger.debug("抽奖界面已创建")
-                else:
-                    logger.debug("'抽奖'界面已设置为不创建")
-                    self.pumping_rewardInterface = None
-        except Exception as e:
-            logger.error(f"读取抽奖界面设置失败: {e}, 默认创建界面")
-            # 创建抽奖界面
-            self.pumping_rewardInterface = pumping_reward(self)
-            self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
-            logger.debug("抽奖界面已创建")
+        # 创建各个子界面
+        # 抽象成函数，提升可读性喵~
+        _create_interface(
+            attr_name='history_handoff_settingInterface',
+            class_type=history_handoff_setting,
+            sidebar_key='main_window_history_switch',
+            default_value=1,
+            object_name='history_handoff_settingInterface',
+            log_name='历史交接设置',
+            create_on_error=True
+        )
+        _create_interface(
+            attr_name='vocabulary_learningInterface',
+            class_type=vocabulary_learning,
+            sidebar_key='main_window_side_switch',
+            default_value=2,
+            object_name='vocabulary_learningInterface',
+            log_name='背单词',
+            create_on_error=False,
+            default_on_error=None
+        )
+        _create_interface(
+            attr_name='pumping_peopleInterface',
+            class_type=pumping_people,
+            sidebar_key='pumping_floating_side',
+            default_value=0,
+            object_name='pumping_peopleInterface',
+            log_name='抽人',
+            create_on_error=True
+        )
+        _create_interface(
+            attr_name='pumping_rewardInterface',
+            class_type=pumping_reward,
+            sidebar_key='pumping_reward_side',
+            default_value=0,
+            object_name='pumping_rewardInterface',
+            log_name='抽奖',
+            create_on_error=True
+        )
 
         # 初始化导航系统
         self.initNavigation()
@@ -1085,7 +1045,7 @@ class Window(MSFluentWindow):
                 # 点击历史记录导航项时切换到历史记录界面
                 history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
 
-        self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
+    # 移除关于按钮，不添加到主界面导航栏
 
         try:
             settings_side = sidebar_settings.get('show_settings_icon', 1)
@@ -2185,11 +2145,8 @@ class Window(MSFluentWindow):
             self.switchTo(self.pumping_peopleInterface)
             
             # 尝试调用点名界面的开始方法
-            if hasattr(self.pumping_peopleInterface, 'start_draw'):
-                self.pumping_peopleInterface.start_draw()
-                logger.info("抽选功能已成功启动")
-            else:
-                logger.warning("点名界面缺少start_draw方法")
+            self.pumping_peopleInterface.start_draw()
+            logger.info("抽选功能已成功启动")
         except Exception as e:
             logger.error(f"启动抽选功能失败: {e}")
     
@@ -2222,11 +2179,8 @@ class Window(MSFluentWindow):
             self.switchTo(self.pumping_peopleInterface)
             
             # 尝试调用点名界面的停止方法
-            if hasattr(self.pumping_peopleInterface, '_stop_animation') and self.pumping_peopleInterface.is_animating:
-                self.pumping_peopleInterface._stop_animation()
-                logger.info("抽选功能已成功停止")
-            else:
-                logger.warning("点名界面未在动画中或缺少_stop_animation方法")
+            self.pumping_peopleInterface._stop_animation()
+            logger.info("抽选功能已成功停止")
         except Exception as e:
             logger.error(f"停止抽选功能失败: {e}")
     
@@ -2245,11 +2199,8 @@ class Window(MSFluentWindow):
             # self.switchTo(self.pumping_peopleInterface)
             
             # 尝试调用点名界面的重置方法
-            if hasattr(self.pumping_peopleInterface, '_reset_to_initial_state'):
-                self.pumping_peopleInterface._reset_to_initial_state()
-                logger.info("抽选状态已成功重置")
-            else:
-                logger.warning("点名界面缺少_reset_to_initial_state方法")
+            self.pumping_peopleInterface._reset_to_initial_state()
+            logger.info("抽选状态已成功重置")
         except Exception as e:
             logger.error(f"重置抽选状态失败: {e}")
     
@@ -2282,11 +2233,8 @@ class Window(MSFluentWindow):
             self.switchTo(self.pumping_rewardInterface)
             
             # 尝试调用抽奖界面的开始方法
-            if hasattr(self.pumping_rewardInterface, 'start_draw'):
-                self.pumping_rewardInterface.start_draw()
-                logger.info("抽奖功能已成功启动")
-            else:
-                logger.warning("抽奖界面缺少start_draw方法")
+            self.pumping_rewardInterface.start_draw()
+            logger.info("抽奖功能已成功启动")
         except Exception as e:
             logger.error(f"启动抽奖功能失败: {e}")
     
@@ -2319,11 +2267,8 @@ class Window(MSFluentWindow):
             self.switchTo(self.pumping_rewardInterface)
             
             # 尝试调用抽奖界面的停止方法
-            if hasattr(self.pumping_rewardInterface, '_stop_animation') and self.pumping_rewardInterface.is_animating:
-                self.pumping_rewardInterface._stop_animation()
-                logger.info("抽奖功能已成功停止")
-            else:
-                logger.warning("抽奖界面未在动画中或缺少_stop_animation方法")
+            self.pumping_rewardInterface._stop_animation()
+            logger.info("抽奖功能已成功停止")
         except Exception as e:
             logger.error(f"停止抽奖功能失败: {e}")
     
@@ -2332,21 +2277,9 @@ class Window(MSFluentWindow):
         通过URL参数重置抽奖状态，检查当前界面并调用相应的重置方法"""
         logger.info("正在重置抽奖状态")
         try:
-            # # 确保主窗口可见
-            # if not self.isVisible():
-            #     self.show()
-            #     self.activateWindow()
-            #     self.raise_()
-            
-            # # 切换到抽奖界面
-            # self.switchTo(self.pumping_rewardInterface)
-            
             # 尝试调用抽奖界面的重置方法
-            if hasattr(self.pumping_rewardInterface, '_reset_to_initial_state'):
-                self.pumping_rewardInterface._reset_to_initial_state()
-                logger.info("抽奖状态已成功重置")
-            else:
-                logger.warning("抽奖界面缺少_reset_to_initial_state方法")
+            self.pumping_rewardInterface._reset_to_initial_state()
+            logger.info("抽奖状态已成功重置")
         except Exception as e:
             logger.error(f"重置抽奖状态失败: {e}")
 
@@ -2400,15 +2333,6 @@ class Window(MSFluentWindow):
         """通过URL参数打开捐赠支持对话框
         通过URL参数打开捐赠支持对话框，显示捐赠支持对话框"""
         try:
-            # # 确保主窗口可见
-            # if not self.isVisible():
-            #     self.show()
-            #     self.activateWindow()
-            #     self.raise_()
-            
-            # # 切换到关于界面
-            # self.switchTo(self.about_settingInterface)
-            
             # 打开捐赠支持对话框
             donation_dialog = DonationDialog(self)
             donation_dialog.exec_()
@@ -2420,15 +2344,6 @@ class Window(MSFluentWindow):
         """通过URL参数打开贡献者对话框
         通过URL参数打开贡献者对话框，显示贡献者对话框"""
         try:
-            # # 确保主窗口可见
-            # if not self.isVisible():
-            #     self.show()
-            #     self.activateWindow()
-            #     self.raise_()
-            
-            # # 切换到关于界面
-            # self.switchTo(self.about_settingInterface)
-            
             # 打开贡献者对话框
             contributor_dialog = ContributorDialog(self)
             contributor_dialog.exec_()
