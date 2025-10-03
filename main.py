@@ -1,5 +1,5 @@
 # ==================================================
-# 🔮 系统魔法工具 (System Magic Tools)
+# 系统工具导入
 # ==================================================
 import os
 import sys
@@ -13,7 +13,7 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 # ==================================================
-# 📚 第三方魔法书 (Third-Party Magic Books)
+# 第三方库导入
 # ==================================================
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -23,7 +23,7 @@ from qfluentwidgets import *
 from loguru import logger
 
 # ==================================================
-# 📜 内部魔法卷轴 (Internal Magic Scrolls)
+# 内部模块导入
 # ==================================================
 from app.common.config import cfg, VERSION, load_custom_font
 from app.view.SecRandom import Window
@@ -32,9 +32,7 @@ from app.common.path_utils import path_manager, ensure_dir, open_file, file_exis
 from qfluentwidgets import qconfig, Theme
 
 def send_ipc_message(url_command=None):
-    """(^・ω・^ ) 白露的IPC信使魔法！
-    正在向已运行的实例发送唤醒消息～ 就像传递小纸条一样神奇！
-    如果成功连接，会发送'show'指令或URL命令让窗口重新出现哦～ ✨"""
+    """向已运行的实例发送IPC消息"""
     socket = QLocalSocket()
     socket.connectToServer(IPC_SERVER_NAME)
 
@@ -43,27 +41,25 @@ def send_ipc_message(url_command=None):
             # 发送URL命令
             message = f"url:{url_command}"
             socket.write(message.encode('utf-8'))
-            logger.debug(f"白露信使: IPC URL消息发送成功～ {message}")
+            logger.info(f"IPC URL消息发送成功: {message}")
         else:
             # 发送普通的show指令
             socket.write(b"show")
-            logger.debug("白露信使: IPC show消息发送成功～ ")
+            logger.info("IPC show消息发送成功")
         socket.flush()
         socket.waitForBytesWritten(1000)
         socket.disconnectFromServer()
         return True
-    logger.warning("白露信使: IPC连接失败，目标实例可能未响应～ ")
+    logger.error("IPC连接失败，目标实例可能未响应")
     return False
 
 
 def configure_logging():
-    """(^・ω・^ ) 白露的日志魔法师登场！
-    正在设置魔法日志卷轴，让程序运行轨迹变得清晰可见～
-    日志会自动按大小(1MB)和时间切割，保存30天并压缩归档哦～ 📜✨"""
+    """配置日志系统"""
     log_dir = os.path.join(project_root, "logs")
     if not path_manager.file_exists(log_dir):
         os.makedirs(log_dir)
-        logger.info("白露魔法: 日志文件夹创建成功～ ")
+        logger.info("日志文件夹创建成功")
 
     logger.configure(patcher=lambda record: record)
 
@@ -73,52 +69,46 @@ def configure_logging():
         encoding="utf-8",
         retention="30 days",
         format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}",
-        enqueue=True,  # 启用异步日志记录，像派出小信使一样高效
-        compression="tar.gz", # 启用压缩魔法，节省存储空间～
-        backtrace=True,  # 启用回溯信息，像魔法追踪器一样定位问题
-        diagnose=True,  # 启用诊断信息，提供更详细的魔法检查报告
-        catch=True  # 捕获未处理的异常，保护程序稳定运行～
+        enqueue=True,  # 启用异步日志记录
+        compression="tar.gz", # 启用压缩
+        backtrace=True,  # 启用回溯信息
+        diagnose=True,  # 启用诊断信息
+        catch=True  # 捕获未处理的异常
     )
 
-    logger.debug("=" * 50)
-
-    logger.info("白露魔法: 日志系统配置完成，可以开始记录冒险啦～ ")
+    logger.info("=" * 50)
+    logger.info("日志系统配置完成")
 
 # ==================================================
-# 📐 显示魔法调节 (Display Magic Adjustment)
+# 显示设置
 # ==================================================
-"""(^・ω・^ ) 白露的显示魔法调节！
-根据设置自动调整DPI缩放模式，让界面显示更清晰舒适～
-就像调整魔法放大镜的焦距一样神奇哦～ ✨"""
 if cfg.get(cfg.dpiScale) == "Auto":
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-    logger.debug("白露调节: DPI缩放已设置为自动模式～ ")
+    logger.info("DPI缩放已设置为自动模式")
 else:
     os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
     os.environ["QT_SCALE_FACTOR"] = str(cfg.get(cfg.dpiScale))
-    logger.debug(f"白露调节: DPI缩放已设置为{cfg.get(cfg.dpiScale)}倍～ ")
+    logger.info(f"DPI缩放已设置为{cfg.get(cfg.dpiScale)}倍")
 
 # ==================================================
-# 🧙‍♀️ 应用实例创建 (Application Instance Creation)
+# 应用实例创建
 # ==================================================
 # 首先创建QApplication实例，确保在任何QWidget创建之前
 app = QApplication(sys.argv)
-logger.debug("白露创建: QApplication实例已创建～ ")
+logger.debug("QApplication实例已创建")
 
 # 初始化消息接收器
 from app.common.message_receiver import init_message_receiver
 init_message_receiver()
-logger.debug("白露创建: MessageReceiver实例已初始化～ ")
+logger.debug("MessageReceiver实例已初始化")
 
 # ==================================================
-# 🚀 启动窗口魔法 (Startup Window Magic)
+# 启动窗口
 # ==================================================
 class StartupWindow(QDialog):
-    """(^・ω・^ ) 白露的启动窗口魔法！
-    展示软件启动的各个步骤和实时进度，让用户了解启动状态～
-    就像魔法仪式的进度条一样，让等待变得有趣哦～ ✨"""
+    """启动窗口，展示软件启动进度"""
     
     def __init__(self):
         super().__init__()
@@ -168,7 +158,7 @@ class StartupWindow(QDialog):
                 icon_label.setFixedSize(52, 52)
                 top_layout.addWidget(icon_label)
             else:
-                logger.warning(f"软件图标文件不存在: {icon_path}")
+                logger.error(f"软件图标文件不存在: {icon_path}")
         except Exception as e:
             logger.error(f"加载软件图标失败: {e}")
         
@@ -353,11 +343,8 @@ class StartupWindowThread(QThread):
 
 
 # ==================================================
-# 🔐 验证状态初始化 (Verification Status Initialization)
+# 验证状态初始化
 # ==================================================
-"""(ﾟДﾟ≡ﾟдﾟ) 星野的安全验证初始化！
-正在重置验证状态标记，确保程序启动时处于安全状态喵～
-这是防止重复验证的魔法保护措施哦～ 🔒"""
 try:
     enc_set_path = path_manager.get_enc_set_path()
     ensure_dir(enc_set_path.parent)
@@ -366,16 +353,13 @@ try:
     settings['hashed_set']['verification_start'] = False
     with open_file(enc_set_path, 'w') as f:
         json.dump(settings, f, ensure_ascii=False, indent=4)
-    logger.info("星野安全: verification_start状态已成功重置为False喵～")
+    logger.info("verification_start状态已成功重置为False")
 except Exception as e:
-    logger.error(f"星野错误: 写入verification_start失败喵～ {e}")
+    logger.error(f"写入verification_start失败: {e}")
 
 # ==================================================
-# 🔮 魔法常量定义 (Magic Constants Definition)
+# 常量定义
 # ==================================================
-"""(^・ω・^ ) 白露的魔法常量簿！
-定义程序中需要用到的各种魔法密钥和服务器名称～
-这些是保证程序各部分正常通讯的重要魔法标识哦～ ✨"""
 IPC_SERVER_NAME = 'SecRandomIPC'  # IPC通讯服务器名称
 SHARED_MEMORY_KEY = 'SecRandom'   # 共享内存密钥
 
@@ -435,14 +419,11 @@ async def apply_font_to_application(font_family):
                         app_font.setPointSize(current_font.pointSize())
                         logger.info(f"已加载HarmonyOS Sans SC字体文件: {font_path}")
                     else:
-                        logger.warning(f"无法从字体文件获取字体家族: {font_path}")
+                        logger.error(f"无法从字体文件获取字体家族: {font_path}")
                 else:
-                    logger.warning(f"无法加载字体文件: {font_path}")
+                    logger.error(f"无法加载字体文件: {font_path}")
             else:
-                logger.warning(f"HarmonyOS Sans SC字体文件不存在: {font_path}")
-        
-        # 移除延迟更新字体，避免UI卡顿
-        # await asyncio.sleep(0.1)
+                logger.error(f"HarmonyOS Sans SC字体文件不存在: {font_path}")
         
         # 获取所有顶级窗口并更新它们的字体
         widgets_updated = 0
@@ -509,7 +490,7 @@ async def check_single_instance():
     
     shared_memory = QSharedMemory(SHARED_MEMORY_KEY)
     if not shared_memory.create(1):
-        logger.debug('检测到已有 SecRandom 实例正在运行')
+        logger.info('检测到已有 SecRandom 实例正在运行')
 
         # 获取URL命令（如果存在）
         url_command = None
@@ -526,7 +507,6 @@ async def check_single_instance():
             if has_startup_thread:
                 startup_thread.next_step(detail=f"获取URL命令失败: {e}")
 
-        # 异步发送IPC消息，避免阻塞启动流程
         # 尝试直接发送IPC消息唤醒已有实例
         if send_ipc_message(url_command):
             logger.info('成功唤醒已有实例，当前实例将退出')
@@ -551,7 +531,7 @@ async def check_single_instance():
 def log_software_info():
     """记录软件启动成功信息和相关元信息"""
     # 打印分隔线，增强日志可读性
-    logger.debug("=" * 50)
+    logger.info("=" * 50)
     # 记录软件启动成功信息
     logger.info("软件启动成功")
     # 记录软件相关元信息
@@ -568,7 +548,7 @@ def clean_expired_data():
     from app.common.history_cleaner import clean_expired_history, clean_expired_reward_history
     clean_expired_history()
     clean_expired_reward_history()
-    logger.debug("已清理过期历史记录")
+    logger.info("已清理过期历史记录")
 
 def check_plugin_settings():
     """检查插件自启动设置"""
@@ -596,7 +576,7 @@ def check_plugin_settings():
                     if has_startup_thread:
                         startup_thread.update_progress(detail="插件自启动功能已禁用")
         else:
-            logger.warning("插件设置文件不存在，跳过插件自启动")
+            logger.error("插件设置文件不存在，跳过插件自启动")
             if has_startup_thread:
                 startup_thread.update_progress(detail="插件设置文件不存在，跳过插件自启动")
     except Exception as e:
@@ -771,7 +751,7 @@ async def async_create_startup_window():
     await async_initialize_app()
 
 # ==================================================
-# 主程序入口 (Main Program Entry)
+# 主程序入口
 # ==================================================
 async def main_async():
     """异步主函数，使用asyncio实现异步初始化"""
@@ -815,7 +795,7 @@ if __name__ == "__main__":
                 foundation_settings = settings.get('foundation', {})
                 show_startup_window = foundation_settings.get('show_startup_window_switch', False)
     except Exception as e:
-        logger.warning(f"读取启动窗口设置失败，使用默认显示启动窗口: {e}")
+        logger.error(f"读取启动窗口设置失败，使用默认显示启动窗口: {e}")
     
     # 根据设置决定是否创建启动窗口
     if show_startup_window:
