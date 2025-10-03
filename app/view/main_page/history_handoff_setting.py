@@ -95,7 +95,11 @@ class history_handoff_setting(QFrame):
         self.stackedWidget.setCurrentWidget(self.pumping_people_page)
         self.SegmentedWidget.setCurrentItem('pumping_People_history')
 
+        self.__initWidget()
         self.__connectSignalToSlot()
+        
+        # 界面初始化完成后加载数据
+        QTimer.singleShot(300, self._load_initial_data)
         
     def addSubInterface(self, widget: QWidget, objectName: str, text: str):
         widget.setObjectName(objectName)
@@ -108,6 +112,11 @@ class history_handoff_setting(QFrame):
             onClick=lambda: self.stackedWidget.setCurrentWidget(widget)
         )
 
+    def __initWidget(self):
+        """初始化窗口部件"""
+        # 设置窗口属性
+        self.setObjectName("history_handoff_setting")
+
     def __connectSignalToSlot(self):
         cfg.themeChanged.connect(setTheme)
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
@@ -118,15 +127,20 @@ class history_handoff_setting(QFrame):
 
         # 根据页面切换加载对应数据
         if widget.objectName() == 'pumping_People_history':
-            self.pumping_people_card.load_data()
+            # 确保页面完全显示后再加载数据
+            QTimer.singleShot(100, lambda: self.pumping_people_card.load_data())
         elif widget.objectName() == 'pumping_Reward_history':
-            self.pumping_reward_card.load_data()
+            # 确保页面完全显示后再加载数据
+            QTimer.singleShot(100, lambda: self.pumping_reward_card.load_data())
 
         # 首次加载后设置标志
         self.first_load = False
-        
-        # 页面切换时加载对应的数据
-        if widget.objectName() == 'pumping_People_history':
+    
+    def _load_initial_data(self):
+        """初始化时加载数据"""
+        # 加载当前页面的数据
+        current_widget = self.stackedWidget.currentWidget()
+        if current_widget.objectName() == 'pumping_People_history':
             self.pumping_people_card.load_data()
-        elif widget.objectName() == 'pumping_Reward_history':
+        elif current_widget.objectName() == 'pumping_Reward_history':
             self.pumping_reward_card.load_data()

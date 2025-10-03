@@ -53,6 +53,11 @@ class RewardDataLoader(QThread):
                 # 读取配置文件
                 reward_file = path_manager.get_resource_path('reward', f'{prize_pools_name}.json')
 
+                # 检查文件是否存在，不存在则返回空数据
+                if not path_manager.file_exists(reward_file):
+                    logger.debug(f"奖品配置文件不存在: {reward_file}")
+                    return []
+
                 try:
                     with open_file(reward_file, 'r', encoding='utf-8') as f:
                         data = json.load(f)
@@ -70,11 +75,17 @@ class RewardDataLoader(QThread):
                     history_data = {}
                     # 读取历史记录文件
                     history_file = path_manager.get_resource_path('reward', f'history/{prize_pools_name}.json')
-                    if remove_file(history_file):
+                    
+                    # 检查文件是否存在，不存在则使用空数据
+                    if not path_manager.file_exists(history_file):
+                        logger.debug(f"奖品历史记录文件不存在: {history_file}")
+                        history_data = {}
+                    else:
                         try:
                             with open_file(history_file, 'r', encoding='utf-8') as f:
                                 history_data = json.load(f)
                         except json.JSONDecodeError:
+                            logger.error(f"奖品历史记录文件格式错误: {history_file}")
                             history_data = {}
 
                     # 生成序号(从1开始)并返回学生数据，包含被点次数信息
@@ -140,19 +151,24 @@ class RewardDataLoader(QThread):
                 try:
                     with open_file(reward_file, 'r', encoding='utf-8') as f:
                         reward_data = json.load(f)
-                except (FileNotFoundError, json.JSONDecodeError):
-                    logger.error(f"奖品配置文件不存在或格式错误: {reward_file}")
+                except (FileNotFoundError, json.JSONDecodeError) as e:
+                    logger.error(f"奖品配置文件不存在或格式错误: {reward_file}, 错误: {e}")
                     return []
 
                 # 读取奖品发放历史
                 history_data = {}
-                if remove_file(history_file):
+                
+                # 检查文件是否存在，不存在则使用空数据
+                if not path_manager.file_exists(history_file):
+                    logger.debug(f"奖品历史记录文件不存在: {history_file}")
+                    history_data = {}
+                else:
                     try:
                         with open_file(history_file, 'r', encoding='utf-8') as f:
                             history_data = json.load(f).get('pumping_reward', {})
                     except json.JSONDecodeError:
                         logger.error(f"奖品历史记录格式错误: {history_file}")
-                        pass
+                        history_data = {}
 
                 # 收集所有奖品发放记录
                 all_records = []
@@ -180,7 +196,7 @@ class RewardDataLoader(QThread):
                 result = []
                 for record in sorted_records:
                     # 将概率字符串转换为整数权重
-                    weight = int(record['weight']) if record['weight'].isdigit() else 1
+                    weight = int(record['weight']) if str(record['weight']).isdigit() else 1
                     result.append([
                         record['time'],
                         record['reward_id'],
@@ -200,12 +216,17 @@ class RewardDataLoader(QThread):
                     # 读取历史记录文件
                     history_file = path_manager.get_resource_path('reward', f'history/{prize_pools_name}.json')
 
-                    if remove_file(history_file):
-                        try:
-                            with open_file(history_file, 'r', encoding='utf-8') as f:
-                                history_data = json.load(f)
-                        except json.JSONDecodeError:
-                            history_data = {}
+                    # 检查文件是否存在，不存在则返回空数据
+                    if not path_manager.file_exists(history_file):
+                        logger.debug(f"奖品历史记录文件不存在: {history_file}")
+                        return []
+                    
+                    try:
+                        with open_file(history_file, 'r', encoding='utf-8') as f:
+                            history_data = json.load(f)
+                    except json.JSONDecodeError:
+                        logger.error(f"奖品历史记录文件格式错误: {history_file}")
+                        history_data = {}
                     
                     # 修复历史记录数据访问路径
                     reward_data = []

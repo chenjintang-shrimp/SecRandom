@@ -119,18 +119,17 @@ class RewardDataLoader(QThread):
 
                     # 生成最终数据
                     for i, reward in enumerate(rewards):
-                        for i, reward in enumerate(rewards):
+                        reward_name = reward if not reward else reward[1:-1]
+                        pumping_reward_count = int(history_data['pumping_reward'].get(reward, {}).get('total_number_of_times', 0)) if 'pumping_reward' in history_data else 0
 
-                            pumping_reward_count = int(history_data['pumping_reward'].get(reward, {}).get('total_number_of_times', 0)) if 'pumping_reward' in history_data else 0
+                        reward_data.append([
+                            str(cleaned_data[i][0]).zfill(max_digits['id']),
+                            reward,
+                            cleaned_data[i][2],
+                            str(pumping_reward_count).zfill(max_digits['pumping_reward'])
+                        ])
 
-                            reward_data.append([
-                                str(cleaned_data[i][0]).zfill(max_digits['id']),
-                                reward,
-                                cleaned_data[i][2],
-                                str(pumping_reward_count).zfill(max_digits['pumping_reward'])
-                            ])
-
-                        return reward_data
+                    return reward_data
 
                 except Exception as e:
                     logger.error(f"读取奖池名单文件失败: {e}")
@@ -198,13 +197,14 @@ class RewardDataLoader(QThread):
                 result = []
                 for record in sorted_records:
                     # 将概率字符串转换为整数权重
-                        weight = int(record['weight']) if record['weight'].isdigit() else 1
-                        result.append([
-                            record['time'],
-                            record['reward_id'],
-                            record['name'],
-                            str(weight)
-                        ])
+                    weight_str = str(record['weight'])
+                    weight = int(weight_str) if weight_str.isdigit() else 1
+                    result.append([
+                        record['time'],
+                        record['reward_id'],
+                        record['name'],
+                        str(weight)
+                    ])
                 
                 return result
             else:
@@ -225,25 +225,34 @@ class RewardDataLoader(QThread):
                                 history_data = json.load(f)
                         except json.JSONDecodeError:
                             history_data = {}
+                            logger.warning(f"历史记录文件格式错误: {history_file}")
                     
                     # 假设历史数据中每个抽取记录有时间、抽取方式和被点次数信息
                     reward_data = []
-                    if _reward_name in history_data.get('pumping_reward', {}):
-                        pumping_reward_history = history_data['pumping_reward'][_reward_name]['time']
-                        for record in pumping_reward_history:
-                            time = record.get('draw_time', '')
-                            draw_method = record.get('draw_method', '')
-                            if draw_method == 'random':
-                                draw_method_text = '重复抽取'
-                            elif draw_method == 'until_reboot':
-                                draw_method_text = '不重复抽取(直到软件重启)'
-                            elif draw_method == 'until_all':
-                                draw_method_text = '不重复抽取(直到抽完全部奖)'
-                            else:
-                                draw_method_text = draw_method
-                            draw_reward_numbers = record.get('draw_reward_numbers', '')
-                            reward_data.append([time, draw_method_text, f'{draw_reward_numbers}'])
-                    print(reward_data)
+                    
+                    if 'pumping_reward' in history_data and _reward_name in history_data['pumping_reward']:
+                        pumping_reward_history = history_data['pumping_reward'][_reward_name]
+                        logger.debug(f"找到奖品历史记录: {pumping_reward_history}")
+                        
+                        if 'time' in pumping_reward_history:
+                            for record in pumping_reward_history['time']:
+                                time = record.get('draw_time', '')
+                                draw_method = record.get('draw_method', '')
+                                if draw_method == 'random':
+                                    draw_method_text = '重复抽取'
+                                elif draw_method == 'until_reboot':
+                                    draw_method_text = '不重复抽取(直到软件重启)'
+                                elif draw_method == 'until_all':
+                                    draw_method_text = '不重复抽取(直到抽完全部奖)'
+                                else:
+                                    draw_method_text = draw_method
+                                draw_reward_numbers = record.get('draw_reward_numbers', '')
+                                reward_data.append([time, draw_method_text, f'{draw_reward_numbers}'])
+                        else:
+                            logger.warning(f"奖品历史记录中缺少time字段: {_reward_name}")
+                    else:
+                        logger.warning(f"未找到奖品历史记录: {_reward_name}")
+
                     return reward_data
                     
                 except Exception as e:
@@ -259,6 +268,7 @@ class RewardDataLoader(QThread):
                     )
                     return []
             else:
+                logger.warning("未选择奖池")
                 return []
 
 class changeable_history_reward(QFrame):
@@ -305,11 +315,25 @@ class changeable_history_reward(QFrame):
         self.table.setEditTriggers(TableWidget.NoEditTriggers) # 静止编辑
         self.table.scrollDelagate.verticalSmoothScroll.setSmoothMode(SmoothMode.NO_SMOOTH) # 静止平滑滚动
         self.table.setSortingEnabled(True) # 启用排序
+        
+        # 将表格添加到布局中
+        self.inner_layout_personal.addWidget(self.table)
 
         # 创建加载状态组件
         self.loading_widget = self._create_loading_widget()
         self.inner_layout_personal.addWidget(self.loading_widget)
         self.loading_widget.hide()
+        
+        # 设置滚动区域的内容部件
+        self.scroll_area_personal.setWidget(self.inner_frame_personal)
+        
+        # 设置主布局
+        main_layout = QVBoxLayout(self)
+        main_layout.addWidget(self.scroll_area_personal)
+        self.setLayout(main_layout)
+        
+        # 标记布局已初始化
+        self._layout_initialized = True
         
         if load_on_init:
             self.load_data()
@@ -459,19 +483,18 @@ class changeable_history_reward(QFrame):
                 item.setFont(QFont(load_custom_font(), 12))
                 self.table.setItem(i, j, item)
 
-        self._setup_layout()
-
-    def _setup_layout(self):
-        """设置布局"""
-        self.inner_layout_personal.addWidget(self.table)
-        self.scroll_area_personal.setWidget(self.inner_frame_personal)
+        # 启用表格排序
         self.table.setSortingEnabled(True)
         
-        if not self.layout():
-            main_layout = QVBoxLayout(self)
-            main_layout.addWidget(self.scroll_area_personal)
-        else:
-            self.layout().addWidget(self.scroll_area_personal)
+        # 只在初始化时设置一次布局
+        if not hasattr(self, '_layout_initialized'):
+            self._setup_layout()
+            self._layout_initialized = True
+
+    def _setup_layout(self):
+        """设置布局（已移至__init__方法）"""
+        # 布局已在__init__方法中设置，这里不需要重复设置
+        pass
 
     def _refresh_table(self):
         """刷新表格"""

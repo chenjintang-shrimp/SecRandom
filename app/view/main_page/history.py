@@ -290,6 +290,81 @@ class HistoryDataLoader(QThread):
                     raise Exception(f"读取学生名单文件失败: {e}")
             else:
                 return []
+
+        elif _student_name == '全班同学_时间排序':
+            if class_name:
+                student_file = path_manager.get_resource_path('list', f'{class_name}.json')
+                history_file = path_manager.get_resource_path('history', f'{class_name}.json')
+                
+                # 读取学生名单
+                try:
+                    with open_file(student_file, 'r', encoding='utf-8') as f:
+                        class_data = json.load(f)
+                except (FileNotFoundError, json.JSONDecodeError):
+                    return []
+
+                # 清理学生数据
+                cleaned_students = []
+                for name, info in class_data.items():
+                    if isinstance(info, dict) and info.get('exist', True):
+                        cleaned_name = name.replace('【', '').replace('】', '')
+                        cleaned_students.append((
+                            info.get('id', ''),
+                            cleaned_name,
+                            info.get('gender', ''),
+                            info.get('group', '')
+                        ))
+
+                # 读取历史记录
+                history_data = {}
+                if path_manager.file_exists(history_file):
+                    try:
+                        with open_file(history_file, 'r', encoding='utf-8') as f:
+                            history_data = json.load(f).get('pumping_people', {})
+                    except json.JSONDecodeError:
+                        pass
+
+                # 计算学号最大位数（用于补零对齐）
+                max_id_length = max(len(str(student[0])) for student in cleaned_students) if cleaned_students else 0
+
+                # 收集所有抽取记录
+                all_records = []
+                
+                # 遍历每个学生的历史记录
+                for (student_id, name, gender, group) in cleaned_students:
+                    student_history = history_data.get(name, {})
+                    time_records = student_history.get('time', [])
+                    
+                    for record in time_records:
+                        draw_time = record.get('draw_time', '')
+                        if draw_time:
+                            formatted_id = str(student_id).zfill(max_id_length)
+                            all_records.append({
+                                'time': draw_time,
+                                'id': formatted_id,
+                                'name': name,
+                                'gender': gender,
+                                'group': group
+                            })
+                
+                # 降序
+                sorted_records = sorted(all_records, key=lambda x: x['time'], reverse=True)
+                
+                # 转换为列表格式返回
+                result = []
+                for record in sorted_records:
+                    result.append([
+                        record['time'],
+                        record['id'],
+                        record['name'],
+                        record['gender'],
+                        record['group']
+                    ])
+                
+                return result
+            else:
+                return []
+
         else:
             if class_name:
                 try:
@@ -536,6 +611,10 @@ class history(QFrame):
             
         self._fill_table_data(data)
         self.table.setHorizontalHeaderLabels(headers)
+        
+        # 如果是时间排序模式，按时间列降序排列
+        if time_sort:
+            self.table.sortByColumn(0, Qt.SortOrder.DescendingOrder)
 
     def _setup_individual_table(self, data: list):
         """设置个人表格"""

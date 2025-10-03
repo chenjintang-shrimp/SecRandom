@@ -1045,7 +1045,7 @@ class Window(MSFluentWindow):
                 # 点击历史记录导航项时切换到历史记录界面
                 history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
 
-    # 移除关于按钮，不添加到主界面导航栏
+        self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
 
         try:
             settings_side = sidebar_settings.get('show_settings_icon', 1)
@@ -1988,8 +1988,8 @@ class Window(MSFluentWindow):
             self.activateWindow()
             self.raise_()
         self.switchTo(self.history_handoff_settingInterface)
-        # 触发历史记录数据加载
-        self.history_handoff_settingInterface.pumping_people_card.load_data()
+        # 延迟触发历史记录数据加载，确保界面完全显示后再加载数据
+        QTimer.singleShot(300, lambda: self.history_handoff_settingInterface.pumping_people_card.load_data())
         logger.info("历史记录界面已成功打开")
     
     def show_floating_window(self):
