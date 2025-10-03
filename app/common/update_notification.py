@@ -67,7 +67,7 @@ class UpdateNotification(QDialog):
 
         # 更新图标
         icon_label = QLabel()
-        icon_path = path_manager.get_resource_path('icon', 'secrandom-icon-v2.png')
+        icon_path = path_manager.get_resource_path('icon', 'secrandom-icon.png')
         icon_label.setPixmap(QIcon(str(icon_path)).pixmap(55, 55))
         icon_label.setStyleSheet("background: transparent; border: none;")
 

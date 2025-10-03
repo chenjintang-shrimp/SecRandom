@@ -158,7 +158,7 @@ class StartupWindow(QDialog):
         
         # 添加软件图标到左上角
         try:
-            icon_path = str(path_manager.get_resource_path('icon', 'secrandom-icon-v2.png'))
+            icon_path = str(path_manager.get_resource_path('icon', 'secrandom-icon.png'))
             if os.path.exists(icon_path):
                 icon_label = QLabel()
                 pixmap = QPixmap(icon_path)

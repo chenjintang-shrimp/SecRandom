@@ -854,7 +854,7 @@ class SettingsSelectionDialog(QDialog):
         
         # 添加设置图标
         settings_icon = BodyLabel()
-        icon_path = path_manager.get_resource_path('icon', 'secrandom-icon-v2.png')
+        icon_path = path_manager.get_resource_path('icon', 'secrandom-icon.png')
         if path_manager.file_exists(icon_path):
             settings_icon.setPixmap(QIcon(str(icon_path)).pixmap(20, 20))
         else:
