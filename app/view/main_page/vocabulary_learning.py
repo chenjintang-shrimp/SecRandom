@@ -2750,7 +2750,7 @@ class vocabulary_learning(QWidget):
                         with open_file(mapping_file, 'r', encoding='utf-8') as f:
                             mapping_data = json.load(f)
                     except Exception as e:
-                        logger.warning(f"读取现有配置文件失败: {str(e)}，将创建新配置")
+                        logger.error(f"读取现有配置文件失败: {str(e)}，将创建新配置")
                         mapping_data = {}
                 
                 # 更新或添加当前词汇表的配置
@@ -2984,7 +2984,7 @@ class ImportVocabularyDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -3125,7 +3125,7 @@ class ImportVocabularyDialog(QDialog):
                 self._load_csv_columns()
         except Warning as w:
             # 🌟 小鸟游星野：处理提示性警告，不清除文件路径 ~ (๑•̀ㅂ•́)ญ✧
-            logger.warning(f"列选择提示: {str(w)}")
+            logger.error(f"列选择提示: {str(w)}")
             msg_box = MessageBox("列选择提示", str(w), self)
             msg_box.yesButton.setText("确定")
             msg_box.cancelButton.hide()

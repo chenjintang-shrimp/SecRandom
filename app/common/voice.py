@@ -107,7 +107,7 @@ class VoicePlaybackSystem:
             self.play_queue.put_nowait(task)
             return True
         except queue.Full:
-            logger.warning("播放队列已满，丢弃新任务")
+            logger.error("播放队列已满，丢弃新任务")
             return False
     
     def stop(self):
@@ -150,7 +150,7 @@ class VoiceCacheManager:
                 self._memory_cache[cache_key] = (data, fs)
                 return data, fs
             except Exception as e:
-                logger.warning(f"读取缓存失败: {e}")
+                logger.error(f"读取缓存失败: {e}")
         
         # 3. 实时生成并缓存
         data, fs = asyncio.run(self._generate_voice(text, voice, speed))
@@ -238,11 +238,11 @@ class LoadBalancer:
             
             # 参数有效性检查
             if not isinstance(cpu_percent, (int, float)) or cpu_percent < 0 or cpu_percent > 100:
-                logger.warning("CPU使用率异常，使用基础队列大小")
+                logger.error("CPU使用率异常，使用基础队列大小")
                 return self.BASE_QUEUE_SIZE
             
             if not isinstance(mem_available, (int, float)) or mem_available < 0:
-                logger.warning("内存信息异常，使用基础队列大小")
+                logger.error("内存信息异常，使用基础队列大小")
                 return self.BASE_QUEUE_SIZE
             
             # 根据CPU使用率确定增量
@@ -262,7 +262,7 @@ class LoadBalancer:
             # 计算最终队列大小
             queue_size = self.BASE_QUEUE_SIZE + cpu_bonus + mem_bonus
             
-            logger.debug(f"系统负载 (CPU:{cpu_percent}%, 内存:{mem_available:.2f}GB)，队列大小设为{queue_size}")
+            logger.info(f"系统负载 (CPU:{cpu_percent}%, 内存:{mem_available:.2f}GB)，队列大小设为{queue_size}")
             return queue_size
         except Exception as e:
             # 异常处理，确保方法总是返回有效值
@@ -295,7 +295,7 @@ class TTSHandler:
                     self.voice_engine = QApplication.instance().pumping_reward_voice_engine
                     logger.info("Windows系统TTS引擎初始化成功")
                 else:
-                    logger.warning("Windows系统TTS引擎需要Windows 10及以上系统且非x86架构")
+                    logger.error("Windows系统TTS引擎需要Windows 10及以上系统且非x86架构")
             
             elif system == 'Linux':
                 # Linux平台TTS引擎初始化
@@ -310,12 +310,12 @@ class TTSHandler:
                         self.voice_engine = QApplication.instance().pumping_reward_voice_engine
                         logger.info("Linux系统TTS引擎初始化成功 (使用espeak)")
                     else:
-                        logger.warning("Linux系统TTS引擎需要安装espeak: sudo apt-get install espeak")
+                        logger.error("Linux系统TTS引擎需要安装espeak: sudo apt-get install espeak")
                 except Exception as e:
                     logger.error(f"Linux系统TTS引擎初始化失败: {e}")
             
             else:
-                logger.warning(f"不支持的操作系统: {system}，系统TTS功能不可用")
+                logger.error(f"不支持的操作系统: {system}，系统TTS功能不可用")
                 
         except Exception as e:
             logger.error(f"TTS引擎初始化失败: {e}")

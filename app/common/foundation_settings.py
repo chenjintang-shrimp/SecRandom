@@ -280,7 +280,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 elif system == 'Linux':
                     subprocess.run(['xdg-open', path], check=True)
                 else:
-                    logger.warning(f"不支持的操作系统: {system}")
+                    logger.error(f"不支持的操作系统: {system}")
             except Exception as e:
                 logger.error(f"打开文件夹失败: {e}")
 
@@ -456,7 +456,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         self.register_global_shortcut(global_shortcut_key)
                     self.register_local_shortcuts()
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
                 self.main_window_focus_comboBox.setCurrentIndex(self.default_settings["main_window_focus_mode"])
                 self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
@@ -1345,7 +1345,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                             return False
                         else:
                             # 不是管理员，提示用户
-                            logger.warning("需要管理员权限才能注册URL协议")
+                            logger.error("需要管理员权限才能注册URL协议")
                             return False
                     except Exception:
                         logger.error("无法检查管理员权限")
@@ -1446,7 +1446,7 @@ def register_url_protocol_on_startup():
                 logger.info(f"URL协议注册成功: {protocol_key}")
                 return True
             except PermissionError as e:
-                logger.warning(f"权限不足，无法注册URL协议: {str(e)}")
+                logger.error(f"权限不足，无法注册URL协议: {str(e)}")
                 return False
             except Exception as e:
                 logger.error(f"注册URL协议时发生未知错误: {str(e)}")
@@ -1678,4 +1678,4 @@ class CleanupTimeDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")

@@ -201,7 +201,7 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
                 self.custom_display_mode_comboBox.setCurrentIndex(floating_window_settings.get("custom_display_mode", self.default_settings.get("custom_display_mode", 1)))
                 self.floating_window_visibility_comboBox.setCurrentIndex(floating_window_settings.get("floating_window_visibility", self.default_settings.get("floating_window_visibility", 0)))
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
                 self.pumping_floating_switch.setChecked(self.default_settings.get("pumping_floating_enabled", True))
                 self.pumping_floating_transparency_SpinBox.setValue(self.default_settings.get("pumping_floating_transparency_mode", 80))
                 self.left_pumping_floating_switch.setCurrentIndex(self.default_settings.get("pumping_floating_visible", 3))
@@ -427,7 +427,7 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
                         ctypes.sizeof(ctypes.c_uint)  # 数据大小
                     )
                 except Exception as e:
-                    logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                    logger.error(f"设置标题栏颜色失败: {str(e)}")
 
         def load_software_settings(self):
             """加载已保存的软件设置"""
@@ -568,7 +568,7 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
                         break
 
             if not floating_window:
-                logger.warning("未找到浮窗实例")
+                logger.error("未找到浮窗实例")
                 return
             
             # 根据检测结果更新浮窗可见性

@@ -112,7 +112,7 @@ class reward_settingsCard(GroupHeaderCardWidget):
                     self.pumping_reward_theme_comboBox.setCurrentIndex(reward_settings.get("reward_theme", self.default_settings.get("reward_theme", 0)))
 
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
 
                 self.pumping_reward_control_Switch.setChecked(self.default_settings.get("pumping_reward_control_Switch", True))
                 self.reset_button_switch.setChecked(self.default_settings.get("show_reset_button", True))

@@ -132,7 +132,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                 message_receiver.json_message_received.connect(self._handle_ci_message)
                 logger.info("成功连接消息接收器信号")
             else:
-                logger.warning("消息接收器初始化失败，将延迟连接")
+                logger.error("消息接收器初始化失败，将延迟连接")
                 # 延迟尝试连接
                 QTimer.singleShot(2000, self.connect_message_receiver)
         except Exception as e:
@@ -152,7 +152,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                     self.clear_draw_records_time_SpinBox.setValue(program_functionality_settings.get("clear_draw_records_time", self.default_settings.get("clear_draw_records_time", 120)))
                     self.use_cwci_confirm_switch.setChecked(program_functionality_settings.get("use_cwci_confirm_switch", self.default_settings.get("use_cwci_confirm_switch", False)))
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
 
                 self.instant_draw_disable_switch.setChecked(self.default_settings.get("instant_draw_disable", False))
                 self.clear_draw_records_switch.setChecked(self.default_settings.get("clear_draw_records_switch", False))
@@ -442,7 +442,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                 time_key = f"ci_{self.ci_info['next_subject']}_{on_class_left_time}"
                 if self.cleanup_status.get(time_key, False):
                     self.cleanup_status[time_key] = False  # 重置清理状态
-                    logger.debug(f"CI 信息检测：重置清理状态: {self.ci_info['next_subject']}")
+                    logger.info(f"CI 信息检测：重置清理状态: {self.ci_info['next_subject']}")
         except Exception as e:
             logger.error(f"CI 信息检查清理时间时出错: {e}")
     
@@ -472,12 +472,12 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
             for self._time_range_value, time_range_value in time_settings["non_class_times"].items():
                 # 确保时间范围格式正确
                 if "-" not in time_range_value:
-                    logger.warning(f"时间范围格式不正确，缺少'-'分隔符: {time_range_value}")
+                    logger.error(f"时间范围格式不正确，缺少'-'分隔符: {time_range_value}")
                     continue
                     
                 time_parts = time_range_value.split("-")
                 if len(time_parts) != 2:
-                    logger.warning(f"时间范围格式不正确，应该包含开始和结束时间: {time_range_value}")
+                    logger.error(f"时间范围格式不正确，应该包含开始和结束时间: {time_range_value}")
                     continue
                     
                 start_time_str, end_time_str = time_parts
@@ -518,7 +518,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                         time_key = f"{self._class_start_time_str}_{self._time_range_value}"
                         if self.cleanup_status.get(time_key, False):
                             self.cleanup_status[time_key] = False  # 重置清理状态
-                            logger.debug(f"重置清理状态: {self._time_range_value}")
+                            # logger.debug(f"重置清理状态: {self._time_range_value}")
         except Exception as e:
             logger.error(f"检查清理时间时出错: {e}")
     
@@ -562,7 +562,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                 settings = json.load(f)
                 max_draw_times_per_person = settings['pumping_people']['Draw_pumping']
                 pumping_people_draw_mode = settings['pumping_people']['draw_mode']
-                logger.debug(f"星野侦察: 抽选模式为{max_draw_times_per_person}，准备执行对应清理方案～ ")
+                logger.info(f"星野侦察: 抽选模式为{max_draw_times_per_person}，准备执行对应清理方案～ ")
 
         except Exception as e:
             pumping_people_draw_mode = 1
@@ -588,7 +588,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
             main_window.cleanup_signal.emit()
             logger.info("星野广播: 已通过主窗口发送清理信号，通知抽奖和抽人界面清除标签～")
         else:
-            logger.warning("星野警告: 未找到主窗口实例，无法发送清理信号～")
+            logger.error("星野警告: 未找到主窗口实例，无法发送清理信号～")
     
     def _seconds_to_time_string(self, seconds):
         """将秒数转换为HH:MM:SS格式的时间字符串"""
@@ -609,7 +609,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
             # 检查CI信息是否可用
             if not hasattr(self, 'ci_info') or not self.ci_info:
                 # 如果CI信息不可用，回退到原有的时间检测方式
-                logger.warning("CI信息不可用，回退到原有时间检测方式")
+                logger.error("CI信息不可用，回退到原有时间检测方式")
                 return self._is_non_class_time_with_timer()
                 
             # 检查是否启用课表、已加载课表、已确定当前时间点
@@ -617,7 +617,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                     self.ci_info.get("is_class_plan_loaded", False) and 
                     self.ci_info.get("is_lesson_confirmed", False)):
                 # 如果 CI 信息不完整，回退到原有的时间检测方式
-                logger.warning("CI信息不完整，回退到原有时间检测方式")
+                logger.error("CI信息不完整，回退到原有时间检测方式")
                 return self._is_non_class_time_with_timer()
             
             # 检查当前状态是否为课间
@@ -630,13 +630,13 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                 return False
             else:
                 # 如果状态未知，回退到原有的时间检测方式
-                logger.warning(f"未知的CI状态: {current_state}，回退到原有时间检测方式")
+                logger.error(f"未知的CI状态: {current_state}，回退到原有时间检测方式")
                 return self._is_non_class_time_with_timer()
                 
         except Exception as e:
             logger.error(f"使用CI插件检测非上课时间失败: {e}")
             # 如果CI插件检测失败，回退到原有的时间检测方式
-            logger.warning("CI插件检测失败，回退到原有时间检测方式")
+            logger.error("CI插件检测失败，回退到原有时间检测方式")
             return self._is_non_class_time_with_timer()
 
     def _is_non_class_time_with_timer(self):
@@ -869,7 +869,7 @@ class TimeSettingsDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def accept(self):
         """保存上课时间段设置"""

@@ -198,7 +198,7 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
                 return filtered_voices
             except (aiohttp.ClientError, aiohttp.ClientResponseError) as e:
                 if attempt < max_retries - 1:
-                    logger.warning(f"Edge TTS服务连接失败，第{attempt + 1}次重试中... 错误: {str(e)!r}")
+                    logger.error(f"Edge TTS服务连接失败，第{attempt + 1}次重试中... 错误: {str(e)!r}")
                     await asyncio.sleep(retry_delay)
                     continue
                 else:
@@ -208,7 +208,7 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
                 break
             except Exception as e:
                 if attempt < max_retries - 1:
-                    logger.warning(f"Edge TTS语音获取失败，第{attempt + 1}次重试中... 错误: {str(e)!r}")
+                    logger.error(f"Edge TTS语音获取失败，第{attempt + 1}次重试中... 错误: {str(e)!r}")
                     await asyncio.sleep(retry_delay)
                     continue
                 else:

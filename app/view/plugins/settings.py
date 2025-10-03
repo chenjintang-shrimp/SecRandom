@@ -62,7 +62,7 @@ class PluginSettingsPage(GroupHeaderCardWidget):
         self.plugin_combo_box.addItem("主窗口")
         
         if not path_manager.file_exists(self.plugin_dir):
-            logger.warning(f"插件目录不存在: {self.plugin_dir}")
+            logger.error(f"插件目录不存在: {self.plugin_dir}")
             return
         
         try:
@@ -86,7 +86,7 @@ class PluginSettingsPage(GroupHeaderCardWidget):
                             plugin_config = json.load(f)
                             plugin_name = plugin_config.get("name", item)
                     except Exception as e:
-                        logger.warning(f"读取插件 {item} 配置文件失败: {e}")
+                        logger.error(f"读取插件 {item} 配置文件失败: {e}")
                         plugin_name = item
                 else:
                     plugin_name = item
@@ -116,7 +116,7 @@ class PluginSettingsPage(GroupHeaderCardWidget):
                     self.plugin_combo_box.setCurrentText(selected_plugin)
 
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
                 self.run_plugins_on_startup_switch.setChecked(self.default_settings["run_plugins_on_startup"])
                 self.fetch_plugin_list_on_startup_switch.setChecked(self.default_settings["fetch_plugin_list_on_startup"])
                 self.plugin_combo_box.setCurrentText(self.default_settings["selected_plugin"])

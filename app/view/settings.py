@@ -82,7 +82,7 @@ class settings_Window(MSFluentWindow):
         try:
             self.more_settingInterface = more_setting(self)
             self.more_settingInterface.setObjectName("more_settingInterface")
-            logger.debug("更多设置界面创建成功")
+            logger.info("更多设置界面创建成功")
         except Exception as e:
             logger.error(f"创建更多设置界面失败: {e}")
             self.more_settingInterface = None
@@ -90,7 +90,7 @@ class settings_Window(MSFluentWindow):
         try:
             self.custom_settingInterface = custom_setting(self)
             self.custom_settingInterface.setObjectName("custom_settingInterface")
-            logger.debug("自定义设置界面创建成功")
+            logger.info("自定义设置界面创建成功")
         except Exception as e:
             logger.error(f"创建自定义设置界面失败: {e}")
             self.custom_settingInterface = None
@@ -106,9 +106,9 @@ class settings_Window(MSFluentWindow):
                 if plugin_settings_switch != 2:  # 不为"不显示"时才创建界面
                     self.plugin_settingsInterface = PluginSettingsWindow(self)
                     self.plugin_settingsInterface.setObjectName("plugin_settingsInterface")
-                    logger.debug("插件设置界面创建成功")
+                    logger.info("插件设置界面创建成功")
                 else:
-                    logger.debug("插件设置界面已设置为不创建")
+                    logger.info("插件设置界面已设置为不创建")
                     self.plugin_settingsInterface = None
         except Exception as e:
             logger.error(f"读取插件设置界面设置失败: {e}, 默认不创建界面")
@@ -117,7 +117,7 @@ class settings_Window(MSFluentWindow):
         try:
             self.pumping_handoff_settingInterface = pumping_handoff_setting(self)
             self.pumping_handoff_settingInterface.setObjectName("pumping_handoff_settingInterface")
-            logger.debug("抽取设置界面创建成功")
+            logger.info("抽取设置界面创建成功")
         except Exception as e:
             logger.error(f"创建抽取设置界面失败: {e}")
             self.pumping_handoff_settingInterface = None
@@ -133,20 +133,20 @@ class settings_Window(MSFluentWindow):
                 if history_settings_switch != 2:  # 不为"不显示"时才创建界面
                     self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
                     self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
-                    logger.debug("历史记录设置界面创建成功")
+                    logger.info("历史记录设置界面创建成功")
                 else:
-                    logger.debug("历史记录设置界面已设置为不创建")
+                    logger.info("历史记录设置界面已设置为不创建")
                     self.changeable_history_handoff_settingInterface = None
         except Exception as e:
             logger.error(f"读取历史记录设置界面设置失败: {e}, 默认创建界面")
             self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
             self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
-            logger.debug("历史记录设置界面创建成功")
+            logger.info("历史记录设置界面创建成功")
 
         try:
             self.about_settingInterface = about(self)
             self.about_settingInterface.setObjectName("about_settingInterface")
-            logger.debug("关于界面创建成功")
+            logger.info("关于界面创建成功")
         except Exception as e:
             logger.error(f"创建关于界面失败: {e}")
             self.about_settingInterface = None
@@ -162,15 +162,15 @@ class settings_Window(MSFluentWindow):
                 if security_settings_switch != 2:  # 不为"不显示"时才创建界面
                     self.password_setInterface = password_set(self)
                     self.password_setInterface.setObjectName("password_setInterface")
-                    logger.debug("安全设置界面创建成功")
+                    logger.info("安全设置界面创建成功")
                 else:
-                    logger.debug("安全设置界面已设置为不创建")
+                    logger.info("安全设置界面已设置为不创建")
                     self.password_setInterface = None
         except Exception as e:
             logger.error(f"读取安全设置界面设置失败: {e}, 默认创建界面")
             self.password_setInterface = password_set(self)
             self.password_setInterface.setObjectName("password_setInterface")
-            logger.debug("安全设置界面创建成功")
+            logger.info("安全设置界面创建成功")
 
         # 根据设置决定是否创建"语音设置"界面
         try:
@@ -183,15 +183,15 @@ class settings_Window(MSFluentWindow):
                 if voice_settings_switch != 2:  # 不为"不显示"时才创建界面
                     self.voice_engine_settingsInterface = voice_engine_settings(self)
                     self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
-                    logger.debug("语音设置界面创建成功")
+                    logger.info("语音设置界面创建成功")
                 else:
-                    logger.debug("语音设置界面已设置为不创建")
+                    logger.info("语音设置界面已设置为不创建")
                     self.voice_engine_settingsInterface = None
         except Exception as e:
             logger.error(f"读取语音设置界面设置失败: {e}, 默认创建界面")
             self.voice_engine_settingsInterface = voice_engine_settings(self)
             self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
-            logger.debug("语音设置界面创建成功")
+            logger.info("语音设置界面创建成功")
 
         self.initNavigation()
 
@@ -218,17 +218,17 @@ class settings_Window(MSFluentWindow):
                 if plugin_settings_switch == 1:
                     if self.plugin_settingsInterface is not None:
                         self.addSubInterface(self.plugin_settingsInterface, get_theme_icon("ic_fluent_database_plug_connected_20_filled"), '插件', position=NavigationItemPosition.BOTTOM)
-                        logger.debug("插件设置导航项已放置在底部导航栏")
+                        logger.info("插件设置导航项已放置在底部导航栏")
                     else:
-                        logger.debug("插件设置界面未创建，无法添加到导航栏")
+                        logger.error("插件设置界面未创建，无法添加到导航栏")
                 elif plugin_settings_switch == 2:
-                    logger.debug("插件设置导航项已设置为不显示")
+                    logger.info("插件设置导航项已设置为不显示")
                 else:
                     if self.plugin_settingsInterface is not None:
                         self.addSubInterface(self.plugin_settingsInterface, get_theme_icon("ic_fluent_database_plug_connected_20_filled"), '插件', position=NavigationItemPosition.TOP)
-                        logger.debug("插件设置导航项已放置在顶部导航栏")
+                        logger.info("插件设置导航项已放置在顶部导航栏")
                     else:
-                        logger.debug("插件设置界面未创建，无法添加到导航栏")
+                        logger.error("插件设置界面未创建，无法添加到导航栏")
         except Exception as e:
             logger.error(f"加载插件设置导航项失败: {e}")
             if self.plugin_settingsInterface is not None:
@@ -245,17 +245,17 @@ class settings_Window(MSFluentWindow):
                 if voice_settings_switch == 1:
                     if self.voice_engine_settingsInterface is not None:
                         self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
-                        logger.debug("语音设置导航项已放置在底部导航栏")
+                        logger.info("语音设置导航项已放置在底部导航栏")
                     else:
-                        logger.debug("语音设置界面未创建，无法添加到导航栏")
+                        logger.error("语音设置界面未创建，无法添加到导航栏")
                 elif voice_settings_switch == 2:
-                    logger.debug("语音设置导航项已设置为不显示")
+                    logger.info("语音设置导航项已设置为不显示")
                 else:
                     if self.voice_engine_settingsInterface is not None:
                         self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.TOP)
-                        logger.debug("语音设置导航项已放置在顶部导航栏")
+                        logger.info("语音设置导航项已放置在顶部导航栏")
                     else:
-                        logger.debug("语音设置界面未创建，无法添加到导航栏")
+                        logger.error("语音设置界面未创建，无法添加到导航栏")
         except Exception as e:
             logger.error(f"加载语音设置导航项失败: {e}")
             if self.voice_engine_settingsInterface is not None:
@@ -272,17 +272,17 @@ class settings_Window(MSFluentWindow):
                 if security_settings_switch == 1:
                     if self.password_setInterface is not None:
                         self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
-                        logger.debug("安全设置导航项已放置在底部导航栏")
+                        logger.info("安全设置导航项已放置在底部导航栏")
                     else:
-                        logger.debug("安全设置界面未创建，无法添加到导航栏")
+                        logger.error("安全设置界面未创建，无法添加到导航栏")
                 elif security_settings_switch == 2:
-                    logger.debug("安全设置导航项已设置为不显示")
+                    logger.info("安全设置导航项已设置为不显示")
                 else:
                     if self.password_setInterface is not None:
                         self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.TOP)
-                        logger.debug("安全设置导航项已放置在顶部导航栏")
+                        logger.info("安全设置导航项已放置在顶部导航栏")
                     else:
-                        logger.debug("安全设置界面未创建，无法添加到导航栏")
+                        logger.error("安全设置界面未创建，无法添加到导航栏")
         except Exception as e:
             logger.error(f"加载安全设置导航项失败: {e}")
             if self.password_setInterface is not None:
@@ -300,18 +300,18 @@ class settings_Window(MSFluentWindow):
                     if self.changeable_history_handoff_settingInterface is not None:
                         history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
                         history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
-                        logger.debug("历史记录设置导航项已放置在底部导航栏")
+                        logger.info("历史记录设置导航项已放置在底部导航栏")
                     else:
-                        logger.debug("历史记录设置界面未创建，无法添加到导航栏")
+                        logger.error("历史记录设置界面未创建，无法添加到导航栏")
                 elif history_settings_switch == 2:
-                    logger.debug("历史记录设置导航项已设置为不显示")
+                    logger.info("历史记录设置导航项已设置为不显示")
                 else:
                     if self.changeable_history_handoff_settingInterface is not None:
                         history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.TOP)
                         history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
-                        logger.debug("历史记录设置导航项已放置在顶部导航栏")
+                        logger.info("历史记录设置导航项已放置在顶部导航栏")
                     else:
-                        logger.debug("历史记录设置界面未创建，无法添加到导航栏")
+                        logger.error("历史记录设置界面未创建，无法添加到导航栏")
         except Exception as e:
             logger.error(f"加载历史记录设置导航项失败: {e}")
             if self.changeable_history_handoff_settingInterface is not None:
@@ -410,7 +410,7 @@ class settings_Window(MSFluentWindow):
                 try:
                     self.plugin_settingsInterface = PluginSettingsWindow(self)
                     self.plugin_settingsInterface.setObjectName("plugin_settingsInterface")
-                    logger.debug("插件设置界面重新创建成功")
+                    logger.info("插件设置界面重新创建成功")
                     # 重新初始化导航
                     self.initNavigation()
                     # 切换到插件设置界面
@@ -553,11 +553,11 @@ class settings_Window(MSFluentWindow):
                             else:
                                 logger.error(f"设置界面背景图片 {settings_background_image} 加载失败")
                         else:
-                            logger.warning(f"设置界面背景图片 {settings_background_image} 不存在")
+                            logger.error(f"设置界面背景图片 {settings_background_image} 不存在")
                     else:
-                        logger.warning("背景图片文件夹不存在")
+                        logger.error("背景图片文件夹不存在")
                 else:
-                    logger.debug("未选择设置界面背景图片")
+                    logger.info("未选择设置界面背景图片")
             else:
                 # 如果两者都未启用，则使用默认背景
                 self.setStyleSheet("background: transparent;")
@@ -572,10 +572,10 @@ class settings_Window(MSFluentWindow):
                     self.resizeEvent = self.original_resizeEvent
                     delattr(self, 'original_resizeEvent')
                 
-                logger.debug("设置界面背景图片和颜色功能均未启用，使用默认背景")
+                # logger.debug("设置界面背景图片和颜色功能均未启用，使用默认背景")
                 
         except FileNotFoundError:
-            logger.warning("自定义设置文件不存在，使用默认设置")
+            logger.error("自定义设置文件不存在，使用默认设置")
         except Exception as e:
             logger.error(f"应用设置界面背景图片或颜色时发生异常: {e}")
     

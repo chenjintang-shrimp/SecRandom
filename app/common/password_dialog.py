@@ -308,7 +308,7 @@ class PasswordDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def mousePressEvent(self, event):
         # 窗口拖动功能

@@ -1049,7 +1049,7 @@ class LevitationWindow(QWidget):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间使用抽取功能")
+                            logger.error("用户取消在课间使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -1077,7 +1077,7 @@ class LevitationWindow(QWidget):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间使用抽取功能")
+                            logger.error("用户取消在课间使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -1105,7 +1105,7 @@ class LevitationWindow(QWidget):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间使用抽取功能")
+                            logger.error("用户取消在课间使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -1133,7 +1133,7 @@ class LevitationWindow(QWidget):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间使用抽取功能")
+                            logger.error("用户取消在课间使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -1210,7 +1210,7 @@ class LevitationWindow(QWidget):
         plugin_file_path = path_manager.get_plugin_path(f"plugin/{os.path.basename(plugin_path)}/{entry_point}")
             
         if not path_manager.file_exists(plugin_file_path):
-            logger.warning(f"插件 {plugin_name} 的入口文件 {entry_point} 不存在")
+            logger.error(f"插件 {plugin_name} 的入口文件 {entry_point} 不存在")
             error_dialog = Dialog("文件不存在", f"插件 {plugin_name} 的入口文件 {entry_point} 不存在", self)
             error_dialog.yesButton.setText("确定")
             error_dialog.cancelButton.hide()
@@ -1559,7 +1559,7 @@ class LevitationWindow(QWidget):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间使用抽取功能")
+                            logger.error("用户取消在课间使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -2015,7 +2015,7 @@ class LevitationWindow(QWidget):
                     ctypes.sizeof(ctypes.c_uint)
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def _on_window_press(self, event):
         """窗口鼠标按下事件 - 整个窗口都可以拖动"""
@@ -2107,7 +2107,7 @@ class LevitationWindow(QWidget):
                 self.arrow_widget.raise_()
             # self.activateWindow()  # 激活窗口
         except Exception as e:
-            logger.warning(f"保持窗口置顶失败: {e}")
+            logger.error(f"保持窗口置顶失败: {e}")
 
     # 对用户的选择进行返回学生数量或小组数量
     def _get_cleaned_data(self, student_file, group_name, genders):
@@ -3016,7 +3016,7 @@ class LevitationWindow(QWidget):
             indicator.show()
             
         except Exception as e:
-            logger.debug(f"添加方向指示器失败: {e}")
+            logger.info(f"添加方向指示器失败: {e}")
 
 
     def eventFilter(self, obj, event):

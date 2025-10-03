@@ -122,7 +122,6 @@ class instant_draw(QWidget):
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 instant_clear = settings['instant_draw']['instant_clear']
-                logger.debug(f"准备执行对应清理方案")
 
         except Exception as e:
             instant_clear = False
@@ -677,7 +676,7 @@ class instant_draw(QWidget):
             BGM_RESULT_PATH = path_manager.get_resource_path("music/instant_draw/result_music")
             # 检查音乐目录是否存在
             if not path_manager.file_exists(BGM_RESULT_PATH):
-                logger.warning(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
+                logger.error(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
                 return
 
             # 获取所有支持的音乐文件
@@ -687,7 +686,7 @@ class instant_draw(QWidget):
                 music_files.extend(glob.glob(os.path.join(BGM_RESULT_PATH, ext)))
 
             if not music_files:
-                logger.warning(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
+                logger.error(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
                 return
 
             # 随机选择一首音乐
@@ -752,7 +751,7 @@ class instant_draw(QWidget):
             BGM_ANIMATION_PATH = path_manager.get_resource_path("music/instant_draw/Animation_music")
             # 检查音乐目录是否存在
             if not path_manager.file_exists(BGM_ANIMATION_PATH):
-                logger.warning(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
+                logger.error(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
                 return
 
             # 获取所有支持的音乐文件 (｡･ω･｡)ﾉ♡
@@ -762,7 +761,7 @@ class instant_draw(QWidget):
                 music_files.extend(glob.glob(os.path.join(BGM_ANIMATION_PATH, ext)))
 
             if not music_files:
-                logger.warning(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
+                logger.error(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
                 return
 
             # 随机选择一首音乐 ♪(^∇^*)
@@ -843,7 +842,6 @@ class instant_draw(QWidget):
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 instant_clear = settings['instant_draw']['instant_clear']
-                logger.debug(f"准备执行对应清理方案")
 
         except Exception as e:
             instant_clear = False
@@ -1749,12 +1747,12 @@ class instant_draw(QWidget):
                 settings = json.load(f)
                 instant_clear_mode = settings['instant_draw']['clear_mode']
                 instant_clear = settings['instant_draw']['instant_clear']
-                logger.debug(f"星野侦察: 准备执行对应清理方案～ ")
+                logger.info(f"准备执行对应清理方案")
 
         except Exception as e:
             instant_clear_mode = 1
             instant_clear = False
-            logger.error(f"星野魔法出错: 加载抽选模式设置失败了喵～ {e}")
+            logger.error(f"加载抽选模式设置失败了喵～ {e}")
 
         import glob
         temp_dir = path_manager.get_temp_path('')
@@ -2007,11 +2005,11 @@ class instant_draw(QWidget):
                             else:
                                 logger.error(f"闪抽界面背景图片 {flash_background_image} 加载失败")
                         else:
-                            logger.warning(f"闪抽界面背景图片 {flash_background_image} 不存在")
+                            logger.error(f"闪抽界面背景图片 {flash_background_image} 不存在")
                     else:
-                        logger.warning("背景图片文件夹不存在")
+                        logger.error("背景图片文件夹不存在")
                 else:
-                    logger.debug("未选择闪抽界面背景图片")
+                    logger.info("未选择闪抽界面背景图片")
             else:
                 # 如果两者都未启用，则使用默认背景
                 self.setStyleSheet("background: transparent;")
@@ -2026,10 +2024,10 @@ class instant_draw(QWidget):
                     self.resizeEvent = self.original_resizeEvent
                     delattr(self, 'original_resizeEvent')
                 
-                logger.debug("闪抽界面背景图片和颜色功能均未启用，使用默认背景")
+                logger.info("闪抽界面背景图片和颜色功能均未启用，使用默认背景")
                 
         except FileNotFoundError:
-            logger.warning("自定义设置文件不存在，使用默认设置")
+            logger.error("自定义设置文件不存在，使用默认设置")
         except Exception as e:
             logger.error(f"应用闪抽界面背景图片或颜色时发生异常: {e}")
     

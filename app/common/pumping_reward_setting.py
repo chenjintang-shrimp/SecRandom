@@ -295,14 +295,14 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
             else:
-                logger.warning(f"字体大小超出范围: {font_size}")
+                logger.error(f"字体大小超出范围: {font_size}")
                 InfoBar.warning(
                     title='字体大小超出范围',
                     content=f"字体大小超出范围，请输入30-200之间的数字，最多一位小数: {font_size}",
                     orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
         except ValueError as e:
-            logger.warning(f"无效的字体大小输入: {self.pumping_reward_font_size_SpinBox.value()}")
+            logger.error(f"无效的字体大小输入: {self.pumping_reward_font_size_SpinBox.value()}")
             InfoBar.warning(
                 title='无效的字体大小输入',
                 content=f"无效的字体大小输入: {e}",
@@ -333,17 +333,17 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     # 直接使用索引值
                     draw_mode = pumping_reward_settings.get("draw_mode", self.default_settings["draw_mode"])
                     if draw_mode < 0 or draw_mode >= self.pumping_reward_Draw_comboBox.count():
-                        logger.warning(f"无效的抽取模式索引: {draw_mode}")
+                        logger.error(f"无效的抽取模式索引: {draw_mode}")
                         draw_mode = self.default_settings["draw_mode"]
 
                     draw_pumping = pumping_reward_settings.get("draw_pumping", self.default_settings["draw_pumping"])
                     if draw_pumping < 0 or draw_pumping >= self.pumping_reward_mode_Draw_comboBox.count():
-                        logger.warning(f"无效的抽取方式索引: {draw_pumping}")
+                        logger.error(f"无效的抽取方式索引: {draw_pumping}")
                         draw_pumping = self.default_settings["draw_pumping"]
                         
                     animation_mode = pumping_reward_settings.get("animation_mode", self.default_settings["animation_mode"])
                     if animation_mode < 0 or animation_mode >= self.pumping_reward_Animation_comboBox.count():
-                        logger.warning(f"无效的动画模式索引: {animation_mode}")
+                        logger.error(f"无效的动画模式索引: {animation_mode}")
                         animation_mode = self.default_settings["animation_mode"]
 
                     animation_interval = pumping_reward_settings.get("animation_interval", self.default_settings["animation_interval"])
@@ -360,13 +360,13 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
                     # 显示格式
                     display_format = pumping_reward_settings.get("display_format", self.default_settings["display_format"])
                     if display_format < 0 or display_format >= self.pumping_reward_display_format_comboBox.count():
-                        logger.warning(f"无效的显示格式索引: {display_format}")
+                        logger.error(f"无效的显示格式索引: {display_format}")
                         display_format = self.default_settings["display_format"]
 
                     # 动画/结果颜色
                     animation_color = pumping_reward_settings.get("animation_color", self.default_settings["animation_color"])
                     if animation_color < 0 or animation_color >= self.pumping_reward_student_name_color_comboBox.count():
-                        logger.warning(f"无效的动画/结果颜色索引: {animation_color}")
+                        logger.error(f"无效的动画/结果颜色索引: {animation_color}")
                         animation_color = self.default_settings["animation_color"]
 
                     # 奖品图片显示
@@ -462,7 +462,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             if 30 <= font_size <= 200:
                 pumping_reward_settings["font_size"] = font_size
             # else:
-            #     logger.warning(f"字体大小超出范围: {font_size}")
+            #     logger.error(f"字体大小超出范围: {font_size}")
         except ValueError:
             # logger.warning(f"无效的字体大小输入: {self.pumping_reward_font_size_edit.text()}")
             pass

@@ -312,7 +312,7 @@ class HistoryDataLoader(QThread):
                                 history_data = json.load(f)
                         except json.JSONDecodeError:
                             history_data = {}
-                            logger.warning(f"历史记录文件格式错误: {history_file}")
+                            logger.error(f"历史记录文件格式错误: {history_file}")
                     
                     # 假设历史数据中每个抽取记录有时间、抽取方式和被点次数信息
                     reward_data = []
@@ -335,9 +335,9 @@ class HistoryDataLoader(QThread):
                                 draw_reward_numbers = record.get('draw_reward_numbers', '')
                                 reward_data.append([time, draw_method_text, f'{draw_reward_numbers}'])
                         else:
-                            logger.warning(f"奖品历史记录中缺少time字段: {_reward_name}")
+                            logger.error(f"奖品历史记录中缺少time字段: {_reward_name}")
                     else:
-                        logger.warning(f"未找到奖品历史记录: {_reward_name}")
+                        logger.error(f"未找到奖品历史记录: {_reward_name}")
 
                     return reward_data
                     
@@ -345,7 +345,7 @@ class HistoryDataLoader(QThread):
                     logger.error(f"读取奖品历史记录失败: {e}")
                     raise Exception(f"读取奖品历史记录失败: {e}")
             else:
-                logger.warning("未选择奖池")
+                logger.error("未选择奖池")
                 return []
     
     def get_random_method_setting(self) -> int:

@@ -348,7 +348,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             elif system == 'Linux':
                 subprocess.run(['xdg-open', path], check=True)
             else:
-                logger.warning(f"不支持的操作系统: {system}")
+                logger.error(f"不支持的操作系统: {system}")
         except Exception as e:
             logger.error(f"打开文件夹失败: {e}")
 
@@ -366,14 +366,14 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
             else:
-                logger.warning(f"字体大小超出范围: {font_size}")
+                logger.error(f"字体大小超出范围: {font_size}")
                 InfoBar.warning(
                     title='字体大小超出范围',
                     content=f"字体大小超出范围，请输入30-200之间的数字: {font_size}",
                     orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
                 )
         except ValueError as e:
-            logger.warning(f"无效的字体大小输入: {self.pumping_people_font_size_SpinBox.value()}")
+            logger.error(f"无效的字体大小输入: {self.pumping_people_font_size_SpinBox.value()}")
             InfoBar.warning(
                 title='无效的字体大小输入',
                 content=f"无效的字体大小输入: {str(e)}",
@@ -429,32 +429,32 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     # 直接使用索引值
                     draw_mode = pumping_people_settings.get("draw_mode", self.default_settings["draw_mode"])
                     if draw_mode < 0 or draw_mode >= self.pumping_people_Draw_comboBox.count():
-                        logger.warning(f"无效的抽取模式索引: {draw_mode}")
+                        logger.error(f"无效的抽取模式索引: {draw_mode}")
                         draw_mode = self.default_settings["draw_mode"]
                         
                     clear_mode = pumping_people_settings.get("clear_mode", self.default_settings["clear_mode"])
                     if clear_mode < 0 or clear_mode >= self.pumping_people_Clear_comboBox.count():
-                        logger.warning(f"无效的清除抽取记录方式索引: {clear_mode}")
+                        logger.error(f"无效的清除抽取记录方式索引: {clear_mode}")
                         clear_mode = self.default_settings["clear_mode"]
                         
                     draw_pumping = pumping_people_settings.get("draw_pumping", self.default_settings["draw_pumping"])
                     if draw_pumping < 0 or draw_pumping >= self.pumping_Draw_comboBox.count():
-                        logger.warning(f"无效的抽取方式索引: {draw_pumping}")
+                        logger.error(f"无效的抽取方式索引: {draw_pumping}")
                         draw_pumping = self.default_settings["draw_pumping"]
                         
                     animation_mode = pumping_people_settings.get("animation_mode", self.default_settings["animation_mode"])
                     if animation_mode < 0 or animation_mode >= self.pumping_people_Animation_comboBox.count():
-                        logger.warning(f"无效的动画模式索引: {animation_mode}")
+                        logger.error(f"无效的动画模式索引: {animation_mode}")
                         animation_mode = self.default_settings["animation_mode"]
 
                     student_id = pumping_people_settings.get("student_id", self.default_settings["student_id"])
                     if student_id < 0 or student_id >= self.pumping_people_student_id_comboBox.count():
-                        logger.warning(f"无效的学号格式索引: {student_id}")
+                        logger.error(f"无效的学号格式索引: {student_id}")
                         student_id = self.default_settings["student_id"]
                     
                     student_name = pumping_people_settings.get("student_name", self.default_settings["student_name"])
                     if student_name < 0 or student_name >= self.pumping_people_student_name_comboBox.count():
-                        logger.warning(f"无效的姓名格式索引: {student_name}")
+                        logger.error(f"无效的姓名格式索引: {student_name}")
                         student_name = self.default_settings["student_name"]
 
                     # 加载随机组员显示设置
@@ -482,13 +482,13 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     # 加载抽取结果显示格式
                     display_format = pumping_people_settings.get("display_format", self.default_settings["display_format"])
                     if display_format < 0 or display_format >= self.pumping_people_display_format_comboBox.count():
-                        logger.warning(f"无效的抽取结果显示格式索引: {display_format}")
+                        logger.error(f"无效的抽取结果显示格式索引: {display_format}")
                         display_format = self.default_settings["display_format"]
 
                     # 动画/结果颜色
                     animation_color = pumping_people_settings.get("animation_color", self.default_settings["animation_color"])
                     if animation_color < 0 or animation_color >= self.pumping_people_student_name_color_comboBox.count():
-                        logger.warning(f"无效的动画/结果颜色索引: {animation_color}")
+                        logger.error(f"无效的动画/结果颜色索引: {animation_color}")
                         animation_color = self.default_settings["animation_color"]
 
                     # 加载学生图片开关
@@ -573,7 +573,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             if 30 <= font_size <= 200:
                 pumping_people_settings["font_size"] = font_size
             # else:
-            #     logger.warning(f"字体大小超出范围: {font_size}")
+            #     logger.error(f"字体大小超出范围: {font_size}")
         except ValueError:
             # logger.warning(f"无效的字体大小输入: {self.pumping_people_font_size_edit.text()}")
             pass

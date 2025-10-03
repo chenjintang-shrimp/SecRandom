@@ -17,7 +17,7 @@ def _clean_history(history_type, settings_key, retention_days_key, history_dir, 
     try:
         settings_file = path_manager.get_settings_path()
         if not path_manager.file_exists(settings_file):
-            logger.warning("设置文件不存在，无法清理历史记录")
+            logger.error("设置文件不存在，无法清理历史记录")
             return
 
         with open_file(settings_file, 'r', encoding='utf-8') as f:
@@ -52,9 +52,9 @@ def _clean_history(history_type, settings_key, retention_days_key, history_dir, 
                                     parsed_time = _parse_time(draw_time)
                                     if parsed_time is None:
                                         if draw_time is None:
-                                            logger.warning("解析记录时间失败: 缺少'draw_time'字段")
+                                            logger.error("解析记录时间失败: 缺少'draw_time'字段")
                                         else:
-                                            logger.warning(f"解析记录时间失败: 无效格式 '{draw_time}'")
+                                            logger.error(f"解析记录时间失败: 无效格式 '{draw_time}'")
                                         valid_records.append(record)
                                     elif parsed_time >= cutoff_date:
                                         valid_records.append(record)

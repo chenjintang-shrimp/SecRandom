@@ -582,7 +582,7 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
                         self.about_contributor_url_switch.setEnabled(False)
 
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
                 self._fuckingResetter()
                 self.save_settings()
         except Exception as e:

@@ -55,7 +55,7 @@ class MessageReceiver(QObject):
         try:
             # 检查是否存在 QCoreApplication 实例
             if not QCoreApplication.instance():
-                logger.warning("QCoreApplication 实例不存在，QFileSystemWatcher 可能无法正常工作")
+                logger.error("QCoreApplication 实例不存在，QFileSystemWatcher 可能无法正常工作")
                 return
             
             # 确保临时目录存在
@@ -69,12 +69,12 @@ class MessageReceiver(QObject):
             
             # 监视临时目录
             if not self.file_watcher.addPath(self.temp_dir):
-                logger.warning(f"无法监视临时目录: {self.temp_dir}")
+                logger.error(f"无法监视临时目录: {self.temp_dir}")
             
             # 监视 unread 文件（如果存在）
             if os.path.exists(self.unread_file):
                 if not self.file_watcher.addPath(self.unread_file):
-                    logger.warning(f"无法监视文件: {self.unread_file}")
+                    logger.error(f"无法监视文件: {self.unread_file}")
             
             # 连接文件变化信号
             if not self.file_watcher.receivers(self.file_watcher.fileChanged):
@@ -157,7 +157,7 @@ class MessageReceiver(QObject):
                             # logger.debug("消息不是字典格式，已忽略")
                             pass
                     except json.JSONDecodeError as e2:
-                        logger.debug(f"移除 BOM 后仍无法解析 JSON 消息，已忽略: {e2}")
+                        logger.error(f"移除 BOM 后仍无法解析 JSON 消息，已忽略: {e2}")
                 else:
                     # 不是 BOM 问题，记录原始错误
                     # logger.debug(f"收到非 JSON 格式消息，已忽略: {e}")
@@ -193,7 +193,7 @@ def get_message_receiver():
     if _message_receiver_instance is None:
         # 检查是否存在 QCoreApplication 实例
         if not QCoreApplication.instance():
-            logger.warning("QCoreApplication 实例不存在，MessageReceiver 可能无法正常工作")
+            logger.error("QCoreApplication 实例不存在，MessageReceiver 可能无法正常工作")
         _message_receiver_instance = MessageReceiver()
     return _message_receiver_instance
 

@@ -124,7 +124,7 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
                     self.show_history_settings_switch.setCurrentIndex(sidebar_settings.get("show_history_settings_switch", 1))
 
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
 
                 self.pumping_floating_side_comboBox.setCurrentIndex(self.default_settings.get("pumping_floating_side", 0))
                 self.pumping_reward_side_comboBox.setCurrentIndex(self.default_settings.get("pumping_reward_side", 0))

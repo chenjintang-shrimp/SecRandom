@@ -882,7 +882,7 @@ class ImportStudentDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def init_ui(self):
         layout = QVBoxLayout()
@@ -1022,7 +1022,7 @@ class ImportStudentDialog(QDialog):
                 self._load_csv_columns()
         except Warning as w:
             # 处理提示性警告，不清除文件路径
-            logger.warning(f"列选择提示: {str(w)}")
+            logger.error(f"列选择提示: {str(w)}")
             msg_box = MessageBox("列选择提示", str(w), self)
             msg_box.yesButton.setText("确定")
             msg_box.cancelButton.hide()
@@ -1463,7 +1463,7 @@ class ClassInputDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def mousePressEvent(self, event):
         # 标题栏拖动
@@ -1560,7 +1560,7 @@ class StudentInputDialog(QDialog):
                 file_content = f.read()
                 if not file_content.strip():
                     # 处理空文件情况
-                    logger.warning(f"JSON文件为空: {student_file}")
+                    logger.error(f"JSON文件为空: {student_file}")
                     return
                 
                 try:
@@ -1657,7 +1657,7 @@ class StudentInputDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def mousePressEvent(self, event):
         # 标题栏拖动
@@ -1755,7 +1755,7 @@ class GenderInputDialog(QDialog):
             with open_file(student_file, 'r', encoding='utf-8') as f:
                 file_content = f.read()
                 if not file_content.strip():
-                    logger.warning(f"JSON文件为空: {student_file}")
+                    logger.error(f"JSON文件为空: {student_file}")
                     return
                 data = json.loads(file_content)
                 if isinstance(data, dict):
@@ -1845,7 +1845,7 @@ class GenderInputDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def mousePressEvent(self, event):
         # 标题栏拖动
@@ -1943,7 +1943,7 @@ class GroupInputDialog(QDialog):
             with open_file(student_file, 'r', encoding='utf-8') as f:
                 file_content = f.read()
                 if not file_content.strip():
-                    logger.warning(f"JSON文件为空: {student_file}")
+                    logger.error(f"JSON文件为空: {student_file}")
                     return
                 data = json.loads(file_content)
                 if isinstance(data, dict):
@@ -2033,7 +2033,7 @@ class GroupInputDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def mousePressEvent(self, event):
         # 标题栏拖动

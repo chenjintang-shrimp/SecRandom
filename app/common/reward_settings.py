@@ -599,7 +599,7 @@ class ImportPrizeDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def mousePressEvent(self, event):
         # 窗口拖动功能~ 按住标题栏就能移动啦
@@ -743,7 +743,7 @@ class ImportPrizeDialog(QDialog):
             elif self.file_type == 'csv':
                 self._load_csv_columns()
         except Warning as w:
-            logger.warning(f"列选择提示: {str(w)}")
+            logger.error(f"列选择提示: {str(w)}")
             msg_box = MessageBox("列选择提示", str(w), self)
             msg_box.yesButton.setText("确定")
             msg_box.cancelButton.hide()
@@ -1149,7 +1149,7 @@ class Prize_pools_InputDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败：{str(e)}")
+                logger.error(f"设置标题栏颜色失败：{str(e)}")
         
     def mousePressEvent(self, event):
         # 窗口拖动功能~ 按住标题栏就能移动啦
@@ -1257,7 +1257,7 @@ class PrizeInputDialog(QDialog):
                 file_content = f.read()
                 if not file_content.strip():
                     # 处理空文件情况
-                    logger.warning(f"JSON文件为空: {prize_file}")
+                    logger.error(f"JSON文件为空: {prize_file}")
                     return
                 
                 try:
@@ -1338,7 +1338,7 @@ class PrizeInputDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
         
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton and self.title_bar.underMouse():
@@ -1445,7 +1445,7 @@ class ProbabilityInputDialog(QDialog):
             with open_file(prize_file, 'r', encoding='utf-8') as f:
                 file_content = f.read()
                 if not file_content.strip():
-                    logger.warning(f"JSON文件为空: {prize_file}")
+                    logger.error(f"JSON文件为空: {prize_file}")
                     return
                 data = json.loads(file_content)
                 if isinstance(data, dict):
@@ -1521,7 +1521,7 @@ class ProbabilityInputDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
         
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton and self.title_bar.underMouse():

@@ -93,7 +93,7 @@ class tray_settingsCard(GroupHeaderCardWidget):
                     self.flash_switch.setChecked(tray_settings.get("flash", self.default_settings["flash"]))
 
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
 
                 self.show_main_window_switch.setChecked(self.default_settings["show_main_window"])
                 self.show_floating_window_switch.setChecked(self.default_settings["show_floating_window"])

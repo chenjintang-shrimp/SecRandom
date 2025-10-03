@@ -142,7 +142,7 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
                     self.pumping_people_theme_comboBox.setCurrentIndex(roll_call_settings.get("people_theme", self.default_settings.get("people_theme", 0)))
 
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
 
                 self.pumping_people_control_Switch.setChecked(self.default_settings.get("pumping_people_control_Switch", True))
                 self.modify_button_switch.setChecked(self.default_settings.get("modify_button_switch", True))

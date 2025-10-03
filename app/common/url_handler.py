@@ -32,7 +32,7 @@ class URLHandler:
             
             # 检查配置文件是否存在
             if not os.path.exists(self.config_file_path):
-                logger.warning(f"配置文件不存在: {self.config_file_path}")
+                logger.error(f"配置文件不存在: {self.config_file_path}")
                 self._load_default_settings()
                 return
             
@@ -44,7 +44,7 @@ class URLHandler:
             # 记录文件修改时间
             self.last_modified_time = os.path.getmtime(self.config_file_path)
             
-            logger.debug("配置文件加载完成")
+            logger.info("配置文件加载完成")
         except Exception as e:
             logger.error(f"加载fixed_url设置失败: {str(e)}")
             self._load_default_settings()
@@ -125,7 +125,7 @@ class URLHandler:
                 try:
                     notification_type = int(notification_type)
                 except ValueError:
-                    logger.warning(f"无效的通知设置值: {notification_type}, 使用默认值0")
+                    logger.error(f"无效的通知设置值: {notification_type}, 使用默认值0")
                     notification_type = 0
             self.fixed_url_settings[setting_key] = notification_type
             
@@ -235,7 +235,7 @@ class URLHandler:
                 
                 # 检查该URL是否启用
                 if not self.is_url_enabled(f"enable_{setting_key}"):
-                    logger.warning(f"URL功能已禁用: {path} (设置项: enable_{setting_key})")
+                    logger.error(f"URL功能已禁用: {path} (设置项: enable_{setting_key})")
                     return False
                 
                 # 显示弹窗提醒
@@ -318,7 +318,7 @@ class URLHandler:
                 
                 # 如果操作未启用，记录日志并返回
                 if not action_enabled:
-                    logger.warning(f"URL操作已禁用: {path}?action={action}")
+                    logger.error(f"URL操作已禁用: {path}?action={action}")
                     return
                 
                 # 执行相应的操作
@@ -349,7 +349,7 @@ class URLHandler:
                     main_window.show_plugin_settings_window()
                 
                 else:
-                    logger.warning(f"未知的动作或主窗口缺少对应方法: {action}")
+                    logger.error(f"未知的动作或主窗口缺少对应方法: {action}")
             
         except Exception as e:
             logger.error(f"处理额外参数失败: {str(e)}")
@@ -710,14 +710,14 @@ class URLNotification(QDialog):
                 enc_settings_path = path_manager.get_enc_set_path()
                 with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    logger.debug("星野安检: 正在读取安全设置，准备执行URL操作验证～ ")
+                    logger.info("星野安检: 正在读取安全设置，准备执行URL操作验证～ ")
                     
                     # 检查是否启用了启动密码和退出验证功能
                     if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
                         # 创建并显示密码验证对话框，等待用户输入
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("星野安检: 用户取消URL操作，安全防御已解除～ ")
+                            logger.error("星野安检: 用户取消URL操作，安全防御已解除～ ")
                             # 验证失败或用户取消，不执行回调函数并返回
                             return
             except Exception as e:

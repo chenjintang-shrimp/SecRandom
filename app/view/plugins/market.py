@@ -68,11 +68,11 @@ class MarketPluginButtonGroup(QWidget):
         """检查插件是否已安装及版本"""
         plugin_dir = path_manager.get_plugin_path("plugin")
         if not path_manager.file_exists(plugin_dir):
-            logger.debug(f"插件目录不存在: {plugin_dir}")
+            logger.error(f"插件目录不存在: {plugin_dir}")
             return None
         
         market_plugin_name = self.plugin_info.get("name")
-        logger.debug(f"开始检查插件 '{market_plugin_name}' 的安装状态")
+        # logger.debug(f"开始检查插件 '{market_plugin_name}' 的安装状态")
         
         # 查找已安装的插件
         for item in os.listdir(plugin_dir):
@@ -96,18 +96,18 @@ class MarketPluginButtonGroup(QWidget):
                     version = plugin_config.get("version")
                     # 如果版本为空或None，返回None而不是空字符串
                     if not version or version.strip() == "":
-                        logger.debug(f"插件匹配成功但版本信息为空: 已安装插件='{installed_plugin_name}'")
+                        logger.info(f"插件匹配成功但版本信息为空: 已安装插件='{installed_plugin_name}'")
                         return None
                     logger.info(f"找到匹配的已安装插件: '{installed_plugin_name}'，版本: {version}")
                     return version
                 else:
-                    logger.debug(f"插件不匹配，跳过: 已安装='{installed_plugin_name}' vs 市场='{market_plugin_name}'")
+                    logger.error(f"插件不匹配，跳过: 已安装='{installed_plugin_name}' vs 市场='{market_plugin_name}'")
                     
             except Exception as e:
                 logger.error(f"检查已安装插件版本失败: {e}")
                 continue
         
-        logger.debug(f"未找到已安装的插件 '{market_plugin_name}'")
+        logger.error(f"未找到已安装的插件 '{market_plugin_name}'")
         return None
     
     def _is_same_plugin(self, plugin_config):
@@ -120,7 +120,7 @@ class MarketPluginButtonGroup(QWidget):
             return self._match_by_url(installed_plugin_url, market_plugin_url)
         
         # 如果没有URL信息，则无法匹配
-        logger.debug(f"插件缺少URL信息，无法进行匹配")
+        logger.info(f"插件缺少URL信息，无法进行匹配")
         return False
     
     def _match_by_url(self, installed_url, market_url):
@@ -129,12 +129,12 @@ class MarketPluginButtonGroup(QWidget):
             logger.info(f"插件匹配成功 - URL匹配: {installed_url}")
             return True
         else:
-            logger.debug(f"插件URL不匹配: 已安装={installed_url}, 市场={market_url}")
+            logger.error(f"插件URL不匹配: 已安装={installed_url}, 市场={market_url}")
             return False
     
     def _match_by_name_and_author(self, installed_name, market_name, installed_author, market_author):
         """已弃用：此方法不再使用，仅保留URL匹配"""
-        logger.debug(f"名称和作者匹配方法已弃用，仅使用URL匹配")
+        logger.error(f"名称和作者匹配方法已弃用，仅使用URL匹配")
         return False
     
     def _check_plugin_version_compatibility(self):
@@ -156,7 +156,7 @@ class MarketPluginButtonGroup(QWidget):
                 logger.info(f"插件 {self.plugin_info['name']} 版本兼容: 当前版本 {current_version} >= 最低要求 {required_version}")
                 return True
             else:
-                logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容: 当前版本 {current_version} < 最低要求 {required_version}")
+                logger.error(f"插件 {self.plugin_info['name']} 版本不兼容: 当前版本 {current_version} < 最低要求 {required_version}")
                 return False
                 
         except Exception as e:
@@ -172,7 +172,7 @@ class MarketPluginButtonGroup(QWidget):
             plugin_url = self.plugin_info.get("url")
             
             if not plugin_name and not plugin_url:
-                logger.warning(f"插件缺少名称和URL信息")
+                logger.error(f"插件缺少名称和URL信息")
                 return False
             
             # 如果没有传入市场插件列表，则获取（保持向后兼容）
@@ -204,7 +204,7 @@ class MarketPluginButtonGroup(QWidget):
                     logger.info(f"插件 {plugin_name} 在插件广场中存在")
                     return True
             
-            logger.warning(f"插件 {plugin_name} 不在插件广场中")
+            logger.error(f"插件 {plugin_name} 不在插件广场中")
             return False
             
         except Exception as e:
@@ -222,7 +222,7 @@ class MarketPluginButtonGroup(QWidget):
                 logger.info(f"插件 {self.plugin_info['name']} 版本兼容，操作按钮已启用")
             else:
                 self.actionButton.setEnabled(False)
-                logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容，操作按钮已禁用")
+                logger.error(f"插件 {self.plugin_info['name']} 版本不兼容，操作按钮已禁用")
                 
         except Exception as e:
             logger.error(f"更新操作按钮状态失败: {e}")
@@ -905,13 +905,13 @@ class PluginMarketPage(GroupHeaderCardWidget):
                     repo = parts[1]
                     
                     # 添加调试日志
-                    logger.debug(f"解析仓库信息 - owner: {owner}, repo: {repo}, branch: {branch}")
+                    # logger.debug(f"解析仓库信息 - owner: {owner}, repo: {repo}, branch: {branch}")
                     
                     # 构建图标文件URL：插件仓库名称\icon.png
                     raw_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{repo}/icon.png"
                     
                     # 添加调试日志
-                    logger.debug(f"尝试获取图标: {raw_url}")
+                    # logger.debug(f"尝试获取图标: {raw_url}")
                     
                     try:
                         # 创建请求对象并添加请求头
@@ -935,17 +935,17 @@ class PluginMarketPage(GroupHeaderCardWidget):
                                     logger.info(f"成功获取插件图标: {raw_url}")
                                     return QIcon(pixmap)
                                 else:
-                                    logger.debug(f"图标数据无效，无法创建QPixmap")
+                                    logger.error(f"图标数据无效，无法创建QPixmap")
                             else:
-                                logger.debug(f"图标文件访问失败，状态码: {response.status}")
+                                logger.error(f"图标文件访问失败，状态码: {response.status}")
                     except Exception as e:
-                        logger.debug(f"访问图标文件异常: {e}")
+                        logger.error(f"访问图标文件异常: {e}")
                 else:
-                    logger.warning(f"无法解析GitHub URL: {repo_url}, parts: {parts}")
+                    logger.error(f"无法解析GitHub URL: {repo_url}, parts: {parts}")
             else:
-                logger.warning(f"非GitHub URL: {repo_url}")
+                logger.error(f"非GitHub URL: {repo_url}")
             
-            logger.warning(f"无法获取插件仓库图标: {repo_url}")
+            logger.error(f"无法获取插件仓库图标: {repo_url}")
             return None
             
         except Exception as e:
@@ -991,7 +991,7 @@ class PluginMarketPage(GroupHeaderCardWidget):
             if all(field in value for field in required_fields):
                 filtered_plugins[key] = value
             else:
-                logger.warning(f"插件 {key} 缺少必需字段，跳过")
+                logger.error(f"插件 {key} 缺少必需字段，跳过")
         
         if not filtered_plugins:
             # 显示无有效插件提示

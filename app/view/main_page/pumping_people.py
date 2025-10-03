@@ -671,7 +671,7 @@ class pumping_people(QWidget):
             BGM_RESULT_PATH = path_manager.get_resource_path("music", "pumping_people/result_music")
             # 检查音乐目录是否存在
             if not path_manager.file_exists(BGM_RESULT_PATH):
-                logger.warning(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
+                logger.error(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
                 return
 
             # 获取所有支持的音乐文件 (｡･ω･｡)ﾉ♡
@@ -681,7 +681,7 @@ class pumping_people(QWidget):
                 music_files.extend(glob.glob(os.path.join(BGM_RESULT_PATH, ext)))
 
             if not music_files:
-                logger.warning(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
+                logger.error(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
                 return
 
             # 随机选择一首音乐 ♪(^∇^*)
@@ -736,7 +736,7 @@ class pumping_people(QWidget):
             BGM_ANIMATION_PATH = path_manager.get_resource_path("music", "pumping_people/Animation_music")
             # 检查音乐目录是否存在
             if not path_manager.file_exists(BGM_ANIMATION_PATH):
-                logger.warning(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
+                logger.error(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
                 return
 
             # 获取所有支持的音乐文件 (｡･ω･｡)ﾉ♡
@@ -746,7 +746,7 @@ class pumping_people(QWidget):
                 music_files.extend(glob.glob(os.path.join(BGM_ANIMATION_PATH, ext)))
 
             if not music_files:
-                logger.warning(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
+                logger.error(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
                 return
 
             # 随机选择一首音乐 ♪(^∇^*)
@@ -1507,7 +1507,7 @@ class pumping_people(QWidget):
                     logger.info("抽人界面已连接到主窗口清理信号")
                     return
             
-            logger.warning("未找到主窗口实例，清理信号连接失败")
+            logger.error("未找到主窗口实例，清理信号连接失败")
         except Exception as e:
             logger.error(f"连接清理信号时出错: {e}")
     
@@ -1911,7 +1911,7 @@ class pumping_people(QWidget):
                 if classes:
                     self.class_combo.addItems(classes)
                 else:
-                    logger.warning("班级文件夹为空")
+                    logger.error("班级文件夹为空")
                     self.class_combo.addItem("你暂未添加班级")
             else:
                 logger.error(f"班级列表文件夹不存在: {list_folder}")
@@ -2031,7 +2031,7 @@ class pumping_people(QWidget):
                 settings = json.load(f)
                 instant_clear_mode = settings['instant_draw']['clear_mode']
                 instant_clear = settings['instant_draw']['instant_clear']
-                logger.debug("准备执行对应清理方案")
+                logger.info("准备执行对应清理方案")
 
         except Exception as e:
             instant_clear_mode = 1
@@ -2535,7 +2535,7 @@ class StudentInputDialog(QDialog):
                 file_content = f.read()
                 if not file_content.strip():
                     # 处理空文件情况
-                    logger.warning(f"JSON文件为空: {student_file}")
+                    logger.error(f"JSON文件为空: {student_file}")
                     return
                 
                 try:
@@ -2633,7 +2633,7 @@ class StudentInputDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"标题栏颜色设置失败: {str(e)}")
+                logger.error(f"标题栏颜色设置失败: {str(e)}")
 
     def mousePressEvent(self, event):
         # 标题栏拖动

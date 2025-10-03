@@ -156,7 +156,7 @@ class ConfigurationManager:
         """保存窗口大小
         确保窗口不会太小（至少600x400），然后把新尺寸记下来"""
         if width < 600 or height < 400:  # 太小的窗口不行
-            logger.warning("窗口尺寸太小，不保存")
+            logger.error("窗口尺寸太小，不保存")
             return
 
         try:
@@ -252,7 +252,7 @@ class UpdateChecker(QObject):
                     # 首先尝试优雅退出
                     self.worker.quit()
                     if not self.worker.wait(2000):  # 等待最多2秒
-                        logger.warning("线程优雅退出失败，准备强制终止")
+                        logger.error("线程优雅退出失败，准备强制终止")
                         # 如果优雅退出失败，强制终止
                         self.worker.terminate()
                         self.worker.wait(1000)  # 再等待1秒
@@ -324,7 +324,7 @@ class TrayIconManager(QObject):
             for key, default_value in default_settings.items():
                 tray_settings[key] = tray_settings.get(key, default_value)
                 
-            logger.debug(f"托盘设置已加载")
+            logger.info(f"托盘设置已加载")
             return tray_settings
             
         except Exception as e:
@@ -397,14 +397,14 @@ class TrayIconManager(QObject):
             
             # 启动5秒自动关闭定时器
             self.menu_timer.start(5000)  # 5秒后自动关闭
-            logger.debug("托盘菜单已显示")
+            logger.info("托盘菜单已显示")
     
     def _on_menu_timeout(self):
         """菜单超时自动关闭
         当用户5秒内没有操作菜单时，自动关闭菜单"""
         if self.tray_menu.isVisible():
             self.tray_menu.close()
-            logger.debug("托盘菜单因超时自动关闭")
+            logger.info("托盘菜单因超时自动关闭")
     
     def eventFilter(self, obj, event):
         """事件过滤器
@@ -427,7 +427,7 @@ class TrayIconManager(QObject):
             if not menu_rect.contains(click_pos):
                 self.tray_menu.close()
                 self.menu_timer.stop()
-                logger.debug("托盘菜单因点击外部而关闭")
+                logger.info("托盘菜单因点击外部而关闭")
                 return True
         
         return super().eventFilter(obj, event)
@@ -688,9 +688,9 @@ class Window(MSFluentWindow):
                         else:
                             logger.error(f"主界面背景图片 {main_background_image} 加载失败")
                     else:
-                        logger.warning(f"主界面背景图片 {main_background_image} 不存在")
+                        logger.error(f"主界面背景图片 {main_background_image} 不存在")
                 else:
-                    logger.debug("未选择主界面背景图片")
+                    logger.info("未选择主界面背景图片")
             else:
                 # 如果两者都未启用，则使用默认背景
                 self.setStyleSheet("background: transparent;")
@@ -705,10 +705,10 @@ class Window(MSFluentWindow):
                     self.resizeEvent = self.original_resizeEvent
                     delattr(self, 'original_resizeEvent')
                 
-                logger.debug("主界面背景图片和颜色功能均未启用，使用默认背景")
+                # logger.debug("主界面背景图片和颜色功能均未启用，使用默认背景")
                 
         except FileNotFoundError:
-            logger.warning("自定义设置文件不存在，使用默认设置")
+            logger.error("自定义设置文件不存在，使用默认设置")
         except Exception as e:
             logger.error(f"应用主界面背景图片或颜色时发生异常: {e}")
     
@@ -794,7 +794,7 @@ class Window(MSFluentWindow):
             # Windows和其他系统使用标准方法
             self.move(target_x, target_y)
             
-        logger.debug(f"窗口已定位到({self.x()}, {self.y()})位置")
+        logger.info(f"窗口已定位到({self.x()}, {self.y()})位置")
     
     def _position_window_linux(self, target_x, target_y):
         """Linux窗口定位
@@ -846,7 +846,7 @@ class Window(MSFluentWindow):
                 window_height = self.height() if self.height() > 0 else 600
                 self.setGeometry(target_x, target_y, window_width, window_height)
                 
-            logger.debug(f"Linux延迟定位完成，当前位置({self.x()}, {self.y()})")
+            logger.info(f"Linux延迟定位完成，当前位置({self.x()}, {self.y()})")
             
         except Exception as e:
             logger.error(f"Linux延迟定位失败: {e}")
@@ -874,12 +874,12 @@ class Window(MSFluentWindow):
         # 创建设置界面
         self.settingInterface = settings_Window(self)
         self.settingInterface.setObjectName("settingInterface")
-        logger.debug("设置界面已创建")
+        logger.info("设置界面已创建")
 
         # 创建关于界面
         self.about_settingInterface = about(self)
         self.about_settingInterface.setObjectName("about_settingInterface")
-        logger.debug("关于界面已创建")
+        logger.info("关于界面已创建")
         
         # 通用界面创建函数
         def _create_interface(attr_name, class_type, sidebar_key, default_value, default_on_error=None, object_name=None, create_on_value_not=2, log_name=None, create_on_error=True):
@@ -892,9 +892,9 @@ class Window(MSFluentWindow):
                     setattr(self, attr_name, class_type(self))
                     if object_name:
                         getattr(self, attr_name).setObjectName(object_name)
-                    logger.debug(f"{log_name or attr_name}界面已创建")
+                    logger.info(f"{log_name or attr_name}界面已创建")
                 else:
-                    logger.debug(f"'{log_name or attr_name}'界面已设置为不创建")
+                    logger.info(f"'{log_name or attr_name}'界面已设置为不创建")
                     setattr(self, attr_name, None)
 
         # 创建各个子界面
@@ -949,41 +949,41 @@ class Window(MSFluentWindow):
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 sidebar_settings = settings.get('sidebar', {})
-                logger.debug("已读取导航配置，准备构建个性化菜单")
+                logger.info("已读取导航配置，准备构建个性化菜单")
 
                 # 根据设置决定"点名"界面位置
                 pumping_floating_side = sidebar_settings.get('pumping_floating_side', 0)
                 if pumping_floating_side == 1:
                     if self.pumping_peopleInterface is not None:
                         self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.BOTTOM)
-                        logger.debug("'点名'界面已放置在底部导航栏")
+                        logger.info("'点名'界面已放置在底部导航栏")
                     else:
-                        logger.debug("'点名'界面未创建，无法添加到导航栏")
+                        logger.error("'点名'界面未创建，无法添加到导航栏")
                 elif pumping_floating_side == 2:
-                    logger.debug("'点名'界面已设置为不显示")
+                    logger.info("'点名'界面已设置为不显示")
                 else:
                     if self.pumping_peopleInterface is not None:
                         self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.TOP)
-                        logger.debug("'点名'界面已放置在顶部导航栏")
+                        logger.info("'点名'界面已放置在顶部导航栏")
                     else:
-                        logger.debug("'点名'界面未创建，无法添加到导航栏")
+                        logger.error("'点名'界面未创建，无法添加到导航栏")
 
                 # 根据设置决定"抽奖"界面位置
                 pumping_reward_side = sidebar_settings.get('pumping_reward_side', 0)
                 if pumping_reward_side == 1:
                     if self.pumping_rewardInterface is not None:
                         self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.BOTTOM)
-                        logger.debug("'抽奖'界面已放置在底部导航栏")
+                        logger.info("'抽奖'界面已放置在底部导航栏")
                     else:
-                        logger.debug("'抽奖'界面未创建，无法添加到导航栏")
+                        logger.error("'抽奖'界面未创建，无法添加到导航栏")
                 elif pumping_reward_side == 2:
-                    logger.debug("'抽奖'界面已设置为不显示")
+                    logger.info("'抽奖'界面已设置为不显示")
                 else:
                     if self.pumping_rewardInterface is not None:
                         self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
-                        logger.debug("'抽奖'界面已放置在顶部导航栏")
+                        logger.info("'抽奖'界面已放置在顶部导航栏")
                     else:
-                        logger.debug("'抽奖'界面未创建，无法添加到导航栏")
+                        logger.error("'抽奖'界面未创建，无法添加到导航栏")
 
         except FileNotFoundError as e:
             logger.error(f"配置文件找不到: {e}, 使用默认顶部导航布局")
@@ -998,17 +998,17 @@ class Window(MSFluentWindow):
             if vocabulary_side == 1:
                 if self.vocabulary_learningInterface is not None:
                     self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
-                    logger.debug("'单词PK'界面已放置在底部导航栏")
+                    logger.info("'单词PK'界面已放置在底部导航栏")
                 else:
-                    logger.debug("'单词PK'界面未创建，无法添加到导航栏")
+                    logger.error("'单词PK'界面未创建，无法添加到导航栏")
             elif vocabulary_side == 2:
-                logger.debug("'单词PK'界面已设置为不显示")
+                logger.info("'单词PK'界面已设置为不显示")
             else:
                 if self.vocabulary_learningInterface is not None:
                     self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.TOP)
-                    logger.debug("'单词PK'界面已放置在顶部导航栏")
+                    logger.info("'单词PK'界面已放置在顶部导航栏")
                 else:
-                    logger.debug("'单词PK'界面未创建，无法添加到导航栏")
+                    logger.error("'单词PK'界面未创建，无法添加到导航栏")
         except Exception as e:
             if self.vocabulary_learningInterface is not None:
                 self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
@@ -1023,20 +1023,20 @@ class Window(MSFluentWindow):
                     history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
                     # 点击历史记录导航项时切换到历史记录界面
                     history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
-                    logger.debug("'历史记录'导航项已放置在底部导航栏")
+                    logger.info("'历史记录'导航项已放置在底部导航栏")
                 else:
-                    logger.debug("'历史记录'界面未创建，无法添加到导航栏")
+                    logger.error("'历史记录'界面未创建，无法添加到导航栏")
             elif history_side == 2:
-                logger.debug("'历史记录'导航项已设置为不显示")
+                logger.info("'历史记录'导航项已设置为不显示")
             else:
                 if self.history_handoff_settingInterface is not None:
                     # 为历史记录导航项添加点击事件处理器
                     history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.TOP)
                     # 点击历史记录导航项时切换到历史记录界面
                     history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
-                    logger.debug("'历史记录'导航项已放置在顶部导航栏")
+                    logger.info("'历史记录'导航项已放置在顶部导航栏")
                 else:
-                    logger.debug("'历史记录'界面未创建，无法添加到导航栏")
+                    logger.error("'历史记录'界面未创建，无法添加到导航栏")
         except Exception as e:
             logger.error(f"加载历史记录导航项失败: {e}")
             # 默认添加到底部导航栏
@@ -1057,9 +1057,9 @@ class Window(MSFluentWindow):
                 # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
-                logger.debug("'设置'图标已放置在底部导航栏")
+                logger.info("'设置'图标已放置在底部导航栏")
             elif settings_side == 2:
-                logger.debug("'设置'图标已设置为不显示")
+                logger.info("'设置'图标已设置为不显示")
             else:
                 # 创建一个空的设置界面占位符，用于导航栏
                 self.settings_placeholder = QWidget()
@@ -1068,7 +1068,7 @@ class Window(MSFluentWindow):
                 # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
-                logger.debug("'设置'图标已放置在顶部导航栏")
+                logger.info("'设置'图标已放置在顶部导航栏")
         except Exception as e:
             logger.error(f"加载设置图标失败: {e}")
             if sidebar_settings.get('show_settings_icon', True):
@@ -1243,7 +1243,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消打开关于界面操作")
+                            logger.error("用户取消打开关于界面操作")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -1267,7 +1267,7 @@ class Window(MSFluentWindow):
                 clear_mode = settings['pumping_people']['clear_mode']
                 instant_clear_mode = settings['instant_draw']['clear_mode']
                 instant_clear = settings['instant_draw']['instant_clear']
-                logger.debug("准备执行对应清理方案")
+                # logger.debug("准备执行对应清理方案")
 
         except Exception as e:
             clear_mode = 1
@@ -1309,7 +1309,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消打开窗口切换操作")
+                            logger.error("用户取消打开窗口切换操作")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -1365,14 +1365,14 @@ class Window(MSFluentWindow):
             enc_settings_path = path_manager.get_enc_set_path()
             with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                logger.debug("正在读取安全设置，准备执行退出验证")
+                logger.info("正在读取安全设置，准备执行退出验证")
 
                 if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
                     if settings.get('hashed_set', {}).get('exit_verification_enabled', False) == True:
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消退出程序操作")
+                            logger.error("用户取消退出程序操作")
                             return
         except Exception as e:
             logger.error(f"密码验证系统出错: {e}")
@@ -1382,26 +1382,26 @@ class Window(MSFluentWindow):
         self.hide()
         if hasattr(self, 'levitation_window'):
             self.levitation_window.hide()
-            logger.debug("悬浮窗已隐藏")
+            logger.info("悬浮窗已隐藏")
             
         if hasattr(self, 'focus_timer'):
             self.stop_focus_timer()
-            logger.debug("焦点计时器已停止")
+            logger.info("焦点计时器已停止")
 
         if hasattr(self, 'usb_detection_timer'):
             self.usb_detection_timer.stop()
-            logger.debug("USB绑定已关闭")
+            logger.info("USB绑定已关闭")
 
         # 停止resize_timer以优化CPU占用
         if hasattr(self, 'resize_timer') and self.resize_timer.isActive():
             self.resize_timer.stop()
-            logger.debug("resize_timer已停止")
+            logger.info("resize_timer已停止")
 
         # 停止托盘菜单定时器
         if hasattr(self, 'tray_manager') and hasattr(self.tray_manager, 'menu_timer'):
             if self.tray_manager.menu_timer.isActive():
                 self.tray_manager.menu_timer.stop()
-                logger.debug("托盘菜单定时器已停止")
+                logger.info("托盘菜单定时器已停止")
 
         # 停止USB监控线程
         if hasattr(self, 'settingInterface') and self.settingInterface:
@@ -1414,16 +1414,16 @@ class Window(MSFluentWindow):
                 if self.settingInterface.usb_monitor_thread.isRunning():
                     self.settingInterface.usb_monitor_thread.wait(500)  # 等待最多500ms
                 self.settingInterface.usb_monitor_thread = None
-                logger.debug("USB监控线程已停止")
+                logger.info("USB监控线程已停止")
 
         if hasattr(self, 'server'):
             self.server.close()
-            logger.debug("IPC服务器已关闭")
+            logger.info("IPC服务器已关闭")
 
         # 停止更新检查
         if hasattr(self, 'update_checker') and self.update_checker:
             self.update_checker.stop_checking()
-            logger.debug("更新检查已停止")
+            logger.info("更新检查已停止")
             
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
@@ -1431,11 +1431,11 @@ class Window(MSFluentWindow):
                 self.shared_memory.detach()
                 if self.shared_memory.isAttached():
                     self.shared_memory.detach()
-                logger.debug("共享内存已完全释放")
+                logger.info("共享内存已完全释放")
             except Exception as e:
                 logger.error(f"共享内存释放出错: {e}")
 
-        logger.debug("所有资源已成功释放，程序即将退出")
+        logger.info("所有资源已成功释放，程序即将退出")
         
         # 正确关闭日志系统
         try:
@@ -1461,7 +1461,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消重启操作")
+                            logger.error("用户取消重启操作")
                             return
         except Exception as e:
             logger.error(f"密码验证过程出错: {e}")
@@ -1473,7 +1473,7 @@ class Window(MSFluentWindow):
         self.hide()
         if hasattr(self, 'levitation_window'):
             self.levitation_window.hide()
-            logger.debug("悬浮窗已隐藏")
+            logger.info("悬浮窗已隐藏")
         
         # 彻底清理设置界面，防止重启后嵌套问题
         if hasattr(self, 'settingInterface') and self.settingInterface:
@@ -1485,30 +1485,30 @@ class Window(MSFluentWindow):
                 # 关闭设置界面
                 self.settingInterface.close()
                 self.settingInterface = None
-                logger.debug("设置界面已完全清理")
+                logger.info("设置界面已完全清理")
             except Exception as e:
                 logger.error(f"清理设置界面时出错: {e}")
         
         # 停止所有计时器
         if hasattr(self, 'focus_timer'):
             self.stop_focus_timer()
-            logger.debug("焦点计时器已停止")
+            logger.info("焦点计时器已停止")
     
         # 停止USB检测计时器
         if hasattr(self, 'usb_detection_timer'):
             self.usb_detection_timer.stop()
-            logger.debug("USB绑定已关闭")
+            logger.info("USB绑定已关闭")
 
         # 停止resize_timer以优化CPU占用
         if hasattr(self, 'resize_timer') and self.resize_timer.isActive():
             self.resize_timer.stop()
-            logger.debug("resize_timer已停止")
+            logger.info("resize_timer已停止")
 
         # 停止托盘菜单定时器
         if hasattr(self, 'tray_manager') and hasattr(self.tray_manager, 'menu_timer'):
             if self.tray_manager.menu_timer.isActive():
                 self.tray_manager.menu_timer.stop()
-                logger.debug("托盘菜单定时器已停止")
+                logger.info("托盘菜单定时器已停止")
                 
         # 停止USB监控线程
         if hasattr(self, 'settingInterface') and self.settingInterface:
@@ -1521,17 +1521,17 @@ class Window(MSFluentWindow):
                 if self.settingInterface.usb_monitor_thread.isRunning():
                     self.settingInterface.usb_monitor_thread.wait(500)  # 等待最多500ms
                 self.settingInterface.usb_monitor_thread = None
-                logger.debug("USB监控线程已停止")
+                logger.info("USB监控线程已停止")
         
         # 关闭IPC服务器
         if hasattr(self, 'server'):
             self.server.close()
-            logger.debug("IPC服务器已关闭")
+            logger.info("IPC服务器已关闭")
         
         # 停止更新检查
         if hasattr(self, 'update_checker') and self.update_checker:
             self.update_checker.stop_checking()
-            logger.debug("更新检查已停止")
+            logger.info("更新检查已停止")
 
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
@@ -1552,7 +1552,7 @@ class Window(MSFluentWindow):
                 settings['hashed_set']['verification_start'] = False
                 with open_file(enc_settings_path, 'w', encoding='utf-8') as f:
                     json.dump(settings, f, ensure_ascii=False, indent=4)
-                logger.debug("密码验证状态已重置")
+                logger.info("密码验证状态已重置")
         except Exception as e:
             logger.error(f"重置密码验证状态时出错: {e}")
         
@@ -1606,7 +1606,7 @@ class Window(MSFluentWindow):
                     from app.common.password_dialog import PasswordDialog
                     dialog = PasswordDialog(self)
                     if dialog.exec_() != QDialog.Accepted:
-                        logger.warning("用户取消打开设置界面操作")
+                        logger.error("用户取消打开设置界面操作")
                         return
         except Exception as e:
             logger.error(f"密码验证失败: {e}")
@@ -1650,7 +1650,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消暂时切换浮窗显示/隐藏状态操作")
+                            logger.error("用户取消暂时切换浮窗显示/隐藏状态操作")
                             return
         except Exception as e:
             logger.error(f"密码验证失败: {e}")
@@ -1771,12 +1771,12 @@ class Window(MSFluentWindow):
         try:
             # 检查连接状态和是否可读
             if not client_connection or not client_connection.isOpen() or not client_connection.isReadable():
-                logger.warning("IPC连接未打开或不可读，跳过处理")
+                logger.error("IPC连接未打开或不可读，跳过处理")
                 return
                 
             data = client_connection.readAll().data().decode().strip()
             if not data:
-                logger.warning("接收到空的IPC消息，跳过处理")
+                logger.error("接收到空的IPC消息，跳过处理")
                 return
                 
             logger.info(f"接收到IPC消息: {data}")
@@ -1796,7 +1796,7 @@ class Window(MSFluentWindow):
                 # 处理URL命令，这会显示通知窗口（如果设置启用）
                 url_handler.process_url_command(self)
             else:
-                logger.warning(f"未知的IPC消息: {data}")
+                logger.error(f"未知的IPC消息: {data}")
         except Exception as e:
             logger.error(f"处理IPC消息时发生错误: {e}")
         finally:
@@ -1822,12 +1822,12 @@ class Window(MSFluentWindow):
         try:
             # 检查连接状态和是否可读
             if not socket or not socket.isOpen() or not socket.isReadable():
-                logger.warning("IPC连接未打开或不可读，跳过处理")
+                logger.error("IPC连接未打开或不可读，跳过处理")
                 return
                 
             data = socket.readAll().data().decode().strip()
             if not data:
-                logger.warning("接收到空的IPC窗口显示请求，跳过处理")
+                logger.error("接收到空的IPC窗口显示请求，跳过处理")
                 return
                 
             logger.info(f"接收到IPC窗口显示请求: {data}")
@@ -1924,7 +1924,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            logger.error("用户取消在课间调用URL使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -1950,7 +1950,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            logger.error("用户取消在课间调用URL使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -1976,7 +1976,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            logger.error("用户取消在课间调用URL使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -2006,7 +2006,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            logger.error("用户取消在课间调用URL使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -2050,7 +2050,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            logger.error("用户取消在课间调用URL使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -2105,7 +2105,7 @@ class Window(MSFluentWindow):
                     from app.view.plugins.plugin_settings import PluginSettingsWindow
                     self.settingInterface.plugin_settingsInterface = PluginSettingsWindow(self.settingInterface)
                     self.settingInterface.plugin_settingsInterface.setObjectName("plugin_settingsInterface")
-                    logger.debug("设置界面: 插件设置界面重新创建成功")
+                    logger.info("插件设置界面重新创建成功")
                     # 重新初始化导航
                     self.settingInterface.initNavigation()
                     # 切换到插件设置界面
@@ -2128,7 +2128,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            logger.error("用户取消在课间调用URL使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -2162,7 +2162,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            logger.error("用户取消在课间调用URL使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -2216,7 +2216,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            logger.error("用户取消在课间调用URL使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -2250,7 +2250,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            logger.error("用户取消在课间调用URL使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -2295,7 +2295,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间调用URL使用抽取功能")
+                            logger.error("用户取消在课间调用URL使用抽取功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
@@ -2316,7 +2316,7 @@ class Window(MSFluentWindow):
                         from app.common.password_dialog import PasswordDialog
                         dialog = PasswordDialog(self)
                         if dialog.exec_() != QDialog.Accepted:
-                            logger.warning("用户取消在课间调用URL使用功能")
+                            logger.error("用户取消在课间调用URL使用功能")
                             return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")

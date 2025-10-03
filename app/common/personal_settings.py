@@ -284,7 +284,7 @@ class personal_settingsCard(GroupHeaderCardWidget):
                     self.flash_background_color = flash_bg_color
 
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
                 self.background_icon_switch.setChecked(self.default_settings["enable_background_icon"])
                 self.blur_spinbox.setValue(self.default_settings["background_blur"])
                 self.brightness_spinbox.setValue(self.default_settings["background_brightness"])

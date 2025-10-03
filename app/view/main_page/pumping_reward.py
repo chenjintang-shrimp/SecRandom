@@ -550,7 +550,7 @@ class pumping_reward(QWidget):
         try:
             # 检查音乐目录是否存在
             if not path_manager.file_exists(BGM_RESULT_PATH):
-                logger.warning(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
+                logger.error(f"结果音乐目录不存在: {BGM_RESULT_PATH}")
                 return
 
             # 获取所有支持的音乐文件 (｡･ω･｡)ﾉ♡
@@ -560,7 +560,7 @@ class pumping_reward(QWidget):
                 music_files.extend(glob.glob(os.path.join(BGM_RESULT_PATH, ext)))
 
             if not music_files:
-                logger.warning(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
+                logger.error(f"结果音乐目录中没有找到音乐文件: {BGM_RESULT_PATH}")
                 return
 
             # 随机选择一首音乐 ♪(^∇^*)
@@ -608,7 +608,7 @@ class pumping_reward(QWidget):
                 fade_out_animation.finished.connect(final_stop)
                 fade_out_animation.start()
             else:
-                logger.warning("音乐播放器未在播放状态，跳过渐出动画")
+                logger.error("音乐播放器未在播放状态，跳过渐出动画")
         except Exception as e:
             logger.error(f"开始音量渐出动画时出错: {e}")
 
@@ -617,7 +617,7 @@ class pumping_reward(QWidget):
         try:
             # 检查音乐目录是否存在
             if not path_manager.file_exists(BGM_ANIMATION_PATH):
-                logger.warning(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
+                logger.error(f"音乐目录不存在: {BGM_ANIMATION_PATH}")
                 return
 
             # 获取所有支持的音乐文件 (｡･ω･｡)ﾉ♡
@@ -627,7 +627,7 @@ class pumping_reward(QWidget):
                 music_files.extend(glob.glob(os.path.join(BGM_ANIMATION_PATH, ext)))
 
             if not music_files:
-                logger.warning(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
+                logger.error(f"音乐目录中没有找到音乐文件: {BGM_ANIMATION_PATH}")
                 return
 
             # 随机选择一首音乐 ♪(^∇^*)
@@ -1151,7 +1151,7 @@ class pumping_reward(QWidget):
                     logger.info("星野连接: 已通过应用程序查找连接主窗口清理信号～")
                     return
             
-            logger.warning("星野警告: 未找到主窗口实例，清理信号连接失败～")
+            logger.error("星野警告: 未找到主窗口实例，清理信号连接失败～")
         except Exception as e:
             logger.error(f"星野连接失败: 连接清理信号时出错喵～ {e}")
     

@@ -206,7 +206,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
                     self.probability_or_weight.setCurrentIndex(probability_weight)
                     self.history_spinBox.setValue(history_days)
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
                 self.history_switch.setChecked(self.default_settings["history_enabled"])
                 self.probability_or_weight.setCurrentIndex(self.default_settings["probability_weight"])
                 self.history_spinBox.setValue(self.default_settings["history_days"])

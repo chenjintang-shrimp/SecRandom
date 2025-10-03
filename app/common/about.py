@@ -95,7 +95,7 @@ class aboutCard(GroupHeaderCardWidget):
                     self.update_worker.wait(1000)  # 等待1秒让线程正常结束
                 self.update_worker.deleteLater()
             except Exception as e:
-                logger.warning(f"清理旧update_worker时出现错误: {e}")
+                logger.error(f"清理旧update_worker时出现错误: {e}")
         
         # 创建新的worker
         self.update_worker = self.UpdateCheckWorker()
@@ -118,9 +118,9 @@ class aboutCard(GroupHeaderCardWidget):
                 self.update_worker.deleteLater()
                 self.update_worker = None
             except RuntimeError as e:
-                logger.warning(f"删除update_worker时出现错误: {e}")
+                logger.error(f"删除update_worker时出现错误: {e}")
             except Exception as e:
-                logger.warning(f"删除update_worker时出现未知错误: {e}")
+                logger.error(f"删除update_worker时出现未知错误: {e}")
 
     def on_channel_changed(self, index):
         channel = 'stable' if index == 0 else 'beta'
@@ -417,7 +417,7 @@ class ContributorDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)  # 数据大小
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def closeEvent(self, event):
         if not self.saved:
@@ -690,7 +690,7 @@ class DonationDialog(QDialog):
                 current_md5 = self.calculate_file_md5(local_path)
                 
                 if current_md5 is None:
-                    logger.warning(f"文件不存在: {local_path}")
+                    logger.error(f"文件不存在: {local_path}")
                     # 文件不存在，直接下载
                     if self.download_file_from_github(filename, local_path):
                         logger.info(f"成功下载缺失的文件: {filename}")
@@ -700,7 +700,7 @@ class DonationDialog(QDialog):
                         logger.error(f"下载失败: {filename}")
                         self.dialog.image_download_complete.emit(filename, False)
                 elif current_md5 != self.dialog.CORRECT_MD5.get(filename):
-                    logger.warning(f"MD5不匹配: {filename} (当前: {current_md5}, 期望: {self.dialog.CORRECT_MD5.get(filename)})")
+                    logger.error(f"MD5不匹配: {filename} (当前: {current_md5}, 期望: {self.dialog.CORRECT_MD5.get(filename)})")
                     # MD5不匹配，重新下载
                     if self.download_file_from_github(filename, local_path):
                         # 验证下载后的文件MD5
@@ -754,7 +754,7 @@ class DonationDialog(QDialog):
                 return True
                 
             except requests.exceptions.SSLError as e:
-                logger.warning(f"SSL证书验证失败 {filename}: {str(e)}")
+                logger.error(f"SSL证书验证失败 {filename}: {str(e)}")
                 logger.info("尝试禁用SSL验证重新下载...")
                 
                 try:
@@ -912,7 +912,7 @@ class DonationDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")
 
     def update_card_theme_style(self, card):
         """ 根据当前主题更新卡片样式 """

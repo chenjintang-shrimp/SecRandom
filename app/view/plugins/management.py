@@ -239,7 +239,7 @@ class PluginButtonGroup(QWidget):
             logger.info("使用32位Python嵌入式版本")
         else:
             # 默认使用64位版本
-            logger.warning(f"未识别的架构 {architecture}，默认使用64位Python嵌入式版本")
+            logger.error(f"未识别的架构 {architecture}，默认使用64位Python嵌入式版本")
             download_url = f"https://www.python.org/ftp/python/{python_version}/python-{python_version}-embed-amd64.zip"
         
         logger.info(f"正在下载嵌入式Python: {download_url}")
@@ -351,7 +351,7 @@ class PluginButtonGroup(QWidget):
         
         # 如果插件已设置为自启动但版本不兼容，自动禁用自启动
         if self.autostartButton.isChecked() and not self._check_app_version_compatibility():
-            logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容，自动禁用自启动")
+            logger.error(f"插件 {self.plugin_info['name']} 版本不兼容，自动禁用自启动")
             self.autostartButton.setChecked(False)
             # 更新plugin.json文件
             plugin_json_path = os.path.join(self.plugin_info["path"], "plugin.json")
@@ -383,7 +383,7 @@ class PluginButtonGroup(QWidget):
         plugin_file_path = os.path.join(self.plugin_info["path"], entry_point)
         
         if not path_manager.file_exists(plugin_file_path):
-            logger.warning(f"插件 {self.plugin_info['name']} 的入口文件 {entry_point} 不存在")
+            logger.error(f"插件 {self.plugin_info['name']} 的入口文件 {entry_point} 不存在")
             error_dialog = Dialog("文件不存在", f"插件 {self.plugin_info['name']} 的入口文件 {entry_point} 不存在", self)
             error_dialog.yesButton.setText("确定")
             error_dialog.cancelButton.hide()
@@ -632,7 +632,7 @@ class PluginButtonGroup(QWidget):
             readme_dialog.exec()
             
         else:
-            logger.warning(f"插件 {self.plugin_info['name']} 没有README文件")
+            logger.error(f"插件 {self.plugin_info['name']} 没有README文件")
             # 显示提示对话框
             no_readme_dialog = Dialog("提示", f"插件 {self.plugin_info['name']} 没有README文件", self)
             no_readme_dialog.yesButton.setText("确定")
@@ -650,7 +650,7 @@ class PluginButtonGroup(QWidget):
         if is_autostart:
             if not self._check_app_version_compatibility():
                 # 版本不兼容，不允许启用自启动
-                logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容，不允许启用自启动")
+                logger.error(f"插件 {self.plugin_info['name']} 版本不兼容，不允许启用自启动")
                 # 显示提示对话框
                 incompatible_dialog = Dialog("版本不兼容", f"插件 {self.plugin_info['name']} 与当前应用版本不兼容，无法启用自启动", self)
                 incompatible_dialog.yesButton.setText("确定")
@@ -745,7 +745,7 @@ class PluginButtonGroup(QWidget):
                 logger.info(f"插件 {self.plugin_info['name']} 版本兼容: 当前版本 {current_version} >= 最低要求 {min_version}")
                 return True
             else:
-                logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容: 当前版本 {current_version} < 最低要求 {min_version}")
+                logger.error(f"插件 {self.plugin_info['name']} 版本不兼容: 当前版本 {current_version} < 最低要求 {min_version}")
                 return False
                 
         except Exception as e:
@@ -763,7 +763,7 @@ class PluginButtonGroup(QWidget):
                 logger.info(f"插件 {self.plugin_info['name']} 版本兼容，启用按钮已启用")
             else:
                 self.enableButton.setEnabled(False)
-                logger.warning(f"插件 {self.plugin_info['name']} 版本不兼容，启用按钮已禁用")
+                logger.error(f"插件 {self.plugin_info['name']} 版本不兼容，启用按钮已禁用")
                 
         except Exception as e:
             logger.error(f"更新启用按钮状态失败: {e}")
@@ -822,7 +822,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
         plugins = []
         
         if not path_manager.file_exists(self.plugin_dir):
-            logger.warning(f"插件目录不存在: {self.plugin_dir}")
+            logger.error(f"插件目录不存在: {self.plugin_dir}")
             return plugins
         
         for item in os.listdir(self.plugin_dir):
@@ -849,7 +849,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
                         missing_fields.append(field)
                 
                 if missing_fields:
-                    logger.warning(f"插件 {item} 缺少必需字段: {missing_fields}")
+                    logger.error(f"插件 {item} 缺少必需字段: {missing_fields}")
                     continue
                 
                 # 添加插件信息
@@ -936,7 +936,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
             if plugin.get("autostart", False):
                 # 检查版本兼容性
                 if not self._check_plugin_version_compatibility(plugin):
-                    logger.warning(f"插件 {plugin['name']} 版本不兼容，跳过自启动")
+                    logger.error(f"插件 {plugin['name']} 版本不兼容，跳过自启动")
                     continue
                 
                 try:
@@ -968,7 +968,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
                 logger.info(f"插件 {plugin_info['name']} 版本兼容: 当前版本 {current_version} >= 最低要求 {min_version}")
                 return True
             else:
-                logger.warning(f"插件 {plugin_info['name']} 版本不兼容: 当前版本 {current_version} < 最低要求 {min_version}")
+                logger.error(f"插件 {plugin_info['name']} 版本不兼容: 当前版本 {current_version} < 最低要求 {min_version}")
                 return False
                 
         except Exception as e:
@@ -981,7 +981,7 @@ class PluginManagementPage(GroupHeaderCardWidget):
         background_service_path = os.path.join(plugin_info["path"], plugin_info["background_service"])
         
         if not path_manager.file_exists(background_service_path):
-            logger.warning(f"插件 {plugin_info['name']} 没有后台服务文件")
+            logger.error(f"插件 {plugin_info['name']} 没有后台服务文件")
             return
         
         try:

@@ -105,13 +105,13 @@ class advanced_settingsCard(GroupHeaderCardWidget):
             enc_set_file = path_manager.get_enc_set_path()
             with open_file(enc_set_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                logger.debug("正在读取安全设置，准备执行导出诊断数据验证")
+                logger.info("正在读取安全设置，准备执行导出诊断数据验证")
 
                 if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
                     from app.common.password_dialog import PasswordDialog
                     dialog = PasswordDialog(self)
                     if dialog.exec_() != QDialog.Accepted:
-                        logger.warning("用户取消导出诊断数据操作，安全防御已解除")
+                        logger.error("用户取消导出诊断数据操作，安全防御已解除")
                         return
         except Exception as e:
             logger.error(f"密码验证系统出错: {e}")
@@ -307,7 +307,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                     return f"{product_name} (Build {current_build}, Version {display_version})"
                     
             except Exception as e:
-                logger.warning(f"从注册表获取Windows版本信息失败: {str(e)}")
+                logger.error(f"从注册表获取Windows版本信息失败: {str(e)}")
                 # 回退到标准方法
                 release = platform.release()
                 version = platform.version()
@@ -359,7 +359,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                         return platform.release()
                         
             except Exception as e:
-                logger.warning(f"从注册表获取Windows版本信息失败: {str(e)}")
+                logger.error(f"从注册表获取Windows版本信息失败: {str(e)}")
                 # 回退到标准方法
                 release = platform.release()
                 version = platform.version()
@@ -405,7 +405,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                     return f"{current_build}.{ubr} (Version {display_version})"
                     
             except Exception as e:
-                logger.warning(f"从注册表获取Windows版本信息失败: {str(e)}")
+                logger.error(f"从注册表获取Windows版本信息失败: {str(e)}")
                 # 回退到标准方法但进行修正
                 version = platform.version()
                 release = platform.release()
@@ -1403,4 +1403,4 @@ class SettingsSelectionDialog(QDialog):
                     ctypes.sizeof(ctypes.c_uint)
                 )
             except Exception as e:
-                logger.warning(f"设置标题栏颜色失败: {str(e)}")
+                logger.error(f"设置标题栏颜色失败: {str(e)}")

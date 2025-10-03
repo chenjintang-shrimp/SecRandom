@@ -61,7 +61,7 @@ def set_system_hidden_file(file_path):
                 os.chmod(file_path, current_mode & ~stat.S_IALLUGO)
                 logger.info(f"已设置文件为隐藏: {file_path}")
         else:
-            logger.warning(f"文件不存在，无法设置隐藏属性: {file_path}")
+            logger.error(f"文件不存在，无法设置隐藏属性: {file_path}")
     except Exception as e:
         logger.error(f"设置文件隐藏属性失败: {e}")
 
@@ -224,7 +224,7 @@ def get_usb_drive_letter(device_id):
                                     logger.info(f"USB设备但DriveType不为2，盘符: {logical_disk.DeviceID}")
                                     return logical_disk.DeviceID
                     except Exception as e:
-                        logger.warning(f"关联查询失败: {e}")
+                        logger.error(f"关联查询失败: {e}")
         
         # 方法2：通过PNPDeviceID匹配
         logger.info("方法1失败，尝试通过PNPDeviceID匹配")
@@ -257,7 +257,7 @@ def get_usb_drive_letter(device_id):
                                     logger.info(f"通过方法2确认U盘盘符: {logical_disk.DeviceID}")
                                     return logical_disk.DeviceID
                     except Exception as e:
-                        logger.warning(f"检查逻辑磁盘关联失败: {e}")
+                        logger.error(f"检查逻辑磁盘关联失败: {e}")
         
         # 方法3：直接查找所有逻辑磁盘并尝试匹配USB设备
         logger.info("方法2失败，尝试直接查找所有逻辑磁盘")
@@ -298,7 +298,7 @@ def get_usb_drive_letter(device_id):
                                     logger.info(f"通过方法3确认U盘盘符: {disk_letter}")
                                     return disk_letter
                 except Exception as e:
-                    logger.warning(f"检查逻辑磁盘 {disk_letter} 失败: {e}")
+                    logger.error(f"检查逻辑磁盘 {disk_letter} 失败: {e}")
         
         # 最后的备选方案：如果有USB设备且只有一个逻辑磁盘，返回它
         if len(usb_logical_disks) == 1:
@@ -309,7 +309,7 @@ def get_usb_drive_letter(device_id):
             logger.info(f"有多个逻辑磁盘，返回第一个: {usb_logical_disks[0]}")
             return usb_logical_disks[0]
         
-        logger.warning(f"未找到设备ID {device_id} 对应的U盘盘符")
+        logger.error(f"未找到设备ID {device_id} 对应的U盘盘符")
         return None
     except Exception as e:
         logger.error(f"获取U盘盘符失败: {e}")
@@ -335,8 +335,8 @@ def bind_usb_device(selected_device, usb_mount_path, require_key_file=True):
     """
     try:
         # 添加调试日志
-        logger.debug(f"开始绑定U盘，selected_device: {selected_device}, 类型: {type(selected_device)}")
-        logger.debug(f"usb_mount_path: {usb_mount_path}")
+        logger.info(f"开始绑定U盘，selected_device: {selected_device}, 类型: {type(selected_device)}")
+        logger.info(f"usb_mount_path: {usb_mount_path}")
         
         # 检查selected_device是否为字典类型
         if not isinstance(selected_device, dict):
@@ -363,7 +363,7 @@ def bind_usb_device(selected_device, usb_mount_path, require_key_file=True):
             # 生成加密密钥（使用设备ID和序列号的组合作为加密密钥）
             try:
                 encryption_key = selected_device["设备ID"] + selected_device["序列号"]
-                logger.debug(f"生成加密密钥成功")
+                logger.info(f"生成加密密钥成功")
             except Exception as e:
                 logger.error(f"生成加密密钥失败: {e}")
                 logger.error(f"selected_device内容: {selected_device}")
@@ -379,7 +379,7 @@ def bind_usb_device(selected_device, usb_mount_path, require_key_file=True):
             if os.path.exists(key_path):
                 try:
                     os.remove(key_path)
-                    logger.debug(f"已删除已存在的密钥文件: {key_path}")
+                    logger.info(f"已删除已存在的密钥文件: {key_path}")
                 except PermissionError as e:
                     logger.error(f"权限错误，无法删除已存在的密钥文件: {key_path}, 错误: {e}")
                     logger.error(f"请检查文件是否被占用或是否有管理员权限")
@@ -392,7 +392,7 @@ def bind_usb_device(selected_device, usb_mount_path, require_key_file=True):
             try:
                 with open(key_path, "wb") as f:
                     f.write(encrypted_key_data)
-                logger.debug(f"成功写入密钥文件: {key_path}")
+                logger.info(f"成功写入密钥文件: {key_path}")
             except PermissionError as e:
                 logger.error(f"权限错误，无法写入密钥文件: {key_path}, 错误: {e}")
                 logger.error(f"请检查U盘是否被写保护或是否有管理员权限")
@@ -437,7 +437,7 @@ def bind_usb_device(selected_device, usb_mount_path, require_key_file=True):
         # 如果不存在usb_binding数组，则创建
         if "usb_binding" not in existing_settings:
             existing_settings["usb_binding"] = []
-            logger.debug("创建新的usb_binding数组")
+            logger.info("创建新的usb_binding数组")
         
         # 检查现有usb_binding数组的数据类型
         # logger.debug(f"现有usb_binding数组: {existing_settings['usb_binding']}, 类型: {type(existing_settings['usb_binding'])}")
@@ -457,9 +457,9 @@ def bind_usb_device(selected_device, usb_mount_path, require_key_file=True):
         
         if not device_exists:
             existing_settings["usb_binding"].append(usb_config)
-            logger.debug(f"成功添加USB配置到绑定列表")
+            logger.info(f"成功添加USB配置到绑定列表")
         else:
-            logger.warning("该U盘已经绑定过，不能重复绑定")
+            logger.error("该U盘已经绑定过，不能重复绑定")
             return False
         
         # 保存到enc_set.json文件
@@ -467,7 +467,7 @@ def bind_usb_device(selected_device, usb_mount_path, require_key_file=True):
             os.makedirs(os.path.dirname(enc_set_file), exist_ok=True)
             with open(enc_set_file, "w", encoding='utf-8') as f:
                 json.dump(existing_settings, f, indent=4, ensure_ascii=False)
-            logger.debug(f"成功保存配置到文件: {enc_set_file}")
+            logger.info(f"成功保存配置到文件: {enc_set_file}")
         except Exception as e:
             logger.error(f"保存配置文件失败: {e}")
             return False
@@ -565,10 +565,10 @@ def unbind_usb(device_id=None, serial_number=None, model=None):
                         logger.info(f"成功解绑 {unbound_count} 个U盘（均为无需.key文件的U盘）")
                     return True
                 else:
-                    logger.warning("没有找到匹配的U盘进行解绑")
+                    logger.error("没有找到匹配的U盘进行解绑")
                     return False
             else:
-                logger.warning("没有找到绑定的U盘")
+                logger.error("没有找到绑定的U盘")
                 return False
         return False
     except Exception as e:
@@ -607,7 +607,7 @@ def check_and_delete_pending_usb():
                     usb_device["序列号"] == deletion_info["SerialNumber"] and
                     (not deletion_info.get("Model") or usb_device.get("型号", "") == deletion_info.get("Model", ""))):
                     device_found = True
-                    logger.debug(f"找到匹配的USB设备进行删除: {deletion_info['DeviceID']}, 型号: {deletion_info.get('Model', '未知')}")
+                    logger.info(f"找到匹配的USB设备进行删除: {deletion_info['DeviceID']}, 型号: {deletion_info.get('Model', '未知')}")
                     
                     # 获取U盘盘符
                     usb_drive_letter = get_usb_drive_letter(deletion_info["DeviceID"])
@@ -626,11 +626,11 @@ def check_and_delete_pending_usb():
                                 # 删除失败，保留在待删除列表
                                 remaining_deletions.append(deletion_info)
                         else:
-                            logger.warning(f"密钥文件不存在: {key_path}")
+                            logger.error(f"密钥文件不存在: {key_path}")
                             # 文件不存在，认为已删除
                             deleted_count += 1
                     else:
-                        logger.warning(f"无法获取U盘盘符: {deletion_info['DeviceID']}")
+                        logger.error(f"无法获取U盘盘符: {deletion_info['DeviceID']}")
                         # 无法获取盘符，保留在待删除列表
                         remaining_deletions.append(deletion_info)
                     break
@@ -706,19 +706,19 @@ def is_usb_bound():
                     # 获取U盘盘符
                     usb_drive_letter = get_usb_drive_letter(device_id)
                     if not usb_drive_letter:
-                        logger.debug(f"未找到绑定的U盘设备: {device_id}")
+                        logger.info(f"未找到绑定的U盘设备: {device_id}")
                         continue
                     
                     # 检查.key文件是否存在
                     key_path = os.path.join(usb_drive_letter, ".key")
                     if not os.path.exists(key_path):
-                        logger.debug(f"U盘中的密钥文件不存在: {key_path}")
+                        logger.info(f"U盘中的密钥文件不存在: {key_path}")
                         continue
                     
                     # 读取并解密密钥文件
                     decrypted_key = read_encrypted_key_file(key_path, device_id, serial_number)
                     if decrypted_key is None:
-                        logger.debug(f"密钥文件解密失败: {key_path}")
+                        logger.info(f"密钥文件解密失败: {key_path}")
                         continue
                     
                     # 验证解密后的密钥是否与保存的密钥值匹配
@@ -726,7 +726,7 @@ def is_usb_bound():
                         # logger.info(f"U盘绑定验证成功: {device_id}, 型号: {model}")
                         return True
                     else:
-                        logger.debug(f"U盘绑定验证失败，密钥不匹配: {device_id}")
+                        logger.info(f"U盘绑定验证失败，密钥不匹配: {device_id}")
                         continue
                 else:
                     # 不需要.key文件验证，直接检查key值是否为特殊标记
@@ -734,11 +734,11 @@ def is_usb_bound():
                         # logger.info(f"U盘绑定验证成功（无需.key文件）: {device_id}, 型号: {model}")
                         return True
                     else:
-                        logger.debug(f"U盘绑定验证失败，key值不匹配: {device_id}")
+                        logger.info(f"U盘绑定验证失败，key值不匹配: {device_id}")
                         continue
             
             # 所有U盘都验证失败
-            logger.warning("没有找到验证通过的U盘")
+            logger.error("没有找到验证通过的U盘")
             return False
         
         return False
@@ -1245,7 +1245,7 @@ class USBDeviceListWidget(ListWidget):
                 with open(enc_set_file, "r", encoding='utf-8') as f:
                     settings = json.load(f)
                     usb_bindings = settings.get("usb_binding", [])
-                    logger.debug(f"从配置文件读取到usb_bindings: {usb_bindings}, 类型: {type(usb_bindings)}")
+                    logger.info(f"从配置文件读取到usb_bindings: {usb_bindings}, 类型: {type(usb_bindings)}")
                     if usb_bindings:
                         # 收集所有已绑定的完整设备信息
                         if isinstance(usb_bindings, dict):
@@ -1259,13 +1259,13 @@ class USBDeviceListWidget(ListWidget):
                                     "SerialNumber": serial_number,
                                     "Model": model
                                 })
-                                logger.debug(f"从字典中添加设备到绑定列表: {device_id}")
+                                logger.info(f"从字典中添加设备到绑定列表: {device_id}")
                             else:
-                                logger.warning("usb_bindings字典中缺少必要的设备信息")
+                                logger.error("usb_bindings字典中缺少必要的设备信息")
                         elif isinstance(usb_bindings, list):
                             # 如果usb_bindings是列表，遍历处理每个元素
                             for i, usb_binding in enumerate(usb_bindings):
-                                logger.debug(f"处理usb_binding[{i}]: {usb_binding}, 类型: {type(usb_binding)}")
+                                logger.info(f"处理usb_binding[{i}]: {usb_binding}, 类型: {type(usb_binding)}")
                                 if isinstance(usb_binding, dict):
                                     device_id = usb_binding.get("DeviceID")
                                     serial_number = usb_binding.get("SerialNumber")
@@ -1276,9 +1276,9 @@ class USBDeviceListWidget(ListWidget):
                                             "SerialNumber": serial_number,
                                             "Model": model
                                         })
-                                        logger.debug(f"添加设备到绑定列表: {device_id}")
+                                        logger.info(f"添加设备到绑定列表: {device_id}")
                                     else:
-                                        logger.warning(f"usb_binding[{i}]中缺少必要的设备信息")
+                                        logger.error(f"usb_binding[{i}]中缺少必要的设备信息")
                                 else:
                                     logger.error(f"usb_binding[{i}]类型错误，期望字典，实际得到: {type(usb_binding)}")
                         else:
@@ -1297,7 +1297,7 @@ class USBDeviceListWidget(ListWidget):
                     drive["序列号"] == bound_device["SerialNumber"] and
                     (not bound_device.get("Model") or drive.get("型号", "") == bound_device.get("Model", ""))):
                     is_bound = True
-                    logger.debug(f"设备 {drive['设备ID']} 通过三重验证，标记为已绑定")
+                    logger.info(f"设备 {drive['设备ID']} 通过三重验证，标记为已绑定")
                     break
             
             bound_status = " [已绑定]" if is_bound else ""
@@ -1306,7 +1306,7 @@ class USBDeviceListWidget(ListWidget):
             # 确保存储的是字典类型
             if isinstance(drive, dict):
                 self.item(i).setData(Qt.UserRole, drive)
-                logger.debug(f"成功存储设备数据到列表项 {i}")
+                logger.info(f"成功存储设备数据到列表项 {i}")
             else:
                 logger.error(f"设备数据类型错误，无法存储到列表项 {i}: {type(drive)}")
     
@@ -1316,7 +1316,7 @@ class USBDeviceListWidget(ListWidget):
         if current_item:
             device_data = current_item.data(Qt.UserRole)
             # 添加调试日志
-            logger.debug(f"获取选中的设备数据: {device_data}, 类型: {type(device_data)}")
+            logger.info(f"获取选中的设备数据: {device_data}, 类型: {type(device_data)}")
             # 确保返回的是字典类型
             if isinstance(device_data, dict):
                 return device_data
@@ -1380,7 +1380,7 @@ class USBBindDialog(MessageBoxBase):
         """验证绑定信息"""
         selected_device = self.deviceListWidget.get_selected_device()
         # 添加调试日志
-        logger.debug(f"绑定对话框获取选中的设备: {selected_device}, 类型: {type(selected_device)}")
+        logger.info(f"绑定对话框获取选中的设备: {selected_device}, 类型: {type(selected_device)}")
         if not selected_device:
             self.warningLabel.setText("请选择要绑定的U盘")
             self.warningLabel.show()
@@ -1389,7 +1389,7 @@ class USBBindDialog(MessageBoxBase):
         # 自动获取盘符
         try:
             drive_letter = get_usb_drive_letter(selected_device["设备ID"])
-            logger.debug(f"获取到盘符: {drive_letter}")
+            logger.info(f"获取到盘符: {drive_letter}")
         except Exception as e:
             logger.error(f"获取盘符时发生错误: {e}")
             self.warningLabel.setText("获取U盘盘符时发生错误")
@@ -1403,7 +1403,7 @@ class USBBindDialog(MessageBoxBase):
         
         # 获取是否需要.key文件的选项
         require_key_file = self.requireKeyFileCheckBox.isChecked()
-        logger.debug(f"用户选择是否需要.key文件: {require_key_file}")
+        logger.info(f"用户选择是否需要.key文件: {require_key_file}")
         
         # 执行绑定
         try:
@@ -2519,7 +2519,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
                     if settings.get("usb_auth_enabled", False):
                         self.start_usb_monitoring()
             else:
-                logger.warning(f"设置文件不存在: {self.settings_file}")
+                logger.error(f"设置文件不存在: {self.settings_file}")
                 self.start_password_switch.setChecked(self.default_settings["start_password_enabled"])
                 self.encrypt_setting_switch.setChecked(self.default_settings["encrypt_setting_enabled"])
                 self.two_factor_switch.setChecked(self.default_settings["two_factor_auth"])
@@ -2657,7 +2657,7 @@ class USBMonitorThread(QThread):
                 self.terminate()
                 self.wait(1000)  # 等待终止完成
                 if self.isRunning():
-                    logger.warning("USB监控线程强制终止失败")
+                    logger.error("USB监控线程强制终止失败")
     
     def __del__(self):
         """析构函数，确保线程正确停止"""

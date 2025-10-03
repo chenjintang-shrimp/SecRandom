@@ -28,7 +28,7 @@ class MessageSender:
         self.temp_dir = tempfile.gettempdir()
         self.json_file = os.path.join(self.temp_dir, "SecRandom_message_sent.json")
         self.unread_file = os.path.join(self.temp_dir, "SecRandom_unread")
-        logger.debug(f"消息发送器已初始化，临时目录: {self.temp_dir}")
+        # logger.debug(f"消息发送器已初始化，临时目录: {self.temp_dir}")
 
     def send_json_message(self, data: Dict[str, Any]) -> bool:
         """发送 JSON 格式的结构化消息"""
