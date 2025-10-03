@@ -194,26 +194,30 @@ class list_SettinsCard(GroupHeaderCardWidget):
                 self,
                 "保存学生名单",
                 f"{class_name}_学生名单",
-                "Excel文件 (*.xlsx);;Excel 97-2003文件 (*.xls);;CSV文件 (*.csv)"
+                "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件（仅姓名） (*.txt)"
             )
             
             if file_path:
                 # 根据选择的格式处理文件扩展名和保存方式
-                if "Excel文件 (*.xlsx)" in selected_filter:
+                if "Excel 文件 (*.xlsx)" in selected_filter:
                     if not file_path.endswith('.xlsx'):
                         file_path += '.xlsx'
                     # 保存为xlsx文件
                     df.to_excel(file_path, index=False, engine='openpyxl')
-                elif "Excel 97-2003文件 (*.xls)" in selected_filter:
-                    if not file_path.endswith('.xls'):
-                        file_path += '.xls'
-                    # 保存为xls文件
-                    df.to_excel(file_path, index=False, engine='xlwt')
-                else:  # CSV格式
+                elif "CSV 文件 (*.csv)" in selected_filter:
                     if not file_path.endswith('.csv'):
                         file_path += '.csv'
                     # 保存为CSV文件
                     df.to_csv(file_path, index=False, encoding='utf-8-sig')
+                else:  # TXT格式（仅姓名）
+                    if not file_path.endswith('.txt'):
+                        file_path += '.txt'
+                    # 提取姓名并保存为TXT文件，每行一个姓名
+                    with open_file(file_path, 'w', encoding='utf-8') as f:
+                        for name in data.keys():
+                            # 去除【】符号后写入
+                            clean_name = name.replace('【', '').replace('】', '')
+                            f.write(f"{clean_name}\n")
                 
                 InfoBar.success(
                     title='导出成功',
@@ -910,7 +914,7 @@ class ImportStudentDialog(QDialog):
         type_label.setFont(QFont(load_custom_font(), 12))
         self.type_combo = ComboBox()
         self.type_combo.setFont(QFont(load_custom_font(), 12))
-        self.type_combo.addItems(["Excel文件 (*.xls *.xlsx)", "CSV文件 (*.csv)", "NamePicker文件 (*.csv)"])
+        self.type_combo.addItems(["Excel文件 (*.xlsx)", "CSV文件 (*.csv)", "NamePicker < 软件版本3.0 格式 CSV 文件 (*.csv)"])
         self.type_combo.currentIndexChanged.connect(self.change_file_type)
         type_layout.addWidget(type_label)
         type_layout.addWidget(self.type_combo)
@@ -990,10 +994,10 @@ class ImportStudentDialog(QDialog):
 
     def browse_file(self):
         filters = {
-            # 支持xls和xlsx格式的Excel文件
-            'excel': "Excel Files (*.xls *.xlsx)",
-            'csv': "CSV Files (*.csv)",
-            'namepicker': "NamePicker Files (*.csv)"
+            # 仅支持xlsx格式的Excel文件
+            'excel': "Excel 文件 (*.xlsx)",
+            'csv': "CSV 文件 (*.csv)",
+            'namepicker': "NamePicker < 软件版本3.0 格式 CSV 文件 (*.csv)"
         }
         self.file_path, _ = QFileDialog.getOpenFileName(
             self, "选择文件", "", filters[self.file_type]

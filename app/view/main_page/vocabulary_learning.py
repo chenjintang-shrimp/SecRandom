@@ -3016,7 +3016,7 @@ class ImportVocabularyDialog(QDialog):
         type_label.setFont(QFont(load_custom_font(), 12))
         self.type_combo = ComboBox()
         self.type_combo.setFont(QFont(load_custom_font(), 12))
-        self.type_combo.addItems(["Excel文件 (*.xls *.xlsx)", "CSV文件 (*.csv)"])
+        self.type_combo.addItems(["Excel文件 (*.xlsx)", "CSV文件 (*.csv)"])
         self.type_combo.currentIndexChanged.connect(self.change_file_type)
         type_layout.addWidget(type_label)
         type_layout.addWidget(self.type_combo)
@@ -3099,7 +3099,7 @@ class ImportVocabularyDialog(QDialog):
     def browse_file(self):
         filters = {
             # 🌟 星穹铁道白露：支持xls和xlsx格式的Excel文件 ~ (๑•̀ㅂ•́)ญ✧
-            'excel': "Excel Files (*.xls *.xlsx)",
+            'excel': "Excel Files (*.xlsx)",
             'csv': "CSV Files (*.csv)"
         }
         self.file_path, _ = QFileDialog.getOpenFileName(

@@ -168,23 +168,26 @@ class reward_SettinsCard(GroupHeaderCardWidget):
                 self,
                 "保存奖品名单",
                 f"{prize_pools_name}_奖品名单",
-                "Excel文件 (*.xlsx);;Excel 97-2003文件 (*.xls);;CSV文件 (*.csv)"
+                "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件（仅名称） (*.txt)"
             )
             
             if file_path:
                 # 根据选择的文件类型确定扩展名和保存格式
-                if selected_filter == "Excel文件 (*.xlsx)":
+                if selected_filter == "Excel 文件 (*.xlsx)":
                     if not file_path.endswith('.xlsx'):
                         file_path += '.xlsx'
                     df.to_excel(file_path, index=False, engine='openpyxl')
-                elif selected_filter == "Excel 97-2003文件 (*.xls)":
-                    if not file_path.endswith('.xls'):
-                        file_path += '.xls'
-                    df.to_excel(file_path, index=False, engine='xlwt')
-                else:  # CSV文件
+                elif selected_filter == "CSV 文件 (*.csv)":
                     if not file_path.endswith('.csv'):
                         file_path += '.csv'
                     df.to_csv(file_path, index=False, encoding='utf-8-sig')
+                else:  # TXT文件（仅名称）
+                    if not file_path.endswith('.txt'):
+                        file_path += '.txt'
+                    # 仅导出奖品名称，每行一个名称
+                    with open_file(file_path, 'w', encoding='utf-8') as f:
+                        for name in data.keys():
+                            f.write(f"{name}\n")
                 
                 InfoBar.success(
                     title='导出成功',
@@ -640,7 +643,7 @@ class ImportPrizeDialog(QDialog):
         type_label.setFont(QFont(load_custom_font(), 12))
         self.type_combo = ComboBox()
         self.type_combo.setFont(QFont(load_custom_font(), 12))
-        self.type_combo.addItems(["Excel文件 (*.xls *.xlsx)", "CSV文件 (*.csv)"])
+        self.type_combo.addItems(["Excel 文件 (*.xlsx)", "CSV 文件 (*.csv)"])
         self.type_combo.currentIndexChanged.connect(self.change_file_type)
         type_layout.addWidget(type_label)
         type_layout.addWidget(self.type_combo)
@@ -717,8 +720,8 @@ class ImportPrizeDialog(QDialog):
 
     def browse_file(self):
         filters = {
-            'excel': "Excel Files (*.xls *.xlsx)",
-            'csv': "CSV Files (*.csv)"
+            'excel': "Excel 文件 (*.xlsx)",
+            'csv': "CSV 文件 (*.csv)"
         }
         self.file_path, _ = QFileDialog.getOpenFileName(
             self, "选择文件", "", filters[self.file_type]
