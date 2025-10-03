@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import *
 
 import os
 import json
+from collections import OrderedDict
 from pathlib import Path
 from loguru import logger
 import pandas as pd
@@ -96,14 +97,25 @@ class list_SettinsCard(GroupHeaderCardWidget):
         self.table.setBorderVisible(True)
         self.table.setBorderRadius(8)
         self.table.setWordWrap(False)
-        self.table.setColumnCount(4)
+        self.table.setColumnCount(5)
         self.table.setEditTriggers(TableWidget.DoubleClicked)
         self.table.setSortingEnabled(True)
         self.table.setSelectionMode(QAbstractItemView.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.verticalHeader().hide()
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组'])
+        # 设置表格列宽模式
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Fixed)    # 在班级列固定且不可调整
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)  # 学号列拉伸
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)  # 姓名列拉伸
+        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)  # 性别列拉伸
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)  # 所处小组列拉伸
+        # 设置"在班级"列的宽度为较小值
+        self.table.horizontalHeader().resizeSection(0, 80)  # 第1列（索引0）宽度设为80
+        # 设置表格拉伸最后一列后的剩余空间
+        self.table.horizontalHeader().setStretchLastSection(False)
+        self.table.setHorizontalHeaderLabels(['在班级', '学号', '姓名', '性别', '所处小组'])
+        # 设置第一列表头居中对齐
+        self.table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
         self.show_table()
         self.refresh_signal.connect(self.show_table)
         self.table.itemChanged.connect(self.save_table_data)
@@ -286,7 +298,7 @@ class list_SettinsCard(GroupHeaderCardWidget):
         if class_name:
             try:
                 with open_file(student_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
+                    data = json.load(f, object_pairs_hook=OrderedDict)
                 self.table.setRowCount(len(data))
                 self.table.clearContents()
                 
@@ -296,21 +308,44 @@ class list_SettinsCard(GroupHeaderCardWidget):
                 self.table.setSortingEnabled(False)
                 self.table.blockSignals(True)
                 for i, (name, info) in enumerate(data.items()):
-                    self.table.setItem(i, 0, QTableWidgetItem(str(info['id']).zfill(max_digits)))
-                    self.table.setItem(i, 1, QTableWidgetItem(name.replace('【', '').replace('】', '')))
-                    self.table.setItem(i, 2, QTableWidgetItem(info['gender']))
-                    self.table.setItem(i, 3, QTableWidgetItem(info['group']))
-                    for j in range(4):
+                    # 添加"在班级"勾选框到第一列
+                    checkbox = QTableWidgetItem()
+                    checkbox.setFlags(checkbox.flags() | Qt.ItemIsUserCheckable)
+                    if info.get('exist', True):  # 默认为True，如果不存在exist字段
+                        checkbox.setCheckState(Qt.Checked)
+                    else:
+                        checkbox.setCheckState(Qt.Unchecked)
+                    # 设置勾选框居中对齐
+                    checkbox.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    self.table.setItem(i, 0, checkbox)
+                    # 设置单元格的勾选框居中
+                    self.table.item(i, 0).setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    
+                    # 设置其他列数据
+                    self.table.setItem(i, 1, QTableWidgetItem(str(info['id']).zfill(max_digits)))
+                    self.table.setItem(i, 2, QTableWidgetItem(name.replace('【', '').replace('】', '')))
+                    self.table.setItem(i, 3, QTableWidgetItem(info['gender']))
+                    self.table.setItem(i, 4, QTableWidgetItem(info['group']))
+                    
+                    for j in range(5):
                         item = self.table.item(i, j)
                         if item:
                             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                             item.setFont(QFont(load_custom_font(), 12))
-                            # 学号和姓名列不可编辑
-                            if j in (0, 1):  # 学号列(0)和姓名列(1)不可编辑
+                            # 学号列不可编辑，姓名列可编辑
+                            if j == 1:  # 学号列(现在在索引1)不可编辑
                                 item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-                self.table.setHorizontalHeaderLabels(['学号', '姓名', '性别', '所处小组'])
+                self.table.setHorizontalHeaderLabels(['在班级', '学号', '姓名', '性别', '所处小组'])
                 self.table.blockSignals(False)
                 self.table.setSortingEnabled(True)
+                # 重新设置列宽模式，保持第1列固定宽度，其他列拉伸
+                self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Fixed)    # 在班级列固定且不可调整
+                self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)  # 学号列拉伸
+                self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)  # 姓名列拉伸
+                self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)  # 性别列拉伸
+                self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Stretch)  # 所处小组列拉伸
+                # 重新设置"在班级"列的宽度
+                self.table.horizontalHeader().resizeSection(0, 80)  # 第1列（索引0）宽度设为80
             except FileNotFoundError:
                 self.table.setRowCount(0)
                 self.table.setHorizontalHeaderLabels([])
@@ -392,11 +427,11 @@ class list_SettinsCard(GroupHeaderCardWidget):
                     ensure_dir(list_folder)
                     
                     student_file = path_manager.get_resource_path('list', f'{selected_class}.json')
-                    student_data = {}
+                    student_data = OrderedDict()
                     
                     if path_manager.file_exists(student_file):
                         with open_file(student_file, 'r', encoding='utf-8') as f:
-                            student_data = json.load(f)
+                            student_data = json.load(f, object_pairs_hook=OrderedDict)
                     
                     # 先删除不在新名单中的学生
                     # 保留原始键名处理特殊字符
@@ -413,25 +448,77 @@ class list_SettinsCard(GroupHeaderCardWidget):
                     for student_to_remove in students_to_remove:
                         del student_data[student_to_remove]
                     
-                    # 更新或添加新学生
-                    # 重新生成学生顺序，确保按输入顺序存储
-                    new_student_data = {}
+                    # 更新或添加新学生，保持原有学号和顺序
+                    # 创建一个临时有序字典来存储所有学生信息
+                    temp_student_data = OrderedDict()
+                    
+                    # 首先，将所有现有学生添加到临时字典
+                    for name, info in student_data.items():
+                        temp_student_data[name] = info
+                    
+                    # 处理新输入的学生
                     for idx, student in enumerate(students, start=1):
                         student_name = student.strip()
-                        exist_status = False if '【' in student_name and '】' in student_name else True
-                        # 确保保留原有的性别和小组信息
-                        cleaned_name = student_name.replace('【', '').replace('】', '')
-                        if cleaned_name in {k.replace('【', '').replace('】', '') for k in student_data.keys()}: 
-                            original_info = next((student_data[k] for k in student_data if k.replace('【', '').replace('】', '') == cleaned_name), {})
+                        # 去掉输入中的【】符号（如果用户输入了）
+                        clean_name = student_name.replace('【', '').replace('】', '')
+                        
+                        # 检查学生是否已存在
+                        existing_key = None
+                        for key in temp_student_data.keys():
+                            if key.replace('【', '').replace('】', '') == clean_name:
+                                existing_key = key
+                                break
+                        
+                        if existing_key:
+                            # 学生已存在，保留原有信息（包括学号）
+                            original_info = temp_student_data[existing_key]
+                            exist_status = original_info.get("exist", True)
+                            original_key = existing_key
                         else:
-                            original_info = {}
-                        new_student_data[student_name] = {
-                            "id": idx,
+                            # 新学生，找到最小的可用学号
+                            used_ids = {info['id'] for info in temp_student_data.values()}
+                            new_id = 1
+                            while new_id in used_ids:
+                                new_id += 1
+                            
+                            original_info = {"id": new_id}
+                            exist_status = True
+                            original_key = ""
+                        
+                        # 根据 exist 状态决定是否在名称两侧加上【】符号
+                        # 检查原本的名称是否已经包含【】符号
+                        original_has_brackets = '【' in original_key and '】' in original_key if original_key else False
+                        # 只有当 exist 状态与括号状态不一致时才更改
+                        if not exist_status and not original_has_brackets:
+                            # 不是否在班级但名称没有括号，添加括号
+                            display_name = f"【{clean_name}】"
+                        elif exist_status and original_has_brackets:
+                            # 是否在班级但名称有括号，移除括号
+                            display_name = clean_name
+                        else:
+                            # 状态一致，保持原有名称
+                            display_name = original_key if original_key else clean_name
+                        
+                        # 如果键名发生变化，需要更新字典
+                        if display_name != original_key and original_key:
+                            # 删除旧键
+                            del temp_student_data[original_key]
+                        
+                        # 更新学生信息
+                        temp_student_data[display_name] = {
+                            "id": original_info.get("id", idx),
                             "exist": exist_status,
                             "gender": original_info.get("gender", ""),
                             "group": original_info.get("group", "")
                         }
-                    student_data = new_student_data
+                    
+                    # 根据学号排序学生
+                    sorted_students = sorted(temp_student_data.items(), key=lambda x: x[1]['id'])
+                    
+                    # 创建排序后的学生数据有序字典
+                    student_data = OrderedDict()
+                    for name, info in sorted_students:
+                        student_data[name] = info
                     
                     with open_file(student_file, 'w', encoding='utf-8') as f:
                         json.dump(student_data, f, ensure_ascii=False, indent=4)
@@ -454,11 +541,11 @@ class list_SettinsCard(GroupHeaderCardWidget):
                     ensure_dir(list_folder)
 
                     student_file = path_manager.get_resource_path('list', f'{class_name}.json')
-                    student_data = {}
+                    student_data = OrderedDict()
                     
                     if path_manager.file_exists(student_file):
                         with open_file(student_file, 'r', encoding='utf-8') as f:
-                            student_data = json.load(f)
+                            student_data = json.load(f, object_pairs_hook=OrderedDict)
                     
                     for idx, gender_name in enumerate(genders, start=1):
                         gender_name = gender_name.strip()
@@ -487,11 +574,11 @@ class list_SettinsCard(GroupHeaderCardWidget):
                     ensure_dir(list_folder)
 
                     student_file = path_manager.get_resource_path('list', f'{class_name}.json')
-                    student_data = {}
+                    student_data = OrderedDict()
                     
                     if path_manager.file_exists(student_file):
                         with open_file(student_file, 'r', encoding='utf-8') as f:
-                            student_data = json.load(f)
+                            student_data = json.load(f, object_pairs_hook=OrderedDict)
                     
                     for idx, group_name in enumerate(groups, start=1):
                         group_name = group_name.strip()
@@ -517,50 +604,130 @@ class list_SettinsCard(GroupHeaderCardWidget):
         row = item.row()
         col = item.column()
         
-        # 获取当前行的学生姓名（索引1）
-        name_item = self.table.item(row, 1)
-        if not name_item:
+        # 获取当前行的学号（索引1）和姓名（索引2）
+        id_item = self.table.item(row, 1)
+        name_item = self.table.item(row, 2)
+        if not id_item or not name_item:
             return
+        student_id = id_item.text()
         student_name = name_item.text()
         
         # 加载当前班级的学生数据
         student_file = path_manager.get_resource_path('list', f'{class_name}.json')
         try:
             with open_file(student_file, 'r', encoding='utf-8') as f:
-                student_data = json.load(f)
+                student_data = json.load(f, object_pairs_hook=OrderedDict)
         except Exception as e:
             logger.error(f"加载学生数据失败: {str(e)}")
             return
         
-        # 找到对应的学生键（考虑可能的特殊字符）
+        # 通过学号找到对应的学生键
         matched_key = None
-        for key in student_data.keys():
-            cleaned_key = key.replace('【', '').replace('】', '')
-            if cleaned_key == student_name:
+        for key, value in student_data.items():
+            # 确保学号比较时类型一致，处理字符串和整数类型的比较，并去除前导零
+            stored_id = value.get('id')
+            # 去除前导零后比较
+            if str(stored_id).lstrip('0') == str(student_id).lstrip('0') or str(stored_id) == str(student_id):
                 matched_key = key
                 break
         if not matched_key:
-            logger.error(f"未找到学生: {student_name}")
+            logger.error(f"未找到学号为 {student_id} 的学生，学生姓名: {student_name}")
             return
         
         # 根据列索引更新相应的字段
         new_value = item.text()
-        if col == 2:  # 性别列
+        if col == 2:  # 姓名列
+            # 获取当前学生的exist状态
+            exist_status = student_data[matched_key].get('exist', True)
+            
+            # 检查原始键名中是否包含【】符号
+            has_brackets = '【' in matched_key and '】' in matched_key
+            
+            # 获取原始姓名（不包含【】符号）
+            original_name = matched_key.replace('【', '').replace('】', '')
+            
+            # 根据exist状态决定是否在名称两侧加上【】符号
+            if not exist_status:
+                # 不在班级，名称加上【】符号
+                new_key = f"【{new_value}】"
+            else:
+                # 在班级，名称不加【】符号
+                new_key = new_value
+            
+            # 如果只是姓名内容没有变化，不需要更新
+            if new_key.replace('【', '').replace('】', '') == original_name:
+                return
+            
+            # 只有当键名需要改变时才执行
+            if new_key != matched_key:
+                # 创建一个新的有序字典来保持原始顺序
+                new_student_data = OrderedDict()
+                
+                # 遍历原始数据，保持顺序
+                for key, value in student_data.items():
+                    if key == matched_key:
+                        # 使用新键而不是旧键
+                        new_student_data[new_key] = value
+                    else:
+                        # 保持其他键不变
+                        new_student_data[key] = value
+                
+                # 更新原始数据
+                student_data = new_student_data
+        elif col == 3:  # 性别列
             student_data[matched_key]['gender'] = new_value
-        elif col == 3:  # 小组列
+        elif col == 4:  # 小组列
             student_data[matched_key]['group'] = new_value
-        # 学号列（col=0）不可编辑，所以不需要处理
+        elif col == 0:  # "是否在班级"勾选框列
+            # 获取勾选框状态
+            checkbox_item = self.table.item(row, 0)
+            if checkbox_item:
+                is_checked = checkbox_item.checkState() == Qt.Checked
+                student_data[matched_key]['exist'] = is_checked
+                
+                # 如果 exist 状态改变，需要更新键名（添加或移除【】符号）
+                clean_name = matched_key.replace('【', '').replace('】', '')
+                new_key = f"【{clean_name}】" if not is_checked else clean_name
+                
+                # 只有当键名需要改变时才执行
+                if new_key != matched_key:
+                    # 创建一个新的有序字典来保持原始顺序
+                    new_student_data = OrderedDict()
+                    
+                    # 遍历原始数据，保持顺序
+                    for key, value in student_data.items():
+                        if key == matched_key:
+                            # 使用新键而不是旧键
+                            new_student_data[new_key] = value
+                        else:
+                            # 保持其他键不变
+                            new_student_data[key] = value
+                    
+                    # 更新原始数据
+                    student_data = new_student_data
+        # 学号列（col=1）不可编辑，所以不需要处理
         
         # 保存更新后的数据
         try:
             with open_file(student_file, 'w', encoding='utf-8') as f:
                 json.dump(student_data, f, ensure_ascii=False, indent=4)
             logger.info(f"学生数据更新成功: {student_name}")
+            # 保存成功后设置后4列拉伸铺满表格宽度
+            self.table.blockSignals(True)
+            for i in range(1, 5):
+                self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.Stretch)
+            self.table.blockSignals(False)
         except Exception as e:
             logger.error(f"保存学生数据失败: {str(e)}")
             # 如果保存失败，恢复原来的值
-            original_value = student_data[matched_key]['gender'] if col == 2 else student_data[matched_key]['group'] if col == 3 else ""
-            item.setText(str(original_value))
+            if col == 2:  # 姓名列
+                # 恢复原始姓名（保持原始的【】符号状态）
+                item.setText(str(matched_key) if matched_key else student_name)
+            else:
+                original_value = ""
+                if matched_key:
+                    original_value = student_data[matched_key]['gender'] if col == 3 else student_data[matched_key]['group'] if col == 4 else ""
+                item.setText(str(original_value))
 
 class ImportStudentDialog(QDialog):
     # 学生名单导入对话框
@@ -1370,7 +1537,7 @@ class StudentInputDialog(QDialog):
         title_layout.addStretch(1)
         title_layout.addWidget(self.close_button)
 
-        self.text_label = BodyLabel('请输入学生姓名，每行一个\n在输入已经不在当前班级的学生时\n请在姓名前后加上“【】”')
+        self.text_label = BodyLabel('请输入学生姓名，每行一个\n已经不在当前班级的学生会被标记为不是否在班级')
         self.text_label.setFont(QFont(load_custom_font(), 12))
 
         self.update_theme_style()
@@ -1399,7 +1566,9 @@ class StudentInputDialog(QDialog):
                     
                     name_list = []
                     for student_name in data:
-                        name_list.append(student_name)
+                        # 去掉显示时的【】符号
+                        clean_name = student_name.replace('【', '').replace('】', '')
+                        name_list.append(clean_name)
                     self.textEdit.setPlainText("\n".join(name_list))
                 except json.JSONDecodeError as e:
                     logger.error(f"JSON解析错误: {str(e)}")
