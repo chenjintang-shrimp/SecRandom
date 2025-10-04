@@ -96,7 +96,6 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
         
         # 加载设置
         self.load_settings()
-        self.save_settings()
 
     def load_settings(self):
         try:
@@ -137,6 +136,7 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
             self.show_security_settings_switch.setCurrentIndex(self.default_settings.get("show_security_settings_switch", 1))
             self.show_voice_settings_switch.setCurrentIndex(self.default_settings.get("show_voice_settings_switch", 1))
             self.show_history_settings_switch.setCurrentIndex(self.default_settings.get("show_history_settings_switch", 1))
+            self.save_settings()    
 
     def save_settings(self):
         # 先读取现有设置

@@ -105,7 +105,6 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         
         # 加载设置
         self.load_settings()
-        self.save_settings()
 
         # 延迟连接消息接收器信号，避免阻塞页面初始化
         QTimer.singleShot(1000, self.connect_message_receiver)
@@ -161,11 +160,11 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                 self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
-
             self.instant_draw_disable_switch.setChecked(self.default_settings.get("instant_draw_disable", False))
             self.clear_draw_records_switch.setChecked(self.default_settings.get("clear_draw_records_switch", False))
             self.clear_draw_records_time_SpinBox.setValue(self.default_settings.get("clear_draw_records_time", 120))
             self.use_cwci_confirm_switch.setChecked(self.default_settings.get("use_cwci_confirm_switch", False))
+            self.save_settings()
 
     def save_settings(self):
         # 先读取现有设置

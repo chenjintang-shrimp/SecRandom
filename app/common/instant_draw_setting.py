@@ -185,7 +185,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         # 随机组员显示设置
         self.show_random_member_checkbox.setOnText("开启")
         self.show_random_member_checkbox.setOffText("关闭")
-        self.show_random_member_checkbox.checkedChanged.connect(self.on_instant_draw_Voice_switch_changed)
+        self.show_random_member_checkbox.checkedChanged.connect(self.save_settings)
         self.show_random_member_checkbox.setFont(QFont(load_custom_font(), 12))
 
         # 随机组员格式设置
@@ -354,8 +354,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐入时间", "设置音乐淡入效果的持续时间", self.instant_draw_music_fade_in_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐出时间", "设置音乐淡出效果的持续时间", self.instant_draw_music_fade_out_SpinBox)
 
-        self.load_settings()  # 加载设置
-        self.save_settings()  # 保存设置
+        self.load_settings()
 
     def on_follow_roll_call_changed(self, checked):
         """当跟随点名设置开关状态改变时触发"""
@@ -573,9 +572,6 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                 orient=Qt.Horizontal, parent=self, isClosable=True, duration=3000, position=InfoBarPosition.TOP
             )
 
-    def on_instant_draw_Voice_switch_changed(self, checked):
-        self.save_settings()
-
     # 动画颜色选择器
     def on_color_animation_dialog(self):
         color_type = "animation"
@@ -651,6 +647,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         except KeyError:
             logger.error(f"设置文件中缺少'foundation'键, 使用默认大小:50")
             self.instant_draw_font_size_SpinBox.setValue("50")
+
         self.save_settings()
         self.load_settings()
         

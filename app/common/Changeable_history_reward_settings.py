@@ -59,7 +59,7 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         self.history_switch = SwitchButton()
         self.history_switch.setOnText("开启")
         self.history_switch.setOffText("关闭")
-        self.history_switch.checkedChanged.connect(self.on_switch_changed)
+        self.history_switch.checkedChanged.connect(self.save_settings)
         self.history_switch.setFont(QFont(load_custom_font(), 12))
         
         # 程序启动时自动加载奖池名称
@@ -85,10 +85,6 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "历史记录", "启用抽奖历史记录功能", self.history_switch)
 
         self.load_settings()
-        self.save_settings()
-
-    def on_switch_changed(self, checked):
-        self.save_settings()
 
     def refresh_reward_list(self):
         try:

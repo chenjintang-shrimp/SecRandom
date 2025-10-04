@@ -77,7 +77,6 @@ class tray_settingsCard(GroupHeaderCardWidget):
         
         # 加载设置
         self.load_settings()
-        self.save_settings()
 
     def load_settings(self):
         try:
@@ -110,6 +109,7 @@ class tray_settingsCard(GroupHeaderCardWidget):
             self.restart_switch.setChecked(self.default_settings["restart"])
             self.exit_switch.setChecked(self.default_settings["exit"])
             self.flash_switch.setChecked(self.default_settings["flash"])
+            self.save_settings()
 
 
     def save_settings(self):

@@ -121,7 +121,6 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
         
         # 加载设置
         self.load_settings()
-        self.save_settings()
 
     def load_settings(self):
         try:
@@ -168,6 +167,7 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
             self.selection_range_switch.setChecked(self.default_settings.get("selection_range", True))
             self.selection_gender_switch.setChecked(self.default_settings.get("selection_gender", True))
             self.pumping_people_theme_comboBox.setCurrentIndex(self.default_settings.get("people_theme", 0))
+            self.save_settings()
 
     def save_settings(self):
         # 先读取现有设置

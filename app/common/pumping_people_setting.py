@@ -135,7 +135,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         # 随机组员显示设置
         self.show_random_member_checkbox.setOnText("开启")
         self.show_random_member_checkbox.setOffText("关闭")
-        self.show_random_member_checkbox.checkedChanged.connect(self.on_pumping_people_Voice_switch_changed)
+        self.show_random_member_checkbox.checkedChanged.connect(self.save_settings)
         self.show_random_member_checkbox.setFont(QFont(load_custom_font(), 12))
 
         # 随机组员格式设置
@@ -295,11 +295,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐入时间", "设置音乐淡入效果的持续时间", self.pumping_people_music_fade_in_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐出时间", "设置音乐淡出效果的持续时间", self.pumping_people_music_fade_out_SpinBox)
 
-        self.load_settings()  # 加载设置
-        self.save_settings()  # 保存设置
-
-    def on_pumping_people_Voice_switch_changed(self, checked):
-        self.save_settings()
+        self.load_settings()
 
     def on_color_animation_dialog(self):
         color_type = "animation"

@@ -259,13 +259,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.cleanup_timer.start(1000)
 
         self.load_settings()
-        self.save_settings()
-
-    def on_pumping_floating_switch_changed(self, checked):
-        self.save_settings()
 
     def on_focus_mode_changed(self):
-        self.save_settings()  # 先保存设置
+        self.save_settings()
         index = self.main_window_focus_comboBox.currentIndex()
         main_window = None
         for widget in QApplication.topLevelWidgets():
@@ -276,7 +272,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             main_window.update_focus_mode(index)
 
     def on_focus_time_changed(self):
-        self.save_settings()  # 先保存设置
+        self.save_settings()
         index = self.main_window_focus_time_comboBox.currentIndex()
         main_window = None
         for widget in QApplication.topLevelWidgets():

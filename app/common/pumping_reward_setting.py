@@ -221,11 +221,7 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐入时间", "设置音乐渐入效果的时间长度(0-1000ms)", self.pumping_reward_music_fade_in_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐出时间", "设置音乐渐出效果的时间长度(0-1000ms)", self.pumping_reward_music_fade_out_SpinBox)
 
-        self.load_settings()  # 加载设置
-        self.save_settings()  # 保存设置
-
-    def on_pumping_reward_Voice_switch_changed(self, checked):
-        self.save_settings()
+        self.load_settings()
 
     def on_color_animation_dialog(self):
         color_type = "animation"

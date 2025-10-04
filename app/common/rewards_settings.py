@@ -94,7 +94,6 @@ class reward_settingsCard(GroupHeaderCardWidget):
         
         # 加载设置
         self.load_settings()
-        self.save_settings()
 
     def load_settings(self):
         try:
@@ -132,6 +131,7 @@ class reward_settingsCard(GroupHeaderCardWidget):
             self.start_button_switch.setChecked(self.default_settings.get("show_start_button", True))
             self.list_toggle_switch.setChecked(self.default_settings.get("show_list_toggle", True))
             self.pumping_reward_theme_comboBox.setCurrentIndex(self.default_settings.get("reward_theme", 0))
+            self.save_settings()
 
     def save_settings(self):
         # 先读取现有设置
