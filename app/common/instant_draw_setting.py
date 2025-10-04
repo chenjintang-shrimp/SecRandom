@@ -603,34 +603,16 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         # 根据按钮选择打开对应的音乐文件夹
         if button == 'Animation_music':
             # 确保路径是文件夹格式再打开
-            self.open_folder(str(bgm_animation_path))
+            os.startfile(str(bgm_animation_path))
         elif button == 'result_music':
             # 用绝对路径确保文件夹正确打开
-            self.open_folder(str(bgm_result_path))
+            os.startfile(str(bgm_result_path))
 
     def open_image_path(self):
         image_path = path_manager.get_resource_path('images', 'students')
         ensure_dir(image_path)
         # 用绝对路径确保文件夹正确打开
-        self.open_folder(str(image_path))
-
-    def open_folder(self, path):
-        """跨平台打开文件夹的方法"""
-        import subprocess
-        import platform
-        
-        try:
-            system = platform.system()
-            if system == 'Windows':
-                os.startfile(path)
-            elif system == 'Darwin':  # macOS
-                subprocess.run(['open', path], check=True)
-            elif system == 'Linux':
-                subprocess.run(['xdg-open', path], check=True)
-            else:
-                logger.error(f"不支持的操作系统: {system}")
-        except Exception as e:
-            logger.error(f"打开文件夹失败: {e}")
+        os.startfile(str(image_path))
 
     def apply_font_size(self):
         try:

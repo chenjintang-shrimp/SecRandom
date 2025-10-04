@@ -267,23 +267,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.load_settings()
         self.save_settings()
 
-    def open_folder(self, path):
-            """跨平台打开文件夹的方法"""
-            import subprocess
-            
-            try:
-                system = platform.system()
-                if system == 'Windows':
-                    os.startfile(path)
-                elif system == 'Darwin':  # macOS
-                    subprocess.run(['open', path], check=True)
-                elif system == 'Linux':
-                    subprocess.run(['xdg-open', path], check=True)
-                else:
-                    logger.error(f"不支持的操作系统: {system}")
-            except Exception as e:
-                logger.error(f"打开文件夹失败: {e}")
-
     def on_pumping_floating_switch_changed(self, checked):
         self.save_settings()
 

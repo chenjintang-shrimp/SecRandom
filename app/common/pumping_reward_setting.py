@@ -251,35 +251,14 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         ensure_dir(bgm_animation_path)
         ensure_dir(bgm_result_path)
         if button == 'Animation_music':
-            self.open_folder(str(bgm_animation_path))
+            os.startfile(str(bgm_animation_path))
         elif button == 'result_music':
-            self.open_folder(str(bgm_result_path))
+            os.startfile(str(bgm_result_path))
 
     def open_image_path(self):
         image_path = path_manager.get_resource_path('images/pumping_reward', 'rewards')
         ensure_dir(image_path)
-        self.open_folder(str(image_path))
-    
-    def open_folder(self, folder_path):
-        """跨平台打开文件夹的方法"""
-        try:
-            if os.name == 'nt':  # Windows系统
-                os.startfile(folder_path)
-            elif os.name == 'posix':  # Linux/Mac系统
-                if os.uname().sysname == 'Darwin':  # macOS
-                    subprocess.run(['open', folder_path])
-                else:  # Linux
-                    subprocess.run(['xdg-open', folder_path])
-            else:
-                # 使用Qt的跨平台方案作为备选
-                QDesktopServices.openUrl(QUrl.fromLocalFile(folder_path))
-        except Exception as e:
-            logger.error(f"打开文件夹失败: {e}")
-            # 最后尝试使用Qt方案
-            try:
-                QDesktopServices.openUrl(QUrl.fromLocalFile(folder_path))
-            except Exception as e2:
-                logger.error(f"使用Qt打开文件夹也失败: {e2}")
+        os.startfile(str(image_path))
 
     def apply_font_size(self):
         try:
