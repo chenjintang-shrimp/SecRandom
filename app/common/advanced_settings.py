@@ -14,14 +14,7 @@ from pathlib import Path
 from datetime import datetime
 from loguru import logger
 
-# 平台特定导入
-if platform.system() == "Windows":
-    import winreg
-else:
-    # Linux平台使用subprocess处理注册表相关操作
-    import subprocess
-    import shutil
-    import stat
+import winreg
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 from app.common.path_utils import path_manager
@@ -121,15 +114,35 @@ class advanced_settingsCard(GroupHeaderCardWidget):
             import zipfile
             from datetime import datetime
             
-            # 获取桌面路径
-            desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-            if not path_manager.file_exists(desktop_path):
-                desktop_path = os.path.join(os.path.expanduser("~"), "桌面")
-            
-            # 创建诊断文件名
+            # 让用户选择导出位置
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            zip_filename = f"SecRandom_诊断数据_{timestamp}.zip"
-            zip_path = os.path.join(desktop_path, zip_filename)
+            default_filename = f"SecRandom_诊断数据_{timestamp}.zip"
+            
+            # 打开文件保存对话框，让用户选择导出位置
+            zip_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "选择诊断数据导出位置",
+                default_filename,
+                "压缩文件 (*.zip);;所有文件 (*.*)"
+            )
+            
+            # 如果用户取消了选择，则直接返回
+            if not zip_path:
+                logger.info("用户取消了诊断数据导出位置选择")
+                InfoBar.info(
+                    title='导出已取消',
+                    content='诊断数据导出操作已取消',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return
+            
+            # 确保文件扩展名是.zip
+            if not zip_path.lower().endswith('.zip'):
+                zip_path += '.zip'
             
             # 需要导出的文件夹列表
             export_folders = [
@@ -246,7 +259,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                 
                 if msg_box.exec():
                     # 用户选择打开文件夹
-                    self.open_folder(os.path.dirname(zip_path))
+                    os.startfile(os.path.dirname(zip_path))
                     logger.info("用户选择打开诊断数据导出文件夹")
                 else:
                     # 用户选择不打开
@@ -256,10 +269,9 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                 # 如果消息框创建失败，回退到简单的提示
                 logger.error(f"创建消息框失败: {str(e)}")
                 try:
-                    self.open_folder(os.path.dirname(zip_path))
+                    os.startfile(os.path.dirname(zip_path))
                 except:
                     logger.error("无法打开诊断数据导出文件夹")
-                    self.open_folder(desktop_path)
             except:
                 pass
                 
