@@ -9,6 +9,7 @@ import json
 import os
 import sys
 import platform
+import asyncio
 from pathlib import Path
 from datetime import datetime
 from loguru import logger
@@ -63,7 +64,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.self_starting_switch.setOnText("开启")
         self.self_starting_switch.setOffText("关闭")
         self.self_starting_switch.setFont(QFont(load_custom_font(), 12))
-        self.self_starting_switch.checkedChanged.connect(self.setting_startup)
+        self.self_starting_switch.checkedChanged.connect(self._on_startup_switch_changed)
 
         # 定时清理按钮
         self.cleanup_button = PushButton("设置定时清理")
@@ -292,7 +293,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         if main_window:
             main_window.update_focus_time(index)
 
-    def setting_startup(self):
+    async def setting_startup(self):
         import sys
         import os
         import platform
@@ -311,53 +312,75 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             # 读取设置文件
             from app.common.path_utils import path_manager
             settings_file = path_manager.get_settings_path('Settings.json')
-            with open_file(settings_file, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                foundation_settings = settings.get('foundation', {})
-                self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
+            
+            # 使用异步方式读取文件
+            def read_settings():
+                with open_file(settings_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            
+            # 在事件循环中执行文件读取
+            loop = asyncio.get_event_loop()
+            settings = await loop.run_in_executor(None, read_settings)
+            
+            foundation_settings = settings.get('foundation', {})
+            self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
 
-                # 处理Windows系统的启动文件夹操作
-                if platform.system() == 'Windows':
-                    # Windows系统：使用启动文件夹快捷方式
-                    startup_folder = os.path.join(
-                        os.getenv('APPDATA'),
-                        r'Microsoft\Windows\Start Menu\Programs\Startup'
-                    )
-                    shortcut_path = os.path.join(startup_folder, 'SecRandom.lnk')
+            # 处理Windows系统的启动文件夹操作
+            if platform.system() == 'Windows':
+                # Windows系统：使用启动文件夹快捷方式
+                startup_folder = os.path.join(
+                    os.getenv('APPDATA'),
+                    r'Microsoft\Windows\Start Menu\Programs\Startup'
+                )
+                shortcut_path = os.path.join(startup_folder, 'SecRandom.lnk')
 
-                    if self_starting_enabled:
-                        try:
-                            # 创建快捷方式
-                            import winshell
-                            from win32com.client import Dispatch
+                if self_starting_enabled:
+                    try:
+                        # 创建快捷方式
+                        import winshell
+                        from win32com.client import Dispatch
 
+                        def create_shortcut():
                             shell = Dispatch('WScript.Shell')
                             shortcut = shell.CreateShortCut(shortcut_path)
                             shortcut.Targetpath = executable
                             shortcut.WorkingDirectory = os.path.dirname(executable)
                             shortcut.save()
-                            logger.success("开机自启动设置成功")
-                        except Exception as e:
-                            logger.error(f"创建快捷方式失败: {e}")
-                    else:
-                        try:
-                            if path_manager.file_exists(shortcut_path):
-                                os.remove(shortcut_path)
-                                logger.success("开机自启动取消成功")
-                            else:
-                                logger.info("开机自启动项不存在，无需取消")
-                        except Exception as e:
-                            logger.error(f"删除快捷方式失败: {e}")
+                        
+                        # 在事件循环中执行快捷方式创建
+                        await loop.run_in_executor(None, create_shortcut)
+                        logger.success("开机自启动设置成功")
+                    except Exception as e:
+                        logger.error(f"创建快捷方式失败: {e}")
                 else:
-                    # 不支持的系统
-                    self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
-                    logger.error(f"不支持的操作系统: {platform.system()}")
-                    return
+                    try:
+                        if path_manager.file_exists(shortcut_path):
+                            def remove_shortcut():
+                                os.remove(shortcut_path)
+                            
+                            # 在事件循环中执行快捷方式删除
+                            await loop.run_in_executor(None, remove_shortcut)
+                            logger.success("开机自启动取消成功")
+                        else:
+                            logger.info("开机自启动项不存在，无需取消")
+                    except Exception as e:
+                        logger.error(f"删除快捷方式失败: {e}")
+            else:
+                # 不支持的系统
+                self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
+                logger.error(f"不支持的操作系统: {platform.system()}")
+                return
 
         except json.JSONDecodeError as e:
             logger.error(f"设置文件格式错误: {e}")
         except Exception as e:
             logger.error(f"读取设置文件时出错: {e}")
+
+    def _on_startup_switch_changed(self):
+        """处理开机自启动开关变化的包装器方法"""
+        # 创建一个任务来运行异步的setting_startup方法
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.setting_startup())
 
     def load_settings(self):
         try:
