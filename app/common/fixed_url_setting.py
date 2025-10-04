@@ -34,12 +34,10 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             "enable_floating_url": True,
             "enable_about_url": True,
             "enable_direct_extraction_url": True,
-            "enable_plugin_settings_url": True,
             # Action参数URL设置
             "enable_pumping_action_url": True,
             "enable_reward_action_url": True,
             "enable_about_action_url": True,
-            "enable_plugin_settings_action_url": True,
             # 点名Action参数URL独立开关
             "enable_pumping_start_url": True,
             "enable_pumping_stop_url": True,
@@ -51,8 +49,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             # 关于界面Action参数URL独立开关
             "enable_about_donation_url": True,
             "enable_about_contributor_url": True,
-            # 插件设置Action参数URL独立开关
-            "enable_plugin_settings_open_url": True,
             # 弹窗提醒设置(0=disabled, 1=notify_only, 2=confirm, 3=confirm_with_security)
             "main_url_notification": 0,
             "settings_url_notification": 0,
@@ -62,7 +58,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             "floating_url_notification": 0,
             "about_url_notification": 0,
             "direct_extraction_url_notification": 0,
-            "plugin_settings_url_notification": 0,
             "pumping_start_url_notification": 0,
             "pumping_stop_url_notification": 0,
             "pumping_reset_url_notification": 0,
@@ -71,11 +66,9 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             "reward_reset_url_notification": 0,
             "about_donation_url_notification": 0,
             "about_contributor_url_notification": 0,
-            "plugin_settings_open_url_notification": 0,
             # 跳过安全验证设置
             "settings_url_skip_security": False,
             "floating_url_skip_security": False,
-            "plugin_settings_open_url_skip_security": False,
         }
         
         # 创建主界面URL开关
@@ -206,20 +199,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.about_contributor_url_switch.setOffText("关闭")
         self.about_contributor_url_switch.setFont(QFont(load_custom_font(), 12))
         self.about_contributor_url_switch.checkedChanged.connect(self.save_settings)
-        
-        # 插件设置Action参数URL开关
-        self.plugin_settings_action_url_switch = SwitchButton()
-        self.plugin_settings_action_url_switch.setOnText("开启")
-        self.plugin_settings_action_url_switch.setOffText("关闭")
-        self.plugin_settings_action_url_switch.setFont(QFont(load_custom_font(), 12))
-        self.plugin_settings_action_url_switch.checkedChanged.connect(self.save_settings)
-        
-        # 创建插件设置Action参数URL独立开关
-        self.plugin_settings_open_url_switch = SwitchButton()
-        self.plugin_settings_open_url_switch.setOnText("开启")
-        self.plugin_settings_open_url_switch.setOffText("关闭")
-        self.plugin_settings_open_url_switch.setFont(QFont(load_custom_font(), 12))
-        self.plugin_settings_open_url_switch.checkedChanged.connect(self.save_settings)
 
         # 创建弹窗提醒下拉框
         self.main_url_notification_combo = ComboBox()
@@ -278,13 +257,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             lambda index: self.on_notification_changed("direct_extraction_url_notification", index)
         )
 
-        self.plugin_settings_url_notification_combo = ComboBox()
-        self.plugin_settings_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
-        self.plugin_settings_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.plugin_settings_url_notification_combo.currentIndexChanged.connect(
-            lambda index: self.on_notification_changed("plugin_settings_url_notification", index)
-        )
-
         self.pumping_start_url_notification_combo = ComboBox()
         self.pumping_start_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
         self.pumping_start_url_notification_combo.setFont(QFont(load_custom_font(), 12))
@@ -341,13 +313,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
             lambda index: self.on_notification_changed("about_contributor_url_notification", index)
         )
 
-        self.plugin_settings_open_url_notification_combo = ComboBox()
-        self.plugin_settings_open_url_notification_combo.addItems(["禁用", "仅提醒", "弹窗同意", "安全验证同意"])
-        self.plugin_settings_open_url_notification_combo.setFont(QFont(load_custom_font(), 12))
-        self.plugin_settings_open_url_notification_combo.currentIndexChanged.connect(
-            lambda index: self.on_notification_changed("plugin_settings_open_url_notification", index)
-        )
-
         # 创建跳过安全验证开关
         self.settings_url_skip_security_switch = SwitchButton()
         self.settings_url_skip_security_switch.setOnText("开启")
@@ -360,12 +325,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.floating_url_skip_security_switch.setOffText("关闭")
         self.floating_url_skip_security_switch.setFont(QFont(load_custom_font(), 12))
         self.floating_url_skip_security_switch.checkedChanged.connect(self.save_settings)
-        
-        self.plugin_settings_open_url_skip_security_switch = SwitchButton()
-        self.plugin_settings_open_url_skip_security_switch.setOnText("开启")
-        self.plugin_settings_open_url_skip_security_switch.setOffText("关闭")
-        self.plugin_settings_open_url_skip_security_switch.setFont(QFont(load_custom_font(), 12))
-        self.plugin_settings_open_url_skip_security_switch.checkedChanged.connect(self.save_settings)
 
         # 添加URL设置组
         self.addGroup(get_theme_icon("ic_fluent_home_20_filled"), "主界面URL", "secrandom://main - 打开SecRandom主界面", self.main_url_switch)
@@ -418,10 +377,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         
         self.addGroup(get_theme_icon("ic_fluent_document_person_20_filled"), "打开贡献者对话框URL", "secrandom://about?action=contributor - 自动切换到关于界面并打开贡献者对话框", self.about_contributor_url_switch)
         self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "打开贡献者对话框URL弹窗提醒", "选择通过URL协议打开贡献者对话框时的弹窗提醒方式", self.about_contributor_url_notification_combo)
-        
-        self.addGroup(get_theme_icon("ic_fluent_database_plug_connected_20_filled"), "打开插件页面URL", "secrandom://plugin_settings?action=open - 打开插件页面，管理和配置插件", self.plugin_settings_open_url_switch)
-        self.addGroup(get_theme_icon("ic_fluent_alert_20_filled"), "打开插件页面URL弹窗提醒", "选择通过URL协议打开插件页面时的弹窗提醒方式", self.plugin_settings_open_url_notification_combo)
-        self.addGroup(get_theme_icon("ic_fluent_shield_20_filled"), "打开插件页面跳过安全验证", "通过URL协议打开插件页面时是否跳过安全验证", self.plugin_settings_open_url_skip_security_switch)
 
         # 加载设置
         self.load_settings()
@@ -440,7 +395,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.pumping_action_url_switch.setChecked(self.default_settings["enable_pumping_action_url"])
         self.reward_action_url_switch.setChecked(self.default_settings["enable_reward_action_url"])
         self.about_action_url_switch.setChecked(self.default_settings["enable_about_action_url"])
-        self.plugin_settings_action_url_switch.setChecked(self.default_settings["enable_plugin_settings_action_url"])
         
         # 加载点名Action参数URL独立开关
         self.pumping_start_url_switch.setChecked(self.default_settings["enable_pumping_start_url"])
@@ -455,9 +409,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         # 加载关于界面Action参数URL独立开关
         self.about_donation_url_switch.setChecked(self.default_settings["enable_about_donation_url"])
         self.about_contributor_url_switch.setChecked(self.default_settings["enable_about_contributor_url"])
-        
-        # 加载插件设置Action参数URL独立开关
-        self.plugin_settings_open_url_switch.setChecked(self.default_settings["enable_plugin_settings_open_url"])
 
         # 加载弹窗提醒设置
         self.main_url_notification_combo.setCurrentIndex(self.default_settings["main_url_notification"])
@@ -468,7 +419,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.floating_url_notification_combo.setCurrentIndex(self.default_settings["floating_url_notification"])
         self.about_url_notification_combo.setCurrentIndex(self.default_settings["about_url_notification"])
         self.direct_extraction_url_notification_combo.setCurrentIndex(self.default_settings["direct_extraction_url_notification"])
-        self.plugin_settings_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_url_notification"])
         self.pumping_start_url_notification_combo.setCurrentIndex(self.default_settings["pumping_start_url_notification"])
         self.pumping_stop_url_notification_combo.setCurrentIndex(self.default_settings["pumping_stop_url_notification"])
         self.pumping_reset_url_notification_combo.setCurrentIndex(self.default_settings["pumping_reset_url_notification"])
@@ -477,12 +427,10 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         self.reward_reset_url_notification_combo.setCurrentIndex(self.default_settings["reward_reset_url_notification"])
         self.about_donation_url_notification_combo.setCurrentIndex(self.default_settings["about_donation_url_notification"])
         self.about_contributor_url_notification_combo.setCurrentIndex(self.default_settings["about_contributor_url_notification"])
-        self.plugin_settings_open_url_notification_combo.setCurrentIndex(self.default_settings["plugin_settings_open_url_notification"])
     
         # 加载跳过安全验证设置
         self.settings_url_skip_security_switch.setChecked(self.default_settings["settings_url_skip_security"])
         self.floating_url_skip_security_switch.setChecked(self.default_settings["floating_url_skip_security"])
-        self.plugin_settings_open_url_skip_security_switch.setChecked(self.default_settings["plugin_settings_open_url_skip_security"])
 
     def load_settings(self):
         try:
@@ -519,7 +467,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
                     self.pumping_action_url_switch.setChecked(fixed_url_settings.get("enable_pumping_action_url", self.default_settings["enable_pumping_action_url"]))
                     self.reward_action_url_switch.setChecked(fixed_url_settings.get("enable_reward_action_url", self.default_settings["enable_reward_action_url"]))
                     self.about_action_url_switch.setChecked(fixed_url_settings.get("enable_about_action_url", self.default_settings["enable_about_action_url"]))
-                    self.plugin_settings_action_url_switch.setChecked(fixed_url_settings.get("enable_plugin_settings_action_url", self.default_settings["enable_plugin_settings_action_url"]))
                     
                     # 加载点名Action参数URL独立开关
                     self.pumping_start_url_switch.setChecked(fixed_url_settings.get("enable_pumping_start_url", self.default_settings["enable_pumping_start_url"]))
@@ -535,9 +482,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
                     self.about_donation_url_switch.setChecked(fixed_url_settings.get("enable_about_donation_url", self.default_settings["enable_about_donation_url"]))
                     self.about_contributor_url_switch.setChecked(fixed_url_settings.get("enable_about_contributor_url", self.default_settings["enable_about_contributor_url"]))
                     
-                    # 加载插件设置Action参数URL独立开关
-                    self.plugin_settings_open_url_switch.setChecked(fixed_url_settings.get("enable_plugin_settings_open_url", self.default_settings["enable_plugin_settings_open_url"]))
-                    
                     # 加载弹窗提醒设置
                     self.main_url_notification_combo.setCurrentIndex(fixed_url_settings.get("main_url_notification", self.default_settings["main_url_notification"]))
                     self.settings_url_notification_combo.setCurrentIndex(fixed_url_settings.get("settings_url_notification", self.default_settings["settings_url_notification"]))
@@ -547,7 +491,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
                     self.floating_url_notification_combo.setCurrentIndex(fixed_url_settings.get("floating_url_notification", self.default_settings["floating_url_notification"]))
                     self.about_url_notification_combo.setCurrentIndex(fixed_url_settings.get("about_url_notification", self.default_settings["about_url_notification"]))
                     self.direct_extraction_url_notification_combo.setCurrentIndex(fixed_url_settings.get("direct_extraction_url_notification", self.default_settings["direct_extraction_url_notification"]))
-                    self.plugin_settings_url_notification_combo.setCurrentIndex(fixed_url_settings.get("plugin_settings_url_notification", self.default_settings["plugin_settings_url_notification"]))
                     self.pumping_start_url_notification_combo.setCurrentIndex(fixed_url_settings.get("pumping_start_url_notification", self.default_settings["pumping_start_url_notification"]))
                     self.pumping_stop_url_notification_combo.setCurrentIndex(fixed_url_settings.get("pumping_stop_url_notification", self.default_settings["pumping_stop_url_notification"]))
                     self.pumping_reset_url_notification_combo.setCurrentIndex(fixed_url_settings.get("pumping_reset_url_notification", self.default_settings["pumping_reset_url_notification"]))
@@ -556,13 +499,11 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
                     self.reward_reset_url_notification_combo.setCurrentIndex(fixed_url_settings.get("reward_reset_url_notification", self.default_settings["reward_reset_url_notification"]))
                     self.about_donation_url_notification_combo.setCurrentIndex(fixed_url_settings.get("about_donation_url_notification", self.default_settings["about_donation_url_notification"]))
                     self.about_contributor_url_notification_combo.setCurrentIndex(fixed_url_settings.get("about_contributor_url_notification", self.default_settings["about_contributor_url_notification"]))
-                    self.plugin_settings_open_url_notification_combo.setCurrentIndex(fixed_url_settings.get("plugin_settings_open_url_notification", self.default_settings["plugin_settings_open_url_notification"]))
-                    
+
                     # 加载跳过安全验证设置
                     self.settings_url_skip_security_switch.setChecked(fixed_url_settings.get("settings_url_skip_security", self.default_settings["settings_url_skip_security"]))
                     self.floating_url_skip_security_switch.setChecked(fixed_url_settings.get("floating_url_skip_security", self.default_settings["floating_url_skip_security"]))
-                    self.plugin_settings_open_url_skip_security_switch.setChecked(fixed_url_settings.get("plugin_settings_open_url_skip_security", self.default_settings["plugin_settings_open_url_skip_security"]))
-                    
+
                     # 根据基础URL开关状态设置Action参数URL开关的启用/禁用状态
                     if not self.pumping_url_switch.isChecked():
                         self.pumping_action_url_switch.setEnabled(False)
@@ -633,7 +574,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         fixed_url_settings["enable_pumping_action_url"] = self.pumping_action_url_switch.isChecked()
         fixed_url_settings["enable_reward_action_url"] = self.reward_action_url_switch.isChecked()
         fixed_url_settings["enable_about_action_url"] = self.about_action_url_switch.isChecked()
-        fixed_url_settings["enable_plugin_settings_action_url"] = self.plugin_settings_action_url_switch.isChecked()
         
         # 保存点名Action参数URL独立开关
         fixed_url_settings["enable_pumping_start_url"] = self.pumping_start_url_switch.isChecked()
@@ -649,12 +589,8 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         fixed_url_settings["enable_about_donation_url"] = self.about_donation_url_switch.isChecked()
         fixed_url_settings["enable_about_contributor_url"] = self.about_contributor_url_switch.isChecked()
         
-        # 保存插件设置Action参数URL独立开关
-        fixed_url_settings["enable_plugin_settings_open_url"] = self.plugin_settings_open_url_switch.isChecked()
-        
         # 保存跳过安全验证设置
         fixed_url_settings["settings_url_skip_security"] = self.settings_url_skip_security_switch.isChecked()
-        fixed_url_settings["plugin_settings_open_url_skip_security"] = self.plugin_settings_open_url_skip_security_switch.isChecked()
         
         # 保存弹窗提醒设置 (0=disabled, 1=notify_only, 2=confirm, 3=confirm_with_security)
         fixed_url_settings["main_url_notification"] = self.main_url_notification_combo.currentIndex()
@@ -665,7 +601,6 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         fixed_url_settings["floating_url_notification"] = self.floating_url_notification_combo.currentIndex()
         fixed_url_settings["about_url_notification"] = self.about_url_notification_combo.currentIndex()
         fixed_url_settings["direct_extraction_url_notification"] = self.direct_extraction_url_notification_combo.currentIndex()
-        fixed_url_settings["plugin_settings_url_notification"] = self.plugin_settings_url_notification_combo.currentIndex()
         fixed_url_settings["pumping_start_url_notification"] = self.pumping_start_url_notification_combo.currentIndex()
         fixed_url_settings["pumping_stop_url_notification"] = self.pumping_stop_url_notification_combo.currentIndex()
         fixed_url_settings["pumping_reset_url_notification"] = self.pumping_reset_url_notification_combo.currentIndex()
@@ -674,12 +609,10 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
         fixed_url_settings["reward_reset_url_notification"] = self.reward_reset_url_notification_combo.currentIndex()
         fixed_url_settings["about_donation_url_notification"] = self.about_donation_url_notification_combo.currentIndex()
         fixed_url_settings["about_contributor_url_notification"] = self.about_contributor_url_notification_combo.currentIndex()
-        fixed_url_settings["plugin_settings_open_url_notification"] = self.plugin_settings_open_url_notification_combo.currentIndex()
         
         # 保存跳过安全验证设置
         fixed_url_settings["settings_url_skip_security"] = self.settings_url_skip_security_switch.isChecked()
         fixed_url_settings["floating_url_skip_security"] = self.floating_url_skip_security_switch.isChecked()
-        fixed_url_settings["plugin_settings_open_url_skip_security"] = self.plugin_settings_open_url_skip_security_switch.isChecked()
 
         os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
         with open_file(self.settings_file, 'w', encoding='utf-8') as f:

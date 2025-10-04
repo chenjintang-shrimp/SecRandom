@@ -182,9 +182,5 @@ cython_debug/
 /.vercel
 /app/resource/music
 /app/cache
-/app/plugins
-/app/plugin
-/app/plugin
-/app/plugin/SecRandom-plugins
 /app/resource/images
 /logs

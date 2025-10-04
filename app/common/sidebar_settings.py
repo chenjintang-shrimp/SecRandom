@@ -31,7 +31,6 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
             "show_settings_icon": 1,
             "main_window_history_switch": 1,
             "main_window_side_switch": 2,
-            "show_plugin_settings_switch": 1,
             "show_security_settings_switch": 1,
             "show_voice_settings_switch": 1,
             "show_history_settings_switch": 1,
@@ -67,12 +66,6 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
         self.show_settings_icon_switch.setFont(QFont(load_custom_font(), 12))
         self.show_settings_icon_switch.currentIndexChanged.connect(self.save_settings)
 
-        # 设置页面侧边是否显示插件设置
-        self.show_plugin_settings_switch = ComboBox()
-        self.show_plugin_settings_switch.addItems(["顶部", "底部", "不显示"])
-        self.show_plugin_settings_switch.setFont(QFont(load_custom_font(), 12))
-        self.show_plugin_settings_switch.currentIndexChanged.connect(self.save_settings)
-
         # 设置页面侧边是否显示安全设置
         self.show_security_settings_switch = ComboBox()
         self.show_security_settings_switch.addItems(["顶部", "底部", "不显示"])
@@ -97,7 +90,6 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_text_whole_word_20_filled"), "主窗口侧边显示单词PK", "控制主窗口侧边栏中单词PK的显示状态", self.main_window_side_switch)
         self.addGroup(get_theme_icon("ic_fluent_chat_history_20_filled"), "主窗口侧边显示历史记录", "控制主窗口侧边栏中历史记录的显示状态", self.main_window_history_switch)
         self.addGroup(get_theme_icon("ic_fluent_content_settings_20_filled"), "设置图标显示", "控制主界面侧边栏中设置图标的显示状态", self.show_settings_icon_switch)
-        self.addGroup(get_theme_icon("ic_fluent_database_plug_connected_20_filled"), "插件设置侧边栏位置", "调整插件设置侧边栏的显示位置", self.show_plugin_settings_switch)
         self.addGroup(get_theme_icon("ic_fluent_shield_keyhole_20_filled"), "安全设置侧边栏位置", "调整安全设置侧边栏的显示位置", self.show_security_settings_switch)
         self.addGroup(get_theme_icon("ic_fluent_person_voice_20_filled"), "语音设置侧边栏位置", "调整语音设置侧边栏的显示位置", self.show_voice_settings_switch)
         self.addGroup(get_theme_icon("ic_fluent_chat_history_20_filled"), "历史记录设置侧边栏位置", "调整历史记录设置侧边栏的显示位置", self.show_history_settings_switch)
@@ -118,7 +110,6 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
                     self.show_settings_icon_switch.setCurrentIndex(sidebar_settings.get("show_settings_icon", 1))
                     self.main_window_history_switch.setCurrentIndex(sidebar_settings.get("main_window_history_switch", 1))
                     self.main_window_side_switch.setCurrentIndex(sidebar_settings.get("main_window_side_switch", 2))
-                    self.show_plugin_settings_switch.setCurrentIndex(sidebar_settings.get("show_plugin_settings_switch", 1))
                     self.show_security_settings_switch.setCurrentIndex(sidebar_settings.get("show_security_settings_switch", 1))
                     self.show_voice_settings_switch.setCurrentIndex(sidebar_settings.get("show_voice_settings_switch", 1))
                     self.show_history_settings_switch.setCurrentIndex(sidebar_settings.get("show_history_settings_switch", 1))
@@ -131,7 +122,6 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
                 self.show_settings_icon_switch.setCurrentIndex(self.default_settings.get("show_settings_icon", 1))
                 self.main_window_history_switch.setCurrentIndex(self.default_settings.get("main_window_history_switch", 1))
                 self.main_window_side_switch.setCurrentIndex(self.default_settings.get("main_window_side_switch", 2))
-                self.show_plugin_settings_switch.setCurrentIndex(self.default_settings.get("show_plugin_settings_switch", 1))
                 self.show_security_settings_switch.setCurrentIndex(self.default_settings.get("show_security_settings_switch", 1))
                 self.show_voice_settings_switch.setCurrentIndex(self.default_settings.get("show_voice_settings_switch", 1))
                 self.show_history_settings_switch.setCurrentIndex(self.default_settings.get("show_history_settings_switch", 1))
@@ -144,7 +134,6 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
             self.show_settings_icon_switch.setCurrentIndex(self.default_settings.get("show_settings_icon", 1))
             self.main_window_history_switch.setCurrentIndex(self.default_settings.get("main_window_history_switch", 1))
             self.main_window_side_switch.setCurrentIndex(self.default_settings.get("main_window_side_switch", 2))
-            self.show_plugin_settings_switch.setCurrentIndex(self.default_settings.get("show_plugin_settings_switch", 1))
             self.show_security_settings_switch.setCurrentIndex(self.default_settings.get("show_security_settings_switch", 1))
             self.show_voice_settings_switch.setCurrentIndex(self.default_settings.get("show_voice_settings_switch", 1))
             self.show_history_settings_switch.setCurrentIndex(self.default_settings.get("show_history_settings_switch", 1))
@@ -170,7 +159,6 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
         sidebar_settings["main_window_side_switch"] = self.main_window_side_switch.currentIndex()
         sidebar_settings["main_window_history_switch"] = self.main_window_history_switch.currentIndex()
         sidebar_settings["show_settings_icon"] = self.show_settings_icon_switch.currentIndex()
-        sidebar_settings["show_plugin_settings_switch"] = self.show_plugin_settings_switch.currentIndex()
         sidebar_settings["show_security_settings_switch"] = self.show_security_settings_switch.currentIndex()
         sidebar_settings["show_voice_settings_switch"] = self.show_voice_settings_switch.currentIndex()
         sidebar_settings["show_history_settings_switch"] = self.show_history_settings_switch.currentIndex()

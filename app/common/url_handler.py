@@ -225,8 +225,7 @@ class URLHandler:
                 "reward": ("show_reward_window", "reward_url"),
                 "history": ("show_history_window", "history_url"),
                 "floating": ("show_floating_window", "floating_url"),
-                'direct_extraction': ('show_direct_extraction', 'direct_extraction_url'),
-                "plugin_settings": ("show_plugin_settings_window", "plugin_settings_url")
+                'direct_extraction': ('show_direct_extraction', 'direct_extraction_url')
             }
             
             # 根据路径打开对应界面
@@ -309,13 +308,6 @@ class URLHandler:
                     else:
                         action_enabled = self.is_url_enabled("about_action_url")
                 
-                # 插件设置相关操作
-                elif path == "plugin_settings":
-                    if action == 'open':
-                        action_enabled = self.is_url_enabled("plugin_settings_open_url")
-                    else:
-                        action_enabled = self.is_url_enabled("plugin_settings_action_url")
-                
                 # 如果操作未启用，记录日志并返回
                 if not action_enabled:
                     logger.error(f"URL操作已禁用: {path}?action={action}")
@@ -343,10 +335,6 @@ class URLHandler:
                     main_window.show_donation_dialog()
                 elif action == 'contributor' and hasattr(main_window, 'show_contributor_dialog'):
                     main_window.show_contributor_dialog()
-                
-                # 插件设置相关操作
-                elif action == 'open' and hasattr(main_window, 'show_plugin_settings_window'):
-                    main_window.show_plugin_settings_window()
                 
                 else:
                     logger.error(f"未知的动作或主窗口缺少对应方法: {action}")
@@ -376,7 +364,6 @@ class URLHandler:
             "history": "历史记录界面",
             "floating": "浮窗界面",
             'direct_extraction': '闪抽界面',
-            "plugin_settings": "插件设置界面"
         }
     
     def generate_url_examples(self):
@@ -415,10 +402,6 @@ class URLHandler:
             examples.append("secrandom://about?action=donation - 打开捐赠支持对话框")
         if self.is_url_enabled("enable_about_contributor_url"):
             examples.append("secrandom://about?action=contributor - 打开贡献者对话框")
-        
-        # 插件设置相关操作示例
-        if self.is_url_enabled("enable_plugin_settings_open_url"):
-            examples.append("secrandom://plugin_settings?action=open - 打开插件页面")
         
         return examples
 
@@ -477,7 +460,6 @@ class URLNotification(QDialog):
             "history": {"title": "SecRandom 历史记录界面", "desc": "即将打开SecRandom历史记录界面"},
             "floating": {"title": "SecRandom 浮窗界面", "desc": "即将打开SecRandom浮窗界面"},
             "direct_extraction": {"title": "SecRandom 闪抽界面", "desc": "即将打开SecRandom闪抽界面"},
-            "plugin_settings": {"title": "SecRandom 插件设置界面", "desc": "即将打开SecRandom插件设置界面"},
             "pumping_start": {"title": "SecRandom 开始点名", "desc": "即将开始SecRandom点名操作"},
             "pumping_stop": {"title": "SecRandom 停止点名", "desc": "即将停止SecRandom点名操作"},
             "pumping_reset": {"title": "SecRandom 重置点名", "desc": "即将重置SecRandom点名结果"},
@@ -486,7 +468,6 @@ class URLNotification(QDialog):
             "reward_reset": {"title": "SecRandom 重置抽奖", "desc": "即将重置SecRandom抽奖结果"},
             "about_donation": {"title": "SecRandom 捐赠支持", "desc": "即将打开SecRandom捐赠支持对话框"},
             "about_contributor": {"title": "SecRandom 贡献者", "desc": "即将打开SecRandom贡献者对话框"},
-            "plugin_settings_open": {"title": "SecRandom 插件页面", "desc": "即将打开SecRandom插件页面"},
         }
         
         return url_info_map.get(self.url_type, {"title": "SecRandom URL请求", "desc": f"即将处理URL请求: {self.url}"})

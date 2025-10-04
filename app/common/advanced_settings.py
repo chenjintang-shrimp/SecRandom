@@ -68,7 +68,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                     '您即将导出诊断数据，这些数据可能包含敏感信息：\n\n'
                     '📋 包含的数据类型：\n'
                     '• 点名名单数据、抽奖设置文件、历史记录文件\n'
-                    '• 软件设置文件、插件配置文件、系统日志文件\n\n'
+                    '• 软件设置文件、系统日志文件\n\n'
                     '⚠️ 注意事项：\n'
                     '• 这些数据可能包含个人信息和使用记录\n'
                     '• 请妥善保管导出的压缩包文件\n'
@@ -137,7 +137,6 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                 path_manager.get_resource_path('reward'),
                 path_manager.get_resource_path('history'),
                 path_manager._app_root / "app" / "settings",
-                path_manager.get_plugin_path(),
                 path_manager._app_root / "logs"
             ]
 
@@ -508,8 +507,6 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                 self._update_settings_json_categories(file_name, settings, current_settings, imported_settings)
             elif file_name == "voice_engine":
                 self._update_voice_engine_settings(settings, current_settings, imported_settings)
-            elif file_name == "plugin_settings":
-                self._update_plugin_settings(settings, current_settings, imported_settings)
             elif file_name == "config":
                 self._update_config_settings(settings, current_settings, imported_settings)
             elif file_name == "CleanupTimes":
@@ -546,15 +543,6 @@ class advanced_settingsCard(GroupHeaderCardWidget):
         for setting_name in settings:
             if "voice_engine" in imported_settings and setting_name in imported_settings["voice_engine"]:
                 current_settings["voice_engine"][setting_name] = imported_settings["voice_engine"][setting_name]
-    
-    def _update_plugin_settings(self, settings, current_settings, imported_settings):
-        """更新plugin_settings设置"""
-        if "plugin_settings" not in current_settings:
-            current_settings["plugin_settings"] = {}
-        
-        for setting_name in settings:
-            if "plugin_settings" in imported_settings and setting_name in imported_settings["plugin_settings"]:
-                current_settings["plugin_settings"][setting_name] = imported_settings["plugin_settings"][setting_name]
     
     def _update_config_settings(self, settings, current_settings, imported_settings):
         """更新config设置"""
@@ -662,9 +650,6 @@ class advanced_settingsCard(GroupHeaderCardWidget):
         # 处理voice_engine文件
         elif file_name == "voice_engine":
             self._export_voice_engine_settings(settings, current_settings, exported_settings)
-        # 处理plugin_settings文件
-        elif file_name == "plugin_settings":
-            self._export_plugin_settings(settings, current_settings, exported_settings)
         # 处理pumping_people和pumping_reward文件（特殊处理音效设置）
         elif file_name in ["pumping_people", "pumping_reward"]:
             self._export_pumping_settings(file_name, settings, current_settings, exported_settings, selected_settings)
@@ -712,16 +697,6 @@ class advanced_settingsCard(GroupHeaderCardWidget):
         for setting_name in settings:
             if section_name in current_settings and setting_name in current_settings[section_name]:
                 exported_settings["voice_engine"][section_name][setting_name] = current_settings[section_name][setting_name]
-    
-    def _export_plugin_settings(self, settings, current_settings, exported_settings):
-        """导出plugin_settings设置"""
-        section_name = "plugin_settings"
-        if section_name not in exported_settings["plugin_settings"]:
-            exported_settings["plugin_settings"][section_name] = {}
-        
-        for setting_name in settings:
-            if section_name in current_settings and setting_name in current_settings[section_name]:
-                exported_settings["plugin_settings"][section_name][setting_name] = current_settings[section_name][setting_name]
     
     def _export_pumping_settings(self, file_name, settings, current_settings, exported_settings, selected_settings):
         """导出pumping_people和pumping_reward设置（包含音效设置的特殊处理）"""
@@ -1037,11 +1012,6 @@ class SettingsSelectionDialog(QDialog):
                     "voice_speed", "system_volume_enabled", "system_volume_value"
                 ]
             },
-            "plugin_settings": {
-                "插件设置": [
-                    "run_plugins_on_startup", "fetch_plugin_list_on_startup", "selected_plugin"
-                ]
-            },
             "CleanupTimes": {
                 "清理时间设置": [
                     "cleanuptimes"
@@ -1056,15 +1026,15 @@ class SettingsSelectionDialog(QDialog):
                 "固定URL设置": [
                     "enable_main_url", "enable_settings_url", "enable_pumping_url", "enable_reward_url",
                     "enable_history_url", "enable_floating_url", "enable_about_url", "enable_direct_extraction_url",
-                    "enable_pumping_action_url", "enable_reward_action_url", "enable_about_action_url", "enable_plugin_settings_action_url",
+                    "enable_pumping_action_url", "enable_reward_action_url", "enable_about_action_url",
                     "enable_pumping_start_url", "enable_pumping_stop_url", "enable_pumping_reset_url", "enable_reward_start_url",
                     "enable_reward_stop_url", "enable_reward_reset_url", "enable_about_donation_url", "enable_about_contributor_url",
-                    "enable_plugin_settings_open_url", "main_url_notification", "settings_url_notification", "pumping_url_notification",
+                    "main_url_notification", "settings_url_notification", "pumping_url_notification",
                     "reward_url_notification", "history_url_notification", "floating_url_notification", "about_url_notification",
-                    "direct_extraction_url_notification", "plugin_settings_url_notification", "pumping_start_url_notification", "pumping_stop_url_notification",
+                    "direct_extraction_url_notification", "pumping_start_url_notification", "pumping_stop_url_notification",
                     "pumping_reset_url_notification", "reward_start_url_notification", "reward_stop_url_notification", "reward_reset_url_notification",
-                    "about_donation_url_notification", "about_contributor_url_notification", "plugin_settings_open_url_notification", "settings_url_skip_security",
-                    "floating_url_skip_security", "plugin_settings_open_url_skip_security",
+                    "about_donation_url_notification", "about_contributor_url_notification", "settings_url_skip_security",
+                    "floating_url_skip_security"
                 ]
             },
             "personal": {
@@ -1077,7 +1047,7 @@ class SettingsSelectionDialog(QDialog):
             "sidebar": {
                 "侧边栏设置": [
                     "pumping_floating_side", "pumping_reward_side", "show_settings_icon", "main_window_side_switch",
-                    "main_window_history_switch", "show_plugin_settings_switch", "show_security_settings_switch", 
+                    "main_window_history_switch", "show_security_settings_switch", 
                     "show_voice_settings_switch", "show_history_settings_switch"
                 ]
             },
@@ -1220,10 +1190,6 @@ class SettingsSelectionDialog(QDialog):
             "DpiScale": "DPI缩放", # 有
             "ThemeColor": "主题颜色", # 有
             "ThemeMode": "主题模式", # 有
-            # plugin_settings设置
-            "run_plugins_on_startup": "启动时运行插件", # 有
-            "fetch_plugin_list_on_startup": "启动时获取插件列表", # 有
-            "selected_plugin": "选中插件", # 有
             # voice_engine设置
             "voice_engine": "语音引擎", # 有
             "edge_tts_voice_name": "Edge TTS语音", # 有
@@ -1250,7 +1216,6 @@ class SettingsSelectionDialog(QDialog):
             "enable_pumping_action_url": "点名操作URL启用", # 有
             "enable_reward_action_url": "抽奖操作URL启用", # 有
             "enable_about_action_url": "关于操作URL启用", # 有
-            "enable_plugin_settings_action_url": "插件设置操作URL启用", # 有
             "enable_pumping_start_url": "点名开始URL启用", # 有
             "enable_pumping_stop_url": "点名停止URL启用", # 有
             "enable_pumping_reset_url": "点名重置URL启用", # 有
@@ -1259,7 +1224,6 @@ class SettingsSelectionDialog(QDialog):
             "enable_reward_reset_url": "抽奖重置URL启用", # 有
             "enable_about_donation_url": "关于捐赠URL启用", # 有
             "enable_about_contributor_url": "关于贡献者URL启用", # 有
-            "enable_plugin_settings_open_url": "插件设置打开URL启用", # 有
             "main_url_notification": "主界面URL通知", # 有
             "settings_url_notification": "设置界面URL通知", # 有
             "pumping_url_notification": "点名界面URL通知", # 有
@@ -1268,7 +1232,6 @@ class SettingsSelectionDialog(QDialog):
             "floating_url_notification": "浮窗界面URL通知", # 有
             "about_url_notification": "关于界面URL通知", # 有
             "direct_extraction_url_notification": "直接抽取URL通知", # 有
-            "plugin_settings_url_notification": "插件设置URL通知", # 有
             "pumping_start_url_notification": "点名开始URL通知", # 有
             "pumping_stop_url_notification": "点名停止URL通知", # 有
             "pumping_reset_url_notification": "点名重置URL通知", # 有
@@ -1277,10 +1240,8 @@ class SettingsSelectionDialog(QDialog):
             "reward_reset_url_notification": "抽奖重置URL通知", # 有
             "about_donation_url_notification": "关于捐赠URL通知", # 有
             "about_contributor_url_notification": "关于贡献者URL通知", # 有
-            "plugin_settings_open_url_notification": "插件设置打开URL通知", # 有
             "settings_url_skip_security": "设置界面URL跳过安全检查", # 有
             "floating_url_skip_security": "浮窗界面URL跳过安全检查", # 有
-            "plugin_settings_open_url_skip_security": "插件设置打开URL跳过安全检查", # 有
             # personal设置
             "enable_background_icon": "背景图标启用", # 有
             "background_blur": "背景模糊度", # 有
@@ -1298,7 +1259,6 @@ class SettingsSelectionDialog(QDialog):
             "show_settings_icon": "主窗口上的设置侧边栏", # 有
             "main_window_side_switch": "主窗口侧边栏", # 有
             "main_window_history_switch": "主窗口历史记录侧边栏", # 有
-            "show_plugin_settings_switch": "插件管理侧边栏", # 有
             "show_security_settings_switch": "安全设置侧边栏", # 有
             "show_voice_settings_switch": "语音设置侧边栏", # 有
             "show_history_settings_switch": "设置历史记录侧边栏", # 有

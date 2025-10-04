@@ -104,20 +104,6 @@ class PathManager:
         else:
             return self.get_absolute_path("app/resource/Temp")
     
-    def get_plugin_path(self, filename: str = "") -> Path:
-        """获取插件相关路径
-        
-        Args:
-            filename: 插件文件名或目录名
-            
-        Returns:
-            插件相关路径的绝对路径
-        """
-        if filename:
-            return self.get_absolute_path(f"app/plugin/{filename}")
-        else:
-            return self.get_absolute_path("app/plugin")
-    
     def get_cache_path(self, filename: str) -> Path:
         """获取缓存文件路径
         
