@@ -14,14 +14,7 @@ from pathlib import Path
 from datetime import datetime
 from loguru import logger
 
-# 平台特定导入
-if platform.system() == "Windows":
-    import winreg
-else:
-    # Linux平台使用subprocess处理注册表相关操作
-    import subprocess
-    import shutil
-    import stat
+import winreg
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 from app.common.path_utils import path_manager
@@ -130,7 +123,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.url_protocol_switch.setOnText("已注册")
         self.url_protocol_switch.setOffText("未注册")
         self.url_protocol_switch.setFont(QFont(load_custom_font(), 12))
-        self.url_protocol_switch.checkedChanged.connect(self.toggle_url_protocol)
+        self.url_protocol_switch.checkedChanged.connect(self._on_url_protocol_switch_changed)
 
         # 设置是否显示启动窗口
         self.show_startup_window_switch = SwitchButton()
@@ -1206,15 +1199,15 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 parent=self
             )
 
-    def toggle_url_protocol(self, enabled):
+    async def toggle_url_protocol(self, enabled):
         """切换URL协议注册状态"""
         try:
             if enabled:
-                success = self.register_url_protocol()
+                success = await self.register_url_protocol()
                 if success:
                     logger.success("URL协议注册成功")
                     InfoBar.success(
-                        title='注册成功',
+                        title='URL协议注册成功',
                         content='SecRandom URL协议已成功注册，现在可以通过secrandom://链接启动程序',
                         orient=Qt.Horizontal,
                         isClosable=True,
@@ -1222,7 +1215,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         duration=3000,
                         parent=self
                     )
-                    self.save_settings()
+                    await self.save_settings()
                 else:
                     self.url_protocol_switch.setChecked(False)
                     logger.error("URL协议注册失败")
@@ -1234,7 +1227,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                             # 不是管理员，提供更具体的错误信息
                             InfoBar.warning(
                                 title='权限不足',
-                                content='URL协议注册需要管理员权限，请以管理员身份运行程序',
+                                content='URL协议注册需要管理员权限，请右键点击程序图标，选择"以管理员身份运行"后重试',
                                 orient=Qt.Horizontal,
                                 isClosable=True,
                                 position=InfoBarPosition.TOP,
@@ -1245,7 +1238,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                             # 已经是管理员但仍然失败
                             InfoBar.error(
                                 title='注册失败',
-                                content='URL协议注册失败，即使以管理员权限运行也无法完成',
+                                content='URL协议注册失败，可能是注册表被锁定或系统安全策略阻止',
                                 orient=Qt.Horizontal,
                                 isClosable=True,
                                 position=InfoBarPosition.TOP,
@@ -1256,7 +1249,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         # 无法检查管理员权限
                         InfoBar.error(
                             title='注册失败',
-                            content='URL协议注册失败，请检查权限设置',
+                            content='URL协议注册失败，请检查系统权限设置或联系技术支持',
                             orient=Qt.Horizontal,
                             isClosable=True,
                             position=InfoBarPosition.TOP,
@@ -1265,14 +1258,14 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         )
                     
                     self.url_protocol_switch.setChecked(False)
-                    self.save_settings()
+                    await self.save_settings()
             else:
-                success = self.unregister_url_protocol()
+                success = await self.unregister_url_protocol()
                 if success:
                     logger.success("URL协议注销成功")
                     InfoBar.success(
-                        title='注销成功',
-                        content='SecRandom URL协议已成功注销',
+                        title='URL协议注销成功',
+                        content='SecRandom URL协议已成功注销，secrandom://链接将不再启动程序',
                         orient=Qt.Horizontal,
                         isClosable=True,
                         position=InfoBarPosition.TOP,
@@ -1284,7 +1277,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     logger.error("URL协议注销失败")
                     InfoBar.error(
                         title='注销失败',
-                        content='URL协议注销失败，请检查权限设置',
+                        content='URL协议注销失败，请检查系统权限设置或联系技术支持',
                         orient=Qt.Horizontal,
                         isClosable=True,
                         position=InfoBarPosition.TOP,
@@ -1295,7 +1288,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             logger.error(f"URL协议操作失败: {str(e)}")
             InfoBar.error(
                 title='操作失败',
-                content=f'URL协议操作失败: {str(e)}',
+                content=f'URL协议操作失败: {str(e)}，请稍后重试或联系技术支持',
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -1303,7 +1296,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 parent=self
             )
     
-    def register_url_protocol(self):
+    async def register_url_protocol(self):
         """注册SecRandom URL协议"""
         try:
             import sys
@@ -1326,17 +1319,18 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 # 尝试以管理员权限注册URL协议
                 try:
                     # 创建协议主键
+                    loop = asyncio.get_event_loop()
                     with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
-                        winreg.SetValue(key, None, winreg.REG_SZ, "URL:SecRandom Protocol")
-                        winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
+                        await loop.run_in_executor(None, winreg.SetValue, key, None, winreg.REG_SZ, "URL:SecRandom Protocol")
+                        await loop.run_in_executor(None, winreg.SetValueEx, key, "URL Protocol", 0, winreg.REG_SZ, "")
                     
                     # 创建默认图标
                     with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon") as key:
-                        winreg.SetValue(key, None, winreg.REG_SZ, executable)
+                        await loop.run_in_executor(None, winreg.SetValue, key, None, winreg.REG_SZ, executable)
                     
                     # 创建shell\open\command
                     with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command") as key:
-                        winreg.SetValue(key, None, winreg.REG_SZ, command)
+                        await loop.run_in_executor(None, winreg.SetValue, key, None, winreg.REG_SZ, command)
                     
                     logger.info(f"URL协议注册成功: {protocol_key}")
                     return True
@@ -1364,7 +1358,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             logger.error(f"注册URL协议失败: {str(e)}")
             return False
     
-    def unregister_url_protocol(self):
+    async def unregister_url_protocol(self):
         """注销SecRandom URL协议"""
         try:
             if platform.system() == "Windows":
@@ -1372,11 +1366,12 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 
                 # 删除注册表项
                 try:
-                    winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command")
-                    winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open")
-                    winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell")
-                    winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon")
-                    winreg.DeleteKey(winreg.HKEY_CLASSES_ROOT, protocol_key)
+                    loop = asyncio.get_event_loop()
+                    await loop.run_in_executor(None, winreg.DeleteKey, winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command")
+                    await loop.run_in_executor(None, winreg.DeleteKey, winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open")
+                    await loop.run_in_executor(None, winreg.DeleteKey, winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell")
+                    await loop.run_in_executor(None, winreg.DeleteKey, winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon")
+                    await loop.run_in_executor(None, winreg.DeleteKey, winreg.HKEY_CLASSES_ROOT, protocol_key)
                 except Exception:
                     # 如果键不存在，忽略错误
                     pass
@@ -1388,17 +1383,23 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             logger.error(f"注销URL协议失败: {str(e)}")
             return False
     
-    def is_url_protocol_registered(self):
+    async def is_url_protocol_registered(self):
         """检查URL协议是否已注册"""
         try:
             if platform.system() == "Windows":
                 protocol_key = "secrandom"
-                with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
-                    return True
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, winreg.OpenKey, winreg.HKEY_CLASSES_ROOT, protocol_key)
+                return True
         except Exception:
             return False
     
-def register_url_protocol_on_startup():
+    def _on_url_protocol_switch_changed(self, enabled):
+        """URL协议开关变化的异步处理包装器"""
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.toggle_url_protocol(enabled))
+    
+async def register_url_protocol_on_startup():
     """在应用程序启动时自动注册URL协议
     
     该函数会在应用程序启动时自动调用，尝试注册SecRandom URL协议。
@@ -1426,10 +1427,11 @@ def register_url_protocol_on_startup():
             
             # 检查是否已经注册
             try:
-                with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, protocol_key):
-                    # 如果能打开键，说明已经注册
-                    logger.info(f"URL协议已注册: {protocol_key}")
-                    return True
+                loop = asyncio.get_event_loop()
+                await loop.run_in_executor(None, winreg.OpenKey, winreg.HKEY_CLASSES_ROOT, protocol_key)
+                # 如果能打开键，说明已经注册
+                logger.info(f"URL协议已注册: {protocol_key}")
+                return True
             except Exception:
                 # 键不存在，需要注册
                 pass
@@ -1438,16 +1440,16 @@ def register_url_protocol_on_startup():
             try:
                 # 创建协议主键
                 with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, protocol_key) as key:
-                    winreg.SetValue(key, None, winreg.REG_SZ, "URL:SecRandom Protocol")
-                    winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
+                    await loop.run_in_executor(None, winreg.SetValue, key, None, winreg.REG_SZ, "URL:SecRandom Protocol")
+                    await loop.run_in_executor(None, winreg.SetValueEx, key, "URL Protocol", 0, winreg.REG_SZ, "")
                 
                 # 创建默认图标
                 with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\DefaultIcon") as key:
-                    winreg.SetValue(key, None, winreg.REG_SZ, executable)
+                    await loop.run_in_executor(None, winreg.SetValue, key, None, winreg.REG_SZ, executable)
                 
                 # 创建shell\open\command
                 with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, f"{protocol_key}\\shell\\open\\command") as key:
-                    winreg.SetValue(key, None, winreg.REG_SZ, command)
+                    await loop.run_in_executor(None, winreg.SetValue, key, None, winreg.REG_SZ, command)
                 
                 logger.info(f"URL协议注册成功: {protocol_key}")
                 return True

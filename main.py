@@ -654,7 +654,7 @@ async def async_register_url_protocol():
         startup_thread.set_step(5, "正在注册URL协议...")
     try:
         from app.common.foundation_settings import register_url_protocol_on_startup
-        register_url_protocol_on_startup()
+        await register_url_protocol_on_startup()
         logger.info("URL协议自动注册完成")
         if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
             startup_thread.set_step(6, "正在创建主窗口...")
