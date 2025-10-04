@@ -54,7 +54,7 @@ class theme_settingsCard(QFrame):
             cfg.themeMode,
             get_theme_icon("ic_fluent_color_20_filled"),
             self.tr("主题"),
-            self.tr("更改应用程序的主题(图标颜色需重启生效)"),
+            self.tr("更改应用程序的主题(部分界面需重启生效)"),
             texts=["浅色", "深色", "跟随系统设置"]
         )
 
