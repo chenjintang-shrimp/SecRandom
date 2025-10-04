@@ -51,7 +51,7 @@ class settings_Window(MSFluentWindow):
 
         self.setMinimumSize(600, 400)
         self.setWindowTitle('SecRandom - 设置')
-        self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'secrandom-icon.png'))))
+        self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'secrandom-icon-paper.png'))))
 
         # 应用背景图片
         self.apply_background_image()

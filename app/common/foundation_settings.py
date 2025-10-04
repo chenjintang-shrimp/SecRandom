@@ -69,7 +69,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             ["不关闭", "直接关闭", "3秒后关闭", "5秒后关闭", "10秒后关闭", "15秒后关闭", "30秒后关闭", "1分钟后关闭",
              "2分钟后关闭", "3分钟后关闭", "5分钟后关闭", "10分钟后关闭", "30分钟后关闭", "45分钟后关闭", "1小时后关闭",
              "2小时后关闭", "3小时后关闭", "6小时后关闭", "12小时后关闭"])
-        self.main_window_focus_comboBox.currentIndexChanged.connect(self.on_focus_mode_changed)
+        self.main_window_focus_comboBox.currentIndexChanged.connect(lambda: asyncio.create_task(self.on_focus_mode_changed()))
         self.main_window_focus_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 设置检测主窗口焦点时间
@@ -77,17 +77,17 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             ["不检测", "1秒", "2秒", "3秒", "5秒", "10秒", "15秒", "30秒",
              "1分钟", "5分钟", "10分钟", "15分钟", "30分钟",
              "1小时", "2小时", "3小时", "6小时"])
-        self.main_window_focus_time_comboBox.currentIndexChanged.connect(self.on_focus_time_changed)
+        self.main_window_focus_time_comboBox.currentIndexChanged.connect(lambda: asyncio.create_task(self.on_focus_time_changed()))
         self.main_window_focus_time_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 主窗口窗口显示位置下拉框
         self.main_window_comboBox.addItems(["居中", "居中向下3/5"])
-        self.main_window_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.main_window_comboBox.currentIndexChanged.connect(lambda: asyncio.create_task(self.save_settings()))
         self.main_window_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 设置窗口显示位置下拉框
         self.settings_window_comboBox.addItems(["居中", "居中向下3/5"])
-        self.settings_window_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.settings_window_comboBox.currentIndexChanged.connect(lambda: asyncio.create_task(self.save_settings()))
         self.settings_window_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 添加组件到分组中
@@ -95,7 +95,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.check_on_startup.setOnText("开启")
         self.check_on_startup.setOffText("关闭")
         self.check_on_startup.setFont(QFont(load_custom_font(), 12))
-        self.check_on_startup.checkedChanged.connect(self.save_settings)
+        self.check_on_startup.checkedChanged.connect(lambda: asyncio.create_task(self.save_settings()))
         
         # 浮窗
         # 闪抽窗口自动关闭开关
@@ -103,12 +103,12 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.flash_window_auto_close_switch.setOnText("开启")
         self.flash_window_auto_close_switch.setOffText("关闭")
         self.flash_window_auto_close_switch.setFont(QFont(load_custom_font(), 12))
-        self.flash_window_auto_close_switch.checkedChanged.connect(self.save_settings)
+        self.flash_window_auto_close_switch.checkedChanged.connect(lambda: asyncio.create_task(self.save_settings()))
 
         # 闪抽窗口自动关闭时间设置
         self.flash_window_close_time_comboBox = ComboBox()
         self.flash_window_close_time_comboBox.addItems(["1秒", "2秒", "3秒", "5秒", "10秒", "15秒", "30秒"])
-        self.flash_window_close_time_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.flash_window_close_time_comboBox.currentIndexChanged.connect(lambda: asyncio.create_task(self.save_settings()))
         self.flash_window_close_time_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 主界面置顶功能
@@ -116,7 +116,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.topmost_switch.setOnText("置顶")
         self.topmost_switch.setOffText("取消置顶")
         self.topmost_switch.setFont(QFont(load_custom_font(), 12))
-        self.topmost_switch.checkedChanged.connect(self.save_settings)
+        self.topmost_switch.checkedChanged.connect(lambda: asyncio.create_task(self.save_settings()))
         
         # URL协议注册功能
         self.url_protocol_switch = SwitchButton()
@@ -130,7 +130,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.show_startup_window_switch.setOnText("开启")
         self.show_startup_window_switch.setOffText("关闭")
         self.show_startup_window_switch.setFont(QFont(load_custom_font(), 12))
-        self.show_startup_window_switch.checkedChanged.connect(self.save_settings)
+        self.show_startup_window_switch.checkedChanged.connect(lambda: asyncio.create_task(self.save_settings()))
 
         # 快捷键设置功能
         # 全局快捷键开关
@@ -138,13 +138,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.global_shortcut_switch.setOnText("开启")
         self.global_shortcut_switch.setOffText("关闭")
         self.global_shortcut_switch.setFont(QFont(load_custom_font(), 12))
-        self.global_shortcut_switch.checkedChanged.connect(self.save_settings)
+        self.global_shortcut_switch.checkedChanged.connect(lambda: asyncio.create_task(self.save_settings()))
         
         # 全局快捷键目标选择下拉框
         self.global_shortcut_target_comboBox = ComboBox()
         self.global_shortcut_target_comboBox.addItems(["点名界面", "闪抽界面", "抽奖界面"])
         self.global_shortcut_target_comboBox.setFont(QFont(load_custom_font(), 12))
-        self.global_shortcut_target_comboBox.currentIndexChanged.connect(self.save_settings)
+        self.global_shortcut_target_comboBox.currentIndexChanged.connect(lambda: asyncio.create_task(self.save_settings()))
         
         # 全局快捷键设置按钮
         self.global_shortcut_button = PushButton("设置快捷键")
@@ -260,8 +260,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
         self.load_settings()
 
-    def on_focus_mode_changed(self):
-        self.save_settings()
+    async def on_focus_mode_changed(self):
+        await self.save_settings()
         index = self.main_window_focus_comboBox.currentIndex()
         main_window = None
         for widget in QApplication.topLevelWidgets():
@@ -271,8 +271,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         if main_window:
             main_window.update_focus_mode(index)
 
-    def on_focus_time_changed(self):
-        self.save_settings()
+    async def on_focus_time_changed(self):
+        await self.save_settings()
         index = self.main_window_focus_time_comboBox.currentIndex()
         main_window = None
         for widget in QApplication.topLevelWidgets():
@@ -295,7 +295,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             logger.error("无法获取可执行文件路径")
             return
 
-        self.save_settings()
+        await self.save_settings()
 
         try:
             # 读取设置文件
@@ -371,7 +371,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         loop = asyncio.get_event_loop()
         loop.create_task(self.setting_startup())
 
-    def load_settings(self):
+    async def load_settings(self):
         try:
             if path_manager.file_exists(self.settings_file):
                 with open_file(self.settings_file, 'r', encoding='utf-8') as f:
@@ -470,7 +470,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.global_shortcut_label.setText(self.default_settings["global_shortcut_key"] if self.default_settings["global_shortcut_key"] else "未设置")
                 self.local_pumping_shortcut_label.setText(self.default_settings["local_pumping_shortcut_key"] if self.default_settings["local_pumping_shortcut_key"] else "未设置")
                 self.local_reward_shortcut_label.setText(self.default_settings["local_reward_shortcut_key"] if self.default_settings["local_reward_shortcut_key"] else "未设置")
-                self.save_settings()
+                await self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
@@ -491,14 +491,14 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.global_shortcut_label.setText(self.default_settings["global_shortcut_key"] if self.default_settings["global_shortcut_key"] else "未设置")
             self.local_pumping_shortcut_label.setText(self.default_settings["local_pumping_shortcut_key"] if self.default_settings["local_pumping_shortcut_key"] else "未设置")
             self.local_reward_shortcut_label.setText(self.default_settings["local_reward_shortcut_key"] if self.default_settings["local_reward_shortcut_key"] else "未设置")
-            self.save_settings()
+            await self.save_settings()
             
             # 注册快捷键
             if self.global_shortcut_switch.isChecked() and self.global_shortcut_label.text() != "未设置":
                 self.register_global_shortcut(self.global_shortcut_label.text())
             self.register_local_shortcuts()
 
-    def save_settings(self):
+    async def save_settings(self):
         # 先读取现有设置
         existing_settings = {}
         if path_manager.file_exists(self.settings_file):

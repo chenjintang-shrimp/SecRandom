@@ -1,6 +1,6 @@
 <div align="center">
 
-<image src="resources/secrandom-icon.png" height="128"/>
+<image src="resources/secrandom-icon-paper.png" height="128"/>
 
 # SecRandom - 公平随机抽取系统
 
