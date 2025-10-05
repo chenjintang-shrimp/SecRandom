@@ -10,8 +10,7 @@ from loguru import logger
 from app.common.config import get_theme_icon, load_custom_font
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
-from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value,
-                                        refresh_settings_cache, get_settings_summary, update_settings)
+import random
 
 # 导入子页面
 from app.view.settings_page.more_setting import more_setting
@@ -34,13 +33,18 @@ class settings_Window(MSFluentWindow):
         self.resize_timer.setSingleShot(True)
         self.resize_timer.timeout.connect(self.save_settings_window_size)
 
-        # 使用 settings_reader 读取设置
+        settings_path = path_manager.get_settings_path()
         try:
-            foundation_settings = get_settings_by_category("foundation")
-            # 读取保存的窗口大小，默认为800x600
-            window_width = foundation_settings.get('settings_window_width', 800)
-            window_height = foundation_settings.get('settings_window_height', 600)
-            self.resize(window_width, window_height)
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                # 读取保存的窗口大小，默认为800x600
+                window_width = foundation_settings.get('settings_window_width', 800)
+                window_height = foundation_settings.get('settings_window_height', 600)
+                self.resize(window_width, window_height)
+        except FileNotFoundError as e:
+            logger.error(f"加载设置时出错: {e}, 使用默认大小:800x600")
+            self.resize(800, 600)
         except Exception as e:
             logger.error(f"加载窗口大小设置失败: {e}, 使用默认大小:800x600")
             self.resize(800, 600)
@@ -58,14 +62,15 @@ class settings_Window(MSFluentWindow):
         desktop = screen.availableGeometry()
         w, h = desktop.width(), desktop.height()
         try:
-            # 使用 settings_reader 读取设置
-            foundation_settings = get_settings_by_category("foundation")
-            settings_window_mode = foundation_settings.get('settings_window_mode', 0)
-            if settings_window_mode == 0:
-                self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
-            elif settings_window_mode == 1:
-                self.move(w // 2 - self.width() // 2, h * 3 // 5 - self.height() // 2)
-        except Exception as e:
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                settings_window_mode = foundation_settings.get('settings_window_mode', 0)
+                if settings_window_mode == 0:
+                    self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
+                elif settings_window_mode == 1:
+                    self.move(w // 2 - self.width() // 2, h * 3 // 5 - self.height() // 2)
+        except FileNotFoundError as e:
             logger.error(f"加载设置时出错: {e}, 使用默认窗口居中显示设置界面")
             self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
@@ -98,18 +103,19 @@ class settings_Window(MSFluentWindow):
 
         # 根据设置决定是否创建"历史记录设置"界面
         try:
-            # 使用 settings_reader 读取设置
-            custom_settings = get_settings_by_category("personal")
-            sidebar_settings = custom_settings.get('sidebar', {})
-            history_settings_switch = sidebar_settings.get('show_history_settings_switch', 1)
-            
-            if history_settings_switch != 2:  # 不为"不显示"时才创建界面
-                self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
-                self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
-                logger.info("历史记录设置界面创建成功")
-            else:
-                logger.info("历史记录设置界面已设置为不创建")
-                self.changeable_history_handoff_settingInterface = None
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                history_settings_switch = sidebar_settings.get('show_history_settings_switch', 1)
+                
+                if history_settings_switch != 2:  # 不为"不显示"时才创建界面
+                    self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
+                    self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
+                    logger.info("历史记录设置界面创建成功")
+                else:
+                    logger.info("历史记录设置界面已设置为不创建")
+                    self.changeable_history_handoff_settingInterface = None
         except Exception as e:
             logger.error(f"读取历史记录设置界面设置失败: {e}, 默认创建界面")
             self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
@@ -126,18 +132,19 @@ class settings_Window(MSFluentWindow):
 
         # 根据设置决定是否创建"安全设置"界面
         try:
-            # 使用 settings_reader 读取设置
-            custom_settings = get_settings_by_category("personal")
-            sidebar_settings = custom_settings.get('sidebar', {})
-            security_settings_switch = sidebar_settings.get('show_security_settings_switch', 1)
-            
-            if security_settings_switch != 2:  # 不为"不显示"时才创建界面
-                self.password_setInterface = password_set(self)
-                self.password_setInterface.setObjectName("password_setInterface")
-                logger.info("安全设置界面创建成功")
-            else:
-                logger.info("安全设置界面已设置为不创建")
-                self.password_setInterface = None
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                security_settings_switch = sidebar_settings.get('show_security_settings_switch', 1)
+                
+                if security_settings_switch != 2:  # 不为"不显示"时才创建界面
+                    self.password_setInterface = password_set(self)
+                    self.password_setInterface.setObjectName("password_setInterface")
+                    logger.info("安全设置界面创建成功")
+                else:
+                    logger.info("安全设置界面已设置为不创建")
+                    self.password_setInterface = None
         except Exception as e:
             logger.error(f"读取安全设置界面设置失败: {e}, 默认创建界面")
             self.password_setInterface = password_set(self)
@@ -146,18 +153,19 @@ class settings_Window(MSFluentWindow):
 
         # 根据设置决定是否创建"语音设置"界面
         try:
-            # 使用 settings_reader 读取设置
-            custom_settings = get_settings_by_category("personal")
-            sidebar_settings = custom_settings.get('sidebar', {})
-            voice_settings_switch = sidebar_settings.get('show_voice_settings_switch', 1)
-            
-            if voice_settings_switch != 2:  # 不为"不显示"时才创建界面
-                self.voice_engine_settingsInterface = voice_engine_settings(self)
-                self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
-                logger.info("语音设置界面创建成功")
-            else:
-                logger.info("语音设置界面已设置为不创建")
-                self.voice_engine_settingsInterface = None
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                voice_settings_switch = sidebar_settings.get('show_voice_settings_switch', 1)
+                
+                if voice_settings_switch != 2:  # 不为"不显示"时才创建界面
+                    self.voice_engine_settingsInterface = voice_engine_settings(self)
+                    self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
+                    logger.info("语音设置界面创建成功")
+                else:
+                    logger.info("语音设置界面已设置为不创建")
+                    self.voice_engine_settingsInterface = None
         except Exception as e:
             logger.error(f"读取语音设置界面设置失败: {e}, 默认创建界面")
             self.voice_engine_settingsInterface = voice_engine_settings(self)
@@ -180,25 +188,26 @@ class settings_Window(MSFluentWindow):
 
         # 添加语音设置导航项
         try:
-            # 使用 settings_reader 读取设置
-            custom_settings = get_settings_by_category("personal")
-            sidebar_settings = custom_settings.get('sidebar', {})
-            voice_settings_switch = sidebar_settings.get('show_voice_settings_switch', 1)
-            
-            if voice_settings_switch == 1:
-                if self.voice_engine_settingsInterface is not None:
-                    self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
-                    # logger.info("语音设置导航项已放置在底部导航栏")
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                voice_settings_switch = sidebar_settings.get('show_voice_settings_switch', 1)
+                
+                if voice_settings_switch == 1:
+                    if self.voice_engine_settingsInterface is not None:
+                        self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.BOTTOM)
+                        # logger.info("语音设置导航项已放置在底部导航栏")
+                    else:
+                        logger.error("语音设置界面未创建，无法添加到导航栏")
+                elif voice_settings_switch == 2:
+                    logger.info("语音设置导航项已设置为不显示")
                 else:
-                    logger.error("语音设置界面未创建，无法添加到导航栏")
-            elif voice_settings_switch == 2:
-                logger.info("语音设置导航项已设置为不显示")
-            else:
-                if self.voice_engine_settingsInterface is not None:
-                    self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.TOP)
-                    # logger.info("语音设置导航项已放置在顶部导航栏")
-                else:
-                    logger.error("语音设置界面未创建，无法添加到导航栏")
+                    if self.voice_engine_settingsInterface is not None:
+                        self.addSubInterface(self.voice_engine_settingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), '语音设置', position=NavigationItemPosition.TOP)
+                        # logger.info("语音设置导航项已放置在顶部导航栏")
+                    else:
+                        logger.error("语音设置界面未创建，无法添加到导航栏")
         except Exception as e:
             logger.error(f"加载语音设置导航项失败: {e}")
             if self.voice_engine_settingsInterface is not None:
@@ -206,25 +215,26 @@ class settings_Window(MSFluentWindow):
 
         # 添加安全设置导航项
         try:
-            # 使用 settings_reader 读取设置
-            custom_settings = get_settings_by_category("personal")
-            sidebar_settings = custom_settings.get('sidebar', {})
-            security_settings_switch = sidebar_settings.get('show_security_settings_switch', 1)
-            
-            if security_settings_switch == 1:
-                if self.password_setInterface is not None:
-                    self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
-                    # logger.info("安全设置导航项已放置在底部导航栏")
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                security_settings_switch = sidebar_settings.get('show_security_settings_switch', 1)
+                
+                if security_settings_switch == 1:
+                    if self.password_setInterface is not None:
+                        self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.BOTTOM)
+                        # logger.info("安全设置导航项已放置在底部导航栏")
+                    else:
+                        logger.error("安全设置界面未创建，无法添加到导航栏")
+                elif security_settings_switch == 2:
+                    logger.info("安全设置导航项已设置为不显示")
                 else:
-                    logger.error("安全设置界面未创建，无法添加到导航栏")
-            elif security_settings_switch == 2:
-                logger.info("安全设置导航项已设置为不显示")
-            else:
-                if self.password_setInterface is not None:
-                    self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.TOP)
-                    # logger.info("安全设置导航项已放置在顶部导航栏")
-                else:
-                    logger.error("安全设置界面未创建，无法添加到导航栏")
+                    if self.password_setInterface is not None:
+                        self.addSubInterface(self.password_setInterface, get_theme_icon("ic_fluent_shield_keyhole_20_filled"), '安全设置', position=NavigationItemPosition.TOP)
+                        # logger.info("安全设置导航项已放置在顶部导航栏")
+                    else:
+                        logger.error("安全设置界面未创建，无法添加到导航栏")
         except Exception as e:
             logger.error(f"加载安全设置导航项失败: {e}")
             if self.password_setInterface is not None:
@@ -232,27 +242,28 @@ class settings_Window(MSFluentWindow):
 
         # 添加历史记录设置导航项
         try:
-            # 使用 settings_reader 读取设置
-            custom_settings = get_settings_by_category("personal")
-            sidebar_settings = custom_settings.get('sidebar', {})
-            history_settings_switch = sidebar_settings.get('show_history_settings_switch', 1)
-            
-            if history_settings_switch == 1:
-                if self.changeable_history_handoff_settingInterface is not None:
-                    history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
-                    history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
-                    # logger.info("历史记录设置导航项已放置在底部导航栏")
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                history_settings_switch = sidebar_settings.get('show_history_settings_switch', 1)
+                
+                if history_settings_switch == 1:
+                    if self.changeable_history_handoff_settingInterface is not None:
+                        history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+                        history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
+                        # logger.info("历史记录设置导航项已放置在底部导航栏")
+                    else:
+                        logger.error("历史记录设置界面未创建，无法添加到导航栏")
+                elif history_settings_switch == 2:
+                    logger.info("历史记录设置导航项已设置为不显示")
                 else:
-                    logger.error("历史记录设置界面未创建，无法添加到导航栏")
-            elif history_settings_switch == 2:
-                logger.info("历史记录设置导航项已设置为不显示")
-            else:
-                if self.changeable_history_handoff_settingInterface is not None:
-                    history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.TOP)
-                    history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
-                    # logger.info("历史记录设置导航项已放置在顶部导航栏")
-                else:
-                    logger.error("历史记录设置界面未创建，无法添加到导航栏")
+                    if self.changeable_history_handoff_settingInterface is not None:
+                        history_item = self.addSubInterface(self.changeable_history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.TOP)
+                        history_item.clicked.connect(lambda: self.changeable_history_handoff_settingInterface.pumping_people_card.load_data())
+                        # logger.info("历史记录设置导航项已放置在顶部导航栏")
+                    else:
+                        logger.error("历史记录设置界面未创建，无法添加到导航栏")
         except Exception as e:
             logger.error(f"加载历史记录设置导航项失败: {e}")
             if self.changeable_history_handoff_settingInterface is not None:
@@ -302,15 +313,26 @@ class settings_Window(MSFluentWindow):
     def save_settings_window_size(self):
         if not self.isMaximized():
             try:
-                # 准备要更新的 foundation 设置
-                foundation_settings = {
-                    'settings_window_width': self.width(),
-                    'settings_window_height': self.height()
-                }
+                settings_path = path_manager.get_settings_path()
+                # 读取现有设置
+                try:
+                    with open_file(settings_path, 'r', encoding='utf-8') as f:
+                        settings = json.load(f)
+                except FileNotFoundError:
+                    settings = {}
                 
-                # 使用 settings_reader 更新设置
-                update_settings("foundation", foundation_settings)
+                # 确保foundation键存在
+                if 'foundation' not in settings:
+                    settings['foundation'] = {}
                 
+                # 更新窗口大小设置
+                settings['foundation']['settings_window_width'] = self.width()
+                settings['foundation']['settings_window_height'] = self.height()
+                
+                # 保存设置
+                ensure_dir(settings_path.parent)
+                with open_file(settings_path, 'w', encoding='utf-8') as f:
+                    json.dump(settings, f, ensure_ascii=False, indent=4)
             except Exception as e:
                 logger.error(f"保存窗口大小设置失败: {e}")
 
@@ -318,8 +340,11 @@ class settings_Window(MSFluentWindow):
         """检查设置中的 enable_settings_background 和 enable_settings_background_color，
         如果开启则应用设置界面背景图片或背景颜色"""
         try:
-            custom_settings = get_settings_by_category("personal")
-            
+            # 读取自定义设置
+            custom_settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(custom_settings_path, 'r', encoding='utf-8') as f:
+                custom_settings = json.load(f)
+                
             # 检查是否启用了设置界面背景图标
             personal_settings = custom_settings.get('personal', {})
             enable_settings_background = personal_settings.get('enable_settings_background', True)

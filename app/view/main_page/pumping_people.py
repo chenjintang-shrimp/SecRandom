@@ -17,8 +17,6 @@ system_random = SystemRandom()
 
 from app.common.config import get_theme_icon, load_custom_font, restore_volume, is_dark_theme
 from app.common.path_utils import path_manager, open_file, remove_file, ensure_dir
-from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value,
-                                        refresh_settings_cache, get_settings_summary, update_settings)
 from app.common.voice import TTSHandler
 
 is_dark = is_dark_theme(qconfig)
@@ -1728,9 +1726,9 @@ class pumping_people(QWidget):
         genders = self.gender_combo.currentText()
 
         try:
-            # 使用settings_reader模块获取自定义设置
-            custom_settings = get_settings_by_category("roll_call")
-            pumping_people_student_quantity = custom_settings.get('people_theme', 0)
+            with open_file(path_manager.get_settings_path("custom_settings.json"), 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                pumping_people_student_quantity = settings['roll_call']['people_theme']
         except Exception:
             pumping_people_student_quantity = 0
 
@@ -2107,18 +2105,18 @@ class pumping_people(QWidget):
     def initUI(self):
         # 加载设置
         try:
-            # 使用settings_reader模块获取自定义设置
-            custom_settings = get_settings_by_category("roll_call")
-            main_window_control_Switch = custom_settings.get('pumping_people_control_Switch', True)
-            modify_button_switch = custom_settings.get('modify_button_switch', False)
-            show_reset_button = custom_settings.get('show_reset_button', True)
-            show_refresh_button = custom_settings.get('show_refresh_button', True)
-            show_quantity_control = custom_settings.get('show_quantity_control', True)
-            show_start_button = custom_settings.get('show_start_button', True)
-            show_list_toggle = custom_settings.get('show_list_toggle', True)
-            selection_range = custom_settings.get('selection_range', True)
-            selection_gender = custom_settings.get('selection_gender', True)
-            pumping_people_student_quantity = custom_settings.get('people_theme', 0)
+            with open_file(path_manager.get_settings_path("custom_settings.json"), 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                main_window_control_Switch = settings['roll_call']['pumping_people_control_Switch']
+                modify_button_switch = settings['roll_call']['modify_button_switch']
+                show_reset_button = settings['roll_call']['show_reset_button']
+                show_refresh_button = settings['roll_call']['show_refresh_button']
+                show_quantity_control = settings['roll_call']['show_quantity_control']
+                show_start_button = settings['roll_call']['show_start_button']
+                show_list_toggle = settings['roll_call']['show_list_toggle']
+                selection_range = settings['roll_call']['selection_range']
+                selection_gender = settings['roll_call']['selection_gender']
+                pumping_people_student_quantity = settings['roll_call']['people_theme']
         except Exception as e:
             logger.error(f"加载设置失败: {e}, 使用默认设置")
             main_window_control_Switch = True

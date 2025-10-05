@@ -27,8 +27,6 @@ from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_W
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, get_update_channel
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
-from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
-                                        refresh_settings_cache, get_settings_summary, update_settings)
 from app.view.settings import settings_Window
 from app.view.main_page.pumping_people import pumping_people
 from app.view.main_page.pumping_reward import pumping_reward
@@ -318,10 +316,9 @@ class TrayIconManager(QObject):
                 "flash": False,
             }
             
-            # 使用settings_reader模块获取托盘设置
-            custom_settings = get_settings_by_category("fixed_url")
-            fixed_url_settings = custom_settings.get("fixed_url", {})
-            tray_settings = fixed_url_settings.get("tray", {})
+            # 从自定义设置中读取托盘设置
+            custom_settings = self.main_window.config_manager.load_custom_settings()
+            tray_settings = custom_settings.get("tray", {})
             
             # 合并默认设置和用户设置
             for key, default_value in default_settings.items():
@@ -564,11 +561,13 @@ class Window(MSFluentWindow):
         检查设置中的 enable_main_background 和 enable_main_background_color，
         如果开启则应用主界面背景图片或背景颜色"""
         try:
-            # 使用settings_reader模块获取个人设置
-            custom_settings = get_settings_by_category("personal")
-            personal_settings = custom_settings.get("personal", {})
+            # 读取自定义设置
+            custom_settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(custom_settings_path, 'r', encoding='utf-8') as f:
+                custom_settings = json.load(f)
                 
             # 检查是否启用了主界面背景图标
+            personal_settings = custom_settings.get('personal', {})
             enable_main_background = personal_settings.get('enable_main_background', True)
             enable_main_background_color = personal_settings.get('enable_main_background_color', False)
             
@@ -708,6 +707,8 @@ class Window(MSFluentWindow):
                 
                 # logger.debug("主界面背景图片和颜色功能均未启用，使用默认背景")
                 
+        except FileNotFoundError:
+            logger.error("自定义设置文件不存在，使用默认设置")
         except Exception as e:
             logger.error(f"应用主界面背景图片或颜色时发生异常: {e}")
     
@@ -1877,9 +1878,12 @@ class Window(MSFluentWindow):
         # 检查是否跳过安全验证
         skip_security = False
         try:
-            # 使用settings_reader模块获取固定URL设置
-            fixed_url_settings = get_settings_by_category("fixed_url")
-            skip_security = fixed_url_settings.get("settings_url_skip_security", False)
+            settings_path = path_manager.get_settings_path('fixed_url_settings.json')
+            if path_manager.file_exists(settings_path):
+                with open_file(settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    fixed_url_settings = settings.get('fixed_url', {})
+                    skip_security = fixed_url_settings.get('settings_url_skip_security', False)
         except Exception as e:
             logger.error(f"读取跳过安全验证设置失败: {e}")
         
@@ -1913,14 +1917,15 @@ class Window(MSFluentWindow):
         通过URL协议打开点名界面，自动切换到点名界面"""
         if self._is_non_class_time():
             try:
-                # 使用settings_reader模块获取加密设置
-                enc_settings = get_settings_by_category("hashed_set")
-                if enc_settings.get('start_password_enabled', False):
-                    from app.common.password_dialog import PasswordDialog
-                    dialog = PasswordDialog(self)
-                    if dialog.exec_() != QDialog.Accepted:
-                        logger.error("用户取消在课间调用URL使用抽取功能")
-                        return
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.error("用户取消在课间调用URL使用抽取功能")
+                            return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
                 return
@@ -1938,14 +1943,15 @@ class Window(MSFluentWindow):
         通过URL协议打开抽奖界面，自动切换到抽奖界面"""
         if self._is_non_class_time():
             try:
-                # 使用settings_reader模块获取加密设置
-                enc_settings = get_settings_by_category("hashed_set")
-                if enc_settings.get('start_password_enabled', False):
-                    from app.common.password_dialog import PasswordDialog
-                    dialog = PasswordDialog(self)
-                    if dialog.exec_() != QDialog.Accepted:
-                        logger.error("用户取消在课间调用URL使用抽取功能")
-                        return
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.error("用户取消在课间调用URL使用抽取功能")
+                            return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
                 return
@@ -1963,14 +1969,15 @@ class Window(MSFluentWindow):
         通过URL协议打开历史记录界面，自动切换到历史记录界面"""
         if self._is_non_class_time():
             try:
-                # 使用settings_reader模块获取加密设置
-                enc_settings = get_settings_by_category("hashed_set")
-                if enc_settings.get('start_password_enabled', False):
-                    from app.common.password_dialog import PasswordDialog
-                    dialog = PasswordDialog(self)
-                    if dialog.exec_() != QDialog.Accepted:
-                        logger.error("用户取消在课间调用URL使用抽取功能")
-                        return
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.error("用户取消在课间调用URL使用抽取功能")
+                            return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
                 return
@@ -1992,22 +1999,26 @@ class Window(MSFluentWindow):
         skip_security = False
         if self._is_non_class_time():
             try:
-                # 使用settings_reader模块获取加密设置
-                enc_settings = get_settings_by_category("hashed_set")
-                if enc_settings.get('start_password_enabled', False):
-                    from app.common.password_dialog import PasswordDialog
-                    dialog = PasswordDialog(self)
-                    if dialog.exec_() != QDialog.Accepted:
-                        logger.error("用户取消在课间调用URL使用抽取功能")
-                        return
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.error("用户取消在课间调用URL使用抽取功能")
+                            return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
                 return
 
         try:
-            # 使用settings_reader模块获取固定URL设置
-            fixed_url_settings = get_settings_by_category("fixed_url")
-            skip_security = fixed_url_settings.get("floating_url_skip_security", False)
+            settings_path = path_manager.get_settings_path('fixed_url_settings.json')
+            if path_manager.file_exists(settings_path):
+                with open_file(settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    fixed_url_settings = settings.get('fixed_url', {})
+                    skip_security = fixed_url_settings.get('floating_url_skip_security', False)
         except Exception as e:
             logger.error(f"读取跳过安全验证设置失败: {e}")
         
@@ -2032,14 +2043,15 @@ class Window(MSFluentWindow):
         通过URL参数启动抽选功能，检查当前界面并调用相应的开始方法"""
         if self._is_non_class_time():
             try:
-                # 使用settings_reader模块获取加密设置
-                enc_settings = get_settings_by_category("hashed_set")
-                if enc_settings.get('start_password_enabled', False):
-                    from app.common.password_dialog import PasswordDialog
-                    dialog = PasswordDialog(self)
-                    if dialog.exec_() != QDialog.Accepted:
-                        logger.error("用户取消在课间调用URL使用抽取功能")
-                        return
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.error("用户取消在课间调用URL使用抽取功能")
+                            return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
                 return
@@ -2065,14 +2077,15 @@ class Window(MSFluentWindow):
         通过URL参数停止抽选功能，检查当前界面并调用相应的停止方法"""
         if self._is_non_class_time():
             try:
-                # 使用settings_reader模块获取加密设置
-                enc_settings = get_settings_by_category("hashed_set")
-                if enc_settings.get('start_password_enabled', False):
-                    from app.common.password_dialog import PasswordDialog
-                    dialog = PasswordDialog(self)
-                    if dialog.exec_() != QDialog.Accepted:
-                        logger.error("用户取消在课间调用URL使用抽取功能")
-                        return
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.error("用户取消在课间调用URL使用抽取功能")
+                            return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
                 return
@@ -2118,14 +2131,15 @@ class Window(MSFluentWindow):
         通过URL参数启动抽奖功能，检查当前界面并调用相应的开始方法"""
         if self._is_non_class_time():
             try:
-                # 使用settings_reader模块获取加密设置
-                enc_settings = get_settings_by_category("hashed_set")
-                if enc_settings.get('start_password_enabled', False):
-                    from app.common.password_dialog import PasswordDialog
-                    dialog = PasswordDialog(self)
-                    if dialog.exec_() != QDialog.Accepted:
-                        logger.error("用户取消在课间调用URL使用抽取功能")
-                        return
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.error("用户取消在课间调用URL使用抽取功能")
+                            return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
                 return
@@ -2151,14 +2165,15 @@ class Window(MSFluentWindow):
         通过URL参数停止抽奖功能，检查当前界面并调用相应的停止方法"""
         if self._is_non_class_time():
             try:
-                # 使用settings_reader模块获取加密设置
-                enc_settings = get_settings_by_category("hashed_set")
-                if enc_settings.get('start_password_enabled', False):
-                    from app.common.password_dialog import PasswordDialog
-                    dialog = PasswordDialog(self)
-                    if dialog.exec_() != QDialog.Accepted:
-                        logger.error("用户取消在课间调用URL使用抽取功能")
-                        return
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.error("用户取消在课间调用URL使用抽取功能")
+                            return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
                 return
@@ -2195,14 +2210,15 @@ class Window(MSFluentWindow):
         通过URL参数直接打开点名界面，自动切换到点名界面"""
         if self._is_non_class_time():
             try:
-                # 使用settings_reader模块获取加密设置
-                enc_settings = get_settings_by_category("hashed_set")
-                if enc_settings.get('start_password_enabled', False):
-                    from app.common.password_dialog import PasswordDialog
-                    dialog = PasswordDialog(self)
-                    if dialog.exec_() != QDialog.Accepted:
-                        logger.error("用户取消在课间调用URL使用抽取功能")
-                        return
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.error("用户取消在课间调用URL使用抽取功能")
+                            return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
                 return
@@ -2215,14 +2231,15 @@ class Window(MSFluentWindow):
         通过URL协议打开关于界面，自动切换到关于界面"""
         if self._is_non_class_time():
             try:
-                # 使用settings_reader模块获取加密设置
-                enc_settings = get_settings_by_category("hashed_set")
-                if enc_settings.get('start_password_enabled', False):
-                    from app.common.password_dialog import PasswordDialog
-                    dialog = PasswordDialog(self)
-                    if dialog.exec_() != QDialog.Accepted:
-                        logger.error("用户取消在课间调用URL使用功能")
-                        return
+                enc_settings_path = path_manager.get_enc_set_path()
+                with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
+                        from app.common.password_dialog import PasswordDialog
+                        dialog = PasswordDialog(self)
+                        if dialog.exec_() != QDialog.Accepted:
+                            logger.error("用户取消在课间调用URL使用功能")
+                            return
             except Exception as e:
                 logger.error(f"密码验证失败: {e}")
                 return

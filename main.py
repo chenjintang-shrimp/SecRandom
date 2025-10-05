@@ -29,8 +29,6 @@ from app.common.config import cfg, VERSION, load_custom_font
 from app.view.SecRandom import Window
 from app.common.url_handler import process_url_if_exists
 from app.common.path_utils import path_manager, ensure_dir, open_file, file_exists
-from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value,
-                                        refresh_settings_cache, get_settings_summary, update_settings)
 from qfluentwidgets import qconfig, Theme
 
 def send_ipc_message(url_command=None):
@@ -367,17 +365,27 @@ SHARED_MEMORY_KEY = 'SecRandom'   # 共享内存密钥
 async def initialize_font_settings():
     """初始化字体设置，加载并应用保存的字体"""
     try:
-        # 使用 settings_reader 读取个人设置
-        custom_settings = get_settings_by_category("personal")
-        font_family = custom_settings.get("font_family")
+        # 读取个人设置文件
+        settings_file = path_manager.get_settings_path('custom_settings.json')
+        ensure_dir(settings_file.parent)
         
-        if font_family:
-            # 应用字体设置
-            logger.info(f"初始化字体设置: {font_family}")
-            await apply_font_to_application(font_family)
+        if file_exists(settings_file):
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                personal_settings = settings.get('personal', {})
+                font_family = personal_settings.get('font_family')
+                
+                if font_family:
+                    # 应用字体设置
+                    logger.info(f"初始化字体设置: {font_family}")
+                    await apply_font_to_application(font_family)
+                else:
+                    logger.info("初始化字体设置: 未指定字体家族，使用默认字体")
+                    await apply_font_to_application('HarmonyOS Sans SC')  
         else:
-            logger.info("初始化字体设置: 未指定字体家族，使用默认字体")
-            await apply_font_to_application('HarmonyOS Sans SC')  
+            # 如果设置文件不存在，使用默认字体
+            logger.info("初始化字体设置: 设置文件不存在，使用默认字体")
+            await apply_font_to_application('HarmonyOS Sans SC')
     except Exception as e:
         logger.error(f"初始化字体设置失败: {e}")
         # 发生错误时使用默认字体
@@ -646,7 +654,7 @@ async def async_register_url_protocol():
         startup_thread.set_step(5, "正在注册URL协议...")
     try:
         from app.common.foundation_settings import register_url_protocol_on_startup
-        register_url_protocol_on_startup()
+        await register_url_protocol_on_startup()
         logger.info("URL协议自动注册完成")
         if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
             startup_thread.set_step(6, "正在创建主窗口...")
@@ -723,10 +731,6 @@ async def main_async():
     if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
         startup_thread.next_step(detail="正在初始化字体设置...")
     await initialize_font_settings()
-    
-    # 使用 settings_reader 加载应用程序设置
-    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-        startup_thread.next_step(detail="正在加载应用程序设置...")
 
 if __name__ == "__main__":
     # 创建新的事件循环
@@ -744,9 +748,13 @@ if __name__ == "__main__":
     # 检查是否显示启动窗口
     show_startup_window = True  # 默认显示启动窗口
     try:
-        # 使用 settings_reader 读取 foundation 设置
-        foundation_settings = get_settings_by_category("foundation")
-        show_startup_window = foundation_settings.get("show_startup_window_switch", False)
+        settings_file = path_manager.get_settings_path()
+        ensure_dir(settings_file.parent)
+        if file_exists(settings_file):
+            with open_file(settings_file, 'r') as f:
+                settings = json.load(f)
+                foundation_settings = settings.get('foundation', {})
+                show_startup_window = foundation_settings.get('show_startup_window_switch', False)
     except Exception as e:
         logger.error(f"读取启动窗口设置失败，使用默认显示启动窗口: {e}")
     

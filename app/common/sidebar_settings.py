@@ -16,8 +16,6 @@ import winreg
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
-from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
-                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 is_dark = is_dark_theme(qconfig)
 
@@ -101,19 +99,32 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            # 使用settings_reader模块获取设置
-            sidebar_settings = get_settings_by_category("sidebar", {})
-            sidebar_settings = sidebar_settings.get("sidebar", {})
+            if path_manager.file_exists(self.settings_file):
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    sidebar_settings = settings.get("sidebar", {})
 
-            self.pumping_floating_side_comboBox.setCurrentIndex(sidebar_settings.get("pumping_floating_side", 0))
-            self.pumping_reward_side_comboBox.setCurrentIndex(sidebar_settings.get("pumping_reward_side", 0))
-            self.show_settings_icon_switch.setCurrentIndex(sidebar_settings.get("show_settings_icon", 1))
-            self.main_window_history_switch.setCurrentIndex(sidebar_settings.get("main_window_history_switch", 1))
-            self.main_window_side_switch.setCurrentIndex(sidebar_settings.get("main_window_side_switch", 2))
-            self.show_security_settings_switch.setCurrentIndex(sidebar_settings.get("show_security_settings_switch", 1))
-            self.show_voice_settings_switch.setCurrentIndex(sidebar_settings.get("show_voice_settings_switch", 1))
-            self.show_history_settings_switch.setCurrentIndex(sidebar_settings.get("show_history_settings_switch", 1))
+                    self.pumping_floating_side_comboBox.setCurrentIndex(sidebar_settings.get("pumping_floating_side", 0))
+                    self.pumping_reward_side_comboBox.setCurrentIndex(sidebar_settings.get("pumping_reward_side", 0))
+                    self.show_settings_icon_switch.setCurrentIndex(sidebar_settings.get("show_settings_icon", 1))
+                    self.main_window_history_switch.setCurrentIndex(sidebar_settings.get("main_window_history_switch", 1))
+                    self.main_window_side_switch.setCurrentIndex(sidebar_settings.get("main_window_side_switch", 2))
+                    self.show_security_settings_switch.setCurrentIndex(sidebar_settings.get("show_security_settings_switch", 1))
+                    self.show_voice_settings_switch.setCurrentIndex(sidebar_settings.get("show_voice_settings_switch", 1))
+                    self.show_history_settings_switch.setCurrentIndex(sidebar_settings.get("show_history_settings_switch", 1))
 
+            else:
+                logger.error(f"设置文件不存在: {self.settings_file}")
+
+                self.pumping_floating_side_comboBox.setCurrentIndex(self.default_settings.get("pumping_floating_side", 0))
+                self.pumping_reward_side_comboBox.setCurrentIndex(self.default_settings.get("pumping_reward_side", 0))
+                self.show_settings_icon_switch.setCurrentIndex(self.default_settings.get("show_settings_icon", 1))
+                self.main_window_history_switch.setCurrentIndex(self.default_settings.get("main_window_history_switch", 1))
+                self.main_window_side_switch.setCurrentIndex(self.default_settings.get("main_window_side_switch", 2))
+                self.show_security_settings_switch.setCurrentIndex(self.default_settings.get("show_security_settings_switch", 1))
+                self.show_voice_settings_switch.setCurrentIndex(self.default_settings.get("show_voice_settings_switch", 1))
+                self.show_history_settings_switch.setCurrentIndex(self.default_settings.get("show_history_settings_switch", 1))
+                self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
 
@@ -128,22 +139,30 @@ class sidebar_settingsCard(GroupHeaderCardWidget):
             self.save_settings()    
 
     def save_settings(self):
-        try:
-            # 准备设置数据
-            sidebar_settings = {
-                "sidebar": {
-                    "pumping_floating_side": self.pumping_floating_side_comboBox.currentIndex(),
-                    "pumping_reward_side": self.pumping_reward_side_comboBox.currentIndex(),
-                    "main_window_side_switch": self.main_window_side_switch.currentIndex(),
-                    "main_window_history_switch": self.main_window_history_switch.currentIndex(),
-                    "show_settings_icon": self.show_settings_icon_switch.currentIndex(),
-                    "show_security_settings_switch": self.show_security_settings_switch.currentIndex(),
-                    "show_voice_settings_switch": self.show_voice_settings_switch.currentIndex(),
-                    "show_history_settings_switch": self.show_history_settings_switch.currentIndex()
-                }
-            }
+        # 先读取现有设置
+        existing_settings = {}
+        if path_manager.file_exists(self.settings_file):
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                try:
+                    existing_settings = json.load(f)
+                except json.JSONDecodeError:
+                    existing_settings = {}
+        
+        # 更新sidebar部分的所有设置
+        if "sidebar" not in existing_settings:
+            existing_settings["sidebar"] = {}
             
-            # 使用settings_reader模块保存设置
-            update_settings("sidebar", sidebar_settings)
-        except Exception as e:
-            logger.error(f"保存设置时出错: {e}")
+        sidebar_settings = existing_settings["sidebar"]
+
+        sidebar_settings["pumping_floating_side"] = self.pumping_floating_side_comboBox.currentIndex()
+        sidebar_settings["pumping_reward_side"] = self.pumping_reward_side_comboBox.currentIndex()
+        sidebar_settings["main_window_side_switch"] = self.main_window_side_switch.currentIndex()
+        sidebar_settings["main_window_history_switch"] = self.main_window_history_switch.currentIndex()
+        sidebar_settings["show_settings_icon"] = self.show_settings_icon_switch.currentIndex()
+        sidebar_settings["show_security_settings_switch"] = self.show_security_settings_switch.currentIndex()
+        sidebar_settings["show_voice_settings_switch"] = self.show_voice_settings_switch.currentIndex()
+        sidebar_settings["show_history_settings_switch"] = self.show_history_settings_switch.currentIndex()
+
+        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_settings, f, indent=4)

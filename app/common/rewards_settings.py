@@ -16,8 +16,6 @@ import winreg
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
-from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
-                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 is_dark = is_dark_theme(qconfig)
 
@@ -99,17 +97,30 @@ class reward_settingsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            # 使用settings_reader模块获取设置
-            reward_settings = get_settings_by_category("reward", {})
-            reward_settings = reward_settings.get("reward", {})
-            
-            self.pumping_reward_control_Switch.setChecked(reward_settings.get("pumping_reward_control_Switch", self.default_settings.get("pumping_reward_control_Switch", True)))
-            self.reset_button_switch.setChecked(reward_settings.get("show_reset_button", self.default_settings.get("show_reset_button", True)))
-            self.refresh_button_switch.setChecked(reward_settings.get("show_refresh_button", self.default_settings.get("show_refresh_button", True)))
-            self.quantity_control_switch.setChecked(reward_settings.get("show_quantity_control", self.default_settings.get("show_quantity_control", True)))
-            self.start_button_switch.setChecked(reward_settings.get("show_start_button", self.default_settings.get("show_start_button", True)))
-            self.list_toggle_switch.setChecked(reward_settings.get("show_list_toggle", self.default_settings.get("show_list_toggle", True)))
-            self.pumping_reward_theme_comboBox.setCurrentIndex(reward_settings.get("reward_theme", self.default_settings.get("reward_theme", 0)))
+            if path_manager.file_exists(self.settings_file):
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    reward_settings = settings.get("reward", {})
+
+                    self.pumping_reward_control_Switch.setChecked(reward_settings.get("pumping_reward_control_Switch", self.default_settings.get("pumping_reward_control_Switch", True)))
+                    self.reset_button_switch.setChecked(reward_settings.get("show_reset_button", self.default_settings.get("show_reset_button", True)))
+                    self.refresh_button_switch.setChecked(reward_settings.get("show_refresh_button", self.default_settings.get("show_refresh_button", True)))
+                    self.quantity_control_switch.setChecked(reward_settings.get("show_quantity_control", self.default_settings.get("show_quantity_control", True)))
+                    self.start_button_switch.setChecked(reward_settings.get("show_start_button", self.default_settings.get("show_start_button", True)))
+                    self.list_toggle_switch.setChecked(reward_settings.get("show_list_toggle", self.default_settings.get("show_list_toggle", True)))
+                    self.pumping_reward_theme_comboBox.setCurrentIndex(reward_settings.get("reward_theme", self.default_settings.get("reward_theme", 0)))
+
+            else:
+                logger.error(f"设置文件不存在: {self.settings_file}")
+
+                self.pumping_reward_control_Switch.setChecked(self.default_settings.get("pumping_reward_control_Switch", True))
+                self.reset_button_switch.setChecked(self.default_settings.get("show_reset_button", True))
+                self.refresh_button_switch.setChecked(self.default_settings.get("show_refresh_button", True))
+                self.quantity_control_switch.setChecked(self.default_settings.get("show_quantity_control", True))
+                self.start_button_switch.setChecked(self.default_settings.get("show_start_button", True))
+                self.list_toggle_switch.setChecked(self.default_settings.get("show_list_toggle", True))
+                self.pumping_reward_theme_comboBox.setCurrentIndex(self.default_settings.get("reward_theme", 0))
+                self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
 
@@ -123,21 +134,29 @@ class reward_settingsCard(GroupHeaderCardWidget):
             self.save_settings()
 
     def save_settings(self):
-        try:
-            # 准备要保存的设置
-            reward_settings_data = {
-                "reward": {
-                    "pumping_reward_control_Switch": self.pumping_reward_control_Switch.isChecked(),
-                    "show_reset_button": self.reset_button_switch.isChecked(),
-                    "show_refresh_button": self.refresh_button_switch.isChecked(),
-                    "show_quantity_control": self.quantity_control_switch.isChecked(),
-                    "show_start_button": self.start_button_switch.isChecked(),
-                    "show_list_toggle": self.list_toggle_switch.isChecked(),
-                    "reward_theme": self.pumping_reward_theme_comboBox.currentIndex()
-                }
-            }
+        # 先读取现有设置
+        existing_settings = {}
+        if path_manager.file_exists(self.settings_file):
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                try:
+                    existing_settings = json.load(f)
+                except json.JSONDecodeError:
+                    existing_settings = {}
+        
+        # 更新reward部分的所有设置
+        if "reward" not in existing_settings:
+            existing_settings["reward"] = {}
             
-            # 使用settings_reader模块更新设置
-            update_settings("reward", reward_settings_data)
-        except Exception as e:
-            logger.error(f"保存设置时出错: {e}")
+        reward_settings = existing_settings["reward"]
+
+        reward_settings["pumping_reward_control_Switch"] = self.pumping_reward_control_Switch.isChecked()
+        reward_settings["show_reset_button"] = self.reset_button_switch.isChecked()
+        reward_settings["show_refresh_button"] = self.refresh_button_switch.isChecked()
+        reward_settings["show_quantity_control"] = self.quantity_control_switch.isChecked()
+        reward_settings["show_start_button"] = self.start_button_switch.isChecked()
+        reward_settings["show_list_toggle"] = self.list_toggle_switch.isChecked()
+        reward_settings["reward_theme"] = self.pumping_reward_theme_comboBox.currentIndex()
+
+        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_settings, f, indent=4)

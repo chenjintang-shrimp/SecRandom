@@ -12,8 +12,6 @@ from loguru import logger
 from app.common.config import get_theme_icon, load_custom_font
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
-from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
-                                        refresh_settings_cache, get_settings_summary, update_settings)
 from app.view.main_page import pumping_people
 
 
@@ -32,8 +30,8 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             "Draw_pumping": 1,
             "draw_mode": 1,
             "clear_mode": 0,
-            "draw_pumping":3,
-            "animation_mode": 1,
+            "draw_pumping": 0,
+            "animation_mode": 0,
             "student_id": 0,
             "student_name": 0,
             "show_random_member": False,
@@ -399,112 +397,125 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         
     def load_settings(self):
         try:
-            # 使用settings_reader模块获取设置
-            pumping_people_settings = get_settings_by_category("pumping_people") or {}
+            if path_manager.file_exists(self.settings_file):
+                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    pumping_people_settings = settings.get("pumping_people", {})
 
-            font_size = pumping_people_settings.get("font_size", self.default_settings["font_size"])
-            
-            # 直接使用索引值
-            draw_mode = pumping_people_settings.get("draw_mode", self.default_settings["draw_mode"])
-            if draw_mode < 0 or draw_mode >= self.pumping_people_Draw_comboBox.count():
-                logger.error(f"无效的抽取模式索引: {draw_mode}")
-                draw_mode = self.default_settings["draw_mode"]
-                
-            clear_mode = pumping_people_settings.get("clear_mode", self.default_settings["clear_mode"])
-            if clear_mode < 0 or clear_mode >= self.pumping_people_Clear_comboBox.count():
-                logger.error(f"无效的清除抽取记录方式索引: {clear_mode}")
-                clear_mode = self.default_settings["clear_mode"]
-                
-            draw_pumping = pumping_people_settings.get("draw_pumping", self.default_settings["draw_pumping"])
-            if draw_pumping < 0 or draw_pumping >= self.pumping_Draw_comboBox.count():
-                logger.error(f"无效的抽取方式索引: {draw_pumping}")
-                draw_pumping = self.default_settings["draw_pumping"]
-                
-            animation_mode = pumping_people_settings.get("animation_mode", self.default_settings["animation_mode"])
-            if animation_mode < 0 or animation_mode >= self.pumping_people_Animation_comboBox.count():
-                logger.error(f"无效的动画模式索引: {animation_mode}")
-                animation_mode = self.default_settings["animation_mode"]
+                    font_size = pumping_people_settings.get("font_size", self.default_settings["font_size"])
+                    
+                    # 直接使用索引值
+                    draw_mode = pumping_people_settings.get("draw_mode", self.default_settings["draw_mode"])
+                    if draw_mode < 0 or draw_mode >= self.pumping_people_Draw_comboBox.count():
+                        logger.error(f"无效的抽取模式索引: {draw_mode}")
+                        draw_mode = self.default_settings["draw_mode"]
+                        
+                    clear_mode = pumping_people_settings.get("clear_mode", self.default_settings["clear_mode"])
+                    if clear_mode < 0 or clear_mode >= self.pumping_people_Clear_comboBox.count():
+                        logger.error(f"无效的清除抽取记录方式索引: {clear_mode}")
+                        clear_mode = self.default_settings["clear_mode"]
+                        
+                    draw_pumping = pumping_people_settings.get("draw_pumping", self.default_settings["draw_pumping"])
+                    if draw_pumping < 0 or draw_pumping >= self.pumping_Draw_comboBox.count():
+                        logger.error(f"无效的抽取方式索引: {draw_pumping}")
+                        draw_pumping = self.default_settings["draw_pumping"]
+                        
+                    animation_mode = pumping_people_settings.get("animation_mode", self.default_settings["animation_mode"])
+                    if animation_mode < 0 or animation_mode >= self.pumping_people_Animation_comboBox.count():
+                        logger.error(f"无效的动画模式索引: {animation_mode}")
+                        animation_mode = self.default_settings["animation_mode"]
 
-            student_id = pumping_people_settings.get("student_id", self.default_settings["student_id"])
-            if student_id < 0 or student_id >= self.pumping_people_student_id_comboBox.count():
-                logger.error(f"无效的学号格式索引: {student_id}")
-                student_id = self.default_settings["student_id"]
-            
-            student_name = pumping_people_settings.get("student_name", self.default_settings["student_name"])
-            if student_name < 0 or student_name >= self.pumping_people_student_name_comboBox.count():
-                logger.error(f"无效的姓名格式索引: {student_name}")
-                student_name = self.default_settings["student_name"]
+                    student_id = pumping_people_settings.get("student_id", self.default_settings["student_id"])
+                    if student_id < 0 or student_id >= self.pumping_people_student_id_comboBox.count():
+                        logger.error(f"无效的学号格式索引: {student_id}")
+                        student_id = self.default_settings["student_id"]
+                    
+                    student_name = pumping_people_settings.get("student_name", self.default_settings["student_name"])
+                    if student_name < 0 or student_name >= self.pumping_people_student_name_comboBox.count():
+                        logger.error(f"无效的姓名格式索引: {student_name}")
+                        student_name = self.default_settings["student_name"]
 
-            # 加载随机组员显示设置
-            show_random_member = pumping_people_settings.get("show_random_member", self.default_settings["show_random_member"])
-            random_member_format = pumping_people_settings.get("random_member_format", self.default_settings["random_member_format"])
+                    # 加载随机组员显示设置
+                    show_random_member = pumping_people_settings.get("show_random_member", self.default_settings["show_random_member"])
+                    random_member_format = pumping_people_settings.get("random_member_format", self.default_settings["random_member_format"])
 
-            # 不重复抽取模式下的数字一个人的最多重复次数
-            Draw_pumping = pumping_people_settings.get("Draw_pumping", self.default_settings["Draw_pumping"])
+                    # 不重复抽取模式下的数字一个人的最多重复次数
+                    Draw_pumping = pumping_people_settings.get("Draw_pumping", self.default_settings["Draw_pumping"])
 
-            # 最大抽取次数设置
-            max_draw_count = pumping_people_settings.get("max_draw_count", self.default_settings["max_draw_count"])
+                    # 最大抽取次数设置
+                    max_draw_count = pumping_people_settings.get("max_draw_count", self.default_settings["max_draw_count"])
 
-            # 加载动画设置
-            animation_interval = pumping_people_settings.get("animation_interval", self.default_settings["animation_interval"])
-            animation_auto_play = pumping_people_settings.get("animation_auto_play", self.default_settings["animation_auto_play"])
+                    # 加载动画设置
+                    animation_interval = pumping_people_settings.get("animation_interval", self.default_settings["animation_interval"])
+                    animation_auto_play = pumping_people_settings.get("animation_auto_play", self.default_settings["animation_auto_play"])
 
-            # 加载动画音乐设置
-            animation_music_enabled = pumping_people_settings.get("animation_music_enabled", self.default_settings["animation_music_enabled"])
-            result_music_enabled = pumping_people_settings.get("result_music_enabled", self.default_settings["result_music_enabled"])
-            animation_music_volume = pumping_people_settings.get("animation_music_volume", self.default_settings["animation_music_volume"])
-            result_music_volume = pumping_people_settings.get("result_music_volume", self.default_settings["result_music_volume"])
-            music_fade_in = pumping_people_settings.get("music_fade_in", self.default_settings["music_fade_in"])
-            music_fade_out = pumping_people_settings.get("music_fade_out", self.default_settings["music_fade_out"])
+                    # 加载动画音乐设置
+                    animation_music_enabled = pumping_people_settings.get("animation_music_enabled", self.default_settings["animation_music_enabled"])
+                    result_music_enabled = pumping_people_settings.get("result_music_enabled", self.default_settings["result_music_enabled"])
+                    animation_music_volume = pumping_people_settings.get("animation_music_volume", self.default_settings["animation_music_volume"])
+                    result_music_volume = pumping_people_settings.get("result_music_volume", self.default_settings["result_music_volume"])
+                    music_fade_in = pumping_people_settings.get("music_fade_in", self.default_settings["music_fade_in"])
+                    music_fade_out = pumping_people_settings.get("music_fade_out", self.default_settings["music_fade_out"])
 
-            # 加载抽取结果显示格式
-            display_format = pumping_people_settings.get("display_format", self.default_settings["display_format"])
-            if display_format < 0 or display_format >= self.pumping_people_display_format_comboBox.count():
-                logger.error(f"无效的抽取结果显示格式索引: {display_format}")
-                display_format = self.default_settings["display_format"]
+                    # 加载抽取结果显示格式
+                    display_format = pumping_people_settings.get("display_format", self.default_settings["display_format"])
+                    if display_format < 0 or display_format >= self.pumping_people_display_format_comboBox.count():
+                        logger.error(f"无效的抽取结果显示格式索引: {display_format}")
+                        display_format = self.default_settings["display_format"]
 
-            # 动画/结果颜色
-            animation_color = pumping_people_settings.get("animation_color", self.default_settings["animation_color"])
-            if animation_color < 0 or animation_color >= self.pumping_people_student_name_color_comboBox.count():
-                logger.error(f"无效的动画/结果颜色索引: {animation_color}")
-                animation_color = self.default_settings["animation_color"]
+                    # 动画/结果颜色
+                    animation_color = pumping_people_settings.get("animation_color", self.default_settings["animation_color"])
+                    if animation_color < 0 or animation_color >= self.pumping_people_student_name_color_comboBox.count():
+                        logger.error(f"无效的动画/结果颜色索引: {animation_color}")
+                        animation_color = self.default_settings["animation_color"]
 
-            # 加载学生图片开关
-            show_student_image = pumping_people_settings.get("show_student_image", self.default_settings["show_student_image"])
+                    # 加载学生图片开关
+                    show_student_image = pumping_people_settings.get("show_student_image", self.default_settings["show_student_image"])
 
-            self.pumping_people_Draw_comboBox.setCurrentIndex(draw_mode)
-            self.pumping_people_Clear_comboBox.setCurrentIndex(clear_mode)
-            self.pumping_people_auto_play_count_SpinBox.setValue(max_draw_count)
-            self.Draw_pumping_SpinBox.setValue(Draw_pumping)
-            self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
-            self.pumping_people_font_size_SpinBox.setValue(font_size)
-            self.pumping_people_Animation_comboBox.setCurrentIndex(animation_mode)
-            self.pumping_people_student_id_comboBox.setCurrentIndex(student_id)
-            self.pumping_people_student_name_comboBox.setCurrentIndex(student_name)
-            self.show_random_member_checkbox.setChecked(show_random_member)
-            self.random_member_format_comboBox.setCurrentIndex(random_member_format)
-            self.pumping_people_Animation_interval_SpinBox.setValue(animation_interval)
-            self.pumping_people_Animation_auto_play_SpinBox.setValue(animation_auto_play)
-            self.pumping_people_Animation_music_switch.setChecked(animation_music_enabled)
-            self.pumping_people_result_music_switch.setChecked(result_music_enabled)
-            self.pumping_people_Animation_music_volume_SpinBox.setValue(animation_music_volume)
-            self.pumping_people_result_music_volume_SpinBox.setValue(result_music_volume)
-            self.pumping_people_music_fade_in_SpinBox.setValue(music_fade_in)
-            self.pumping_people_music_fade_out_SpinBox.setValue(music_fade_out)
-            self.pumping_people_display_format_comboBox.setCurrentIndex(display_format)
-            self.pumping_people_student_name_color_comboBox.setCurrentIndex(animation_color)
-            self.pumping_people_show_image_switch.setChecked(show_student_image)
-            
-            # 加载设置后应用抽取模式逻辑
-            self.on_draw_mode_changed()
+                    self.pumping_people_Draw_comboBox.setCurrentIndex(draw_mode)
+                    self.pumping_people_Clear_comboBox.setCurrentIndex(clear_mode)
+                    self.pumping_people_auto_play_count_SpinBox.setValue(max_draw_count)
+                    self.Draw_pumping_SpinBox.setValue(Draw_pumping)
+                    self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
+                    self.pumping_people_font_size_SpinBox.setValue(font_size)
+                    self.pumping_people_Animation_comboBox.setCurrentIndex(animation_mode)
+                    self.pumping_people_student_id_comboBox.setCurrentIndex(student_id)
+                    self.pumping_people_student_name_comboBox.setCurrentIndex(student_name)
+                    self.show_random_member_checkbox.setChecked(show_random_member)
+                    self.random_member_format_comboBox.setCurrentIndex(random_member_format)
+                    self.pumping_people_Animation_interval_SpinBox.setValue(animation_interval)
+                    self.pumping_people_Animation_auto_play_SpinBox.setValue(animation_auto_play)
+                    self.pumping_people_Animation_music_switch.setChecked(animation_music_enabled)
+                    self.pumping_people_result_music_switch.setChecked(result_music_enabled)
+                    self.pumping_people_Animation_music_volume_SpinBox.setValue(animation_music_volume)
+                    self.pumping_people_result_music_volume_SpinBox.setValue(result_music_volume)
+                    self.pumping_people_music_fade_in_SpinBox.setValue(music_fade_in)
+                    self.pumping_people_music_fade_out_SpinBox.setValue(music_fade_out)
+                    self.pumping_people_display_format_comboBox.setCurrentIndex(display_format)
+                    self.pumping_people_student_name_color_comboBox.setCurrentIndex(animation_color)
+                    self.pumping_people_show_image_switch.setChecked(show_student_image)
+                    
+                    # 加载设置后应用抽取模式逻辑
+                    self.on_draw_mode_changed()
+            else:
+                self._fuckingDefault()
+                # 加载默认设置后应用抽取模式逻辑
+                self.on_draw_mode_changed()
+                self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self._fuckingDefault()
             self.save_settings()
     
     def save_settings(self):
-        # 使用settings_reader模块获取所有设置
-        existing_settings = get_all_settings()
+        # 先读取现有设置
+        existing_settings = {}
+        if path_manager.file_exists(self.settings_file):
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                try:
+                    existing_settings = json.load(f)
+                except json.JSONDecodeError:
+                    existing_settings = {}
         
         # 更新pumping_people部分的所有设置
         if "pumping_people" not in existing_settings:
@@ -542,7 +553,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
             # else:
             #     logger.error(f"字体大小超出范围: {font_size}")
         except ValueError:
-            # logger.error(f"无效的字体大小输入: {self.pumping_people_font_size_edit.text()}")
+            # logger.warning(f"无效的字体大小输入: {self.pumping_people_font_size_edit.text()}")
             pass
         
         # 检查是否需要同步到instant_draw设置
@@ -597,8 +608,9 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
                     else:
                         instant_draw_settings[instant_key] = pumping_people_settings[pumping_key]
         
-        # 使用settings_reader模块保存设置
-        update_settings("pumping_people", existing_settings)
+        ensure_dir(Path(self.settings_file).parent)
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_settings, f, indent=4)
             
         # 如果同步了设置到instant_draw，则触发信号通知刷新UI
         if sync_to_instant_draw:
@@ -659,14 +671,26 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
 
     # 读取颜色设置
     def load_color_settings(self):
-        # 使用settings_reader模块获取设置
-        pumping_people_settings = get_settings_by_category("pumping_people") or {}
+        existing_settings = {}
+        if path_manager.file_exists(self.settings_file):
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                try:
+                    existing_settings = json.load(f)
+                except json.JSONDecodeError:
+                    existing_settings = {}
+        pumping_people_settings = existing_settings.get("pumping_people", {})
         self.pumping_people_animation_color_fixed = (pumping_people_settings.get("_animation_color", "#ffffff"))
         self.pumping_people_result_color_fixed = (pumping_people_settings.get("_result_color", "#ffffff"))
 
     def save_color_settings(self, color_name, color_type):
-        # 使用settings_reader模块获取所有设置
-        existing_settings = get_all_settings()
+        # 先读取现有设置
+        existing_settings = {}
+        if path_manager.file_exists(self.settings_file):
+            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                try:
+                    existing_settings = json.load(f)
+                except json.JSONDecodeError:
+                    existing_settings = {}
         
         # 更新pumping_people部分的所有设置
         if "pumping_people" not in existing_settings:
@@ -678,5 +702,6 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         elif color_type == "result":
             pumping_people_settings["_result_color"] = color_name
         
-        # 使用settings_reader模块保存设置
-        update_settings("pumping_people", existing_settings)
+        ensure_dir(Path(self.settings_file).parent)
+        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_settings, f, indent=4)

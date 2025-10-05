@@ -11,14 +11,6 @@ from loguru import logger
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 from app.common.path_utils import path_manager, open_file
 from app.common.password_settings import is_usb_bound, get_usb_drives
-from app.common.settings_reader import (
-    get_all_settings,
-    get_settings_by_category,
-    get_setting_value,
-    refresh_settings_cache,
-    get_settings_summary,
-    update_settings
-)
 
 class PasswordDialog(QDialog):
     def __init__(self, parent=None):
@@ -174,8 +166,10 @@ class PasswordDialog(QDialog):
             # 清空现有选项
             self.unlock_method.clear()
             
-            # 使用 settings_reader 模块读取配置
-            settings = get_all_settings()
+            # 读取配置文件
+            with open_file(path_manager.get_enc_set_path(), 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                
             hashed_set = settings.get('hashed_set', {})
             
             # 根据配置添加解锁方式
@@ -361,108 +355,108 @@ class PasswordDialog(QDialog):
 
     def verify(self):
         try:
-            # 使用 settings_reader 模块读取配置
-            settings = get_all_settings()
-            hashed_set_settings = settings.get('hashed_set', {})
+            with open_file(path_manager.get_enc_set_path(), 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                hashed_set_settings = settings.get('hashed_set', {})
 
-            method = self.unlock_method.currentText()
+                method = self.unlock_method.currentText()
 
-            if method == "密码解锁":
-                password = self.password_input.text()
-                salt = hashed_set_settings.get('password_salt', '')
-                stored_hash = hashed_set_settings.get('hashed_password', '')
+                if method == "密码解锁":
+                    password = self.password_input.text()
+                    salt = hashed_set_settings.get('password_salt', '')
+                    stored_hash = hashed_set_settings.get('hashed_password', '')
 
-                if not password or not salt or not stored_hash:
-                    w = MessageBox("错误", "密码验证失败: 未输入密码", self)
-                    w.setFont(QFont(load_custom_font(), 14))
-                    w.yesButton.setText("知道了")
-                    w.cancelButton.hide()
-                    w.buttonLayout.insertStretch(1)
-                    w.exec_()
-                    return
-
-                hashed = hashlib.md5((password + salt).encode()).hexdigest()
-                if hashed == stored_hash:
-                    self.accept()
-                else:
-                    w = MessageBox("错误", "密码错误", self)
-                    w.setFont(QFont(load_custom_font(), 14))
-                    w.yesButton.setText("知道了")
-                    w.cancelButton.hide()
-                    w.buttonLayout.insertStretch(1)
-                    w.exec_()
-                    return
-
-            elif method == "密钥文件解锁":
-                key_file = self.key_file_input.text()
-                stored_key_hash = hashed_set_settings.get('hashed_password', '')
-
-                if not key_file or not stored_key_hash:
-                    w = MessageBox("错误", "密钥文件验证失败: 未设置密钥文件", self)
-                    w.setFont(QFont(load_custom_font(), 14))
-                    w.yesButton.setText("知道了")
-                    w.cancelButton.hide()
-                    w.buttonLayout.insertStretch(1)
-                    w.exec_()
-                    return
-
-                try:
-                    with open_file(key_file, 'rb') as f:
-                        file_content = f.read()
-                        file_content = file_content.decode().strip("b'").strip("'")
-
-                    if file_content == stored_key_hash:
-                        self.accept()
-                    else:
-                        w = MessageBox("错误", "密钥文件内容不匹配", self)
+                    if not password or not salt or not stored_hash:
+                        w = MessageBox("错误", "密码验证失败: 未输入密码", self)
                         w.setFont(QFont(load_custom_font(), 14))
                         w.yesButton.setText("知道了")
                         w.cancelButton.hide()
                         w.buttonLayout.insertStretch(1)
                         w.exec_()
-                except Exception as e:
-                    logger.error(f"读取密钥文件失败: {e}")
-                    w = MessageBox("错误", f"读取密钥文件失败: {str(e)}", self)
-                    w.setFont(QFont(load_custom_font(), 14))
-                    w.yesButton.setText("知道了")
-                    w.cancelButton.hide()
-                    w.buttonLayout.insertStretch(1)
-                    w.exec_()
+                        return
 
-            elif method == "2FA验证":
-                username = self.username_input.text()
-                if not username:
-                    w = MessageBox("错误", "请输入用户名", self)
-                    w.setFont(QFont(load_custom_font(), 14))
-                    w.yesButton.setText("知道了")
-                    w.cancelButton.hide()
-                    w.buttonLayout.insertStretch(1)
-                    w.exec_()
-                    return
+                    hashed = hashlib.md5((password + salt).encode()).hexdigest()
+                    if hashed == stored_hash:
+                        self.accept()
+                    else:
+                        w = MessageBox("错误", "密码错误", self)
+                        w.setFont(QFont(load_custom_font(), 14))
+                        w.yesButton.setText("知道了")
+                        w.cancelButton.hide()
+                        w.buttonLayout.insertStretch(1)
+                        w.exec_()
+                        return
 
-                if not self.verify_2fa_code(self.totp_input.text(), username):
-                    w = MessageBox("错误", "验证码/用户名不正确", self)
-                    w.setFont(QFont(load_custom_font(), 14))
-                    w.yesButton.setText("知道了")
-                    w.cancelButton.hide()
-                    w.buttonLayout.insertStretch(1)
-                    w.exec_()
-                    return
+                elif method == "密钥文件解锁":
+                    key_file = self.key_file_input.text()
+                    stored_key_hash = hashed_set_settings.get('hashed_password', '')
 
-                self.accept()
+                    if not key_file or not stored_key_hash:
+                        w = MessageBox("错误", "密钥文件验证失败: 未设置密钥文件", self)
+                        w.setFont(QFont(load_custom_font(), 14))
+                        w.yesButton.setText("知道了")
+                        w.cancelButton.hide()
+                        w.buttonLayout.insertStretch(1)
+                        w.exec_()
+                        return
 
-            elif method == "U盘解锁":
-                if self.verify_usb():
+                    try:
+                        with open_file(key_file, 'rb') as f:
+                            file_content = f.read()
+                            file_content = file_content.decode().strip("b'").strip("'")
+
+                        if file_content == stored_key_hash:
+                            self.accept()
+                        else:
+                            w = MessageBox("错误", "密钥文件内容不匹配", self)
+                            w.setFont(QFont(load_custom_font(), 14))
+                            w.yesButton.setText("知道了")
+                            w.cancelButton.hide()
+                            w.buttonLayout.insertStretch(1)
+                            w.exec_()
+                    except Exception as e:
+                        logger.error(f"读取密钥文件失败: {e}")
+                        w = MessageBox("错误", f"读取密钥文件失败: {str(e)}", self)
+                        w.setFont(QFont(load_custom_font(), 14))
+                        w.yesButton.setText("知道了")
+                        w.cancelButton.hide()
+                        w.buttonLayout.insertStretch(1)
+                        w.exec_()
+
+                elif method == "2FA验证":
+                    username = self.username_input.text()
+                    if not username:
+                        w = MessageBox("错误", "请输入用户名", self)
+                        w.setFont(QFont(load_custom_font(), 14))
+                        w.yesButton.setText("知道了")
+                        w.cancelButton.hide()
+                        w.buttonLayout.insertStretch(1)
+                        w.exec_()
+                        return
+
+                    if not self.verify_2fa_code(self.totp_input.text(), username):
+                        w = MessageBox("错误", "验证码/用户名不正确", self)
+                        w.setFont(QFont(load_custom_font(), 14))
+                        w.yesButton.setText("知道了")
+                        w.cancelButton.hide()
+                        w.buttonLayout.insertStretch(1)
+                        w.exec_()
+                        return
+
                     self.accept()
-                    return
-                else:
-                    w = MessageBox("错误", "U盘验证失败，请确保已插入正确的U盘", self)
-                    w.setFont(QFont(load_custom_font(), 14))
-                    w.yesButton.setText("知道了")
-                    w.cancelButton.hide()
-                    w.buttonLayout.insertStretch(1)
-                    w.exec_()
-                    return
+
+                elif method == "U盘解锁":
+                    if self.verify_usb():
+                        self.accept()
+                        return
+                    else:
+                        w = MessageBox("错误", "U盘验证失败，请确保已插入正确的U盘", self)
+                        w.setFont(QFont(load_custom_font(), 14))
+                        w.yesButton.setText("知道了")
+                        w.cancelButton.hide()
+                        w.buttonLayout.insertStretch(1)
+                        w.exec_()
+                        return
 
         except Exception as e:
             logger.error(f"验证失败: {e}")
@@ -476,10 +470,11 @@ class PasswordDialog(QDialog):
 
     def verify_2fa_code(self, code, username):
         try:
-            # 使用 settings_reader 模块读取2FA密钥和加密用户名
-            settings = get_all_settings()
-            secret = settings['hashed_set']['2fa_secret']
-            stored_username = settings['hashed_set'].get('encrypted_username', '')
+            # 从设置文件中读取2FA密钥和加密用户名
+            with open_file(path_manager.get_enc_set_path(), 'r') as f:
+                settings = json.load(f)
+                secret = settings['hashed_set']['2fa_secret']
+                stored_username = settings['hashed_set'].get('encrypted_username', '')
 
             # 对输入的用户名进行相同加密
             salt = 'SecRandomSalt'
