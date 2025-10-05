@@ -11,6 +11,8 @@ from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font
 from app.common.path_utils import path_manager, open_file, ensure_dir
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
+                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 class history_reward_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -173,21 +175,15 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if self.settings_file.exists():
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    history_settings = settings.get("history", {})
-                        
-                    reward_history_enabled = history_settings.get("reward_history_enabled", self.default_settings["reward_history_enabled"])
-                    history_reward_days = history_settings.get("history_days", self.default_settings["history_reward_days"])
-                    
-                    self.history_switch.setChecked(reward_history_enabled)
-                    self.history_reward_spinBox.setValue(history_reward_days)
-            else:
-                logger.error(f"设置文件不存在: {self.settings_file}")
-                self.history_switch.setChecked(self.default_settings["reward_history_enabled"])
-                self.history_reward_spinBox.setValue(self.default_settings["history_reward_days"])
-                self.save_settings()
+            # 使用settings_reader模块获取设置
+            history_settings = get_settings_by_category("history", {})
+            history_settings = history_settings.get("history", {})
+            
+            reward_history_enabled = history_settings.get("reward_history_enabled", self.default_settings["reward_history_enabled"])
+            history_reward_days = history_settings.get("history_days", self.default_settings["history_reward_days"])
+            
+            self.history_switch.setChecked(reward_history_enabled)
+            self.history_reward_spinBox.setValue(history_reward_days)
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.history_switch.setChecked(self.default_settings["reward_history_enabled"])
@@ -195,28 +191,17 @@ class history_reward_SettinsCard(GroupHeaderCardWidget):
             self.save_settings()
     
     def save_settings(self):
-        # 先读取现有设置
-        existing_settings = {}
-        if self.settings_file.exists():
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
-
-        if "history" not in existing_settings:
-            existing_settings["history"] = {}
-            
-        history_settings = existing_settings["history"]
-        history_settings["reward_history_enabled"] = self.history_switch.isChecked()
-        history_settings["history_days"] = self.history_reward_spinBox.value()
-        
-        # 确保设置目录存在
-        ensure_dir(Path(self.settings_file).parent)
-        
         try:
-            with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-                json.dump(existing_settings, f, ensure_ascii=False, indent=4)
+            # 准备要保存的设置
+            history_settings = {
+                "history": {
+                    "reward_history_enabled": self.history_switch.isChecked(),
+                    "history_days": self.history_reward_spinBox.value()
+                }
+            }
+            
+            # 使用settings_reader模块更新设置
+            update_settings("history", history_settings)
             # logger.info("保存了抽奖历史记录设置")
         except Exception as e:
             logger.error(f"保存设置时出错: {e}")

@@ -16,6 +16,8 @@ import winreg
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
+                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 is_dark = is_dark_theme(qconfig)
 
@@ -124,36 +126,21 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if path_manager.file_exists(self.settings_file):
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    roll_call_settings = settings.get("roll_call", {})
+            # 使用settings_reader模块获取设置
+            roll_call_settings = get_settings_by_category("roll_call", {})
+            roll_call_settings = roll_call_settings.get("roll_call", {})
 
-                    self.pumping_people_control_Switch.setChecked(roll_call_settings.get("pumping_people_control_Switch", self.default_settings.get("pumping_people_control_Switch", True)))
-                    self.modify_button_switch.setChecked(roll_call_settings.get("modify_button_switch", self.default_settings.get("modify_button_switch", True)))   
-                    self.reset_button_switch.setChecked(roll_call_settings.get("show_reset_button", self.default_settings.get("show_reset_button", True)))
-                    self.refresh_button_switch.setChecked(roll_call_settings.get("show_refresh_button", self.default_settings.get("show_refresh_button", True)))
-                    self.quantity_control_switch.setChecked(roll_call_settings.get("show_quantity_control", self.default_settings.get("show_quantity_control", True)))
-                    self.start_button_switch.setChecked(roll_call_settings.get("show_start_button", self.default_settings.get("show_start_button", True)))
-                    self.list_toggle_switch.setChecked(roll_call_settings.get("show_list_toggle", self.default_settings.get("show_list_toggle", True)))
-                    self.selection_range_switch.setChecked(roll_call_settings.get("selection_range", self.default_settings.get("selection_range", True)))
-                    self.selection_gender_switch.setChecked(roll_call_settings.get("selection_gender", self.default_settings.get("selection_gender", True)))
-                    self.pumping_people_theme_comboBox.setCurrentIndex(roll_call_settings.get("people_theme", self.default_settings.get("people_theme", 0)))
+            self.pumping_people_control_Switch.setChecked(roll_call_settings.get("pumping_people_control_Switch", self.default_settings.get("pumping_people_control_Switch", True)))
+            self.modify_button_switch.setChecked(roll_call_settings.get("modify_button_switch", self.default_settings.get("modify_button_switch", True)))   
+            self.reset_button_switch.setChecked(roll_call_settings.get("show_reset_button", self.default_settings.get("show_reset_button", True)))
+            self.refresh_button_switch.setChecked(roll_call_settings.get("show_refresh_button", self.default_settings.get("show_refresh_button", True)))
+            self.quantity_control_switch.setChecked(roll_call_settings.get("show_quantity_control", self.default_settings.get("show_quantity_control", True)))
+            self.start_button_switch.setChecked(roll_call_settings.get("show_start_button", self.default_settings.get("show_start_button", True)))
+            self.list_toggle_switch.setChecked(roll_call_settings.get("show_list_toggle", self.default_settings.get("show_list_toggle", True)))
+            self.selection_range_switch.setChecked(roll_call_settings.get("selection_range", self.default_settings.get("selection_range", True)))
+            self.selection_gender_switch.setChecked(roll_call_settings.get("selection_gender", self.default_settings.get("selection_gender", True)))
+            self.pumping_people_theme_comboBox.setCurrentIndex(roll_call_settings.get("people_theme", self.default_settings.get("people_theme", 0)))
 
-            else:
-                logger.error(f"设置文件不存在: {self.settings_file}")
-
-                self.pumping_people_control_Switch.setChecked(self.default_settings.get("pumping_people_control_Switch", True))
-                self.modify_button_switch.setChecked(self.default_settings.get("modify_button_switch", True))
-                self.reset_button_switch.setChecked(self.default_settings.get("show_reset_button", True))
-                self.refresh_button_switch.setChecked(self.default_settings.get("show_refresh_button", True))
-                self.quantity_control_switch.setChecked(self.default_settings.get("show_quantity_control", True))
-                self.start_button_switch.setChecked(self.default_settings.get("show_start_button", True))
-                self.list_toggle_switch.setChecked(self.default_settings.get("show_list_toggle", True))
-                self.selection_range_switch.setChecked(self.default_settings.get("selection_range", True))
-                self.selection_gender_switch.setChecked(self.default_settings.get("selection_gender", True))
-                self.pumping_people_theme_comboBox.setCurrentIndex(self.default_settings.get("people_theme", 0))
-                self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
 
@@ -170,32 +157,24 @@ class roll_call_settingsCard(GroupHeaderCardWidget):
             self.save_settings()
 
     def save_settings(self):
-        # 先读取现有设置
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
-        
-        # 更新roll_call部分的所有设置
-        if "roll_call" not in existing_settings:
-            existing_settings["roll_call"] = {}
+        try:
+            # 准备设置数据
+            roll_call_settings = {
+                "roll_call": {
+                    "pumping_people_control_Switch": self.pumping_people_control_Switch.isChecked(),
+                    "modify_button_switch": self.modify_button_switch.isChecked(),
+                    "show_reset_button": self.reset_button_switch.isChecked(),
+                    "show_refresh_button": self.refresh_button_switch.isChecked(),
+                    "show_quantity_control": self.quantity_control_switch.isChecked(),
+                    "show_start_button": self.start_button_switch.isChecked(),
+                    "show_list_toggle": self.list_toggle_switch.isChecked(),
+                    "selection_range": self.selection_range_switch.isChecked(),
+                    "selection_gender": self.selection_gender_switch.isChecked(),
+                    "people_theme": self.pumping_people_theme_comboBox.currentIndex()
+                }
+            }
             
-        roll_call_settings = existing_settings["roll_call"]
-
-        roll_call_settings["pumping_people_control_Switch"] = self.pumping_people_control_Switch.isChecked()
-        roll_call_settings["modify_button_switch"] = self.modify_button_switch.isChecked()
-        roll_call_settings["show_reset_button"] = self.reset_button_switch.isChecked()
-        roll_call_settings["show_refresh_button"] = self.refresh_button_switch.isChecked()
-        roll_call_settings["show_quantity_control"] = self.quantity_control_switch.isChecked()
-        roll_call_settings["show_start_button"] = self.start_button_switch.isChecked()
-        roll_call_settings["show_list_toggle"] = self.list_toggle_switch.isChecked()
-        roll_call_settings["selection_range"] = self.selection_range_switch.isChecked()
-        roll_call_settings["selection_gender"] = self.selection_gender_switch.isChecked()
-        roll_call_settings["people_theme"] = self.pumping_people_theme_comboBox.currentIndex()
-
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+            # 使用settings_reader模块保存设置
+            update_settings("roll_call", roll_call_settings)
+        except Exception as e:
+            logger.error(f"保存设置时出错: {e}")

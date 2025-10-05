@@ -18,6 +18,8 @@ import winreg
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value,
+                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 is_dark = is_dark_theme(qconfig)
 
@@ -301,21 +303,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.save_settings()
 
         try:
-            # 读取设置文件
-            from app.common.path_utils import path_manager
-            settings_file = path_manager.get_settings_path('Settings.json')
-            
-            # 使用异步方式读取文件
-            def read_settings():
-                with open_file(settings_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            
-            # 在事件循环中执行文件读取
-            loop = asyncio.get_event_loop()
-            settings = await loop.run_in_executor(None, read_settings)
-            
-            foundation_settings = settings.get('foundation', {})
-            self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
+            foundation_settings = get_settings_by_category("foundation")
+            self_starting_enabled = foundation_settings.get("self_starting_enabled", False)
 
             # 处理Windows系统的启动文件夹操作
             if platform.system() == 'Windows':
@@ -340,6 +329,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                             shortcut.save()
                         
                         # 在事件循环中执行快捷方式创建
+                        loop = asyncio.get_event_loop()
                         await loop.run_in_executor(None, create_shortcut)
                         logger.success("开机自启动设置成功")
                     except Exception as e:
@@ -351,6 +341,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                                 os.remove(shortcut_path)
                             
                             # 在事件循环中执行快捷方式删除
+                            loop = asyncio.get_event_loop()
                             await loop.run_in_executor(None, remove_shortcut)
                             logger.success("开机自启动取消成功")
                         else:
@@ -363,10 +354,8 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 logger.error(f"不支持的操作系统: {platform.system()}")
                 return
 
-        except json.JSONDecodeError as e:
-            logger.error(f"设置文件格式错误: {e}")
         except Exception as e:
-            logger.error(f"读取设置文件时出错: {e}")
+            logger.error(f"读取设置时出错: {e}")
 
     def _on_startup_switch_changed(self):
         """处理开机自启动开关变化的包装器方法"""
@@ -376,104 +365,80 @@ class foundation_settingsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if path_manager.file_exists(self.settings_file):
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    foundation_settings = settings.get("foundation", {})
-                    
-                    # 优先使用保存的文字选项
-                    self_starting_enabled = foundation_settings.get("self_starting_enabled", self.default_settings["self_starting_enabled"])
-                        
-                    main_window_mode = foundation_settings.get("main_window_mode", self.default_settings["main_window_mode"])
-                    if main_window_mode < 0 or main_window_mode >= self.main_window_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        main_window_mode = self.default_settings["main_window_mode"]
-
-                    main_window_focus_mode = foundation_settings.get("main_window_focus_mode", self.default_settings["main_window_focus_mode"])
-                    if main_window_focus_mode < 0 or main_window_focus_mode >= self.main_window_focus_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        main_window_focus_mode = self.default_settings["main_window_focus_mode"]
-
-                    main_window_focus_time = foundation_settings.get("main_window_focus_time", self.default_settings["main_window_focus_time"])
-                    if main_window_focus_time < 0 or main_window_focus_time >= self.main_window_focus_time_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        main_window_focus_time = self.default_settings["main_window_focus_time"]
-
-                    settings_window_mode = foundation_settings.get("settings_window_mode", self.default_settings["settings_window_mode"])
-                    if settings_window_mode < 0 or settings_window_mode >= self.settings_window_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        settings_window_mode = self.default_settings["settings_window_mode"]
-
-                    check_on_startup = foundation_settings.get("check_on_startup", self.default_settings["check_on_startup"])
-
-                    topmost_switch = foundation_settings.get("topmost_switch", self.default_settings["topmost_switch"])
-
-                    url_protocol_enabled = foundation_settings.get("url_protocol_enabled", self.default_settings["url_protocol_enabled"])
-
-                    # 闪抽窗口自动关闭设置
-                    flash_window_auto_close = foundation_settings.get("flash_window_auto_close", self.default_settings["flash_window_auto_close"])
-                    flash_window_close_time = foundation_settings.get("flash_window_close_time", self.default_settings["flash_window_close_time"])
-                    if flash_window_close_time < 0 or flash_window_close_time >= self.flash_window_close_time_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        flash_window_close_time = self.default_settings["flash_window_close_time"]
-                    
-                    # 快捷键设置
-                    global_shortcut_enabled = foundation_settings.get("global_shortcut_enabled", self.default_settings["global_shortcut_enabled"])
-                    global_shortcut_target = foundation_settings.get("global_shortcut_target", self.default_settings["global_shortcut_target"])
-                    if global_shortcut_target < 0 or global_shortcut_target >= self.global_shortcut_target_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        global_shortcut_target = self.default_settings["global_shortcut_target"]
-                    global_shortcut_key = foundation_settings.get("global_shortcut_key", self.default_settings["global_shortcut_key"])
-                    local_pumping_shortcut_key = foundation_settings.get("local_pumping_shortcut_key", self.default_settings["local_pumping_shortcut_key"])
-                    local_reward_shortcut_key = foundation_settings.get("local_reward_shortcut_key", self.default_settings["local_reward_shortcut_key"])
-
-                    # 显示启动窗口
-                    show_startup_window_switch = foundation_settings.get("show_startup_window_switch", self.default_settings["show_startup_window_switch"])
-                    
-                    self.self_starting_switch.setChecked(self_starting_enabled)
-                    self.main_window_focus_comboBox.setCurrentIndex(main_window_focus_mode)
-                    self.main_window_focus_time_comboBox.setCurrentIndex(main_window_focus_time)
-                    self.main_window_comboBox.setCurrentIndex(main_window_mode)
-                    self.settings_window_comboBox.setCurrentIndex(settings_window_mode)
-                    self.check_on_startup.setChecked(check_on_startup)
-                    self.topmost_switch.setChecked(topmost_switch)
-                    self.url_protocol_switch.setChecked(url_protocol_enabled)
-                    self.flash_window_auto_close_switch.setChecked(flash_window_auto_close)
-                    self.flash_window_close_time_comboBox.setCurrentIndex(flash_window_close_time)
-                    self.show_startup_window_switch.setChecked(show_startup_window_switch)
-                    
-                    # 更新快捷键设置
-                    self.global_shortcut_switch.setChecked(global_shortcut_enabled)
-                    self.global_shortcut_target_comboBox.setCurrentIndex(global_shortcut_target)
-                    self.global_shortcut_label.setText(global_shortcut_key if global_shortcut_key else "未设置")
-                    self.local_pumping_shortcut_label.setText(local_pumping_shortcut_key if local_pumping_shortcut_key else "未设置")
-                    self.local_reward_shortcut_label.setText(local_reward_shortcut_key if local_reward_shortcut_key else "未设置")
-                    
-                    # 注册快捷键
-                    if global_shortcut_enabled and global_shortcut_key:
-                        self.register_global_shortcut(global_shortcut_key)
-                    self.register_local_shortcuts()
-            else:
-                logger.error(f"设置文件不存在: {self.settings_file}")
-                self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
-                self.main_window_focus_comboBox.setCurrentIndex(self.default_settings["main_window_focus_mode"])
-                self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
-                self.main_window_comboBox.setCurrentIndex(self.default_settings["main_window_mode"])
-                self.settings_window_comboBox.setCurrentIndex(self.default_settings["settings_window_mode"])
-                self.check_on_startup.setChecked(self.default_settings["check_on_startup"])
-                self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
-                self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
-                self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
-                self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
-                self.show_startup_window_switch.setChecked(self.default_settings["show_startup_window_switch"])
+            foundation_settings = get_settings_by_category("foundation")
+            
+            # 优先使用保存的文字选项
+            self_starting_enabled = foundation_settings.get("self_starting_enabled", self.default_settings["self_starting_enabled"])
                 
-                # 加载快捷键设置的默认值
-                self.global_shortcut_switch.setChecked(self.default_settings["global_shortcut_enabled"])
-                self.global_shortcut_target_comboBox.setCurrentIndex(self.default_settings["global_shortcut_target"])
-                self.global_shortcut_label.setText(self.default_settings["global_shortcut_key"] if self.default_settings["global_shortcut_key"] else "未设置")
-                self.local_pumping_shortcut_label.setText(self.default_settings["local_pumping_shortcut_key"] if self.default_settings["local_pumping_shortcut_key"] else "未设置")
-                self.local_reward_shortcut_label.setText(self.default_settings["local_reward_shortcut_key"] if self.default_settings["local_reward_shortcut_key"] else "未设置")
-                self.save_settings()
+            main_window_mode = foundation_settings.get("main_window_mode", self.default_settings["main_window_mode"])
+            if main_window_mode < 0 or main_window_mode >= self.main_window_comboBox.count():
+                # 如果索引值无效，则使用默认值
+                main_window_mode = self.default_settings["main_window_mode"]
+
+            main_window_focus_mode = foundation_settings.get("main_window_focus_mode", self.default_settings["main_window_focus_mode"])
+            if main_window_focus_mode < 0 or main_window_focus_mode >= self.main_window_focus_comboBox.count():
+                # 如果索引值无效，则使用默认值
+                main_window_focus_mode = self.default_settings["main_window_focus_mode"]
+
+            main_window_focus_time = foundation_settings.get("main_window_focus_time", self.default_settings["main_window_focus_time"])
+            if main_window_focus_time < 0 or main_window_focus_time >= self.main_window_focus_time_comboBox.count():
+                # 如果索引值无效，则使用默认值
+                main_window_focus_time = self.default_settings["main_window_focus_time"]
+
+            settings_window_mode = foundation_settings.get("settings_window_mode", self.default_settings["settings_window_mode"])
+            if settings_window_mode < 0 or settings_window_mode >= self.settings_window_comboBox.count():
+                # 如果索引值无效，则使用默认值
+                settings_window_mode = self.default_settings["settings_window_mode"]
+
+            check_on_startup = foundation_settings.get("check_on_startup", self.default_settings["check_on_startup"])
+
+            topmost_switch = foundation_settings.get("topmost_switch", self.default_settings["topmost_switch"])
+
+            url_protocol_enabled = foundation_settings.get("url_protocol_enabled", self.default_settings["url_protocol_enabled"])
+
+            # 闪抽窗口自动关闭设置
+            flash_window_auto_close = foundation_settings.get("flash_window_auto_close", self.default_settings["flash_window_auto_close"])
+            flash_window_close_time = foundation_settings.get("flash_window_close_time", self.default_settings["flash_window_close_time"])
+            if flash_window_close_time < 0 or flash_window_close_time >= self.flash_window_close_time_comboBox.count():
+                # 如果索引值无效，则使用默认值
+                flash_window_close_time = self.default_settings["flash_window_close_time"]
+            
+            # 快捷键设置
+            global_shortcut_enabled = foundation_settings.get("global_shortcut_enabled", self.default_settings["global_shortcut_enabled"])
+            global_shortcut_target = foundation_settings.get("global_shortcut_target", self.default_settings["global_shortcut_target"])
+            if global_shortcut_target < 0 or global_shortcut_target >= self.global_shortcut_target_comboBox.count():
+                # 如果索引值无效，则使用默认值
+                global_shortcut_target = self.default_settings["global_shortcut_target"]
+            global_shortcut_key = foundation_settings.get("global_shortcut_key", self.default_settings["global_shortcut_key"])
+            local_pumping_shortcut_key = foundation_settings.get("local_pumping_shortcut_key", self.default_settings["local_pumping_shortcut_key"])
+            local_reward_shortcut_key = foundation_settings.get("local_reward_shortcut_key", self.default_settings["local_reward_shortcut_key"])
+
+            # 显示启动窗口
+            show_startup_window_switch = foundation_settings.get("show_startup_window_switch", self.default_settings["show_startup_window_switch"])
+            
+            self.self_starting_switch.setChecked(self_starting_enabled)
+            self.main_window_focus_comboBox.setCurrentIndex(main_window_focus_mode)
+            self.main_window_focus_time_comboBox.setCurrentIndex(main_window_focus_time)
+            self.main_window_comboBox.setCurrentIndex(main_window_mode)
+            self.settings_window_comboBox.setCurrentIndex(settings_window_mode)
+            self.check_on_startup.setChecked(check_on_startup)
+            self.topmost_switch.setChecked(topmost_switch)
+            self.url_protocol_switch.setChecked(url_protocol_enabled)
+            self.flash_window_auto_close_switch.setChecked(flash_window_auto_close)
+            self.flash_window_close_time_comboBox.setCurrentIndex(flash_window_close_time)
+            self.show_startup_window_switch.setChecked(show_startup_window_switch)
+            
+            # 更新快捷键设置
+            self.global_shortcut_switch.setChecked(global_shortcut_enabled)
+            self.global_shortcut_target_comboBox.setCurrentIndex(global_shortcut_target)
+            self.global_shortcut_label.setText(global_shortcut_key if global_shortcut_key else "未设置")
+            self.local_pumping_shortcut_label.setText(local_pumping_shortcut_key if local_pumping_shortcut_key else "未设置")
+            self.local_reward_shortcut_label.setText(local_reward_shortcut_key if local_reward_shortcut_key else "未设置")
+            
+            # 注册快捷键
+            if global_shortcut_enabled and global_shortcut_key:
+                self.register_global_shortcut(global_shortcut_key)
+            self.register_local_shortcuts()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
@@ -502,44 +467,34 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.register_local_shortcuts()
 
     def save_settings(self):
-        # 先读取现有设置
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
-        
-        # 更新foundation部分的所有设置
-        if "foundation" not in existing_settings:
-            existing_settings["foundation"] = {}
+        try:
+            # 准备要更新的 foundation 设置
+            foundation_settings = {}
+            foundation_settings["self_starting_enabled"] = self.self_starting_switch.isChecked()
+            foundation_settings["main_window_focus_mode"] = self.main_window_focus_comboBox.currentIndex()
+            foundation_settings["main_window_focus_time"] = self.main_window_focus_time_comboBox.currentIndex()
+            foundation_settings["main_window_mode"] = self.main_window_comboBox.currentIndex()
+            foundation_settings["settings_window_mode"] = self.settings_window_comboBox.currentIndex()
+            foundation_settings["check_on_startup"] = self.check_on_startup.isChecked()
+            foundation_settings["topmost_switch"] = self.topmost_switch.isChecked()
+            foundation_settings["url_protocol_enabled"] = self.url_protocol_switch.isChecked()
+            foundation_settings["flash_window_auto_close"] = self.flash_window_auto_close_switch.isChecked()
+            foundation_settings["flash_window_close_time"] = self.flash_window_close_time_comboBox.currentIndex()
+            # 显示启动窗口
+            foundation_settings["show_startup_window_switch"] = self.show_startup_window_switch.isChecked()
             
-        foundation_settings = existing_settings["foundation"]
-        # 删除保存文字选项的代码
-        foundation_settings["self_starting_enabled"] = self.self_starting_switch.isChecked()
-        foundation_settings["main_window_focus_mode"] = self.main_window_focus_comboBox.currentIndex()
-        foundation_settings["main_window_focus_time"] = self.main_window_focus_time_comboBox.currentIndex()
-        foundation_settings["main_window_mode"] = self.main_window_comboBox.currentIndex()
-        foundation_settings["settings_window_mode"] = self.settings_window_comboBox.currentIndex()
-        foundation_settings["check_on_startup"] = self.check_on_startup.isChecked()
-        foundation_settings["topmost_switch"] = self.topmost_switch.isChecked()
-        foundation_settings["url_protocol_enabled"] = self.url_protocol_switch.isChecked()
-        foundation_settings["flash_window_auto_close"] = self.flash_window_auto_close_switch.isChecked()
-        foundation_settings["flash_window_close_time"] = self.flash_window_close_time_comboBox.currentIndex()
-        # 显示启动窗口
-        foundation_settings["show_startup_window_switch"] = self.show_startup_window_switch.isChecked()
-        
-        # 保存快捷键设置
-        foundation_settings["global_shortcut_enabled"] = self.global_shortcut_switch.isChecked()
-        foundation_settings["global_shortcut_target"] = self.global_shortcut_target_comboBox.currentIndex()
-        foundation_settings["global_shortcut_key"] = self.global_shortcut_label.text() if self.global_shortcut_label.text() != "未设置" else ""
-        foundation_settings["local_pumping_shortcut_key"] = self.local_pumping_shortcut_label.text() if self.local_pumping_shortcut_label.text() != "未设置" else ""
-        foundation_settings["local_reward_shortcut_key"] = self.local_reward_shortcut_label.text() if self.local_reward_shortcut_label.text() != "未设置" else ""
-        
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+            # 保存快捷键设置
+            foundation_settings["global_shortcut_enabled"] = self.global_shortcut_switch.isChecked()
+            foundation_settings["global_shortcut_target"] = self.global_shortcut_target_comboBox.currentIndex()
+            foundation_settings["global_shortcut_key"] = self.global_shortcut_label.text() if self.global_shortcut_label.text() != "未设置" else ""
+            foundation_settings["local_pumping_shortcut_key"] = self.local_pumping_shortcut_label.text() if self.local_pumping_shortcut_label.text() != "未设置" else ""
+            foundation_settings["local_reward_shortcut_key"] = self.local_reward_shortcut_label.text() if self.local_reward_shortcut_label.text() != "未设置" else ""
+            
+            # 使用 settings_reader 更新设置
+            update_settings("foundation", foundation_settings)
+            
+        except Exception as e:
+            logger.error(f"保存设置时出错: {e}")
     
     def show_cleanup_dialog(self):
         dialog = CleanupTimeDialog(self)

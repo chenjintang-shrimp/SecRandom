@@ -14,7 +14,8 @@ from loguru import logger
 from random import SystemRandom
 system_random = SystemRandom()
 from app.common.path_utils import path_manager, open_file, remove_file
-
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value,
+                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 # 音乐文件路径定义 ~(≧▽≦)/~ 星野最喜欢的动画BGM存放地
 BGM_ANIMATION_PATH = path_manager.get_resource_path("music/pumping_reward/Animation_music")
@@ -1265,9 +1266,9 @@ class pumping_reward(QWidget):
         reward_name = self.reward_combo.currentText()
 
         try:
-            with open_file(path_manager.get_settings_path("custom_settings.json"), 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                pumping_reward_reward_quantity = settings['reward']['reward_theme']
+            # 使用settings_reader模块获取自定义设置
+            custom_settings = get_settings_by_category("reward")
+            pumping_reward_reward_quantity = custom_settings.get('reward_theme', 0)
         except Exception:
             pumping_reward_reward_quantity = 0
 
@@ -1437,15 +1438,15 @@ class pumping_reward(QWidget):
     def initUI(self):
         # 加载设置
         try:
-            with open_file(path_manager.get_settings_path("custom_settings.json"), 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                main_window_control_Switch = settings['reward']['pumping_reward_control_Switch']
-                show_reset_button = settings['reward']['show_reset_button']
-                show_refresh_button = settings['reward']['show_refresh_button']
-                show_quantity_control = settings['reward']['show_quantity_control']
-                show_start_button = settings['reward']['show_start_button']
-                show_list_toggle = settings['reward']['show_list_toggle']
-                pumping_reward_reward_quantity = settings['reward']['reward_theme']
+            # 使用settings_reader模块获取自定义设置
+            custom_settings = get_settings_by_category("reward")
+            main_window_control_Switch = custom_settings.get('pumping_reward_control_Switch', True)
+            show_reset_button = custom_settings.get('show_reset_button', True)
+            show_refresh_button = custom_settings.get('show_refresh_button', True)
+            show_quantity_control = custom_settings.get('show_quantity_control', True)
+            show_start_button = custom_settings.get('show_start_button', True)
+            show_list_toggle = custom_settings.get('show_list_toggle', True)
+            pumping_reward_reward_quantity = custom_settings.get('reward_theme', 0)
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             show_reset_button = True

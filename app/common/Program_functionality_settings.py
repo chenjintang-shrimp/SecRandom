@@ -17,6 +17,8 @@ from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, V
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
 from app.common.message_receiver import init_message_receiver
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value,
+                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 is_dark = is_dark_theme(qconfig)
 
@@ -141,18 +143,15 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if path_manager.file_exists(self.settings_file):
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    program_functionality_settings = settings.get("program_functionality", {})
-
-                    self.instant_draw_disable_switch.setChecked(program_functionality_settings.get("instant_draw_disable", self.default_settings.get("instant_draw_disable", False)))
-                    self.clear_draw_records_switch.setChecked(program_functionality_settings.get("clear_draw_records_switch", self.default_settings.get("clear_draw_records_switch", False)))
-                    self.clear_draw_records_time_SpinBox.setValue(program_functionality_settings.get("clear_draw_records_time", self.default_settings.get("clear_draw_records_time", 120)))
-                    self.use_cwci_confirm_switch.setChecked(program_functionality_settings.get("use_cwci_confirm_switch", self.default_settings.get("use_cwci_confirm_switch", False)))
+            # 使用settings_reader模块获取设置
+            settings = get_settings_by_category("program_functionality")
+            if settings:
+                self.instant_draw_disable_switch.setChecked(settings.get("instant_draw_disable", self.default_settings.get("instant_draw_disable", False)))
+                self.clear_draw_records_switch.setChecked(settings.get("clear_draw_records_switch", self.default_settings.get("clear_draw_records_switch", False)))
+                self.clear_draw_records_time_SpinBox.setValue(settings.get("clear_draw_records_time", self.default_settings.get("clear_draw_records_time", 120)))
+                self.use_cwci_confirm_switch.setChecked(settings.get("use_cwci_confirm_switch", self.default_settings.get("use_cwci_confirm_switch", False)))
             else:
-                logger.error(f"设置文件不存在: {self.settings_file}")
-
+                logger.error("无法获取program_functionality设置")
                 self.instant_draw_disable_switch.setChecked(self.default_settings.get("instant_draw_disable", False))
                 self.clear_draw_records_switch.setChecked(self.default_settings.get("clear_draw_records_switch", False))
                 self.clear_draw_records_time_SpinBox.setValue(self.default_settings.get("clear_draw_records_time", 120))
@@ -167,20 +166,14 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
             self.save_settings()
 
     def save_settings(self):
-        # 先读取现有设置
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
+        # 使用settings_reader模块获取所有设置
+        all_settings = get_all_settings()
         
-        # 更新program_functionality部分的所有设置
-        if "program_functionality" not in existing_settings:
-            existing_settings["program_functionality"] = {}
+        # 确保program_functionality部分存在
+        if "program_functionality" not in all_settings:
+            all_settings["program_functionality"] = {}
             
-        program_functionality_settings = existing_settings["program_functionality"]
+        program_functionality_settings = all_settings["program_functionality"]
 
         # 保存旧的状态，用于比较是否发生变化
         old_clear_draw_records_switch = program_functionality_settings.get("clear_draw_records_switch", False)
@@ -191,9 +184,8 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         program_functionality_settings["clear_draw_records_time"] = self.clear_draw_records_time_SpinBox.value()
         program_functionality_settings["use_cwci_confirm_switch"] = self.use_cwci_confirm_switch.isChecked()
 
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+        # 使用settings_reader模块保存设置
+        update_settings("program_functionality", all_settings)
         
         # 检查清理开关状态是否发生变化
         if old_clear_draw_records_switch != self.clear_draw_records_switch.isChecked():
@@ -228,24 +220,17 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
             self.time_settings_cache = None
             time_settings = dialog.textEdit.toPlainText()
             try:
-                # 确保Settings目录存在
-                from app.common.path_utils import path_manager
-                time_settings_file = path_manager.get_settings_path('time_settings.json')
-                os.makedirs(os.path.dirname(time_settings_file), exist_ok=True)
-                
-                settings = {}
-                if path_manager.file_exists(time_settings_file):
-                    with open_file(time_settings_file, 'r', encoding='utf-8') as f:
-                        settings = json.load(f)
+                # 使用settings_reader模块获取所有设置
+                all_settings = get_settings_by_category("time_settings")
                 
                 # 处理多个时间段输入
                 time_list = [time.strip() for time in time_settings.split('\n') if time.strip()]
                 
                 # 清空现有设置
-                if 'non_class_times' in settings:
-                    settings['non_class_times'] = {}
-                if 'class_times' in settings:
-                    settings['class_times'] = []
+                if 'non_class_times' in all_settings:
+                    all_settings['non_class_times'] = {}
+                if 'class_times' in all_settings:
+                    all_settings['class_times'] = []
                 
                 # 验证并收集所有有效时间段
                 valid_class_times = []
@@ -335,7 +320,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                 valid_class_times.sort(key=lambda x: tuple(map(int, x['start'].split(':'))))
                 
                 # 保存上课时间段
-                settings['class_times'] = [time_info['raw'] for time_info in valid_class_times]
+                all_settings['class_times'] = [time_info['raw'] for time_info in valid_class_times]
                 
                 # 生成非上课时间段（用于清理）
                 non_class_times_list = []
@@ -365,22 +350,22 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                 
                 # 保存清理时间段
                 for idx, time_str in enumerate(non_class_times_list, 1):
-                    settings.setdefault('non_class_times', {})[str(idx)] = time_str
+                    all_settings.setdefault('non_class_times', {})[str(idx)] = time_str
                 
-                with open_file(time_settings_file, 'w', encoding='utf-8') as f:
-                    json.dump(settings, f, ensure_ascii=False, indent=4)
-                    # 更新缓存
-                    self.time_settings_cache = settings
-                    logger.info(f"成功保存{len(time_list)}个上课时间段设置，生成了{len(non_class_times_list)}个清理时间段")
-                    InfoBar.success(
-                        title='设置成功',
-                        content=f"成功保存{len(time_list)}个上课时间段，生成了{len(non_class_times_list)}个清理时间段!",
-                        orient=Qt.Horizontal,
-                        isClosable=True,
-                        position=InfoBarPosition.TOP,
-                        duration=3000,
-                        parent=self
-                    )
+                # 使用settings_reader模块保存设置
+                update_settings("time_settings", all_settings)
+                # 更新缓存
+                self.time_settings_cache = all_settings
+                logger.info(f"成功保存{len(time_list)}个上课时间段设置，生成了{len(non_class_times_list)}个清理时间段")
+                InfoBar.success(
+                    title='设置成功',
+                    content=f"成功保存{len(time_list)}个上课时间段，生成了{len(non_class_times_list)}个清理时间段!",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
             except Exception as e:
                 logger.error(f"保存上课时间段失败: {str(e)}")
                 InfoBar.error(
@@ -557,12 +542,16 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
     def _cleanup_draw_records(self):
         """清理抽取记录"""
         try:
-            settings_path = path_manager.get_settings_path('Settings.json')
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                max_draw_times_per_person = settings['pumping_people']['Draw_pumping']
-                pumping_people_draw_mode = settings['pumping_people']['draw_mode']
+            # 使用settings_reader模块获取设置
+            settings = get_settings_by_category("pumping_people")
+            if settings:
+                max_draw_times_per_person = settings.get('Draw_pumping', 1)
+                pumping_people_draw_mode = settings.get('draw_mode', 1)
                 logger.info(f"星野侦察: 抽选模式为{max_draw_times_per_person}，准备执行对应清理方案～ ")
+            else:
+                pumping_people_draw_mode = 1
+                max_draw_times_per_person = 1
+                logger.error("星野魔法出错: 无法获取pumping_people设置，使用默认:1次模式")
 
         except Exception as e:
             pumping_people_draw_mode = 1
@@ -600,7 +589,12 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
     def _is_non_class_time_with_ci(self):
         """使用 CI 插件信息判断是否为非上课时间"""
         try:
-            # 读取程序功能设置
+            # 使用settings_reader模块获取程序功能设置
+            program_functionality = get_settings_by_category("program_functionality")
+            if not program_functionality:
+                logger.error("无法获取program_functionality设置")
+                return self._is_non_class_time_with_timer()
+                
             instant_draw_disable = program_functionality.get("instant_draw_disable", False)
             
             if not instant_draw_disable:
@@ -642,28 +636,23 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
     def _is_non_class_time_with_timer(self):
         """使用原有的时间检测方式判断是否为非上课时间"""
         try:
-            # 读取程序功能设置
-            settings_path = path_manager.get_settings_path('custom_settings.json')
-            if not path_manager.file_exists(settings_path):
+            # 使用settings_reader模块获取程序功能设置
+            program_functionality = get_settings_by_category("program_functionality")
+            if not program_functionality:
+                logger.error("无法获取program_functionality设置")
                 return False
                 
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                
             # 检查课间禁用开关是否启用
-            program_functionality = settings.get("program_functionality", {})
             instant_draw_disable = program_functionality.get("instant_draw_disable", False)
             
             if not instant_draw_disable:
                 return False
                 
-            # 读取上课时间段设置
-            time_settings_path = path_manager.get_settings_path('time_settings.json')
-            if not path_manager.file_exists(time_settings_path):
+            # 使用settings_reader模块获取上课时间段设置
+            time_settings = get_settings_by_category("time_settings")
+            if not time_settings:
+                logger.error("无法获取time_settings设置")
                 return False
-                
-            with open_file(time_settings_path, 'r', encoding='utf-8') as f:
-                time_settings = json.load(f)
                 
             # 获取非上课时间段
             non_class_times = time_settings.get('non_class_times', {})
@@ -778,17 +767,15 @@ class TimeSettingsDialog(QDialog):
         self.setFont(QFont(load_custom_font(), 12))
 
         try:
-            time_settings_file = path_manager.get_settings_path('time_settings.json')
-            if path_manager.file_exists(time_settings_file):
-                with open_file(time_settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    
-                    # 获取所有上课时间段并格式化为字符串
-                    class_times = settings.get('class_times', [])
-                    if class_times:
-                        self.textEdit.setPlainText('\n'.join(class_times))
-                    else:
-                        pass
+            # 使用settings_reader模块获取时间设置
+            time_settings = get_settings_by_category("time_settings")
+            if time_settings:
+                # 获取所有上课时间段并格式化为字符串
+                class_times = time_settings.get('class_times', [])
+                if class_times:
+                    self.textEdit.setPlainText('\n'.join(class_times))
+                else:
+                    pass
         except Exception as e:
             logger.error(f"加载上课时间段设置失败: {str(e)}")
 
@@ -875,24 +862,17 @@ class TimeSettingsDialog(QDialog):
         """保存上课时间段设置"""
         time_settings = self.textEdit.toPlainText()
         try:
-            # 确保Settings目录存在
-            from app.common.path_utils import path_manager
-            time_settings_file = path_manager.get_settings_path('time_settings.json')
-            os.makedirs(os.path.dirname(time_settings_file), exist_ok=True)
-            
-            settings = {}
-            if path_manager.file_exists(time_settings_file):
-                with open_file(time_settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
+            # 使用settings_reader模块获取所有设置
+            all_settings = get_settings_by_category("time_settings")
             
             # 处理多个时间段输入
             time_list = [time.strip() for time in time_settings.split('\n') if time.strip()]
             
             # 清空现有设置
-            if 'non_class_times' in settings:
-                settings['non_class_times'] = {}
-            if 'class_times' in settings:
-                settings['class_times'] = []
+            if 'non_class_times' in all_settings:
+                all_settings['non_class_times'] = {}
+            if 'class_times' in all_settings:
+                all_settings['class_times'] = []
             
             # 验证并收集所有有效时间段
             valid_class_times = []
@@ -982,7 +962,7 @@ class TimeSettingsDialog(QDialog):
             valid_class_times.sort(key=lambda x: tuple(map(int, x['start'].split(':'))))
             
             # 保存上课时间段
-            settings['class_times'] = [time_info['raw'] for time_info in valid_class_times]
+            all_settings['class_times'] = [time_info['raw'] for time_info in valid_class_times]
             
             # 生成非上课时间段（用于清理）
             non_class_times_list = []
@@ -1012,22 +992,22 @@ class TimeSettingsDialog(QDialog):
             
             # 保存清理时间段
             for idx, time_str in enumerate(non_class_times_list, 1):
-                settings.setdefault('non_class_times', {})[str(idx)] = time_str
+                all_settings.setdefault('non_class_times', {})[str(idx)] = time_str
             
-            with open_file(time_settings_file, 'w', encoding='utf-8') as f:
-                json.dump(settings, f, ensure_ascii=False, indent=4)
-                logger.info(f"成功保存{len(time_list)}个上课时间段设置，生成了{len(non_class_times_list)}个清理时间段")
-                InfoBar.success(
-                    title='设置成功',
-                    content=f"成功保存{len(time_list)}个上课时间段，生成了{len(non_class_times_list)}个清理时间段!",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=3000,
-                    parent=self
-                )
-                self.saved = True
-                super().accept()
+            # 使用settings_reader模块保存设置
+            update_settings("time_settings", all_settings)
+            logger.info(f"成功保存{len(time_list)}个上课时间段设置，生成了{len(non_class_times_list)}个清理时间段")
+            InfoBar.success(
+                title='设置成功',
+                content=f"成功保存{len(time_list)}个上课时间段，生成了{len(non_class_times_list)}个清理时间段!",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+            self.saved = True
+            super().accept()
         except Exception as e:
             logger.error(f"保存上课时间段失败: {str(e)}")
             InfoBar.error(

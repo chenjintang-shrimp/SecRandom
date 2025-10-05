@@ -13,6 +13,7 @@ from loguru import logger
 from app.common.config import cfg, AUTHOR, VERSION, YEAR
 from app.common.config import get_theme_icon, load_custom_font
 from app.common.path_utils import path_manager, open_file, remove_file
+from app.common.settings_reader import get_all_settings, get_settings_by_category, get_setting_value, refresh_settings_cache, get_settings_summary, update_settings
 
 from app.common.history_settings import history_SettinsCard
 from app.view.main_page.pumping_people import pumping_people
@@ -185,11 +186,8 @@ class HistoryDataLoader(QThread):
                     available_students = __cleaned_data
 
                     # 获取当前抽取模式
-                    settings_file = path_manager.get_settings_path()
                     try:
-                        with open_file(settings_file, 'r', encoding='utf-8') as f:
-                            settings = json.load(f)
-                            max_draw_times_per_person = settings['pumping_people']['Draw_pumping']
+                        max_draw_times_per_person = get_setting_value('pumping_people', 'Draw_pumping', 1)
                     except Exception as e:
                         max_draw_times_per_person = 1
                         logger.error(f"加载设置时出错: {e}, 使用默认设置")
@@ -502,11 +500,10 @@ class HistoryDataLoader(QThread):
     
     def _get_setting_value(self, section: str, key: str, default: int) -> int:
         """通用设置读取方法"""
-        settings_file = path_manager.get_settings_path()
         try:
-            with open_file(settings_file, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                return settings[section][key]
+            # 使用settings_reader模块的get_setting_value函数获取设置值
+            value = get_setting_value(section, key, default)
+            return value
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             return default
@@ -1172,11 +1169,10 @@ class history(QFrame):
 
     def _get_setting_value(self, section: str, key: str, default: int) -> int:
         """通用设置读取方法"""
-        settings_file = path_manager.get_settings_path()
         try:
-            with open_file(settings_file, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                return settings[section][key]
+            # 使用settings_reader模块的get_setting_value函数获取设置值
+            value = get_setting_value(section, key, default)
+            return value
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             return default

@@ -114,7 +114,7 @@ class MessageReceiver(QObject):
                             # 处理消息
                             self._process_message(message_content)
                         else:
-                            # logger.warning("消息内容为空")
+                            # logger.error("消息内容为空")
                             pass
                         
                         # 删除 unread 文件，表示消息已处理
@@ -126,7 +126,7 @@ class MessageReceiver(QObject):
                     except Exception as e:
                         logger.error(f"读取消息文件失败: {e}")
                 else:
-                    # logger.warning(f"消息文件 {self.json_file} 不存在")
+                    # logger.error(f"消息文件 {self.json_file} 不存在")
                     pass
         except Exception as e:
             logger.error(f"检查消息失败: {e}")

@@ -13,6 +13,8 @@ from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font
 from app.common.path_utils import path_manager, ensure_dir, open_file
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value,
+                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 class pumping_reward_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -22,9 +24,9 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         self.settings_file = path_manager.get_settings_path()
         self.default_settings = {
             "font_size": 50,
-            "draw_mode": 0,
-            "draw_pumping": 0,
-            "animation_mode": 0,
+            "draw_mode": 1,
+            "draw_pumping": 1,
+            "animation_mode": 1,
             "animation_interval": 100,
             "animation_auto_play": 5,
             "animation_music_enabled": False,
@@ -298,88 +300,67 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
         
     def load_settings(self):
         try:
-            if path_manager.file_exists(self.settings_file):
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    pumping_reward_settings = settings.get("pumping_reward", {})
+            pumping_reward_settings = get_settings_by_category("pumping_reward")
 
-                    font_size = pumping_reward_settings.get("font_size", self.default_settings["font_size"])
-                    
-                    # 直接使用索引值
-                    draw_mode = pumping_reward_settings.get("draw_mode", self.default_settings["draw_mode"])
-                    if draw_mode < 0 or draw_mode >= self.pumping_reward_Draw_comboBox.count():
-                        logger.error(f"无效的抽取模式索引: {draw_mode}")
-                        draw_mode = self.default_settings["draw_mode"]
+            font_size = pumping_reward_settings.get("font_size", self.default_settings["font_size"])
+            
+            # 直接使用索引值
+            draw_mode = pumping_reward_settings.get("draw_mode", self.default_settings["draw_mode"])
+            if draw_mode < 0 or draw_mode >= self.pumping_reward_Draw_comboBox.count():
+                logger.error(f"无效的抽取模式索引: {draw_mode}")
+                draw_mode = self.default_settings["draw_mode"]
 
-                    draw_pumping = pumping_reward_settings.get("draw_pumping", self.default_settings["draw_pumping"])
-                    if draw_pumping < 0 or draw_pumping >= self.pumping_reward_mode_Draw_comboBox.count():
-                        logger.error(f"无效的抽取方式索引: {draw_pumping}")
-                        draw_pumping = self.default_settings["draw_pumping"]
-                        
-                    animation_mode = pumping_reward_settings.get("animation_mode", self.default_settings["animation_mode"])
-                    if animation_mode < 0 or animation_mode >= self.pumping_reward_Animation_comboBox.count():
-                        logger.error(f"无效的动画模式索引: {animation_mode}")
-                        animation_mode = self.default_settings["animation_mode"]
+            draw_pumping = pumping_reward_settings.get("draw_pumping", self.default_settings["draw_pumping"])
+            if draw_pumping < 0 or draw_pumping >= self.pumping_reward_mode_Draw_comboBox.count():
+                logger.error(f"无效的抽取方式索引: {draw_pumping}")
+                draw_pumping = self.default_settings["draw_pumping"]
+                
+            animation_mode = pumping_reward_settings.get("animation_mode", self.default_settings["animation_mode"])
+            if animation_mode < 0 or animation_mode >= self.pumping_reward_Animation_comboBox.count():
+                logger.error(f"无效的动画模式索引: {animation_mode}")
+                animation_mode = self.default_settings["animation_mode"]
 
-                    animation_interval = pumping_reward_settings.get("animation_interval", self.default_settings["animation_interval"])
-                    animation_auto_play = pumping_reward_settings.get("animation_auto_play", self.default_settings["animation_auto_play"])
+            animation_interval = pumping_reward_settings.get("animation_interval", self.default_settings["animation_interval"])
+            animation_auto_play = pumping_reward_settings.get("animation_auto_play", self.default_settings["animation_auto_play"])
 
-                    # 加载动画音乐设置
-                    animation_music_enabled = pumping_reward_settings.get("animation_music_enabled", self.default_settings["animation_music_enabled"])
-                    result_music_enabled = pumping_reward_settings.get("result_music_enabled", self.default_settings["result_music_enabled"])
-                    animation_music_volume = pumping_reward_settings.get("animation_music_volume", self.default_settings["animation_music_volume"])
-                    result_music_volume = pumping_reward_settings.get("result_music_volume", self.default_settings["result_music_volume"])
-                    music_fade_in = pumping_reward_settings.get("music_fade_in", self.default_settings["music_fade_in"])
-                    music_fade_out = pumping_reward_settings.get("music_fade_out", self.default_settings["music_fade_out"])
+            # 加载动画音乐设置
+            animation_music_enabled = pumping_reward_settings.get("animation_music_enabled", self.default_settings["animation_music_enabled"])
+            result_music_enabled = pumping_reward_settings.get("result_music_enabled", self.default_settings["result_music_enabled"])
+            animation_music_volume = pumping_reward_settings.get("animation_music_volume", self.default_settings["animation_music_volume"])
+            result_music_volume = pumping_reward_settings.get("result_music_volume", self.default_settings["result_music_volume"])
+            music_fade_in = pumping_reward_settings.get("music_fade_in", self.default_settings["music_fade_in"])
+            music_fade_out = pumping_reward_settings.get("music_fade_out", self.default_settings["music_fade_out"])
 
-                    # 显示格式
-                    display_format = pumping_reward_settings.get("display_format", self.default_settings["display_format"])
-                    if display_format < 0 or display_format >= self.pumping_reward_display_format_comboBox.count():
-                        logger.error(f"无效的显示格式索引: {display_format}")
-                        display_format = self.default_settings["display_format"]
+            # 显示格式
+            display_format = pumping_reward_settings.get("display_format", self.default_settings["display_format"])
+            if display_format < 0 or display_format >= self.pumping_reward_display_format_comboBox.count():
+                logger.error(f"无效的显示格式索引: {display_format}")
+                display_format = self.default_settings["display_format"]
 
-                    # 动画/结果颜色
-                    animation_color = pumping_reward_settings.get("animation_color", self.default_settings["animation_color"])
-                    if animation_color < 0 or animation_color >= self.pumping_reward_student_name_color_comboBox.count():
-                        logger.error(f"无效的动画/结果颜色索引: {animation_color}")
-                        animation_color = self.default_settings["animation_color"]
+            # 动画/结果颜色
+            animation_color = pumping_reward_settings.get("animation_color", self.default_settings["animation_color"])
+            if animation_color < 0 or animation_color >= self.pumping_reward_student_name_color_comboBox.count():
+                logger.error(f"无效的动画/结果颜色索引: {animation_color}")
+                animation_color = self.default_settings["animation_color"]
 
-                    # 奖品图片显示
-                    show_reward_image = pumping_reward_settings.get("show_reward_image", self.default_settings["show_reward_image"])
-                    
-                    self.pumping_reward_Draw_comboBox.setCurrentIndex(draw_mode)
-                    self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(draw_pumping)
-                    self.pumping_reward_font_size_SpinBox.setValue(font_size)
-                    self.pumping_reward_Animation_comboBox.setCurrentIndex(animation_mode)
-                    self.pumping_reward_animation_interval_SpinBox.setValue(animation_interval)
-                    self.pumping_reward_animation_auto_play_SpinBox.setValue(animation_auto_play)
-                    self.pumping_reward_Animation_music_switch.setChecked(animation_music_enabled)
-                    self.pumping_reward_result_music_switch.setChecked(result_music_enabled)
-                    self.pumping_reward_Animation_music_volume_SpinBox.setValue(animation_music_volume)
-                    self.pumping_reward_result_music_volume_SpinBox.setValue(result_music_volume)
-                    self.pumping_reward_music_fade_in_SpinBox.setValue(music_fade_in)
-                    self.pumping_reward_music_fade_out_SpinBox.setValue(music_fade_out)
-                    self.pumping_reward_display_format_comboBox.setCurrentIndex(display_format)
-                    self.pumping_reward_student_name_color_comboBox.setCurrentIndex(animation_color)
-                    self.pumping_reward_show_image_switch.setChecked(show_reward_image)
-            else:
-                self.pumping_reward_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
-                self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
-                self.pumping_reward_font_size_SpinBox.setValue(self.default_settings["font_size"])
-                self.pumping_reward_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
-                self.pumping_reward_animation_interval_SpinBox.setValue(self.default_settings["animation_interval"])
-                self.pumping_reward_animation_auto_play_SpinBox.setValue(self.default_settings["animation_auto_play"])
-                self.pumping_reward_Animation_music_switch.setChecked(self.default_settings["animation_music_enabled"])
-                self.pumping_reward_result_music_switch.setChecked(self.default_settings["result_music_enabled"])
-                self.pumping_reward_Animation_music_volume_SpinBox.setValue(self.default_settings["animation_music_volume"])
-                self.pumping_reward_result_music_volume_SpinBox.setValue(self.default_settings["result_music_volume"])
-                self.pumping_reward_music_fade_in_SpinBox.setValue(self.default_settings["music_fade_in"])
-                self.pumping_reward_music_fade_out_SpinBox.setValue(self.default_settings["music_fade_out"])
-                self.pumping_reward_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
-                self.pumping_reward_display_format_comboBox.setCurrentIndex(self.default_settings["display_format"])
-                self.pumping_reward_student_name_color_comboBox.setCurrentIndex(self.default_settings["animation_color"])
-                self.pumping_reward_show_image_switch.setChecked(self.default_settings["show_reward_image"])
-                self.save_settings()
+            # 奖品图片显示
+            show_reward_image = pumping_reward_settings.get("show_reward_image", self.default_settings["show_reward_image"])
+            
+            self.pumping_reward_Draw_comboBox.setCurrentIndex(draw_mode)
+            self.pumping_reward_mode_Draw_comboBox.setCurrentIndex(draw_pumping)
+            self.pumping_reward_font_size_SpinBox.setValue(font_size)
+            self.pumping_reward_Animation_comboBox.setCurrentIndex(animation_mode)
+            self.pumping_reward_animation_interval_SpinBox.setValue(animation_interval)
+            self.pumping_reward_animation_auto_play_SpinBox.setValue(animation_auto_play)
+            self.pumping_reward_Animation_music_switch.setChecked(animation_music_enabled)
+            self.pumping_reward_result_music_switch.setChecked(result_music_enabled)
+            self.pumping_reward_Animation_music_volume_SpinBox.setValue(animation_music_volume)
+            self.pumping_reward_result_music_volume_SpinBox.setValue(result_music_volume)
+            self.pumping_reward_music_fade_in_SpinBox.setValue(music_fade_in)
+            self.pumping_reward_music_fade_out_SpinBox.setValue(music_fade_out)
+            self.pumping_reward_display_format_comboBox.setCurrentIndex(display_format)
+            self.pumping_reward_student_name_color_comboBox.setCurrentIndex(animation_color)
+            self.pumping_reward_show_image_switch.setChecked(show_reward_image)
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.pumping_reward_Draw_comboBox.setCurrentIndex(self.default_settings["draw_mode"])
@@ -401,20 +382,14 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             self.save_settings()
     
     def save_settings(self):
-        # 先读取现有设置
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
+        # 获取所有设置
+        all_settings = get_all_settings()
         
         # 更新pumping_reward部分的所有设置
-        if "pumping_reward" not in existing_settings:
-            existing_settings["pumping_reward"] = {}
+        if "pumping_reward" not in all_settings:
+            all_settings["pumping_reward"] = {}
             
-        pumping_reward_settings = existing_settings["pumping_reward"]
+        pumping_reward_settings = all_settings["pumping_reward"]
         # 只保存索引值
         pumping_reward_settings["draw_mode"] = self.pumping_reward_Draw_comboBox.currentIndex()
         pumping_reward_settings["draw_pumping"] = self.pumping_reward_mode_Draw_comboBox.currentIndex()
@@ -439,46 +414,31 @@ class pumping_reward_SettinsCard(GroupHeaderCardWidget):
             # else:
             #     logger.error(f"字体大小超出范围: {font_size}")
         except ValueError:
-            # logger.warning(f"无效的字体大小输入: {self.pumping_reward_font_size_edit.text()}")
+            # logger.error(f"无效的字体大小输入: {self.pumping_reward_font_size_edit.text()}")
             pass
         
-        ensure_dir(Path(self.settings_file).parent)
-        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+        # 保存设置
+        update_settings("pumping_reward", all_settings)
 
     # 读取颜色设置
     def load_color_settings(self):
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
-        pumping_reward_settings = existing_settings.get("pumping_reward", {})
+        pumping_reward_settings = get_settings_by_category("pumping_reward")
         self.pumping_reward_animation_color_fixed = (pumping_reward_settings.get("_animation_color", "#ffffff"))
         self.pumping_reward_result_color_fixed = (pumping_reward_settings.get("_result_color", "#ffffff"))
 
     def save_color_settings(self, color_name, color_type):
-        # 先读取现有设置
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
+        # 获取所有设置
+        all_settings = get_all_settings()
         
         # 更新pumping_reward部分的所有设置
-        if "pumping_reward" not in existing_settings:
-            existing_settings["pumping_reward"] = {}
+        if "pumping_reward" not in all_settings:
+            all_settings["pumping_reward"] = {}
 
-        pumping_reward_settings = existing_settings["pumping_reward"]
+        pumping_reward_settings = all_settings["pumping_reward"]
         if color_type == "animation":
             pumping_reward_settings["_animation_color"] = color_name
         elif color_type == "result":
             pumping_reward_settings["_result_color"] = color_name
         
-        ensure_dir(Path(self.settings_file).parent)
-        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+        # 保存设置
+        update_settings("pumping_reward", all_settings)

@@ -5,6 +5,7 @@ from pathlib import Path
 from loguru import logger
 from functools import lru_cache
 from app.common.path_utils import path_manager, open_file
+from app.common.settings_reader import get_setting_value
 
 @lru_cache(maxsize=None)
 def _parse_time(time_str):
@@ -15,15 +16,9 @@ def _parse_time(time_str):
 
 def _clean_history(history_type, settings_key, retention_days_key, history_dir, record_keys, enabled_key):
     try:
-        settings_file = path_manager.get_settings_path()
-        if not path_manager.file_exists(settings_file):
-            logger.error("设置文件不存在，无法清理历史记录")
-            return
-
-        with open_file(settings_file, 'r', encoding='utf-8') as f:
-            settings = json.load(f)
-            retention_days = settings.get(settings_key, {}).get(retention_days_key, 0)
-            history_enabled = settings.get(settings_key, {}).get(enabled_key, True)
+        # 使用 get_setting_value 获取设置值
+        retention_days = get_setting_value(settings_key, retention_days_key, 0)
+        history_enabled = get_setting_value(settings_key, enabled_key, True)
 
         if not history_enabled or retention_days <= 0:
             return

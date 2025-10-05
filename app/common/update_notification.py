@@ -6,6 +6,8 @@ import webbrowser
 
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, VERSION, themeColor
 from app.common.path_utils import path_manager, open_file
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
+                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 def show_update_notification(latest_version):
     """显示更新通知窗口"""

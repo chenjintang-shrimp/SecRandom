@@ -12,6 +12,8 @@ from loguru import logger
 from app.common.config import get_theme_icon, load_custom_font
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
+                                         refresh_settings_cache, get_settings_summary, update_settings)
 
 
 class instant_draw_SettinsCard(GroupHeaderCardWidget):
@@ -28,10 +30,10 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
             "clear_mode": 0, 
             "instant_clear": False,
             "Draw_pumping": 1,
-            "draw_pumping": 0,
+            "draw_pumping": 3,
             "use_cwci_display": False,
             "use_cwci_display_time": 3,
-            "animation_mode": 0,
+            "animation_mode": 1,
             "student_id": 0,
             "student_name": 0,
             "show_random_member": True,
@@ -653,134 +655,134 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         
     def load_settings(self):
         try:
-            if path_manager.file_exists(self.settings_file):
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    instant_draw_settings = settings.get("instant_draw", {})
+            # 使用settings_reader模块获取设置
+            settings = get_settings_by_category("instant_draw")
+            if settings:
+                instant_draw_settings = settings
 
-                    font_size = instant_draw_settings.get("font_size", self.default_settings["font_size"])
+                font_size = instant_draw_settings.get("font_size", self.default_settings["font_size"])
+                
+                Draw_pumping = instant_draw_settings.get("Draw_pumping", self.default_settings["Draw_pumping"])
+
+                
+                # 直接使用索引值
+                draw_mode = instant_draw_settings.get("draw_mode", self.default_settings["draw_mode"])
+                if draw_mode < 0 or draw_mode >= self.instant_draw_Draw_comboBox.count():
+                    logger.error(f"无效的抽取模式索引: {draw_mode}")
+                    draw_mode = self.default_settings["draw_mode"]
                     
-                    Draw_pumping = instant_draw_settings.get("Draw_pumping", self.default_settings["Draw_pumping"])
-
+                draw_pumping = instant_draw_settings.get("draw_pumping", self.default_settings["draw_pumping"])
+                if draw_pumping < 0 or draw_pumping >= self.pumping_Draw_comboBox.count():
+                    logger.error(f"无效的抽取方式索引: {draw_pumping}")
+                    draw_pumping = self.default_settings["draw_pumping"]
                     
-                    # 直接使用索引值
-                    draw_mode = instant_draw_settings.get("draw_mode", self.default_settings["draw_mode"])
-                    if draw_mode < 0 or draw_mode >= self.instant_draw_Draw_comboBox.count():
-                        logger.error(f"无效的抽取模式索引: {draw_mode}")
-                        draw_mode = self.default_settings["draw_mode"]
-                        
-                    draw_pumping = instant_draw_settings.get("draw_pumping", self.default_settings["draw_pumping"])
-                    if draw_pumping < 0 or draw_pumping >= self.pumping_Draw_comboBox.count():
-                        logger.error(f"无效的抽取方式索引: {draw_pumping}")
-                        draw_pumping = self.default_settings["draw_pumping"]
-                        
-                    animation_mode = instant_draw_settings.get("animation_mode", self.default_settings["animation_mode"])
-                    if animation_mode < 0 or animation_mode >= self.instant_draw_Animation_comboBox.count():
-                        logger.error(f"无效的动画模式索引: {animation_mode}")
-                        animation_mode = self.default_settings["animation_mode"]
+                animation_mode = instant_draw_settings.get("animation_mode", self.default_settings["animation_mode"])
+                if animation_mode < 0 or animation_mode >= self.instant_draw_Animation_comboBox.count():
+                    logger.error(f"无效的动画模式索引: {animation_mode}")
+                    animation_mode = self.default_settings["animation_mode"]
 
-                    student_id = instant_draw_settings.get("student_id", self.default_settings["student_id"])
-                    if student_id < 0 or student_id >= self.instant_draw_student_id_comboBox.count():
-                        logger.error(f"无效的学号格式索引: {student_id}")
-                        student_id = self.default_settings["student_id"]
+                student_id = instant_draw_settings.get("student_id", self.default_settings["student_id"])
+                if student_id < 0 or student_id >= self.instant_draw_student_id_comboBox.count():
+                    logger.error(f"无效的学号格式索引: {student_id}")
+                    student_id = self.default_settings["student_id"]
+                
+                student_name = instant_draw_settings.get("student_name", self.default_settings["student_name"])
+                if student_name < 0 or student_name >= self.instant_draw_student_name_comboBox.count():
+                    logger.error(f"无效的姓名格式索引: {student_name}")
+                    student_name = self.default_settings["student_name"]
+
+                # 清除抽取记录方式下拉框
+                clear_mode = instant_draw_settings.get("clear_mode", self.default_settings["clear_mode"])
+                if clear_mode < 0 or clear_mode >= self.instant_draw_Clear_comboBox.count():
+                    logger.error(f"无效的清除模式索引: {clear_mode}")
+                    clear_mode = self.default_settings["clear_mode"]
                     
-                    student_name = instant_draw_settings.get("student_name", self.default_settings["student_name"])
-                    if student_name < 0 or student_name >= self.instant_draw_student_name_comboBox.count():
-                        logger.error(f"无效的姓名格式索引: {student_name}")
-                        student_name = self.default_settings["student_name"]
+                # 是否隔离点名页面抽取的已抽取名单
+                instant_clear = instant_draw_settings.get("instant_clear", self.default_settings["instant_clear"])
+                self.instant_draw_isolate_checkbox.setChecked(instant_clear)
+                
+                # 加载随机组员显示设置
+                show_random_member = instant_draw_settings.get("show_random_member", self.default_settings["show_random_member"])
+                random_member_format = instant_draw_settings.get("random_member_format", self.default_settings["random_member_format"])
 
-                    # 清除抽取记录方式下拉框
-                    clear_mode = instant_draw_settings.get("clear_mode", self.default_settings["clear_mode"])
-                    if clear_mode < 0 or clear_mode >= self.instant_draw_Clear_comboBox.count():
-                        logger.error(f"无效的清除模式索引: {clear_mode}")
-                        clear_mode = self.default_settings["clear_mode"]
-                        
-                    # 是否隔离点名页面抽取的已抽取名单
-                    instant_clear = instant_draw_settings.get("instant_clear", self.default_settings["instant_clear"])
-                    self.instant_draw_isolate_checkbox.setChecked(instant_clear)
-                    
-                    # 加载随机组员显示设置
-                    show_random_member = instant_draw_settings.get("show_random_member", self.default_settings["show_random_member"])
-                    random_member_format = instant_draw_settings.get("random_member_format", self.default_settings["random_member_format"])
+                # 加载是否使用ci/cw显示结果
+                use_cwci_display = instant_draw_settings.get("use_cwci_display", self.default_settings["use_cwci_display"])
+                self.use_cwci_display_checkbox.setChecked(use_cwci_display)
+                
+                # 加载自定显示使用ci/cw的通知显示时间
+                use_cwci_display_time = instant_draw_settings.get("use_cwci_display_time", self.default_settings["use_cwci_display_time"])
+                self.use_cwci_display_time_SpinBox.setValue(use_cwci_display_time)
 
-                    # 加载是否使用ci/cw显示结果
-                    use_cwci_display = instant_draw_settings.get("use_cwci_display", self.default_settings["use_cwci_display"])
-                    self.use_cwci_display_checkbox.setChecked(use_cwci_display)
-                    
-                    # 加载自定显示使用ci/cw的通知显示时间
-                    use_cwci_display_time = instant_draw_settings.get("use_cwci_display_time", self.default_settings["use_cwci_display_time"])
-                    self.use_cwci_display_time_SpinBox.setValue(use_cwci_display_time)
+                # 最大抽取次数设置
+                max_draw_count = instant_draw_settings.get("max_draw_count", self.default_settings["max_draw_count"])
 
-                    # 最大抽取次数设置
-                    max_draw_count = instant_draw_settings.get("max_draw_count", self.default_settings["max_draw_count"])
+                # 加载是否跟随点名设置
+                follow_roll_call = instant_draw_settings.get("follow_roll_call", self.default_settings["follow_roll_call"])
 
-                    # 加载是否跟随点名设置
-                    follow_roll_call = instant_draw_settings.get("follow_roll_call", self.default_settings["follow_roll_call"])
+                # 加载动画设置
+                animation_interval = instant_draw_settings.get("animation_interval", self.default_settings["animation_interval"])
+                animation_auto_play = instant_draw_settings.get("animation_auto_play", self.default_settings["animation_auto_play"])
 
-                    # 加载动画设置
-                    animation_interval = instant_draw_settings.get("animation_interval", self.default_settings["animation_interval"])
-                    animation_auto_play = instant_draw_settings.get("animation_auto_play", self.default_settings["animation_auto_play"])
+                # 加载动画音乐设置
+                animation_music_enabled = instant_draw_settings.get("animation_music_enabled", self.default_settings["animation_music_enabled"])
+                result_music_enabled = instant_draw_settings.get("result_music_enabled", self.default_settings["result_music_enabled"])
+                animation_music_volume = instant_draw_settings.get("animation_music_volume", self.default_settings["animation_music_volume"])
+                result_music_volume = instant_draw_settings.get("result_music_volume", self.default_settings["result_music_volume"])
+                music_fade_in = instant_draw_settings.get("music_fade_in", self.default_settings["music_fade_in"])
+                music_fade_out = instant_draw_settings.get("music_fade_out", self.default_settings["music_fade_out"])
 
-                    # 加载动画音乐设置
-                    animation_music_enabled = instant_draw_settings.get("animation_music_enabled", self.default_settings["animation_music_enabled"])
-                    result_music_enabled = instant_draw_settings.get("result_music_enabled", self.default_settings["result_music_enabled"])
-                    animation_music_volume = instant_draw_settings.get("animation_music_volume", self.default_settings["animation_music_volume"])
-                    result_music_volume = instant_draw_settings.get("result_music_volume", self.default_settings["result_music_volume"])
-                    music_fade_in = instant_draw_settings.get("music_fade_in", self.default_settings["music_fade_in"])
-                    music_fade_out = instant_draw_settings.get("music_fade_out", self.default_settings["music_fade_out"])
+                # 加载抽取结果显示格式
+                display_format = instant_draw_settings.get("display_format", self.default_settings["display_format"])
+                if display_format < 0 or display_format >= self.instant_draw_display_format_comboBox.count():
+                    logger.error(f"无效的抽取结果显示格式索引: {display_format}")
+                    display_format = self.default_settings["display_format"]
 
-                    # 加载抽取结果显示格式
-                    display_format = instant_draw_settings.get("display_format", self.default_settings["display_format"])
-                    if display_format < 0 or display_format >= self.instant_draw_display_format_comboBox.count():
-                        logger.error(f"无效的抽取结果显示格式索引: {display_format}")
-                        display_format = self.default_settings["display_format"]
+                # 动画/结果颜色
+                animation_color = instant_draw_settings.get("animation_color", self.default_settings["animation_color"])
+                if animation_color < 0 or animation_color >= self.instant_draw_student_name_color_comboBox.count():
+                    logger.error(f"无效的动画/结果颜色索引: {animation_color}")
+                    animation_color = self.default_settings["animation_color"]
 
-                    # 动画/结果颜色
-                    animation_color = instant_draw_settings.get("animation_color", self.default_settings["animation_color"])
-                    if animation_color < 0 or animation_color >= self.instant_draw_student_name_color_comboBox.count():
-                        logger.error(f"无效的动画/结果颜色索引: {animation_color}")
-                        animation_color = self.default_settings["animation_color"]
+                # 加载学生图片开关
+                show_student_image = instant_draw_settings.get("show_student_image", self.default_settings["show_student_image"])
+                
+                # 加载固定默认名单名称
+                fixed_default_list = instant_draw_settings.get("fixed_default_list", "")
 
-                    # 加载学生图片开关
-                    show_student_image = instant_draw_settings.get("show_student_image", self.default_settings["show_student_image"])
-                    
-                    # 加载固定默认名单名称
-                    fixed_default_list = instant_draw_settings.get("fixed_default_list", "")
+                self.follow_roll_call_checkbox.setChecked(follow_roll_call)
+                self.Draw_pumping_SpinBox.setValue(Draw_pumping)
+                self.instant_draw_Clear_comboBox.setCurrentIndex(clear_mode)
+                self.instant_draw_isolate_checkbox.setChecked(instant_clear)
+                self.instant_draw_Draw_comboBox.setCurrentIndex(draw_mode)
+                self.instant_draw_auto_play_count_SpinBox.setValue(max_draw_count)
+                self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
+                self.instant_draw_font_size_SpinBox.setValue(font_size)
+                self.use_cwci_display_checkbox.setChecked(use_cwci_display)
+                self.use_cwci_display_time_SpinBox.setValue(use_cwci_display_time)
+                self.instant_draw_Animation_comboBox.setCurrentIndex(animation_mode)
+                self.instant_draw_student_id_comboBox.setCurrentIndex(student_id)
+                self.instant_draw_student_name_comboBox.setCurrentIndex(student_name)
+                self.show_random_member_checkbox.setChecked(show_random_member)
+                self.random_member_format_comboBox.setCurrentIndex(random_member_format)
+                self.instant_draw_Animation_interval_SpinBox.setValue(animation_interval)
+                self.instant_draw_Animation_auto_play_SpinBox.setValue(animation_auto_play)
+                self.instant_draw_Animation_music_switch.setChecked(animation_music_enabled)
+                self.instant_draw_result_music_switch.setChecked(result_music_enabled)
+                self.instant_draw_Animation_music_volume_SpinBox.setValue(animation_music_volume)
+                self.instant_draw_result_music_volume_SpinBox.setValue(result_music_volume)
+                self.instant_draw_music_fade_in_SpinBox.setValue(music_fade_in)
+                self.instant_draw_music_fade_out_SpinBox.setValue(music_fade_out)
+                self.instant_draw_display_format_comboBox.setCurrentIndex(display_format)
+                self.instant_draw_student_name_color_comboBox.setCurrentIndex(animation_color)
+                self.instant_draw_show_image_switch.setChecked(show_student_image)
+                
+                # 设置固定默认名单
+                if fixed_default_list:
+                    index = self.fixed_default_list.findText(fixed_default_list)
+                    if index >= 0:
+                        self.fixed_default_list.setCurrentIndex(index)
 
-                    self.follow_roll_call_checkbox.setChecked(follow_roll_call)
-                    self.Draw_pumping_SpinBox.setValue(Draw_pumping)
-                    self.instant_draw_Clear_comboBox.setCurrentIndex(clear_mode)
-                    self.instant_draw_isolate_checkbox.setChecked(instant_clear)
-                    self.instant_draw_Draw_comboBox.setCurrentIndex(draw_mode)
-                    self.instant_draw_auto_play_count_SpinBox.setValue(max_draw_count)
-                    self.pumping_Draw_comboBox.setCurrentIndex(draw_pumping)
-                    self.instant_draw_font_size_SpinBox.setValue(font_size)
-                    self.use_cwci_display_checkbox.setChecked(use_cwci_display)
-                    self.use_cwci_display_time_SpinBox.setValue(use_cwci_display_time)
-                    self.instant_draw_Animation_comboBox.setCurrentIndex(animation_mode)
-                    self.instant_draw_student_id_comboBox.setCurrentIndex(student_id)
-                    self.instant_draw_student_name_comboBox.setCurrentIndex(student_name)
-                    self.show_random_member_checkbox.setChecked(show_random_member)
-                    self.random_member_format_comboBox.setCurrentIndex(random_member_format)
-                    self.instant_draw_Animation_interval_SpinBox.setValue(animation_interval)
-                    self.instant_draw_Animation_auto_play_SpinBox.setValue(animation_auto_play)
-                    self.instant_draw_Animation_music_switch.setChecked(animation_music_enabled)
-                    self.instant_draw_result_music_switch.setChecked(result_music_enabled)
-                    self.instant_draw_Animation_music_volume_SpinBox.setValue(animation_music_volume)
-                    self.instant_draw_result_music_volume_SpinBox.setValue(result_music_volume)
-                    self.instant_draw_music_fade_in_SpinBox.setValue(music_fade_in)
-                    self.instant_draw_music_fade_out_SpinBox.setValue(music_fade_out)
-                    self.instant_draw_display_format_comboBox.setCurrentIndex(display_format)
-                    self.instant_draw_student_name_color_comboBox.setCurrentIndex(animation_color)
-                    self.instant_draw_show_image_switch.setChecked(show_student_image)
-                    
-                    # 设置固定默认名单
-                    if fixed_default_list:
-                        index = self.fixed_default_list.findText(fixed_default_list)
-                        if index >= 0:
-                            self.fixed_default_list.setCurrentIndex(index)
-
-                    self.on_draw_mode_changed
+                self.on_draw_mode_changed
             else:
                 self.on_draw_mode_changed
 
@@ -842,20 +844,14 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
             self.save_settings()
     
     def save_settings(self):
-        # 先读取现有设置
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
+        # 获取所有设置
+        all_settings = get_all_settings()
         
         # 更新instant_draw部分的所有设置
-        if "instant_draw" not in existing_settings:
-            existing_settings["instant_draw"] = {}
+        if "instant_draw" not in all_settings:
+            all_settings["instant_draw"] = {}
             
-        instant_draw_settings = existing_settings["instant_draw"]
+        instant_draw_settings = all_settings["instant_draw"]
         # 只保存索引值
         # 保存是否跟随点名设置
         instant_draw_settings["follow_roll_call"] = self.follow_roll_call_checkbox.isChecked()
@@ -896,12 +892,11 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
             # else:
             #     logger.error(f"字体大小超出范围: {font_size}")
         except ValueError:
-            # logger.warning(f"无效的字体大小输入: {self.instant_draw_font_size_edit.text()}")
+            # logger.error(f"无效的字体大小输入: {self.instant_draw_font_size_edit.text()}")
             pass
         
-        ensure_dir(Path(self.settings_file).parent)
-        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+        # 使用update_settings函数保存设置
+        update_settings("instant_draw", all_settings)
 
     def on_draw_mode_changed(self):
         """当抽取模式改变时的处理逻辑"""
@@ -958,37 +953,24 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
 
     # 读取颜色设置
     def load_color_settings(self):
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
-        instant_draw_settings = existing_settings.get("instant_draw", {})
+        # 使用settings_reader模块获取设置
+        instant_draw_settings = get_settings_by_category("instant_draw") or {}
         self.instant_draw_animation_color_fixed = (instant_draw_settings.get("_animation_color", "#ffffff"))
         self.instant_draw_result_color_fixed = (instant_draw_settings.get("_result_color", "#ffffff"))
 
     def save_color_settings(self, color_name, color_type):
-        # 先读取现有设置
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
+        # 使用settings_reader模块获取所有设置
+        all_settings = get_all_settings()
         
         # 更新instant_draw部分的所有设置
-        if "instant_draw" not in existing_settings:
-            existing_settings["instant_draw"] = {}
+        if "instant_draw" not in all_settings:
+            all_settings["instant_draw"] = {}
 
-        instant_draw_settings = existing_settings["instant_draw"]
+        instant_draw_settings = all_settings["instant_draw"]
         if color_type == "animation":
             instant_draw_settings["_animation_color"] = color_name
         elif color_type == "result":
             instant_draw_settings["_result_color"] = color_name
         
-        ensure_dir(Path(self.settings_file).parent)
-        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+        # 使用update_settings函数保存设置
+        update_settings("instant_draw", all_settings)

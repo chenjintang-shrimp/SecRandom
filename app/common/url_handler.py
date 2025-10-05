@@ -11,6 +11,8 @@ from app.common.config import get_theme_icon, load_custom_font, check_for_update
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
 from app.common.update_notification import UpdateNotification
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
+                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 class URLHandler:
     """URL处理器类"""
@@ -26,24 +28,10 @@ class URLHandler:
     def load_fixed_url_settings(self):
         """加载fixed_url设置"""
         try:
-            # 获取配置文件路径
-            if not self.config_file_path:
-                self.config_file_path = path_manager.get_settings_path('custom_settings.json')
-            
-            # 检查配置文件是否存在
-            if not os.path.exists(self.config_file_path):
-                logger.error(f"配置文件不存在: {self.config_file_path}")
-                self._load_default_settings()
-                return
-            
-            # 读取配置文件
-            with open(self.config_file_path, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-                self.fixed_url_settings = config.get('fixed_url', {})
+            # 使用settings_reader模块获取设置
+            settings = get_settings_by_category("fixed_url", {})
+            self.fixed_url_settings = settings.get("fixed_url", {})
                 
-            # 记录文件修改时间
-            self.last_modified_time = os.path.getmtime(self.config_file_path)
-            
             logger.info("配置文件加载完成")
         except Exception as e:
             logger.error(f"加载fixed_url设置失败: {str(e)}")
@@ -104,8 +92,9 @@ class URLHandler:
     def force_reload_settings(self):
         """强制重新加载配置文件"""
         logger.info("强制重新加载配置文件")
-        # 重置修改时间，强制重新加载
-        self.last_modified_time = 0
+        # 使用settings_reader模块刷新设置缓存
+        refresh_settings_cache()
+        # 重新加载设置
         self.load_fixed_url_settings()
     
     def update_notification_setting(self, url_type, notification_type):
@@ -129,25 +118,8 @@ class URLHandler:
                     notification_type = 0
             self.fixed_url_settings[setting_key] = notification_type
             
-            # 读取现有配置
-            config = {}
-            if os.path.exists(self.config_file_path):
-                with open(self.config_file_path, 'r', encoding='utf-8') as f:
-                    config = json.load(f)
-            
-            # 确保fixed_url部分存在
-            if 'fixed_url' not in config:
-                config['fixed_url'] = {}
-            
-            # 更新配置
-            config['fixed_url'][setting_key] = notification_type
-            
-            # 保存配置
-            with open(self.config_file_path, 'w', encoding='utf-8') as f:
-                json.dump(config, f, ensure_ascii=False, indent=4)
-            
-            # 更新修改时间
-            self.last_modified_time = os.path.getmtime(self.config_file_path)
+            # 使用settings_reader模块保存设置
+            update_settings("fixed_url", self.fixed_url_settings)
             
             logger.info(f"已更新 {url_type} 的通知设置为: {notification_type}")
             return True

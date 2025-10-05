@@ -16,6 +16,8 @@ import winreg
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
+                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 is_dark = is_dark_theme(qconfig)
 
@@ -204,101 +206,83 @@ class personal_settingsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if path_manager.file_exists(self.settings_file):
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    personal_settings = settings.get("personal", {})
-                    
-                    # 加载背景图标开关状态
-                    background_icon_enabled = personal_settings.get("enable_background_icon", self.default_settings["enable_background_icon"])
-                    
-                    # 加载背景颜色开关状态
-                    background_color_enabled = personal_settings.get("enable_background_color", self.default_settings["enable_background_color"])
-                    
-                    # 检查互斥性：如果两者都启用，则禁用背景颜色开关
-                    if background_icon_enabled and background_color_enabled:
-                        background_color_enabled = False
-                    
-                    # 设置开关状态
-                    self.background_icon_switch.setChecked(background_icon_enabled)
-                    self.background_color_switch.setChecked(background_color_enabled)
-                    
-                    # 加载背景模糊度设置
-                    self.blur_spinbox.setValue(personal_settings.get("background_blur", self.default_settings["background_blur"]))
-                    
-                    # 加载背景亮度设置
-                    self.brightness_spinbox.setValue(personal_settings.get("background_brightness", self.default_settings["background_brightness"]))
-                    
-                    # 加载主界面背景图开关状态
-                    self.main_background_switch.setChecked(personal_settings.get("enable_main_background", self.default_settings["enable_main_background"]))
-                    
-                    # 加载设置界面背景图开关状态
-                    self.settings_background_switch.setChecked(personal_settings.get("enable_settings_background", self.default_settings["enable_settings_background"]))
-                    
-                    # 加载闪抽界面背景图开关状态
-                    self.flash_background_switch.setChecked(personal_settings.get("enable_flash_background", self.default_settings["enable_flash_background"]))
-                    
-                    # 加载背景图片列表
-                    self._load_background_images()
-                    
-                    # 加载主界面背景图选择
-                    main_bg_image = personal_settings.get("main_background_image", self.default_settings["main_background_image"])
-                    if main_bg_image and main_bg_image in [self.main_background_combo.itemText(i) for i in range(self.main_background_combo.count())]:
-                        self.main_background_combo.setCurrentText(main_bg_image)
-                    
-                    # 加载设置界面背景图选择
-                    settings_bg_image = personal_settings.get("settings_background_image", self.default_settings["settings_background_image"])
-                    if settings_bg_image and settings_bg_image in [self.settings_background_combo.itemText(i) for i in range(self.settings_background_combo.count())]:
-                        self.settings_background_combo.setCurrentText(settings_bg_image)
-                    
-                    # 加载闪抽界面背景图选择
-                    flash_bg_image = personal_settings.get("flash_background_image", self.default_settings["flash_background_image"])
-                    if flash_bg_image and flash_bg_image in [self.flash_background_combo.itemText(i) for i in range(self.flash_background_combo.count())]:
-                        self.flash_background_combo.setCurrentText(flash_bg_image)
-                    
-                    # 加载字体设置
-                    font_family = personal_settings.get("font_family", self.default_settings["font_family"])
-                    if font_family and font_family in [self.font_combo.itemText(i) for i in range(self.font_combo.count())]:
-                        self.font_combo.setCurrentText(font_family)
-                    
-                    # 加载主界面背景颜色开关状态
-                    self.main_background_color_switch.setChecked(personal_settings.get("enable_main_background_color", self.default_settings["enable_main_background_color"]))
-                    
-                    # 加载设置界面背景颜色开关状态
-                    self.settings_background_color_switch.setChecked(personal_settings.get("enable_settings_background_color", self.default_settings["enable_settings_background_color"]))
-                    
-                    # 加载闪抽界面背景颜色开关状态
-                    self.flash_background_color_switch.setChecked(personal_settings.get("enable_flash_background_color", self.default_settings["enable_flash_background_color"]))
-                    
-                    # 加载主界面背景颜色
-                    main_bg_color = personal_settings.get("main_background_color", self.default_settings["main_background_color"])
-                    self.main_background_color = main_bg_color
-                    
-                    # 加载设置界面背景颜色
-                    settings_bg_color = personal_settings.get("settings_background_color", self.default_settings["settings_background_color"])
-                    self.settings_background_color = settings_bg_color
-                    
-                    # 加载闪抽界面背景颜色
-                    flash_bg_color = personal_settings.get("flash_background_color", self.default_settings["flash_background_color"])
-                    self.flash_background_color = flash_bg_color
+            # 使用 settings_reader 模块获取设置
+            settings = get_all_settings()
+            personal_settings = settings.get("personal", {})
+            
+            # 加载背景图标开关状态
+            background_icon_enabled = personal_settings.get("enable_background_icon", self.default_settings["enable_background_icon"])
+            
+            # 加载背景颜色开关状态
+            background_color_enabled = personal_settings.get("enable_background_color", self.default_settings["enable_background_color"])
+            
+            # 检查互斥性：如果两者都启用，则禁用背景颜色开关
+            if background_icon_enabled and background_color_enabled:
+                background_color_enabled = False
+            
+            # 设置开关状态
+            self.background_icon_switch.setChecked(background_icon_enabled)
+            self.background_color_switch.setChecked(background_color_enabled)
+            
+            # 加载背景模糊度设置
+            self.blur_spinbox.setValue(personal_settings.get("background_blur", self.default_settings["background_blur"]))
+            
+            # 加载背景亮度设置
+            self.brightness_spinbox.setValue(personal_settings.get("background_brightness", self.default_settings["background_brightness"]))
+            
+            # 加载主界面背景图开关状态
+            self.main_background_switch.setChecked(personal_settings.get("enable_main_background", self.default_settings["enable_main_background"]))
+            
+            # 加载设置界面背景图开关状态
+            self.settings_background_switch.setChecked(personal_settings.get("enable_settings_background", self.default_settings["enable_settings_background"]))
+            
+            # 加载闪抽界面背景图开关状态
+            self.flash_background_switch.setChecked(personal_settings.get("enable_flash_background", self.default_settings["enable_flash_background"]))
+            
+            # 加载背景图片列表
+            self._load_background_images()
+            
+            # 加载主界面背景图选择
+            main_bg_image = personal_settings.get("main_background_image", self.default_settings["main_background_image"])
+            if main_bg_image and main_bg_image in [self.main_background_combo.itemText(i) for i in range(self.main_background_combo.count())]:
+                self.main_background_combo.setCurrentText(main_bg_image)
+            
+            # 加载设置界面背景图选择
+            settings_bg_image = personal_settings.get("settings_background_image", self.default_settings["settings_background_image"])
+            if settings_bg_image and settings_bg_image in [self.settings_background_combo.itemText(i) for i in range(self.settings_background_combo.count())]:
+                self.settings_background_combo.setCurrentText(settings_bg_image)
+            
+            # 加载闪抽界面背景图选择
+            flash_bg_image = personal_settings.get("flash_background_image", self.default_settings["flash_background_image"])
+            if flash_bg_image and flash_bg_image in [self.flash_background_combo.itemText(i) for i in range(self.flash_background_combo.count())]:
+                self.flash_background_combo.setCurrentText(flash_bg_image)
+            
+            # 加载字体设置
+            font_family = personal_settings.get("font_family", self.default_settings["font_family"])
+            if font_family and font_family in [self.font_combo.itemText(i) for i in range(self.font_combo.count())]:
+                self.font_combo.setCurrentText(font_family)
+            
+            # 加载主界面背景颜色开关状态
+            self.main_background_color_switch.setChecked(personal_settings.get("enable_main_background_color", self.default_settings["enable_main_background_color"]))
+            
+            # 加载设置界面背景颜色开关状态
+            self.settings_background_color_switch.setChecked(personal_settings.get("enable_settings_background_color", self.default_settings["enable_settings_background_color"]))
+            
+            # 加载闪抽界面背景颜色开关状态
+            self.flash_background_color_switch.setChecked(personal_settings.get("enable_flash_background_color", self.default_settings["enable_flash_background_color"]))
+            
+            # 加载主界面背景颜色
+            main_bg_color = personal_settings.get("main_background_color", self.default_settings["main_background_color"])
+            self.main_background_color = main_bg_color
+            
+            # 加载设置界面背景颜色
+            settings_bg_color = personal_settings.get("settings_background_color", self.default_settings["settings_background_color"])
+            self.settings_background_color = settings_bg_color
+            
+            # 加载闪抽界面背景颜色
+            flash_bg_color = personal_settings.get("flash_background_color", self.default_settings["flash_background_color"])
+            self.flash_background_color = flash_bg_color
 
-            else:
-                logger.error(f"设置文件不存在: {self.settings_file}")
-                self.background_icon_switch.setChecked(self.default_settings["enable_background_icon"])
-                self.blur_spinbox.setValue(self.default_settings["background_blur"])
-                self.brightness_spinbox.setValue(self.default_settings["background_brightness"])
-                self.main_background_switch.setChecked(self.default_settings["enable_main_background"])
-                self.settings_background_switch.setChecked(self.default_settings["enable_settings_background"])
-                self.flash_background_switch.setChecked(self.default_settings["enable_flash_background"])
-                self.background_color_switch.setChecked(self.default_settings["enable_background_color"])
-                self.main_background_color_switch.setChecked(self.default_settings["enable_main_background_color"])
-                self.settings_background_color_switch.setChecked(self.default_settings["enable_settings_background_color"])
-                self.flash_background_color_switch.setChecked(self.default_settings["enable_flash_background_color"])
-                self.main_background_color = self.default_settings["main_background_color"]
-                self.settings_background_color = self.default_settings["settings_background_color"]
-                self.flash_background_color = self.default_settings["flash_background_color"]
-                
-                self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.background_icon_switch.setChecked(self.default_settings["enable_background_icon"])
@@ -320,14 +304,8 @@ class personal_settingsCard(GroupHeaderCardWidget):
         self.on_background_color_switch_changed()
 
     def save_settings(self):
-        # 先读取现有设置
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
+        # 使用 settings_reader 模块获取现有设置
+        existing_settings = get_all_settings()
         
         # 更新personal部分的所有设置
         if "personal" not in existing_settings:
@@ -399,9 +377,8 @@ class personal_settingsCard(GroupHeaderCardWidget):
         # 保存闪抽界面背景颜色
         personal_settings["flash_background_color"] = self.flash_background_color
 
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+        # 使用 settings_reader 模块保存设置
+        update_settings("personal", existing_settings)
     
     def on_background_icon_switch_changed(self):
         """处理背景图标总开关变化"""

@@ -16,6 +16,8 @@ import winreg
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
+                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 is_dark = is_dark_theme(qconfig)
 
@@ -80,27 +82,16 @@ class tray_settingsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if path_manager.file_exists(self.settings_file):
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    tray_settings = settings.get("tray", {})
+            # 使用settings_reader模块获取设置
+            settings = get_settings_by_category("tray", {})
+            tray_settings = settings.get("tray", {})
 
-                    self.show_main_window_switch.setChecked(tray_settings.get("show_main_window", self.default_settings["show_main_window"]))
-                    self.show_floating_window_switch.setChecked(tray_settings.get("show_floating_window", self.default_settings["show_floating_window"]))
-                    self.restart_switch.setChecked(tray_settings.get("restart", self.default_settings["restart"]))
-                    self.exit_switch.setChecked(tray_settings.get("exit", self.default_settings["exit"]))
-                    self.flash_switch.setChecked(tray_settings.get("flash", self.default_settings["flash"]))
+            self.show_main_window_switch.setChecked(tray_settings.get("show_main_window", self.default_settings["show_main_window"]))
+            self.show_floating_window_switch.setChecked(tray_settings.get("show_floating_window", self.default_settings["show_floating_window"]))
+            self.restart_switch.setChecked(tray_settings.get("restart", self.default_settings["restart"]))
+            self.exit_switch.setChecked(tray_settings.get("exit", self.default_settings["exit"]))
+            self.flash_switch.setChecked(tray_settings.get("flash", self.default_settings["flash"]))
 
-            else:
-                logger.error(f"设置文件不存在: {self.settings_file}")
-
-                self.show_main_window_switch.setChecked(self.default_settings["show_main_window"])
-                self.show_floating_window_switch.setChecked(self.default_settings["show_floating_window"])
-                self.restart_switch.setChecked(self.default_settings["restart"])
-                self.exit_switch.setChecked(self.default_settings["exit"])
-                self.flash_switch.setChecked(self.default_settings["flash"])
-
-                self.save_settings()
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
 
@@ -113,27 +104,18 @@ class tray_settingsCard(GroupHeaderCardWidget):
 
 
     def save_settings(self):
-        # 先读取现有设置
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
-        
-        # 更新tray部分的所有设置
-        if "tray" not in existing_settings:
-            existing_settings["tray"] = {}
+        try:
+            # 准备tray设置数据
+            tray_settings = {
+                "show_main_window": self.show_main_window_switch.isChecked(),
+                "show_floating_window": self.show_floating_window_switch.isChecked(),
+                "restart": self.restart_switch.isChecked(),
+                "exit": self.exit_switch.isChecked(),
+                "flash": self.flash_switch.isChecked()
+            }
             
-        tray_settings = existing_settings["tray"]
-
-        tray_settings["show_main_window"] = self.show_main_window_switch.isChecked()
-        tray_settings["show_floating_window"] = self.show_floating_window_switch.isChecked()
-        tray_settings["restart"] = self.restart_switch.isChecked()
-        tray_settings["exit"] = self.exit_switch.isChecked()
-        tray_settings["flash"] = self.flash_switch.isChecked()
-
-        os.makedirs(os.path.dirname(self.settings_file), exist_ok=True)
-        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+            # 使用settings_reader模块保存设置
+            update_settings("tray", tray_settings)
+            
+        except Exception as e:
+            logger.error(f"保存设置时出错: {e}")

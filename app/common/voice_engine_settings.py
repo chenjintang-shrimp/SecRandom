@@ -13,6 +13,8 @@ from loguru import logger
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 from app.common.path_utils import path_manager, ensure_dir, open_file
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, 
+                                      refresh_settings_cache, get_settings_summary, update_settings)
 
 class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
     # 定义信号
@@ -227,35 +229,29 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if path_manager.file_exists(self.settings_file):
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    voice_engine_settings = settings.get("voice_engine", {})
+            # 使用settings_reader模块获取设置
+            settings = get_settings_by_category("voice_engine", {})
+            voice_engine_settings = settings.get("voice_engine", {})
 
-                    voice_engine = voice_engine_settings.get("voice_engine", self.default_settings["voice_engine"])
-                    edge_tts_voice_name = voice_engine_settings.get("edge_tts_voice_name", self.default_settings["edge_tts_voice_name"])
-                    voice_enabled = voice_engine_settings.get("voice_enabled", self.default_settings["voice_enabled"])
-                    voice_volume = voice_engine_settings.get("voice_volume", self.default_settings["voice_volume"])
-                    voice_speed = voice_engine_settings.get("voice_speed", self.default_settings["voice_speed"])
-                    system_volume_enabled = voice_engine_settings.get("system_volume_enabled", self.default_settings["system_volume_enabled"])
-                    system_volume_value = voice_engine_settings.get("system_volume_value", self.default_settings["system_volume_value"])
+            # 确保voice_engine是整数类型
+            voice_engine = voice_engine_settings.get("voice_engine", self.default_settings["voice_engine"])
+            if isinstance(voice_engine, dict):
+                voice_engine = self.default_settings["voice_engine"]
+            
+            edge_tts_voice_name = voice_engine_settings.get("edge_tts_voice_name", self.default_settings["edge_tts_voice_name"])
+            voice_enabled = voice_engine_settings.get("voice_enabled", self.default_settings["voice_enabled"])
+            voice_volume = voice_engine_settings.get("voice_volume", self.default_settings["voice_volume"])
+            voice_speed = voice_engine_settings.get("voice_speed", self.default_settings["voice_speed"])
+            system_volume_enabled = voice_engine_settings.get("system_volume_enabled", self.default_settings["system_volume_enabled"])
+            system_volume_value = voice_engine_settings.get("system_volume_value", self.default_settings["system_volume_value"])
 
-                    self.voice_engine_comboBox.setCurrentIndex(voice_engine)
-                    self.edge_tts_voiceComboBox.setCurrentText(edge_tts_voice_name)
-                    self.pumping_people_Voice_switch.setChecked(voice_enabled)
-                    self.pumping_people_voice_volume_SpinBox.setValue(voice_volume)
-                    self.pumping_people_voice_speed_SpinBox.setValue(voice_speed)
-                    self.pumping_people_system_volume_switch.setChecked(system_volume_enabled)
-                    self.pumping_people_system_volume_SpinBox.setValue(system_volume_value)
-            else:
-                self.voice_engine_comboBox.setCurrentIndex(self.default_settings["voice_engine"])
-                self.edge_tts_voiceComboBox.setCurrentText(self.default_settings["edge_tts_voice_name"])
-                self.pumping_people_Voice_switch.setChecked(self.default_settings["voice_enabled"])
-                self.pumping_people_voice_volume_SpinBox.setValue(self.default_settings["voice_volume"])
-                self.pumping_people_voice_speed_SpinBox.setValue(self.default_settings["voice_speed"])
-                self.pumping_people_system_volume_switch.setChecked(self.default_settings["system_volume_enabled"])
-                self.pumping_people_system_volume_SpinBox.setValue(self.default_settings["system_volume_value"])
-                self.save_settings()
+            self.voice_engine_comboBox.setCurrentIndex(voice_engine)
+            self.edge_tts_voiceComboBox.setCurrentText(edge_tts_voice_name)
+            self.pumping_people_Voice_switch.setChecked(voice_enabled)
+            self.pumping_people_voice_volume_SpinBox.setValue(voice_volume)
+            self.pumping_people_voice_speed_SpinBox.setValue(voice_speed)
+            self.pumping_people_system_volume_switch.setChecked(system_volume_enabled)
+            self.pumping_people_system_volume_SpinBox.setValue(system_volume_value)
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.voice_engine_comboBox.setCurrentIndex(self.default_settings["voice_engine"])
@@ -268,44 +264,21 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
             self.save_settings()
     
     def save_settings(self):
-        # 先读取现有设置
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
-        
-        # 更新voice_engine部分的所有设置
-        if "voice_engine" not in existing_settings:
-            existing_settings["voice_engine"] = {}
+        try:
+            # 准备voice_engine设置数据
+            voice_engine_settings_data = {
+                "voice_engine": {
+                    "voice_engine": self.voice_engine_comboBox.currentIndex(),
+                    "edge_tts_voice_name": self.edge_tts_voiceComboBox.currentText(),
+                    "voice_enabled": self.pumping_people_Voice_switch.isChecked(),
+                    "voice_volume": self.pumping_people_voice_volume_SpinBox.value(),
+                    "voice_speed": self.pumping_people_voice_speed_SpinBox.value(),
+                    "system_volume_enabled": self.pumping_people_system_volume_switch.isChecked(),
+                    "system_volume_value": self.pumping_people_system_volume_SpinBox.value()
+                }
+            }
             
-        voice_engine_settings = existing_settings["voice_engine"]
-        
-        # 检查设置是否有变化，如果没有变化则不写入文件
-        settings_changed = (
-            voice_engine_settings.get("voice_engine") != self.voice_engine_comboBox.currentIndex() or
-            voice_engine_settings.get("edge_tts_voice_name") != self.edge_tts_voiceComboBox.currentText() or
-            voice_engine_settings.get("voice_enabled") != self.pumping_people_Voice_switch.isChecked() or
-            voice_engine_settings.get("voice_volume") != self.pumping_people_voice_volume_SpinBox.value() or
-            voice_engine_settings.get("voice_speed") != self.pumping_people_voice_speed_SpinBox.value() or
-            voice_engine_settings.get("system_volume_enabled") != self.pumping_people_system_volume_switch.isChecked() or
-            voice_engine_settings.get("system_volume_value") != self.pumping_people_system_volume_SpinBox.value()
-        )
-        
-        if not settings_changed:
-            return  # 设置没有变化，不写入文件
-        
-        # 更新设置
-        voice_engine_settings["voice_engine"] = self.voice_engine_comboBox.currentIndex()
-        voice_engine_settings["edge_tts_voice_name"] = self.edge_tts_voiceComboBox.currentText()
-        voice_engine_settings["voice_enabled"] = self.pumping_people_Voice_switch.isChecked()
-        voice_engine_settings["voice_volume"] = self.pumping_people_voice_volume_SpinBox.value()
-        voice_engine_settings["voice_speed"] = self.pumping_people_voice_speed_SpinBox.value()
-        voice_engine_settings["system_volume_enabled"] = self.pumping_people_system_volume_switch.isChecked()
-        voice_engine_settings["system_volume_value"] = self.pumping_people_system_volume_SpinBox.value()
-
-        ensure_dir(Path(self.settings_file).parent)
-        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+            # 使用settings_reader模块保存设置
+            update_settings("voice_engine", voice_engine_settings_data)
+        except Exception as e:
+            logger.error(f"保存设置时出错: {e}")

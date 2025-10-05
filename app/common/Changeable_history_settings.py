@@ -5,11 +5,13 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 import os
+import json
 from pathlib import Path
 from loguru import logger
 from app.common.path_utils import path_manager, open_file, ensure_dir
 
 from app.common.config import get_theme_icon, load_custom_font
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value, refresh_settings_cache, get_settings_summary, update_settings)
 
 class history_SettinsCard(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -181,32 +183,24 @@ class history_SettinsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if path_manager.file_exists(self.settings_file):
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    history_settings = settings.get("history", {})
-                        
-                    history_enabled = history_settings.get("history_enabled", self.default_settings["history_enabled"])
+            # 使用get_settings_by_category函数获取设置
+            history_settings = get_settings_by_category("history", {})
+            
+            history_enabled = history_settings.get("history_enabled", self.default_settings["history_enabled"])
 
-                    probability_weight = history_settings.get("probability_weight", self.default_settings["probability_weight"])
-                    if probability_weight < 0 or probability_weight >= self.probability_or_weight.count():
-                        # 如果索引值无效，则使用默认值
-                        probability_weight = self.default_settings["probability_weight"]
+            probability_weight = history_settings.get("probability_weight", self.default_settings["probability_weight"])
+            if probability_weight < 0 or probability_weight >= self.probability_or_weight.count():
+                # 如果索引值无效，则使用默认值
+                probability_weight = self.default_settings["probability_weight"]
 
-                    history_days = history_settings.get("history_days", self.default_settings["history_days"])
-                    if history_days < 0 or history_days > 365:
-                        # 如果索引值无效，则使用默认值
-                        history_days = self.default_settings["history_days"]
-                    
-                    self.history_switch.setChecked(history_enabled)
-                    self.probability_or_weight.setCurrentIndex(probability_weight)
-                    self.history_spinBox.setValue(history_days)
-            else:
-                logger.error(f"设置文件不存在: {self.settings_file}")
-                self.history_switch.setChecked(self.default_settings["history_enabled"])
-                self.probability_or_weight.setCurrentIndex(self.default_settings["probability_weight"])
-                self.history_spinBox.setValue(self.default_settings["history_days"])
-                self.save_settings()
+            history_days = history_settings.get("history_days", self.default_settings["history_days"])
+            if history_days < 0 or history_days > 365:
+                # 如果索引值无效，则使用默认值
+                history_days = self.default_settings["history_days"]
+            
+            self.history_switch.setChecked(history_enabled)
+            self.probability_or_weight.setCurrentIndex(probability_weight)
+            self.history_spinBox.setValue(history_days)
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
             self.history_switch.setChecked(self.default_settings["history_enabled"])
@@ -215,23 +209,17 @@ class history_SettinsCard(GroupHeaderCardWidget):
             self.save_settings()
     
     def save_settings(self):
-        # 先读取现有设置
-        existing_settings = {}
-        if path_manager.file_exists(self.settings_file):
-            with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                try:
-                    existing_settings = json.load(f)
-                except json.JSONDecodeError:
-                    existing_settings = {}
-
-        if "history" not in existing_settings:
-            existing_settings["history"] = {}
+        try:
+            # 准备history设置字典
+            history_settings = {
+                "history_enabled": self.history_switch.isChecked(),
+                "probability_weight": self.probability_or_weight.currentIndex(),
+                "history_days": self.history_spinBox.value()
+            }
             
-        history_settings = existing_settings["history"]
-        history_settings["history_enabled"] = self.history_switch.isChecked()
-        history_settings["probability_weight"] = self.probability_or_weight.currentIndex()
-        history_settings["history_days"] = self.history_spinBox.value()
-        
-        ensure_dir(Path(self.settings_file).parent)
-        with open_file(self.settings_file, 'w', encoding='utf-8') as f:
-            json.dump(existing_settings, f, indent=4)
+            # 使用update_settings函数保存设置
+            update_settings("history", history_settings)
+            
+            logger.info("历史记录设置已保存")
+        except Exception as e:
+            logger.error(f"保存历史记录设置时出错: {e}")

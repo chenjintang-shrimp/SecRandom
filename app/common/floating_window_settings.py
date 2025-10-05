@@ -12,19 +12,13 @@ import platform
 from pathlib import Path
 from datetime import datetime
 from loguru import logger
-
-# 平台特定导入
-if platform.system() == "Windows":
-    import winreg
-else:
-    # Linux平台使用subprocess处理注册表相关操作
-    import subprocess
-    import shutil
-    import stat
+import winreg
 
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+from app.common.settings_reader import (get_all_settings, get_settings_by_category, get_setting_value,
+                                        refresh_settings_cache, get_settings_summary, update_settings)
 
 is_dark = is_dark_theme(qconfig)
 
@@ -185,33 +179,16 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
     def load_settings(self):
         """加载设置"""
         try:
-            if path_manager.file_exists(self.settings_file):
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    floating_window_settings = settings.get("floating_window", {})
-                
-                # 加载浮窗设置
-                self.pumping_floating_switch.setChecked(floating_window_settings.get("pumping_floating_enabled", self.default_settings.get("pumping_floating_enabled", True)))
-                self.pumping_floating_transparency_SpinBox.setValue(floating_window_settings.get("pumping_floating_transparency_mode", self.default_settings.get("pumping_floating_transparency_mode", 80)))
-                self.left_pumping_floating_switch.setCurrentIndex(floating_window_settings.get("pumping_floating_visible", self.default_settings.get("pumping_floating_visible", 3)))
-                self.button_arrangement_comboBox.setCurrentIndex(floating_window_settings.get("button_arrangement_mode", self.default_settings.get("button_arrangement_mode", 0)))
-                self.floating_icon_mode_comboBox.setCurrentIndex(floating_window_settings.get("floating_icon_mode", self.default_settings.get("floating_icon_mode", 0)))
-                self.flash_window_side_switch.setChecked(floating_window_settings.get("flash_window_side_switch", self.default_settings.get("flash_window_side_switch", False)))
-                self.custom_retract_time_spinBox.setValue(floating_window_settings.get("custom_retract_time", self.default_settings.get("custom_retract_time", 5)))
-                self.custom_display_mode_comboBox.setCurrentIndex(floating_window_settings.get("custom_display_mode", self.default_settings.get("custom_display_mode", 1)))
-                self.floating_window_visibility_comboBox.setCurrentIndex(floating_window_settings.get("floating_window_visibility", self.default_settings.get("floating_window_visibility", 0)))
-            else:
-                logger.error(f"设置文件不存在: {self.settings_file}")
-                self.pumping_floating_switch.setChecked(self.default_settings.get("pumping_floating_enabled", True))
-                self.pumping_floating_transparency_SpinBox.setValue(self.default_settings.get("pumping_floating_transparency_mode", 80))
-                self.left_pumping_floating_switch.setCurrentIndex(self.default_settings.get("pumping_floating_visible", 3))
-                self.button_arrangement_comboBox.setCurrentIndex(self.default_settings.get("button_arrangement_mode", 0))
-                self.floating_icon_mode_comboBox.setCurrentIndex(self.default_settings.get("floating_icon_mode", 0))
-                self.flash_window_side_switch.setChecked(self.default_settings.get("flash_window_side_switch", False))
-                self.custom_retract_time_spinBox.setValue(self.default_settings.get("custom_retract_time", 5))
-                self.custom_display_mode_comboBox.setCurrentIndex(self.default_settings.get("custom_display_mode", 1))
-                self.floating_window_visibility_comboBox.setCurrentIndex(self.default_settings.get("floating_window_visibility", 0))
-                self.save_settings()
+            # 使用get_setting_value函数获取设置值
+            self.pumping_floating_switch.setChecked(get_setting_value("floating_window", "pumping_floating_enabled", self.default_settings.get("pumping_floating_enabled", True)))
+            self.pumping_floating_transparency_SpinBox.setValue(get_setting_value("floating_window", "pumping_floating_transparency_mode", self.default_settings.get("pumping_floating_transparency_mode", 80)))
+            self.left_pumping_floating_switch.setCurrentIndex(get_setting_value("floating_window", "pumping_floating_visible", self.default_settings.get("pumping_floating_visible", 3)))
+            self.button_arrangement_comboBox.setCurrentIndex(get_setting_value("floating_window", "button_arrangement_mode", self.default_settings.get("button_arrangement_mode", 0)))
+            self.floating_icon_mode_comboBox.setCurrentIndex(get_setting_value("floating_window", "floating_icon_mode", self.default_settings.get("floating_icon_mode", 0)))
+            self.flash_window_side_switch.setChecked(get_setting_value("floating_window", "flash_window_side_switch", self.default_settings.get("flash_window_side_switch", False)))
+            self.custom_retract_time_spinBox.setValue(get_setting_value("floating_window", "custom_retract_time", self.default_settings.get("custom_retract_time", 5)))
+            self.custom_display_mode_comboBox.setCurrentIndex(get_setting_value("floating_window", "custom_display_mode", self.default_settings.get("custom_display_mode", 1)))
+            self.floating_window_visibility_comboBox.setCurrentIndex(get_setting_value("floating_window", "floating_window_visibility", self.default_settings.get("floating_window_visibility", 0)))
             
         except Exception as e:
             logger.error(f"加载浮窗设置时出错: {str(e)}")
@@ -228,29 +205,21 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
     def save_settings(self):
         """保存设置"""
         try:
-            settings = {}
-            if os.path.exists(self.settings_file):
-                with open(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
+            # 准备要保存的设置
+            floating_window_settings = {
+                "pumping_floating_enabled": self.pumping_floating_switch.isChecked(),
+                "pumping_floating_transparency_mode": self.pumping_floating_transparency_SpinBox.value(),
+                "pumping_floating_visible": self.left_pumping_floating_switch.currentIndex(),
+                "button_arrangement_mode": self.button_arrangement_comboBox.currentIndex(),
+                "floating_icon_mode": self.floating_icon_mode_comboBox.currentIndex(),
+                "flash_window_side_switch": self.flash_window_side_switch.isChecked(),
+                "custom_retract_time": self.custom_retract_time_spinBox.value(),
+                "custom_display_mode": self.custom_display_mode_comboBox.currentIndex(),
+                "floating_window_visibility": self.floating_window_visibility_comboBox.currentIndex()
+            }
             
-            # 确保floating_window部分存在
-            if "floating_window" not in settings:
-                settings["floating_window"] = {}
-            
-            # 保存浮窗设置
-            settings["floating_window"]["pumping_floating_enabled"] = self.pumping_floating_switch.isChecked()
-            settings["floating_window"]["pumping_floating_transparency_mode"] = self.pumping_floating_transparency_SpinBox.value()
-            settings["floating_window"]["pumping_floating_visible"] = self.left_pumping_floating_switch.currentIndex()
-            settings["floating_window"]["button_arrangement_mode"] = self.button_arrangement_comboBox.currentIndex()
-            settings["floating_window"]["floating_icon_mode"] = self.floating_icon_mode_comboBox.currentIndex()
-            settings["floating_window"]["flash_window_side_switch"] = self.flash_window_side_switch.isChecked()
-            settings["floating_window"]["custom_retract_time"] = self.custom_retract_time_spinBox.value()
-            settings["floating_window"]["custom_display_mode"] = self.custom_display_mode_comboBox.currentIndex()
-            settings["floating_window"]["floating_window_visibility"] = self.floating_window_visibility_comboBox.currentIndex()
-            
-            # 保存到文件
-            with open(self.settings_file, 'w', encoding='utf-8') as f:
-                json.dump(settings, f, ensure_ascii=False, indent=4)
+            # 使用update_settings函数保存设置
+            update_settings("floating_window", floating_window_settings)
                 
         except Exception as e:
             logger.error(f"保存浮窗设置时出错: {str(e)}")
@@ -329,23 +298,21 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
             self.setFont(QFont(load_custom_font(), 12))
 
             try:
-                foreground_software_file = path_manager.get_settings_path('ForegroundSoftware.json')
-                if path_manager.file_exists(foreground_software_file):
-                    with open_file(foreground_software_file, 'r', encoding='utf-8') as f:
-                        settings = json.load(f)
-                        
-                        # 获取所有清理时间并格式化为字符串
-                        if current_software_mode == 'class':
-                            foreground_software = settings.get('foregroundsoftware_class', {})
-                        elif current_software_mode == 'title':
-                            foreground_software = settings.get('foregroundsoftware_title', {})
-                        elif current_software_mode == 'process':
-                            foreground_software = settings.get('foregroundsoftware_process', {})
-                        if foreground_software:
-                            software_list = [str(software) for software_id, software in foreground_software.items()]
-                            self.textEdit.setPlainText('\n'.join(software_list))
-                        else:
-                            pass
+                # 使用get_all_settings函数获取所有设置
+                settings = get_settings_by_category("foreground_software")
+                    
+                # 获取所有清理时间并格式化为字符串
+                if current_software_mode == 'class':
+                    foreground_software = settings.get('foregroundsoftware_class', {})
+                elif current_software_mode == 'title':
+                    foreground_software = settings.get('foregroundsoftware_title', {})
+                elif current_software_mode == 'process':
+                    foreground_software = settings.get('foregroundsoftware_process', {})
+                if foreground_software:
+                    software_list = [str(software) for software_id, software in foreground_software.items()]
+                    self.textEdit.setPlainText('\n'.join(software_list))
+                else:
+                    pass
             except Exception as e:
                 logger.error(f"加载定时清理记录时间失败: {str(e)}")
 
@@ -432,24 +399,20 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
         def load_software_settings(self):
             """加载已保存的软件设置"""
             try:
-                from app.common.path_utils import path_manager
-                foreground_software_file = path_manager.get_settings_path('ForegroundSoftware.json')
+                # 使用get_settings_by_category函数获取设置值
+                settings = get_settings_by_category("foreground_software")
                 
-                if path_manager.file_exists(foreground_software_file):
-                    with open_file(foreground_software_file, 'r', encoding='utf-8') as f:
-                        settings = json.load(f)
-                        
-                    # 根据当前模式加载对应的设置
-                    if self.current_software_mode == 'class' and 'foregroundsoftware_class' in settings:
-                        software_list = list(settings['foregroundsoftware_class'].values())
-                    elif self.current_software_mode == 'title' and 'foregroundsoftware_title' in settings:
-                        software_list = list(settings['foregroundsoftware_title'].values())
-                    elif self.current_software_mode == 'process' and 'foregroundsoftware_process' in settings:
-                        software_list = list(settings['foregroundsoftware_process'].values())
-                    else:
-                        software_list = []
-                        
-                    self.textEdit.setPlainText('\n'.join(software_list))
+                # 根据当前模式加载对应的设置
+                if self.current_software_mode == 'class' and 'foregroundsoftware_class' in settings:
+                    software_list = list(settings['foregroundsoftware_class'].values())
+                elif self.current_software_mode == 'title' and 'foregroundsoftware_title' in settings:
+                    software_list = list(settings['foregroundsoftware_title'].values())
+                elif self.current_software_mode == 'process' and 'foregroundsoftware_process' in settings:
+                    software_list = list(settings['foregroundsoftware_process'].values())
+                else:
+                    software_list = []
+                    
+                self.textEdit.setPlainText('\n'.join(software_list))
             except Exception as e:
                 logger.error(f"加载前台软件设置时出错: {str(e)}")
 
@@ -487,14 +450,8 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
     def check_foreground_software(self):
         """检查前台软件是否匹配设置"""
         try:
-            from app.common.path_utils import path_manager
-            foreground_software_file = path_manager.get_settings_path('ForegroundSoftware.json')
-            
-            if not path_manager.file_exists(foreground_software_file):
-                return False
-            
-            with open_file(foreground_software_file, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
+            # 使用get_settings_by_category函数获取前台软件设置
+            settings = get_settings_by_category("foreground_software")
                 
             # 获取前台窗口信息
             foreground_info = self.get_foreground_window_info()
@@ -581,15 +538,8 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
         if dialog.exec():
             foreground_software = dialog.textEdit.toPlainText()
             try:
-                # 确保Settings目录存在
-                from app.common.path_utils import path_manager
-                foreground_software_file = path_manager.get_settings_path('ForegroundSoftware.json')
-                os.makedirs(os.path.dirname(foreground_software_file), exist_ok=True)
-                
-                settings = {}
-                if path_manager.file_exists(foreground_software_file):
-                    with open_file(foreground_software_file, 'r', encoding='utf-8') as f:
-                        settings = json.load(f)
+                # 获取前台软件设置
+                settings = get_settings_by_category("foreground_software")
                 
                 # 清空现有设置
                 if current_software_mode == 'class':
@@ -610,18 +560,18 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
                         elif current_software_mode == 'process':
                             settings.setdefault('foregroundsoftware_process', {})[str(idx)] = software_str
                 
-                with open_file(foreground_software_file, 'w', encoding='utf-8') as f:
-                    json.dump(settings, f, ensure_ascii=False, indent=4)
-                    logger.info(f"成功保存{len([s for s in foreground_software.splitlines() if s.strip()])}个前台软件设置")
-                    InfoBar.success(
-                        title='设置成功',
-                        content=f"成功保存{len([s for s in foreground_software.splitlines() if s.strip()])}个前台软件设置!",
-                        orient=Qt.Horizontal,
-                        isClosable=True,
-                        position=InfoBarPosition.TOP,
-                        duration=3000,
-                        parent=self
-                    )
+                # 使用update_settings函数保存设置
+                update_settings("foreground_software", settings)
+                logger.info(f"成功保存{len([s for s in foreground_software.splitlines() if s.strip()])}个前台软件设置")
+                InfoBar.success(
+                    title='设置成功',
+                    content=f"成功保存{len([s for s in foreground_software.splitlines() if s.strip()])}个前台软件设置!",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
             except Exception as e:
                 logger.error(f"保存前台软件设置失败: {str(e)}")
                 InfoBar.error(

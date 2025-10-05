@@ -19,6 +19,7 @@ from app.common.config import get_theme_icon, load_custom_font, restore_volume
 from app.common.path_utils import path_manager, open_file, remove_file, ensure_dir
 from app.common.voice import TTSHandler
 from app.common.message_sender import message_sender
+from app.common.settings_reader import get_all_settings, get_settings_by_category, get_setting_value, refresh_settings_cache, get_settings_summary, update_settings
 
 class instant_draw(QWidget):
     # 抽取完成信号
@@ -43,20 +44,18 @@ class instant_draw(QWidget):
         """开始抽选学生"""
         # 获取抽选模式和动画模式设置
         try:
-            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                instant_draw_animation_mode = settings['instant_draw']['animation_mode']
-                self.interval = settings['instant_draw']['animation_interval']
-                self.auto_play = settings['instant_draw']['animation_auto_play']
-                self.animation_music_enabled = settings['instant_draw']['animation_music_enabled']
-                self.result_music_enabled = settings['instant_draw']['result_music_enabled']
-                self.animation_music_volume = settings['instant_draw']['animation_music_volume']
-                self.result_music_volume = settings['instant_draw']['result_music_volume']
-                self.music_fade_in = settings['instant_draw']['music_fade_in']
-                self.music_fade_out = settings['instant_draw']['music_fade_out']
-                self.max_draw_times_per_person = settings['instant_draw']['Draw_pumping']
-                self.use_cwci_display = settings['instant_draw']['use_cwci_display']
-                self.use_cwci_display_time = settings['instant_draw']['use_cwci_display_time']
+            instant_draw_animation_mode = get_setting_value('instant_draw', 'animation_mode', 0)
+            self.interval = get_setting_value('instant_draw', 'animation_interval', 100)
+            self.auto_play = get_setting_value('instant_draw', 'animation_auto_play', 5)
+            self.animation_music_enabled = get_setting_value('instant_draw', 'animation_music_enabled', False)
+            self.result_music_enabled = get_setting_value('instant_draw', 'result_music_enabled', False)
+            self.animation_music_volume = get_setting_value('instant_draw', 'animation_music_volume', 5)
+            self.result_music_volume = get_setting_value('instant_draw', 'result_music_volume', 5)
+            self.music_fade_in = get_setting_value('instant_draw', 'music_fade_in', 300)
+            self.music_fade_out = get_setting_value('instant_draw', 'music_fade_out', 300)
+            self.max_draw_times_per_person = get_setting_value('instant_draw', 'Draw_pumping', 1)
+            self.use_cwci_display = get_setting_value('instant_draw', 'use_cwci_display', False)
+            self.use_cwci_display_time = get_setting_value('instant_draw', 'use_cwci_display_time', 3)
                 
         except Exception as e:
             instant_draw_animation_mode = 0
@@ -87,9 +86,7 @@ class instant_draw(QWidget):
             
         try:
             # 读取设置中的定时清理时间
-            with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                clear_time = settings['instant_draw']['max_draw_count']
+            clear_time = get_setting_value('instant_draw', 'max_draw_count', 0)
 
             self.current_count = 1
                 
@@ -118,10 +115,7 @@ class instant_draw(QWidget):
         genders = self.gender_name
 
         try:
-            settings_path = path_manager.get_settings_path('Settings.json')
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                instant_clear = settings['instant_draw']['instant_clear']
+            instant_clear = get_setting_value('instant_draw', 'instant_clear', False)
 
         except Exception as e:
             instant_clear = False
@@ -285,17 +279,14 @@ class instant_draw(QWidget):
                                     pass
                         
                         # 根据设置格式化学号显示
-                        settings_file = path_manager.get_settings_path('Settings.json')
                         try:
-                            with open_file(settings_file, 'r', encoding='utf-8') as f:
-                                settings = json.load(f)
-                                instant_draw_student_id = settings['instant_draw']['student_id']
-                                instant_draw_student_name = settings['instant_draw']['student_name']
-                                display_format = settings['instant_draw']['display_format']
-                                font_size = settings['instant_draw']['font_size']
-                                animation_color = settings['instant_draw']['animation_color']
-                                _animation_color = settings['instant_draw'].get('_animation_color', '#ffffff')
-                                show_student_image = settings['instant_draw']['show_student_image']
+                            instant_draw_student_id = get_setting_value('instant_draw', 'student_id', 0)
+                            instant_draw_student_name = get_setting_value('instant_draw', 'student_name', 0)
+                            display_format = get_setting_value('instant_draw', 'display_format', 0)
+                            font_size = get_setting_value('instant_draw', 'font_size', 50)
+                            animation_color = get_setting_value('instant_draw', 'animation_color', 0)
+                            _animation_color = get_setting_value('instant_draw', '_animation_color', '#ffffff')
+                            show_student_image = get_setting_value('instant_draw', 'show_student_image', False)
                         except Exception as e:
                             instant_draw_student_id = 0
                             instant_draw_student_name = 0
@@ -388,10 +379,8 @@ class instant_draw(QWidget):
 
                                 # 加载显示设置
                                 try:
-                                    with open_file(settings_file, 'r', encoding='utf-8') as f:
-                                        settings = json.load(f)
-                                        show_random = settings['instant_draw'].get('show_random_member', False)
-                                        format_str = settings['instant_draw'].get('random_member_format', FORMAT_GROUP_SIMPLE)
+                                    show_random = get_setting_value('instant_draw', 'show_random_member', False)
+                                    format_str = get_setting_value('instant_draw', 'random_member_format', FORMAT_GROUP_SIMPLE)
                                 except (json.JSONDecodeError, IOError, KeyError) as e:
                                     show_random = False
                                     format_str = FORMAT_GROUP_SIMPLE
@@ -605,11 +594,8 @@ class instant_draw(QWidget):
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
             
-            settings_file = path_manager.get_settings_path()
             try:
-                with open_file(settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    font_size = settings['instant_draw']['font_size']
+                font_size = get_setting_value('instant_draw', 'font_size', 50)
             except Exception as e:
                 font_size = 50
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
@@ -838,10 +824,7 @@ class instant_draw(QWidget):
         genders = self.gender_name
 
         try:
-            settings_path = path_manager.get_settings_path('Settings.json')
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                instant_clear = settings['instant_draw']['instant_clear']
+            instant_clear = get_setting_value('instant_draw', 'instant_clear', False)
 
         except Exception as e:
             instant_clear = False
@@ -1110,17 +1093,14 @@ class instant_draw(QWidget):
                             if widget:
                                 widget.deleteLater()
                         
-                        settings = path_manager.get_settings_path()
                         try:
-                            with open_file(settings, 'r', encoding='utf-8') as f:
-                                settings = json.load(f)
-                                instant_draw_student_id = settings['instant_draw']['student_id']
-                                instant_draw_student_name = settings['instant_draw']['student_name']
-                                display_format = settings['instant_draw']['display_format']
-                                font_size = settings['instant_draw']['font_size']
-                                animation_color = settings['instant_draw']['animation_color']
-                                _result_color = settings['instant_draw'].get('_result_color', '#ffffff')
-                                show_student_image = settings['instant_draw']['show_student_image']
+                            instant_draw_student_id = get_setting_value('instant_draw', 'student_id', 0)
+                            instant_draw_student_name = get_setting_value('instant_draw', 'student_name', 0)
+                            display_format = get_setting_value('instant_draw', 'display_format', 0)
+                            font_size = get_setting_value('instant_draw', 'font_size', 50)
+                            animation_color = get_setting_value('instant_draw', 'animation_color', 0)
+                            _result_color = get_setting_value('instant_draw', '_result_color', '#ffffff')
+                            show_student_image = get_setting_value('instant_draw', 'show_student_image', False)
                         except Exception as e:
                             instant_draw_student_id = 0
                             instant_draw_student_name = 0
@@ -1210,11 +1190,8 @@ class instant_draw(QWidget):
 
                                 # 加载显示设置
                                 try:
-                                    settings_path = path_manager.get_settings_path()
-                                    with open_file(settings_path, 'r', encoding='utf-8') as f:
-                                        settings_data = json.load(f)
-                                        show_random = settings_data['instant_draw'].get('show_random_member', False)
-                                        format_str = settings_data['instant_draw'].get('random_member_format', FORMAT_GROUP_SIMPLE)
+                                    show_random = get_setting_value('instant_draw', 'show_random_member', False)
+                                    format_str = get_setting_value('instant_draw', 'random_member_format', FORMAT_GROUP_SIMPLE)
                                 except (json.JSONDecodeError, IOError, KeyError) as e:
                                     show_random = False
                                     format_str = FORMAT_GROUP_SIMPLE
@@ -1494,12 +1471,8 @@ class instant_draw(QWidget):
             error_label = BodyLabel("-- 抽选失败")
             error_label.setAlignment(Qt.AlignCenter)
             
-            settings = path_manager.get_settings_path()
-
             try:
-                with open_file(settings, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    font_size = settings['instant_draw']['font_size']
+                font_size = get_setting_value('instant_draw', 'font_size', 50)
             except Exception as e:
                 font_size = 50
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
@@ -1537,12 +1510,9 @@ class instant_draw(QWidget):
     # 获取随机抽取方法的设置
     def get_random_method_setting(self):
         """获取随机抽取方法的设置"""
-        settings = path_manager.get_settings_path()
         try:
-            with open_file(settings, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                random_method = settings['instant_draw']['draw_pumping']
-                return random_method
+            random_method = get_setting_value('instant_draw', 'draw_pumping', 0)
+            return random_method
         except Exception as e:
             logger.error(f"加载随机抽取方法设置时出错: {e}, 使用默认设置")
             return 0
@@ -1550,11 +1520,8 @@ class instant_draw(QWidget):
     # 更新历史记录
     def _update_history(self, class_name, group_name, genders, selected_students):
         """更新历史记录"""
-        settings = path_manager.get_settings_path()
         try:
-            with open_file(settings, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                history_enabled = settings['history']['history_enabled']
+            history_enabled = get_setting_value('history', 'history_enabled', False)
         except Exception as e:
             history_enabled = False
             logger.error(f"加载历史记录设置时出错: {e}, 使用默认设置")
@@ -1742,12 +1709,9 @@ class instant_draw(QWidget):
     # 清理临时文件
     def _clean_temp_files(self):
         try:
-            settings_path = path_manager.get_settings_path('Settings.json')
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                instant_clear_mode = settings['instant_draw']['clear_mode']
-                instant_clear = settings['instant_draw']['instant_clear']
-                logger.info(f"准备执行对应清理方案")
+            instant_clear_mode = get_setting_value('instant_draw', 'clear_mode', 1)
+            instant_clear = get_setting_value('instant_draw', 'instant_clear', False)
+            logger.info(f"准备执行对应清理方案")
 
         except Exception as e:
             instant_clear_mode = 1
@@ -1877,19 +1841,13 @@ class instant_draw(QWidget):
         如果开启则应用闪抽界面背景图片或背景颜色
         让界面变得更加美观个性化，就像给房间贴上漂亮的壁纸或涂上漂亮的颜色一样！"""
         try:
-            # 读取自定义设置
-            custom_settings_path = path_manager.get_settings_path('custom_settings.json')
-            with open_file(custom_settings_path, 'r', encoding='utf-8') as f:
-                custom_settings = json.load(f)
-                
             # 检查是否启用了闪抽界面背景图标
-            personal_settings = custom_settings.get('personal', {})
-            enable_flash_background = personal_settings.get('enable_flash_background', True)
-            enable_flash_background_color = personal_settings.get('enable_flash_background_color', False)
+            enable_flash_background = get_setting_value('personal', 'enable_flash_background', True)
+            enable_flash_background_color = get_setting_value('personal', 'enable_flash_background_color', False)
             
             # 优先应用背景颜色（如果启用）
             if enable_flash_background_color:
-                flash_background_color = personal_settings.get('flash_background_color', '#FFFFFF')
+                flash_background_color = get_setting_value('personal', 'flash_background_color', '#FFFFFF')
                 
                 # 创建背景颜色标签并设置样式（使用标签方式，与图片保持一致）
                 self.background_label = QLabel(self)
@@ -1912,7 +1870,7 @@ class instant_draw(QWidget):
             # 如果背景颜色未启用，但背景图片启用了，则应用背景图片
             elif enable_flash_background:
                 # 获取闪抽界面背景图片设置
-                flash_background_image = personal_settings.get('flash_background_image', '')
+                flash_background_image = get_setting_value('personal', 'flash_background_image', '')
                 
                 # 检查是否选择了背景图片
                 if flash_background_image and flash_background_image != "无背景图":
@@ -1932,8 +1890,8 @@ class instant_draw(QWidget):
                             # 如果图片加载成功，应用背景
                             if not background_pixmap.isNull():
                                 # 获取模糊度和亮度设置
-                                blur_value = personal_settings.get('background_blur', 10)
-                                brightness_value = personal_settings.get('background_brightness', 30)
+                                blur_value = get_setting_value('personal', 'background_blur', 10)
+                                brightness_value = get_setting_value('personal', 'background_brightness', 30)
                                 
                                 # 应用模糊效果
                                 if blur_value > 0:
