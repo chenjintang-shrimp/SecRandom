@@ -31,6 +31,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
             "draw_pumping": 0,
             "use_cwci_display": False,
             "use_cwci_display_time": 3,
+            "flash_window_auto_close": True,
+            "flash_window_close_time": 3,
             "animation_mode": 0,
             "student_id": 0,
             "student_name": 0,
@@ -108,6 +110,22 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.pumping_Draw_comboBox.addItems(["可预测抽取", "不可预测抽取", "公平可预测抽取", "公平不可预测抽取"])
         self.pumping_Draw_comboBox.currentIndexChanged.connect(self.save_settings)
         self.pumping_Draw_comboBox.setFont(QFont(load_custom_font(), 12))
+
+        # 闪抽窗口自动关闭开关
+        self.flash_window_auto_close_switch = SwitchButton()
+        self.flash_window_auto_close_switch.setOnText("开启")
+        self.flash_window_auto_close_switch.setOffText("关闭")
+        self.flash_window_auto_close_switch.setFont(QFont(load_custom_font(), 12))
+        self.flash_window_auto_close_switch.checkedChanged.connect(self.save_settings)
+
+        # 闪抽窗口自动关闭时间设置
+        self.flash_window_close_time_SpinBox = SpinBox()
+        self.flash_window_close_time_SpinBox.setRange(1, 30)
+        self.flash_window_close_time_SpinBox.setValue(self.default_settings["flash_window_close_time"])
+        self.flash_window_close_time_SpinBox.setSingleStep(1)
+        self.flash_window_close_time_SpinBox.setSuffix("秒")
+        self.flash_window_close_time_SpinBox.valueChanged.connect(self.save_settings)
+        self.flash_window_close_time_SpinBox.setFont(QFont(load_custom_font(), 12))
 
         # 是否使用cw/ci显示结果
         self.use_cwci_display_checkbox = SwitchButton()
@@ -322,8 +340,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_calendar_week_numbers_20_filled"), "半重复抽取次数", "一轮中抽取最大次数", self.Draw_pumping_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_timer_off_20_filled"), "抽取后定时清除时间", "配置临时记录清理时间(0-86400)(0表示禁用该功能)", self.instant_draw_auto_play_count_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_drawer_play_20_filled"), "抽取方式", "选择具体的抽取执行方式", self.pumping_Draw_comboBox)
-        self.addGroup(get_theme_icon("ic_fluent_alert_on_20_filled"), "点击后关闭抽取窗口", "再次点击按钮时是否关闭抽取窗口", self.instant_draw_close_after_click_switch)
-        
+
         # 固定默认名单
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "固定默认名单", "选择一个班级作为默认名单", self.fixed_default_list)
         
@@ -344,6 +361,11 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画模式", "选择抽取过程的动画播放模式", self.instant_draw_Animation_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "动画间隔", "调整动画播放的速度间隔", self.instant_draw_Animation_interval_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置动画自动重复播放的次数", self.instant_draw_Animation_auto_play_SpinBox)
+
+        # 闪抽窗口自动关闭时间设置
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽自动关闭", "启用后闪抽窗口将在完成操作后自动关闭", self.flash_window_auto_close_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽关闭时间", "设置闪抽窗口自动关闭的延迟时间", self.flash_window_close_time_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_alert_on_20_filled"), "点击后关闭抽取窗口", "再次点击按钮时是否关闭抽取窗口", self.instant_draw_close_after_click_switch)
 
         # 是否使用cw/ci显示结果
         self.addGroup(get_theme_icon("ic_fluent_alert_on_20_filled"), "是否使用 CI/CW 显示结果", "是否使用 CI/CW 展示抽取结果（CI、CW都开启，则CI优先）", self.use_cwci_display_checkbox)
@@ -725,6 +747,12 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     # 最大抽取次数设置
                     max_draw_count = instant_draw_settings.get("max_draw_count", self.default_settings["max_draw_count"])
 
+                    # 加载闪抽窗口自动关闭设置
+                    flash_window_auto_close = instant_draw_settings.get("flash_window_auto_close", self.default_settings["flash_window_auto_close"])
+
+                    # 加载闪抽窗口自动关闭时间设置
+                    flash_window_close_time = instant_draw_settings.get("flash_window_close_time", self.default_settings["flash_window_close_time"])
+
                     # 加载是否跟随点名设置
                     follow_roll_call = instant_draw_settings.get("follow_roll_call", self.default_settings["follow_roll_call"])
 
@@ -776,6 +804,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     self.instant_draw_student_id_comboBox.setCurrentIndex(student_id)
                     self.instant_draw_student_name_comboBox.setCurrentIndex(student_name)
                     self.show_random_member_checkbox.setChecked(show_random_member)
+                    self.flash_window_auto_close_switch.setChecked(flash_window_auto_close)
+                    self.flash_window_close_time_SpinBox.setValue(flash_window_close_time)
                     self.random_member_format_comboBox.setCurrentIndex(random_member_format)
                     self.instant_draw_Animation_interval_SpinBox.setValue(animation_interval)
                     self.instant_draw_Animation_auto_play_SpinBox.setValue(animation_auto_play)
@@ -808,6 +838,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                 self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
                 self.instant_draw_font_size_SpinBox.setValue(self.default_settings["font_size"])
                 self.use_cwci_display_checkbox.setChecked(self.default_settings["use_cwci_display"])
+                self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
+                self.flash_window_close_time_SpinBox.setValue(self.default_settings["flash_window_close_time"])
                 self.use_cwci_display_time_SpinBox.setValue(self.default_settings["use_cwci_display_time"])
                 self.instant_draw_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
                 self.instant_draw_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
@@ -837,6 +869,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
             self.pumping_Draw_comboBox.setCurrentIndex(self.default_settings["draw_pumping"])
             self.instant_draw_font_size_SpinBox.setValue(self.default_settings["font_size"])
             self.use_cwci_display_checkbox.setChecked(self.default_settings["use_cwci_display"])
+            self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
+            self.flash_window_close_time_SpinBox.setValue(self.default_settings["flash_window_close_time"])
             self.use_cwci_display_time_SpinBox.setValue(self.default_settings["use_cwci_display_time"])
             self.instant_draw_isolate_checkbox.setChecked(self.default_settings["instant_clear"])
             self.instant_draw_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
@@ -881,6 +915,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         instant_draw_settings["draw_mode"] = self.instant_draw_Draw_comboBox.currentIndex()
         instant_draw_settings["max_draw_count"] = self.instant_draw_auto_play_count_SpinBox.value()
         instant_draw_settings["instant_clear"] = self.instant_draw_isolate_checkbox.isChecked()
+        instant_draw_settings["flash_window_auto_close"] = self.flash_window_auto_close_switch.isChecked()
+        instant_draw_settings["flash_window_close_time"] = self.flash_window_close_time_SpinBox.value() 
         instant_draw_settings["use_cwci_display"] = self.use_cwci_display_checkbox.isChecked()
         instant_draw_settings["use_cwci_display_time"] = self.use_cwci_display_time_SpinBox.value()
         instant_draw_settings["draw_pumping"] = self.pumping_Draw_comboBox.currentIndex()

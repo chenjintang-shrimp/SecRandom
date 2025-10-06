@@ -36,8 +36,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             "settings_window_mode": 0,
             "topmost_switch": False,
             "url_protocol_enabled": False,
-            "flash_window_auto_close": True,
-            "flash_window_close_time": 2,
             "global_shortcut_enabled": False,
             "global_shortcut_target": 0,
             "global_shortcut_key": "",
@@ -95,20 +93,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.check_on_startup.setOffText("关闭")
         self.check_on_startup.setFont(QFont(load_custom_font(), 12))
         self.check_on_startup.checkedChanged.connect(self.save_settings)
-        
-        # 浮窗
-        # 闪抽窗口自动关闭开关
-        self.flash_window_auto_close_switch = SwitchButton()
-        self.flash_window_auto_close_switch.setOnText("开启")
-        self.flash_window_auto_close_switch.setOffText("关闭")
-        self.flash_window_auto_close_switch.setFont(QFont(load_custom_font(), 12))
-        self.flash_window_auto_close_switch.checkedChanged.connect(self.save_settings)
-
-        # 闪抽窗口自动关闭时间设置
-        self.flash_window_close_time_comboBox = ComboBox()
-        self.flash_window_close_time_comboBox.addItems(["1秒", "2秒", "3秒", "5秒", "10秒", "15秒", "30秒"])
-        self.flash_window_close_time_comboBox.currentIndexChanged.connect(self.save_settings)
-        self.flash_window_close_time_comboBox.setFont(QFont(load_custom_font(), 12))
 
         # 主界面置顶功能
         self.topmost_switch = SwitchButton()
@@ -240,10 +224,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "主窗口位置", "设置主窗口在屏幕上的默认显示位置", self.main_window_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_location_target_20_filled"), "设置窗口位置", "设置设置窗口在屏幕上的默认显示位置", self.settings_window_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "主窗口置顶", "使主窗口始终显示在其他窗口之上(需重新打开窗口生效)", self.topmost_switch)
-        
-        # 闪抽设置
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽自动关闭", "启用后闪抽窗口将在完成操作后自动关闭", self.flash_window_auto_close_switch)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽关闭时间", "设置闪抽窗口自动关闭的延迟时间", self.flash_window_close_time_comboBox)
 
         # 智能检测设置
         self.addGroup(get_theme_icon("ic_fluent_layout_row_two_focus_top_settings_20_filled"), "窗口焦点延迟", "设置主窗口失去焦点后的自动关闭延迟时间", self.main_window_focus_comboBox)
@@ -398,13 +378,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     topmost_switch = foundation_settings.get("topmost_switch", self.default_settings["topmost_switch"])
 
                     url_protocol_enabled = foundation_settings.get("url_protocol_enabled", self.default_settings["url_protocol_enabled"])
-
-                    # 闪抽窗口自动关闭设置
-                    flash_window_auto_close = foundation_settings.get("flash_window_auto_close", self.default_settings["flash_window_auto_close"])
-                    flash_window_close_time = foundation_settings.get("flash_window_close_time", self.default_settings["flash_window_close_time"])
-                    if flash_window_close_time < 0 or flash_window_close_time >= self.flash_window_close_time_comboBox.count():
-                        # 如果索引值无效，则使用默认值
-                        flash_window_close_time = self.default_settings["flash_window_close_time"]
                     
                     # 快捷键设置
                     global_shortcut_enabled = foundation_settings.get("global_shortcut_enabled", self.default_settings["global_shortcut_enabled"])
@@ -427,8 +400,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                     self.check_on_startup.setChecked(check_on_startup)
                     self.topmost_switch.setChecked(topmost_switch)
                     self.url_protocol_switch.setChecked(url_protocol_enabled)
-                    self.flash_window_auto_close_switch.setChecked(flash_window_auto_close)
-                    self.flash_window_close_time_comboBox.setCurrentIndex(flash_window_close_time)
                     self.show_startup_window_switch.setChecked(show_startup_window_switch)
                     
                     # 更新快捷键设置
@@ -452,8 +423,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 self.check_on_startup.setChecked(self.default_settings["check_on_startup"])
                 self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
                 self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
-                self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
-                self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
                 self.show_startup_window_switch.setChecked(self.default_settings["show_startup_window_switch"])
                 
                 # 加载快捷键设置的默认值
@@ -473,8 +442,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             self.check_on_startup.setChecked(self.default_settings["check_on_startup"])
             self.topmost_switch.setChecked(self.default_settings["topmost_switch"])
             self.url_protocol_switch.setChecked(self.default_settings["url_protocol_enabled"])
-            self.flash_window_auto_close_switch.setChecked(self.default_settings["flash_window_auto_close"])
-            self.flash_window_close_time_comboBox.setCurrentIndex(self.default_settings["flash_window_close_time"])
             self.show_startup_window_switch.setChecked(self.default_settings["show_startup_window_switch"])
             
             # 加载快捷键设置的默认值
@@ -514,8 +481,6 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         foundation_settings["check_on_startup"] = self.check_on_startup.isChecked()
         foundation_settings["topmost_switch"] = self.topmost_switch.isChecked()
         foundation_settings["url_protocol_enabled"] = self.url_protocol_switch.isChecked()
-        foundation_settings["flash_window_auto_close"] = self.flash_window_auto_close_switch.isChecked()
-        foundation_settings["flash_window_close_time"] = self.flash_window_close_time_comboBox.currentIndex()
         # 显示启动窗口
         foundation_settings["show_startup_window_switch"] = self.show_startup_window_switch.isChecked()
         

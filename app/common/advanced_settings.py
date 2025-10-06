@@ -929,9 +929,6 @@ class SettingsSelectionDialog(QDialog):
                 "设置窗口设置": [
                     "settings_window_mode", "settings_window_width", "settings_window_height"
                 ],
-                "闪抽窗口设置": [
-                    "flash_window_auto_close", "flash_window_close_time",
-                ],
                 "启动设置": [
                     "check_on_startup", "self_starting_enabled", "url_protocol_enabled"
                 ],
@@ -968,7 +965,8 @@ class SettingsSelectionDialog(QDialog):
                     "show_random_member", "random_member_format", "close_after_click"
                 ],
                 "动画设置": [
-                    "animation_mode", "animation_interval", "animation_auto_play"
+                    "animation_mode", "animation_interval", "animation_auto_play",
+                    "flash_window_auto_close", "flash_window_close_time"
                 ],
                 "联动设置": [
                     "use_cwci_display", "use_cwci_display_time"
@@ -1142,8 +1140,6 @@ class SettingsSelectionDialog(QDialog):
             "main_window_focus_time": "焦点检测时间", # 有
             "main_window_mode": "主窗口位置", # 有
             "settings_window_mode": "设置窗口位置", # 有
-            "flash_window_auto_close": "闪抽窗口自动关闭", # 有
-            "flash_window_close_time": "闪抽窗口关闭时间", # 有
             "topmost_switch": "主窗口置顶", # 有
             "window_width": "主窗口宽度", # 有
             "window_height": "主窗口高度", # 有
@@ -1167,6 +1163,8 @@ class SettingsSelectionDialog(QDialog):
             "show_student_image": "显示学生图片", # 有
             # instant_draw设置
             "close_after_click": "再次点击按钮后关闭抽取窗口", # 有
+            "flash_window_auto_close": "闪抽窗口自动关闭", # 有
+            "flash_window_close_time": "闪抽窗口关闭时间", # 有
             "follow_roll_call": "跟随点名设置", # 有
             "use_cwci_display": "使用cw/ci显示结果", # 有
             "use_cwci_display_time": "使用cw/ci显示结果时间", # 有
