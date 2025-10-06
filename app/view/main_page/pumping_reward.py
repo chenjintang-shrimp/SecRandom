@@ -36,8 +36,8 @@ class pumping_reward(QWidget):
         self.music_player = QMediaPlayer()
         self.initUI()
         
-        # 连接清理信号
-        self._connect_cleanup_signal()
+        # 延迟连接清理信号，确保主窗口已完全初始化
+        QTimer.singleShot(100, self._connect_cleanup_signal)
     
     def start_draw(self):
         """开始抽选奖品"""

@@ -230,7 +230,15 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
             if path_manager.file_exists(self.settings_file):
                 with open_file(self.settings_file, 'r', encoding='utf-8') as f:
                     settings = json.load(f)
-                    voice_engine_settings = settings.get("voice_engine", {})
+                    # 确保 voice_engine_settings 是一个字典
+                    if isinstance(settings.get("voice_engine"), dict):
+                        voice_engine_settings = settings.get("voice_engine", {})
+                    else:
+                        # 如果 voice_engine 不是字典，则创建一个新的字典
+                        voice_engine_settings = {}
+                        # 如果 voice_engine 是一个整数，则将其作为 voice_engine 键的值
+                        if isinstance(settings.get("voice_engine"), int):
+                            voice_engine_settings["voice_engine"] = settings.get("voice_engine")
 
                     voice_engine = voice_engine_settings.get("voice_engine", self.default_settings["voice_engine"])
                     edge_tts_voice_name = voice_engine_settings.get("edge_tts_voice_name", self.default_settings["edge_tts_voice_name"])
@@ -277,9 +285,12 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
                 except json.JSONDecodeError:
                     existing_settings = {}
         
-        # 更新voice_engine部分的所有设置
-        if "voice_engine" not in existing_settings:
+        # 确保 voice_engine 是一个字典
+        if "voice_engine" not in existing_settings or not isinstance(existing_settings["voice_engine"], dict):
             existing_settings["voice_engine"] = {}
+            # 如果原来的 voice_engine 是一个整数，则将其作为 voice_engine 键的值
+            if isinstance(existing_settings.get("voice_engine"), int):
+                existing_settings["voice_engine"]["voice_engine"] = existing_settings.get("voice_engine")
             
         voice_engine_settings = existing_settings["voice_engine"]
         

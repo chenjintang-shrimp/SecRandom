@@ -27,12 +27,12 @@ class history_handoff_setting(QFrame):
         self.addSubInterface(self.pumping_people_page, 'pumping_People_history', '点名记录')
         self.addSubInterface(self.pumping_reward_page, 'pumping_Reward_history', '抽奖记录')
 
-        # 点名历史记录
+        # 点名历史记录 - 后台创建
         # 创建滚动区域
-        pumping_people_scroll_area_personal = SingleDirectionScrollArea(self.pumping_people_page)
-        pumping_people_scroll_area_personal.setWidgetResizable(True)
+        self.pumping_people_scroll_area_personal = SingleDirectionScrollArea(self.pumping_people_page)
+        self.pumping_people_scroll_area_personal.setWidgetResizable(True)
         # 设置样式表
-        pumping_people_scroll_area_personal.setStyleSheet("""
+        self.pumping_people_scroll_area_personal.setStyleSheet("""
             QScrollArea {
                 border: none;
                 background-color: transparent;
@@ -43,25 +43,24 @@ class history_handoff_setting(QFrame):
             }
         """)
         # 启用鼠标滚轮
-        QScroller.grabGesture(pumping_people_scroll_area_personal.viewport(), QScroller.LeftMouseButtonGesture)
+        QScroller.grabGesture(self.pumping_people_scroll_area_personal.viewport(), QScroller.LeftMouseButtonGesture)
         # 创建内部框架
-        pumping_people_inner_frame_personal = QWidget(pumping_people_scroll_area_personal)
-        pumping_people_inner_layout_personal = QVBoxLayout(pumping_people_inner_frame_personal)
-        pumping_people_inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
-        pumping_people_scroll_area_personal.setWidget(pumping_people_inner_frame_personal)
-        # 点名历史记录卡片组
-        self.pumping_people_card = history(load_on_init=False)
-        pumping_people_inner_layout_personal.addWidget(self.pumping_people_card)
+        self.pumping_people_inner_frame_personal = QWidget(self.pumping_people_scroll_area_personal)
+        self.pumping_people_inner_layout_personal = QVBoxLayout(self.pumping_people_inner_frame_personal)
+        self.pumping_people_inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        self.pumping_people_scroll_area_personal.setWidget(self.pumping_people_inner_frame_personal)
+        # 点名历史记录卡片组 - 后台创建
+        self.pumping_people_created = False
         # 设置点名历史记录页面布局
-        pumping_people_layout = QVBoxLayout(self.pumping_people_page)
-        pumping_people_layout.addWidget(pumping_people_scroll_area_personal)
+        self.pumping_people_layout = QVBoxLayout(self.pumping_people_page)
+        self.pumping_people_layout.addWidget(self.pumping_people_scroll_area_personal)
 
-        # 抽奖历史记录
+        # 抽奖历史记录 - 后台创建
         # 创建滚动区域
-        pumping_reward_scroll_area_personal = SingleDirectionScrollArea(self.pumping_reward_page)
-        pumping_reward_scroll_area_personal.setWidgetResizable(True)
+        self.pumping_reward_scroll_area_personal = SingleDirectionScrollArea(self.pumping_reward_page)
+        self.pumping_reward_scroll_area_personal.setWidgetResizable(True)
         # 设置样式表
-        pumping_reward_scroll_area_personal.setStyleSheet("""
+        self.pumping_reward_scroll_area_personal.setStyleSheet("""
             QScrollArea {
                 border: none;
                 background-color: transparent;
@@ -72,18 +71,17 @@ class history_handoff_setting(QFrame):
             }
         """)
         # 启用鼠标滚轮
-        QScroller.grabGesture(pumping_reward_scroll_area_personal.viewport(), QScroller.LeftMouseButtonGesture)
+        QScroller.grabGesture(self.pumping_reward_scroll_area_personal.viewport(), QScroller.LeftMouseButtonGesture)
         # 创建内部框架
-        pumping_reward_inner_frame_personal = QWidget(pumping_reward_scroll_area_personal)
-        pumping_reward_inner_layout_personal = QVBoxLayout(pumping_reward_inner_frame_personal)
-        pumping_reward_inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
-        pumping_reward_scroll_area_personal.setWidget(pumping_reward_inner_frame_personal)
-        # 抽奖历史记录卡片组
-        self.pumping_reward_card = history_reward(load_on_init=False)
-        pumping_reward_inner_layout_personal.addWidget(self.pumping_reward_card)
+        self.pumping_reward_inner_frame_personal = QWidget(self.pumping_reward_scroll_area_personal)
+        self.pumping_reward_inner_layout_personal = QVBoxLayout(self.pumping_reward_inner_frame_personal)
+        self.pumping_reward_inner_layout_personal.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+        self.pumping_reward_scroll_area_personal.setWidget(self.pumping_reward_inner_frame_personal)
+        # 抽奖历史记录卡片组 - 后台创建
+        self.pumping_reward_created = False
         # 设置抽奖历史记录页面布局
-        pumping_reward_layout = QVBoxLayout(self.pumping_reward_page)
-        pumping_reward_layout.addWidget(pumping_reward_scroll_area_personal)
+        self.pumping_reward_layout = QVBoxLayout(self.pumping_reward_page)
+        self.pumping_reward_layout.addWidget(self.pumping_reward_scroll_area_personal)
         
         # 设置主布局
         main_layout = QVBoxLayout(self)
@@ -98,8 +96,8 @@ class history_handoff_setting(QFrame):
         self.__initWidget()
         self.__connectSignalToSlot()
         
-        # 界面初始化完成后加载数据
-        QTimer.singleShot(300, self._load_initial_data)
+        # 后台创建历史记录卡片，避免堵塞进程
+        QTimer.singleShot(0, self.create_history_cards)
         
     def addSubInterface(self, widget: QWidget, objectName: str, text: str):
         widget.setObjectName(objectName)
@@ -125,22 +123,41 @@ class history_handoff_setting(QFrame):
         widget = self.stackedWidget.widget(index)
         self.SegmentedWidget.setCurrentItem(widget.objectName())
 
-        # 根据页面切换加载对应数据
-        if widget.objectName() == 'pumping_People_history':
-            # 确保页面完全显示后再加载数据
-            QTimer.singleShot(100, lambda: self.pumping_people_card.load_data())
-        elif widget.objectName() == 'pumping_Reward_history':
-            # 确保页面完全显示后再加载数据
-            QTimer.singleShot(100, lambda: self.pumping_reward_card.load_data())
-
+        # 所有卡片和数据已在后台创建和加载，无需在切换页面时加载
         # 首次加载后设置标志
         self.first_load = False
     
-    def _load_initial_data(self):
-        """初始化时加载数据"""
-        # 加载当前页面的数据
-        current_widget = self.stackedWidget.currentWidget()
-        if current_widget.objectName() == 'pumping_People_history':
+    def create_history_cards(self):
+        """后台创建历史记录卡片并加载数据，避免堵塞进程"""
+        self.create_pumping_people_card()
+        self.create_pumping_reward_card()
+        # 启动后台数据加载
+        QTimer.singleShot(100, self.load_all_data)
+    
+    def load_all_data(self):
+        """后台加载所有历史记录数据"""
+        # 加载点名历史记录数据
+        if self.pumping_people_created and hasattr(self, 'pumping_people_card'):
             self.pumping_people_card.load_data()
-        elif current_widget.objectName() == 'pumping_Reward_history':
+        
+        # 加载抽奖历史记录数据
+        if self.pumping_reward_created and hasattr(self, 'pumping_reward_card'):
             self.pumping_reward_card.load_data()
+    
+    def create_pumping_people_card(self):
+        """后台创建点名历史记录卡片"""
+        if self.pumping_people_created:
+            return
+            
+        self.pumping_people_card = history(load_on_init=False)
+        self.pumping_people_inner_layout_personal.addWidget(self.pumping_people_card)
+        self.pumping_people_created = True
+    
+    def create_pumping_reward_card(self):
+        """后台创建抽奖历史记录卡片"""
+        if self.pumping_reward_created:
+            return
+            
+        self.pumping_reward_card = history_reward(load_on_init=False)
+        self.pumping_reward_inner_layout_personal.addWidget(self.pumping_reward_card)
+        self.pumping_reward_created = True

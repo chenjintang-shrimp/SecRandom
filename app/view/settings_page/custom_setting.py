@@ -64,9 +64,10 @@ class custom_setting(QFrame):
         fixed_url_inner_layout = QVBoxLayout(fixed_url_inner_frame)
         fixed_url_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         fixed_url_scroll_area.setWidget(fixed_url_inner_frame)
-        # 固定Url设置卡片组
-        fixed_url_card = fixed_url_SettinsCard()
-        fixed_url_inner_layout.addWidget(fixed_url_card)
+        # 固定Url设置卡片组 - 后台创建
+        self.fixed_url_created = False
+        # fixed_url_card = fixed_url_SettinsCard()
+        # fixed_url_inner_layout.addWidget(fixed_url_card)
         # 设置固定Url设置页面布局
         fixed_url_layout = QVBoxLayout(self.fixed_url_page)
         fixed_url_layout.addWidget(fixed_url_scroll_area)
@@ -93,11 +94,9 @@ class custom_setting(QFrame):
         theme_settings_inner_layout = QVBoxLayout(theme_settings_inner_frame)
         theme_settings_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         theme_settings_scroll_area.setWidget(theme_settings_inner_frame)
-        # 主题设置卡片组
-        self.theme_settings_card = theme_settingsCard()
-        theme_settings_inner_layout.addWidget(self.theme_settings_card)
-        # 连接主题设置卡片的背景设置变化信号
-        self.theme_settings_card.background_settings_changed.connect(self.on_background_settings_changed)
+        # 后台创建主题设置卡片组，仅在需要显示时创建
+        self.theme_settings_card = None
+        self.theme_settings_created = False
         # 设置主题设置页面布局
         theme_settings_layout = QVBoxLayout(self.theme_settings_page)
         theme_settings_layout.addWidget(theme_settings_scroll_area)
@@ -125,20 +124,8 @@ class custom_setting(QFrame):
         sidebar_settings_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         sidebar_settings_scroll_area.setWidget(sidebar_settings_inner_frame)
         
-        # 创建分隔线
-        separator = QFrame()
-        separator.setFrameShape(QFrame.HLine)
-        separator.setFrameShadow(QFrame.Sunken)
-        separator.setStyleSheet("background-color: rgba(0, 0, 0, 0.1); margin: 10px 0;")
-        
-        # 侧边栏设置卡片组
-        sidebar_settings_card = sidebar_settingsCard()
-        sidebar_settings_inner_layout.addWidget(sidebar_settings_card)
-        sidebar_settings_inner_layout.addWidget(separator)
-        
-        # 系统托盘设置卡片组
-        tray_settings_card = tray_settingsCard()
-        sidebar_settings_inner_layout.addWidget(tray_settings_card)
+        # 后台创建侧边栏设置卡片组，仅在需要显示时创建
+        self.sidebar_settings_created = False
         
         # 设置侧边栏设置页面布局
         sidebar_settings_layout = QVBoxLayout(self.sidebar_settings_page)
@@ -166,9 +153,10 @@ class custom_setting(QFrame):
         floating_window_inner_layout = QVBoxLayout(floating_window_inner_frame)
         floating_window_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         floating_window_scroll_area.setWidget(floating_window_inner_frame)
-        # 浮窗管理设置卡片组
-        floating_window_card = floating_window_settingsCard()
-        floating_window_inner_layout.addWidget(floating_window_card)
+        
+        # 后台创建浮窗管理设置卡片组，仅在需要显示时创建
+        self.floating_window_created = False
+        
         # 设置浮窗管理设置页面布局
         floating_window_layout = QVBoxLayout(self.floating_window_page)
         floating_window_layout.addWidget(floating_window_scroll_area)
@@ -196,26 +184,8 @@ class custom_setting(QFrame):
         extraction_management_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         extraction_management_scroll_area.setWidget(extraction_management_inner_frame)
         
-        # 创建分隔线
-        separator1 = QFrame()
-        separator1.setFrameShape(QFrame.HLine)
-        separator1.setFrameShadow(QFrame.Sunken)
-        separator1.setStyleSheet("background-color: rgba(0, 0, 0, 0.1); margin: 10px 0;")
-        
-        separator2 = QFrame()
-        separator2.setFrameShape(QFrame.HLine)
-        separator2.setFrameShadow(QFrame.Sunken)
-        separator2.setStyleSheet("background-color: rgba(0, 0, 0, 0.1); margin: 10px 0;")
-        
-        # 点名界面设置卡片组
-        roll_call_card = roll_call_settingsCard()
-        extraction_management_inner_layout.addWidget(roll_call_card)
-        extraction_management_inner_layout.addWidget(separator1)
-        
-        # 抽奖界面设置卡片组
-        reward_card = reward_settingsCard()
-        extraction_management_inner_layout.addWidget(reward_card)
-        extraction_management_inner_layout.addWidget(separator2)
+        # 后台创建抽取管理设置卡片组，仅在需要显示时创建
+        self.extraction_management_created = False
         
         # 设置抽取管理设置页面布局
         extraction_management_layout = QVBoxLayout(self.extraction_management_page)
@@ -243,9 +213,10 @@ class custom_setting(QFrame):
         Program_functionality_settings_inner_layout = QVBoxLayout(Program_functionality_settings_inner_frame)
         Program_functionality_settings_inner_layout.setAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
         Program_functionality_settings_scroll_area.setWidget(Program_functionality_settings_inner_frame)
-        # 软件功能设置卡片组
-        Program_functionality_settings_card = Program_functionality_settingsCard()
-        Program_functionality_settings_inner_layout.addWidget(Program_functionality_settings_card)
+        
+        # 后台创建软件功能设置卡片组，仅在需要显示时创建
+        self.program_functionality_created = False
+        
         # 设置软件功能设置页面布局
         Program_functionality_settings_layout = QVBoxLayout(self.Program_functionality_settings_page)
         Program_functionality_settings_layout.addWidget(Program_functionality_settings_scroll_area)
@@ -262,6 +233,9 @@ class custom_setting(QFrame):
 
         self.__connectSignalToSlot()
         
+        # 启动后台加载所有设置卡片
+        QTimer.singleShot(100, self.create_all_settings_cards)
+        
     def addSubInterface(self, widget: QWidget, objectName: str, text: str):
         widget.setObjectName(objectName)
         self.stackedWidget.addWidget(widget)
@@ -277,9 +251,170 @@ class custom_setting(QFrame):
         cfg.themeChanged.connect(setTheme)
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
         
+    def create_all_settings_cards(self):
+        """后台创建所有设置卡片"""
+        # 创建主题设置卡片
+        if not self.theme_settings_created:
+            self.create_theme_settings_card()
+        
+        # 创建抽取管理设置卡片
+        if not self.extraction_management_created:
+            self.create_extraction_management_cards()
+        
+        # 创建软件功能设置卡片
+        if not self.program_functionality_created:
+            self.create_program_functionality_card()
+        
+        # 创建侧边栏设置卡片
+        if not self.sidebar_settings_created:
+            self.create_sidebar_settings_cards()
+        
+        # 创建浮窗设置卡片
+        if not self.floating_window_created:
+            self.create_floating_window_card()
+        
+        # 创建固定链接设置卡片
+        if not self.fixed_url_created:
+            self.create_fixed_url_card()
+        
     def onCurrentIndexChanged(self, index):
         widget = self.stackedWidget.widget(index)
         self.SegmentedWidget.setCurrentItem(widget.objectName())
+        
+        # 所有卡片已在后台创建，无需在切换页面时创建
+    
+    def create_theme_settings_card(self):
+        """后台创建主题设置卡片"""
+        if self.theme_settings_created:
+            return
+            
+        # 获取主题设置页面的内部框架
+        theme_settings_scroll_area = self.theme_settings_page.findChild(SingleDirectionScrollArea)
+        theme_settings_inner_frame = theme_settings_scroll_area.widget()
+        theme_settings_inner_layout = theme_settings_inner_frame.layout()
+        
+        # 创建主题设置卡片
+        self.theme_settings_card = theme_settingsCard()
+        theme_settings_inner_layout.addWidget(self.theme_settings_card)
+        
+        # 连接主题设置卡片的背景设置变化信号
+        self.theme_settings_card.background_settings_changed.connect(self.on_background_settings_changed)
+        
+        # 标记为已创建
+        self.theme_settings_created = True
+    
+    def create_extraction_management_cards(self):
+        """后台创建抽取管理设置卡片"""
+        if self.extraction_management_created:
+            return
+            
+        # 获取抽取管理页面的内部框架
+        extraction_management_scroll_area = self.extraction_management_page.findChild(SingleDirectionScrollArea)
+        extraction_management_inner_frame = extraction_management_scroll_area.widget()
+        extraction_management_inner_layout = extraction_management_inner_frame.layout()
+        
+        # 创建分隔线
+        separator1 = QFrame()
+        separator1.setFrameShape(QFrame.HLine)
+        separator1.setFrameShadow(QFrame.Sunken)
+        separator1.setStyleSheet("background-color: rgba(0, 0, 0, 0.1); margin: 10px 0;")
+        
+        separator2 = QFrame()
+        separator2.setFrameShape(QFrame.HLine)
+        separator2.setFrameShadow(QFrame.Sunken)
+        separator2.setStyleSheet("background-color: rgba(0, 0, 0, 0.1); margin: 10px 0;")
+        
+        # 点名界面设置卡片组
+        roll_call_card = roll_call_settingsCard()
+        extraction_management_inner_layout.addWidget(roll_call_card)
+        extraction_management_inner_layout.addWidget(separator1)
+        
+        # 抽奖界面设置卡片组
+        reward_card = reward_settingsCard()
+        extraction_management_inner_layout.addWidget(reward_card)
+        extraction_management_inner_layout.addWidget(separator2)
+        
+        # 标记为已创建
+        self.extraction_management_created = True
+    
+    def create_program_functionality_card(self):
+        """后台创建软件功能设置卡片"""
+        if self.program_functionality_created:
+            return
+            
+        # 获取软件功能设置页面的内部框架
+        Program_functionality_settings_scroll_area = self.Program_functionality_settings_page.findChild(SingleDirectionScrollArea)
+        Program_functionality_settings_inner_frame = Program_functionality_settings_scroll_area.widget()
+        Program_functionality_settings_inner_layout = Program_functionality_settings_inner_frame.layout()
+        
+        # 创建软件功能设置卡片
+        Program_functionality_settings_card = Program_functionality_settingsCard()
+        Program_functionality_settings_inner_layout.addWidget(Program_functionality_settings_card)
+        
+        # 标记为已创建
+        self.program_functionality_created = True
+    
+    def create_sidebar_settings_cards(self):
+        """后台创建侧边栏设置卡片"""
+        if self.sidebar_settings_created:
+            return
+            
+        # 获取侧边栏设置页面的内部框架
+        sidebar_settings_scroll_area = self.sidebar_settings_page.findChild(SingleDirectionScrollArea)
+        sidebar_settings_inner_frame = sidebar_settings_scroll_area.widget()
+        sidebar_settings_inner_layout = sidebar_settings_inner_frame.layout()
+        
+        # 创建分隔线
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        separator.setStyleSheet("background-color: rgba(0, 0, 0, 0.1); margin: 10px 0;")
+        
+        # 侧边栏设置卡片组
+        sidebar_settings_card = sidebar_settingsCard()
+        sidebar_settings_inner_layout.addWidget(sidebar_settings_card)
+        sidebar_settings_inner_layout.addWidget(separator)
+        
+        # 系统托盘设置卡片组
+        tray_settings_card = tray_settingsCard()
+        sidebar_settings_inner_layout.addWidget(tray_settings_card)
+        
+        # 标记为已创建
+        self.sidebar_settings_created = True
+    
+    def create_floating_window_card(self):
+        """后台创建浮窗设置卡片"""
+        if self.floating_window_created:
+            return
+            
+        # 获取浮窗设置页面的内部框架
+        floating_window_scroll_area = self.floating_window_page.findChild(SingleDirectionScrollArea)
+        floating_window_inner_frame = floating_window_scroll_area.widget()
+        floating_window_inner_layout = floating_window_inner_frame.layout()
+        
+        # 创建浮窗管理设置卡片
+        floating_window_card = floating_window_settingsCard()
+        floating_window_inner_layout.addWidget(floating_window_card)
+        
+        # 标记为已创建
+        self.floating_window_created = True
+    
+    def create_fixed_url_card(self):
+        """后台创建固定链接设置卡片"""
+        if self.fixed_url_created:
+            return
+            
+        # 获取固定链接设置页面的内部框架
+        fixed_url_scroll_area = self.fixed_url_page.findChild(SingleDirectionScrollArea)
+        fixed_url_inner_frame = fixed_url_scroll_area.widget()
+        fixed_url_inner_layout = fixed_url_inner_frame.layout()
+        
+        # 创建固定链接设置卡片
+        fixed_url_card = fixed_url_SettinsCard()
+        fixed_url_inner_layout.addWidget(fixed_url_card)
+        
+        # 标记为已创建
+        self.fixed_url_created = True
     
     def on_background_settings_changed(self):
         """处理背景设置变化信号"""

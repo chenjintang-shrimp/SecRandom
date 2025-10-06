@@ -561,7 +561,7 @@ class pumping_people_SettinsCard(GroupHeaderCardWidget):
         if "instant_draw" in existing_settings:
             instant_draw_settings = existing_settings["instant_draw"]
             # 检查是否开启了跟随点名设置
-            if instant_draw_settings.get("follow_roll_call", False):
+            if instant_draw_settings.get("follow_roll_call", True):
                 sync_to_instant_draw = True
         
         # 如果需要同步，则更新instant_draw设置

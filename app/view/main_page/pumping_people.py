@@ -36,8 +36,8 @@ class pumping_people(QWidget):
         self.music_player = QMediaPlayer()
         self.initUI()
         
-        # 连接清理信号
-        self._connect_cleanup_signal()
+        # 延迟连接清理信号，确保主窗口已完全初始化
+        QTimer.singleShot(100, self._connect_cleanup_signal)
     
     def start_draw(self):
         """开始抽选学生"""
@@ -1496,7 +1496,7 @@ class pumping_people(QWidget):
             while parent is not None:
                 if hasattr(parent, 'cleanup_signal'):
                     parent.cleanup_signal.connect(self._on_cleanup_signal)
-                    # logger.debug("抽人界面已连接到主窗口清理信号")
+                    # logger.debug("点名界面已连接到主窗口清理信号")
                     return
                 parent = parent.parent()
             
@@ -1504,7 +1504,7 @@ class pumping_people(QWidget):
             for widget in QApplication.topLevelWidgets():
                 if hasattr(widget, 'cleanup_signal'):
                     widget.cleanup_signal.connect(self._on_cleanup_signal)
-                    # logger.debug("抽人界面已连接到主窗口清理信号")
+                    # logger.debug("点名界面已连接到主窗口清理信号")
                     return
             
             logger.error("未找到主窗口实例，清理信号连接失败")
@@ -1518,9 +1518,9 @@ class pumping_people(QWidget):
             self.clear_layout(self.result_grid)
             # 更新总人数显示
             self.update_total_count()
-            logger.info("抽人界面已清除所有标签")
+            logger.info("点名界面已清除所有标签")
         except Exception as e:
-            logger.error(f"清除抽人界面标签时出错: {e}")
+            logger.error(f"清除点名界面标签时出错: {e}")
 
     # 获取随机抽取方法的设置
     def get_random_method_setting(self):

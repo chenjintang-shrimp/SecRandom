@@ -285,7 +285,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         if main_window:
             main_window.update_focus_time(index)
 
-    async def setting_startup(self):
+    def setting_startup(self):
         import sys
         import os
         import platform
@@ -305,14 +305,9 @@ class foundation_settingsCard(GroupHeaderCardWidget):
             from app.common.path_utils import path_manager
             settings_file = path_manager.get_settings_path('Settings.json')
             
-            # 使用异步方式读取文件
-            def read_settings():
-                with open_file(settings_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            
-            # 在事件循环中执行文件读取
-            loop = asyncio.get_event_loop()
-            settings = await loop.run_in_executor(None, read_settings)
+            # 直接读取文件
+            with open_file(settings_file, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
             
             foundation_settings = settings.get('foundation', {})
             self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
@@ -332,27 +327,22 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         import winshell
                         from win32com.client import Dispatch
 
-                        def create_shortcut():
-                            shell = Dispatch('WScript.Shell')
-                            shortcut = shell.CreateShortCut(shortcut_path)
-                            shortcut.Targetpath = executable
-                            shortcut.WorkingDirectory = os.path.dirname(executable)
-                            shortcut.save()
+                        shell = Dispatch('WScript.Shell')
+                        shortcut = shell.CreateShortCut(shortcut_path)
+                        shortcut.Targetpath = executable
+                        shortcut.WorkingDirectory = os.path.dirname(executable)
+                        shortcut.save()
                         
-                        # 在事件循环中执行快捷方式创建
-                        await loop.run_in_executor(None, create_shortcut)
                         logger.success("开机自启动设置成功")
+                        self.self_starting_switch.setChecked(self_starting_enabled)
                     except Exception as e:
                         logger.error(f"创建快捷方式失败: {e}")
                 else:
                     try:
                         if path_manager.file_exists(shortcut_path):
-                            def remove_shortcut():
-                                os.remove(shortcut_path)
-                            
-                            # 在事件循环中执行快捷方式删除
-                            await loop.run_in_executor(None, remove_shortcut)
+                            os.remove(shortcut_path)
                             logger.success("开机自启动取消成功")
+                            self.self_starting_switch.setChecked(self_starting_enabled)
                         else:
                             logger.info("开机自启动项不存在，无需取消")
                     except Exception as e:
@@ -371,8 +361,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
     def _on_startup_switch_changed(self):
         """处理开机自启动开关变化的包装器方法"""
         # 创建一个任务来运行异步的setting_startup方法
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.setting_startup())
+        self.setting_startup()
 
     def load_settings(self):
         try:

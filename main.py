@@ -1,11 +1,15 @@
 # ==================================================
+# SecRandom 主程序文件
+# ==================================================
+
+# ==================================================
 # 系统工具导入
 # ==================================================
 import os
 import sys
 import json
 import time
-import asyncio
+import multiprocessing
 
 # 添加项目根目录到Python路径
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -21,56 +25,42 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtNetwork import *
 from qfluentwidgets import *
 from loguru import logger
+from pathlib import Path
 
 # ==================================================
 # 内部模块导入
 # ==================================================
-from app.common.config import cfg, VERSION, load_custom_font
+from app.common.config import cfg, VERSION, load_custom_font, WEBSITE, APPLY_NAME
+from app.view.startup_window import StartupWindow
+from app.common.global_vars import GlobalVars
+from app.view.settings import settings_Window
 from app.view.SecRandom import Window
 from app.common.url_handler import process_url_if_exists
 from app.common.path_utils import path_manager, ensure_dir, open_file, file_exists
 from qfluentwidgets import qconfig, Theme
 
-def send_ipc_message(url_command=None):
-    """向已运行的实例发送IPC消息"""
-    socket = QLocalSocket()
-    socket.connectToServer(IPC_SERVER_NAME)
+# ==================================================
+# 常量定义
+# ==================================================
+C_SE = 'SecRandomIPC'  # IPC通讯服务器名称
+SHARED_MEMORY_KEY = 'SecRandom'   # 共享内存密钥
+global_vars = GlobalVars()
 
-    if socket.waitForConnected(1000):
-        if url_command:
-            # 发送URL命令
-            message = f"url:{url_command}"
-            socket.write(message.encode('utf-8'))
-            logger.info(f"IPC URL消息发送成功: {message}")
-        else:
-            # 发送普通的show指令
-            socket.write(b"show")
-            logger.info("IPC show消息发送成功")
-        socket.flush()
-        socket.waitForBytesWritten(1000)
-        socket.disconnectFromServer()
-        return True
-    logger.error("IPC连接失败，目标实例可能未响应")
-    return False
-
-
+# ==================================================
+# 日志配置相关函数
+# ==================================================
 def configure_logging():
     """配置日志系统"""
-    log_dir = os.path.join(project_root, "logs")
-    if not path_manager.file_exists(log_dir):
-        os.makedirs(log_dir)
-        logger.info("日志文件夹创建成功")
-
-    logger.configure(patcher=lambda record: record)
-
+    # 确保日志目录存在
+    log_dir = Path(os.path.dirname(os.path.abspath(__file__))) / 'logs'
+    log_dir.mkdir(exist_ok=True)
+    
+    # 配置日志格式
     logger.add(
-        os.path.join(log_dir, "SecRandom_{time:YYYY-MM-DD}.log"),
+        log_dir / "SecRandom_{time:YYYY-MM-DD-HH-mm-ss}.log",
         rotation="1 MB",
-        encoding="utf-8",
         retention="30 days",
-        format="{time:YYYY-MM-DD HH:mm:ss:SSS} | {level} | {name}:{function}:{line} - {message}",
-        enqueue=True,  # 启用异步日志记录
-        compression="tar.gz", # 启用压缩
+        compression="tar.gz",  # 启用压缩
         backtrace=True,  # 启用回溯信息
         diagnose=True,  # 启用诊断信息
         catch=True  # 捕获未处理的异常
@@ -79,320 +69,144 @@ def configure_logging():
     logger.info("=" * 50)
     logger.info("日志系统配置完成")
 
-# ==================================================
-# 显示设置
-# ==================================================
-if cfg.get(cfg.dpiScale) == "Auto":
-    QApplication.setHighDpiScaleFactorRoundingPolicy(
-        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-    logger.info("DPI缩放已设置为自动模式")
-else:
-    os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
-    os.environ["QT_SCALE_FACTOR"] = str(cfg.get(cfg.dpiScale))
-    logger.info(f"DPI缩放已设置为{cfg.get(cfg.dpiScale)}倍")
+def log_software_info():
+    """记录软件启动成功信息和相关元信息"""
+    # 打印分隔线，增强日志可读性
+    logger.info("=" * 50)
+    # 记录软件启动成功信息
+    logger.info("软件启动成功")
+    # 记录软件相关元信息
+    software_info = {
+        "作者": "lzy98276",
+        "Github地址": "https://github.com/SECTL/SecRandom",
+        "版本": VERSION
+    }
+    for key, value in software_info.items():
+        logger.info(f"软件{key}: {value}")
 
 # ==================================================
-# 应用实例创建
+# IPC通信相关函数
 # ==================================================
-# 首先创建QApplication实例，确保在任何QWidget创建之前
-app = QApplication(sys.argv)
-logger.info("QApplication实例已创建")
-
-# 初始化消息接收器
-from app.common.message_receiver import init_message_receiver
-init_message_receiver()
-logger.info("MessageReceiver实例已初始化")
-
-# ==================================================
-# 启动窗口
-# ==================================================
-class StartupWindow(QDialog):
-    """启动窗口，展示软件启动进度"""
+def send_ipc_message(url_command=None):
+    """向已有实例发送IPC消息
     
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("SecRandom 正在启动...")
-        self.setFixedSize(300, 150)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.NoFocus | Qt.Popup)
-        
-        # 移除透明背景属性，使窗口不透明
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        
-        # 移除透明化效果
-        # self.opacity_effect = QGraphicsOpacityEffect()
-        # self.opacity_effect.setOpacity(0.8)
-        # self.setGraphicsEffect(self.opacity_effect)
-
-        # 创建主布局
-        main_layout = QVBoxLayout(self)
-        main_layout.setSpacing(0)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        
-        # 创建背景容器
-        self.background_widget = QWidget()
-        self.background_widget.setObjectName("backgroundWidget")
-        
-        # 根据主题设置背景颜色
-        self.update_background_theme()
-        
-        # 创建内容布局
-        content_layout = QVBoxLayout(self.background_widget)
-        content_layout.setSpacing(15)
-        content_layout.setContentsMargins(20, 20, 20, 20)
-        
-        # 创建顶部水平布局，用于放置图标和标题
-        top_layout = QHBoxLayout()
-        top_layout.setContentsMargins(0, 0, 0, 10)
-        top_layout.setSpacing(10)  # 设置图标和标题之间的间距为10像素
-        
-        # 添加软件图标到左上角
-        try:
-            icon_path = str(path_manager.get_resource_path('icon', 'secrandom-icon-paper.png'))
-            if os.path.exists(icon_path):
-                icon_label = QLabel()
-                pixmap = QPixmap(icon_path)
-                # 缩放图标到合适大小
-                scaled_pixmap = pixmap.scaled(52, 52, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                icon_label.setPixmap(scaled_pixmap)
-                icon_label.setFixedSize(52, 52)
-                top_layout.addWidget(icon_label)
-            else:
-                logger.error(f"软件图标文件不存在: {icon_path}")
-        except Exception as e:
-            logger.error(f"加载软件图标失败: {e}")
-        
-        # 创建垂直布局容器，用于放置标题和版本号
-        title_version_layout = QVBoxLayout()
-        title_version_layout.setSpacing(2)  # 设置标题和版本号之间的间距
-        title_version_layout.setContentsMargins(0, 0, 0, 0)
-        
-        # 添加标题标签
-        self.title_label = BodyLabel("SecRandom")
-        self.title_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.title_label.setFont(QFont(load_custom_font(), 16))
-        title_version_layout.addWidget(self.title_label)
-        
-        # 添加版本号标签到标题下方
-        self.version_label = BodyLabel(f"{VERSION}")
-        self.version_label.setAlignment(Qt.AlignLeft)
-        self.version_label.setFont(QFont(load_custom_font(), 10))
-        title_version_layout.addWidget(self.version_label)
-        
-        # 将标题和版本号布局添加到水平布局
-        top_layout.addLayout(title_version_layout)
-        
-        # 添加弹性空间，使图标和标题靠左对齐
-        top_layout.addStretch(1)
-        
-        # 添加顶部布局到内容布局
-        content_layout.addLayout(top_layout)
-
-        # 创建详细信息标签
-        self.detail_label = BodyLabel("正在初始化，请稍候...")
-        self.detail_label.setAlignment(Qt.AlignCenter)
-        self.detail_label.setFont(QFont(load_custom_font(), 9))
-        content_layout.addWidget(self.detail_label)
-        
-        # 添加弹性空间，使进度条能够贴底显示
-        content_layout.addStretch(1)
-        
-        # 创建进度条
-        self.progress_bar = ProgressBar()
-        self.progress_bar.setRange(0, 100)
-        self.progress_bar.setValue(0)
-        self.progress_bar.setTextVisible(True)
-        self.progress_bar.setFormat("%p%")
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: none;
-                background-color: #F0F0F0;
-                border-radius: 5px;
-                text-align: center;
-                color: #333333;
-            }
-            QProgressBar::chunk {
-                background-color: #0078D7;
-                border-radius: 5px;
-            }
-        """)
-        content_layout.addWidget(self.progress_bar)
-        
-        # 将背景容器添加到主布局
-        main_layout.addWidget(self.background_widget)
-        
-        # 启动步骤和进度
-        self.startup_steps = [
-            ("初始化应用程序环境", 10),
-            ("配置日志系统", 20),
-            ("检查单实例运行", 30),
-            ("加载配置文件", 40),
-            ("清理过期历史记录", 50),
-            ("注册URL协议", 60),
-            ("创建主窗口", 70),
-            ("初始化界面组件", 80),
-            ("处理URL命令", 90),
-            ("启动完成", 100)
-        ]
-        
-        self.current_step = 0
-        
-    def update_progress(self, step_name=None, progress=None, detail=None):
-        """更新启动进度"""
-        if progress is not None:
-            self.progress_bar.setValue(progress)
-        
-        if detail:
-            self.detail_label.setText(detail)
-            
-        # 确保界面更新
-        QApplication.processEvents()
-        
-    def next_step(self, detail=None):
-        """进入下一个启动步骤"""
-        if self.current_step < len(self.startup_steps):
-            step_name, progress = self.startup_steps[self.current_step]
-            self.update_progress(step_name, progress, detail)
-            self.current_step += 1
-            return True
-        return False
+    Args:
+        url_command (str, optional): URL命令，如果有的话会传递给已有实例
     
-    def set_step(self, step_index, detail=None):
-        """设置到指定步骤"""
-        if 0 <= step_index < len(self.startup_steps):
-            step_name, progress = self.startup_steps[step_index]
-            self.update_progress(step_name, progress, detail)
-            self.current_step = step_index + 1
-            return True
-        return False
-    
-    def update_background_theme(self):
-        """根据当前主题更新背景颜色"""
-        # 检测当前主题
-        if qconfig.theme == Theme.AUTO:
-            lightness = QApplication.palette().color(QPalette.Window).lightness()
-            is_dark = lightness <= 127
-        else:
-            is_dark = qconfig.theme == Theme.DARK
-        
-        # 根据主题设置颜色
-        if is_dark:
-            # 深色主题
-            bg_color = "#111116"
-            border_color = "#3E3E42"
-            text_color = "#F5F5F5"
-            progress_bg = "#2D2D30"
-            progress_text = "#F5F5F5"
-        else:
-            # 浅色主题
-            bg_color = "#F5F5F5"
-            border_color = "#CCCCCC"
-            text_color = "#111116"
-            progress_bg = "#F0F0F0"
-            progress_text = "#333333"
-        
-        # 设置背景容器样式
-        self.background_widget.setStyleSheet(f"""
-            #backgroundWidget {{
-                background-color: {bg_color};
-                border-radius: 15px;
-                border: 1px solid {border_color};
-            }}
-        """)
-        
-    def close_startup(self):
-        """关闭启动窗口"""
-        self.close()
-
-class StartupWindowThread(QThread):
-    """启动窗口线程类，用于在单独的线程中运行启动窗口"""
-    
-    def __init__(self, startup_window=None):
-        super().__init__()
-        self.startup_window = startup_window
-        self.running = False
-    
-    def run(self):
-        """线程运行函数"""
-        self.running = True
-        # 启动事件循环，保持线程响应
-        self.exec_()
-    
-    def update_progress(self, step_name=None, progress=None, detail=None):
-        """更新启动进度"""
-        if self.startup_window and self.running:
-            self.startup_window.update_progress(step_name, progress, detail)
-    
-    def next_step(self, detail=None):
-        """进入下一个启动步骤"""
-        if self.startup_window and self.running:
-            self.startup_window.next_step(detail)
-    
-    def set_step(self, step_index, detail=None):
-        """设置到指定步骤"""
-        if self.startup_window and self.running:
-            self.startup_window.set_step(step_index, detail)
-    
-    def close_window(self):
-        """关闭启动窗口"""
-        if self.startup_window and self.running:
-            self.running = False
-            self.startup_window.close()
-            self.quit()  # 退出事件循环
-
-
-# ==================================================
-# 验证状态初始化
-# ==================================================
-try:
-    enc_set_path = path_manager.get_enc_set_path()
-    ensure_dir(enc_set_path.parent)
-    with open_file(enc_set_path, 'r') as f:
-        settings = json.load(f)
-    settings['hashed_set']['verification_start'] = False
-    with open_file(enc_set_path, 'w') as f:
-        json.dump(settings, f, ensure_ascii=False, indent=4)
-    logger.info("verification_start状态已成功重置为False")
-except Exception as e:
-    logger.error(f"写入verification_start失败: {e}")
-
-# ==================================================
-# 常量定义
-# ==================================================
-IPC_SERVER_NAME = 'SecRandomIPC'  # IPC通讯服务器名称
-SHARED_MEMORY_KEY = 'SecRandom'   # 共享内存密钥
-
-async def initialize_font_settings():
-    """初始化字体设置，加载并应用保存的字体"""
+    Returns:
+        bool: 发送是否成功
+    """
     try:
-        # 读取个人设置文件
+        # 创建本地socket连接
+        socket = QLocalSocket()
+        
+        # 连接到IPC服务器
+        socket.connectToServer(C_SE)
+        
+        # 等待连接建立
+        if socket.waitForConnected(1000):  # 等待1秒
+            # 构建要发送的消息
+            if url_command:
+                message = f"url:{url_command}"
+            else:
+                message = "show"
+            
+            # 发送消息
+            socket.write(message.encode('utf-8'))
+            socket.flush()
+            
+            # 等待消息发送完成
+            if socket.waitForBytesWritten(1000):  # 等待1秒
+                # 关闭连接
+                socket.disconnectFromServer()
+                if socket.state() == QLocalSocket.UnconnectedState or socket.waitForDisconnected(1000):
+                    return True
+            else:
+                logger.error("IPC消息发送超时")
+        else:
+            logger.error(f"IPC连接失败: {socket.errorString()}")
+        
+        # 关闭连接
+        socket.disconnectFromServer()
+        return False
+    except Exception as e:
+        logger.error(f"发送IPC消息时发生异常: {e}")
+        return False
+
+# ==================================================
+# 单实例检查相关函数
+# ==================================================
+def check_single_instance():
+    """检查单实例，防止多个程序副本同时运行
+    
+    Returns:
+        QSharedMemory: 共享内存对象
+    """
+    shared_memory = QSharedMemory(SHARED_MEMORY_KEY)
+    if not shared_memory.create(1):
+        logger.info('检测到已有 SecRandom 实例正在运行')
+
+        # 获取URL命令（如果存在）
+        url_command = None
+        try:
+            from app.common.url_handler import get_url_handler
+            url_handler = get_url_handler()
+            if url_handler.has_url_command():
+                url_command = url_handler.get_url_command()
+                logger.info(f'检测到URL命令，将传递给已有实例: {url_command}')
+        except Exception as e:
+            logger.error(f'获取URL命令失败: {e}')
+
+        # 尝试直接发送IPC消息唤醒已有实例
+        if send_ipc_message(url_command):
+            logger.info('成功唤醒已有实例，当前实例将退出')
+            sys.exit()
+        else:
+            # IPC连接失败，短暂延迟后重试一次
+            time.sleep(0.3)
+            if not send_ipc_message(url_command):
+                logger.error("无法连接到已有实例，程序将退出")
+                sys.exit()
+    
+    logger.info('单实例检查通过，可以安全启动程序')
+    
+    return shared_memory
+
+# ==================================================
+# 字体设置相关函数
+# ==================================================
+def apply_font_settings():
+    """应用字体设置，加载并应用保存的字体（后台创建，不阻塞进程）"""
+    try:
+        # 读取字体设置文件
         settings_file = path_manager.get_settings_path('custom_settings.json')
         ensure_dir(settings_file.parent)
         
+        font_family = 'HarmonyOS Sans SC'  # 默认字体
+        
         if file_exists(settings_file):
-            with open_file(settings_file, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                personal_settings = settings.get('personal', {})
-                font_family = personal_settings.get('font_family')
-                
-                if font_family:
-                    # 应用字体设置
-                    logger.info(f"初始化字体设置: {font_family}")
-                    await apply_font_to_application(font_family)
-                else:
-                    logger.info("初始化字体设置: 未指定字体家族，使用默认字体")
-                    await apply_font_to_application('HarmonyOS Sans SC')  
-        else:
-            # 如果设置文件不存在，使用默认字体
-            logger.info("初始化字体设置: 设置文件不存在，使用默认字体")
-            await apply_font_to_application('HarmonyOS Sans SC')
+            try:
+                with open_file(settings_file, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                    personal_settings = settings.get('personal', {})
+                    custom_font_family = personal_settings.get('font_family', '')
+                    if custom_font_family:
+                        font_family = custom_font_family
+            except Exception as e:
+                logger.error(f"读取字体设置失败: {e}")
+        
+        # 应用字体设置（后台创建，不阻塞进程）
+        logger.info(f"字体设置: {font_family}")
+        # 用QTimer在后台应用字体，不阻塞主进程
+        QTimer.singleShot(0, lambda: apply_font_to_application(font_family))
     except Exception as e:
         logger.error(f"初始化字体设置失败: {e}")
         # 发生错误时使用默认字体
         logger.info("初始化字体设置: 发生错误，使用默认字体")
-        await apply_font_to_application('HarmonyOS Sans SC')
+        # 用QTimer在后台应用字体，不阻塞主进程
+        QTimer.singleShot(0, lambda: apply_font_to_application('HarmonyOS Sans SC'))
 
-async def apply_font_to_application(font_family):
+def apply_font_to_application(font_family):
     """应用字体设置到整个应用程序
     
     Args:
@@ -426,7 +240,7 @@ async def apply_font_to_application(font_family):
         
         # 获取所有顶级窗口并更新它们的字体
         widgets_updated = 0
-        for widget in QApplication.topLevelWidgets():
+        for widget in QApplication.allWidgets():
             if isinstance(widget, QWidget):
                 update_widget_fonts(widget, app_font)
                 widgets_updated += 1
@@ -436,7 +250,7 @@ async def apply_font_to_application(font_family):
         logger.error(f"应用字体失败: {e}")
 
 def update_widget_fonts(widget, font):
-    """递归更新控件及其子控件的字体
+    """更新控件及其子控件的字体，优化版本减少内存占用
     
     Args:
         widget: 要更新字体的控件
@@ -458,18 +272,6 @@ def update_widget_fonts(widget, font):
         # 更新当前控件的字体
         widget.setFont(new_font)
         
-        # 特殊处理某些控件类型
-        widget_type = type(widget).__name__
-        
-        # 对于按钮、标签等控件，确保字体更新
-        if widget_type:
-            widget.setFont(new_font)
-            widget.update()
-        
-        # 强制控件更新
-        widget.update()
-        widget.repaint()
-        
         # 如果控件有子控件，递归更新子控件的字体
         if isinstance(widget, QWidget):
             children = widget.children()
@@ -477,138 +279,185 @@ def update_widget_fonts(widget, font):
                 if isinstance(child, QWidget):
                     update_widget_fonts(child, font)
     except Exception as e:
-        logger.error(f"更新控件字体失败: {e}")
+        logger.error(f"更新控件字体时发生异常: {e}")
 
-async def check_single_instance():
-    """检查单实例，防止多个程序副本同时运行"""
-    # 检查是否有启动窗口线程
-    has_startup_thread = 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning()
-    
-    if has_startup_thread:
-        startup_thread.next_step(detail="正在检查单实例...")
-    
-    shared_memory = QSharedMemory(SHARED_MEMORY_KEY)
-    if not shared_memory.create(1):
-        logger.info('检测到已有 SecRandom 实例正在运行')
-
-        # 获取URL命令（如果存在）
-        url_command = None
-        try:
-            from app.common.url_handler import get_url_handler
-            url_handler = get_url_handler()
-            if url_handler.has_url_command():
-                url_command = url_handler.get_url_command()
-                logger.info(f'检测到URL命令，将传递给已有实例: {url_command}')
-                if has_startup_thread:
-                    startup_thread.next_step(detail="检测到URL命令，将传递给已有实例")
-        except Exception as e:
-            logger.error(f'获取URL命令失败: {e}')
-            if has_startup_thread:
-                startup_thread.next_step(detail=f"获取URL命令失败: {e}")
-
-        # 尝试直接发送IPC消息唤醒已有实例
-        if send_ipc_message(url_command):
-            logger.info('成功唤醒已有实例，当前实例将退出')
-            if has_startup_thread:
-                startup_thread.update_progress(detail="成功唤醒已有实例，当前实例将退出")
-            sys.exit()
-        else:
-            # IPC连接失败，短暂延迟后重试一次
-            await asyncio.sleep(0.3)
-            if not send_ipc_message(url_command):
-                logger.error("无法连接到已有实例，程序将退出")
-                if has_startup_thread:
-                    startup_thread.update_progress(detail="无法连接到已有实例，程序将退出")
-                sys.exit()
-    
-    logger.info('单实例检查通过，可以安全启动程序')
-    if has_startup_thread:
-        startup_thread.update_progress(detail="单实例检查通过，可以安全启动程序")
-    
-    return shared_memory
-
-def log_software_info():
-    """记录软件启动成功信息和相关元信息"""
-    # 打印分隔线，增强日志可读性
-    logger.info("=" * 50)
-    # 记录软件启动成功信息
-    logger.info("软件启动成功")
-    # 记录软件相关元信息
-    software_info = {
-        "作者": "lzy98276",
-        "Github地址": "https://github.com/SECTL/SecRandom",
-        "版本": VERSION
-    }
-    for key, value in software_info.items():
-        logger.info(f"软件{key}: {value}")
-
+# ==================================================
+# 历史记录清理相关函数
+# ==================================================
 def clean_expired_data():
-    """清理过期历史记录"""
-    from app.common.history_cleaner import clean_expired_history, clean_expired_reward_history
-    clean_expired_history()
-    clean_expired_reward_history()
-    logger.info("已清理过期历史记录")
+    """清理过期历史记录，避免阻塞启动过程"""
+    # 使用QTimer在后台清理历史记录
+    QTimer.singleShot(0, _clean_expired_data)
+    logger.info("已启动后台任务清理过期历史记录")
 
-async def create_main_window_async():
-    """异步创建主窗口实例并根据设置决定是否显示窗口"""
-    # 检查是否有启动窗口线程
-    has_startup_thread = 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning()
-    
-    # 创建主窗口实例
-    if has_startup_thread:
-        startup_thread.set_step(6, "正在创建主窗口...")
-    
-    # 延迟50ms后异步创建主窗口
-    await asyncio.sleep(0.1)
-    
-    sec = Window()
-    
-    # 等待所有子界面加载完成
-    if has_startup_thread:
-        startup_thread.update_progress(detail="正在等待所有子界面加载完成...")
-    
-    # 等待子界面和UI组件加载完成
-    await asyncio.sleep(0.5)  # 给予足够的时间让异步任务完成
-    
+def _clean_expired_data():
+    """实际执行清理过期历史记录的函数"""
     try:
-        settings_file = path_manager.get_settings_path()
-        ensure_dir(settings_file.parent)
-        with open_file(settings_file, 'r') as f:
-            settings = json.load(f)
-            foundation_settings = settings.get('foundation', {})
-            self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
-            
-            # 显示窗口
-            sec.show()
-            logger.info("主窗口已显示")
-            
-            # 如果是开机自启动，则在短暂延迟后隐藏窗口
-            if self_starting_enabled:
-                sec.hide()
-                logger.info("开机自启动模式，窗口已隐藏")
-    except FileNotFoundError:
-        logger.error("加载设置时出错 - 文件不存在, 使用默认显示主窗口")
-        sec.show()
-    except KeyError:
-        logger.error("设置文件中缺少foundation键, 使用默认显示主窗口")
-        sec.show()
+        from app.common.history_cleaner import clean_expired_history, clean_expired_reward_history
+        clean_expired_history()
+        clean_expired_reward_history()
     except Exception as e:
-        logger.error(f"加载设置时出错: {e}, 使用默认显示主窗口")
-        sec.show()
-    
-    # 将创建的主窗口保存到全局变量
-    global main_window
-    main_window = sec
+        logger.error(f"清理过期历史记录时出错: {e}")
 
 
-# 异步初始化应用程序函数
-async def async_initialize_app():
-    """异步初始化应用程序，使用asyncio避免阻塞主线程"""
-    # 首先配置日志系统
-    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-        startup_thread.next_step("正在配置日志系统...")
-    configure_logging()
+# ==================================================
+# 启动窗口相关函数
+# ==================================================
+def run_startup_window():
+    """运行启动窗口的函数，用于在单独进程中显示启动窗口"""
+    try:
+        # 创建QApplication实例（如果还没有）
+        app_startup = QApplication.instance()
+        if app_startup is None:
+            app_startup = QApplication(sys.argv)
+        
+        # 创建启动窗口实例
+        startup_window = StartupWindow()
+        
+        # 显示启动窗口
+        startup_window.show()
+        
+        # 创建本地服务器，用于接收主程序的进度更新
+        server = QLocalServer()
+        server_name = "SecRandomStartup"  # 使用简单名称，不包含路径
+        server.listen(server_name)
+        
+        # 连接新连接信号
+        server.newConnection.connect(lambda: handle_new_connection(server, startup_window))
+        
+        # 运行事件循环
+        app_startup.exec_()
+        
+        # 关闭服务器
+        server.close()
+        
+    except Exception as e:
+        logger.error(f"启动窗口运行出错: {e}")
+        # 确保应用程序实例退出
+        app = QApplication.instance()
+        if app is not None:
+            app.quit()
+
+def handle_new_connection(server, startup_window):
+    """处理新的连接，接收主程序的进度更新"""
+    socket = server.nextPendingConnection()
+    if socket:
+        # 连接readyRead信号
+        socket.readyRead.connect(lambda: read_progress_update(socket, startup_window))
+        # 连接disconnected信号
+        socket.disconnected.connect(socket.deleteLater)
+
+def read_progress_update(socket, startup_window):
+    """读取进度更新并更新启动窗口"""
+    while socket.bytesAvailable() > 0:
+        data = socket.readAll().data().decode('utf-8')
+        if data.startswith("progress:"):
+            try:
+                step_index = int(data.split(":")[1])
+                if 0 <= step_index < len(startup_window.startup_steps):
+                    step_name, _ = startup_window.startup_steps[step_index]
+                    startup_window.set_step(step_index, step_name)
+                    # logger.info(f"启动窗口进度更新: {step_name}")
+            except (ValueError, IndexError) as e:
+                logger.error(f"解析进度更新失败: {e}")
+        elif data == "close":
+            startup_window.close_startup()
+            # 退出应用程序实例
+            app = QApplication.instance()
+            if app is not None:
+                app.quit()
+
+def update_startup_progress(step_index):
+    """更新启动窗口进度
     
+    Args:
+        step_index (int): 步骤索引
+    """
+    try:
+        # 创建本地socket连接
+        socket = QLocalSocket()
+        
+        # 连接到启动窗口服务器
+        server_name = "SecRandomStartup"  # 使用简单名称，不包含路径
+        socket.connectToServer(server_name)
+        
+        # 等待连接建立
+        if socket.waitForConnected(500):  # 等待0.5秒
+            # 发送进度更新
+            message = f"progress:{step_index}"
+            socket.write(message.encode('utf-8'))
+            socket.flush()
+            
+            # 等待消息发送完成
+            socket.waitForBytesWritten(500)
+            
+            # 关闭连接
+            socket.disconnectFromServer()
+        else:
+            # 连接失败，可能是启动窗口还未准备好
+            # logger.debug(f"无法连接到启动窗口服务器: {socket.errorString()}")
+            pass
+        
+        # 关闭连接
+        socket.disconnectFromServer()
+    except Exception as e:
+        logger.error(f"更新启动窗口进度时发生异常: {e}")
+
+def close_startup_window():
+    """关闭启动窗口"""
+    try:
+        # 创建本地socket连接
+        socket = QLocalSocket()
+        
+        # 连接到启动窗口服务器
+        server_name = "SecRandomStartup"  # 使用简单名称，不包含路径
+        socket.connectToServer(server_name)
+        
+        # 等待连接建立
+        if socket.waitForConnected(500):  # 等待0.5秒
+            # 发送关闭命令
+            message = "close"
+            socket.write(message.encode('utf-8'))
+            socket.flush()
+            
+            # 等待消息发送完成
+            socket.waitForBytesWritten(500)
+            
+            # 关闭连接
+            socket.disconnectFromServer()
+        
+        # 关闭连接
+        socket.disconnectFromServer()
+    except Exception as e:
+        logger.error(f"关闭启动窗口时发生异常: {e}")
+
+# ==================================================
+# 设置界面相关函数
+# ==================================================    
+def show_create_setting_interface(create_exists):
+    """显示设置界面，使用更长的延迟确保主界面完全加载"""
+    # 使用更长的延迟，确保主界面完全加载后再创建设置界面
+    QTimer.singleShot(1000, lambda: _show_create_setting_interface_impl(create_exists))
+
+def _show_create_setting_interface_impl(create_exists):
+    """实际执行设置界面创建和显示的函数"""
+    try:
+        # 检查是否已经有设置界面实例
+        if global_vars.settingInterface is None:
+            # 如果没有实例，先创建但不显示
+            global_vars.create_setting_instance()
+        
+        # logger.debug(f"设置界面处理完成，实例存在: {global_vars.settingInterface is not None}")
+    except Exception as e:
+        logger.error(f"创建设置界面时发生异常: {e}")
+        import traceback
+        logger.error(f"异常详情: {traceback.format_exc()}")
+
+# ==================================================
+# 应用程序初始化相关函数
+# ==================================================
+def initialize_app():
+    """初始化应用程序，使用QTimer避免阻塞主线程"""
     # 设置工作目录为程序所在目录，解决URL协议唤醒时工作目录错误的问题
     if getattr(sys, 'frozen', False):
         # 打包后的可执行文件
@@ -622,180 +471,135 @@ async def async_initialize_app():
         os.chdir(program_dir)
         logger.info(f"工作目录已设置为: {program_dir}")
     
-    # 异步执行检查单实例
-    await async_check_single_instance()
-
-async def async_check_single_instance():
-    """异步检查单实例"""
-    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-        startup_thread.next_step("正在检查单实例运行...")
-    global shared_memory
-    shared_memory = await check_single_instance()
+    # 更新启动窗口进度 - 初始化应用程序环境
+    update_startup_progress(0)
     
-    # 异步执行初始化应用程序
-    await async_init_application()
-
-async def async_init_application():
-    """异步初始化应用程序"""
-    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-        startup_thread.next_step("正在加载配置文件...")
+    # 更新启动窗口进度 - 配置日志系统
+    update_startup_progress(1)
+    
+    # 检查单实例
+    global shared_memory
+    shared_memory = check_single_instance()
+    
+    # 更新启动窗口进度 - 检查单实例运行
+    update_startup_progress(2)
+    
+    # 记录软件信息
     log_software_info()
-
-    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-        startup_thread.set_step(4, "正在清理过期历史记录...")
+    
+    # 更新启动窗口进度 - 加载配置文件
+    update_startup_progress(3)
+    
+    # 清理过期数据
     clean_expired_data()
-
-    # 异步执行注册URL协议
-    await async_register_url_protocol()
-
-async def async_register_url_protocol():
-    """异步注册URL协议"""
-    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-        startup_thread.set_step(5, "正在注册URL协议...")
+    
+    # 更新启动窗口进度 - 清理过期历史记录
+    update_startup_progress(4)
+    
+    # 注册URL协议
     try:
         from app.common.foundation_settings import register_url_protocol_on_startup
-        await register_url_protocol_on_startup()
-        logger.info("URL协议自动注册完成")
-        if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-            startup_thread.set_step(6, "正在创建主窗口...")
+        result = register_url_protocol_on_startup()
+        if result:
+            # logger.info("URL协议自动注册完成")
+            pass
+        else:
+            # logger.info("URL协议注册失败或已跳过")
+            pass
     except Exception as e:
-        logger.error(f"URL协议注册失败: {e}")
-        if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-            startup_thread.set_step(6, "正在创建主窗口...")
+        logger.error(f"注册URL协议时发生异常: {str(e)}")
     
-    # 异步执行创建主窗口
-    await create_main_window_async()
+    # 更新启动窗口进度 - 注册URL协议
+    update_startup_progress(5)
     
-    # 异步执行延迟URL处理
-    await async_delayed_url_processing()
-
-async def async_delayed_url_processing():
-    """异步延迟URL处理"""
-    # 异步处理URL命令
-    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-        startup_thread.set_step(9, "正在处理URL命令...")
+    # 创建主窗口前先进行释放未使用的内存（不知道有没有用）
+    import gc
+    gc.collect()
+    
+    # 创建主窗口实例（窗口会立即显示，但内容会在后台加载）
+    sec = Window()
+    
+    # 更新启动窗口进度 - 创建主窗口
+    update_startup_progress(6)
+    
+    # 将创建的主窗口保存到全局变量
+    global main_window
+    main_window = sec
+    
+    # 再次进行垃圾回收，释放创建窗口过程中产生的临时对象
+    gc.collect()
+    
+    # 更新启动窗口进度 - 初始化界面组件
+    update_startup_progress(7)
     
     # 处理URL命令
     process_url_if_exists()
     
-    # 完成启动
-    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-        startup_thread.set_step(10, "启动完成")
-        startup_thread.update_progress(100, detail="启动完成，欢迎使用SecRandom！")
-        
-        # 延迟关闭启动窗口
-        await asyncio.sleep(0.5)
-        startup_thread.close_window()
-
-# 异步创建启动窗口函数
-async def async_create_startup_window():
-    """异步创建启动窗口"""
-    # 创建启动窗口
-    global startup_window, startup_thread
-    startup_window = StartupWindow()
-    startup_window.show()
+    # 更新启动窗口进度 - 处理URL命令
+    update_startup_progress(8)
     
-    # 强制处理事件，确保启动窗口立即显示
-    QApplication.processEvents()
+    # 更新启动窗口进度 - 启动完成
+    update_startup_progress(9)
     
-    # 创建启动窗口线程并启动
-    startup_thread = StartupWindowThread(startup_window)
-    startup_thread.start()
+    # 关闭启动窗口
+    close_startup_window()
     
-    # 更新启动窗口进度
-    startup_thread.next_step("正在初始化应用程序环境...")
-    
-    # 给启动窗口一些时间显示和更新
-    await asyncio.sleep(0.1)
-    
-    # 异步初始化应用程序
-    await async_initialize_app()
+    # 等待启动窗口进程结束
+    if startup_process.is_alive():
+        startup_process.join(timeout=1.0)  # 最多等待1秒
 
 # ==================================================
 # 主程序入口
 # ==================================================
-async def main_async():
-    """异步主函数，使用asyncio实现异步初始化"""
-    # 全局变量已经在程序入口点初始化
-    
-    # 检查是否需要初始化应用程序
-    if startup_window is None:
-        # 不显示启动窗口，直接初始化应用程序
-        await async_initialize_app()
-    else:
-        # 启动窗口已经创建，继续初始化应用程序
-        await async_initialize_app()
-    
-    # 初始化字体设置
-    # logger.info("初始化字体设置...")
-    if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-        startup_thread.next_step(detail="正在初始化字体设置...")
-    await initialize_font_settings()
+def main_async():
+    """主异步函数，用于启动应用程序"""
+    # 延迟初始化应用程序
+    QTimer.singleShot(200, lambda: initialize_app())
+    QTimer.singleShot(300, apply_font_settings)
 
 if __name__ == "__main__":
-    # 创建新的事件循环
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    
-    # 全局变量，用于存储主窗口实例
-    global main_window, startup_window, startup_thread, shared_memory
-    
+    # 重置全局变量
     main_window = None
-    startup_window = None
-    startup_thread = None
     shared_memory = None
     
-    # 检查是否显示启动窗口
-    show_startup_window = True  # 默认显示启动窗口
-    try:
-        settings_file = path_manager.get_settings_path()
-        ensure_dir(settings_file.parent)
-        if file_exists(settings_file):
-            with open_file(settings_file, 'r') as f:
-                settings = json.load(f)
-                foundation_settings = settings.get('foundation', {})
-                show_startup_window = foundation_settings.get('show_startup_window_switch', False)
-    except Exception as e:
-        logger.error(f"读取启动窗口设置失败，使用默认显示启动窗口: {e}")
+    # 创建QApplication实例
+    app = QApplication(sys.argv)
     
-    # 根据设置决定是否创建启动窗口
-    if show_startup_window:
-        # 立即创建启动窗口，不使用异步函数
-        startup_window = StartupWindow()
-        startup_window.show()
-        
-        # 强制处理事件，确保启动窗口立即显示
-        QApplication.processEvents()
-        
-        # 创建启动窗口线程并启动
-        startup_thread = StartupWindowThread(startup_window)
-        startup_thread.start()
-        
-        # 更新启动窗口进度
-        startup_thread.next_step("正在初始化应用程序环境...")
-        
-        # 给启动窗口一些时间显示和更新
-        QApplication.processEvents()
+    # 导入垃圾回收模块，用于优化内存使用
+    import gc
+    gc.enable()  # 确保垃圾回收已启用
     
     try:
-        # 启动异步主函数
-        loop.run_until_complete(main_async())
-        # 启动Qt事件循环
-        logger.info("应用程序事件循环启动")
+        # 首先配置日志系统，确保日志能正确记录
+        configure_logging()
+        logger.info("日志系统配置完成")
+
+        # 创建并显示启动窗口（在单独进程中）
+        startup_process = multiprocessing.Process(target=run_startup_window)
+        startup_process.daemon = True  # 设置为守护进程，主程序退出时自动结束
+        startup_process.start()
+
+        # 使用QTimer延迟创建设置界面，确保在主线程中创建
+        create_setting_process = multiprocessing.Process(target=show_create_setting_interface(False))
+        create_setting_process.daemon = True  # 设置为守护进程，主程序退出时自动结束
+        create_setting_process.start()
+
+        # 启动主函数
+        main_async()
+        
+        # 启动应用程序事件循环
         app.exec_()
-    except Exception as e:
-        logger.error(f"程序启动失败: {e}")
-    finally:
-        # 确保共享内存已释放
-        if 'shared_memory' in globals() and shared_memory is not None:
-            shared_memory.detach()
-            logger.info("共享内存已释放，程序完全退出")
         
-        # 确保启动窗口线程已退出
-        if 'startup_thread' in globals() and startup_thread is not None and startup_thread.isRunning():
-            startup_thread.close_window()
-            startup_thread.wait(1000)  # 等待最多1秒
+        # 在启动完成后进行一次垃圾回收
+        gc.collect()
         
-        # 关闭事件循环
-        loop.close()
+        # 退出程序
         sys.exit()
+    except Exception as e:
+        print(f"应用程序启动失败: {e}")
+        # 记录错误日志
+        try:
+            logger.error(f"应用程序启动失败: {e}", exc_info=True)
+        except:
+            pass
+        sys.exit(1)

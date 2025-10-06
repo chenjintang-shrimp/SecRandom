@@ -147,12 +147,11 @@ def load_custom_font():
     # 读取自定义设置文件
     try:
         custom_settings_path = path_manager.get_settings_path('custom_settings.json')
-        if custom_settings_path.exists():
+        if custom_settings_path.is_file():
             with open_file(custom_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-            
-            # 获取字体配置
-            font_family_setting = settings.get('personal', {}).get('font_family', 'HarmonyOS Sans SC')
+                personal_settings = settings.get('personal', {})
+                font_family_setting = personal_settings.get('font_family', '')
             
             # 如果字体设置为 HarmonyOS Sans SC，则加载自定义字体
             if font_family_setting == "HarmonyOS Sans SC":
@@ -322,6 +321,11 @@ VERSION = "v0.0.0.0"
 APPLY_NAME = "SecRandom"
 GITHUB_WEB = "https://github.com/SECTL/SecRandom"
 BILIBILI_WEB = "https://space.bilibili.com/520571577"
+WEBSITE = "https://secrandom.netlify.app"
+APP_DESCRIPTION = "一个易用的班级抽号软件，专为教育场景设计，让课堂点名更高效透明"  # 应用程序描述
+APP_COPYRIGHT = f"Copyright © {YEAR} {AUTHOR}. All rights reserved."  # 应用程序版权信息
+APP_LICENSE = "GPL-3.0 License"  # 应用程序许可证
+APP_EMAIL = "lzy.12@foxmail.com"  # 应用程序邮箱
 
 cfg = Config()
 

@@ -20,11 +20,16 @@ class URLHandler:
         self.fixed_url_settings = {}
         self.config_file_path = path_manager.get_settings_path('custom_settings.json')
         self.last_modified_time = 0
-        self.load_fixed_url_settings()
+        self.settings_loaded = False  # 添加标志位，跟踪设置是否已加载
+        
+        # 使用QTimer在后台加载设置，不阻塞进程
+        QTimer.singleShot(0, self.load_fixed_url_settings)
+        
+        # 解析命令行参数
         self.parse_command_line()
     
     def load_fixed_url_settings(self):
-        """加载fixed_url设置"""
+        """加载fixed_url设置（后台创建，不阻塞进程）"""
         try:
             # 获取配置文件路径
             if not self.config_file_path:
@@ -34,6 +39,7 @@ class URLHandler:
             if not os.path.exists(self.config_file_path):
                 logger.error(f"配置文件不存在: {self.config_file_path}")
                 self._load_default_settings()
+                self.settings_loaded = True
                 return
             
             # 读取配置文件
@@ -44,29 +50,45 @@ class URLHandler:
             # 记录文件修改时间
             self.last_modified_time = os.path.getmtime(self.config_file_path)
             
+            # 标记设置已加载
+            self.settings_loaded = True
+            
             logger.info("配置文件加载完成")
         except Exception as e:
             logger.error(f"加载fixed_url设置失败: {str(e)}")
             self._load_default_settings()
+            self.settings_loaded = True
     
     def _load_default_settings(self):
         """加载默认设置"""
         self.fixed_url_settings = {}
+        self.settings_loaded = True
     
     def is_url_enabled(self, url_type):
         """检查特定URL是否启用"""
+        # 如果设置尚未加载，返回默认值True
+        if not self.settings_loaded:
+            return True
         return self.fixed_url_settings.get( f"enable_{url_type}", True)
     
     def get_notification_setting(self, url_type):
         """获取特定URL的弹窗提醒设置"""
+        # 如果设置尚未加载，返回默认值0
+        if not self.settings_loaded:
+            return 0
         return self.fixed_url_settings.get(f"{url_type}_notification", 0)
     
     def show_url_notification(self, url, url_type, callback=None):
         """显示URL弹窗提醒"""
         try:
-            self.load_fixed_url_settings()
-
-            notification_type = self.get_notification_setting(url_type)
+            # 如果设置尚未加载，使用QTimer在后台重新加载设置
+            if not self.settings_loaded:
+                QTimer.singleShot(0, self.load_fixed_url_settings)
+                # 如果设置未加载，暂时使用默认值
+                notification_type = 0
+            else:
+                self.load_fixed_url_settings()
+                notification_type = self.get_notification_setting(url_type)
             
             logger.info(f"显示URL弹窗提醒: url={url}, url_type={url_type}, notification_type={notification_type}")
             
@@ -115,6 +137,10 @@ class URLHandler:
             notification_type: 通知设置 (0=disabled, 1=notify_only, 2=confirm, 3=confirm_with_security)
         """
         try:
+            # 如果设置尚未加载，先加载设置
+            if not self.settings_loaded:
+                self.load_fixed_url_settings()
+            
             # 确保设置已加载
             self.load_fixed_url_settings()
             
@@ -186,7 +212,11 @@ class URLHandler:
         
         try:
             # 在处理URL之前重新检查配置文件是否有更新
-            self.load_fixed_url_settings()
+            # 如果设置尚未加载，使用QTimer在后台加载设置
+            if not self.settings_loaded:
+                QTimer.singleShot(0, self.load_fixed_url_settings)
+            else:
+                self.load_fixed_url_settings()
             
             url = self.get_url_command()
             logger.info(f"开始处理URL命令: {url}")
@@ -213,62 +243,36 @@ class URLHandler:
             if main_window is None:
                 main_window = self.get_main_window()
             
+            # 如果仍然找不到主窗口，延迟处理URL命令
             if main_window is None:
-                logger.error("找不到主窗口实例")
-                return False
-            
-            # 界面映射字典
-            interface_map = {
-                "main": ("show_main_window", "main_url"),
-                "settings": ("show_settings_window", "settings_url"),
-                "pumping": ("show_pumping_window", "pumping_url"),
-                "reward": ("show_reward_window", "reward_url"),
-                "history": ("show_history_window", "history_url"),
-                "floating": ("show_floating_window", "floating_url"),
-                'direct_extraction': ('show_direct_extraction', 'direct_extraction_url')
-            }
-            
-            # 根据路径打开对应界面
-            if path in interface_map:
-                method_name, setting_key = interface_map[path]
+                logger.warning("找不到主窗口实例，将延迟处理URL命令")
                 
-                # 检查该URL是否启用
-                if not self.is_url_enabled(f"enable_{setting_key}"):
-                    logger.error(f"URL功能已禁用: {path} (设置项: enable_{setting_key})")
-                    return False
-                
-                # 显示弹窗提醒
-                def open_interface():
-                    if hasattr(main_window, method_name):
-                        method = getattr(main_window, method_name)
-                        method()
-                        logger.info(f"通过URL成功打开界面: {path}")
-                        
-                        # 处理额外的参数
-                        self.handle_additional_params(main_window, query_params, path)
+                def delayed_process():
+                    # 再次尝试获取主窗口
+                    delayed_main_window = self.get_main_window()
+                    if delayed_main_window:
+                        logger.info("延迟处理URL命令：找到主窗口实例")
+                        self.process_url_with_window(delayed_main_window, url, path, query_params)
                     else:
-                        logger.error(f"主窗口缺少方法: {method_name}")
+                        logger.error("延迟处理URL命令：仍然找不到主窗口实例")
                 
-                # 显示弹窗提醒
-                self.show_url_notification(url, setting_key, open_interface)
-                
-                return True
-            else:
-                logger.error(f"未知的界面路径: {path}")
-                
-                # 显示可用路径
-                available_paths = ", ".join(interface_map.keys())
-                logger.info(f"可用的界面路径: {available_paths}")
+                # 延迟500ms再次尝试处理URL命令
+                QTimer.singleShot(500, delayed_process)
+                return True  # 返回True表示已接受处理请求
             
-            return False
+            # 找到主窗口，直接处理URL命令
+            return self.process_url_with_window(main_window, url, path, query_params)
             
         except Exception as e:
             logger.error(f"处理URL命令失败: {str(e)}")
             return False
     
-    def handle_additional_params(self, main_window, query_params, path=None):
+    def handle_additional_params(self, main_window, query_params, path):
         """处理额外的URL参数"""
         try:
+            # 如果设置尚未加载，使用QTimer在后台加载设置
+            if not self.settings_loaded:
+                QTimer.singleShot(0, self.load_fixed_url_settings)
             # 处理action参数
             if 'action' in query_params:
                 action = query_params['action'][0]
@@ -342,9 +346,84 @@ class URLHandler:
         except Exception as e:
             logger.error(f"处理额外参数失败: {str(e)}")
     
+    def process_url_with_window(self, main_window, url, path, query_params):
+        """使用已找到的主窗口处理URL命令"""
+        try:
+            # 界面映射字典
+            interface_map = {
+                "main": ("show_main_window", "main_url"),
+                "settings": ("show_settings_window", "settings_url"),
+                "pumping": ("show_pumping_window", "pumping_url"),
+                "reward": ("show_reward_window", "reward_url"),
+                "history": ("show_history_window", "history_url"),
+                "floating": ("show_floating_window", "floating_url"),
+                'direct_extraction': ('show_direct_extraction', 'direct_extraction_url')
+            }
+            
+            # 根据路径打开对应界面
+            if path in interface_map:
+                method_name, setting_key = interface_map[path]
+                
+                # 检查该URL是否启用
+                if not self.is_url_enabled(f"enable_{setting_key}"):
+                    logger.error(f"URL功能已禁用: {path} (设置项: enable_{setting_key})")
+                    return False
+                
+                # 显示弹窗提醒
+                def open_interface():
+                    # 检查是否是UIProcessManager实例
+                    if isinstance(main_window, UIProcessManager):
+                        # 如果是UIProcessManager实例，使用其提供的方法
+                        if hasattr(main_window, method_name):
+                            method = getattr(main_window, method_name)
+                            method()
+                            logger.info(f"通过URL成功打开界面: {path}")
+                            
+                            # 处理额外的参数
+                            self.handle_additional_params(main_window, query_params, path)
+                        else:
+                            logger.error(f"UIProcessManager缺少方法: {method_name}")
+                    else:
+                        # 如果是普通窗口实例，使用原来的方法
+                        if hasattr(main_window, method_name):
+                            method = getattr(main_window, method_name)
+                            method()
+                            logger.info(f"通过URL成功打开界面: {path}")
+                            
+                            # 处理额外的参数
+                            self.handle_additional_params(main_window, query_params, path)
+                        else:
+                            logger.error(f"主窗口缺少方法: {method_name}")
+                
+                # 显示弹窗提醒
+                self.show_url_notification(url, setting_key, open_interface)
+                
+                return True
+            else:
+                logger.error(f"未知的界面路径: {path}")
+                
+                # 显示可用路径
+                available_paths = ", ".join(interface_map.keys())
+                logger.info(f"可用的界面路径: {available_paths}")
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"处理URL命令失败: {str(e)}")
+            return False
+
     def get_main_window(self):
         """获取主窗口实例"""
         try:
+            # 首先尝试从全局变量获取主窗口
+            try:
+                from main import main_window
+                if main_window is not None:
+                    return main_window
+            except ImportError:
+                pass
+            
+            # 如果全局变量中没有，尝试从顶级窗口中查找
             for widget in QApplication.topLevelWidgets():
                 # 通过特征识别主窗口
                 if hasattr(widget, 'update_focus_mode') or hasattr(widget, 'show_main_window'):
@@ -416,10 +495,19 @@ def get_url_handler():
 
 
 def process_url_if_exists(main_window=None):
-    """如果存在URL命令则处理"""
+    """如果存在URL命令则处理（后台运行）"""
     handler = get_url_handler()
     if handler.has_url_command():
-        return handler.process_url_command(main_window)
+        # 使用QTimer.singleShot在后台处理URL命令，避免阻塞主线程
+        def process_url():
+            try:
+                handler.process_url_command(main_window)
+            except Exception as e:
+                logger.error(f"后台处理URL命令失败: {str(e)}")
+        
+        # 延迟100ms处理URL命令，确保主窗口已完全初始化
+        QTimer.singleShot(100, process_url)
+        return True
     return False
 
 

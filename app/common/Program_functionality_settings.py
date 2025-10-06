@@ -582,11 +582,11 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                     except Exception as e:
                         logger.error(f"星野清理失败: 删除临时文件出错喵～ {e}")
         
-        # 通过主窗口发送清理信号，通知抽奖和抽人界面清除标签
+        # 通过主窗口发送清理信号，通知抽奖和点名界面清除标签
         main_window = self._get_main_window()
         if main_window:
             main_window.cleanup_signal.emit()
-            logger.info("星野广播: 已通过主窗口发送清理信号，通知抽奖和抽人界面清除标签～")
+            logger.info("星野广播: 已通过主窗口发送清理信号，通知抽奖和点名界面清除标签～")
         else:
             logger.error("星野警告: 未找到主窗口实例，无法发送清理信号～")
     

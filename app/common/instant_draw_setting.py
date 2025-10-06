@@ -21,7 +21,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.setBorderRadius(8)
         self.settings_file = path_manager.get_settings_path()
         self.default_settings = {
-            "follow_roll_call": False,
+            "follow_roll_call": True,
             "font_size": 50,
             "max_draw_count": 0,
             "draw_mode": 0,

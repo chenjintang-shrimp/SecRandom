@@ -494,7 +494,7 @@ class HistoryDataLoader(QThread):
     
     def get_random_method_setting(self) -> int:
         """获取随机抽取方法的设置"""
-        return self._get_setting_value('pumping_people', 'draw_pumping', 0)
+        return self._get_setting_value('pumping_people', 'draw_pumping', 1)
     
     def get_probability_weight_method_setting(self) -> int:
         """获取概率权重方法设置"""
@@ -506,7 +506,7 @@ class HistoryDataLoader(QThread):
         try:
             with open_file(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                return settings[section][key]
+                return settings[section].get(key, default)
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             return default
@@ -1164,7 +1164,7 @@ class history(QFrame):
 
     def get_random_method_setting(self) -> int:
         """获取随机抽取方法的设置"""
-        return self._get_setting_value('pumping_people', 'draw_pumping', 0)
+        return self._get_setting_value('pumping_people', 'draw_pumping', 1)
 
     def get_probability_weight_method_setting(self) -> int:
         """获取概率权重方法设置"""
@@ -1176,7 +1176,7 @@ class history(QFrame):
         try:
             with open_file(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                return settings[section][key]
+                return settings[section].get(key, default)
         except Exception as e:
             logger.error(f"加载设置时出错: {e}, 使用默认设置")
             return default

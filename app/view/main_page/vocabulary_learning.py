@@ -28,8 +28,8 @@ is_dark = is_dark_theme(qconfig)
 class vocabulary_learning(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # 异步初始化UI
-        asyncio.create_task(self.initUI())
+        # 同步初始化UI
+        self.initUI()
         
     def start_auto_next_timer(self):
         """启动自动下一个单词计时器（向后兼容）"""
@@ -116,7 +116,7 @@ class vocabulary_learning(QWidget):
         # 显示右侧下一个单词
         self.show_right_next_word()
         
-    async def initUI(self):
+    def initUI(self):
         # 初始化答题统计变量
         self.left_correct_count = 0
         self.left_wrong_count = 0
