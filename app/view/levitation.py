@@ -1855,29 +1855,16 @@ class LevitationWindow(QWidget):
                 settings = json.load(f)
                 
             # 检查是否启用自动关闭
-            auto_close_enabled = settings['foundation']['flash_window_auto_close']
-            close_time_setting = settings['foundation']['flash_window_close_time']
-            
-            # 根据设置值映射到实际的关闭时间
-            # 0：1，1：2，2：3，3：5，4：10，5：15，6：30
-            close_time_mapping = {
-                0: 1,
-                1: 2,
-                2: 3,
-                3: 5,
-                4: 10,
-                5: 15,
-                6: 30
-            }
+            auto_close_enabled = settings['instant_draw'].get('flash_window_auto_close', Ture)
+            close_time_setting = settings['instant_draw'].get('flash_window_close_time', 3)
+            close_after_click = settings['instant_draw'].get('close_after_click', False)
             
             # 如果close_time_setting是字符串类型，尝试转换为整数
             if isinstance(close_time_setting, str):
                 try:
                     close_time_setting = int(close_time_setting)
                 except ValueError:
-                    close_time_setting = 2
-            
-            close_time = close_time_mapping.get(close_time_setting, 3)  # 默认值为3秒
+                    close_time_setting = 3
             
             if self.use_cwci_display:
                 self.pumping_widget.reject()
@@ -1898,7 +1885,7 @@ class LevitationWindow(QWidget):
                     self.auto_close_timer = None
                 
                 # 初始化倒计时
-                self.remaining_time = close_time
+                self.remaining_time = close_time_setting
                 self.countdown_label.setText(f"将在{self.remaining_time}秒自动关闭该窗口")
                 self.countdown_label.setFont(QFont(load_custom_font(), 12))
 
@@ -1911,9 +1898,26 @@ class LevitationWindow(QWidget):
                 self.auto_close_timer = QTimer(self.pumping_widget)
                 self.auto_close_timer.setSingleShot(True)
                 self.auto_close_timer.timeout.connect(self.pumping_widget.reject)
-                self.auto_close_timer.start(close_time * 1000)  # 转换为毫秒
-                logger.info(f"闪抽窗口将在{close_time}秒后自动关闭")
+                self.auto_close_timer.start(close_time_setting * 1000)  # 转换为毫秒
+                logger.info(f"闪抽窗口将在{close_time_setting}秒后自动关闭")
             else:
+                # 先停止并清理可能存在的旧定时器
+                if hasattr(self, 'countdown_timer') and self.countdown_timer:
+                    if self.countdown_timer.isActive():
+                        self.countdown_timer.stop()
+                    self.countdown_timer.deleteLater()
+                    self.countdown_timer = None
+                
+                if hasattr(self, 'auto_close_timer') and self.auto_close_timer:
+                    if self.auto_close_timer.isActive():
+                        self.auto_close_timer.stop()
+                    self.auto_close_timer.deleteLater()
+                    self.auto_close_timer = None
+                if close_after_click:
+                    self.countdown_label.setText("抽取结束，请手动关闭或再次点击抽取按钮")
+                else:
+                    self.countdown_label.setText("抽取结束，请手动关闭该窗口")  
+                self.countdown_label.setText("抽取结束，请手动关闭或再次点击抽取按钮")
                 logger.info("闪抽窗口自动关闭功能已禁用")
         except Exception as e:
             logger.error(f"加载闪抽窗口设置时出错: {e}, 使用默认设置")
