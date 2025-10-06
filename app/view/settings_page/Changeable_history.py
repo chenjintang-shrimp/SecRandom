@@ -349,7 +349,7 @@ class HistoryDataLoader(QThread):
                 try:
                     with open_file(student_file, 'r', encoding='utf-8') as f:
                         class_data = json.load(f)
-                except (FileNotFoundError, json.JSONDecodeError):
+                except Exception:
                     return []
 
                 # 清理学生数据

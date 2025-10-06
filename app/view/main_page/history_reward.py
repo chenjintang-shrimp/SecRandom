@@ -226,7 +226,7 @@ class HistoryDataLoader(QThread):
                                 name = reward_name
                                 probability = reward_info.get('probability', '')
                                 cleaned_data.append((id, name, probability))
-                except (FileNotFoundError, json.JSONDecodeError):
+                except Exception:
                     logger.error(f"奖品配置文件不存在或格式错误: {reward_file}")
                     return []
 
