@@ -965,7 +965,7 @@ class SettingsSelectionDialog(QDialog):
                 ],
                 "显示设置": [
                     "display_format", "font_size", "animation_color", "show_student_image",
-                    "show_random_member", "random_member_format"
+                    "show_random_member", "random_member_format", "close_after_click"
                 ],
                 "动画设置": [
                     "animation_mode", "animation_interval", "animation_auto_play"
@@ -1166,6 +1166,7 @@ class SettingsSelectionDialog(QDialog):
             "random_member_format": "随机成员格式", # 有
             "show_student_image": "显示学生图片", # 有
             # instant_draw设置
+            "close_after_click": "再次点击按钮后关闭抽取窗口", # 有
             "follow_roll_call": "跟随点名设置", # 有
             "use_cwci_display": "使用cw/ci显示结果", # 有
             "use_cwci_display_time": "使用cw/ci显示结果时间", # 有

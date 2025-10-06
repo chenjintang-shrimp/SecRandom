@@ -46,7 +46,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
             "music_fade_out": 300,
             "display_format": 0,
             "animation_color": 0,
-            "show_student_image": False
+            "show_student_image": False,
+            "close_after_click": False
         }
 
         self.instant_draw_Draw_comboBox = ComboBox()
@@ -215,6 +216,13 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.instant_draw_result_music_switch.checkedChanged.connect(self.save_settings)
         self.instant_draw_result_music_switch.setFont(QFont(load_custom_font(), 12))
 
+        # 是否选择再次点击按钮后关闭抽取窗口
+        self.instant_draw_close_after_click_switch = SwitchButton()
+        self.instant_draw_close_after_click_switch.setOnText("开启")
+        self.instant_draw_close_after_click_switch.setOffText("关闭")
+        self.instant_draw_close_after_click_switch.checkedChanged.connect(self.save_settings)
+        self.instant_draw_close_after_click_switch.setFont(QFont(load_custom_font(), 12))
+
         # 动画音乐文件夹
         self.instant_draw_Animation_music_path_button = PushButton("动画音乐文件夹")
         self.instant_draw_Animation_music_path_button.setFont(QFont(load_custom_font(), 12))
@@ -314,6 +322,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_calendar_week_numbers_20_filled"), "半重复抽取次数", "一轮中抽取最大次数", self.Draw_pumping_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_timer_off_20_filled"), "抽取后定时清除时间", "配置临时记录清理时间(0-86400)(0表示禁用该功能)", self.instant_draw_auto_play_count_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_drawer_play_20_filled"), "抽取方式", "选择具体的抽取执行方式", self.pumping_Draw_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_alert_on_20_filled"), "点击后关闭抽取窗口", "再次点击按钮时是否关闭抽取窗口", self.instant_draw_close_after_click_switch)
         
         # 固定默认名单
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "固定默认名单", "选择一个班级作为默认名单", self.fixed_default_list)
@@ -337,7 +346,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置动画自动重复播放的次数", self.instant_draw_Animation_auto_play_SpinBox)
 
         # 是否使用cw/ci显示结果
-        self.addGroup(get_theme_icon("ic_fluent_alert_on_20_filled"), "是否使用 CI/CW 显示结果", "是否使用 CI/CW 展示抽取结果", self.use_cwci_display_checkbox)
+        self.addGroup(get_theme_icon("ic_fluent_alert_on_20_filled"), "是否使用 CI/CW 显示结果", "是否使用 CI/CW 展示抽取结果（CI、CW都开启，则CI优先）", self.use_cwci_display_checkbox)
         self.addGroup(get_theme_icon("ic_fluent_time_picker_20_filled"), "CI/CW 通知显示时长", "设置 CI/CW 通知的显示持续时间", self.use_cwci_display_time_SpinBox)
         
         # 图片显示设置
@@ -719,6 +728,9 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     # 加载是否跟随点名设置
                     follow_roll_call = instant_draw_settings.get("follow_roll_call", self.default_settings["follow_roll_call"])
 
+                    # 加载是否选择再次点击按钮后关闭抽取窗口
+                    close_after_click = instant_draw_settings.get("close_after_click", self.default_settings["close_after_click"])
+
                     # 加载动画设置
                     animation_interval = instant_draw_settings.get("animation_interval", self.default_settings["animation_interval"])
                     animation_auto_play = instant_draw_settings.get("animation_auto_play", self.default_settings["animation_auto_play"])
@@ -760,6 +772,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     self.use_cwci_display_checkbox.setChecked(use_cwci_display)
                     self.use_cwci_display_time_SpinBox.setValue(use_cwci_display_time)
                     self.instant_draw_Animation_comboBox.setCurrentIndex(animation_mode)
+                    self.instant_draw_close_after_click_switch.setChecked(close_after_click)
                     self.instant_draw_student_id_comboBox.setCurrentIndex(student_id)
                     self.instant_draw_student_name_comboBox.setCurrentIndex(student_name)
                     self.show_random_member_checkbox.setChecked(show_random_member)
@@ -798,6 +811,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                 self.use_cwci_display_time_SpinBox.setValue(self.default_settings["use_cwci_display_time"])
                 self.instant_draw_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
                 self.instant_draw_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
+                self.instant_draw_close_after_click_switch.setChecked(self.default_settings["close_after_click"])
                 self.instant_draw_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
                 self.show_random_member_checkbox.setChecked(self.default_settings["show_random_member"])
                 self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
@@ -827,6 +841,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
             self.instant_draw_isolate_checkbox.setChecked(self.default_settings["instant_clear"])
             self.instant_draw_Animation_comboBox.setCurrentIndex(self.default_settings["animation_mode"])
             self.instant_draw_student_id_comboBox.setCurrentIndex(self.default_settings["student_id"])
+            self.instant_draw_close_after_click_switch.setChecked(self.default_settings["close_after_click"])
             self.instant_draw_student_name_comboBox.setCurrentIndex(self.default_settings["student_name"])
             self.show_random_member_checkbox.setChecked(self.default_settings["show_random_member"])
             self.random_member_format_comboBox.setCurrentIndex(self.default_settings["random_member_format"])
@@ -871,6 +886,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         instant_draw_settings["draw_pumping"] = self.pumping_Draw_comboBox.currentIndex()
         instant_draw_settings["animation_mode"] = self.instant_draw_Animation_comboBox.currentIndex()
         instant_draw_settings["student_id"] = self.instant_draw_student_id_comboBox.currentIndex()
+        instant_draw_settings["close_after_click"] = self.instant_draw_close_after_click_switch.isChecked()
         instant_draw_settings["student_name"] = self.instant_draw_student_name_comboBox.currentIndex()
         instant_draw_settings["show_random_member"] = self.show_random_member_checkbox.isChecked()
         instant_draw_settings["random_member_format"] = self.random_member_format_comboBox.currentIndex()

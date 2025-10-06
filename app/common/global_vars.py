@@ -54,9 +54,9 @@ class GlobalVars:
     
     def _handle_new_connection(self, confirmation):
         """处理新的连接"""
-        logger.debug(f"收到新连接确认: {confirmation}，当前设置界面实例: {self.settingInterface}")
+        # logger.debug(f"收到新连接确认: {confirmation}，当前设置界面实例: {self.settingInterface}")
         if confirmation == "show_setting_interface":
-            logger.debug(f"准备显示设置界面，settingInterface类型: {type(self.settingInterface)}")
+            # logger.debug(f"准备显示设置界面，settingInterface类型: {type(self.settingInterface)}")
             if self.settingInterface:
                 if self.settingInterface.isVisible() and not self.settingInterface.isMinimized():
                     self.settingInterface.showNormal() 
