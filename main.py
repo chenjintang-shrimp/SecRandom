@@ -32,7 +32,6 @@ from pathlib import Path
 # ==================================================
 from app.common.config import cfg, VERSION, load_custom_font, WEBSITE, APPLY_NAME
 from app.view.startup_window import StartupWindow
-from app.common.global_vars import GlobalVars
 from app.view.settings import settings_Window
 from app.view.SecRandom import Window
 from app.common.url_handler import process_url_if_exists
@@ -44,7 +43,6 @@ from qfluentwidgets import qconfig, Theme
 # ==================================================
 C_SE = 'SecRandomIPC'  # IPC通讯服务器名称
 SHARED_MEMORY_KEY = 'SecRandom'   # 共享内存密钥
-global_vars = GlobalVars()
 
 # ==================================================
 # 日志配置相关函数
@@ -178,6 +176,11 @@ def check_single_instance():
 def apply_font_settings():
     """应用字体设置，加载并应用保存的字体（后台创建，不阻塞进程）"""
     try:
+        # 检查是否已经加载过字体，避免重复加载
+        if hasattr(apply_font_settings, '_font_loaded') and apply_font_settings._font_loaded:
+            logger.debug("字体已加载，跳过重复加载")
+            return
+            
         # 读取字体设置文件
         settings_file = path_manager.get_settings_path('custom_settings.json')
         ensure_dir(settings_file.parent)
@@ -199,6 +202,9 @@ def apply_font_settings():
         logger.info(f"字体设置: {font_family}")
         # 用QTimer在后台应用字体，不阻塞主进程
         QTimer.singleShot(0, lambda: apply_font_to_application(font_family))
+        
+        # 标记字体已加载
+        apply_font_settings._font_loaded = True
     except Exception as e:
         logger.error(f"初始化字体设置失败: {e}")
         # 发生错误时使用默认字体
@@ -213,6 +219,11 @@ def apply_font_to_application(font_family):
         font_family (str): 字体家族名称
     """
     try:
+        # 检查是否已经应用过字体，避免重复应用
+        if hasattr(apply_font_to_application, '_font_applied') and apply_font_to_application._font_applied == font_family:
+            logger.debug(f"字体 {font_family} 已应用，跳过重复应用")
+            return
+            
         # 获取当前应用程序默认字体
         current_font = QApplication.font()
         
@@ -222,21 +233,31 @@ def apply_font_to_application(font_family):
         
         # 如果是HarmonyOS Sans SC字体，使用特定的字体文件路径
         if font_family == "HarmonyOS Sans SC":
-            font_path = path_manager.get_font_path('HarmonyOS_Sans_SC_Bold.ttf')
-            if font_path and path_manager.file_exists(font_path):
-                font_id = QFontDatabase.addApplicationFont(str(font_path))
-                if font_id >= 0:
-                    font_families = QFontDatabase.applicationFontFamilies(font_id)
-                    if font_families:
-                        app_font = QFont(font_families[0])
-                        app_font.setPointSize(current_font.pointSize())
-                        # logger.debug(f"已加载HarmonyOS Sans SC字体文件: {font_path}")
+            # 检查字体是否已加载，避免重复加载
+            if not hasattr(apply_font_to_application, '_harmony_font_loaded'):
+                font_path = path_manager.get_font_path('HarmonyOS_Sans_SC_Bold.ttf')
+                if font_path and path_manager.file_exists(font_path):
+                    font_id = QFontDatabase.addApplicationFont(str(font_path))
+                    if font_id >= 0:
+                        font_families = QFontDatabase.applicationFontFamilies(font_id)
+                        if font_families:
+                            app_font = QFont(font_families[0])
+                            app_font.setPointSize(current_font.pointSize())
+                            # logger.debug(f"已加载HarmonyOS Sans SC字体文件: {font_path}")
+                            # 标记字体已加载
+                            apply_font_to_application._harmony_font_loaded = True
+                        else:
+                            logger.error(f"无法从字体文件获取字体家族: {font_path}")
                     else:
-                        logger.error(f"无法从字体文件获取字体家族: {font_path}")
+                        logger.error(f"无法加载字体文件: {font_path}")
                 else:
-                    logger.error(f"无法加载字体文件: {font_path}")
+                    logger.error(f"HarmonyOS Sans SC字体文件不存在: {font_path}")
             else:
-                logger.error(f"HarmonyOS Sans SC字体文件不存在: {font_path}")
+                # 字体已加载，直接使用
+                font_families = QFontDatabase.applicationFontFamilies(QFontDatabase.addApplicationFont(str(path_manager.get_font_path('HarmonyOS_Sans_SC_Bold.ttf'))))
+                if font_families:
+                    app_font = QFont(font_families[0])
+                    app_font.setPointSize(current_font.pointSize())
         
         # 获取所有顶级窗口并更新它们的字体
         widgets_updated = 0
@@ -246,6 +267,9 @@ def apply_font_to_application(font_family):
                 widgets_updated += 1
             
         # logger.debug(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件字体")
+        
+        # 标记字体已应用
+        apply_font_to_application._font_applied = font_family
     except Exception as e:
         logger.error(f"应用字体失败: {e}")
 
@@ -432,28 +456,6 @@ def close_startup_window():
         logger.error(f"关闭启动窗口时发生异常: {e}")
 
 # ==================================================
-# 设置界面相关函数
-# ==================================================    
-def show_create_setting_interface(create_exists):
-    """显示设置界面，使用更长的延迟确保主界面完全加载"""
-    # 使用更长的延迟，确保主界面完全加载后再创建设置界面
-    QTimer.singleShot(1000, lambda: _show_create_setting_interface_impl(create_exists))
-
-def _show_create_setting_interface_impl(create_exists):
-    """实际执行设置界面创建和显示的函数"""
-    try:
-        # 检查是否已经有设置界面实例
-        if global_vars.settingInterface is None:
-            # 如果没有实例，先创建但不显示
-            global_vars.create_setting_instance()
-        
-        # logger.debug(f"设置界面处理完成，实例存在: {global_vars.settingInterface is not None}")
-    except Exception as e:
-        logger.error(f"创建设置界面时发生异常: {e}")
-        import traceback
-        logger.error(f"异常详情: {traceback.format_exc()}")
-
-# ==================================================
 # 应用程序初始化相关函数
 # ==================================================
 def initialize_app():
@@ -516,8 +518,10 @@ def initialize_app():
     import gc
     gc.collect()
     
-    # 创建主窗口实例（窗口会立即显示，但内容会在后台加载）
+    # 创建主窗口实例（窗口不会立即显示，等待所有组件加载完成）
     sec = Window()
+    # 先隐藏窗口，等待所有组件加载完成后再显示
+    sec.hide()
     
     # 更新启动窗口进度 - 创建主窗口
     update_startup_progress(6)
@@ -547,6 +551,14 @@ def initialize_app():
     # 等待启动窗口进程结束
     if startup_process.is_alive():
         startup_process.join(timeout=1.0)  # 最多等待1秒
+    
+    # 所有组件加载完成后，显示主窗口
+    # 检查是否是开机自启动模式
+    if hasattr(main_window, 'is_self_starting') and main_window.is_self_starting:
+        logger.info("开机自启动模式，窗口已隐藏")
+    else:
+        main_window.show()
+        logger.info("主窗口已显示")
 
 # ==================================================
 # 主程序入口
@@ -578,11 +590,6 @@ if __name__ == "__main__":
         startup_process = multiprocessing.Process(target=run_startup_window)
         startup_process.daemon = True  # 设置为守护进程，主程序退出时自动结束
         startup_process.start()
-
-        # 使用QTimer延迟创建设置界面，确保在主线程中创建
-        create_setting_process = multiprocessing.Process(target=show_create_setting_interface(False))
-        create_setting_process.daemon = True  # 设置为守护进程，主程序退出时自动结束
-        create_setting_process.start()
 
         # 启动主函数
         main_async()

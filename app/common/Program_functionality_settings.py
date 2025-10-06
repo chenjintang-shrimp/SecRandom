@@ -106,11 +106,11 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         # 加载设置
         self.load_settings()
 
-        # 延迟连接消息接收器信号，避免阻塞页面初始化
-        QTimer.singleShot(1000, self.connect_message_receiver)
+        # 减少延迟时间，加快初始化速度
+        QTimer.singleShot(100, self.connect_message_receiver)
         
-        # 延迟启动计时器和连接消息接收器信号，避免阻塞页面初始化
-        QTimer.singleShot(1000, self._delayed_init)
+        # 减少延迟时间，加快初始化速度
+        QTimer.singleShot(100, self._delayed_init)
     
     def _delayed_init(self):
         """延迟初始化计时器和消息接收器连接，避免阻塞页面加载"""

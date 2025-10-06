@@ -2474,81 +2474,88 @@ class password_SettingsCard(GroupHeaderCardWidget):
 
     def load_settings(self):
         try:
-            if path_manager.file_exists(self.settings_file):
-                with open_file(self.settings_file, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                    hashed_set_settings = settings.get("hashed_set", {})
-
-                    self.start_password_switch.setChecked(
-                        hashed_set_settings.get("start_password_enabled", self.default_settings["start_password_enabled"])
-                    )
-                    self.encrypt_setting_switch.setChecked(
-                        hashed_set_settings.get("encrypt_setting_enabled", self.default_settings["encrypt_setting_enabled"])
-                    )
-                    self.two_factor_switch.setChecked(
-                        hashed_set_settings.get("two_factor_auth", self.default_settings["two_factor_auth"])
-                    )
-                    self.exit_verification_switch.setChecked(
-                        hashed_set_settings.get("exit_verification_enabled", self.default_settings["exit_verification_enabled"])
-                    )
-                    self.restart_verification_switch.setChecked(
-                        hashed_set_settings.get("restart_verification_enabled", self.default_settings["restart_verification_enabled"])
-                    )
-                    self.show_hide_verification_switch.setChecked(
-                        hashed_set_settings.get("show_hide_verification_enabled", self.default_settings["show_hide_verification_enabled"])
-                    )
-                    self.usb_auth_switch.setChecked(
-                        settings.get("usb_auth_enabled", self.default_settings["usb_auth_enabled"])
-                    )
-                    logger.info("安全设置加载完成")
-                    
-                    # 检查是否有绑定的U盘，如果没有则关闭U盘认证开关
-                    try:
-                        usb_bindings = settings.get("usb_binding", [])
-                        if not usb_bindings and self.usb_auth_switch.isChecked():
-                            self.usb_auth_switch.blockSignals(True)
-                            self.usb_auth_switch.setChecked(False)
-                            self.usb_auth_switch.blockSignals(False)
-                            self.save_settings()
-                            logger.info("没有绑定的U盘，已自动关闭U盘认证开关")
-                    except Exception as e:
-                        logger.error(f"检查U盘绑定时出错: {e}")
-                    
-                    # 如果U盘认证已启用，启动监控线程
-                    if settings.get("usb_auth_enabled", False):
-                        self.start_usb_monitoring()
+            # 使用缓存避免重复读取文件
+            if hasattr(self, '_settings_cache') and self._settings_cache:
+                settings = self._settings_cache
             else:
-                logger.error(f"设置文件不存在: {self.settings_file}")
-                self.start_password_switch.setChecked(self.default_settings["start_password_enabled"])
-                self.encrypt_setting_switch.setChecked(self.default_settings["encrypt_setting_enabled"])
-                self.two_factor_switch.setChecked(self.default_settings["two_factor_auth"])
-                self.exit_verification_switch.setChecked(self.default_settings["exit_verification_enabled"])
-                self.restart_verification_switch.setChecked(self.default_settings["restart_verification_enabled"])
-                self.show_hide_verification_switch.setChecked(self.default_settings["show_hide_verification_enabled"])
-                self.usb_auth_switch.setChecked(self.default_settings["usb_auth_enabled"])
+                if path_manager.file_exists(self.settings_file):
+                    with open_file(self.settings_file, 'r', encoding='utf-8') as f:
+                        settings = json.load(f)
+                        # 缓存设置以避免重复读取
+                        self._settings_cache = settings
+                else:
+                    settings = {"hashed_set": {}, "usb_binding": []}
+                    self._settings_cache = settings
+            
+            hashed_set_settings = settings.get("hashed_set", {})
+            usb_bindings = settings.get("usb_binding", [])
+
+            # 批量设置开关状态，减少UI更新次数
+            self.start_password_switch.blockSignals(True)
+            self.encrypt_setting_switch.blockSignals(True)
+            self.two_factor_switch.blockSignals(True)
+            self.exit_verification_switch.blockSignals(True)
+            self.restart_verification_switch.blockSignals(True)
+            self.show_hide_verification_switch.blockSignals(True)
+            self.usb_auth_switch.blockSignals(True)
+
+            self.start_password_switch.setChecked(
+                hashed_set_settings.get("start_password_enabled", self.default_settings["start_password_enabled"])
+            )
+            self.encrypt_setting_switch.setChecked(
+                hashed_set_settings.get("encrypt_setting_enabled", self.default_settings["encrypt_setting_enabled"])
+            )
+            self.two_factor_switch.setChecked(
+                hashed_set_settings.get("two_factor_auth", self.default_settings["two_factor_auth"])
+            )
+            self.exit_verification_switch.setChecked(
+                hashed_set_settings.get("exit_verification_enabled", self.default_settings["exit_verification_enabled"])
+            )
+            self.restart_verification_switch.setChecked(
+                hashed_set_settings.get("restart_verification_enabled", self.default_settings["restart_verification_enabled"])
+            )
+            self.show_hide_verification_switch.setChecked(
+                hashed_set_settings.get("show_hide_verification_enabled", self.default_settings["show_hide_verification_enabled"])
+            )
+            
+            usb_auth_enabled = settings.get("usb_auth_enabled", self.default_settings["usb_auth_enabled"])
+            # 检查是否有绑定的U盘，如果没有则关闭U盘认证开关
+            if not usb_bindings and usb_auth_enabled:
+                usb_auth_enabled = False
+                logger.info("没有绑定的U盘，已自动关闭U盘认证开关")
+            
+            self.usb_auth_switch.setChecked(usb_auth_enabled)
+
+            # 恢复信号连接
+            self.start_password_switch.blockSignals(False)
+            self.encrypt_setting_switch.blockSignals(False)
+            self.two_factor_switch.blockSignals(False)
+            self.exit_verification_switch.blockSignals(False)
+            self.restart_verification_switch.blockSignals(False)
+            self.show_hide_verification_switch.blockSignals(False)
+            self.usb_auth_switch.blockSignals(False)
+            
+            logger.info("安全设置加载完成")
+            
+            # 如果U盘认证已启用，启动监控线程
+            if usb_auth_enabled:
+                self.start_usb_monitoring()
                 
-                # 设置文件不存在时，确保U盘认证开关关闭（因为没有绑定的U盘）
-                if self.usb_auth_switch.isChecked():
-                    self.usb_auth_switch.blockSignals(True)
-                    self.usb_auth_switch.setChecked(False)
-                    self.usb_auth_switch.blockSignals(False)
-                    logger.info("设置文件不存在，已关闭U盘认证开关")
         except Exception as e:
             logger.error(f"加载设置时出错: {e}")
-            self.start_password_switch.setChecked(self.default_settings["start_password_enabled"])
-            self.encrypt_setting_switch.setChecked(self.default_settings["encrypt_setting_enabled"])
-            self.two_factor_switch.setChecked(self.default_settings["two_factor_auth"])
-            self.exit_verification_switch.setChecked(self.default_settings["exit_verification_enabled"])
-            self.restart_verification_switch.setChecked(self.default_settings["restart_verification_enabled"])
-            self.show_hide_verification_switch.setChecked(self.default_settings["show_hide_verification_enabled"])
-            self.usb_auth_switch.setChecked(self.default_settings["usb_auth_enabled"])
-            
-            # 加载设置出错时，确保U盘认证开关关闭（因为没有绑定的U盘）
-            if self.usb_auth_switch.isChecked():
-                self.usb_auth_switch.blockSignals(True)
-                self.usb_auth_switch.setChecked(False)
-                self.usb_auth_switch.blockSignals(False)
-                logger.info("加载设置出错，已关闭U盘认证开关")
+            # 出错时使用默认设置
+            self._apply_default_settings()
+
+    def _apply_default_settings(self):
+        """应用默认设置"""
+        self.start_password_switch.setChecked(self.default_settings["start_password_enabled"])
+        self.encrypt_setting_switch.setChecked(self.default_settings["encrypt_setting_enabled"])
+        self.two_factor_switch.setChecked(self.default_settings["two_factor_auth"])
+        self.exit_verification_switch.setChecked(self.default_settings["exit_verification_enabled"])
+        self.restart_verification_switch.setChecked(self.default_settings["restart_verification_enabled"])
+        self.show_hide_verification_switch.setChecked(self.default_settings["show_hide_verification_enabled"])
+        self.usb_auth_switch.setChecked(self.default_settings["usb_auth_enabled"])
+        logger.info("已应用默认安全设置")
 
     def save_settings(self):
         # 先读取现有设置

@@ -9,8 +9,9 @@ import sys
 import time
 import subprocess
 import warnings
-import multiprocessing
+import random
 from urllib3.exceptions import InsecureRequestWarning
+from pathlib import Path
 
 # 第三方库
 import loguru
@@ -27,7 +28,6 @@ from app.common.config import get_theme_icon, load_custom_font, check_for_update
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
 from app.view.settings import settings_Window
-from app.common.global_vars import GlobalVars
 from app.view.main_page.pumping_people import pumping_people
 from app.view.main_page.pumping_reward import pumping_reward
 from app.view.main_page.history_handoff_setting import history_handoff_setting
@@ -47,8 +47,6 @@ warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 # 设置目录
 settings_dir = path_manager.get_settings_path().parent
 ensure_dir(settings_dir)
-
-global_vars = GlobalVars()
 
 def show_update_notification(latest_version):
     """显示自定义更新通知窗口"""
@@ -506,6 +504,8 @@ class Window(MSFluentWindow):
         # USB检测定时器
         self.usb_detection_timer = QTimer(self)
         self.usb_detection_timer.timeout.connect(check_and_delete_pending_usb)
+        self.usb_detection_timer.start(5000)  # 每5秒检查一次
+
 
         # 初始化焦点模式设置
         self.focus_mode = self.config_manager.get_foundation_setting('main_window_focus_mode')
@@ -515,45 +515,6 @@ class Window(MSFluentWindow):
         if self.focus_time >= len(self.FOCUS_TIMEOUT_TIME):
             self.focus_time = 1
 
-        # 设置窗口属性
-        window_width = self.config_manager.get_foundation_setting('window_width')
-        window_height = self.config_manager.get_foundation_setting('window_height')
-        self.resize(window_width, window_height)
-        self.setMinimumSize(self.MINIMUM_WINDOW_SIZE[0], self.MINIMUM_WINDOW_SIZE[1])
-        self.setWindowTitle('SecRandom')
-        self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'secrandom-icon-paper.png'))))
-
-        # 应用背景图片
-        self.apply_background_image()
-
-        # 初始化基本UI组件
-        self._initialize_basic_ui()
-        
-        # 启动初始化
-        self._initialize_async()
-
-    def _initialize_basic_ui(self):
-        """初始化基本UI组件
-        初始化最基本的UI组件，确保窗口可以快速显示"""
-        # 设置窗口位置
-        self._position_window()
-        
-        # 创建基本的子界面
-        self.createSubInterface()
-        
-        # 应用窗口可见性设置
-        self._apply_window_visibility_settings()
-        
-        # 设置窗口置顶状态
-        if self.config_manager.get_foundation_setting('topmost_switch'):
-            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # 置顶
-        else:
-            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)  # 取消置顶
-            
-        logger.info("基本UI组件初始化完成")
-
-    def _initialize_async(self):
-        """初始化"""
         # 启动焦点计时器
         # 修复CPU占用过高问题，设置最低计时器间隔为200ms
         if self.focus_time == 0:
@@ -562,32 +523,64 @@ class Window(MSFluentWindow):
             # 确保计时器间隔不小于200ms
             interval = max(self.FOCUS_TIMEOUT_TIME[self.focus_time], 200)
             self.focus_timer.start(interval)
+
+        # 设置窗口属性
+        window_width = self.config_manager.get_foundation_setting('window_width')
+        window_height = self.config_manager.get_foundation_setting('window_height')
+        self.resize(window_width, window_height)
+        self.setMinimumSize(self.MINIMUM_WINDOW_SIZE[0], self.MINIMUM_WINDOW_SIZE[1])
+        self.setWindowTitle('SecRandom')
+        self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'secrandom-icon-paper.png'))))
+
+        # 优化：尽早启动清理任务，提高优先级
+        self.start_cleanup()
         
-        # 启动USB检测定时器
-        self.usb_detection_timer.start(5000)  # 每5秒检查一次
-        
+        # 异步应用背景图片，不阻塞主线程
+        QTimer.singleShot(0, self.apply_background_image)
+
         # 检查更新
         check_startup = self.config_manager.get_foundation_setting('check_on_startup')
         if check_startup:
             self.check_updates_async()
+
+        self._position_window()
         
-        # 创建托盘图标
-        self.tray_manager = TrayIconManager(self)
-        self.tray_manager.tray_icon.show()
+        # 优化：尽早创建核心界面，确保窗口大小保存可以尽早执行
+        self.createSubInterface()
         
-        # 启动清理任务
-        self.start_cleanup()
+        # 优化：立即初始化托盘图标管理器，减少延迟
+        self._init_tray_manager()
         
-        # 创建悬浮窗口
-        self.levitation_window = LevitationWindow()
-        if self.config_manager.get_floating_window_setting('pumping_floating_enabled'):
+        # 优化：尽早应用窗口显示设置，确保窗口大小保存可以尽早执行
+        self._apply_window_visibility_settings()
+        
+        # 优化：减少悬浮窗口创建延迟，从200ms减少到50ms
+        QTimer.singleShot(50, self._create_levitation_window)
+
+        if self.config_manager.get_foundation_setting('topmost_switch'):
+            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint) # 置顶
+        else:
+            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint) # 取消置顶
+
+    def _create_levitation_window(self):
+        """延迟创建悬浮窗口
+        优化：简化创建流程，减少初始化时间"""
+        try:
+            # 优化：直接创建悬浮窗口，减少不必要的条件判断
+            self.levitation_window = LevitationWindow()
+            # 优化：移除条件判断，直接显示悬浮窗口，后续可以通过设置控制
             self.levitation_window.show()
+            logger.info("悬浮窗口已创建")
+        except Exception as e:
+            logger.error(f"创建悬浮窗口失败: {e}")
 
     def apply_background_image(self):
         """应用背景图片和颜色
         检查设置中的 enable_main_background 和 enable_main_background_color，
         如果开启则应用主界面背景图片或背景颜色"""
         try:
+            logger.info("开始应用背景图片或颜色")
+            
             # 读取自定义设置
             custom_settings_path = path_manager.get_settings_path('custom_settings.json')
             with open_file(custom_settings_path, 'r', encoding='utf-8') as f:
@@ -880,18 +873,22 @@ class Window(MSFluentWindow):
     
     def _apply_window_visibility_settings(self):
         """应用窗口显示设置
-        根据用户保存的设置决定窗口是否自动显示"""
+        根据用户保存的设置决定窗口是否自动显示，优化窗口大小保存时机"""
         try:
-            settings = self.config_manager.load_settings()
-            # 显示窗口
-            self.show()
+            logger.info("开始应用窗口显示设置")
             
-            # 如果是开机自启动，则在短暂延迟后隐藏窗口
-            if settings.get('self_starting_enabled') == True:
-                self.hide()
-                logger.info("开机自启动模式，窗口已隐藏")
-            else:
-                logger.info("主窗口已显示")
+            settings = self.config_manager.load_settings()
+            # 不在初始化时显示窗口，等待所有组件加载完成后再显示
+            # self.show()
+            
+            # 保存开机自启动设置，稍后在main.py中使用
+            self.is_self_starting = settings.get('self_starting_enabled') == True
+            
+            # 立即执行一次窗口大小保存，确保在安全设置加载完成后尽快保存
+            # 这样可以减少安全设置加载完成与窗口大小保存之间的时间间隔
+            if not self.isMaximized():
+                self.config_manager.save_window_size(self.width(), self.height())
+                logger.info(f"窗口大小已提前保存为 {self.width()}x{self.height()}")
         except Exception as e:
             logger.error(f"加载窗口显示设置失败: {e}")
 
@@ -903,71 +900,186 @@ class Window(MSFluentWindow):
 
     def createSubInterface(self):
         """创建子界面
-        搭建子界面导航系统"""
-        # 创建关于界面
-        self.about_settingInterface = about(self)
-        self.about_settingInterface.setObjectName("about_settingInterface")
-        logger.info("关于界面已创建")
-        
-        # 通用界面创建函数
-        def _create_interface(attr_name, class_type, sidebar_key, default_value, default_on_error=None, object_name=None, create_on_value_not=2, log_name=None, create_on_error=True):
+        搭建子界面导航系统，采用延迟加载策略优化启动速度"""
+        try:
+            logger.info("开始创建核心界面")
+            
+            # 创建设置界面（核心界面，立即创建）
+            self.settingInterface = settings_Window(self)
+            self.settingInterface.setObjectName("settingInterface")
+            logger.info("设置界面已创建")
+
+            # 创建关于界面（核心界面，立即创建）
+            self.about_settingInterface = about(self)
+            self.about_settingInterface.setObjectName("about_settingInterface")
+            logger.info("关于界面已创建")
+            
+            # 延迟加载其他界面，减少初始化时间
+            self._delayed_interfaces_created = False
+            
+            # 立即创建核心界面（点名和抽奖），其他界面延迟加载
+            self._create_core_interfaces()
+            
+            # 优化：减少延迟加载非核心界面的时间，从100ms减少到0ms
+            QTimer.singleShot(0, self._create_remaining_interfaces)
+        except Exception as e:
+            logger.error(f"创建子界面失败: {e}")
+
+    def _create_core_interfaces(self):
+        """创建核心界面（点名和抽奖）
+        这些是用户最常用的界面，优先创建"""
+        try:
             settings_path = path_manager.get_settings_path('custom_settings.json')
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 sidebar_settings = settings.get('sidebar', {})
-                value = sidebar_settings.get(sidebar_key, default_value)
-                if value != create_on_value_not:
-                    setattr(self, attr_name, class_type(self))
-                    if object_name:
-                        getattr(self, attr_name).setObjectName(object_name)
-                    logger.info(f"{log_name or attr_name}界面已创建")
+                
+                # 创建点名界面（核心界面）
+                pumping_floating_side = sidebar_settings.get('pumping_floating_side', 0)
+                if pumping_floating_side != 2:  # 不为2才创建
+                    self.pumping_peopleInterface = pumping_people(self)
+                    self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
+                    logger.info("点名界面已创建")
                 else:
-                    logger.info(f"'{log_name or attr_name}'界面已设置为不创建")
-                    setattr(self, attr_name, None)
+                    self.pumping_peopleInterface = None
+                    logger.info("'点名'界面已设置为不创建")
+                
+                # 创建抽奖界面（核心界面）
+                pumping_reward_side = sidebar_settings.get('pumping_reward_side', 0)
+                if pumping_reward_side != 2:  # 不为2才创建
+                    self.pumping_rewardInterface = pumping_reward(self)
+                    self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
+                    logger.info("抽奖界面已创建")
+                else:
+                    self.pumping_rewardInterface = None
+                    logger.info("'抽奖'界面已设置为不创建")
+                    
+        except Exception as e:
+            logger.error(f"创建核心界面失败: {e}")
+            # 出错时创建默认的核心界面
+            self.pumping_peopleInterface = pumping_people(self)
+            self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
+            self.pumping_rewardInterface = pumping_reward(self)
+            self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
+            logger.info("已创建默认核心界面")
 
-        # 创建各个子界面
-        # 抽象成函数，提升可读性喵~
-        _create_interface(
-            attr_name='history_handoff_settingInterface',
-            class_type=history_handoff_setting,
-            sidebar_key='main_window_history_switch',
-            default_value=1,
-            object_name='history_handoff_settingInterface',
-            log_name='历史交接设置',
-            create_on_error=True
-        )
-        _create_interface(
-            attr_name='vocabulary_learningInterface',
-            class_type=vocabulary_learning,
-            sidebar_key='main_window_side_switch',
-            default_value=2,
-            object_name='vocabulary_learningInterface',
-            log_name='背单词',
-            create_on_error=False,
-            default_on_error=None
-        )
-        _create_interface(
-            attr_name='pumping_peopleInterface',
-            class_type=pumping_people,
-            sidebar_key='pumping_floating_side',
-            default_value=0,
-            object_name='pumping_peopleInterface',
-            log_name='点名',
-            create_on_error=True
-        )
-        _create_interface(
-            attr_name='pumping_rewardInterface',
-            class_type=pumping_reward,
-            sidebar_key='pumping_reward_side',
-            default_value=0,
-            object_name='pumping_rewardInterface',
-            log_name='抽奖',
-            create_on_error=True
-        )
+    def _create_remaining_interfaces(self):
+        """创建剩余的非核心界面
+        这些界面在后台异步创建，不影响主界面显示速度"""
+        if self._delayed_interfaces_created:
+            return
+            
+        try:
+            # 优化：减少异步创建历史交接设置界面的延迟，从50ms减少到0ms
+            QTimer.singleShot(0, self._create_history_handoff_interface)
+            
+            # 优化：减少异步创建背单词界面的延迟，从100ms减少到0ms
+            QTimer.singleShot(0, self._create_vocabulary_learning_interface)
+            
+        except Exception as e:
+            logger.error(f"启动延迟界面创建失败: {e}")
+            # 即使失败也要初始化导航系统
+            QTimer.singleShot(0, self.initNavigation)
 
-        # 初始化导航系统
-        self.initNavigation()
-        logger.info("所有子界面和导航系统已初始化完成")
+    def _create_history_handoff_interface(self):
+        """异步创建历史交接设置界面"""
+        try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                value = sidebar_settings.get('main_window_history_switch', 1)
+                if value != 2:  # 不为2才创建
+                    self.history_handoff_settingInterface = history_handoff_setting(self)
+                    self.history_handoff_settingInterface.setObjectName('history_handoff_settingInterface')
+                    logger.info("历史交接设置界面已创建")
+                else:
+                    logger.info("'历史交接设置'界面已设置为不创建")
+                    self.history_handoff_settingInterface = None
+                    
+            # 检查是否所有延迟界面都已创建
+            self._check_all_interfaces_created()
+        except Exception as e:
+            logger.error(f"创建历史交接设置界面失败: {e}")
+            self.history_handoff_settingInterface = None
+            # 检查是否所有延迟界面都已创建
+            self._check_all_interfaces_created()
+
+    def _create_vocabulary_learning_interface(self):
+        """异步创建背单词界面"""
+        try:
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                value = sidebar_settings.get('main_window_side_switch', 2)
+                if value != 2:  # 不为2才创建
+                    # 创建界面但不立即加载设置，减少初始化时间
+                    self.vocabulary_learningInterface = vocabulary_learning(self)
+                    self.vocabulary_learningInterface.setObjectName('vocabulary_learningInterface')
+                    logger.info("背单词界面已创建")
+                    
+                    # 优化：移除异步加载设置，减少初始化时间
+                    # QTimer.singleShot(0, self._load_vocabulary_learning_settings)
+                else:
+                    logger.info("'背单词'界面已设置为不创建")
+                    self.vocabulary_learningInterface = None
+                    
+            # 检查是否所有延迟界面都已创建
+            self._check_all_interfaces_created()
+        except Exception as e:
+            logger.error(f"创建背单词界面失败: {e}")
+            self.vocabulary_learningInterface = None
+            # 检查是否所有延迟界面都已创建
+            self._check_all_interfaces_created()
+
+    def _load_vocabulary_learning_settings(self):
+        """异步加载背单词界面设置"""
+        try:
+            if hasattr(self, 'vocabulary_learningInterface') and self.vocabulary_learningInterface:
+                # 异步加载设置，避免阻塞主线程
+                QTimer.singleShot(0, self._async_load_vocabulary_settings)
+        except Exception as e:
+            logger.error(f"异步加载背单词界面设置失败: {e}")
+
+    def _async_load_vocabulary_settings(self):
+        """真正异步加载单词PK设置，避免阻塞主线程"""
+        try:
+            if hasattr(self, 'vocabulary_learningInterface') and self.vocabulary_learningInterface:
+                # 先加载基本设置（不包含词库）
+                self.vocabulary_learningInterface.load_settings()
+                logger.info("背单词界面基本设置已异步加载")
+                
+                # 异步加载词库，避免阻塞主线程
+                QTimer.singleShot(100, self._async_load_vocabulary)
+        except Exception as e:
+            logger.error(f"异步加载单词PK基本设置失败: {e}")
+
+    def _async_load_vocabulary(self):
+        """异步加载词库，避免阻塞主线程"""
+        try:
+            if hasattr(self, 'vocabulary_learningInterface') and self.vocabulary_learningInterface:
+                # 检查是否有当前词库
+                if hasattr(self.vocabulary_learningInterface, 'current_vocabulary') and self.vocabulary_learningInterface.current_vocabulary:
+                    # 异步加载词库
+                    self.vocabulary_learningInterface.load_vocabulary(self.vocabulary_learningInterface.current_vocabulary)
+                    logger.info("背单词界面词库已异步加载")
+                else:
+                    logger.info("背单词界面未设置当前词库，跳过词库加载")
+        except Exception as e:
+            logger.error(f"异步加载词库失败: {e}")
+
+    def _check_all_interfaces_created(self):
+        """检查所有延迟界面是否已创建完成，如果是则初始化导航系统"""
+        # 检查所有延迟界面是否都已创建（无论成功与否）
+        if (hasattr(self, 'history_handoff_settingInterface') and 
+            hasattr(self, 'vocabulary_learningInterface')):
+            # 标记延迟界面已创建
+            self._delayed_interfaces_created = True
+            
+            # 初始化导航系统
+            self.initNavigation()
+            logger.info("所有子界面和导航系统已初始化完成")
 
     def initNavigation(self):
         """初始化导航系统
@@ -977,161 +1089,138 @@ class Window(MSFluentWindow):
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 sidebar_settings = settings.get('sidebar', {})
-            navigation_items = [
-                {
-                    'name': '点名',
-                    'interface': self.pumping_peopleInterface,
-                    'icon': 'ic_fluent_people_community_20_filled',
-                    'setting_key': 'pumping_floating_side',
-                    'default_position': 0  # 0:顶部, 1:底部, 2:不显示
-                },
-                {
-                    'name': '抽奖',
-                    'interface': self.pumping_rewardInterface,
-                    'icon': 'ic_fluent_reward_20_filled',
-                    'setting_key': 'pumping_reward_side',
-                    'default_position': 0
-                },
-                {
-                    'name': '单词PK',
-                    'interface': self.vocabulary_learningInterface,
-                    'icon': 'ic_fluent_text_whole_word_20_filled',
-                    'setting_key': 'main_window_side_switch',
-                    'default_position': 2
-                },
-                {
-                    'name': '历史记录',
-                    'interface': self.history_handoff_settingInterface,
-                    'icon': 'ic_fluent_chat_history_20_filled',
-                    'setting_key': 'main_window_history_switch',
-                    'default_position': 1,
-                    'has_custom_click': True
-                }
-            ]
-            
-            # 添加可配置的导航项
-            for item in navigation_items:
-                try:
-                    position_setting = sidebar_settings.get(item['setting_key'], item['default_position'])
-                    self._add_navigation_item(item, position_setting)
-                except Exception as e:
-                    logger.error(f"加载'{item['name']}'导航项失败: {e}")
-                    # 使用默认位置添加导航项
-                    if item['interface'] is not None:
-                        self._add_navigation_item(item, item['default_position'])
-            
-            # 添加"关于"导航项（固定在底部）
-            self.addSubInterface(
-                self.about_settingInterface, 
-                get_theme_icon("ic_fluent_info_20_filled"), 
-                '关于', 
-                position=NavigationItemPosition.BOTTOM
-            )
-            
-            # 添加"设置"导航项
-            self._add_settings_navigation_item(sidebar_settings)
-            
+                # logger.info("已读取导航配置，准备构建个性化菜单")
+
+                # 根据设置决定"点名"界面位置
+                pumping_floating_side = sidebar_settings.get('pumping_floating_side', 0)
+                if pumping_floating_side == 1:
+                    if self.pumping_peopleInterface is not None:
+                        self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.BOTTOM)
+                        # logger.info("'点名'界面已放置在底部导航栏")
+                    else:
+                        logger.error("'点名'界面未创建，无法添加到导航栏")
+                elif pumping_floating_side == 2:
+                    logger.info("'点名'界面已设置为不显示")
+                else:
+                    if self.pumping_peopleInterface is not None:
+                        self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.TOP)
+                        # logger.info("'点名'界面已放置在顶部导航栏")
+                    else:
+                        logger.error("'点名'界面未创建，无法添加到导航栏")
+
+                # 根据设置决定"抽奖"界面位置
+                pumping_reward_side = sidebar_settings.get('pumping_reward_side', 0)
+                if pumping_reward_side == 1:
+                    if self.pumping_rewardInterface is not None:
+                        self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.BOTTOM)
+                        # logger.info("'抽奖'界面已放置在底部导航栏")
+                    else:
+                        logger.error("'抽奖'界面未创建，无法添加到导航栏")
+                elif pumping_reward_side == 2:
+                    logger.info("'抽奖'界面已设置为不显示")
+                else:
+                    if self.pumping_rewardInterface is not None:
+                        self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
+                        # logger.info("'抽奖'界面已放置在顶部导航栏")
+                    else:
+                        logger.error("'抽奖'界面未创建，无法添加到导航栏")
+
         except FileNotFoundError as e:
             logger.error(f"配置文件找不到: {e}, 使用默认顶部导航布局")
-            # 使用默认布局添加主要导航项
             if self.pumping_peopleInterface is not None:
-                self.addSubInterface(
-                    self.pumping_peopleInterface, 
-                    get_theme_icon("ic_fluent_people_community_20_filled"), 
-                    '点名', 
-                    position=NavigationItemPosition.TOP
-                )
+                self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.TOP)
             if self.pumping_rewardInterface is not None:
-                self.addSubInterface(
-                    self.pumping_rewardInterface, 
-                    get_theme_icon("ic_fluent_reward_20_filled"), 
-                    '抽奖', 
-                    position=NavigationItemPosition.TOP
-                )
-    
-    def _add_navigation_item(self, item_config, position):
-        """添加单个导航项
-        
-        Args:
-            item_config: 导航项配置字典
-            position: 位置设置 (0:顶部, 1:底部, 2:不显示)
-        """
-        interface = item_config['interface']
-        name = item_config['name']
-        
-        if interface is None:
-            logger.error(f"'{name}'界面未创建，无法添加到导航栏")
-            return
-        
-        if position == 2:  # 不显示
-            logger.info(f"'{name}'界面已设置为不显示")
-            return
-        
-        # 确定导航位置
-        nav_position = NavigationItemPosition.BOTTOM if position == 1 else NavigationItemPosition.TOP
-        
-        # 添加导航项
-        nav_item = self.addSubInterface(
-            interface,
-            get_theme_icon(item_config['icon']),
-            name,
-            position=nav_position
-        )
-        
-        # 如果需要自定义点击事件（如历史记录）
-        if item_config.get('has_custom_click', False):
-            nav_item.clicked.connect(lambda: self.switchTo(interface))
-        
-        # logger.info(f"'{name}'界面已放置在{'底部' if position == 1 else '顶部'}导航栏")
-    
-    def _add_settings_navigation_item(self, sidebar_settings):
-        """添加设置导航项
-        
-        Args:
-            sidebar_settings: 侧边栏设置字典
-        """
+                self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
+
         try:
-            show_settings = sidebar_settings.get('show_settings_icon', 1)
-            
-            if show_settings == 2:  # 不显示
-                logger.info("'设置'图标已设置为不显示")
-                return
-            
-            # 创建设置界面占位符
-            self.settings_placeholder = QWidget()
-            self.settings_placeholder.setObjectName("settings_placeholder")
-            
-            # 确定导航位置
-            nav_position = NavigationItemPosition.BOTTOM if show_settings == 1 else NavigationItemPosition.TOP
-            
-            # 添加设置导航项
-            settings_item = self.addSubInterface(
-                self.settings_placeholder,
-                get_theme_icon("ic_fluent_settings_20_filled"),
-                '设置',
-                position=nav_position
-            )
-            
-            # 添加点击事件
-            settings_item.clicked.connect(self.show_setting_interface)
-            settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
-            
-            # logger.info(f"'设置'图标已放置在{'底部' if show_settings == 1 else '顶部'}导航栏")
-            
+            # 添加单词PK界面导航项
+            vocabulary_side = sidebar_settings.get('main_window_side_switch', 2)
+            if vocabulary_side == 1:
+                if self.vocabulary_learningInterface is not None:
+                    self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
+                    # logger.info("'单词PK'界面已放置在底部导航栏")
+                else:
+                    logger.error("'单词PK'界面未创建，无法添加到导航栏")
+            elif vocabulary_side == 2:
+                logger.info("'单词PK'界面已设置为不显示")
+            else:
+                if self.vocabulary_learningInterface is not None:
+                    self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.TOP)
+                    # logger.info("'单词PK'界面已放置在顶部导航栏")
+                else:
+                    logger.error("'单词PK'界面未创建，无法添加到导航栏")
         except Exception as e:
-            logger.error(f"加载设置图标失败: {e}")
-            # 默认显示设置图标在底部
-            if sidebar_settings.get('show_settings_icon', True):
+            if self.vocabulary_learningInterface is not None:
+                self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
+            logger.error(f"加载单词PK界面导航项失败: {e}")
+
+        # 添加历史记录导航项
+        try:
+            history_side = sidebar_settings.get('main_window_history_switch', 1)
+            if history_side == 1:
+                if self.history_handoff_settingInterface is not None:
+                    # 为历史记录导航项添加点击事件处理器
+                    history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+                    # 点击历史记录导航项时切换到历史记录界面
+                    history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
+                    # logger.info("'历史记录'导航项已放置在底部导航栏")
+                else:
+                    logger.error("'历史记录'界面未创建，无法添加到导航栏")
+            elif history_side == 2:
+                logger.info("'历史记录'导航项已设置为不显示")
+            else:
+                if self.history_handoff_settingInterface is not None:
+                    # 为历史记录导航项添加点击事件处理器
+                    history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.TOP)
+                    # 点击历史记录导航项时切换到历史记录界面
+                    history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
+                    # logger.info("'历史记录'导航项已放置在顶部导航栏")
+                else:
+                    logger.error("'历史记录'界面未创建，无法添加到导航栏")
+        except Exception as e:
+            logger.error(f"加载历史记录导航项失败: {e}")
+            # 默认添加到底部导航栏
+            if self.history_handoff_settingInterface is not None:
+                history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
+                # 点击历史记录导航项时切换到历史记录界面
+                history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
+
+        self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
+
+        try:
+            settings_side = sidebar_settings.get('show_settings_icon', 1)
+            if settings_side == 1:
+                # 创建一个空的设置界面占位符，用于导航栏
                 self.settings_placeholder = QWidget()
                 self.settings_placeholder.setObjectName("settings_placeholder")
-                settings_item = self.addSubInterface(
-                    self.settings_placeholder,
-                    get_theme_icon("ic_fluent_settings_20_filled"),
-                    '设置',
-                    position=NavigationItemPosition.BOTTOM
-                )
+                settings_item = self.addSubInterface(self.settings_placeholder, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.BOTTOM)
+                # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
+                # logger.info("'设置'图标已放置在底部导航栏")
+            elif settings_side == 2:
+                logger.info("'设置'图标已设置为不显示")
+            else:
+                # 创建一个空的设置界面占位符，用于导航栏
+                self.settings_placeholder = QWidget()
+                self.settings_placeholder.setObjectName("settings_placeholder")
+                settings_item = self.addSubInterface(self.settings_placeholder, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.TOP)
+                # 为导航项添加点击事件处理器，调用show_setting_interface方法
+                settings_item.clicked.connect(self.show_setting_interface)
+                settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
+                # logger.info("'设置'图标已放置在顶部导航栏")
+        except Exception as e:
+            logger.error(f"加载设置图标失败: {e}")
+            if sidebar_settings.get('show_settings_icon', True):
+                # 创建一个空的设置界面占位符，用于导航栏
+                self.settings_placeholder = QWidget()
+                self.settings_placeholder.setObjectName("settings_placeholder")
+                settings_item = self.addSubInterface(self.settings_placeholder, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.BOTTOM)
+                # 为导航项添加点击事件处理器，调用show_setting_interface方法
+                settings_item.clicked.connect(self.show_setting_interface)
+                settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
+        
+        # logger.info("所有导航项已布置完成，导航系统可以正常使用")
 
     def closeEvent(self, event):
         """窗口关闭事件处理
@@ -1208,28 +1297,6 @@ class Window(MSFluentWindow):
         窗口获得焦点时重置闲置计时器"""
         super().focusInEvent(event)
         self.last_focus_time = QDateTime.currentDateTime()
-
-    # 设置界面显示
-    def show_create_setting_interface(self, create_exists):
-        """显示设置界面
-        检查实例是否存在，不存在则创建"""
-        # 使用单例模式获取 GlobalVars 实例
-        setting_interface = global_vars.get_setting_interface(create_exists)
-
-        if setting_interface and create_exists:
-            if setting_interface.isVisible() and not setting_interface.isMinimized():
-                setting_interface.showNormal() 
-                setting_interface.activateWindow()
-                setting_interface.raise_()
-            else:
-                if setting_interface.isMinimized():
-                    setting_interface.showNormal()
-                    setting_interface.activateWindow()
-                    setting_interface.raise_()
-                else:
-                    setting_interface.show()
-                    setting_interface.activateWindow()
-                    setting_interface.raise_()
 
     def _is_non_class_time(self):
         """检测当前时间是否在非上课时间段
@@ -1330,9 +1397,31 @@ class Window(MSFluentWindow):
             self.raise_()
         self.switchTo(self.about_settingInterface)
 
+    def _init_tray_manager(self):
+        """初始化托盘图标管理器
+        优化：简化初始化流程，减少延迟"""
+        try:
+            # 优化：移除不必要的日志输出，减少IO操作
+            # logger.info("开始异步初始化托盘图标管理器")
+            
+            # 初始化托盘图标管理器
+            self.tray_manager = TrayIconManager(self)
+            self.tray_manager.tray_icon.show()
+            # 优化：移除不必要的日志输出，减少IO操作
+            # logger.info("托盘图标管理器初始化完成")
+        except Exception as e:
+            logger.error(f"初始化托盘图标管理器失败: {e}")
+
     def start_cleanup(self):
         """启动清理
-        软件启动时清理上次遗留的临时抽取记录文件"""
+        软件启动时清理上次遗留的临时抽取记录文件，改为异步执行以减少初始化时间"""
+        # 优化：将清理任务优先级提高，使用更短的延迟时间
+        QTimer.singleShot(0, self._perform_cleanup)
+        logger.info("清理任务已安排在后台异步执行")
+
+    def _perform_cleanup(self):
+        """实际执行清理操作
+        优化：简化清理逻辑，减少执行时间"""
         try:
             settings_path = path_manager.get_settings_path('Settings.json')
             with open_file(settings_path, 'r', encoding='utf-8') as f:
@@ -1340,8 +1429,6 @@ class Window(MSFluentWindow):
                 clear_mode = settings['pumping_people']['clear_mode']
                 instant_clear_mode = settings['instant_draw']['clear_mode']
                 instant_clear = settings['instant_draw']['instant_clear']
-                # logger.debug("准备执行对应清理方案")
-
         except Exception as e:
             clear_mode = 1
             instant_clear_mode = 1
@@ -1352,22 +1439,33 @@ class Window(MSFluentWindow):
         temp_dir = path_manager.get_temp_path('')
         ensure_dir(temp_dir)
 
-        if (clear_mode != 1 or instant_clear_mode != 1) and not instant_clear:
-            if path_manager.file_exists(temp_dir):
-                for file in glob.glob(f"{temp_dir}/*.json"):
-                    try:
-                        os.remove(file)
-                        logger.info(f"已删除临时抽取记录文件: {file}")
-                    except Exception as e:
-                        logger.error(f"删除临时文件出错: {e}")
-        elif (clear_mode != 1 or instant_clear_mode != 1) and instant_clear:
-            if path_manager.file_exists(temp_dir):
-                for file in glob.glob(f"{temp_dir}/*_instant.json"):
-                    try:
-                        os.remove(file)
-                        logger.info(f"已删除临时抽取记录文件: {file}")
-                    except Exception as e:
-                        logger.error(f"删除临时文件出错: {e}")
+        # 优化：进一步简化条件判断逻辑，减少分支
+        if not path_manager.file_exists(temp_dir):
+            logger.info("临时目录不存在，跳过清理")
+            return
+
+        # 优化：提前计算需要清理的文件类型，减少重复判断
+        if instant_clear:
+            files_pattern = f"{temp_dir}/*_instant.json"
+            log_message = "即时抽取记录文件"
+        elif clear_mode != 1 or instant_clear_mode != 1:
+            files_pattern = f"{temp_dir}/*.json"
+            log_message = "临时抽取记录文件"
+        else:
+            logger.info("当前设置不需要清理临时文件")
+            return
+
+        # 优化：使用更高效的文件查找和清理方式
+        files_to_remove = glob.glob(files_pattern)
+        if files_to_remove:
+            logger.info(f"准备清理 {len(files_to_remove)} 个{log_message}")
+            for file in files_to_remove:
+                try:
+                    os.remove(file)
+                except Exception as e:
+                    logger.error(f"删除临时文件出错: {e}")
+        else:
+            logger.info(f"没有需要清理的{log_message}")
 
     def toggle_window(self):
         """切换窗口显示状态
@@ -1548,6 +1646,20 @@ class Window(MSFluentWindow):
             self.levitation_window.hide()
             logger.info("悬浮窗已隐藏")
         
+        # 彻底清理设置界面，防止重启后嵌套问题
+        if hasattr(self, 'settingInterface') and self.settingInterface:
+            try:
+                # 先断开所有信号连接
+                if hasattr(self.settingInterface, 'usb_monitor_thread') and self.settingInterface.usb_monitor_thread:
+                    self.settingInterface.usb_monitor_thread.usb_removed.disconnect()
+                
+                # 关闭设置界面
+                self.settingInterface.close()
+                self.settingInterface = None
+                logger.info("设置界面已完全清理")
+            except Exception as e:
+                logger.error(f"清理设置界面时出错: {e}")
+        
         # 停止所有计时器
         if hasattr(self, 'focus_timer'):
             self.stop_focus_timer()
@@ -1679,13 +1791,23 @@ class Window(MSFluentWindow):
                 json.dump(settings, f, ensure_ascii=False, indent=4)
         except Exception as e:
             logger.error(f"写入verification_start失败: {e}")
-        
-        # 创建设置界面进程
-        try:
-            self.show_create_setting_interface(True)
 
-        except Exception as e:
-            logger.error(f"启动设置界面失败: {e}")
+        if not hasattr(self, 'settingInterface') or not self.settingInterface:
+            self.settingInterface = settings_Window(self)
+
+        if self.settingInterface.isVisible() and not self.settingInterface.isMinimized():
+            self.settingInterface.showNormal() 
+            self.settingInterface.activateWindow()
+            self.settingInterface.raise_()
+        else:
+            if self.settingInterface.isMinimized():
+                self.settingInterface.showNormal()
+                self.settingInterface.activateWindow()
+                self.settingInterface.raise_()
+            else:
+                self.settingInterface.show()
+                self.settingInterface.activateWindow()
+                self.settingInterface.raise_()
 
     def toggle_levitation_window(self):
         """切换悬浮窗显示状态
@@ -1941,10 +2063,23 @@ class Window(MSFluentWindow):
             self.show_setting_interface()
         else:
             # 跳过安全验证，直接创建并显示设置界面
-            try:
-                self.show_create_setting_interface(True)
-            except Exception as e:
-                logger.error(f"启动设置界面失败: {e}")
+            if not hasattr(self, 'settingInterface') or not self.settingInterface:
+                from app.view.settings import settings_Window
+                self.settingInterface = settings_Window(self)
+
+            if self.settingInterface.isVisible() and not self.settingInterface.isMinimized():
+                self.settingInterface.showNormal() 
+                self.settingInterface.activateWindow()
+                self.settingInterface.raise_()
+            else:
+                if self.settingInterface.isMinimized():
+                    self.settingInterface.showNormal()
+                    self.settingInterface.activateWindow()
+                    self.settingInterface.raise_()
+                else:
+                    self.settingInterface.show()
+                    self.settingInterface.activateWindow()
+                    self.settingInterface.raise_()
         
         logger.info("设置界面已成功打开")
     

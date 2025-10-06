@@ -2143,18 +2143,21 @@ class LevitationWindow(QWidget):
         super().closeEvent(event)
 
     def _init_keep_top_timer(self):
-        """初始化保持置顶定时器 - 每5秒钟让浮窗置顶一下"""
+        """初始化保持置顶定时器
+        优化：减少定时器间隔并提高置顶效率"""
+        # 优化：减少定时器间隔从200ms到100ms，提高响应速度
         self.keep_top_timer = QTimer(self)
         self.keep_top_timer.timeout.connect(self._keep_window_on_top)
-        self.keep_top_timer.start(200)
+        self.keep_top_timer.start(100)  # 减少间隔时间，提高响应速度
         logger.info("浮窗置顶定时器已启动")
 
     def _keep_window_on_top(self):
-        """保持窗口置顶"""
+        """保持窗口置顶
+        优化：简化置顶逻辑，提高效率"""
         try:
+            # 优化：只执行必要的置顶操作，移除不必要的条件判断
             self.raise_()  # 将窗口提升到最前面
-            if hasattr(self, 'arrow_widget') and self.arrow_widget:
-                self.arrow_widget.raise_()
+            # 注释掉激活窗口的操作，避免干扰用户当前操作
             # self.activateWindow()  # 激活窗口
         except Exception as e:
             logger.error(f"保持窗口置顶失败: {e}")

@@ -56,6 +56,11 @@ def set_update_channel(channel):
             with open_file(settings_file, 'r', encoding='utf-8') as f:
                 config = json.load(f)
         
+        # 检查通道是否已设置，避免重复操作
+        if config.get('channel') == channel:
+            # logger.debug(f"更新通道已为 {channel}，无需更改")
+            return
+        
         # 更新通道配置
         config['channel'] = channel
         
@@ -144,6 +149,10 @@ def load_custom_font():
     Returns:
         str: 字体家族名称，如果加载失败则返回 None
     """
+    # 检查是否已经加载过字体，避免重复加载
+    if hasattr(load_custom_font, '_font_cache') and load_custom_font._font_cache:
+        return load_custom_font._font_cache
+    
     # 读取自定义设置文件
     try:
         custom_settings_path = path_manager.get_settings_path('custom_settings.json')
@@ -162,9 +171,13 @@ def load_custom_font():
                     return None
                 font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
                 # logger.info(f"成功加载自定义字体: {font_family}")
+                # 缓存字体
+                load_custom_font._font_cache = font_family
                 return font_family
             else:
                 # logger.info(f"使用系统默认字体: {font_family_setting}")
+                # 缓存字体
+                load_custom_font._font_cache = font_family_setting
                 return font_family_setting
         else:
             # 如果自定义设置文件不存在，默认加载 HarmonyOS Sans SC 字体
@@ -175,6 +188,8 @@ def load_custom_font():
                 return None
             font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
             # logger.info(f"成功加载默认字体: {font_family}")
+            # 缓存字体
+            load_custom_font._font_cache = font_family
             return font_family
     except Exception as e:
         logger.error(f"读取自定义设置失败，使用默认字体: {e}")
@@ -185,6 +200,8 @@ def load_custom_font():
             logger.error(f"加载自定义字体失败: {font_path}")
             return None
         font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
+        # 缓存字体
+        load_custom_font._font_cache = font_family
         return font_family
 
 class FluentSystemIcons(FluentFontIconBase):

@@ -597,6 +597,8 @@ class vocabulary_learning(QWidget):
     
     def load_settings(self):
         """从Settings文件夹加载设置"""
+        logger.info("开始加载单词PK设置")
+        
         try:
             # 获取Settings目录路径
             settings_dir = path_manager.get_absolute_path('app/Settings')
@@ -651,22 +653,17 @@ class vocabulary_learning(QWidget):
                         
                 if 'current_vocabulary' in settings and settings['current_vocabulary']:
                     self.current_vocabulary = settings['current_vocabulary']
-                    # 重新加载词库
-                    self.load_vocabulary(self.current_vocabulary)
+                    # 注意：这里不再立即加载词库，而是由异步方法负责加载
                 
                 if 'auto_next' in settings:
                     self.auto_next = settings['auto_next']
                     
                 if 'next_word_time' in settings:
                     self.next_word_time = settings['next_word_time']
-                    
-                logger.info("单词PK设置已加载")
                 return True
             else:
-                logger.info("未找到单词PK设置文件，使用默认设置")
                 return False
         except Exception as e:
-            logger.error(f"加载单词PK设置失败: {e}")
             return False
     
     def save_settings(self):
@@ -955,7 +952,6 @@ class vocabulary_learning(QWidget):
         
         # 尝试加载列映射配置
         mapping_file = documents_dir / 'vocabulary_mapping.json'
-        column_mapping = None
         
         if mapping_file.exists():
             try:
