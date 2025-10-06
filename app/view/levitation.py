@@ -48,7 +48,7 @@ class LevitationWindow(QWidget):
                 self.flash_window_side_switch = settings['floating_window']['flash_window_side_switch']
                 self.custom_retract_time = settings['floating_window']['custom_retract_time']
                 self.custom_display_mode = settings['floating_window']['custom_display_mode']
-        except (FileNotFoundError, json.JSONDecodeError) as e:
+        except Exception as e:
             self.transparency_mode = 0.8
             self.floating_visible = 3
             self.button_arrangement_mode = 0
@@ -974,14 +974,21 @@ class LevitationWindow(QWidget):
         self.move_timer.setSingleShot(True)
         self.move_timer.timeout.connect(self.save_position)
 
-    def on_people_press(self, event):
-        # 小鸟游星野：记录拖动起始位置 ✧(๑•̀ㅂ•́)ow✧
+    def on_flash_press(self, event):
+        # 小鸟游星野：闪抽按钮按下事件 - 记录拖动起始位置 ✧(๑•̀ㅂ•́)ow✧
         self.drag_start_position = event.pos()
+        
+        # 确保 click_timer 存在，如果为 None 则重新初始化
+        if not hasattr(self, 'click_timer') or self.click_timer is None:
+            self.click_timer = QTimer(self)
+            self.click_timer.setSingleShot(True)
+            self.click_timer.timeout.connect(lambda: self.start_drag(None))
+        
         # 启动长按计时器（100毫秒 - 进一步优化响应速度）
         self.click_timer.start(100)
 
     def on_people_release(self, event):
-        if self.click_timer.isActive():
+        if hasattr(self, 'click_timer') and self.click_timer is not None and self.click_timer.isActive():
             # 短按：停止计时器并触发点击事件
             self.click_timer.stop()
             self.on_people_clicked()
@@ -1022,6 +1029,13 @@ class LevitationWindow(QWidget):
     def on_instant_draw_button_press(self, event):
         # 即抽按钮按下事件 - 支持长按拖动
         self.drag_start_position = event.pos()
+        
+        # 确保 click_timer 存在，如果为 None 则重新初始化
+        if not hasattr(self, 'click_timer') or self.click_timer is None:
+            self.click_timer = QTimer(self)
+            self.click_timer.setSingleShot(True)
+            self.click_timer.timeout.connect(lambda: self.start_drag(None))
+        
         # 启动长按计时器（100毫秒）
         self.click_timer.start(100)
         
@@ -1041,15 +1055,35 @@ class LevitationWindow(QWidget):
                 logger.error(f"密码验证失败: {e}")
                 return
                 
-        if self.click_timer.isActive():
-            # 短按：停止计时器并触发点击事件
+        if hasattr(self, 'click_timer') and self.click_timer is not None and self.click_timer.isActive():
+            # 短按：停止计时器并检查抽取状态
             self.click_timer.stop()
-            self._show_instant_draw_window()
+            # 如果正在抽取且启用了点击关闭功能，则关闭抽取窗口
+            if self.is_drawing:
+                if hasattr(self, 'pumping_widget') and self.pumping_widget is not None:
+                    # 先调用窗口关闭事件处理函数，确保正确清理资源
+                    self._on_pumping_widget_closed()
+                    # 然后关闭窗口
+                    self.pumping_widget.reject()
+                    logger.info("通过即抽按钮关闭抽取窗口")
+            else:
+                # 未在抽取或未启用点击关闭功能，正常触发即抽窗口
+                self._show_instant_draw_window()
             # 长按：计时器已触发拖动，不执行点击
+        
+        # 确保事件被正确处理
+        event.accept()
             
     def on_reset_button_press(self, event):
         # 重置按钮按下事件 - 支持长按拖动
         self.drag_start_position = event.pos()
+        
+        # 确保 click_timer 存在，如果为 None 则重新初始化
+        if not hasattr(self, 'click_timer') or self.click_timer is None:
+            self.click_timer = QTimer(self)
+            self.click_timer.setSingleShot(True)
+            self.click_timer.timeout.connect(lambda: self.start_drag(None))
+        
         # 启动长按计时器（100毫秒）
         self.click_timer.start(100)
         
@@ -1069,7 +1103,7 @@ class LevitationWindow(QWidget):
                 logger.error(f"密码验证失败: {e}")
                 return
 
-        if self.click_timer.isActive():
+        if hasattr(self, 'click_timer') and self.click_timer is not None and self.click_timer.isActive():
             # 短按：停止计时器并触发点击事件
             self.click_timer.stop()
             self._reset_count()
@@ -1078,6 +1112,13 @@ class LevitationWindow(QWidget):
     def on_increase_button_press(self, event):
         # 增加按钮按下事件 - 支持长按拖动
         self.drag_start_position = event.pos()
+        
+        # 确保 click_timer 存在，如果为 None 则重新初始化
+        if not hasattr(self, 'click_timer') or self.click_timer is None:
+            self.click_timer = QTimer(self)
+            self.click_timer.setSingleShot(True)
+            self.click_timer.timeout.connect(lambda: self.start_drag(None))
+        
         # 启动长按计时器（100毫秒）
         self.click_timer.start(100)
         
@@ -1097,7 +1138,7 @@ class LevitationWindow(QWidget):
                 logger.error(f"密码验证失败: {e}")
                 return
 
-        if self.click_timer.isActive():
+        if hasattr(self, 'click_timer') and self.click_timer is not None and self.click_timer.isActive():
             # 短按：停止计时器并触发点击事件
             self.click_timer.stop()
             self._increase_count()
@@ -1106,6 +1147,13 @@ class LevitationWindow(QWidget):
     def on_decrease_button_press(self, event):
         # 减少按钮按下事件 - 支持长按拖动
         self.drag_start_position = event.pos()
+        
+        # 确保 click_timer 存在，如果为 None 则重新初始化
+        if not hasattr(self, 'click_timer') or self.click_timer is None:
+            self.click_timer = QTimer(self)
+            self.click_timer.setSingleShot(True)
+            self.click_timer.timeout.connect(lambda: self.start_drag(None))
+        
         # 启动长按计时器（100毫秒）
         self.click_timer.start(100)
         
@@ -1125,7 +1173,7 @@ class LevitationWindow(QWidget):
                 logger.error(f"密码验证失败: {e}")
                 return
                 
-        if self.click_timer.isActive():
+        if hasattr(self, 'click_timer') and self.click_timer is not None and self.click_timer.isActive():
             # 短按：停止计时器并触发点击事件
             self.click_timer.stop()
             self._decrease_count()
@@ -1157,7 +1205,7 @@ class LevitationWindow(QWidget):
 
     def mouseMoveEvent(self, event):
         # 检测长按计时期间的鼠标移动，超过阈值立即触发拖动
-        if self.click_timer.isActive() and event.buttons() == Qt.LeftButton:
+        if hasattr(self, 'click_timer') and self.click_timer is not None and self.click_timer.isActive() and event.buttons() == Qt.LeftButton:
             delta = event.pos() - self.drag_start_position
             if abs(delta.x()) > 8 or abs(delta.y()) > 8:
                 self.click_timer.stop()
@@ -1189,7 +1237,8 @@ class LevitationWindow(QWidget):
         was_dragging = getattr(self, 'is_dragging', False)
         self.is_dragging = False
         
-        if self.click_timer.isActive():
+        # 确保 click_timer 存在且不为 None
+        if hasattr(self, 'click_timer') and self.click_timer is not None and self.click_timer.isActive():
             # 小鸟游星野：短按点击，触发主页面打开 ✧(๑•̀ㅂ•́)๑
             self.click_timer.stop()
             self.on_people_clicked()
@@ -1206,28 +1255,44 @@ class LevitationWindow(QWidget):
         if hasattr(self, 'people_label') and isinstance(self.people_label, BodyLabel):
             event.accept()
 
-    def on_flash_press(self, event):
-        # 小鸟游星野：闪抽按钮按下事件 - 记录拖动起始位置 ✧(๑•̀ㅂ•́)ow✧
+    def on_instant_draw_button_press(self, event):
+        # 小鸟游星野：即抽按钮按下事件 - 记录拖动起始位置 ✧(๑•̀ㅂ•́)ow✧
         self.drag_start_position = event.pos()
+        
+        # 确保 click_timer 存在，如果为 None 则重新初始化
+        if not hasattr(self, 'click_timer') or self.click_timer is None:
+            self.click_timer = QTimer(self)
+            self.click_timer.setSingleShot(True)
+            self.click_timer.timeout.connect(lambda: self.start_drag(None))
+        
         # 启动长按计时器（100毫秒 - 进一步优化响应速度）
         self.click_timer.start(100)
 
     def on_flash_release(self, event):
-        # 星穹铁道白露：闪抽按钮释放事件处理 - 区分点击和拖动 (≧∇≦)ﾉ
+        # 星穹铁道白露：闪抽按钮释放事件处理 - 区分点击和拖动，抽取中时关闭窗口 (≧∇≦)ﾉ
         was_dragging = getattr(self, 'is_dragging', False)
         self.is_dragging = False
         
         if self.click_timer.isActive():
-            # 小鸟游星野：短按点击，触发闪抽窗口 ✧(๑•̀ㅂ•́)๑
+            # 小鸟游星野：短按点击，检查抽取状态
             self.click_timer.stop()
-            self.on_flash_clicked()
+            # 如果正在抽取且启用了点击关闭功能，则关闭抽取窗口
+            if self.is_drawing:
+                if hasattr(self, 'pumping_widget') and self.pumping_widget is not None:
+                    # 先调用窗口关闭事件处理函数，确保正确清理资源
+                    self._on_pumping_widget_closed()
+                    # 然后关闭窗口
+                    self.pumping_widget.reject()
+                    logger.info("通过闪抽按钮关闭抽取窗口")
+            else:
+                # 未在抽取或未启用点击关闭功能，正常触发闪抽窗口
+                self.on_flash_clicked()
         elif was_dragging:
             # 白露：拖动结束，保存新位置 (≧∇≦)ﾉ
             self.save_position()
         
-        # 如果是BodyLabel（仅图标模式），需要手动调用accept()来处理事件
-        if hasattr(self, 'flash_button') and isinstance(self.flash_button, BodyLabel):
-            event.accept()
+        # 确保事件被正确处理
+        event.accept()
 
     def on_flash_clicked(self, event=None):
         # 小鸟游星野：闪抽按钮点击事件 - 显示直接抽取窗口 ✧(๑•̀ㅂ•́)๑
@@ -1241,9 +1306,15 @@ class LevitationWindow(QWidget):
             # 如果点击的是容器空白区域（没有子控件或子控件不是按钮），则触发拖动
             if child is None or not isinstance(child, QPushButton):
                 self.drag_start_position = event.pos()
+                
+                # 确保 click_timer 存在，如果为 None 则重新初始化
+                if not hasattr(self, 'click_timer') or self.click_timer is None:
+                    self.click_timer = QTimer(self)
+                    self.click_timer.setSingleShot(True)
+                    self.click_timer.timeout.connect(lambda: self.start_drag(None))
+                
                 # 启动长按计时器
-                if hasattr(self, 'click_timer'):
-                    self.click_timer.start(100)  # 100ms后开始拖动
+                self.click_timer.start(100)  # 100ms后开始拖动
                 event.accept()
             else:
                 # 如果点击的是按钮，不处理拖动，让按钮保持原有功能
@@ -1256,7 +1327,7 @@ class LevitationWindow(QWidget):
         was_dragging = getattr(self, 'is_dragging', False)
         self.is_dragging = False
         
-        if hasattr(self, 'click_timer') and self.click_timer.isActive():
+        if hasattr(self, 'click_timer') and self.click_timer is not None and self.click_timer.isActive():
             # 短按点击容器空白区域，不执行任何操作
             self.click_timer.stop()
             # 注释掉下面这行，使点击空白区域不触发即抽窗口
@@ -1287,6 +1358,13 @@ class LevitationWindow(QWidget):
         if event.button() == Qt.LeftButton:
             # 记录拖动起始位置
             self.drag_start_position = event.pos()
+            
+            # 确保 click_timer 存在，如果为 None 则重新初始化
+            if not hasattr(self, 'click_timer') or self.click_timer is None:
+                self.click_timer = QTimer(self)
+                self.click_timer.setSingleShot(True)
+                self.click_timer.timeout.connect(lambda: self.start_drag(None))
+            
             # 启动长按计时器（100毫秒 - 优化响应速度）
             self.click_timer.start(100)
         else:
@@ -1333,13 +1411,13 @@ class LevitationWindow(QWidget):
         self.setCursor(Qt.ArrowCursor)
         self.move_timer.stop()
         
-        # 白露：菜单标签拖动结束，保存新位置
-        self.save_position()
-        
         # 如果启用了边缘贴边隐藏功能，在拖动结束后检查是否需要贴边
         if hasattr(self, 'flash_window_side_switch') and self.flash_window_side_switch:
             # 使用定时器延迟执行边缘检测，确保位置已经保存
             QTimer.singleShot(100, self._check_edge_proximity)
+        else:
+            # 如果没有启用边缘贴边隐藏功能，则保存位置
+            self.save_position()
         
         # 小鸟游星野：延迟保存，避免频繁写入
         self.move_timer.start(300)
@@ -1350,16 +1428,37 @@ class LevitationWindow(QWidget):
 
     def save_position(self):
         pos = self.pos()
+        
+        # 获取屏幕尺寸
+        screen = QApplication.desktop().screenGeometry()
+        window_width = self.width()
+        window_height = self.height()
+        
+        # 检查是否是贴边隐藏状态
+        # 左边缘隐藏：窗口右边缘在屏幕左侧或更左
+        is_hidden_left = pos.x() + window_width <= 10  # 10是隐藏后露出的宽度
+        # 右边缘隐藏：窗口左边缘在屏幕右侧或更右
+        is_hidden_right = pos.x() >= screen.width() - 10  # 10是隐藏后露出的宽度
+        
+        # 如果不是贴边隐藏状态，则确保保存的位置在屏幕范围内
+        if not is_hidden_left and not is_hidden_right:
+            x = max(0, min(pos.x(), screen.width() - window_width))
+            y = max(0, min(pos.y(), screen.height() - window_height))
+        else:
+            # 如果是贴边隐藏状态，直接使用当前位置
+            x = pos.x()
+            y = pos.y()
+        
         settings_path = path_manager.get_settings_path("Settings.json")
         try:
             with open_file(settings_path, "r") as f:
                 data = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
+        except Exception:
             data = {}
         
         data["position"] = {
-            "x": pos.x(), 
-            "y": pos.y()
+            "x": x, 
+            "y": y
         }
         with open_file(settings_path, "w") as f:
             json.dump(data, f, indent=4)
@@ -1370,15 +1469,32 @@ class LevitationWindow(QWidget):
             with open_file(settings_path, "r") as f:
                 data = json.load(f)
                 pos = data.get("position", {"x": 100, "y": 100})
-                self.move(QPoint(pos["x"], pos["y"]))
+                
+                # 获取屏幕尺寸
+                screen = QApplication.desktop().screenGeometry()
+                window_width = self.width()
+                window_height = self.height()
+                
+                # 检查是否是贴边隐藏状态
+                # 左边缘隐藏：窗口右边缘在屏幕左侧或更左
+                is_hidden_left = pos["x"] + window_width <= 10  # 10是隐藏后露出的宽度
+                # 右边缘隐藏：窗口左边缘在屏幕右侧或更右
+                is_hidden_right = pos["x"] >= screen.width() - 10  # 10是隐藏后露出的宽度
+                
+                # 如果不是贴边隐藏状态，则确保窗口位置在屏幕范围内
+                if not is_hidden_left and not is_hidden_right:
+                    # 确保窗口位置在屏幕范围内
+                    x = max(0, min(pos["x"], screen.width() - window_width))
+                    y = max(0, min(pos["y"], screen.height() - window_height))
+                    self.move(QPoint(x, y))
+                else:
+                    # 如果是贴边隐藏状态，直接使用保存的位置
+                    self.move(QPoint(pos["x"], pos["y"]))
                 
                 # 如果启用了边缘贴边隐藏功能，检查窗口是否需要贴边
                 if hasattr(self, 'flash_window_side_switch') and self.flash_window_side_switch:
                     # 获取屏幕尺寸和窗口位置
-                    screen = QApplication.desktop().screenGeometry()
                     window_pos = self.pos()
-                    window_width = self.width()
-                    window_height = self.height()
                     
                     # 定义边缘阈值（像素）
                     edge_threshold = 30
@@ -1404,7 +1520,7 @@ class LevitationWindow(QWidget):
                         elif window_pos.x() >= screen.width():
                             # 创建向左箭头按钮
                             QTimer.singleShot(100, lambda: self._create_arrow_button('left', screen.width() - 30, window_pos.y() + window_height // 2 - 15))
-        except (FileNotFoundError, json.JSONDecodeError):
+        except Exception:
             screen = QApplication.desktop().screenGeometry()
             x = (screen.width() - self.width()) // 2
             y = (screen.height() - self.height()) // 2
@@ -1501,9 +1617,11 @@ class LevitationWindow(QWidget):
                     settings = json.load(f)
                     font_size = settings['pumping_people']['font_size']
                     show_student_image = settings['pumping_people']['show_student_image']
+                    close_after_click = settings['instant_draw']['close_after_click']
             except Exception as e:
                 font_size = 50  # 默认字体大小
                 show_student_image = False
+                close_after_click = False
                 logger.error(f"加载字体设置时出错: {e}, 使用默认设置")
             
             # 根据字体大小计算窗口尺寸
@@ -1651,15 +1769,16 @@ class LevitationWindow(QWidget):
                 self.pumping_widget.show()
                 logger.info("直接抽取窗口已打开")
             
-            # 禁用闪抽按钮，防止重复点击
-            if hasattr(self, 'flash_button') and self.flash_button is not None:
-                self.flash_button.setEnabled(False)
-                logger.info("闪抽按钮已禁用")
-            
-            # 禁用即抽按钮，防止重复点击
-            if hasattr(self, 'instant_draw_button') and self.instant_draw_button is not None:
-                self.instant_draw_button.setEnabled(False)
-                logger.info("即抽按钮已禁用")
+            if not close_after_click:
+                # 禁用闪抽按钮，防止重复点击
+                if hasattr(self, 'flash_button') and self.flash_button is not None:
+                    self.flash_button.setEnabled(False)
+                    logger.info("闪抽按钮已禁用")
+                
+                # 禁用即抽按钮，防止重复点击
+                if hasattr(self, 'instant_draw_button') and self.instant_draw_button is not None:
+                    self.instant_draw_button.setEnabled(False)
+                    logger.info("即抽按钮已禁用")
             
             # 标记抽取正在进行
             self.is_drawing = True
@@ -1765,6 +1884,19 @@ class LevitationWindow(QWidget):
                 return
 
             if auto_close_enabled:
+                # 先停止并清理可能存在的旧定时器
+                if hasattr(self, 'countdown_timer') and self.countdown_timer:
+                    if self.countdown_timer.isActive():
+                        self.countdown_timer.stop()
+                    self.countdown_timer.deleteLater()
+                    self.countdown_timer = None
+                
+                if hasattr(self, 'auto_close_timer') and self.auto_close_timer:
+                    if self.auto_close_timer.isActive():
+                        self.auto_close_timer.stop()
+                    self.auto_close_timer.deleteLater()
+                    self.auto_close_timer = None
+                
                 # 初始化倒计时
                 self.remaining_time = close_time
                 self.countdown_label.setText(f"将在{self.remaining_time}秒自动关闭该窗口")
@@ -1786,6 +1918,20 @@ class LevitationWindow(QWidget):
         except Exception as e:
             logger.error(f"加载闪抽窗口设置时出错: {e}, 使用默认设置")
             # 默认启用3秒自动关闭
+            
+            # 先停止并清理可能存在的旧定时器
+            if hasattr(self, 'countdown_timer') and self.countdown_timer:
+                if self.countdown_timer.isActive():
+                    self.countdown_timer.stop()
+                self.countdown_timer.deleteLater()
+                self.countdown_timer = None
+            
+            if hasattr(self, 'auto_close_timer') and self.auto_close_timer:
+                if self.auto_close_timer.isActive():
+                    self.auto_close_timer.stop()
+                self.auto_close_timer.deleteLater()
+                self.auto_close_timer = None
+            
             close_time = 3
             self.remaining_time = close_time
             self.countdown_label.setText(f"将在{self.remaining_time}秒自动关闭该窗口")
@@ -1902,14 +2048,36 @@ class LevitationWindow(QWidget):
     def _on_pumping_widget_closed(self):
         """直接抽取窗口关闭事件 - 清理定时器资源并重新启用闪抽按钮"""
         # 停止自动关闭定时器
-        if hasattr(self, 'auto_close_timer') and self.auto_close_timer.isActive():
-            self.auto_close_timer.stop()
-            logger.info("直接抽取窗口已关闭，自动关闭定时器已停止")
+        if hasattr(self, 'auto_close_timer') and self.auto_close_timer:
+            if self.auto_close_timer.isActive():
+                self.auto_close_timer.stop()
+            self.auto_close_timer.deleteLater()
+            self.auto_close_timer = None
+            logger.info("直接抽取窗口已关闭，自动关闭定时器已停止并清理")
 
         # 停止倒计时定时器
-        if hasattr(self, 'countdown_timer') and self.countdown_timer.isActive():
-            self.countdown_timer.stop()
-            logger.info("直接抽取窗口已关闭，倒计时定时器已停止")
+        if hasattr(self, 'countdown_timer') and self.countdown_timer:
+            if self.countdown_timer.isActive():
+                self.countdown_timer.stop()
+            self.countdown_timer.deleteLater()
+            self.countdown_timer = None
+            logger.info("直接抽取窗口已关闭，倒计时定时器已停止并清理")
+        
+        # 停止点击定时器
+        if hasattr(self, 'click_timer') and self.click_timer:
+            if self.click_timer.isActive():
+                self.click_timer.stop()
+            self.click_timer.deleteLater()
+            self.click_timer = None
+            logger.info("直接抽取窗口已关闭，点击定时器已停止并清理")
+        
+        # 停止移动定时器
+        if hasattr(self, 'move_timer') and self.move_timer:
+            if self.move_timer.isActive():
+                self.move_timer.stop()
+            self.move_timer.deleteLater()
+            self.move_timer = None
+            logger.info("直接抽取窗口已关闭，移动定时器已停止并清理")
         
         # 重新启用闪抽按钮
         if hasattr(self, 'flash_button') and self.flash_button is not None:
@@ -1928,29 +2096,44 @@ class LevitationWindow(QWidget):
     def closeEvent(self, event):
         """窗口关闭事件 - 清理所有定时器资源"""
         # 停止保持置顶定时器
-        if hasattr(self, 'keep_top_timer') and self.keep_top_timer.isActive():
-            self.keep_top_timer.stop()
-            logger.info("浮窗置顶定时器已停止")
+        if hasattr(self, 'keep_top_timer') and self.keep_top_timer:
+            if self.keep_top_timer.isActive():
+                self.keep_top_timer.stop()
+            self.keep_top_timer.deleteLater()
+            self.keep_top_timer = None
+            logger.info("浮窗置顶定时器已停止并清理")
         
         # 停止点击定时器
-        if hasattr(self, 'click_timer') and self.click_timer.isActive():
-            self.click_timer.stop()
-            logger.info("点击定时器已停止")
+        if hasattr(self, 'click_timer') and self.click_timer:
+            if self.click_timer.isActive():
+                self.click_timer.stop()
+            self.click_timer.deleteLater()
+            self.click_timer = None
+            logger.info("点击定时器已停止并清理")
         
         # 停止移动定时器
-        if hasattr(self, 'move_timer') and self.move_timer.isActive():
-            self.move_timer.stop()
-            logger.info("移动定时器已停止")
+        if hasattr(self, 'move_timer') and self.move_timer:
+            if self.move_timer.isActive():
+                self.move_timer.stop()
+            self.move_timer.deleteLater()
+            self.move_timer = None
+            logger.info("移动定时器已停止并清理")
         
         # 停止自动关闭定时器
-        if hasattr(self, 'auto_close_timer') and self.auto_close_timer.isActive():
-            self.auto_close_timer.stop()
-            logger.info("自动关闭定时器已停止")
+        if hasattr(self, 'auto_close_timer') and self.auto_close_timer:
+            if self.auto_close_timer.isActive():
+                self.auto_close_timer.stop()
+            self.auto_close_timer.deleteLater()
+            self.auto_close_timer = None
+            logger.info("自动关闭定时器已停止并清理")
         
         # 停止倒计时定时器
-        if hasattr(self, 'countdown_timer') and self.countdown_timer.isActive():
-            self.countdown_timer.stop()
-            logger.info("倒计时定时器已停止")
+        if hasattr(self, 'countdown_timer') and self.countdown_timer:
+            if self.countdown_timer.isActive():
+                self.countdown_timer.stop()
+            self.countdown_timer.deleteLater()
+            self.countdown_timer = None
+            logger.info("倒计时定时器已停止并清理")
         
         # 调用父类的closeEvent
         super().closeEvent(event)
@@ -2368,8 +2551,9 @@ class LevitationWindow(QWidget):
             self.animation.finished.connect(lambda: self._create_arrow_button('left', screen.width() - 30, window_pos.y() + window_height // 2 - 15))
             return
         
-        # 保存新位置
-        self.save_position()
+        # 保存新位置（仅在窗口未贴边隐藏时）
+        if window_pos.x() > edge_threshold and window_pos.x() + window_width < screen.width() - edge_threshold:
+            self.save_position()
         
     def _create_arrow_button(self, direction, x, y):
         """创建箭头按钮用于显示隐藏的窗口"""
@@ -2546,8 +2730,7 @@ class LevitationWindow(QWidget):
 
         self._delete_arrow_button()
             
-        # 保存新位置
-        self.save_position()
+        # 不保存位置，保持贴边隐藏前的原始位置
         
         # 激活主窗口，确保窗口显示在最前面
         self.raise_()
