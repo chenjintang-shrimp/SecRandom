@@ -363,8 +363,8 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_calendar_video_20_filled"), "自动播放次数", "设置动画自动重复播放的次数", self.instant_draw_Animation_auto_play_SpinBox)
 
         # 闪抽窗口自动关闭时间设置
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽自动关闭", "启用后闪抽窗口将在完成操作后自动关闭", self.flash_window_auto_close_switch)
-        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "闪抽关闭时间", "设置闪抽窗口自动关闭的延迟时间", self.flash_window_close_time_SpinBox)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "抽取窗口自动关闭", "启用后抽取窗口将在完成操作后自动关闭", self.flash_window_auto_close_switch)
+        self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "抽取窗口关闭时间", "设置抽取窗口自动关闭的延迟时间", self.flash_window_close_time_SpinBox)
         self.addGroup(get_theme_icon("ic_fluent_alert_on_20_filled"), "点击后关闭抽取窗口", "再次点击按钮时是否关闭抽取窗口", self.instant_draw_close_after_click_switch)
 
         # 是否使用cw/ci显示结果
