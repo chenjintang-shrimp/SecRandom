@@ -418,11 +418,13 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                         
                         # 特殊处理animation_mode的同步规则：0和1同步为0，2同步为1
                         if pumping_key == "animation_mode":
-                            if old_value != new_value and new_value in [0, 1]:
-                                instant_draw_settings[instant_key] = 0
-                                updated = True
-                            elif old_value != new_value and new_value == 2:
-                                instant_draw_settings[instant_key] = 1
+                            # 特殊处理animation_mode的同步规则：0和1同步为0，2同步为1
+                            # 需要检查新旧值映射后的结果是否不同，而不是直接比较新旧值
+                            old_mapped_value = 0 if old_value in [0, 1] else 1
+                            new_mapped_value = 0 if new_value in [0, 1] else 1
+                            
+                            if old_mapped_value != new_mapped_value:
+                                instant_draw_settings[instant_key] = new_mapped_value
                                 updated = True
                         # 处理其他设置的同步
                         elif old_value != new_value and pumping_key != "animation_mode":
