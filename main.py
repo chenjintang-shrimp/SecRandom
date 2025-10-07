@@ -59,7 +59,7 @@ startup_process = None
 def configure_logging():
     """配置日志系统"""
     # 确保日志目录存在
-    log_dir = Path(os.path.dirname(os.path.abspath(__file__))) / 'logs'
+    log_dir = path_manager._get_app_root() / 'logs'
     log_dir.mkdir(exist_ok=True)
     
     # 配置日志格式

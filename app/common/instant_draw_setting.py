@@ -386,6 +386,7 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "动画/结果音乐渐出时间", "设置音乐淡出效果的持续时间", self.instant_draw_music_fade_out_SpinBox)
 
         self.load_settings()
+        self.save_settings()
 
     def on_follow_roll_call_changed(self, checked):
         """当跟随点名设置开关状态改变时触发"""

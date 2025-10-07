@@ -380,6 +380,7 @@ class fixed_url_SettinsCard(GroupHeaderCardWidget):
 
         # 加载设置
         self.load_settings()
+        self.save_settings()
 
     # 又臭又长还重复的东西不抽象成函数是抖m吗
     def _fuckingResetter(self):

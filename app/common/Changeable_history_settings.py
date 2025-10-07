@@ -96,6 +96,7 @@ class history_SettinsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_people_eye_20_filled"), "历史记录", "启用历史记录功能(精确公平抽取必需开启)", self.history_switch)
 
         self.load_settings()
+        self.save_settings()
 
     def refresh_class_list(self):
         try:

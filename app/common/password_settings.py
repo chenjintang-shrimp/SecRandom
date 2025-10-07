@@ -1723,6 +1723,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
 
 
         self.load_settings()
+        self.save_settings()
         
         # 初始化USB监控线程属性
         self.usb_monitor_thread = None

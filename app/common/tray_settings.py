@@ -77,6 +77,7 @@ class tray_settingsCard(GroupHeaderCardWidget):
         
         # 加载设置
         self.load_settings()
+        self.save_settings()
 
     def load_settings(self):
         try:

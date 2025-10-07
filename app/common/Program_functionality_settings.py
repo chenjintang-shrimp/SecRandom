@@ -105,6 +105,7 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         
         # 加载设置
         self.load_settings()
+        self.save_settings()
 
         # 优化：移除延迟初始化，直接初始化计时器和消息接收器连接
         self.connect_message_receiver()

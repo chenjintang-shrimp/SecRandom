@@ -120,7 +120,7 @@ class VoiceEngine_SettingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"), "系统音量大小", "设置抽取完成后的系统音量值(0-100)", self.pumping_people_system_volume_SpinBox)
 
         self.load_settings()
-        # 移除构造函数中的save_settings调用，避免不必要的文件写入
+        self.save_settings()
 
     def on_voice_engine_changed(self, index):
         self.edge_tts_voiceComboBox.setEnabled(index == 1)
