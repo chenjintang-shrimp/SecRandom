@@ -83,7 +83,7 @@ jobs:
             pyinstaller main.py `
               -w `
               -D `
-              -i ./resources/SecRandom.ico `
+              -i ./resources/secrandom-icon-paper.ico `
               -n SecRandom `
               --add-data ./app/resource:app/resource `
               --add-data LICENSE:. `
