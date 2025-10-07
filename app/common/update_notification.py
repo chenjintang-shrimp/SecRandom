@@ -7,7 +7,7 @@ import webbrowser
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, VERSION, themeColor
 from app.common.path_utils import path_manager, open_file
 
-def show_update_notification(latest_version):
+def show_update_notification(latest_version, auto_close=False):
     """显示更新通知窗口"""
     if hasattr(QApplication.instance(), 'update_notification_window'):
         # 如果窗口已存在则激活它
@@ -19,19 +19,21 @@ def show_update_notification(latest_version):
         return
 
     # 创建新的通知窗口
-    notification_window = UpdateNotification(latest_version)
+    notification_window = UpdateNotification(latest_version, auto_close=auto_close)
     QApplication.instance().update_notification_window = notification_window
     notification_window.show()
 
 class UpdateNotification(QDialog):
     """自定义更新通知窗口"""
-    def __init__(self, latest_version):
+    def __init__(self, latest_version, auto_close=False):
         super().__init__(parent=None, flags=Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.latest_version = latest_version
-        self.duration = 15000  # 默认显示15秒
+        self.auto_close = auto_close
+        self.duration = 30000  # 默认显示30秒（如果启用自动关闭）
         self.init_ui()
         self.init_animation()
-        self.start_auto_close_timer()
+        if self.auto_close:
+            self.start_auto_close_timer()
 
     def init_ui(self):
         """初始化UI界面"""
@@ -214,8 +216,8 @@ class UpdateNotification(QDialog):
         self.group_animation.start()
 
     def mousePressEvent(self, event):
-        """鼠标按下事件 - 重置自动关闭定时器"""
-        if event.button() == Qt.LeftButton:
+        """鼠标按下事件 - 重置自动关闭定时器（仅在启用自动关闭时）"""
+        if event.button() == Qt.LeftButton and self.auto_close and hasattr(self, 'timer'):
             self.timer.start(self.duration)
         super().mousePressEvent(event)
 

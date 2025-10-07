@@ -60,13 +60,38 @@ def show_update_notification(latest_version):
         else:
             app = QApplication.instance()
 
-        # 创建并显示通知窗口
-        notification = UpdateNotification(latest_version)
-        notification.show()
+        # 检查是否已有通知窗口存在
+        if hasattr(app, 'update_notification_window') and app.update_notification_window:
+            # 如果窗口已存在则激活它
+            notification_window = app.update_notification_window
+            if notification_window.isHidden():
+                notification_window.show()
+            notification_window.raise_()
+            notification_window.activateWindow()
+            logger.info(f"更新通知窗口已激活，版本: {latest_version}")
+            return
+
+        # 创建新的通知窗口
+        notification = UpdateNotification(latest_version, auto_close=False)
+        app.update_notification_window = notification
+        
         # 防止通知窗口关闭时程序退出
         original_quit_setting = app.quitOnLastWindowClosed()
         app.setQuitOnLastWindowClosed(False)
-        notification.destroyed.connect(lambda: app.setQuitOnLastWindowClosed(original_quit_setting))
+        
+        # 窗口关闭时恢复原始设置并清理引用
+        def on_notification_closed():
+            app.setQuitOnLastWindowClosed(original_quit_setting)
+            if hasattr(app, 'update_notification_window'):
+                del app.update_notification_window
+        
+        # 连接信号
+        notification.destroyed.connect(on_notification_closed)
+        
+        # 显示通知窗口
+        notification.show()
+        notification.raise_()
+        
         logger.info(f"自定义更新通知已显示，版本: {latest_version}")
 
     except ImportError as e:
