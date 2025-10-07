@@ -73,6 +73,7 @@
 - 修复 URL显示无法找到主窗口实例的问题
 - 修复 **animation_mode 值在同步时可能不一致的问题**，确保即使新旧值相同但功能指向不同时也能正确同步
 - 修复 **click_timer 为 None 时导致的 AttributeError 错误问题**
+- 修复 **instant_draw_setting.py与pumping_people_setting.py之间颜色设置同步问题**，添加颜色映射和同步逻辑，确保两个模块颜色设置保持一致 
 
 ---
 
@@ -84,7 +85,7 @@
 
 ---
 
-💝 **感谢所有贡献者为 SecRandom 项目付出的努力！** 
+💝 **感谢所有贡献者为 SecRandom 项目付出的努力！**
 
 ---
 <details>
