@@ -188,48 +188,60 @@ class LevitationWindow(QWidget):
         button_count = self._get_button_count()
         
         if self.button_arrangement_mode == 0:  # 矩形排列
-            if button_count >= 3:
-                # 3个或4个按钮时使用垂直布局，文字按钮放在下面
+            if self.floating_visible != 7:
+                if button_count >= 3:
+                    # 3个或4个按钮时使用垂直布局，文字按钮放在下面
+                    main_layout = QVBoxLayout(self.container_button)
+                    main_layout.setContentsMargins(0, 0, 0, 0)
+                    main_layout.setSpacing(0)
+                    
+                    # 创建上下两个容器
+                    self.top_container = QWidget()
+                    self.bottom_container = QWidget()
+                    
+                    # 上层使用水平布局
+                    top_layout = QHBoxLayout(self.top_container)
+                    top_layout.setContentsMargins(0, 0, 0, 0)
+                    top_layout.setSpacing(0)
+                    
+                    # 下层使用水平布局，如果是3个按钮则让按钮填满容器宽度
+                    bottom_layout = QHBoxLayout(self.bottom_container)
+                    bottom_layout.setContentsMargins(0, 0, 0, 0)
+                    bottom_layout.setSpacing(0)
+                    
+                    # 添加到主布局
+                    main_layout.addWidget(self.top_container)
+                    main_layout.addWidget(self.bottom_container)
+                    
+                    # 设置下层高度
+                    if self.floating_icon_mode != 0:
+                        self.bottom_container.setFixedHeight(50)
+                    else:
+                        self.bottom_container.setFixedHeight(70)
+                    
+                else:
+                    # 1个或2个按钮时使用水平布局
+                    button_layout = QHBoxLayout(self.container_button)
+                    button_layout.setContentsMargins(0, 0, 0, 0)
+                    button_layout.setSpacing(0)
+                    
+                    # 创建单个容器
+                    self.top_container = self.container_button
+                    self.bottom_container = None
+
+            elif self.floating_visible == 7:
                 main_layout = QVBoxLayout(self.container_button)
                 main_layout.setContentsMargins(0, 0, 0, 0)
                 main_layout.setSpacing(0)
                 
-                # 创建上下两个容器
                 self.top_container = QWidget()
-                self.bottom_container = QWidget()
-                
-                # 上层使用水平布局
-                top_layout = QHBoxLayout(self.top_container)
-                top_layout.setContentsMargins(0, 0, 0, 0)
-                top_layout.setSpacing(0)
-                
-                # 下层使用水平布局，如果是3个按钮则让按钮填满容器宽度
-                bottom_layout = QHBoxLayout(self.bottom_container)
-                bottom_layout.setContentsMargins(0, 0, 0, 0)
-                bottom_layout.setSpacing(0)
-                
-                # 添加到主布局
-                main_layout.addWidget(self.top_container)
-                main_layout.addWidget(self.bottom_container)
-                
-                # 设置下层高度
-                if self.floating_icon_mode != 0:
-                    self.bottom_container.setFixedHeight(50)
-                else:
-                    self.bottom_container.setFixedHeight(70)
-
-                if self.floating_visible == 7:
-                    self.bottom_container.setFixedHeight(165)
-                
-            else:
-                # 1个或2个按钮时使用水平布局
-                button_layout = QHBoxLayout(self.container_button)
-                button_layout.setContentsMargins(0, 0, 0, 0)
-                button_layout.setSpacing(0)
-                
-                # 创建单个容器
-                self.top_container = self.container_button
                 self.bottom_container = None
+                
+                vertical_layout = QVBoxLayout(self.top_container)
+                vertical_layout.setContentsMargins(0, 0, 0, 0)
+                vertical_layout.setSpacing(0)
+                
+                main_layout.addWidget(self.top_container)
                 
         elif self.button_arrangement_mode == 1:  # 竖着排列
             # 所有按钮都垂直排列
@@ -263,6 +275,14 @@ class LevitationWindow(QWidget):
             
             # 将水平容器添加到主布局
             main_layout.addWidget(self.horizontal_container)
+
+            # 设置下层高度
+            if self.floating_icon_mode != 0:
+                self.horizontal_container.setFixedHeight(50)
+            elif self.floating_visible == 7:
+                self.horizontal_container.setFixedHeight(50)
+            else:
+                self.horizontal_container.setFixedHeight(70)
             
             # 设置其他容器为None，确保独立性
             self.top_container = None
@@ -746,117 +766,284 @@ class LevitationWindow(QWidget):
         self.flash_button.clicked.connect(self._show_direct_extraction_window)
 
     def _init_instant_draw_button(self):
-        # 小鸟游星野：初始化即抽按钮和人数调节功能
-        # 创建主容器 - 优化的两层布局
+        # 小鸟游星野：初始化即抽按钮和人数调节功能 - 支持多种排列方式
+        # 创建主容器 - 根据排列方式决定布局
         self.instant_draw_container = QWidget()
-        main_layout = QVBoxLayout(self.instant_draw_container)
-        main_layout.setContentsMargins(8, 8, 8, 8)
-        main_layout.setSpacing(6)
         
-        # 第一层：标题和人数调节布局
-        first_layer_container = QWidget()
-        first_layer_layout = QHBoxLayout(first_layer_container)
-        first_layer_layout.setContentsMargins(0, 0, 0, 0)
-        first_layer_layout.setSpacing(4)
-        
-        # 添加"即抽"标题
-        self.instant_draw_title = BodyLabel(" 即抽")
-        self.instant_draw_title.setAlignment(Qt.AlignCenter)
-        self.instant_draw_title.setFixedSize(34, 30)
-        if dark_mode:
-            self.instant_draw_title.setStyleSheet('color: #ffffff; font-weight: bold;')
-        else:
-            self.instant_draw_title.setStyleSheet('color: #333333; font-weight: bold;')
-        
-        # 创建融合式人数调节控件
-        self.count_widget = QWidget()
-        self.count_widget.setFixedSize(90, 30)  # 整体宽度减小
-        count_widget_layout = QHBoxLayout(self.count_widget)
-        count_widget_layout.setContentsMargins(0, 0, 0, 0)
-        count_widget_layout.setSpacing(0)
-        
-        # 左侧：减人数按钮
-        self.decrease_button = PushButton("-")
-        self.decrease_button.setFixedSize(28, 30)  # 宽度减小
-        if dark_mode:
-            self.decrease_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #2a2a2a; color: #ffffff;')
-        else:
-            self.decrease_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #f5f5f5; color: #000000;')
-        
-        # 中间：当前抽取人数显示
-        self.count_label = BodyLabel("1")
-        self.count_label.setAlignment(Qt.AlignCenter)
-        self.count_label.setFixedSize(34, 30)  # 宽度减小
-        if dark_mode:
-            self.count_label.setStyleSheet('border-left: none; border-right: none; background: #2a2a2a; color: #ffffff;')
-        else:
-            self.count_label.setStyleSheet('border-left: none; border-right: none; background: #f5f5f5; color: #000000;')
-        
-        # 右侧：加人数按钮
-        self.increase_button = PushButton("+")
-        self.increase_button.setFixedSize(28, 30)  # 宽度减小
-        if dark_mode:
-            self.increase_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #2a2a2a; color: #ffffff;')
-        else:
-            self.increase_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #f5f5f5; color: #000000;')
-        
-        # 添加控件到融合式布局
-        count_widget_layout.addWidget(self.decrease_button)
-        count_widget_layout.addWidget(self.count_label)
-        count_widget_layout.addWidget(self.increase_button)
-        
-        # 将标题和人数调节控件添加到第一层布局
-        first_layer_layout.addWidget(self.instant_draw_title)
-        first_layer_layout.addWidget(self.count_widget)
-        
-        # 第二层：功能按钮布局 - 融合三个按钮为一个紧凑控件
-        button_control_container = QWidget()
-        button_control_layout = QHBoxLayout(button_control_container)
-        button_control_layout.setContentsMargins(0, 0, 0, 0)
-        button_control_layout.setSpacing(0)
-        
-        # 创建融合式功能按钮控件
-        self.function_widget = QWidget()
-        self.function_widget.setFixedSize(135, 30)  # 整体宽度
-        function_widget_layout = QHBoxLayout(self.function_widget)
-        function_widget_layout.setContentsMargins(0, 0, 0, 0)
-        function_widget_layout.setSpacing(0)
-        
-        # 最左侧：重置按钮
-        self.reset_button = PushButton("重置")
-        self.reset_button.setFixedSize(45, 30)
-        if dark_mode:
-            self.reset_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #2a2a2a; color: #ffffff;')
-        else:
-            self.reset_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #f5f5f5; color: #000000;')
-        
-        # 中间：点名按钮
-        self.instant_draw_button = PushButton("点名")
-        self.instant_draw_button.setFixedSize(45, 30)
-        if dark_mode:
-            self.instant_draw_button.setStyleSheet('border-left: none; border-right: none; background: #2a2a2a; color: #ffffff;')
-        else:
-            self.instant_draw_button.setStyleSheet('border-left: none; border-right: none; background: #f5f5f5; color: #000000;')
-        
-        # 右侧：设置按钮（打开小浮窗界面）
-        self.settings_button = PushButton("设置")
-        self.settings_button.setFixedSize(45, 30)
-        if dark_mode:
-            self.settings_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #2a2a2a; color: #ffffff;')
-        else:
-            self.settings_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #f5f5f5; color: #000000;')
-        
-        # 添加控件到融合式布局
-        function_widget_layout.addWidget(self.reset_button)
-        function_widget_layout.addWidget(self.instant_draw_button)
-        function_widget_layout.addWidget(self.settings_button)
-        
-        # 将融合式控件添加到第二层布局
-        button_control_layout.addWidget(self.function_widget)
-        
-        # 将两层布局添加到主布局
-        main_layout.addWidget(first_layer_container)
-        main_layout.addWidget(button_control_container)
+        # 根据排列方式决定布局
+        if self.button_arrangement_mode == 0:  # 矩形排列
+            main_layout = QVBoxLayout(self.instant_draw_container)
+            main_layout.setContentsMargins(8, 8, 8, 8)
+            main_layout.setSpacing(6)
+            
+            # 第一层：标题和人数调节布局
+            first_layer_container = QWidget()
+            first_layer_layout = QHBoxLayout(first_layer_container)
+            first_layer_layout.setContentsMargins(0, 0, 0, 0)
+            first_layer_layout.setSpacing(4)
+            
+            # 添加"即抽"标题
+            self.instant_draw_title = BodyLabel("即抽")
+            self.instant_draw_title.setAlignment(Qt.AlignCenter)
+            self.instant_draw_title.setFixedSize(34, 30)
+            if dark_mode:
+                self.instant_draw_title.setStyleSheet('color: #ffffff; font-weight: bold;')
+            else:
+                self.instant_draw_title.setStyleSheet('color: #333333; font-weight: bold;')
+            
+            # 创建融合式人数调节控件
+            self.count_widget = QWidget()
+            self.count_widget.setFixedSize(90, 30)  # 整体宽度减小
+            count_widget_layout = QHBoxLayout(self.count_widget)
+            count_widget_layout.setContentsMargins(0, 0, 0, 0)
+            count_widget_layout.setSpacing(0)
+            
+            # 左侧：减人数按钮
+            self.decrease_button = PushButton("-")
+            self.decrease_button.setFixedSize(28, 30)  # 宽度减小
+            if dark_mode:
+                self.decrease_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.decrease_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #f5f5f5; color: #000000;')
+            
+            # 中间：当前抽取人数显示
+            self.count_label = BodyLabel("1")
+            self.count_label.setAlignment(Qt.AlignCenter)
+            self.count_label.setFixedSize(34, 30)  # 宽度减小
+            if dark_mode:
+                self.count_label.setStyleSheet('border-left: none; border-right: none; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.count_label.setStyleSheet('border-left: none; border-right: none; background: #f5f5f5; color: #000000;')
+            
+            # 右侧：加人数按钮
+            self.increase_button = PushButton("+")
+            self.increase_button.setFixedSize(28, 30)  # 宽度减小
+            if dark_mode:
+                self.increase_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.increase_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #f5f5f5; color: #000000;')
+            
+            # 添加控件到融合式布局
+            count_widget_layout.addWidget(self.decrease_button)
+            count_widget_layout.addWidget(self.count_label)
+            count_widget_layout.addWidget(self.increase_button)
+            
+            # 将标题和人数调节控件添加到第一层布局
+            first_layer_layout.addWidget(self.instant_draw_title)
+            first_layer_layout.addWidget(self.count_widget)
+            
+            # 第二层：功能按钮布局 - 融合三个按钮为一个紧凑控件
+            button_control_container = QWidget()
+            button_control_layout = QHBoxLayout(button_control_container)
+            button_control_layout.setContentsMargins(0, 0, 0, 0)
+            button_control_layout.setSpacing(0)
+            
+            # 创建融合式功能按钮控件
+            self.function_widget = QWidget()
+            self.function_widget.setFixedSize(135, 30)  # 整体宽度
+            function_widget_layout = QHBoxLayout(self.function_widget)
+            function_widget_layout.setContentsMargins(0, 0, 0, 0)
+            function_widget_layout.setSpacing(0)
+            
+            # 最左侧：重置按钮
+            self.reset_button = PushButton("重置")
+            self.reset_button.setFixedSize(45, 30)
+            if dark_mode:
+                self.reset_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.reset_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #f5f5f5; color: #000000;')
+            
+            # 中间：点名按钮
+            self.instant_draw_button = PushButton("点名")
+            self.instant_draw_button.setFixedSize(45, 30)
+            if dark_mode:
+                self.instant_draw_button.setStyleSheet('border-left: none; border-right: none; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.instant_draw_button.setStyleSheet('border-left: none; border-right: none; background: #f5f5f5; color: #000000;')
+            
+            # 右侧：设置按钮（打开小浮窗界面）
+            self.settings_button = PushButton("设置")
+            self.settings_button.setFixedSize(45, 30)
+            if dark_mode:
+                self.settings_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.settings_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #f5f5f5; color: #000000;')
+            
+            # 添加控件到融合式布局
+            function_widget_layout.addWidget(self.reset_button)
+            function_widget_layout.addWidget(self.instant_draw_button)
+            function_widget_layout.addWidget(self.settings_button)
+            
+            # 将融合式控件添加到第二层布局
+            button_control_layout.addWidget(self.function_widget)
+            
+            # 将两层布局添加到主布局
+            main_layout.addWidget(first_layer_container)
+            main_layout.addWidget(button_control_container)
+            
+        elif self.button_arrangement_mode == 1:  # 竖向排列
+            main_layout = QVBoxLayout(self.instant_draw_container)
+            main_layout.setContentsMargins(8, 8, 8, 8)
+            main_layout.setSpacing(6)
+            
+            # 第一行：人数调节控件
+            self.count_widget = QWidget()
+            self.count_widget.setFixedSize(90, 30)  # 整体宽度减小
+            count_widget_layout = QHBoxLayout(self.count_widget)
+            count_widget_layout.setContentsMargins(0, 0, 0, 0)
+            count_widget_layout.setSpacing(0)
+            
+            # 左侧：减人数按钮
+            self.decrease_button = PushButton("-")
+            self.decrease_button.setFixedSize(28, 30)  # 宽度减小
+            if dark_mode:
+                self.decrease_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.decrease_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #f5f5f5; color: #000000;')
+            
+            # 中间：当前抽取人数显示
+            self.count_label = BodyLabel("1")
+            self.count_label.setAlignment(Qt.AlignCenter)
+            self.count_label.setFixedSize(34, 30)  # 宽度减小
+            if dark_mode:
+                self.count_label.setStyleSheet('border-left: none; border-right: none; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.count_label.setStyleSheet('border-left: none; border-right: none; background: #f5f5f5; color: #000000;')
+            
+            # 右侧：加人数按钮
+            self.increase_button = PushButton("+")
+            self.increase_button.setFixedSize(28, 30)  # 宽度减小
+            if dark_mode:
+                self.increase_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.increase_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #f5f5f5; color: #000000;')
+            
+            # 添加控件到融合式布局
+            count_widget_layout.addWidget(self.decrease_button)
+            count_widget_layout.addWidget(self.count_label)
+            count_widget_layout.addWidget(self.increase_button)
+            
+            # 第二行：功能按钮 - 垂直排列
+            self.function_widget = QWidget()
+            self.function_widget.setFixedSize(90, 90)  # 整体宽度，高度增加以容纳三个按钮
+            function_widget_layout = QVBoxLayout(self.function_widget)
+            function_widget_layout.setContentsMargins(0, 0, 0, 0)
+            function_widget_layout.setSpacing(0)
+            
+            # 上方：重置按钮
+            self.reset_button = PushButton("重置")
+            self.reset_button.setFixedSize(90, 30)
+            if dark_mode:
+                self.reset_button.setStyleSheet('border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.reset_button.setStyleSheet('border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: #f5f5f5; color: #000000;')
+            
+            # 中间：点名按钮
+            self.instant_draw_button = PushButton("点名")
+            self.instant_draw_button.setFixedSize(90, 30)
+            if dark_mode:
+                self.instant_draw_button.setStyleSheet('border-top: none; border-bottom: none; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.instant_draw_button.setStyleSheet('border-top: none; border-bottom: none; background: #f5f5f5; color: #000000;')
+            
+            # 下方：设置按钮（打开小浮窗界面）
+            self.settings_button = PushButton("设置")
+            self.settings_button.setFixedSize(90, 30)
+            if dark_mode:
+                self.settings_button.setStyleSheet('border-top-left-radius: 0; border-top-right-radius: 0; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.settings_button.setStyleSheet('border-top-left-radius: 0; border-top-right-radius: 0; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px; background: #f5f5f5; color: #000000;')
+            
+            # 添加控件到垂直布局
+            function_widget_layout.addWidget(self.reset_button)
+            function_widget_layout.addWidget(self.instant_draw_button)
+            function_widget_layout.addWidget(self.settings_button)
+            
+            # 将所有控件添加到主布局
+            main_layout.addWidget(self.count_widget)
+            main_layout.addWidget(self.function_widget)
+            
+        elif self.button_arrangement_mode == 2:  # 横向排列
+            main_layout = QHBoxLayout(self.instant_draw_container)
+            main_layout.setContentsMargins(8, 8, 8, 8)
+            main_layout.setSpacing(6)
+            
+            # 第一列：人数调节控件
+            self.count_widget = QWidget()
+            self.count_widget.setFixedSize(90, 30)  # 整体宽度减小
+            count_widget_layout = QHBoxLayout(self.count_widget)
+            count_widget_layout.setContentsMargins(0, 0, 0, 0)
+            count_widget_layout.setSpacing(0)
+            
+            # 左侧：减人数按钮
+            self.decrease_button = PushButton("-")
+            self.decrease_button.setFixedSize(28, 30)  # 宽度减小
+            if dark_mode:
+                self.decrease_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.decrease_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #f5f5f5; color: #000000;')
+            
+            # 中间：当前抽取人数显示
+            self.count_label = BodyLabel("1")
+            self.count_label.setAlignment(Qt.AlignCenter)
+            self.count_label.setFixedSize(34, 30)  # 宽度减小
+            if dark_mode:
+                self.count_label.setStyleSheet('border-left: none; border-right: none; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.count_label.setStyleSheet('border-left: none; border-right: none; background: #f5f5f5; color: #000000;')
+            
+            # 右侧：加人数按钮
+            self.increase_button = PushButton("+")
+            self.increase_button.setFixedSize(28, 30)  # 宽度减小
+            if dark_mode:
+                self.increase_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.increase_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #f5f5f5; color: #000000;')
+            
+            # 添加控件到融合式布局
+            count_widget_layout.addWidget(self.decrease_button)
+            count_widget_layout.addWidget(self.count_label)
+            count_widget_layout.addWidget(self.increase_button)
+            
+            # 第二列：功能按钮 - 水平排列
+            self.function_widget = QWidget()
+            self.function_widget.setFixedSize(135, 30)  # 整体宽度
+            function_widget_layout = QHBoxLayout(self.function_widget)
+            function_widget_layout.setContentsMargins(0, 0, 0, 0)
+            function_widget_layout.setSpacing(0)
+            
+            # 最左侧：重置按钮
+            self.reset_button = PushButton("重置")
+            self.reset_button.setFixedSize(45, 30)
+            if dark_mode:
+                self.reset_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.reset_button.setStyleSheet('border-top-left-radius: 4px; border-bottom-left-radius: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; background: #f5f5f5; color: #000000;')
+            
+            # 中间：点名按钮
+            self.instant_draw_button = PushButton("点名")
+            self.instant_draw_button.setFixedSize(45, 30)
+            if dark_mode:
+                self.instant_draw_button.setStyleSheet('border-left: none; border-right: none; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.instant_draw_button.setStyleSheet('border-left: none; border-right: none; background: #f5f5f5; color: #000000;')
+            
+            # 右侧：设置按钮（打开小浮窗界面）
+            self.settings_button = PushButton("设置")
+            self.settings_button.setFixedSize(45, 30)
+            if dark_mode:
+                self.settings_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #2a2a2a; color: #ffffff;')
+            else:
+                self.settings_button.setStyleSheet('border-top-left-radius: 0; border-bottom-left-radius: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #f5f5f5; color: #000000;')
+            
+            # 添加控件到水平布局
+            function_widget_layout.addWidget(self.reset_button)
+            function_widget_layout.addWidget(self.instant_draw_button)
+            function_widget_layout.addWidget(self.settings_button)
+            
+            # 将所有控件添加到主布局
+            main_layout.addWidget(self.count_widget)
+            main_layout.addWidget(self.function_widget)
         
         # 设置字体
         self.reset_button.setFont(QFont(load_custom_font(), 10))
@@ -865,7 +1052,8 @@ class LevitationWindow(QWidget):
         self.decrease_button.setFont(QFont(load_custom_font(), 10))
         self.settings_button.setFont(QFont(load_custom_font(), 10))
         self.count_label.setFont(QFont(load_custom_font(), 10))
-        self.instant_draw_title.setFont(QFont(load_custom_font(), 12))
+        if self.button_arrangement_mode == 0:
+            self.instant_draw_title.setFont(QFont(load_custom_font(), 12))
         
         # 连接信号
         if hasattr(self.reset_button, 'clicked'):
@@ -976,6 +1164,19 @@ class LevitationWindow(QWidget):
 
     def on_flash_press(self, event):
         # 小鸟游星野：闪抽按钮按下事件 - 记录拖动起始位置 ✧(๑•̀ㅂ•́)ow✧
+        self.drag_start_position = event.pos()
+        
+        # 确保 click_timer 存在，如果为 None 则重新初始化
+        if not hasattr(self, 'click_timer') or self.click_timer is None:
+            self.click_timer = QTimer(self)
+            self.click_timer.setSingleShot(True)
+            self.click_timer.timeout.connect(lambda: self.start_drag(None))
+        
+        # 启动长按计时器（100毫秒 - 进一步优化响应速度）
+        self.click_timer.start(100)
+
+    def on_people_press(self, event):
+        # 小鸟游星野：人物标签按下事件 - 记录拖动起始位置 ✧(๑•̀ㅂ•́)ow✧
         self.drag_start_position = event.pos()
         
         # 确保 click_timer 存在，如果为 None 则重新初始化
