@@ -446,6 +446,8 @@ class Window(MSFluentWindow):
     
     # 定义清理信号
     cleanup_signal = pyqtSignal()
+    # 字体变更信号
+    font_changed = pyqtSignal(str)
     FOCUS_TIMEOUT_MAP = [
         0, 0, 3000, 5000, 10000, 15000, 30000, 60000, 120000, 180000, 300000, 600000, 1800000,
         2700000, 3600000, 7200000, 10800000, 21600000, 43200000
@@ -479,24 +481,16 @@ class Window(MSFluentWindow):
         self.update_checker = UpdateChecker(self)
         self.update_checker.update_available.connect(show_update_notification)
 
-        # 初始化IPC服务器
-        self.server = QLocalServer(self)
-        self.server.newConnection.connect(self.handle_new_connection)
-        
-        # 清理可能存在的旧服务器实例
-        QLocalServer.removeServer("SecRandomIPC")
-        
-        # 尝试监听，如果失败则输出错误日志
-        if not self.server.listen("SecRandomIPC"):
-            logger.error(f"IPC服务器监听失败: {self.server.errorString()}")
-        else:
-            logger.info("IPC服务器监听成功: SecRandomIPC")
+        # 优化：延迟初始化IPC服务器，先完成主要界面加载
+        self.server = None
+        QTimer.singleShot(50, self._initialize_ipc_server)
 
         # 初始化定时器
         self.focus_timer = QTimer(self)
         self.focus_timer.timeout.connect(self.check_focus_timeout)
         self.last_focus_time = QDateTime.currentDateTime()
 
+        # resize_timer的初始化
         self.resize_timer = QTimer(self)
         self.resize_timer.setSingleShot(True)
         self.resize_timer.timeout.connect(lambda: self.config_manager.save_window_size(self.width(), self.height()))
@@ -504,7 +498,8 @@ class Window(MSFluentWindow):
         # USB检测定时器
         self.usb_detection_timer = QTimer(self)
         self.usb_detection_timer.timeout.connect(check_and_delete_pending_usb)
-        self.usb_detection_timer.start(5000)  # 每5秒检查一次
+        # 优化：延迟启动USB检测定时器，减少启动时间
+        QTimer.singleShot(0, lambda: self.usb_detection_timer.start(2000))
 
 
         # 初始化焦点模式设置
@@ -548,39 +543,66 @@ class Window(MSFluentWindow):
         # 优化：尽早创建核心界面，确保窗口大小保存可以尽早执行
         self.createSubInterface()
         
-        # 优化：立即初始化托盘图标管理器，减少延迟
+        # 优化：尽早初始化托盘图标管理器，但不显示托盘图标
         self._init_tray_manager()
         
         # 优化：尽早应用窗口显示设置，确保窗口大小保存可以尽早执行
         self._apply_window_visibility_settings()
         
-        # 优化：减少悬浮窗口创建延迟，从200ms减少到50ms
-        QTimer.singleShot(50, self._create_levitation_window)
+        # 优化：延迟创建悬浮窗口，在所有子界面和导航系统初始化完成后创建
+        # self._create_levitation_window()  # 注释掉，将在_check_all_interfaces_created中创建
 
         if self.config_manager.get_foundation_setting('topmost_switch'):
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint) # 置顶
         else:
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint) # 取消置顶
 
-    def _create_levitation_window(self):
-        """延迟创建悬浮窗口
-        优化：简化创建流程，减少初始化时间"""
+    def _initialize_ipc_server(self):
+        """延迟初始化IPC服务器
+        优化：在主界面加载完成后才初始化IPC服务器，减少启动时间"""
         try:
-            # 优化：直接创建悬浮窗口，减少不必要的条件判断
+            # 初始化IPC服务器
+            self.server = QLocalServer(self)
+            self.server.newConnection.connect(self.handle_new_connection)
+            
+            # 清理可能存在的旧服务器实例
+            QLocalServer.removeServer("SecRandomIPC")
+            
+            # 尝试监听，如果失败则输出错误日志
+            if not self.server.listen("SecRandomIPC"):
+                logger.error(f"IPC服务器监听失败: {self.server.errorString()}")
+            else:
+                logger.info("IPC服务器监听成功: SecRandomIPC")
+        except Exception as e:
+            logger.error(f"初始化IPC服务器失败: {e}")
+
+    def _create_levitation_window(self):
+        """创建悬浮窗口
+        优化：在所有子界面和导航系统初始化完成后创建"""
+        try:
+            # 创建悬浮窗口
             self.levitation_window = LevitationWindow()
-            # 优化：移除条件判断，直接显示悬浮窗口，后续可以通过设置控制
+            # 显示悬浮窗口
             self.levitation_window.show()
-            logger.info("悬浮窗口已创建")
+            logger.info("悬浮窗口已创建并显示")
         except Exception as e:
             logger.error(f"创建悬浮窗口失败: {e}")
 
     def apply_background_image(self):
         """应用背景图片和颜色
-        检查设置中的 enable_main_background 和 enable_main_background_color，
-        如果开启则应用主界面背景图片或背景颜色"""
+        优化：使用QTimer.singleShot异步加载，不阻塞主线程"""
         try:
-            logger.info("开始应用背景图片或颜色")
+            logger.info("开始异步应用背景图片或颜色")
             
+            # 使用QTimer.singleShot异步加载背景图片，避免使用PyQt5.QtConcurrent
+            QTimer.singleShot(0, self._load_background_settings)
+            
+        except Exception as e:
+            logger.error(f"启动背景图片异步加载失败: {e}")
+
+    def _load_background_settings(self):
+        """加载背景设置"""
+        try:
             # 读取自定义设置
             custom_settings_path = path_manager.get_settings_path('custom_settings.json')
             with open_file(custom_settings_path, 'r', encoding='utf-8') as f:
@@ -591,146 +613,146 @@ class Window(MSFluentWindow):
             enable_main_background = personal_settings.get('enable_main_background', True)
             enable_main_background_color = personal_settings.get('enable_main_background_color', False)
             
-            # 优先应用背景颜色（如果启用）
+            # 处理背景设置
             if enable_main_background_color:
                 main_background_color = personal_settings.get('main_background_color', '#FFFFFF')
-                
-                # 创建背景颜色标签（使用QLabel实现，与背景图片保持一致）
-                self.background_label = QLabel(self)
-                self.background_label.setGeometry(0, 0, self.width(), self.height())
-                self.background_label.setStyleSheet(f"background-color: {main_background_color};")
-                self.background_label.lower()  # 将背景标签置于底层
-                
-                # 确保背景标签随窗口大小变化
-                self.background_label.setAttribute(Qt.WA_StyledBackground, True)
-                
-                # 设置窗口属性，确保背景可见
-                self.setAttribute(Qt.WA_TranslucentBackground)
-                self.setStyleSheet("background: transparent;")
-                
-                # 保存原始的resizeEvent方法
-                self.original_resizeEvent = self.resizeEvent
-                
-                # 重写resizeEvent方法，调整背景大小
-                self.resizeEvent = self._on_resize_event
-                
-                logger.info(f"已成功应用主界面背景颜色 {main_background_color}")
-                
-            # 如果背景颜色未启用，但背景图片启用了，则应用背景图片
+                self._apply_background_color(main_background_color)
             elif enable_main_background:
-                # 获取主界面背景图片设置
                 main_background_image = personal_settings.get('main_background_image', '')
-                
-                # 检查是否选择了背景图片
                 if main_background_image and main_background_image != "无背景图":
-                    # 获取背景图片文件夹路径
                     background_dir = path_manager.get_resource_path('images', 'background')
                     image_path = background_dir / main_background_image
-                        
-                    # 检查图片文件是否存在
                     if image_path.exists():
-                        # 创建背景图片对象
-                        background_pixmap = QPixmap(str(image_path))
-                        
-                        # 如果图片加载成功，应用背景
-                        if not background_pixmap.isNull():
-                            # 获取模糊度和亮度设置
-                            blur_value = personal_settings.get('background_blur', 10)
-                            brightness_value = personal_settings.get('background_brightness', 30)
-                            
-                            # 应用模糊效果
-                            if blur_value > 0:
-                                # 创建模糊效果
-                                blur_effect = QGraphicsBlurEffect()
-                                blur_effect.setBlurRadius(blur_value)
-                                
-                                # 创建临时场景和图形项来应用模糊效果
-                                scene = QGraphicsScene()
-                                item = QGraphicsPixmapItem(background_pixmap)
-                                item.setGraphicsEffect(blur_effect)
-                                scene.addItem(item)
-                                
-                                # 创建渲染图像
-                                result_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
-                                result_image.fill(Qt.transparent)
-                                painter = QPainter(result_image)
-                                scene.render(painter)
-                                painter.end()
-                                
-                                # 更新背景图片
-                                background_pixmap = QPixmap.fromImage(result_image)
-                            
-                            # 应用亮度效果
-                            if brightness_value != 100:
-                                # 创建图像副本
-                                brightness_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
-                                brightness_image.fill(Qt.transparent)
-                                painter = QPainter(brightness_image)
-                                
-                                # 计算亮度调整因子
-                                brightness_factor = brightness_value / 100.0
-                                
-                                # 应用亮度调整
-                                painter.setOpacity(brightness_factor)
-                                painter.drawPixmap(0, 0, background_pixmap)
-                                painter.end()
-                                
-                                # 更新背景图片
-                                background_pixmap = QPixmap.fromImage(brightness_image)
-                            
-                            # 创建背景标签并设置样式
-                            self.background_label = QLabel(self)
-                            self.background_label.setGeometry(0, 0, self.width(), self.height())
-                            self.background_label.setPixmap(background_pixmap.scaled(
-                                self.width(), self.height(), 
-                                Qt.IgnoreAspectRatio, 
-                                Qt.SmoothTransformation
-                            ))
-                            self.background_label.lower()  # 将背景标签置于底层
-                            
-                            # 保存原始图片，用于窗口大小调整时重新缩放
-                            self.original_background_pixmap = background_pixmap
-                            
-                            # 确保背景标签随窗口大小变化
-                            self.background_label.setAttribute(Qt.WA_StyledBackground, True)
-                            
-                            # 设置窗口属性，确保背景可见
-                            self.setAttribute(Qt.WA_TranslucentBackground)
-                            self.setStyleSheet("background: transparent;")
-                            
-                            # 保存原始的resizeEvent方法
-                            self.original_resizeEvent = self.resizeEvent
-                            
-                            # 重写resizeEvent方法，调整背景大小
-                            self.resizeEvent = self._on_resize_event
-                            
-                            logger.info(f"已成功应用主界面背景图片 {main_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%")
-                        else:
-                            logger.error(f"主界面背景图片 {main_background_image} 加载失败")
-                    else:
-                        logger.error(f"主界面背景图片 {main_background_image} 不存在")
-                else:
-                    logger.info("未选择主界面背景图片")
-            else:
-                # 如果两者都未启用，则使用默认背景
-                self.setStyleSheet("background: transparent;")
-                
-                # 清除可能存在的背景图片标签
-                if hasattr(self, 'background_label') and self.background_label:
-                    self.background_label.deleteLater()
-                    delattr(self, 'background_label')
-                
-                # 恢复原始的resizeEvent方法
-                if hasattr(self, 'original_resizeEvent'):
-                    self.resizeEvent = self.original_resizeEvent
-                    delattr(self, 'original_resizeEvent')
-                
-                # logger.debug("主界面背景图片和颜色功能均未启用，使用默认背景")
-                
-        except FileNotFoundError:
-            logger.error("自定义设置文件不存在，使用默认设置")
+                        # 使用QTimer.singleShot异步处理图片
+                        QTimer.singleShot(0, lambda: self._process_and_apply_background_image(
+                            str(image_path), 
+                            personal_settings.get('background_blur', 10),
+                            personal_settings.get('background_brightness', 30)
+                        ))
+        
         except Exception as e:
-            logger.error(f"应用主界面背景图片或颜色时发生异常: {e}")
+            logger.error(f"加载背景设置失败: {e}")
+
+    def _process_and_apply_background_image(self, image_path, blur_value, brightness_value):
+        """处理并应用背景图片"""
+        try:
+            # 加载图片
+            background_pixmap = QPixmap(image_path)
+            if not background_pixmap.isNull():
+                # 应用模糊和亮度效果
+                if blur_value > 0 or brightness_value != 100:
+                    processed_pixmap = self._process_image(background_pixmap, blur_value, brightness_value)
+                else:
+                    processed_pixmap = background_pixmap
+                
+                # 应用背景图片
+                self._apply_background_image(processed_pixmap)
+        
+        except Exception as e:
+            logger.error(f"处理背景图片失败: {e}")
+
+    def _process_image(self, pixmap, blur_value, brightness_value):
+        """处理图片效果"""
+        # 应用模糊效果
+        if blur_value > 0:
+            # 创建模糊效果
+            blur_effect = QGraphicsBlurEffect()
+            blur_effect.setBlurRadius(blur_value)
+            
+            # 创建临时场景和图形项来应用模糊效果
+            scene = QGraphicsScene()
+            item = QGraphicsPixmapItem(pixmap)
+            item.setGraphicsEffect(blur_effect)
+            scene.addItem(item)
+            
+            # 创建渲染图像
+            result_image = QImage(pixmap.size(), QImage.Format_ARGB32)
+            result_image.fill(Qt.transparent)
+            painter = QPainter(result_image)
+            scene.render(painter)
+            painter.end()
+            
+            # 更新背景图片
+            pixmap = QPixmap.fromImage(result_image)
+        
+        # 应用亮度效果
+        if brightness_value != 100:
+            # 创建图像副本
+            brightness_image = QImage(pixmap.size(), QImage.Format_ARGB32)
+            brightness_image.fill(Qt.transparent)
+            painter = QPainter(brightness_image)
+            
+            # 计算亮度调整因子
+            brightness_factor = brightness_value / 100.0
+            
+            # 应用亮度调整
+            painter.setOpacity(brightness_factor)
+            painter.drawPixmap(0, 0, pixmap)
+            painter.end()
+            
+            # 更新背景图片
+            pixmap = QPixmap.fromImage(brightness_image)
+        
+        return pixmap
+
+    def _apply_background_color(self, color):
+        """在主线程中应用背景颜色"""
+        try:
+            # 创建背景颜色标签
+            self.background_label = QLabel(self)
+            self.background_label.setGeometry(0, 0, self.width(), self.height())
+            self.background_label.setStyleSheet(f"background-color: {color};")
+            self.background_label.lower()
+            
+            # 确保背景标签随窗口大小变化
+            self.background_label.setAttribute(Qt.WA_StyledBackground, True)
+            
+            # 设置窗口属性，确保背景可见
+            self.setAttribute(Qt.WA_TranslucentBackground)
+            self.setStyleSheet("background: transparent;")
+            
+            # 保存原始的resizeEvent方法
+            self.original_resizeEvent = self.resizeEvent
+            
+            # 重写resizeEvent方法，调整背景大小
+            self.resizeEvent = self._on_resize_event
+            
+            logger.info(f"已成功应用主界面背景颜色 {color}")
+        except Exception as e:
+            logger.error(f"应用背景颜色失败: {e}")
+
+    def _apply_background_image(self, pixmap):
+        """在主线程中应用背景图片"""
+        try:
+            # 创建背景标签并设置样式
+            self.background_label = QLabel(self)
+            self.background_label.setGeometry(0, 0, self.width(), self.height())
+            self.background_label.setPixmap(pixmap.scaled(
+                self.width(), self.height(), 
+                Qt.IgnoreAspectRatio, 
+                Qt.SmoothTransformation
+            ))
+            self.background_label.lower()
+            
+            # 保存原始图片，用于窗口大小调整时重新缩放
+            self.original_background_pixmap = pixmap
+            
+            # 确保背景标签随窗口大小变化
+            self.background_label.setAttribute(Qt.WA_StyledBackground, True)
+            
+            # 设置窗口属性，确保背景可见
+            self.setAttribute(Qt.WA_TranslucentBackground)
+            self.setStyleSheet("background: transparent;")
+            
+            # 保存原始的resizeEvent方法
+            self.original_resizeEvent = self.resizeEvent
+            
+            # 重写resizeEvent方法，调整背景大小
+            self.resizeEvent = self._on_resize_event
+            
+            logger.info("已成功应用主界面背景图片")
+        except Exception as e:
+            logger.error(f"应用背景图片失败: {e}")
     
     def _on_resize_event(self, event):
         """窗口大小调整处理
@@ -873,7 +895,7 @@ class Window(MSFluentWindow):
     
     def _apply_window_visibility_settings(self):
         """应用窗口显示设置
-        根据用户保存的设置决定窗口是否自动显示，优化窗口大小保存时机"""
+        根据用户保存的设置决定窗口是否自动显示"""
         try:
             logger.info("开始应用窗口显示设置")
             
@@ -884,11 +906,9 @@ class Window(MSFluentWindow):
             # 保存开机自启动设置，稍后在main.py中使用
             self.is_self_starting = settings.get('self_starting_enabled') == True
             
-            # 立即执行一次窗口大小保存，确保在安全设置加载完成后尽快保存
+            # 优化：移除窗口大小保存操作，改为在窗口关闭时保存
             # 这样可以减少安全设置加载完成与窗口大小保存之间的时间间隔
-            if not self.isMaximized():
-                self.config_manager.save_window_size(self.width(), self.height())
-                logger.info(f"窗口大小已提前保存为 {self.width()}x{self.height()}")
+            logger.info(f"窗口显示设置已应用")
         except Exception as e:
             logger.error(f"加载窗口显示设置失败: {e}")
 
@@ -907,18 +927,16 @@ class Window(MSFluentWindow):
             # 创建设置界面（核心界面，立即创建）
             self.settingInterface = settings_Window(self)
             self.settingInterface.setObjectName("settingInterface")
-            logger.info("设置界面已创建")
+            # 连接设置界面的字体变更信号到槽函数
+            self.settingInterface.font_changed.connect(self.font_changed)
 
             # 创建关于界面（核心界面，立即创建）
             self.about_settingInterface = about(self)
             self.about_settingInterface.setObjectName("about_settingInterface")
-            logger.info("关于界面已创建")
-            
-            # 延迟加载其他界面，减少初始化时间
-            self._delayed_interfaces_created = False
+            logger.info("核心界面（设置、关于）已创建")
             
             # 立即创建核心界面（点名和抽奖），其他界面延迟加载
-            self._create_core_interfaces()
+            QTimer.singleShot(0, self._create_core_interfaces)
             
             # 优化：减少延迟加载非核心界面的时间，从100ms减少到0ms
             QTimer.singleShot(0, self._create_remaining_interfaces)
@@ -939,20 +957,28 @@ class Window(MSFluentWindow):
                 if pumping_floating_side != 2:  # 不为2才创建
                     self.pumping_peopleInterface = pumping_people(self)
                     self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
-                    logger.info("点名界面已创建")
                 else:
                     self.pumping_peopleInterface = None
-                    logger.info("'点名'界面已设置为不创建")
                 
                 # 创建抽奖界面（核心界面）
                 pumping_reward_side = sidebar_settings.get('pumping_reward_side', 0)
                 if pumping_reward_side != 2:  # 不为2才创建
                     self.pumping_rewardInterface = pumping_reward(self)
                     self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
-                    logger.info("抽奖界面已创建")
                 else:
                     self.pumping_rewardInterface = None
-                    logger.info("'抽奖'界面已设置为不创建")
+                
+                # 记录核心界面创建结果
+                created_interfaces = []
+                if self.pumping_peopleInterface is not None:
+                    created_interfaces.append("点名")
+                if self.pumping_rewardInterface is not None:
+                    created_interfaces.append("抽奖")
+                
+                if created_interfaces:
+                    logger.info(f"核心界面创建成功: {', '.join(created_interfaces)}")
+                else:
+                    logger.info("未创建任何核心界面（根据用户设置）")
                     
         except Exception as e:
             logger.error(f"创建核心界面失败: {e}")
@@ -965,24 +991,56 @@ class Window(MSFluentWindow):
 
     def _create_remaining_interfaces(self):
         """创建剩余的非核心界面
-        这些界面在后台异步创建，不影响主界面显示速度"""
-        if self._delayed_interfaces_created:
-            return
-            
+        这些界面在主线程中创建，确保界面创建的可靠性"""
         try:
-            # 优化：减少异步创建历史交接设置界面的延迟，从50ms减少到0ms
-            QTimer.singleShot(0, self._create_history_handoff_interface)
-            
-            # 优化：减少异步创建背单词界面的延迟，从100ms减少到0ms
-            QTimer.singleShot(0, self._create_vocabulary_learning_interface)
-            
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                sidebar_settings = settings.get('sidebar', {})
+                
+                # 创建历史交接设置界面（非核心界面）
+                history_handoff_value = sidebar_settings.get('main_window_history_switch', 1)
+                if history_handoff_value != 2:  # 不为2才创建
+                    self.history_handoff_settingInterface = history_handoff_setting(self)
+                    self.history_handoff_settingInterface.setObjectName('history_handoff_settingInterface')
+                else:
+                    self.history_handoff_settingInterface = None
+                
+                # 创建背单词界面（非核心界面）
+                vocabulary_value = sidebar_settings.get('main_window_side_switch', 2)
+                if vocabulary_value != 2:  # 不为2才创建
+                    # 创建界面但不立即加载设置，减少初始化时间
+                    self.vocabulary_learningInterface = vocabulary_learning(self)
+                    self.vocabulary_learningInterface.setObjectName('vocabulary_learningInterface')
+                else:
+                    self.vocabulary_learningInterface = None
+                
+                # 记录非核心界面创建结果
+                created_interfaces = []
+                if self.history_handoff_settingInterface is not None:
+                    created_interfaces.append("历史交接设置")
+                if self.vocabulary_learningInterface is not None:
+                    created_interfaces.append("背单词")
+                
+                if created_interfaces:
+                    logger.info(f"非核心界面创建成功: {', '.join(created_interfaces)}")
+                else:
+                    logger.info("未创建任何非核心界面（根据用户设置）")
+                    
         except Exception as e:
-            logger.error(f"启动延迟界面创建失败: {e}")
-            # 即使失败也要初始化导航系统
-            QTimer.singleShot(0, self.initNavigation)
+            logger.error(f"创建非核心界面失败: {e}")
+            # 出错时创建默认的非核心界面
+            self.history_handoff_settingInterface = history_handoff_setting(self)
+            self.history_handoff_settingInterface.setObjectName('history_handoff_settingInterface')
+            self.vocabulary_learningInterface = vocabulary_learning(self)
+            self.vocabulary_learningInterface.setObjectName('vocabulary_learningInterface')
+            logger.info("已创建默认非核心界面")
+        
+        # 检查是否所有延迟界面都已创建
+        self._check_all_interfaces_created()
 
     def _create_history_handoff_interface(self):
-        """异步创建历史交接设置界面"""
+        """创建历史交接设置界面"""
         try:
             settings_path = path_manager.get_settings_path('custom_settings.json')
             with open_file(settings_path, 'r', encoding='utf-8') as f:
@@ -992,21 +1050,15 @@ class Window(MSFluentWindow):
                 if value != 2:  # 不为2才创建
                     self.history_handoff_settingInterface = history_handoff_setting(self)
                     self.history_handoff_settingInterface.setObjectName('history_handoff_settingInterface')
-                    logger.info("历史交接设置界面已创建")
                 else:
-                    logger.info("'历史交接设置'界面已设置为不创建")
                     self.history_handoff_settingInterface = None
                     
-            # 检查是否所有延迟界面都已创建
-            self._check_all_interfaces_created()
         except Exception as e:
             logger.error(f"创建历史交接设置界面失败: {e}")
             self.history_handoff_settingInterface = None
-            # 检查是否所有延迟界面都已创建
-            self._check_all_interfaces_created()
 
     def _create_vocabulary_learning_interface(self):
-        """异步创建背单词界面"""
+        """创建背单词界面"""
         try:
             settings_path = path_manager.get_settings_path('custom_settings.json')
             with open_file(settings_path, 'r', encoding='utf-8') as f:
@@ -1017,21 +1069,15 @@ class Window(MSFluentWindow):
                     # 创建界面但不立即加载设置，减少初始化时间
                     self.vocabulary_learningInterface = vocabulary_learning(self)
                     self.vocabulary_learningInterface.setObjectName('vocabulary_learningInterface')
-                    logger.info("背单词界面已创建")
                     
                     # 优化：移除异步加载设置，减少初始化时间
                     # QTimer.singleShot(0, self._load_vocabulary_learning_settings)
                 else:
-                    logger.info("'背单词'界面已设置为不创建")
                     self.vocabulary_learningInterface = None
                     
-            # 检查是否所有延迟界面都已创建
-            self._check_all_interfaces_created()
         except Exception as e:
             logger.error(f"创建背单词界面失败: {e}")
             self.vocabulary_learningInterface = None
-            # 检查是否所有延迟界面都已创建
-            self._check_all_interfaces_created()
 
     def _load_vocabulary_learning_settings(self):
         """异步加载背单词界面设置"""
@@ -1079,7 +1125,17 @@ class Window(MSFluentWindow):
             
             # 初始化导航系统
             self.initNavigation()
-            logger.info("所有子界面和导航系统已初始化完成")
+            
+            # 显示主窗口、悬浮窗口和托盘图标
+            self.show()
+            
+            # 创建并显示悬浮窗口
+            self._create_levitation_window()
+            
+            # 显示托盘图标
+            self.show_tray_icon()
+            
+            logger.info("所有界面、导航系统、主窗口和托盘图标初始化完成")
 
     def initNavigation(self):
         """初始化导航系统
@@ -1089,48 +1145,55 @@ class Window(MSFluentWindow):
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 sidebar_settings = settings.get('sidebar', {})
-                # logger.info("已读取导航配置，准备构建个性化菜单")
-
+                
+                # 记录导航项位置信息
+                top_items = []
+                bottom_items = []
+                hidden_items = []
+                error_items = []
+                
                 # 根据设置决定"点名"界面位置
                 pumping_floating_side = sidebar_settings.get('pumping_floating_side', 0)
                 if pumping_floating_side == 1:
                     if self.pumping_peopleInterface is not None:
                         self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.BOTTOM)
-                        # logger.info("'点名'界面已放置在底部导航栏")
+                        bottom_items.append("点名")
                     else:
-                        logger.error("'点名'界面未创建，无法添加到导航栏")
+                        error_items.append("点名")
                 elif pumping_floating_side == 2:
-                    logger.info("'点名'界面已设置为不显示")
+                    hidden_items.append("点名")
                 else:
                     if self.pumping_peopleInterface is not None:
                         self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.TOP)
-                        # logger.info("'点名'界面已放置在顶部导航栏")
+                        top_items.append("点名")
                     else:
-                        logger.error("'点名'界面未创建，无法添加到导航栏")
+                        error_items.append("点名")
 
                 # 根据设置决定"抽奖"界面位置
                 pumping_reward_side = sidebar_settings.get('pumping_reward_side', 0)
                 if pumping_reward_side == 1:
                     if self.pumping_rewardInterface is not None:
                         self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.BOTTOM)
-                        # logger.info("'抽奖'界面已放置在底部导航栏")
+                        bottom_items.append("抽奖")
                     else:
-                        logger.error("'抽奖'界面未创建，无法添加到导航栏")
+                        error_items.append("抽奖")
                 elif pumping_reward_side == 2:
-                    logger.info("'抽奖'界面已设置为不显示")
+                    hidden_items.append("抽奖")
                 else:
                     if self.pumping_rewardInterface is not None:
                         self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
-                        # logger.info("'抽奖'界面已放置在顶部导航栏")
+                        top_items.append("抽奖")
                     else:
-                        logger.error("'抽奖'界面未创建，无法添加到导航栏")
+                        error_items.append("抽奖")
 
         except FileNotFoundError as e:
             logger.error(f"配置文件找不到: {e}, 使用默认顶部导航布局")
             if self.pumping_peopleInterface is not None:
                 self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.TOP)
+                top_items.append("点名")
             if self.pumping_rewardInterface is not None:
                 self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
+                top_items.append("抽奖")
 
         try:
             # 添加单词PK界面导航项
@@ -1138,20 +1201,21 @@ class Window(MSFluentWindow):
             if vocabulary_side == 1:
                 if self.vocabulary_learningInterface is not None:
                     self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
-                    # logger.info("'单词PK'界面已放置在底部导航栏")
+                    bottom_items.append("单词PK")
                 else:
-                    logger.error("'单词PK'界面未创建，无法添加到导航栏")
+                    error_items.append("单词PK")
             elif vocabulary_side == 2:
-                logger.info("'单词PK'界面已设置为不显示")
+                hidden_items.append("单词PK")
             else:
                 if self.vocabulary_learningInterface is not None:
                     self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.TOP)
-                    # logger.info("'单词PK'界面已放置在顶部导航栏")
+                    top_items.append("单词PK")
                 else:
-                    logger.error("'单词PK'界面未创建，无法添加到导航栏")
+                    error_items.append("单词PK")
         except Exception as e:
             if self.vocabulary_learningInterface is not None:
                 self.addSubInterface(self.vocabulary_learningInterface, get_theme_icon("ic_fluent_text_whole_word_20_filled"), '单词PK', position=NavigationItemPosition.BOTTOM)
+                bottom_items.append("单词PK")
             logger.error(f"加载单词PK界面导航项失败: {e}")
 
         # 添加历史记录导航项
@@ -1163,20 +1227,20 @@ class Window(MSFluentWindow):
                     history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
                     # 点击历史记录导航项时切换到历史记录界面
                     history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
-                    # logger.info("'历史记录'导航项已放置在底部导航栏")
+                    bottom_items.append("历史记录")
                 else:
-                    logger.error("'历史记录'界面未创建，无法添加到导航栏")
+                    error_items.append("历史记录")
             elif history_side == 2:
-                logger.info("'历史记录'导航项已设置为不显示")
+                hidden_items.append("历史记录")
             else:
                 if self.history_handoff_settingInterface is not None:
                     # 为历史记录导航项添加点击事件处理器
                     history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.TOP)
                     # 点击历史记录导航项时切换到历史记录界面
                     history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
-                    # logger.info("'历史记录'导航项已放置在顶部导航栏")
+                    top_items.append("历史记录")
                 else:
-                    logger.error("'历史记录'界面未创建，无法添加到导航栏")
+                    error_items.append("历史记录")
         except Exception as e:
             logger.error(f"加载历史记录导航项失败: {e}")
             # 默认添加到底部导航栏
@@ -1184,8 +1248,11 @@ class Window(MSFluentWindow):
                 history_item = self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
                 # 点击历史记录导航项时切换到历史记录界面
                 history_item.clicked.connect(lambda: self.switchTo(self.history_handoff_settingInterface))
+                bottom_items.append("历史记录")
 
+        # 添加关于界面（固定在底部）
         self.addSubInterface(self.about_settingInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
+        bottom_items.append("关于")
 
         try:
             settings_side = sidebar_settings.get('show_settings_icon', 1)
@@ -1197,9 +1264,9 @@ class Window(MSFluentWindow):
                 # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
-                # logger.info("'设置'图标已放置在底部导航栏")
+                bottom_items.append("设置")
             elif settings_side == 2:
-                logger.info("'设置'图标已设置为不显示")
+                hidden_items.append("设置")
             else:
                 # 创建一个空的设置界面占位符，用于导航栏
                 self.settings_placeholder = QWidget()
@@ -1208,7 +1275,7 @@ class Window(MSFluentWindow):
                 # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
-                # logger.info("'设置'图标已放置在顶部导航栏")
+                top_items.append("设置")
         except Exception as e:
             logger.error(f"加载设置图标失败: {e}")
             if sidebar_settings.get('show_settings_icon', True):
@@ -1219,20 +1286,31 @@ class Window(MSFluentWindow):
                 # 为导航项添加点击事件处理器，调用show_setting_interface方法
                 settings_item.clicked.connect(self.show_setting_interface)
                 settings_item.clicked.connect(lambda: self.switchTo(self.pumping_peopleInterface))
+                bottom_items.append("设置")
         
-        # logger.info("所有导航项已布置完成，导航系统可以正常使用")
+        # 输出导航系统初始化结果
+        if top_items:
+            logger.info(f"顶部导航栏: {', '.join(top_items)}")
+        if bottom_items:
+            logger.info(f"底部导航栏: {', '.join(bottom_items)}")
+        if hidden_items:
+            logger.info(f"已隐藏的导航项: {', '.join(hidden_items)}")
+        if error_items:
+            logger.error(f"无法添加的导航项: {', '.join(error_items)}")
 
     def closeEvent(self, event):
         """窗口关闭事件处理
         拦截窗口关闭事件，隐藏窗口并保存窗口大小"""
         self.hide()
         event.ignore()
-        self.save_window_size()
-        logger.info("窗口关闭事件已拦截，程序已转入后台运行")
+        # 优化：在窗口关闭时保存窗口大小，减少启动时的IO操作
+        self.config_manager.save_window_size(self.width(), self.height())
+        logger.info("窗口关闭事件已拦截，程序已转入后台运行，窗口大小已保存")
 
     def resizeEvent(self, event):
         """窗口大小变化事件处理
-        检测窗口大小变化并启动尺寸记录倒计时"""
+        检测窗口大小变化，但不启动尺寸记录倒计时，减少IO操作"""
+        # 优化：移除窗口大小变化时的自动保存，减少IO操作
         self.resize_timer.start(500)
         super().resizeEvent(event)
 
@@ -1399,23 +1477,32 @@ class Window(MSFluentWindow):
 
     def _init_tray_manager(self):
         """初始化托盘图标管理器
-        优化：简化初始化流程，减少延迟"""
+        优化：延迟显示托盘图标，等待所有子界面和导航系统初始化完成"""
         try:
             # 优化：移除不必要的日志输出，减少IO操作
             # logger.info("开始异步初始化托盘图标管理器")
             
-            # 初始化托盘图标管理器
+            # 初始化托盘图标管理器，但不立即显示托盘图标
             self.tray_manager = TrayIconManager(self)
-            self.tray_manager.tray_icon.show()
             # 优化：移除不必要的日志输出，减少IO操作
             # logger.info("托盘图标管理器初始化完成")
         except Exception as e:
             logger.error(f"初始化托盘图标管理器失败: {e}")
 
+    def show_tray_icon(self):
+        """显示托盘图标
+        在所有子界面和导航系统初始化完成后调用"""
+        try:
+            if hasattr(self, 'tray_manager') and self.tray_manager:
+                self.tray_manager.tray_icon.show()
+                logger.info("托盘图标已显示")
+        except Exception as e:
+            logger.error(f"显示托盘图标失败: {e}")
+
     def start_cleanup(self):
         """启动清理
         软件启动时清理上次遗留的临时抽取记录文件，改为异步执行以减少初始化时间"""
-        # 优化：将清理任务优先级提高，使用更短的延迟时间
+        # 优化：使用QTimer.singleShot异步执行清理任务，避免使用PyQt5.QtConcurrent
         QTimer.singleShot(0, self._perform_cleanup)
         logger.info("清理任务已安排在后台异步执行")
 

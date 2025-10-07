@@ -21,10 +21,11 @@ from app.view.settings_page.custom_setting import custom_setting
 from app.view.settings_page.pumping_handoff_setting import pumping_handoff_setting
 from app.view.settings_page.voice_engine_setting import voice_engine_settings
 
-
 class settings_Window(MSFluentWindow):
     # 定义个性化设置变化信号
     personal_settings_changed = pyqtSignal()
+    # 字体变更信号
+    font_changed = pyqtSignal(str)
     
     def __init__(self, parent=None):
         super().__init__()
@@ -77,100 +78,76 @@ class settings_Window(MSFluentWindow):
         self.createSubInterface()
 
     def createSubInterface(self):
+        """创建设置界面的子界面"""
+        # 创建设置界面的各个子界面
+        interfaces_to_create = [
+            ("more_settingInterface", more_setting, "更多设置界面"),
+            ("custom_settingInterface", custom_setting, "自定义设置界面"),
+            ("pumping_handoff_settingInterface", pumping_handoff_setting, "抽取设置界面"),
+            ("about_settingInterface", about, "关于界面")
+        ]
+        
+        created_interfaces = []
+        for attr_name, interface_class, display_name in interfaces_to_create:
+            try:
+                interface = interface_class(self)
+                interface.setObjectName(attr_name)
+                setattr(self, attr_name, interface)
+                created_interfaces.append(display_name)
+            except Exception as e:
+                logger.error(f"创建{display_name}失败: {e}")
+                setattr(self, attr_name, None)
+        
+        if created_interfaces:
+            logger.info(f"设置界面核心组件创建成功: {', '.join(created_interfaces)}")
+        
+        # 根据设置决定是否创建条件性界面
+        settings_path = path_manager.get_settings_path('custom_settings.json')
         try:
-            self.more_settingInterface = more_setting(self)
-            self.more_settingInterface.setObjectName("more_settingInterface")
-            logger.info("更多设置界面创建成功")
-        except Exception as e:
-            logger.error(f"创建更多设置界面失败: {e}")
-            self.more_settingInterface = None
-
-        try:
-            self.custom_settingInterface = custom_setting(self)
-            self.custom_settingInterface.setObjectName("custom_settingInterface")
-            logger.info("自定义设置界面创建成功")
-        except Exception as e:
-            logger.error(f"创建自定义设置界面失败: {e}")
-            self.custom_settingInterface = None
-
-        try:
-            self.pumping_handoff_settingInterface = pumping_handoff_setting(self)
-            self.pumping_handoff_settingInterface.setObjectName("pumping_handoff_settingInterface")
-            logger.info("抽取设置界面创建成功")
-        except Exception as e:
-            logger.error(f"创建抽取设置界面失败: {e}")
-            self.pumping_handoff_settingInterface = None
-
-        # 根据设置决定是否创建"历史记录设置"界面
-        try:
-            settings_path = path_manager.get_settings_path('custom_settings.json')
             with open_file(settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
                 sidebar_settings = settings.get('sidebar', {})
-                history_settings_switch = sidebar_settings.get('show_history_settings_switch', 1)
                 
-                if history_settings_switch != 2:  # 不为"不显示"时才创建界面
+                # 历史记录设置界面
+                history_settings_switch = sidebar_settings.get('show_history_settings_switch', 1)
+                if history_settings_switch != 2:
                     self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
                     self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
                     logger.info("历史记录设置界面创建成功")
                 else:
-                    logger.info("历史记录设置界面已设置为不创建")
                     self.changeable_history_handoff_settingInterface = None
-        except Exception as e:
-            logger.error(f"读取历史记录设置界面设置失败: {e}, 默认创建界面")
-            self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
-            self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
-            logger.info("历史记录设置界面创建成功")
-
-        try:
-            self.about_settingInterface = about(self)
-            self.about_settingInterface.setObjectName("about_settingInterface")
-            logger.info("关于界面创建成功")
-        except Exception as e:
-            logger.error(f"创建关于界面失败: {e}")
-            self.about_settingInterface = None
-
-        # 根据设置决定是否创建"安全设置"界面
-        try:
-            settings_path = path_manager.get_settings_path('custom_settings.json')
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                sidebar_settings = settings.get('sidebar', {})
-                security_settings_switch = sidebar_settings.get('show_security_settings_switch', 1)
                 
-                if security_settings_switch != 2:  # 不为"不显示"时才创建界面
+                # 安全设置界面
+                security_settings_switch = sidebar_settings.get('show_security_settings_switch', 1)
+                if security_settings_switch != 2:
                     self.password_setInterface = password_set(self)
                     self.password_setInterface.setObjectName("password_setInterface")
                     logger.info("安全设置界面创建成功")
                 else:
-                    logger.info("安全设置界面已设置为不创建")
                     self.password_setInterface = None
-        except Exception as e:
-            logger.error(f"读取安全设置界面设置失败: {e}, 默认创建界面")
-            self.password_setInterface = password_set(self)
-            self.password_setInterface.setObjectName("password_setInterface")
-            logger.info("安全设置界面创建成功")
-
-        # 根据设置决定是否创建"语音设置"界面
-        try:
-            settings_path = path_manager.get_settings_path('custom_settings.json')
-            with open_file(settings_path, 'r', encoding='utf-8') as f:
-                settings = json.load(f)
-                sidebar_settings = settings.get('sidebar', {})
-                voice_settings_switch = sidebar_settings.get('show_voice_settings_switch', 1)
                 
-                if voice_settings_switch != 2:  # 不为"不显示"时才创建界面
+                # 语音设置界面
+                voice_settings_switch = sidebar_settings.get('show_voice_settings_switch', 1)
+                if voice_settings_switch != 2:
                     self.voice_engine_settingsInterface = voice_engine_settings(self)
                     self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
                     logger.info("语音设置界面创建成功")
                 else:
-                    logger.info("语音设置界面已设置为不创建")
                     self.voice_engine_settingsInterface = None
+                    
         except Exception as e:
-            logger.error(f"读取语音设置界面设置失败: {e}, 默认创建界面")
+            logger.error(f"读取条件性界面设置失败: {e}, 使用默认创建")
+            # 出错时创建所有条件性界面
+            self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
+            self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
+            
+            self.password_setInterface = password_set(self)
+            self.password_setInterface.setObjectName("password_setInterface")
+            
             self.voice_engine_settingsInterface = voice_engine_settings(self)
             self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
-            logger.info("语音设置界面创建成功")
+            
+            logger.info("所有条件性设置界面已默认创建")
 
         self.initNavigation()
 
@@ -183,6 +160,8 @@ class settings_Window(MSFluentWindow):
 
         if self.custom_settingInterface is not None:
             self.addSubInterface(self.custom_settingInterface, get_theme_icon("ic_fluent_person_20_filled"), '个性设置', position=NavigationItemPosition.TOP)
+            # 连接个性设置卡片的字体变更信号到上层槽函数
+            self.custom_settingInterface.font_changed.connect(self.font_changed)
         else:
             logger.error("自定义设置界面不存在，无法添加到导航栏")
 

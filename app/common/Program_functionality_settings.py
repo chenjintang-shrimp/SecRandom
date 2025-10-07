@@ -106,14 +106,12 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
         # 加载设置
         self.load_settings()
 
-        # 减少延迟时间，加快初始化速度
-        QTimer.singleShot(100, self.connect_message_receiver)
-        
-        # 减少延迟时间，加快初始化速度
-        QTimer.singleShot(100, self._delayed_init)
+        # 优化：移除延迟初始化，直接初始化计时器和消息接收器连接
+        self.connect_message_receiver()
+        self._delayed_init()
     
     def _delayed_init(self):
-        """延迟初始化计时器和消息接收器连接，避免阻塞页面加载"""
+        """初始化计时器和消息接收器连接"""
         # 根据设置状态启动或停止计时器
         if self.clear_draw_records_switch.isChecked():
             self.cleanup_timer.start()
@@ -131,13 +129,9 @@ class Program_functionality_settingsCard(GroupHeaderCardWidget):
                 message_receiver.json_message_received.connect(self._handle_ci_message)
                 logger.info("成功连接消息接收器信号")
             else:
-                logger.error("消息接收器初始化失败，将延迟连接")
-                # 延迟尝试连接
-                QTimer.singleShot(2000, self.connect_message_receiver)
+                logger.error("消息接收器初始化失败")
         except Exception as e:
             logger.error(f"连接消息接收器信号失败: {e}")
-            # 延迟尝试连接
-            QTimer.singleShot(2000, self.connect_message_receiver)
 
     def load_settings(self):
         try:

@@ -7,7 +7,7 @@
 # ==================================================
 import os
 import sys
-import multiprocessing
+import threading
 
 # ==================================================
 # 第三方库导入
@@ -44,6 +44,9 @@ class StartupWindow(QDialog):
         # self.opacity_effect = QGraphicsOpacityEffect()
         # self.opacity_effect.setOpacity(0.8)
         # self.setGraphicsEffect(self.opacity_effect)
+        
+        # 添加拖动相关变量
+        self._drag_position = None
 
         # 创建主布局
         main_layout = QVBoxLayout(self)
@@ -182,8 +185,14 @@ class StartupWindow(QDialog):
         """设置到指定步骤"""
         if 0 <= step_index < len(self.startup_steps):
             step_name, progress = self.startup_steps[step_index]
+            # 如果没有提供detail，则使用step_name作为detail
+            if detail is None:
+                detail = step_name
             self.update_progress(step_name, progress, detail)
             self.current_step = step_index + 1
+            
+            # 确保界面立即更新
+            QApplication.processEvents()
             return True
         return False
     
@@ -201,16 +210,10 @@ class StartupWindow(QDialog):
             # 深色主题
             bg_color = "#111116"
             border_color = "#3E3E42"
-            text_color = "#F5F5F5"
-            progress_bg = "#2D2D30"
-            progress_text = "#F5F5F5"
         else:
             # 浅色主题
             bg_color = "#F5F5F5"
             border_color = "#CCCCCC"
-            text_color = "#111116"
-            progress_bg = "#F0F0F0"
-            progress_text = "#333333"
         
         # 设置背景容器样式
         self.background_widget.setStyleSheet(f"""
@@ -224,3 +227,40 @@ class StartupWindow(QDialog):
     def close_startup(self):
         """关闭启动窗口"""
         self.close()
+        
+    def get_startup_process(self):
+        """获取启动进程，用于与main.py中的startup_process变量兼容"""
+        # 返回一个虚拟的进程对象，使其具有is_alive和join方法
+        class DummyProcess:
+            def __init__(self):
+                self._alive = True
+                self._lock = threading.Lock()
+                
+            def is_alive(self):
+                with self._lock:
+                    return self._alive
+                    
+            def join(self, timeout=None):
+                with self._lock:
+                    self._alive = False
+                return True
+                
+        return DummyProcess()
+    
+    def mousePressEvent(self, event):
+        """鼠标按下事件，记录当前位置用于拖动"""
+        if event.button() == Qt.LeftButton:
+            self._drag_position = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+    
+    def mouseMoveEvent(self, event):
+        """鼠标移动事件，实现窗口拖动"""
+        if event.buttons() == Qt.LeftButton and self._drag_position is not None:
+            self.move(event.globalPos() - self._drag_position)
+            event.accept()
+    
+    def mouseReleaseEvent(self, event):
+        """鼠标释放事件，清除拖动位置"""
+        if event.button() == Qt.LeftButton:
+            self._drag_position = None
+            event.accept()

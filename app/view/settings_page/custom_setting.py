@@ -13,10 +13,13 @@ from app.common.floating_window_settings import floating_window_settingsCard
 from app.common.roll_call_settings import roll_call_settingsCard
 from app.common.rewards_settings import reward_settingsCard
 from app.common.Program_functionality_settings import Program_functionality_settingsCard
+from app.common.global_signals import font_signal
 
 class custom_setting(QFrame):
     # 背景设置变化信号
     background_settings_changed = pyqtSignal()
+    # 字体变更信号
+    font_changed = pyqtSignal(str)
     
     def __init__(self, parent: QFrame = None):
         super().__init__(parent=parent)
@@ -299,6 +302,10 @@ class custom_setting(QFrame):
         
         # 连接主题设置卡片的背景设置变化信号
         self.theme_settings_card.background_settings_changed.connect(self.on_background_settings_changed)
+        
+        # 连接主题设置卡片的字体变更信号到custom_setting的字体变更信号
+        if hasattr(self.theme_settings_card, 'personal_settings_Card') and hasattr(self.theme_settings_card.personal_settings_Card, 'font_changed'):
+            self.theme_settings_card.personal_settings_Card.font_changed.connect(self.font_changed)
         
         # 标记为已创建
         self.theme_settings_created = True

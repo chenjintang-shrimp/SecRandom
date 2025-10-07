@@ -32,7 +32,6 @@ from pathlib import Path
 # ==================================================
 from app.common.config import cfg, VERSION, load_custom_font, WEBSITE, APPLY_NAME
 from app.view.startup_window import StartupWindow
-from app.view.settings import settings_Window
 from app.view.SecRandom import Window
 from app.common.url_handler import process_url_if_exists
 from app.common.path_utils import path_manager, ensure_dir, open_file, file_exists
@@ -43,6 +42,16 @@ from qfluentwidgets import qconfig, Theme
 # ==================================================
 C_SE = 'SecRandomIPC'  # IPC通讯服务器名称
 SHARED_MEMORY_KEY = 'SecRandom'   # 共享内存密钥
+# 导入全局字体信号
+from app.common.global_signals import font_signal
+
+# ==================================================
+# 全局变量定义
+# ==================================================
+main_window = None
+shared_memory = None
+startup_window = None
+startup_process = None
 
 # ==================================================
 # 日志配置相关函数
@@ -176,11 +185,6 @@ def check_single_instance():
 def apply_font_settings():
     """应用字体设置，加载并应用保存的字体（后台创建，不阻塞进程）"""
     try:
-        # 检查是否已经加载过字体，避免重复加载
-        if hasattr(apply_font_settings, '_font_loaded') and apply_font_settings._font_loaded:
-            logger.debug("字体已加载，跳过重复加载")
-            return
-            
         # 读取字体设置文件
         settings_file = path_manager.get_settings_path('custom_settings.json')
         ensure_dir(settings_file.parent)
@@ -202,9 +206,6 @@ def apply_font_settings():
         logger.info(f"字体设置: {font_family}")
         # 用QTimer在后台应用字体，不阻塞主进程
         QTimer.singleShot(0, lambda: apply_font_to_application(font_family))
-        
-        # 标记字体已加载
-        apply_font_settings._font_loaded = True
     except Exception as e:
         logger.error(f"初始化字体设置失败: {e}")
         # 发生错误时使用默认字体
@@ -219,11 +220,6 @@ def apply_font_to_application(font_family):
         font_family (str): 字体家族名称
     """
     try:
-        # 检查是否已经应用过字体，避免重复应用
-        if hasattr(apply_font_to_application, '_font_applied') and apply_font_to_application._font_applied == font_family:
-            logger.debug(f"字体 {font_family} 已应用，跳过重复应用")
-            return
-            
         # 获取当前应用程序默认字体
         current_font = QApplication.font()
         
@@ -231,50 +227,53 @@ def apply_font_to_application(font_family):
         app_font = QFont(font_family)
         app_font.setPointSize(current_font.pointSize())
         
-        # 如果是HarmonyOS Sans SC字体，使用特定的字体文件路径
-        if font_family == "HarmonyOS Sans SC":
-            # 检查字体是否已加载，避免重复加载
-            if not hasattr(apply_font_to_application, '_harmony_font_loaded'):
-                font_path = path_manager.get_font_path('HarmonyOS_Sans_SC_Bold.ttf')
-                if font_path and path_manager.file_exists(font_path):
-                    font_id = QFontDatabase.addApplicationFont(str(font_path))
-                    if font_id >= 0:
-                        font_families = QFontDatabase.applicationFontFamilies(font_id)
-                        if font_families:
-                            app_font = QFont(font_families[0])
-                            app_font.setPointSize(current_font.pointSize())
-                            # logger.debug(f"已加载HarmonyOS Sans SC字体文件: {font_path}")
-                            # 标记字体已加载
-                            apply_font_to_application._harmony_font_loaded = True
-                        else:
-                            logger.error(f"无法从字体文件获取字体家族: {font_path}")
+        # 如果是汉仪文黑-85W字体，使用特定的字体文件路径
+        if font_family == "汉仪文黑-85W":
+            font_path = path_manager.get_resource_path('font', '汉仪文黑-85W.ttf')
+            if font_path and path_manager.file_exists(font_path):
+                font_id = QFontDatabase.addApplicationFont(str(font_path))
+                if font_id >= 0:
+                    font_families = QFontDatabase.applicationFontFamilies(font_id)
+                    if font_families:
+                        app_font = QFont(font_families[0])
+                        app_font.setPointSize(current_font.pointSize())
+                        # logger.info(f"已加载汉仪文黑-85W字体文件: {font_path}")
                     else:
-                        logger.error(f"无法加载字体文件: {font_path}")
+                        logger.error(f"无法从字体文件获取字体家族: {font_path}")
                 else:
-                    logger.error(f"HarmonyOS Sans SC字体文件不存在: {font_path}")
+                    logger.error(f"无法加载字体文件: {font_path}")
             else:
-                # 字体已加载，直接使用
-                font_families = QFontDatabase.applicationFontFamilies(QFontDatabase.addApplicationFont(str(path_manager.get_font_path('HarmonyOS_Sans_SC_Bold.ttf'))))
-                if font_families:
-                    app_font = QFont(font_families[0])
-                    app_font.setPointSize(current_font.pointSize())
+                logger.error(f"汉仪文黑-85W字体文件不存在: {font_path}")
+        elif font_family == "HarmonyOS Sans SC":
+            font_path = path_manager.get_resource_path('font', 'HarmonyOS_Sans_SC_Bold.ttf')
+            if font_path and path_manager.file_exists(font_path):
+                font_id = QFontDatabase.addApplicationFont(str(font_path))
+                if font_id >= 0:
+                    font_families = QFontDatabase.applicationFontFamilies(font_id)
+                    if font_families:
+                        app_font = QFont(font_families[0])
+                        app_font.setPointSize(current_font.pointSize())
+                        # logger.info(f"已加载HarmonyOS Sans SC字体文件: {font_path}")
+                    else:
+                        logger.error(f"无法从字体文件获取字体家族: {font_path}")
+                else:
+                    logger.error(f"无法加载字体文件: {font_path}")
+            else:
+                logger.error(f"HarmonyOS Sans SC字体文件不存在: {font_path}")
         
         # 获取所有顶级窗口并更新它们的字体
         widgets_updated = 0
-        for widget in QApplication.allWidgets():
-            if isinstance(widget, QWidget):
+        for widget in QApplication.topLevelWidgets():
+            if isinstance(widget, QObject):
                 update_widget_fonts(widget, app_font)
                 widgets_updated += 1
             
-        # logger.debug(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件字体")
-        
-        # 标记字体已应用
-        apply_font_to_application._font_applied = font_family
+        # logger.info(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件字体")
     except Exception as e:
         logger.error(f"应用字体失败: {e}")
 
 def update_widget_fonts(widget, font):
-    """更新控件及其子控件的字体，优化版本减少内存占用
+    """更新控件及其子控件的字体，优化版本减少内存占用，特别处理ComboBox等控件
     
     Args:
         widget: 要更新字体的控件
@@ -284,6 +283,10 @@ def update_widget_fonts(widget, font):
         return
         
     try:
+        # 检查控件是否有font属性，只有有font属性的控件才尝试设置字体
+        if not hasattr(widget, 'font') or not hasattr(widget, 'setFont'):
+            return
+            
         # 获取控件当前字体
         current_widget_font = widget.font()
         
@@ -297,10 +300,10 @@ def update_widget_fonts(widget, font):
         widget.setFont(new_font)
         
         # 如果控件有子控件，递归更新子控件的字体
-        if isinstance(widget, QWidget):
+        if isinstance(widget, QObject):
             children = widget.children()
             for child in children:
-                if isinstance(child, QWidget):
+                if isinstance(child, QObject):
                     update_widget_fonts(child, font)
     except Exception as e:
         logger.error(f"更新控件字体时发生异常: {e}")
@@ -323,137 +326,34 @@ def _clean_expired_data():
     except Exception as e:
         logger.error(f"清理过期历史记录时出错: {e}")
 
-
 # ==================================================
 # 启动窗口相关函数
 # ==================================================
+
 def run_startup_window():
-    """运行启动窗口的函数，用于在单独进程中显示启动窗口"""
+    """启动启动窗口"""
+    global startup_window, startup_process
     try:
-        # 创建QApplication实例（如果还没有）
-        app_startup = QApplication.instance()
-        if app_startup is None:
-            app_startup = QApplication(sys.argv)
-        
-        # 创建启动窗口实例
         startup_window = StartupWindow()
-        
-        # 显示启动窗口
         startup_window.show()
-        
-        # 创建本地服务器，用于接收主程序的进度更新
-        server = QLocalServer()
-        server_name = "SecRandomStartup"  # 使用简单名称，不包含路径
-        server.listen(server_name)
-        
-        # 连接新连接信号
-        server.newConnection.connect(lambda: handle_new_connection(server, startup_window))
-        
-        # 运行事件循环
-        app_startup.exec_()
-        
-        # 关闭服务器
-        server.close()
-        
+        startup_process = startup_window.get_startup_process()
+        logger.info("启动窗口已显示")
     except Exception as e:
-        logger.error(f"启动窗口运行出错: {e}")
-        # 确保应用程序实例退出
-        app = QApplication.instance()
-        if app is not None:
-            app.quit()
-
-def handle_new_connection(server, startup_window):
-    """处理新的连接，接收主程序的进度更新"""
-    socket = server.nextPendingConnection()
-    if socket:
-        # 连接readyRead信号
-        socket.readyRead.connect(lambda: read_progress_update(socket, startup_window))
-        # 连接disconnected信号
-        socket.disconnected.connect(socket.deleteLater)
-
-def read_progress_update(socket, startup_window):
-    """读取进度更新并更新启动窗口"""
-    while socket.bytesAvailable() > 0:
-        data = socket.readAll().data().decode('utf-8')
-        if data.startswith("progress:"):
-            try:
-                step_index = int(data.split(":")[1])
-                if 0 <= step_index < len(startup_window.startup_steps):
-                    step_name, _ = startup_window.startup_steps[step_index]
-                    startup_window.set_step(step_index, step_name)
-                    # logger.info(f"启动窗口进度更新: {step_name}")
-            except (ValueError, IndexError) as e:
-                logger.error(f"解析进度更新失败: {e}")
-        elif data == "close":
-            startup_window.close_startup()
-            # 退出应用程序实例
-            app = QApplication.instance()
-            if app is not None:
-                app.quit()
+        logger.error(f"启动启动窗口时发生异常: {e}")
 
 def update_startup_progress(step_index):
     """更新启动窗口进度
     
     Args:
-        step_index (int): 步骤索引
+        step_index (int): 步骤索引，对应StartupWindow中的启动步骤
     """
+    global startup_window
     try:
-        # 创建本地socket连接
-        socket = QLocalSocket()
-        
-        # 连接到启动窗口服务器
-        server_name = "SecRandomStartup"  # 使用简单名称，不包含路径
-        socket.connectToServer(server_name)
-        
-        # 等待连接建立
-        if socket.waitForConnected(500):  # 等待0.5秒
-            # 发送进度更新
-            message = f"progress:{step_index}"
-            socket.write(message.encode('utf-8'))
-            socket.flush()
-            
-            # 等待消息发送完成
-            socket.waitForBytesWritten(500)
-            
-            # 关闭连接
-            socket.disconnectFromServer()
-        else:
-            # 连接失败，可能是启动窗口还未准备好
-            # logger.debug(f"无法连接到启动窗口服务器: {socket.errorString()}")
-            pass
-        
-        # 关闭连接
-        socket.disconnectFromServer()
+        if startup_window is not None:
+            startup_window.set_step(step_index)
     except Exception as e:
-        logger.error(f"更新启动窗口进度时发生异常: {e}")
+        logger.error(f"更新启动进度时发生异常: {e}")
 
-def close_startup_window():
-    """关闭启动窗口"""
-    try:
-        # 创建本地socket连接
-        socket = QLocalSocket()
-        
-        # 连接到启动窗口服务器
-        server_name = "SecRandomStartup"  # 使用简单名称，不包含路径
-        socket.connectToServer(server_name)
-        
-        # 等待连接建立
-        if socket.waitForConnected(500):  # 等待0.5秒
-            # 发送关闭命令
-            message = "close"
-            socket.write(message.encode('utf-8'))
-            socket.flush()
-            
-            # 等待消息发送完成
-            socket.waitForBytesWritten(500)
-            
-            # 关闭连接
-            socket.disconnectFromServer()
-        
-        # 关闭连接
-        socket.disconnectFromServer()
-    except Exception as e:
-        logger.error(f"关闭启动窗口时发生异常: {e}")
 
 # ==================================================
 # 应用程序初始化相关函数
@@ -545,51 +445,40 @@ def initialize_app():
     # 更新启动窗口进度 - 启动完成
     update_startup_progress(9)
     
-    # 关闭启动窗口
-    close_startup_window()
-    
     # 等待启动窗口进程结束
     if startup_process.is_alive():
         startup_process.join(timeout=1.0)  # 最多等待1秒
-    
-    # 所有组件加载完成后，显示主窗口
-    # 检查是否是开机自启动模式
-    if hasattr(main_window, 'is_self_starting') and main_window.is_self_starting:
-        logger.info("开机自启动模式，窗口已隐藏")
-    else:
-        main_window.show()
-        logger.info("主窗口已显示")
+
+    # 关闭启动窗口
+    if startup_window is not None:
+        startup_window.close()
+
+    QTimer.singleShot(100, apply_font_settings)  # 字体设置稍后执行
 
 # ==================================================
 # 主程序入口
 # ==================================================
 def main_async():
     """主异步函数，用于启动应用程序"""
-    # 延迟初始化应用程序
-    QTimer.singleShot(200, lambda: initialize_app())
-    QTimer.singleShot(300, apply_font_settings)
+    QTimer.singleShot(0, initialize_app)
 
 if __name__ == "__main__":
-    # 重置全局变量
-    main_window = None
-    shared_memory = None
-    
     # 创建QApplication实例
     app = QApplication(sys.argv)
     
     # 导入垃圾回收模块，用于优化内存使用
     import gc
     gc.enable()  # 确保垃圾回收已启用
+
+    font_signal.font_changed.connect(apply_font_settings)
     
     try:
         # 首先配置日志系统，确保日志能正确记录
         configure_logging()
         logger.info("日志系统配置完成")
 
-        # 创建并显示启动窗口（在单独进程中）
-        startup_process = multiprocessing.Process(target=run_startup_window)
-        startup_process.daemon = True  # 设置为守护进程，主程序退出时自动结束
-        startup_process.start()
+        # 启动窗口
+        QTimer.singleShot(0, run_startup_window)
 
         # 启动主函数
         main_async()

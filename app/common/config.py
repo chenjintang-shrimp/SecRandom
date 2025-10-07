@@ -144,7 +144,7 @@ def check_for_updates(channel=None):
         return False, None
 
 def load_custom_font():
-    """加载自定义字体，根据用户设置决定是否加载 HarmonyOS Sans SC 字体
+    """加载自定义字体，根据用户设置决定是否加载 汉仪文黑-85W 字体
     
     Returns:
         str: 字体家族名称，如果加载失败则返回 None
@@ -162,8 +162,19 @@ def load_custom_font():
                 personal_settings = settings.get('personal', {})
                 font_family_setting = personal_settings.get('font_family', '')
             
-            # 如果字体设置为 HarmonyOS Sans SC，则加载自定义字体
-            if font_family_setting == "HarmonyOS Sans SC":
+            # 如果字体设置为 汉仪文黑-85W，则加载自定义字体
+            if font_family_setting == "汉仪文黑-85W":
+                font_path = path_manager.get_resource_path('font', '汉仪文黑-85W.ttf')
+                font_id = QFontDatabase.addApplicationFont(str(font_path))
+                if font_id < 0:
+                    logger.error(f"加载自定义字体失败: {font_path}")
+                    return None
+                font_family = QFontDatabase.applicationFontFamilies(font_id)[0]
+                # logger.info(f"成功加载自定义字体: {font_family}")
+                # 缓存字体
+                load_custom_font._font_cache = font_family
+                return font_family
+            elif font_family_setting == "HarmonyOS Sans SC":
                 font_path = path_manager.get_resource_path('font', 'HarmonyOS_Sans_SC_Bold.ttf')
                 font_id = QFontDatabase.addApplicationFont(str(font_path))
                 if font_id < 0:
@@ -329,7 +340,7 @@ class Config(QConfig):
     dpiScale = OptionsConfigItem(
         "Window", "DpiScale", "Auto", OptionsValidator([1, 1.25, 1.5, 1.75, 2, "Auto"]), restart=True)
     themeColor = ColorConfigItem(
-        "Theme", "Color", "#0078D4")  # Windows系统默认蓝色
+        "Theme", "Color", "#66CCFF")  # 天依蓝
 
 YEAR = 2025
 MONTH = 4
@@ -339,10 +350,10 @@ APPLY_NAME = "SecRandom"
 GITHUB_WEB = "https://github.com/SECTL/SecRandom"
 BILIBILI_WEB = "https://space.bilibili.com/520571577"
 WEBSITE = "https://secrandom.netlify.app"
-APP_DESCRIPTION = "一个易用的班级抽号软件，专为教育场景设计，让课堂点名更高效透明"  # 应用程序描述
-APP_COPYRIGHT = f"Copyright © {YEAR} {AUTHOR}. All rights reserved."  # 应用程序版权信息
-APP_LICENSE = "GPL-3.0 License"  # 应用程序许可证
-APP_EMAIL = "lzy.12@foxmail.com"  # 应用程序邮箱
+APP_DESCRIPTION = "一个易用的班级抽号软件，专为教育场景设计，让课堂点名更高效透明"
+APP_COPYRIGHT = f"Copyright © {YEAR} {AUTHOR}. All rights reserved."
+APP_LICENSE = "GPL-3.0 License"
+APP_EMAIL = "lzy.12@foxmail.com"
 
 cfg = Config()
 

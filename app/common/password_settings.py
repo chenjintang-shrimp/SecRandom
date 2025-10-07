@@ -146,16 +146,15 @@ def get_usb_drives():
         
         c = wmi.WMI()
         usb_drives = []
-        for disk in c.Win32_DiskDrive():
-            # 只要是 USB 接口的物理磁盘
-            if "USB" in disk.InterfaceType.upper():
-                usb_drives.append({
-                    "设备ID": disk.DeviceID,
-                    "型号": disk.Model,
-                    "接口": disk.InterfaceType,
-                    "序列号": getattr(disk, "SerialNumber", "未知"),
-                    "大小(字节)": int(disk.Size) if disk.Size else None
-                })
+        # 优化：使用更高效的WMI查询，只查询必要的字段
+        for disk in c.Win32_DiskDrive(InterfaceType="USB"):
+            usb_drives.append({
+                "设备ID": disk.DeviceID,
+                "型号": disk.Model,
+                "接口": disk.InterfaceType,
+                "序列号": getattr(disk, "SerialNumber", "未知"),
+                "大小(字节)": int(disk.Size) if disk.Size else None
+            })
         return usb_drives
     except Exception as e:
         logger.error(f"获取USB设备失败: {e}")
@@ -2600,11 +2599,12 @@ class password_SettingsCard(GroupHeaderCardWidget):
                 self.usb_monitor_thread.usb_removed.disconnect()
                 self.usb_monitor_thread = None
             
-            # 创建并启动新线程
+            # 创建新线程，但不立即启动，使用QTimer延迟启动以避免阻塞主线程
             self.usb_monitor_thread = USBMonitorThread(self)
             self.usb_monitor_thread.usb_removed.connect(self.on_usb_removed)
-            self.usb_monitor_thread.start()
-            logger.info("USB监控线程已启动")
+            # 使用QTimer.singleShot异步启动线程，避免阻塞主线程
+            QTimer.singleShot(100, self.usb_monitor_thread.start)
+            logger.info("USB监控线程已异步启动")
         except Exception as e:
             logger.error(f"启动USB监控线程时出错: {e}")
 

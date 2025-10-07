@@ -16,12 +16,15 @@ import winreg
 from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
+from app.common.global_signals import font_signal
 
 is_dark = is_dark_theme(qconfig)
 
 class personal_settingsCard(GroupHeaderCardWidget):
     # 定义背景设置变化信号
     background_settings_changed = pyqtSignal()
+    # 定义字体变更信号
+    font_changed = pyqtSignal(str)
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -116,12 +119,14 @@ class personal_settingsCard(GroupHeaderCardWidget):
         self.font_combo = ComboBox()
         self.font_combo.setFont(QFont(load_custom_font(), 12))
         # 添加字体到下拉框
-        # 首先添加 HarmonyOS Sans SC 字体选项
         self.font_combo.addItem("HarmonyOS Sans SC")
+        self.font_combo.addItem("汉仪文黑-85W")
         # 然后添加系统字体
         for font in sorted(QFontDatabase().families()):
             self.font_combo.addItem(font)
         self.font_combo.currentIndexChanged.connect(self.save_settings)
+        self.font_combo.currentIndexChanged.connect(lambda: font_signal.font_changed.emit(self.font_combo.currentText()))
+        self.font_combo.currentIndexChanged.connect(lambda: self.font_changed.emit(self.font_combo.currentText()))
 
         # 背景颜色开关
         self.background_color_switch = SwitchButton()
@@ -192,7 +197,7 @@ class personal_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_paint_brush_20_filled"), "闪抽界面背景颜色选择", "选择闪抽界面使用的背景颜色", self.flash_background_color_button)
         
         # 添加字体设置组
-        self.addGroup(get_theme_icon("ic_fluent_text_font_20_filled"), "字体设置", "选择应用程序使用的字体(重启生效)", self.font_combo)
+        self.addGroup(get_theme_icon("ic_fluent_text_font_20_filled"), "字体设置", "选择应用程序使用的字体", self.font_combo)
 
         # 初始化背景颜色属性
         self.main_background_color = self.default_settings["main_background_color"]
@@ -635,9 +640,3 @@ class personal_settingsCard(GroupHeaderCardWidget):
             self.flash_background_combo.setCurrentText(flash_current)
         elif flash_current == "无背景图":
             self.flash_background_combo.setCurrentText("无背景图")
-
-    def refresh_font(self):
-        """刷新页面字体"""
-        # 刷新所有子控件字体
-        for widget in self.findChildren(QWidget):
-            widget.setFont(self.font())
