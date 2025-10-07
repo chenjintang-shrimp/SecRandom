@@ -1949,31 +1949,61 @@ class instant_draw(QWidget):
                                     
                                     # 创建渲染图像
                                     result_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
-                                    result_image.fill(Qt.transparent)
-                                    painter = QPainter(result_image)
-                                    scene.render(painter)
-                                    painter.end()
-                                    
-                                    # 更新背景图片
-                                    background_pixmap = QPixmap.fromImage(result_image)
+                                    if result_image.isNull():
+                                        logger.error("无法创建渲染图像，模糊效果将被跳过")
+                                    else:
+                                        result_image.fill(Qt.transparent)
+                                        painter = QPainter(result_image)
+                                        try:
+                                            # 确保painter已激活
+                                            if not painter.isActive():
+                                                painter.begin(result_image)
+                                            
+                                            # 渲染场景
+                                            scene.render(painter)
+                                            
+                                            # 确保渲染完成
+                                            painter.end()
+                                        except Exception as e:
+                                            logger.error(f"应用模糊效果时发生异常: {e}")
+                                            # 确保在异常情况下也结束painter
+                                            if painter.isActive():
+                                                painter.end()
+                                        
+                                        # 更新背景图片
+                                        background_pixmap = QPixmap.fromImage(result_image)
                                 
                                 # 应用亮度效果
                                 if brightness_value != 100:
                                     # 创建图像副本
                                     brightness_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
-                                    brightness_image.fill(Qt.transparent)
-                                    painter = QPainter(brightness_image)
-                                    
-                                    # 计算亮度调整因子
-                                    brightness_factor = brightness_value / 100.0
-                                    
-                                    # 应用亮度调整
-                                    painter.setOpacity(brightness_factor)
-                                    painter.drawPixmap(0, 0, background_pixmap)
-                                    painter.end()
-                                    
-                                    # 更新背景图片
-                                    background_pixmap = QPixmap.fromImage(brightness_image)
+                                    if brightness_image.isNull():
+                                        logger.error("无法创建亮度调整图像，亮度效果将被跳过")
+                                    else:
+                                        brightness_image.fill(Qt.transparent)
+                                        painter = QPainter(brightness_image)
+                                        try:
+                                            # 确保painter已激活
+                                            if not painter.isActive():
+                                                painter.begin(brightness_image)
+                                            
+                                            # 计算亮度调整因子
+                                            brightness_factor = brightness_value / 100.0
+                                            
+                                            # 应用亮度调整
+                                            painter.setOpacity(brightness_factor)
+                                            painter.drawPixmap(0, 0, background_pixmap)
+                                            
+                                            # 确保渲染完成
+                                            painter.end()
+                                        except Exception as e:
+                                            logger.error(f"应用亮度效果时发生异常: {e}")
+                                            # 确保在异常情况下也结束painter
+                                            if painter.isActive():
+                                                painter.end()
+                                        
+                                        # 更新背景图片
+                                        background_pixmap = QPixmap.fromImage(brightness_image)
                                 
                                 # 创建背景标签并设置样式
                                 self.background_label = QLabel(self)

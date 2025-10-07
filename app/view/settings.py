@@ -393,8 +393,15 @@ class settings_Window(MSFluentWindow):
                                     result_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
                                     result_image.fill(Qt.transparent)
                                     painter = QPainter(result_image)
-                                    scene.render(painter)
-                                    painter.end()
+                                    try:
+                                        if painter.isActive():
+                                            scene.render(painter)
+                                        else:
+                                            logger.error("QPainter 未激活，无法渲染模糊效果")
+                                    finally:
+                                        # 确保QPainter对象被正确结束
+                                        if painter.isActive():
+                                            painter.end()
                                     
                                     # 更新背景图片
                                     background_pixmap = QPixmap.fromImage(result_image)
@@ -405,14 +412,20 @@ class settings_Window(MSFluentWindow):
                                     brightness_image = QImage(background_pixmap.size(), QImage.Format_ARGB32)
                                     brightness_image.fill(Qt.transparent)
                                     painter = QPainter(brightness_image)
-                                    
-                                    # 计算亮度调整因子
-                                    brightness_factor = brightness_value / 100.0
-                                    
-                                    # 应用亮度调整
-                                    painter.setOpacity(brightness_factor)
-                                    painter.drawPixmap(0, 0, background_pixmap)
-                                    painter.end()
+                                    try:
+                                        if painter.isActive():
+                                            # 计算亮度调整因子
+                                            brightness_factor = brightness_value / 100.0
+                                            
+                                            # 应用亮度调整
+                                            painter.setOpacity(brightness_factor)
+                                            painter.drawPixmap(0, 0, background_pixmap)
+                                        else:
+                                            logger.error("QPainter 未激活，无法渲染亮度效果")
+                                    finally:
+                                        # 确保QPainter对象被正确结束
+                                        if painter.isActive():
+                                            painter.end()
                                     
                                     # 更新背景图片
                                     background_pixmap = QPixmap.fromImage(brightness_image)
