@@ -1440,14 +1440,39 @@ class LevitationWindow(QWidget):
         # 右边缘隐藏：窗口左边缘在屏幕右侧或更右
         is_hidden_right = pos.x() >= screen.width() - 10  # 10是隐藏后露出的宽度
         
-        # 如果不是贴边隐藏状态，则确保保存的位置在屏幕范围内
+        # 保存实际位置，但检查是否为不合理位置
+        x = pos.x()
+        y = pos.y()
+        
         if not is_hidden_left and not is_hidden_right:
-            x = max(0, min(pos.x(), screen.width() - window_width))
-            y = max(0, min(pos.y(), screen.height() - window_height))
-        else:
-            # 如果是贴边隐藏状态，直接使用当前位置
-            x = pos.x()
-            y = pos.y()
+            # 定义位置是否合理的阈值
+            # 如果位置超过屏幕尺寸的1.05倍，则认为是不合理的位置
+            max_reasonable_x = screen.width() * 1.05
+            max_reasonable_y = screen.height() * 1.05
+            
+            # 检查位置是否不合理（过大或过小）
+            is_unreasonable_position = (
+                x < -screen.width() or  # 在屏幕左侧过远
+                x > max_reasonable_x or  # 在屏幕右侧过远
+                y < -screen.height() or  # 在屏幕上方过远
+                y > max_reasonable_y  # 在屏幕下方过远
+            )
+            
+            if is_unreasonable_position:
+                # 如果位置不合理，保存屏幕中央位置
+                x = (screen.width() - window_width) // 2
+                y = (screen.height() - window_height) // 2
+            else:
+                # 如果位置合理但部分超出屏幕，调整到屏幕边缘
+                if x + window_width < 0:  # 窗口完全在屏幕左侧之外
+                    x = 0
+                elif x > screen.width():  # 窗口完全在屏幕右侧之外
+                    x = screen.width() - window_width
+                    
+                if y + window_height < 0:  # 窗口完全在屏幕上方之外
+                    y = 0
+                elif y > screen.height():  # 窗口完全在屏幕下方之外
+                    y = screen.height() - window_height
         
         settings_path = path_manager.get_settings_path("Settings.json")
         try:
@@ -1481,11 +1506,41 @@ class LevitationWindow(QWidget):
                 # 右边缘隐藏：窗口左边缘在屏幕右侧或更右
                 is_hidden_right = pos["x"] >= screen.width() - 10  # 10是隐藏后露出的宽度
                 
-                # 如果不是贴边隐藏状态，则确保窗口位置在屏幕范围内
+                # 如果不是贴边隐藏状态，则检查是否需要调整位置
                 if not is_hidden_left and not is_hidden_right:
-                    # 确保窗口位置在屏幕范围内
-                    x = max(0, min(pos["x"], screen.width() - window_width))
-                    y = max(0, min(pos["y"], screen.height() - window_height))
+                    # 检查位置是否合理（在屏幕范围内或接近屏幕）
+                    x = pos["x"]
+                    y = pos["y"]
+                    
+                    # 定义位置是否合理的阈值
+                    # 使用固定范围判断位置是否合理，超过屏幕尺寸的1.05倍则认为是不合理的位置
+                    max_reasonable_x = screen.width() * 1.05
+                    max_reasonable_y = screen.height() * 1.05
+                    
+                    # 检查位置是否不合理（过大或过小）
+                    is_unreasonable_position = (
+                        x < -screen.width() or  # 在屏幕左侧过远
+                        x > max_reasonable_x or  # 在屏幕右侧过远
+                        y < -screen.height() or  # 在屏幕上方过远
+                        y > max_reasonable_y  # 在屏幕下方过远
+                    )
+                    
+                    if is_unreasonable_position:
+                        # 如果位置不合理，将窗口放置在屏幕中央
+                        x = (screen.width() - window_width) // 2
+                        y = (screen.height() - window_height) // 2
+                    else:
+                        # 如果位置合理但部分超出屏幕，调整到屏幕边缘
+                        if x + window_width < 0:  # 窗口完全在屏幕左侧之外
+                            x = 0
+                        elif x > screen.width():  # 窗口完全在屏幕右侧之外
+                            x = screen.width() - window_width
+                            
+                        if y + window_height < 0:  # 窗口完全在屏幕上方之外
+                            y = 0
+                        elif y > screen.height():  # 窗口完全在屏幕下方之外
+                            y = screen.height() - window_height
+                    
                     self.move(QPoint(x, y))
                 else:
                     # 如果是贴边隐藏状态，直接使用保存的位置

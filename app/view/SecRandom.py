@@ -576,10 +576,70 @@ class Window(MSFluentWindow):
         except Exception as e:
             logger.error(f"初始化IPC服务器失败: {e}")
 
+    def _validate_floating_window_position(self):
+        """验证并修正浮窗位置值，确保在合理范围内
+        在创建浮窗前调用，防止极端位置值导致浮窗显示异常"""
+        try:
+            # 获取Settings.json路径
+            settings_path = path_manager.get_settings_path('Settings.json')
+            
+            # 检查文件是否存在
+            if not os.path.exists(settings_path):
+                logger.warning(f"Settings.json文件不存在: {settings_path}")
+                return
+            
+            # 读取Settings.json
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+            
+            # 获取位置信息
+            position = settings.get('position', {})
+            x = position.get('x', 0)
+            y = position.get('y', 0)
+            
+            # 获取屏幕尺寸
+            screen = QApplication.primaryScreen().geometry()
+            screen_width = screen.width()
+            screen_height = screen.height()
+            
+            # 定义合理位置范围（屏幕尺寸+5%）
+            max_reasonable_x = screen_width * 1.05
+            max_reasonable_y = screen_height * 1.05
+            
+            # 检查位置是否合理
+            is_position_reasonable = (0 <= x <= max_reasonable_x and 0 <= y <= max_reasonable_y)
+            
+            if not is_position_reasonable:
+                logger.warning(f"检测到不合理的浮窗位置值: x={x}, y={y}，将重置为屏幕中央")
+                
+                # 重置为屏幕中央位置
+                center_x = screen_width // 2
+                center_y = screen_height // 2
+                
+                # 更新位置值
+                position['x'] = center_x
+                position['y'] = center_y
+                settings['position'] = position
+                
+                # 保存更新后的设置
+                with open_file(settings_path, 'w', encoding='utf-8') as f:
+                    json.dump(settings, f, indent=4, ensure_ascii=False)
+                
+                logger.info(f"浮窗位置已重置为屏幕中央: x={center_x}, y={center_y}")
+            else:
+                # logger.debug(f"浮窗位置值在合理范围内: x={x}, y={y}")
+                pass
+                
+        except Exception as e:
+            logger.error(f"验证浮窗位置失败: {e}")
+
     def _create_levitation_window(self):
         """创建悬浮窗口
-        优化：在所有子界面和导航系统初始化完成后创建"""
+        优化：在所有子界面和导航系统初始化完成后创建，并在创建前检查位置合理性"""
         try:
+            # 在创建浮窗前先检查位置值是否合理
+            self._validate_floating_window_position()
+            
             # 创建悬浮窗口
             self.levitation_window = LevitationWindow()
             # 显示悬浮窗口
