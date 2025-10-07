@@ -94,7 +94,6 @@ class advanced_settingsCard(GroupHeaderCardWidget):
             pass
 
         try:
-            from app.common.path_utils import path_manager
             enc_set_file = path_manager.get_enc_set_path()
             with open_file(enc_set_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
@@ -459,11 +458,11 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                         continue
                         
                     # 获取目标文件路径
-                    target_file_path = self._get_settings_file_path(file_name)
+                    settings_dir = path_manager.get_settings_path()
+                    target_file_path = self._get_settings_file_path(file_name, settings_dir)
                     if not target_file_path:
                         continue
                     
-                    from app.common.path_utils import path_manager
                     if not path_manager.file_exists(target_file_path):
                         continue
                     
@@ -497,17 +496,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
             w.buttonLayout.insertStretch(1)
             w.exec_()
     
-    def _get_settings_file_path(self, file_name):
-        """根据文件名获取设置文件路径"""
-        from app.common.path_utils import path_manager
-        settings_dir = path_manager.get_settings_path()
-        
-        if file_name in ["foundation", "pumping_people", "instant_draw", "pumping_reward", "history", "channel", "position"]:
-            return os.path.join(settings_dir, "Settings.json")
-        elif file_name in ["fixed_url", "personal", "floating_window", "roll_call", "reward", "program_functionality"]:
-            return os.path.join(settings_dir, "custom_settings.json")
-        else:
-            return os.path.join(settings_dir, f"{file_name}.json")
+    
     
     def _update_settings_by_file_type(self, file_name, subcategories, current_settings, imported_settings):
         """根据文件类型更新设置"""
@@ -604,8 +593,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
             if dialog.exec_() == QDialog.Accepted:
                 selected_settings = dialog.get_selected_settings()
                 
-                # 获取设置目录路径
-                from app.common.path_utils import path_manager
+                # 获取设置目录路
                 settings_dir = path_manager.get_settings_path()
                 
                 # 收集选中的设置
@@ -645,7 +633,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
         # 特殊处理：所有设置项实际上都在Settings.json文件中
         if file_name in ["foundation", "pumping_people", "instant_draw", "pumping_reward", "history", "channel", "position"]:
             return os.path.join(settings_dir, "Settings.json")
-        elif file_name == ["fixed_url", "personal", "sidebar", "floating_window", "roll_call", "reward", "program_functionality"]:
+        elif file_name in ["fixed_url", "personal", "sidebar", "floating_window", "roll_call", "reward", "program_functionality"]:
             return os.path.join(settings_dir, "custom_settings.json")
         else:
             return os.path.join(settings_dir, f"{file_name}.json")
