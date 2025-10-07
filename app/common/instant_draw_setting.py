@@ -440,6 +440,12 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                     "max_draw_count": "max_draw_count"
                 }
                 
+                # 定义需要同步的颜色设置键值映射
+                color_sync_mapping = {
+                    "_animation_color": "_animation_color",
+                    "_result_color": "_result_color"
+                }
+                
                 # 从pumping_people同步设置到instant_draw
                 updated = False
                 for pumping_key, instant_key in sync_mapping.items():
@@ -459,6 +465,16 @@ class instant_draw_SettinsCard(GroupHeaderCardWidget):
                                 updated = True
                         # 处理其他设置的同步
                         elif old_value != new_value and pumping_key != "animation_mode":
+                            instant_draw_settings[instant_key] = new_value
+                            updated = True
+                
+                # 同步颜色设置
+                for pumping_key, instant_key in color_sync_mapping.items():
+                    if pumping_key in pumping_people_settings:
+                        old_value = instant_draw_settings.get(instant_key)
+                        new_value = pumping_people_settings[pumping_key]
+                        
+                        if old_value != new_value:
                             instant_draw_settings[instant_key] = new_value
                             updated = True
                 
