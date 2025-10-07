@@ -145,6 +145,11 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
         self.floating_window_visibility_comboBox.setFont(QFont(load_custom_font(), 12))
         self.floating_window_visibility_comboBox.currentIndexChanged.connect(self.save_settings)
 
+        # 重置浮窗位置
+        self.reset_floating_window_button = PushButton("重置浮窗位置")
+        self.reset_floating_window_button.clicked.connect(self.reset_floating_window_position)
+        self.reset_floating_window_button.setFont(QFont(load_custom_font(), 12))
+        
         # 检测前台软件列表
         self.foreground_software_class_button = PushButton("设置前台窗口类名")
         self.foreground_software_class_button.clicked.connect(lambda: self.show_foreground_software_dialog("class"))
@@ -169,6 +174,7 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗贴边", "控制便捷点名悬浮窗是否贴边", self.flash_window_side_switch)
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "浮窗贴边收回秒数", "设置浮窗贴边自定义收回的秒数(1-60秒)", self.custom_retract_time_spinBox)
         self.addGroup(get_theme_icon("ic_fluent_window_inprivate_20_filled"), "浮窗贴边显示方式", "选择浮窗贴边的显示方式(箭头/文字)", self.custom_display_mode_comboBox)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_reset_20_filled"), "重置浮窗位置", "将悬浮窗位置重置到屏幕中央", self.reset_floating_window_button)
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "前台软件检测", "启用基于前台软件的悬浮窗智能显示控制", self.floating_window_visibility_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "软件类名检测", "设置用于检测的前台软件窗口类名", self.foreground_software_class_button)
         self.addGroup(get_theme_icon("ic_fluent_timer_20_filled"), "软件标题检测", "设置用于检测的前台软件窗口标题", self.foreground_software_title_button)
@@ -255,6 +261,81 @@ class floating_window_settingsCard(GroupHeaderCardWidget):
         except Exception as e:
             logger.error(f"保存浮窗设置时出错: {str(e)}")
 
+
+    def reset_floating_window_position(self):
+        """重置浮窗位置到屏幕中央"""
+        try:
+            # 获取Settings.json路径
+            settings_path = path_manager.get_settings_path('Settings.json')
+            
+            # 检查文件是否存在
+            if not os.path.exists(settings_path):
+                logger.warning(f"Settings.json文件不存在: {settings_path}")
+                InfoBar.warning(
+                    title='重置失败',
+                    content=f"设置文件不存在",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return
+            
+            # 获取屏幕尺寸
+            screen = QApplication.primaryScreen().geometry()
+            center_x = screen.width() // 2
+            center_y = screen.height() // 2
+            
+            # 读取Settings.json
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+            
+            # 更新位置值为屏幕中央
+            if 'position' not in settings:
+                settings['position'] = {}
+            
+            settings['position']['x'] = center_x
+            settings['position']['y'] = center_y
+            
+            # 保存更新后的设置
+            with open_file(settings_path, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, indent=4, ensure_ascii=False)
+            
+            # 如果浮窗已存在，立即更新其位置
+            floating_window = None
+            for widget in QApplication.topLevelWidgets():
+                if hasattr(widget, '__class__') and widget.__class__.__name__ == 'Window':
+                    if hasattr(widget, 'levitation_window') and widget.levitation_window is not None:
+                        floating_window = widget.levitation_window
+                        break
+            
+            if floating_window:
+                floating_window.move(center_x, center_y)
+                logger.info(f"浮窗位置已重置为屏幕中央: x={center_x}, y={center_y}")
+            
+            # 显示成功提示
+            InfoBar.success(
+                title='重置成功',
+                content=f"浮窗位置已重置为屏幕中央",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+            
+        except Exception as e:
+            logger.error(f"重置浮窗位置失败: {e}")
+            InfoBar.error(
+                title='重置失败',
+                content=f"重置浮窗位置失败: {str(e)}",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
 
     class ForegroundSoftwareDialog(QDialog):
         def __init__(self, parent=None, current_software_mode=None):
