@@ -92,6 +92,20 @@ def log_software_info():
         logger.info(f"软件{key}: {value}")
 
 # ==================================================
+# 显示调节
+# ==================================================
+"""根据设置自动调整DPI缩放模式"""
+if cfg.get(cfg.dpiScale) == "Auto":
+    QApplication.setHighDpiScaleFactorRoundingPolicy(
+        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+    logger.info(" DPI缩放已设置为自动模式")
+else:
+    os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
+    os.environ["QT_SCALE_FACTOR"] = str(cfg.get(cfg.dpiScale))
+    logger.info(f" DPI缩放已设置为{cfg.get(cfg.dpiScale)}倍")
+
+# ==================================================
 # IPC通信相关函数
 # ==================================================
 def send_ipc_message(url_command=None):
