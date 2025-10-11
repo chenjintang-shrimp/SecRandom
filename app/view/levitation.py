@@ -135,7 +135,7 @@ class LevitationWindow(QWidget):
             return False
 
     def _init_ui_components(self):
-        # 白露：初始化所有UI组件 - 根据floating_visible值进行功能组合显示
+        # 初始化所有UI组件 - 根据floating_visible值进行功能组合显示
         self._setup_main_layout()
         
         # 根据floating_visible值（0-14）初始化对应的组件组合
@@ -1097,7 +1097,7 @@ class LevitationWindow(QWidget):
             self.container_button.layout().addWidget(self.instant_draw_container)
 
     def _apply_window_styles(self):
-        # 白露：应用窗口样式和标志
+        # 应用窗口样式和标志
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.NoFocus | Qt.Popup)
         # 移除完全透明背景设置，使用样式表设置背景透明度
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -1121,7 +1121,7 @@ class LevitationWindow(QWidget):
             self.menu_label.mousePressEvent = lambda event: self.start_drag(event)
             self.menu_label.mouseReleaseEvent = self.stop_drag
 
-        # 白露：人物标签始终存在，必须绑定事件处理器
+        # 人物标签始终存在，必须绑定事件处理器
         if hasattr(self, 'people_label') and self.people_label is not None:
             self.people_label.mousePressEvent = self.on_people_press
             self.people_label.mouseReleaseEvent = self.on_people_release
@@ -1150,7 +1150,7 @@ class LevitationWindow(QWidget):
             self.decrease_button.mouseReleaseEvent = self.on_decrease_button_release
 
     def _init_drag_system(self):
-        # 白露：初始化拖动系统
+        # 初始化拖动系统
         self.drag_position = QPoint()
         self.drag_start_position = QPoint()
         self.is_dragging = False
@@ -1380,7 +1380,7 @@ class LevitationWindow(QWidget):
             self._decrease_count()
             # 长按：计时器已触发拖动，不执行点击
 
-    # 白露：处理人物标签点击事件（忽略事件参数）
+    # 处理人物标签点击事件
     def on_people_clicked(self, event=None): 
         main_window = None
         for widget in QApplication.topLevelWidgets():
@@ -1395,7 +1395,7 @@ class LevitationWindow(QWidget):
             self.show_connection_error_dialog()
 
     def start_drag(self, event=None):
-        # 白露：开始拖动逻辑 - 使用鼠标按下的全局位置作为起始位置
+        # 开始拖动逻辑 - 使用鼠标按下的全局位置作为起始位置
         if event:
             # 使用事件的全局位置减去窗口当前位置，得到相对于窗口的偏移量
             self.drag_position = event.globalPos() - self.pos()
@@ -1434,7 +1434,7 @@ class LevitationWindow(QWidget):
         super().mouseMoveEvent(event)
 
     def on_people_release(self, event):
-        # 星穹铁道白露：人物标签释放事件处理 - 区分点击和拖动 (≧∇≦)ﾉ
+        # 星穹铁道人物标签释放事件处理 - 区分点击和拖动 (≧∇≦)ﾉ
         was_dragging = getattr(self, 'is_dragging', False)
         self.is_dragging = False
         
@@ -1444,7 +1444,7 @@ class LevitationWindow(QWidget):
             self.click_timer.stop()
             self.on_people_clicked()
         elif was_dragging:
-            # 白露：拖动结束，保存新位置 (≧∇≦)ﾉ
+            # 拖动结束，保存新位置 (≧∇≦)ﾉ
             self.save_position()
             
             # 如果启用了边缘贴边隐藏功能，在拖动结束后检查是否需要贴边
@@ -1470,7 +1470,7 @@ class LevitationWindow(QWidget):
         self.click_timer.start(100)
 
     def on_flash_release(self, event):
-        # 星穹铁道白露：闪抽按钮释放事件处理 - 区分点击和拖动，抽取中时关闭窗口 (≧∇≦)ﾉ
+        # 星穹铁道闪抽按钮释放事件处理 - 区分点击和拖动，抽取中时关闭窗口 (≧∇≦)ﾉ
         was_dragging = getattr(self, 'is_dragging', False)
         self.is_dragging = False
         
@@ -1489,7 +1489,7 @@ class LevitationWindow(QWidget):
                 # 未在抽取或未启用点击关闭功能，正常触发闪抽窗口
                 self.on_flash_clicked()
         elif was_dragging:
-            # 白露：拖动结束，保存新位置 (≧∇≦)ﾉ
+            # 拖动结束，保存新位置 (≧∇≦)ﾉ
             self.save_position()
         
         # 确保事件被正确处理
@@ -1555,7 +1555,7 @@ class LevitationWindow(QWidget):
         msg_box.exec_()
 
     def mousePressEvent(self, event):
-        # 星穹铁道白露：右键点击也会触发事件哦~ 现在整个窗口都可以拖动啦 (๑•̀ㅂ•́)๑
+        # 星穹铁道右键点击也会触发事件哦~ 现在整个窗口都可以拖动啦 (๑•̀ㅂ•́)๑
         if event.button() == Qt.LeftButton:
             # 记录拖动起始位置
             self.drag_start_position = event.pos()
@@ -2685,7 +2685,7 @@ class LevitationWindow(QWidget):
         except ValueError:
             pass
         
-        # 🌟 星穹铁道白露：自定义组名直接使用中文排序啦~
+        # 🌟 星穹铁道自定义组名直接使用中文排序啦~
         return (3, group) # ✨ 小鸟游星野：类型3: 其他名称组，保持排序功能不变
 
     def update_total_count(self):

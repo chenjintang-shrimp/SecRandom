@@ -166,6 +166,8 @@ class UpdateNotification(QDialog):
         self.timer.start(self.duration)
 
     def showEvent(self, event):
+        """显示事件 - 确保窗口在最前面并正确定位"""
+        self.raise_()
         super().showEvent(event)
         # 确保窗口尺寸已确定后再计算位置
         QTimer.singleShot(100, self.move_to_bottom_right)
@@ -220,11 +222,6 @@ class UpdateNotification(QDialog):
         if event.button() == Qt.LeftButton and self.auto_close and hasattr(self, 'timer'):
             self.timer.start(self.duration)
         super().mousePressEvent(event)
-
-    def showEvent(self, event):
-        """显示事件 - 确保窗口在最前面"""
-        self.raise_()
-        super().showEvent(event)
 
     def closeEvent(self, event):
         if hasattr(QApplication.instance(), 'update_notification_window'):

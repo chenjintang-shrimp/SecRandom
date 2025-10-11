@@ -39,8 +39,93 @@ class pumping_people(QWidget):
         # 延迟连接清理信号，确保主窗口已完全初始化
         QTimer.singleShot(100, self._connect_cleanup_signal)
     
+    def _is_non_class_time(self):
+        """检测当前时间是否在非上课时间段
+        当'课间禁用'开关启用时，用于判断是否需要安全验证"""
+        try:
+            # 读取程序功能设置
+            settings_path = path_manager.get_settings_path('custom_settings.json')
+            if not path_manager.file_exists(settings_path):
+                return False
+                
+            with open_file(settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+                
+            # 检查课间禁用开关是否启用
+            program_functionality = settings.get("program_functionality", {})
+            instant_draw_disable = program_functionality.get("instant_draw_disable", False)
+            
+            if not instant_draw_disable:
+                return False
+                
+            # 读取上课时间段设置
+            time_settings_path = path_manager.get_settings_path('time_settings.json')
+            if not path_manager.file_exists(time_settings_path):
+                return False
+                
+            with open_file(time_settings_path, 'r', encoding='utf-8') as f:
+                time_settings = json.load(f)
+                
+            # 获取非上课时间段
+            non_class_times = time_settings.get('non_class_times', {})
+            if not non_class_times:
+                return False
+                
+            # 获取当前时间
+            current_time = QDateTime.currentDateTime()
+            current_hour = current_time.time().hour()
+            current_minute = current_time.time().minute()
+            current_second = current_time.time().second()
+            
+            # 将当前时间转换为总秒数
+            current_total_seconds = current_hour * 3600 + current_minute * 60 + current_second
+            
+            # 检查当前时间是否在任何非上课时间段内
+            for time_range in non_class_times.values():
+                try:
+                    start_end = time_range.split('-')
+                    if len(start_end) != 2:
+                        continue
+                        
+                    start_time_str, end_time_str = start_end
+                    
+                    # 解析开始时间
+                    start_parts = list(map(int, start_time_str.split(':')))
+                    start_total_seconds = start_parts[0] * 3600 + start_parts[1] * 60 + (start_parts[2] if len(start_parts) > 2 else 0)
+                    
+                    # 解析结束时间
+                    end_parts = list(map(int, end_time_str.split(':')))
+                    end_total_seconds = end_parts[0] * 3600 + end_parts[1] * 60 + (end_parts[2] if len(end_parts) > 2 else 0)
+                    
+                    # 检查当前时间是否在该非上课时间段内
+                    if start_total_seconds <= current_total_seconds < end_total_seconds:
+                        return True
+                        
+                except Exception as e:
+                    logger.error(f"解析非上课时间段失败: {e}")
+                    continue
+                    
+            return False
+            
+        except Exception as e:
+            logger.error(f"检测非上课时间失败: {e}")
+            return False
+    
     def start_draw(self):
         """开始抽选学生"""
+        # 检查是否在非上课时间，如果是则禁用所有控件并显示提示
+        if self._is_non_class_time():
+            InfoBar.warning(
+                title='提示',
+                content="当前为非上课时间，点名功能已禁用",
+                orient=Qt.Horizontal,
+                parent=self,
+                isClosable=True,
+                duration=5000,
+                position=InfoBarPosition.TOP
+            )
+            return
+            
         # 获取抽选模式和动画模式设置
         try:
             with open_file(path_manager.get_settings_path(), 'r', encoding='utf-8') as f:

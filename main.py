@@ -277,8 +277,8 @@ def apply_font_to_application(font_family):
         
         # 获取所有顶级窗口并更新它们的字体
         widgets_updated = 0
-        for widget in QApplication.topLevelWidgets():
-            if isinstance(widget, QObject):
+        for widget in QApplication.allWidgets():
+            if isinstance(widget, QWidget):
                 update_widget_fonts(widget, app_font)
                 widgets_updated += 1
             
@@ -314,10 +314,10 @@ def update_widget_fonts(widget, font):
         widget.setFont(new_font)
         
         # 如果控件有子控件，递归更新子控件的字体
-        if isinstance(widget, QObject):
+        if isinstance(widget, QWidget):
             children = widget.children()
             for child in children:
-                if isinstance(child, QObject):
+                if isinstance(child, QWidget):
                     update_widget_fonts(child, font)
     except Exception as e:
         logger.error(f"更新控件字体时发生异常: {e}")
