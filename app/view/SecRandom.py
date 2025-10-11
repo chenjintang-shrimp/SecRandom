@@ -565,17 +565,13 @@ class Window(MSFluentWindow):
 
         self._position_window()
         
-        # 优化：尽早创建核心界面，确保窗口大小保存可以尽早执行
         self.createSubInterface()
         
-        # 优化：尽早初始化托盘图标管理器，但不显示托盘图标
         self._init_tray_manager()
         
-        # 优化：尽早应用窗口显示设置，确保窗口大小保存可以尽早执行
         self._apply_window_visibility_settings()
         
-        # 优化：延迟创建悬浮窗口，在所有子界面和导航系统初始化完成后创建
-        # self._create_levitation_window()  # 注释掉，将在_check_all_interfaces_created中创建
+        self._create_levitation_window()
 
         if self.config_manager.get_foundation_setting('topmost_switch'):
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint) # 置顶
@@ -996,16 +992,12 @@ class Window(MSFluentWindow):
         根据用户保存的设置决定窗口是否自动显示"""
         try:
             logger.info("开始应用窗口显示设置")
-            
             settings = self.config_manager.load_settings()
-            # 不在初始化时显示窗口，等待所有组件加载完成后再显示
-            # self.show()
-            
-            # 保存开机自启动设置，稍后在main.py中使用
-            self.is_self_starting = settings.get('self_starting_enabled') == True
-            
-            # 优化：移除窗口大小保存操作，改为在窗口关闭时保存
-            # 这样可以减少安全设置加载完成与窗口大小保存之间的时间间隔
+            is_self_starting = settings.get('self_starting_enabled')
+            self.show()
+            if is_self_starting:
+                self.hide()
+
             logger.info(f"窗口显示设置已应用")
         except Exception as e:
             logger.error(f"加载窗口显示设置失败: {e}")
@@ -1218,20 +1210,17 @@ class Window(MSFluentWindow):
         # 检查所有延迟界面是否都已创建（无论成功与否）
         if (hasattr(self, 'history_handoff_settingInterface') and 
             hasattr(self, 'vocabulary_learningInterface')):
-            # 标记延迟界面已创建
-            self._delayed_interfaces_created = True
-            
             # 初始化导航系统
             self.initNavigation()
             
             # 显示主窗口、悬浮窗口和托盘图标
-            self.show()
+            # self.show()
             
             # 创建并显示悬浮窗口
-            self._create_levitation_window()
+            # self._create_levitation_window()
             
             # 显示托盘图标
-            self.show_tray_icon()
+            # self.show_tray_icon()
             
             logger.info("所有界面、导航系统、主窗口和托盘图标初始化完成")
 
@@ -1577,13 +1566,9 @@ class Window(MSFluentWindow):
         """初始化托盘图标管理器
         优化：延迟显示托盘图标，等待所有子界面和导航系统初始化完成"""
         try:
-            # 优化：移除不必要的日志输出，减少IO操作
-            # logger.info("开始异步初始化托盘图标管理器")
-            
             # 初始化托盘图标管理器，但不立即显示托盘图标
             self.tray_manager = TrayIconManager(self)
-            # 优化：移除不必要的日志输出，减少IO操作
-            # logger.info("托盘图标管理器初始化完成")
+            self.show_tray_icon()
         except Exception as e:
             logger.error(f"初始化托盘图标管理器失败: {e}")
 
