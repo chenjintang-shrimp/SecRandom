@@ -29,13 +29,13 @@ class foundation_settingsCard(GroupHeaderCardWidget):
         self.settings_file = path_manager.get_settings_path()
         self.default_settings = {
             "check_on_startup": True,
-            "self_starting_enabled": False,
+            "self_starting_enabled": True,
             "main_window_focus_mode": 0,
             "main_window_focus_time": 0,
             "main_window_mode": 0,
             "settings_window_mode": 0,
             "topmost_switch": False,
-            "url_protocol_enabled": False,
+            "url_protocol_enabled": True,
             "global_shortcut_enabled": False,
             "global_shortcut_target": 0,
             "global_shortcut_key": "",
@@ -290,7 +290,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                 settings = json.load(f)
             
             foundation_settings = settings.get('foundation', {})
-            self_starting_enabled = foundation_settings.get('self_starting_enabled', False)
+            self_starting_enabled = foundation_settings.get('self_starting_enabled', True)
 
             # 处理Windows系统的启动文件夹操作
             if platform.system() == 'Windows':
@@ -329,7 +329,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         logger.error(f"删除快捷方式失败: {e}")
             else:
                 # 不支持的系统
-                self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
+                self.self_starting_switch.setChecked(False)
                 logger.error(f"不支持的操作系统: {platform.system()}")
                 return
 
@@ -414,7 +414,7 @@ class foundation_settingsCard(GroupHeaderCardWidget):
                         self.register_global_shortcut(global_shortcut_key)
                     self.register_local_shortcuts()
             else:
-                logger.error(f"设置文件不存在: {self.settings_file}")
+                # logger.error(f"设置文件不存在: {self.settings_file}")
                 self.self_starting_switch.setChecked(self.default_settings["self_starting_enabled"])
                 self.main_window_focus_comboBox.setCurrentIndex(self.default_settings["main_window_focus_mode"])
                 self.main_window_focus_time_comboBox.setCurrentIndex(self.default_settings["main_window_focus_time"])
