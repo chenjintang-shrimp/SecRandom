@@ -68,11 +68,18 @@ def show_update_notification(latest_version):
                 notification_window.show()
             notification_window.raise_()
             notification_window.activateWindow()
-            logger.info(f"更新通知窗口已激活，版本: {latest_version}")
+            # logger.debug(f"更新通知窗口已激活，版本: {latest_version}")
             return
 
-        # 创建新的通知窗口
-        notification = UpdateNotification(latest_version, auto_close=False)
+        # 创建新的通知窗口，启用自动关闭功能
+        notification = UpdateNotification(latest_version, auto_close=True)
+        
+        # 检查是否应该显示通知
+        if not notification.should_show_notification():
+            logger.info(f"用户今日已选择不提醒版本 {latest_version} 的更新通知")
+            notification.deleteLater()
+            return
+        
         app.update_notification_window = notification
         
         # 防止通知窗口关闭时程序退出
@@ -92,7 +99,7 @@ def show_update_notification(latest_version):
         notification.show()
         notification.raise_()
         
-        logger.info(f"自定义更新通知已显示，版本: {latest_version}")
+        # logger.debug(f"自定义更新通知已显示，版本: {latest_version}")
 
     except ImportError as e:
         logger.error(f"导入自定义通知失败: {str(e)}")
@@ -124,6 +131,7 @@ class ConfigurationManager:
                 'main_window_mode': 0,
                 'check_on_startup': True,
                 'topmost_switch': False,
+                'self_starting_enabled': True,
             }
         }  # 默认设置模板
         # 预加载设置缓存，减少启动时IO操作
@@ -194,7 +202,7 @@ class ConfigurationManager:
             ensure_dir(self.settings_path.parent)
             with open_file(self.settings_path, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=4)
-            logger.info(f"窗口大小已保存为 {width}x{height}")
+            # logger.debug(f"窗口大小已保存为 {width}x{height}")
         except Exception as e:
             logger.error(f"保存窗口大小失败: {e}")
 
@@ -218,7 +226,7 @@ class UpdateChecker(QObject):
         self.worker = self.UpdateCheckWorker()
         self.worker.result_ready.connect(self.on_update_result)
         self.worker.start()
-        logger.info("更新检查任务已启动")
+        # logger.debug("更新检查任务已启动")
 
     class UpdateCheckWorker(QThread):
         """更新检查工作线程
@@ -255,7 +263,7 @@ class UpdateChecker(QObject):
         """处理更新检查结果
         如果发现新版本，发射信号通知"""
         if update_available and latest_version:
-            logger.info(f"发现新版本 {latest_version}！准备通知用户")
+            # logger.info(f"发现新版本 {latest_version}！准备通知用户")
             self.update_available.emit(latest_version)  # 发射新版本信号
     
     def stop_checking(self):
@@ -288,7 +296,7 @@ class UpdateChecker(QObject):
                 
                 # 清理引用
                 self.worker = None
-                logger.info("更新检查任务已安全停止")
+                # logger.debug("更新检查任务已安全停止")
         except Exception as e:
             logger.error(f"停止更新检查时出错: {e}")
     
@@ -326,7 +334,7 @@ class TrayIconManager(QObject):
         self.tray_menu.installEventFilter(self)
         QApplication.instance().installEventFilter(self)
         
-        logger.info("托盘图标管理器已初始化")
+        # logger.debug("托盘图标管理器已初始化")
 
     def _get_tray_settings(self):
         """获取托盘设置
@@ -349,7 +357,7 @@ class TrayIconManager(QObject):
             for key, default_value in default_settings.items():
                 tray_settings[key] = tray_settings.get(key, default_value)
                 
-            logger.info(f"托盘设置已加载")
+            # logger.debug(f"托盘设置已加载")
             return tray_settings
             
         except Exception as e:
@@ -388,7 +396,7 @@ class TrayIconManager(QObject):
         if tray_settings.get("exit", True):
             self.tray_menu.addAction(Action(get_theme_icon("ic_fluent_arrow_exit_20_filled"), '退出', triggered=self.main_window.close_window_secrandom))
             
-        logger.info("托盘菜单已创建")
+        # logger.debug("托盘菜单已创建")
 
     def _on_tray_activated(self, reason):
         """处理托盘图标点击事件
@@ -422,14 +430,14 @@ class TrayIconManager(QObject):
             
             # 启动5秒自动关闭定时器
             self.menu_timer.start(5000)  # 5秒后自动关闭
-            logger.info("托盘菜单已显示")
+            # logger.debug("托盘菜单已显示")
     
     def _on_menu_timeout(self):
         """菜单超时自动关闭
         当用户5秒内没有操作菜单时，自动关闭菜单"""
         if self.tray_menu.isVisible():
             self.tray_menu.close()
-            logger.info("托盘菜单因超时自动关闭")
+            # logger.debug("托盘菜单因超时自动关闭")
     
     def eventFilter(self, obj, event):
         """事件过滤器
@@ -452,7 +460,7 @@ class TrayIconManager(QObject):
             if not menu_rect.contains(click_pos):
                 self.tray_menu.close()
                 self.menu_timer.stop()
-                logger.info("托盘菜单因点击外部而关闭")
+                # logger.debug("托盘菜单因点击外部而关闭")
                 return True
         
         return super().eventFilter(obj, event)
@@ -592,8 +600,8 @@ class Window(MSFluentWindow):
             # 尝试监听，如果失败则输出错误日志
             if not self.server.listen("SecRandomIPC"):
                 logger.error(f"IPC服务器监听失败: {self.server.errorString()}")
-            else:
-                logger.info("IPC服务器监听成功: SecRandomIPC")
+            # else:
+                # logger.debug("IPC服务器监听成功: SecRandomIPC")
         except Exception as e:
             logger.error(f"初始化IPC服务器失败: {e}")
 
@@ -665,7 +673,7 @@ class Window(MSFluentWindow):
             self.levitation_window = LevitationWindow()
             # 显示悬浮窗口
             self.levitation_window.show()
-            logger.info("悬浮窗口已创建并显示")
+            # logger.debug("悬浮窗口已创建并显示")
         except Exception as e:
             logger.error(f"创建悬浮窗口失败: {e}")
 
@@ -673,7 +681,7 @@ class Window(MSFluentWindow):
         """应用背景图片和颜色
         优化：使用QTimer.singleShot异步加载，不阻塞主线程"""
         try:
-            logger.info("开始异步应用背景图片或颜色")
+            # logger.debug("开始异步应用背景图片或颜色")
             
             # 使用QTimer.singleShot异步加载背景图片，避免使用PyQt5.QtConcurrent
             QTimer.singleShot(0, self._load_background_settings)
@@ -811,7 +819,7 @@ class Window(MSFluentWindow):
             # 重写resizeEvent方法，调整背景大小
             self.resizeEvent = self._on_resize_event
             
-            logger.info(f"已成功应用主界面背景颜色 {color}")
+            # logger.debug(f"已成功应用主界面背景颜色 {color}")
         except Exception as e:
             logger.error(f"应用背景颜色失败: {e}")
 
@@ -844,7 +852,7 @@ class Window(MSFluentWindow):
             # 重写resizeEvent方法，调整背景大小
             self.resizeEvent = self._on_resize_event
             
-            logger.info("已成功应用主界面背景图片")
+            # logger.debug("已成功应用主界面背景图片")
         except Exception as e:
             logger.error(f"应用背景图片失败: {e}")
     
@@ -930,7 +938,7 @@ class Window(MSFluentWindow):
             # Windows和其他系统使用标准方法
             self.move(target_x, target_y)
             
-        logger.info(f"窗口已定位到({self.x()}, {self.y()})位置")
+        # logger.debug(f"窗口已定位到({self.x()}, {self.y()})位置")
     
     def _position_window_linux(self, target_x, target_y):
         """Linux窗口定位
@@ -982,7 +990,7 @@ class Window(MSFluentWindow):
                 window_height = self.height() if self.height() > 0 else 600
                 self.setGeometry(target_x, target_y, window_width, window_height)
                 
-            logger.info(f"Linux延迟定位完成，当前位置({self.x()}, {self.y()})")
+            # logger.debug(f"Linux延迟定位完成，当前位置({self.x()}, {self.y()})")
             
         except Exception as e:
             logger.error(f"Linux延迟定位失败: {e}")
@@ -991,14 +999,14 @@ class Window(MSFluentWindow):
         """应用窗口显示设置
         根据用户保存的设置决定窗口是否自动显示"""
         try:
-            logger.info("开始应用窗口显示设置")
+            # logger.debug("开始应用窗口显示设置")
             settings = self.config_manager.load_settings()
-            is_self_starting = settings.get('self_starting_enabled')
+            is_self_starting = settings.get('self_starting_enabled', True)
             self.show()
             if is_self_starting:
                 self.hide()
 
-            logger.info(f"窗口显示设置已应用")
+            # logger.debug(f"窗口显示设置已应用")
         except Exception as e:
             logger.error(f"加载窗口显示设置失败: {e}")
 
@@ -1006,13 +1014,13 @@ class Window(MSFluentWindow):
         """异步检查更新
         异步执行版本检查任务，不会阻塞主线程"""
         self.update_checker.check_for_updates()
-        logger.info("更新检查任务已启动")
+        # logger.debug("更新检查任务已启动")
 
     def createSubInterface(self):
         """创建子界面
         搭建子界面导航系统，采用延迟加载策略优化启动速度"""
         try:
-            logger.info("开始创建核心界面")
+            # logger.debug("开始创建核心界面")
             
             # 创建设置界面（核心界面，立即创建）
             self.settingInterface = settings_Window(self)
@@ -1023,7 +1031,7 @@ class Window(MSFluentWindow):
             # 创建关于界面（核心界面，立即创建）
             self.about_settingInterface = about(self)
             self.about_settingInterface.setObjectName("about_settingInterface")
-            logger.info("核心界面（设置、关于）已创建")
+            # logger.debug("核心界面（设置、关于）已创建")
             
             # 立即创建核心界面（点名和抽奖），其他界面延迟加载
             QTimer.singleShot(0, self._create_core_interfaces)
@@ -1065,10 +1073,10 @@ class Window(MSFluentWindow):
                 if self.pumping_rewardInterface is not None:
                     created_interfaces.append("抽奖")
                 
-                if created_interfaces:
-                    logger.info(f"核心界面创建成功: {', '.join(created_interfaces)}")
-                else:
-                    logger.info("未创建任何核心界面（根据用户设置）")
+                # if created_interfaces:
+                    # logger.debug(f"核心界面创建成功: {', '.join(created_interfaces)}")
+                # else:
+                    # logger.debug("未创建任何核心界面（根据用户设置）")
                     
         except Exception as e:
             logger.error(f"创建核心界面失败: {e}")
@@ -1077,7 +1085,7 @@ class Window(MSFluentWindow):
             self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
             self.pumping_rewardInterface = pumping_reward(self)
             self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
-            logger.info("已创建默认核心界面")
+            # logger.debug("已创建默认核心界面")
 
     def _create_remaining_interfaces(self):
         """创建剩余的非核心界面
@@ -1112,10 +1120,10 @@ class Window(MSFluentWindow):
                 if self.vocabulary_learningInterface is not None:
                     created_interfaces.append("背单词")
                 
-                if created_interfaces:
-                    logger.info(f"非核心界面创建成功: {', '.join(created_interfaces)}")
-                else:
-                    logger.info("未创建任何非核心界面（根据用户设置）")
+                # if created_interfaces:
+                #     logger.debug(f"非核心界面创建成功: {', '.join(created_interfaces)}")
+                # else:
+                #     logger.debug("未创建任何非核心界面（根据用户设置）")
                     
         except Exception as e:
             logger.error(f"创建非核心界面失败: {e}")
@@ -1124,7 +1132,7 @@ class Window(MSFluentWindow):
             self.history_handoff_settingInterface.setObjectName('history_handoff_settingInterface')
             self.vocabulary_learningInterface = vocabulary_learning(self)
             self.vocabulary_learningInterface.setObjectName('vocabulary_learningInterface')
-            logger.info("已创建默认非核心界面")
+            # logger.debug("已创建默认非核心界面")
         
         # 检查是否所有延迟界面都已创建
         self._check_all_interfaces_created()
@@ -1184,7 +1192,7 @@ class Window(MSFluentWindow):
             if hasattr(self, 'vocabulary_learningInterface') and self.vocabulary_learningInterface:
                 # 先加载基本设置（不包含词库）
                 self.vocabulary_learningInterface.load_settings()
-                logger.info("背单词界面基本设置已异步加载")
+                # logger.debug("背单词界面基本设置已异步加载")
                 
                 # 异步加载词库，避免阻塞主线程
                 QTimer.singleShot(100, self._async_load_vocabulary)
@@ -1199,9 +1207,9 @@ class Window(MSFluentWindow):
                 if hasattr(self.vocabulary_learningInterface, 'current_vocabulary') and self.vocabulary_learningInterface.current_vocabulary:
                     # 异步加载词库
                     self.vocabulary_learningInterface.load_vocabulary(self.vocabulary_learningInterface.current_vocabulary)
-                    logger.info("背单词界面词库已异步加载")
-                else:
-                    logger.info("背单词界面未设置当前词库，跳过词库加载")
+                    # logger.debug("背单词界面词库已异步加载")
+                # else:
+                    # logger.debug("背单词界面未设置当前词库，跳过词库加载")
         except Exception as e:
             logger.error(f"异步加载词库失败: {e}")
 
@@ -1222,7 +1230,7 @@ class Window(MSFluentWindow):
             # 显示托盘图标
             # self.show_tray_icon()
             
-            logger.info("所有界面、导航系统、主窗口和托盘图标初始化完成")
+            # logger.debug("所有界面、导航系统、主窗口和托盘图标初始化完成")
 
     def initNavigation(self):
         """初始化导航系统
@@ -1376,12 +1384,12 @@ class Window(MSFluentWindow):
                 bottom_items.append("设置")
         
         # 输出导航系统初始化结果
-        if top_items:
-            logger.info(f"顶部导航栏: {', '.join(top_items)}")
-        if bottom_items:
-            logger.info(f"底部导航栏: {', '.join(bottom_items)}")
-        if hidden_items:
-            logger.info(f"已隐藏的导航项: {', '.join(hidden_items)}")
+        # if top_items:
+        #     logger.debug(f"顶部导航栏: {', '.join(top_items)}")
+        # if bottom_items:
+        #     logger.debug(f"底部导航栏: {', '.join(bottom_items)}")
+        # if hidden_items:
+        #     logger.debug(f"已隐藏的导航项: {', '.join(hidden_items)}")
         if error_items:
             logger.error(f"无法添加的导航项: {', '.join(error_items)}")
 
@@ -1392,7 +1400,7 @@ class Window(MSFluentWindow):
         event.ignore()
         # 优化：在窗口关闭时保存窗口大小，减少启动时的IO操作
         self.config_manager.save_window_size(self.width(), self.height())
-        logger.info("窗口关闭事件已拦截，程序已转入后台运行，窗口大小已保存")
+        # logger.debug("窗口关闭事件已拦截，程序已转入后台运行，窗口大小已保存")
 
     def resizeEvent(self, event):
         """窗口大小变化事件处理
@@ -1406,7 +1414,7 @@ class Window(MSFluentWindow):
         记录当前窗口尺寸，下次启动时自动恢复"""
         if not self.isMaximized():
             self.config_manager.save_window_size(self.width(), self.height())
-            logger.info(f"已保存窗口尺寸为{self.width()}x{self.height()}像素")
+            # logger.debug(f"已保存窗口尺寸为{self.width()}x{self.height()}像素")
 
     def update_focus_mode(self, mode):
         """更新焦点模式
@@ -1578,7 +1586,7 @@ class Window(MSFluentWindow):
         try:
             if hasattr(self, 'tray_manager') and self.tray_manager:
                 self.tray_manager.tray_icon.show()
-                logger.info("托盘图标已显示")
+                # logger.debug("托盘图标已显示")
         except Exception as e:
             logger.error(f"显示托盘图标失败: {e}")
 
@@ -1587,7 +1595,7 @@ class Window(MSFluentWindow):
         软件启动时清理上次遗留的临时抽取记录文件，改为异步执行以减少初始化时间"""
         # 优化：使用QTimer.singleShot异步执行清理任务，避免使用PyQt5.QtConcurrent
         QTimer.singleShot(0, self._perform_cleanup)
-        logger.info("清理任务已安排在后台异步执行")
+        # logger.debug("清理任务已安排在后台异步执行")
 
     def _perform_cleanup(self):
         """实际执行清理操作
@@ -1611,7 +1619,7 @@ class Window(MSFluentWindow):
 
         # 优化：进一步简化条件判断逻辑，减少分支
         if not path_manager.file_exists(temp_dir):
-            logger.info("临时目录不存在，跳过清理")
+            # logger.debug("临时目录不存在，跳过清理")
             return
 
         # 优化：提前计算需要清理的文件类型，减少重复判断
@@ -1622,7 +1630,7 @@ class Window(MSFluentWindow):
             files_pattern = f"{temp_dir}/*.json"
             log_message = "临时抽取记录文件"
         else:
-            logger.info("当前设置不需要清理临时文件")
+            # logger.debug("当前设置不需要清理临时文件")
             return
 
         # 优化：使用更高效的文件查找和清理方式
@@ -1634,8 +1642,8 @@ class Window(MSFluentWindow):
                     os.remove(file)
                 except Exception as e:
                     logger.error(f"删除临时文件出错: {e}")
-        else:
-            logger.info(f"没有需要清理的{log_message}")
+        # else:
+            # logger.debug(f"没有需要清理的{log_message}")
 
     def toggle_window(self):
         """切换窗口显示状态
@@ -1664,7 +1672,7 @@ class Window(MSFluentWindow):
 
         if self.isVisible():
             self.hide()
-            logger.info("主窗口已隐藏")
+            # logger.debug("主窗口已隐藏")
             if self.isMinimized():
                 self.showNormal()
                 self.activateWindow()
@@ -1678,7 +1686,7 @@ class Window(MSFluentWindow):
                 self.show()
                 self.activateWindow()
                 self.raise_()
-            logger.info("主窗口已显示")
+            # logger.debug("主窗口已显示")
         self.switchTo(self.pumping_peopleInterface)
 
     def calculate_menu_position(self, menu):
@@ -1706,7 +1714,7 @@ class Window(MSFluentWindow):
             enc_settings_path = path_manager.get_enc_set_path()
             with open_file(enc_settings_path, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                logger.info("正在读取安全设置，准备执行退出验证")
+                # logger.debug("正在读取安全设置，准备执行退出验证")
 
                 if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
                     if settings.get('hashed_set', {}).get('exit_verification_enabled', False) == True:
@@ -1719,30 +1727,30 @@ class Window(MSFluentWindow):
             logger.error(f"密码验证系统出错: {e}")
             return
 
-        logger.info("安全验证通过，开始执行完全退出程序流程")
+        # logger.debug("安全验证通过，开始执行完全退出程序流程")
         self.hide()
         if hasattr(self, 'levitation_window'):
             self.levitation_window.hide()
-            logger.info("悬浮窗已隐藏")
+            # logger.debug("悬浮窗已隐藏")
             
         if hasattr(self, 'focus_timer'):
             self.stop_focus_timer()
-            logger.info("焦点计时器已停止")
+            # logger.debug("焦点计时器已停止")
 
         if hasattr(self, 'usb_detection_timer'):
             self.usb_detection_timer.stop()
-            logger.info("USB绑定已关闭")
+            # logger.debug("USB绑定已关闭")
 
         # 停止resize_timer以优化CPU占用
         if hasattr(self, 'resize_timer') and self.resize_timer.isActive():
             self.resize_timer.stop()
-            logger.info("resize_timer已停止")
+            logger.debug("resize_timer已停止")
 
         # 停止托盘菜单定时器
         if hasattr(self, 'tray_manager') and hasattr(self.tray_manager, 'menu_timer'):
             if self.tray_manager.menu_timer.isActive():
                 self.tray_manager.menu_timer.stop()
-                logger.info("托盘菜单定时器已停止")
+                # logger.debug("托盘菜单定时器已停止")
 
         # 停止USB监控线程
         if hasattr(self, 'settingInterface') and self.settingInterface:
@@ -1755,16 +1763,16 @@ class Window(MSFluentWindow):
                 if self.settingInterface.usb_monitor_thread.isRunning():
                     self.settingInterface.usb_monitor_thread.wait(500)  # 等待最多500ms
                 self.settingInterface.usb_monitor_thread = None
-                logger.info("USB监控线程已停止")
+                # logger.debug("USB监控线程已停止")
 
         if hasattr(self, 'server'):
             self.server.close()
-            logger.info("IPC服务器已关闭")
+            # logger.debug("IPC服务器已关闭")
 
         # 停止更新检查
         if hasattr(self, 'update_checker') and self.update_checker:
             self.update_checker.stop_checking()
-            logger.info("更新检查已停止")
+            # logger.debug("更新检查已停止")
             
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
@@ -1772,7 +1780,7 @@ class Window(MSFluentWindow):
                 self.shared_memory.detach()
                 if self.shared_memory.isAttached():
                     self.shared_memory.detach()
-                logger.info("共享内存已完全释放")
+                # logger.debug("共享内存已完全释放")
             except Exception as e:
                 logger.error(f"共享内存释放出错: {e}")
 
@@ -1782,7 +1790,7 @@ class Window(MSFluentWindow):
         try:
             # 移除所有日志处理器
             loguru.logger.remove()
-            logger.info("日志系统已安全关闭")
+            # logger.debug("日志系统已安全关闭")
         except Exception as e:
             logger.error(f"日志系统关闭出错: {e}")
 
@@ -1808,13 +1816,13 @@ class Window(MSFluentWindow):
             logger.error(f"密码验证过程出错: {e}")
             return
 
-        logger.info("安全验证通过，开始执行完全重启程序流程")
+        # logger.debug("安全验证通过，开始执行完全重启程序流程")
         
         # 隐藏所有窗口
         self.hide()
         if hasattr(self, 'levitation_window'):
             self.levitation_window.hide()
-            logger.info("悬浮窗已隐藏")
+            # logger.debug("悬浮窗已隐藏")
         
         # 彻底清理设置界面，防止重启后嵌套问题
         if hasattr(self, 'settingInterface') and self.settingInterface:
@@ -1826,30 +1834,30 @@ class Window(MSFluentWindow):
                 # 关闭设置界面
                 self.settingInterface.close()
                 self.settingInterface = None
-                logger.info("设置界面已完全清理")
+                # logger.debug("设置界面已完全清理")
             except Exception as e:
                 logger.error(f"清理设置界面时出错: {e}")
         
         # 停止所有计时器
         if hasattr(self, 'focus_timer'):
             self.stop_focus_timer()
-            logger.info("焦点计时器已停止")
+            # logger.debug("焦点计时器已停止")
     
         # 停止USB检测计时器
         if hasattr(self, 'usb_detection_timer'):
             self.usb_detection_timer.stop()
-            logger.info("USB绑定已关闭")
+            # logger.debug("USB绑定已关闭")
 
         # 停止resize_timer以优化CPU占用
         if hasattr(self, 'resize_timer') and self.resize_timer.isActive():
             self.resize_timer.stop()
-            logger.info("resize_timer已停止")
+            # logger.debug("resize_timer已停止")
 
         # 停止托盘菜单定时器
         if hasattr(self, 'tray_manager') and hasattr(self.tray_manager, 'menu_timer'):
             if self.tray_manager.menu_timer.isActive():
                 self.tray_manager.menu_timer.stop()
-                logger.info("托盘菜单定时器已停止")
+                # logger.debug("托盘菜单定时器已停止")
                 
         # 停止USB监控线程
         if hasattr(self, 'settingInterface') and self.settingInterface:
@@ -1862,17 +1870,17 @@ class Window(MSFluentWindow):
                 if self.settingInterface.usb_monitor_thread.isRunning():
                     self.settingInterface.usb_monitor_thread.wait(500)  # 等待最多500ms
                 self.settingInterface.usb_monitor_thread = None
-                logger.info("USB监控线程已停止")
+                # logger.debug("USB监控线程已停止")
         
         # 关闭IPC服务器
         if hasattr(self, 'server'):
             self.server.close()
-            logger.info("IPC服务器已关闭")
+            # logger.debug("IPC服务器已关闭")
         
         # 停止更新检查
         if hasattr(self, 'update_checker') and self.update_checker:
             self.update_checker.stop_checking()
-            logger.info("更新检查已停止")
+            # logger.debug("更新检查已停止")
 
         # 关闭共享内存
         if hasattr(self, 'shared_memory'):
@@ -1880,7 +1888,7 @@ class Window(MSFluentWindow):
                 self.shared_memory.detach()
                 if self.shared_memory.isAttached():
                     self.shared_memory.detach()
-                logger.info("共享内存已完全释放")
+                # logger.debug("共享内存已完全释放")
             except Exception as e:
                 logger.error(f"共享内存释放出错: {e}")
         
@@ -1893,7 +1901,7 @@ class Window(MSFluentWindow):
                 settings['hashed_set']['verification_start'] = False
                 with open_file(enc_settings_path, 'w', encoding='utf-8') as f:
                     json.dump(settings, f, ensure_ascii=False, indent=4)
-                logger.info("密码验证状态已重置")
+                # logger.debug("密码验证状态已重置")
         except Exception as e:
             logger.error(f"重置密码验证状态时出错: {e}")
         
@@ -1919,7 +1927,7 @@ class Window(MSFluentWindow):
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS,
                 startupinfo=startup_info
             )
-            logger.info("新进程已成功启动")
+            # logger.debug("新进程已成功启动")
         except Exception as e:
             logger.error(f"启动新进程失败: {e}")
             return
@@ -1928,7 +1936,7 @@ class Window(MSFluentWindow):
         try:
             # 移除所有日志处理器
             loguru.logger.remove()
-            logger.info("日志系统已安全关闭")
+            # logger.debug("日志系统已安全关闭")
         except Exception as e:
             logger.error(f"日志系统关闭出错: {e}")
         
@@ -2207,14 +2215,14 @@ class Window(MSFluentWindow):
     def show_main_window(self):
         """通过URL协议显示主窗口
         通过URL协议打开主界面，自动显示并激活窗口"""
-        logger.info("正在打开主界面")
+        # logger.debug("正在打开主界面")
         self.toggle_window()
-        logger.info("主界面已成功打开")
+        # logger.debug("主界面已成功打开")
     
     def show_settings_window(self):
         """通过URL协议显示设置窗口
         通过URL协议打开设置界面，检查是否跳过安全验证"""
-        logger.info("正在打开设置界面")
+        # logger.debug("正在打开设置界面")
         
         # 检查是否跳过安全验证
         skip_security = False
@@ -2251,7 +2259,7 @@ class Window(MSFluentWindow):
                     self.settingInterface.activateWindow()
                     self.settingInterface.raise_()
         
-        logger.info("设置界面已成功打开")
+        # logger.debug("设置界面已成功打开")
     
     def show_pumping_window(self):
         """通过URL协议显示点名窗口
@@ -2271,13 +2279,13 @@ class Window(MSFluentWindow):
                 logger.error(f"密码验证失败: {e}")
                 return
 
-        logger.info("正在打开点名界面")
+        # logger.debug("正在打开点名界面")
         if not self.isVisible():
             self.show()
             self.activateWindow()
             self.raise_()
         self.switchTo(self.pumping_peopleInterface)
-        logger.info("点名界面已成功打开")
+        # logger.debug("点名界面已成功打开")
     
     def show_reward_window(self):
         """通过URL协议显示抽奖窗口
@@ -2297,13 +2305,13 @@ class Window(MSFluentWindow):
                 logger.error(f"密码验证失败: {e}")
                 return
 
-        logger.info("正在打开抽奖界面")
+        # logger.debug("正在打开抽奖界面")
         if not self.isVisible():
             self.show()
             self.activateWindow()
             self.raise_()
         self.switchTo(self.pumping_rewardInterface)
-        logger.info("抽奖界面已成功打开")
+        # logger.debug("抽奖界面已成功打开")
     
     def show_history_window(self):
         """通过URL协议显示历史记录窗口
@@ -2323,7 +2331,7 @@ class Window(MSFluentWindow):
                 logger.error(f"密码验证失败: {e}")
                 return
 
-        logger.info("正在打开历史记录界面")
+        # logger.debug("正在打开历史记录界面")
         if not self.isVisible():
             self.show()
             self.activateWindow()
@@ -2331,7 +2339,7 @@ class Window(MSFluentWindow):
         self.switchTo(self.history_handoff_settingInterface)
         # 延迟触发历史记录数据加载，确保界面完全显示后再加载数据
         QTimer.singleShot(300, lambda: self.history_handoff_settingInterface.pumping_people_card.load_data())
-        logger.info("历史记录界面已成功打开")
+        # logger.debug("历史记录界面已成功打开")
     
     def show_floating_window(self):
         """通过URL协议显示浮窗
@@ -2377,7 +2385,7 @@ class Window(MSFluentWindow):
                 self.levitation_window.activateWindow()
                 self.levitation_window.raise_()
         
-        logger.info("浮窗界面已成功打开")
+        # logger.debug("浮窗界面已成功打开")
     
     def start_pumping_selection(self):
         """通过URL参数启动抽选功能
@@ -2409,7 +2417,7 @@ class Window(MSFluentWindow):
             
             # 尝试调用点名界面的开始方法
             self.pumping_peopleInterface.start_draw()
-            logger.info("抽选功能已成功启动")
+            # logger.debug("抽选功能已成功启动")
         except Exception as e:
             logger.error(f"启动抽选功能失败: {e}")
     
@@ -2443,14 +2451,14 @@ class Window(MSFluentWindow):
             
             # 尝试调用点名界面的停止方法
             self.pumping_peopleInterface._stop_animation()
-            logger.info("抽选功能已成功停止")
+            # logger.debug("抽选功能已成功停止")
         except Exception as e:
             logger.error(f"停止抽选功能失败: {e}")
     
     def reset_pumping_selection(self):
         """通过URL参数重置抽选状态
         通过URL参数重置抽选状态，检查当前界面并调用相应的重置方法"""
-        logger.info("正在重置抽选状态")
+        # logger.debug("正在重置抽选状态")
         try:
             # # 确保主窗口可见
             # if not self.isVisible():
@@ -2463,7 +2471,7 @@ class Window(MSFluentWindow):
             
             # 尝试调用点名界面的重置方法
             self.pumping_peopleInterface._reset_to_initial_state()
-            logger.info("抽选状态已成功重置")
+            # logger.debug("抽选状态已成功重置")
         except Exception as e:
             logger.error(f"重置抽选状态失败: {e}")
     
@@ -2497,7 +2505,7 @@ class Window(MSFluentWindow):
             
             # 尝试调用抽奖界面的开始方法
             self.pumping_rewardInterface.start_draw()
-            logger.info("抽奖功能已成功启动")
+            # logger.debug("抽奖功能已成功启动")
         except Exception as e:
             logger.error(f"启动抽奖功能失败: {e}")
     
@@ -2531,18 +2539,18 @@ class Window(MSFluentWindow):
             
             # 尝试调用抽奖界面的停止方法
             self.pumping_rewardInterface._stop_animation()
-            logger.info("抽奖功能已成功停止")
+            # logger.debug("抽奖功能已成功停止")
         except Exception as e:
             logger.error(f"停止抽奖功能失败: {e}")
     
     def reset_reward_selection(self):
         """通过URL参数重置抽奖状态
         通过URL参数重置抽奖状态，检查当前界面并调用相应的重置方法"""
-        logger.info("正在重置抽奖状态")
+        # logger.debug("正在重置抽奖状态")
         try:
             # 尝试调用抽奖界面的重置方法
             self.pumping_rewardInterface._reset_to_initial_state()
-            logger.info("抽奖状态已成功重置")
+            # logger.debug("抽奖状态已成功重置")
         except Exception as e:
             logger.error(f"重置抽奖状态失败: {e}")
 
@@ -2565,7 +2573,7 @@ class Window(MSFluentWindow):
                 return
         
         self.levitation_window._show_direct_extraction_window()
-        logger.info("闪抽界面已成功打开")
+        # logger.debug("闪抽界面已成功打开")
     
     def show_about_window(self):
         """通过URL协议打开关于界面
@@ -2590,7 +2598,7 @@ class Window(MSFluentWindow):
             self.activateWindow()
             self.raise_()
         self.switchTo(self.about_settingInterface)
-        logger.info("关于界面已成功打开")
+        # logger.debug("关于界面已成功打开")
     
     def show_donation_dialog(self):
         """通过URL参数打开捐赠支持对话框
@@ -2599,7 +2607,7 @@ class Window(MSFluentWindow):
             # 打开捐赠支持对话框
             donation_dialog = DonationDialog(self)
             donation_dialog.exec_()
-            logger.info("捐赠支持对话框已成功打开")
+            # logger.debug("捐赠支持对话框已成功打开")
         except Exception as e:
             logger.error(f"打开捐赠支持对话框失败: {e}")
     
@@ -2610,6 +2618,6 @@ class Window(MSFluentWindow):
             # 打开贡献者对话框
             contributor_dialog = ContributorDialog(self)
             contributor_dialog.exec_()
-            logger.info("贡献者对话框已成功打开")
+            # logger.debug("贡献者对话框已成功打开")
         except Exception as e:
             logger.error(f"打开贡献者对话框失败: {e}")
