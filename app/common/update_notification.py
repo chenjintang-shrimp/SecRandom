@@ -29,11 +29,11 @@ def show_update_notification(latest_version, auto_close=True):
 
 class UpdateNotification(QDialog):
     """自定义更新通知窗口"""
-    def __init__(self, latest_version, auto_close=False):
+    def __init__(self, latest_version, auto_close=True):
         super().__init__(parent=None, flags=Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.latest_version = latest_version
         self.auto_close = auto_close
-        self.duration = 15000  # 默认显示15秒（如果启用自动关闭）
+        self.duration = 30000  # 默认显示30秒（如果启用自动关闭）
         self.init_ui()
         self.update_theme_style()  # 应用主题样式
         self.init_animation()

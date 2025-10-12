@@ -459,9 +459,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                     if not subcategories:  # 如果没有选中的设置项，跳过
                         continue
                         
-                    # 获取目标文件路径
-                    settings_dir = path_manager.get_settings_path()
-                    target_file_path = self._get_settings_file_path(file_name, settings_dir)
+                    target_file_path = self._get_settings_file_path(file_name)
                     if not target_file_path:
                         continue
                     
@@ -595,18 +593,15 @@ class advanced_settingsCard(GroupHeaderCardWidget):
             if dialog.exec_() == QDialog.Accepted:
                 selected_settings = dialog.get_selected_settings()
                 
-                # 获取设置目录路
-                settings_dir = path_manager.get_settings_path()
-                
                 # 收集选中的设置
-                exported_settings = {}
+                self.exported_settings = {}
                 
                 # 遍历选中的设置项，现在category_name直接就是文件名
                 for file_name, subcategories in selected_settings.items():
                     for subcategory_name, settings in subcategories.items():
                         if settings:  # 如果有选中的设置项
                             # 根据文件名确定文件路径
-                            file_path = self._get_settings_file_path(file_name, settings_dir)
+                            file_path = self._get_settings_file_path(file_name)
                             
                             if path_manager.file_exists(file_path):
                                 # 读取设置文件
@@ -616,11 +611,11 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                                 # 根据文件类型处理导出逻辑
                                 self._process_export_by_file_type(
                                     file_name, settings, current_settings, 
-                                    exported_settings, selected_settings
+                                    selected_settings
                                 )
                 
                 # 保存导出的设置
-                self._save_exported_settings(exported_settings)
+                self._save_exported_settings(self.exported_settings)
                 
         except Exception as e:
             logger.error(f"导出设置失败: {str(e)}")
@@ -630,93 +625,97 @@ class advanced_settingsCard(GroupHeaderCardWidget):
             w.buttonLayout.insertStretch(1)
             w.exec_()
     
-    def _get_settings_file_path(self, file_name, settings_dir):
+    def _get_settings_file_path(self, file_name):
         """根据文件名获取设置文件路径"""
         # 特殊处理：所有设置项实际上都在Settings.json文件中
         if file_name in ["foundation", "pumping_people", "instant_draw", "pumping_reward", "history", "channel", "position"]:
-            return os.path.join(settings_dir, "Settings.json")
+            return path_manager.get_settings_path("Settings.json")
         elif file_name in ["fixed_url", "personal", "sidebar", "floating_window", "roll_call", "reward", "program_functionality"]:
-            return os.path.join(settings_dir, "custom_settings.json")
+            return path_manager.get_settings_path("custom_settings.json")
         else:
-            return os.path.join(settings_dir, f"{file_name}.json")
+            return path_manager.get_settings_path(f"{file_name}.json")
     
-    def _process_export_by_file_type(self, file_name, settings, current_settings, exported_settings, selected_settings):
+    def _process_export_by_file_type(self, file_name, settings, current_settings, selected_settings):
         """根据文件类型处理导出逻辑"""
         # 初始化导出设置中的文件分类
-        if file_name not in exported_settings:
-            exported_settings[file_name] = {}
+        if file_name not in self.exported_settings:
+            self.exported_settings[file_name] = {}
         
         # 处理Settings.json中的分类
         if file_name in ["foundation", "pumping_people", "instant_draw", "pumping_reward", "history", "channel", "position"]:
-            self._export_settings_json_categories(file_name, settings, current_settings, exported_settings)
+            self._export_settings_json_categories(file_name, settings, current_settings)
         # 处理voice_engine文件
         elif file_name == "voice_engine":
-            self._export_voice_engine_settings(settings, current_settings, exported_settings)
+            self._export_voice_engine_settings(settings, current_settings)
         # 处理pumping_people和pumping_reward文件（特殊处理音效设置）
         elif file_name in ["pumping_people", "pumping_reward"]:
-            self._export_pumping_settings(file_name, settings, current_settings, exported_settings, selected_settings)
+            self._export_pumping_settings(file_name, settings, current_settings, selected_settings)
         # 处理config文件
         elif file_name == "config":
-            self._export_config_settings(settings, current_settings, exported_settings)
+            self._export_config_settings(settings, current_settings)
         # 处理CleanupTimes文件
         elif file_name == "CleanupTimes":
-            self._export_cleanup_times_settings(settings, current_settings, exported_settings)
+            self._export_cleanup_times_settings(settings, current_settings)
         # 处理ForegroundSoftware文件
         elif file_name == "ForegroundSoftware":
-            self._export_foreground_software_settings(settings, current_settings, exported_settings)
+            self._export_foreground_software_settings(settings, current_settings)
         # 处理其他文件类型
         else:
-            self._export_generic_settings(file_name, settings, current_settings, exported_settings)
+            self._export_generic_settings(file_name, settings, current_settings)
     
-    def _export_settings_json_categories(self, file_name, settings, current_settings, exported_settings):
+    def _export_settings_json_categories(self, file_name, settings, current_settings):
         """导出Settings.json中的分类设置"""
         if file_name == "channel":
             # channel是根级别的字符串，不是嵌套对象
             if "channel" in current_settings:
-                exported_settings[file_name] = current_settings["channel"]
+                self.exported_settings[file_name] = current_settings["channel"]
         elif file_name == "position":
             # position是根级别的对象
             if "position" in current_settings:
-                exported_settings[file_name] = current_settings["position"]
+                self.exported_settings[file_name] = current_settings["position"]
         else:
             # foundation、pumping_people、pumping_reward、history等分类
             if file_name in current_settings:
                 # 如果该分类还没有在导出设置中，则创建
-                if file_name not in exported_settings:
-                    exported_settings[file_name] = {}
+                if file_name not in self.exported_settings:
+                    self.exported_settings[file_name] = {}
                 
                 # 导出该分类下的所有选中的设置项
                 for setting_name in settings:
                     if setting_name in current_settings[file_name]:
-                        exported_settings[file_name][setting_name] = current_settings[file_name][setting_name]
+                        self.exported_settings[file_name][setting_name] = current_settings[file_name][setting_name]
     
-    def _export_voice_engine_settings(self, settings, current_settings, exported_settings):
+    def _export_voice_engine_settings(self, settings, current_settings):
         """导出voice_engine设置"""
         section_name = "voice_engine"
-        if section_name not in exported_settings["voice_engine"]:
-            exported_settings["voice_engine"][section_name] = {}
+        # 确保voice_engine分类存在
+        if "voice_engine" not in self.exported_settings:
+            self.exported_settings["voice_engine"] = {}
+        
+        if section_name not in self.exported_settings["voice_engine"]:
+            self.exported_settings["voice_engine"][section_name] = {}
         
         for setting_name in settings:
             if section_name in current_settings and setting_name in current_settings[section_name]:
-                exported_settings["voice_engine"][section_name][setting_name] = current_settings[section_name][setting_name]
+                self.exported_settings["voice_engine"][section_name][setting_name] = current_settings[section_name][setting_name]
     
-    def _export_pumping_settings(self, file_name, settings, current_settings, exported_settings, selected_settings):
+    def _export_pumping_settings(self, file_name, settings, current_settings, selected_settings):
         """导出pumping_people和pumping_reward设置（包含音效设置的特殊处理）"""
         section_name = file_name
         # 确保分类存在
-        if section_name not in exported_settings:
-            exported_settings[section_name] = {}
+        if section_name not in self.exported_settings:
+            self.exported_settings[section_name] = {}
         
         # 导出基础设置
         for setting_name in settings:
             if section_name in current_settings and setting_name in current_settings[section_name]:
-                exported_settings[section_name][setting_name] = current_settings[section_name][setting_name]
+                self.exported_settings[section_name][setting_name] = current_settings[section_name][setting_name]
         
         # 如果当前处理的是pumping_reward，并且有音效设置被选中，需要添加音效设置
         if file_name == "pumping_reward":
-            self._export_sound_settings(current_settings, exported_settings, selected_settings, section_name)
+            self._export_sound_settings(current_settings, selected_settings, section_name)
     
-    def _export_sound_settings(self, current_settings, exported_settings, selected_settings, section_name):
+    def _export_sound_settings(self, current_settings, selected_settings, section_name):
         """导出音效设置"""
         # 检查是否有音效设置被选中
         sound_settings = ["animation_music_enabled", "result_music_enabled", 
@@ -735,9 +734,9 @@ class advanced_settingsCard(GroupHeaderCardWidget):
         if selected_sound_settings:
             for sound_setting in selected_sound_settings:
                 if sound_setting in sound_settings and sound_setting in current_settings.get("pumping_reward", {}):
-                    exported_settings[section_name][sound_setting] = current_settings["pumping_reward"][sound_setting]
+                    self.exported_settings[section_name][sound_setting] = current_settings["pumping_reward"][sound_setting]
     
-    def _export_config_settings(self, settings, current_settings, exported_settings):
+    def _export_config_settings(self, settings, current_settings):
         """导出config设置"""
         for setting_name in settings:
             # 根据设置名确定目标分类
@@ -749,32 +748,32 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                 target_section = "config"
             
             # 确保目标分类存在
-            if target_section not in exported_settings["config"]:
-                exported_settings["config"][target_section] = {}
+            if target_section not in self.exported_settings["config"]:
+                self.exported_settings["config"][target_section] = {}
             
             # 添加设置项
             if target_section in current_settings and setting_name in current_settings[target_section]:
-                exported_settings["config"][target_section][setting_name] = current_settings[target_section][setting_name]
+                self.exported_settings["config"][target_section][setting_name] = current_settings[target_section][setting_name]
     
-    def _export_cleanup_times_settings(self, settings, current_settings, exported_settings):
+    def _export_cleanup_times_settings(self, settings, current_settings):
         """导出CleanupTimes设置"""
         if "cleanuptimes" in current_settings:
-            exported_settings["CleanupTimes"] = current_settings["cleanuptimes"]
+            self.exported_settings["CleanupTimes"] = current_settings["cleanuptimes"]
     
-    def _export_foreground_software_settings(self, settings, current_settings, exported_settings):
+    def _export_foreground_software_settings(self, settings, current_settings):
         """导出ForegroundSoftware设置"""
         if "ForegroundSoftware" in current_settings:
-            exported_settings["ForegroundSoftware"] = current_settings["ForegroundSoftware"]
+            self.exported_settings["ForegroundSoftware"] = current_settings["ForegroundSoftware"]
     
-    def _export_generic_settings(self, file_name, settings, current_settings, exported_settings):
+    def _export_generic_settings(self, file_name, settings, current_settings):
         """导出通用设置"""
-        if file_name not in exported_settings:
-            exported_settings[file_name] = {}
+        if file_name not in self.exported_settings:
+            self.exported_settings[file_name] = {}
         
         for setting_name in settings:
             if file_name in current_settings and setting_name in current_settings[file_name]:
-                exported_settings[file_name][setting_name] = current_settings[file_name][setting_name]
-    
+                self.exported_settings[file_name][setting_name] = current_settings[file_name][setting_name]
+        
     def _save_exported_settings(self, exported_settings):
         """保存导出的设置到文件"""
         # 打开保存文件对话框
@@ -792,7 +791,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
             
             # 保存导出的设置
             with open_file(file_path, 'w', encoding='utf-8') as f:
-                json.dump(exported_settings, f, indent=4, ensure_ascii=False)
+                json.dump(self.exported_settings, f, indent=4, ensure_ascii=False)
             
             # 显示成功消息
             w = Dialog("导出成功", f"设置已成功导出到:\n{file_path}", None)

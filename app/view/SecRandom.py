@@ -514,7 +514,7 @@ class Window(MSFluentWindow):
         self.update_checker = UpdateChecker(self)
         self.update_checker.update_available.connect(show_update_notification)
 
-        # 优化：延迟初始化IPC服务器，先完成主要界面加载
+        # 延迟初始化IPC服务器，先完成主要界面加载
         self.server = None
         QTimer.singleShot(50, self._initialize_ipc_server)
 
@@ -531,7 +531,6 @@ class Window(MSFluentWindow):
         # USB检测定时器
         self.usb_detection_timer = QTimer(self)
         self.usb_detection_timer.timeout.connect(check_and_delete_pending_usb)
-        # 优化：延迟启动USB检测定时器，减少启动时间
         QTimer.singleShot(0, lambda: self.usb_detection_timer.start(2000))
 
 
@@ -544,11 +543,9 @@ class Window(MSFluentWindow):
             self.focus_time = 1
 
         # 启动焦点计时器
-        # 修复CPU占用过高问题，设置最低计时器间隔为200ms
         if self.focus_time == 0:
             pass
         else:
-            # 确保计时器间隔不小于200ms
             interval = max(self.FOCUS_TIMEOUT_TIME[self.focus_time], 200)
             self.focus_timer.start(interval)
 
@@ -560,13 +557,10 @@ class Window(MSFluentWindow):
         self.setWindowTitle('SecRandom')
         self.setWindowIcon(QIcon(str(path_manager.get_resource_path('icon', 'secrandom-icon-paper.png'))))
 
-        # 优化：尽早启动清理任务，提高优先级
         self.start_cleanup()
         
-        # 异步应用背景图片，不阻塞主线程
         QTimer.singleShot(0, self.apply_background_image)
 
-        # 检查更新
         check_startup = self.config_manager.get_foundation_setting('check_on_startup')
         if check_startup:
             self.check_updates_async()
@@ -574,17 +568,17 @@ class Window(MSFluentWindow):
         self._position_window()
         
         self.createSubInterface()
-        
-        self._init_tray_manager()
-        
-        self._apply_window_visibility_settings()
-        
-        self._create_levitation_window()
 
         if self.config_manager.get_foundation_setting('topmost_switch'):
             self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint) # 置顶
         else:
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint) # 取消置顶
+        
+        # self._init_tray_manager()
+        
+        # self._create_levitation_window()
+
+        # self._apply_window_visibility_settings()
 
     def _initialize_ipc_server(self):
         """延迟初始化IPC服务器
@@ -1001,7 +995,7 @@ class Window(MSFluentWindow):
         try:
             # logger.debug("开始应用窗口显示设置")
             settings = self.config_manager.load_settings()
-            is_self_starting = settings.get('self_starting_enabled', True)
+            is_self_starting = settings['foundation'].get('self_starting_enabled', True)
             self.show()
             if is_self_starting:
                 self.hide()
@@ -1221,14 +1215,11 @@ class Window(MSFluentWindow):
             # 初始化导航系统
             self.initNavigation()
             
-            # 显示主窗口、悬浮窗口和托盘图标
-            # self.show()
+            self._init_tray_manager()
             
-            # 创建并显示悬浮窗口
-            # self._create_levitation_window()
-            
-            # 显示托盘图标
-            # self.show_tray_icon()
+            self._create_levitation_window()
+
+            self._apply_window_visibility_settings()
             
             # logger.debug("所有界面、导航系统、主窗口和托盘图标初始化完成")
 
