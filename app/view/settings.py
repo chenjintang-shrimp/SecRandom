@@ -98,8 +98,8 @@ class settings_Window(MSFluentWindow):
                 logger.error(f"创建{display_name}失败: {e}")
                 setattr(self, attr_name, None)
         
-        if created_interfaces:
-            logger.info(f"设置界面核心组件创建成功: {', '.join(created_interfaces)}")
+        # if created_interfaces:
+        #     logger.debug(f"设置界面核心组件创建成功: {', '.join(created_interfaces)}")
         
         # 根据设置决定是否创建条件性界面
         settings_path = path_manager.get_settings_path('custom_settings.json')
@@ -113,7 +113,7 @@ class settings_Window(MSFluentWindow):
                 if history_settings_switch != 2:
                     self.changeable_history_handoff_settingInterface = changeable_history_handoff_setting(self)
                     self.changeable_history_handoff_settingInterface.setObjectName("changeable_history_handoff_settingInterface")
-                    logger.info("历史记录设置界面创建成功")
+                    # logger.debug("历史记录设置界面创建成功")
                 else:
                     self.changeable_history_handoff_settingInterface = None
                 
@@ -122,7 +122,7 @@ class settings_Window(MSFluentWindow):
                 if security_settings_switch != 2:
                     self.password_setInterface = password_set(self)
                     self.password_setInterface.setObjectName("password_setInterface")
-                    logger.info("安全设置界面创建成功")
+                    # logger.debug("安全设置界面创建成功")
                 else:
                     self.password_setInterface = None
                 
@@ -131,7 +131,7 @@ class settings_Window(MSFluentWindow):
                 if voice_settings_switch != 2:
                     self.voice_engine_settingsInterface = voice_engine_settings(self)
                     self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
-                    logger.info("语音设置界面创建成功")
+                    # logger.debug("语音设置界面创建成功")
                 else:
                     self.voice_engine_settingsInterface = None
                     
@@ -147,7 +147,7 @@ class settings_Window(MSFluentWindow):
             self.voice_engine_settingsInterface = voice_engine_settings(self)
             self.voice_engine_settingsInterface.setObjectName("voice_engine_settingsInterface")
             
-            logger.info("所有条件性设置界面已默认创建")
+            # logger.debug("所有条件性设置界面已默认创建")
 
         self.initNavigation()
 
@@ -264,7 +264,7 @@ class settings_Window(MSFluentWindow):
         # 停止resize_timer以优化CPU占用
         if hasattr(self, 'resize_timer') and self.resize_timer.isActive():
             self.resize_timer.stop()
-            logger.info("设置窗口resize_timer已停止")
+            # logger.debug("设置窗口resize_timer已停止")
         
         self.hide()
         event.ignore()
@@ -349,7 +349,7 @@ class settings_Window(MSFluentWindow):
                 # 重写resizeEvent方法，调整背景大小
                 self.resizeEvent = self._on_resize_event
                 
-                logger.info(f"已成功应用设置界面背景颜色 {settings_background_color}")
+                # logger.debug(f"已成功应用设置界面背景颜色 {settings_background_color}")
                 
             # 如果背景颜色未启用，但背景图片启用了，则应用背景图片
             elif enable_settings_background:
@@ -456,15 +456,15 @@ class settings_Window(MSFluentWindow):
                                 # 重写resizeEvent方法，调整背景大小
                                 self.resizeEvent = self._on_resize_event
                                 
-                                logger.info(f"已成功应用设置界面背景图片 {settings_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%")
+                                # logger.debug(f"已成功应用设置界面背景图片 {settings_background_image}，模糊度: {blur_value}，亮度: {brightness_value}%")
                             else:
                                 logger.error(f"设置界面背景图片 {settings_background_image} 加载失败")
                         else:
                             logger.error(f"设置界面背景图片 {settings_background_image} 不存在")
                     else:
                         logger.error("背景图片文件夹不存在")
-                else:
-                    logger.info("未选择设置界面背景图片")
+                # else:
+                    # logger.debug("未选择设置界面背景图片")
             else:
                 # 如果两者都未启用，则使用默认背景
                 self.setStyleSheet("background: transparent;")
