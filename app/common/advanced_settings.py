@@ -97,7 +97,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
             enc_set_file = path_manager.get_enc_set_path()
             with open_file(enc_set_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
-                logger.info("正在读取安全设置，准备执行导出诊断数据验证")
+                # logger.debug("正在读取安全设置，准备执行导出诊断数据验证")
 
                 if settings.get('hashed_set', {}).get('start_password_enabled', False) == True:
                     from app.common.password_dialog import PasswordDialog
@@ -169,7 +169,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                         # 如果文件夹不存在，自动创建目录以确保导出完整
                         try:
                             folder_path.mkdir(parents=True, exist_ok=True)
-                            logger.info(f"自动创建不存在的文件夹: {folder_path}")
+                            # logger.debug(f"自动创建不存在的文件夹: {folder_path}")
                             
                             # 创建一个说明文件，记录该文件夹是自动创建的
                             readme_path = folder_path / "_auto_created_readme.txt"

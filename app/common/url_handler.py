@@ -53,7 +53,7 @@ class URLHandler:
             # 标记设置已加载
             self.settings_loaded = True
             
-            logger.info("配置文件加载完成")
+            # logger.debug("配置文件加载完成")
         except Exception as e:
             logger.error(f"加载fixed_url设置失败: {str(e)}")
             self._load_default_settings()

@@ -53,13 +53,13 @@ def set_system_hidden_file(file_path):
                 if not isinstance(abs_path, str):
                     abs_path = str(abs_path)
                 ctypes.windll.kernel32.SetFileAttributesW(abs_path, 2)
-                logger.info(f"已设置文件为隐藏: {file_path}")
+                # logger.debug(f"已设置文件为隐藏: {file_path}")
             else:
                 # 在非Windows系统上，尝试设置隐藏属性
                 import stat
                 current_mode = os.stat(file_path).st_mode
                 os.chmod(file_path, current_mode & ~stat.S_IALLUGO)
-                logger.info(f"已设置文件为隐藏: {file_path}")
+                # logger.debug(f"已设置文件为隐藏: {file_path}")
         else:
             logger.error(f"文件不存在，无法设置隐藏属性: {file_path}")
     except Exception as e:
@@ -191,20 +191,20 @@ def get_usb_drive_letter(device_id):
         pythoncom.CoInitialize()
         
         c = wmi.WMI()
-        logger.info(f"开始获取设备ID {device_id} 的盘符")
+        logger.debug(f"开始获取设备ID {device_id} 的盘符")
         
         # 方法1：通过磁盘驱动器索引查找
         for disk_drive in c.Win32_DiskDrive():
             if disk_drive.DeviceID == device_id:
-                logger.info(f"找到磁盘驱动器: {disk_drive.DeviceID}, 索引: {disk_drive.Index}")
+                # logger.debug(f"找到磁盘驱动器: {disk_drive.DeviceID}, 索引: {disk_drive.Index}")
                 
                 # 获取该磁盘的所有分区
                 partitions = c.Win32_DiskPartition(DiskIndex=disk_drive.Index)
-                logger.info(f"找到 {len(partitions)} 个分区")
+                # logger.debug(f"找到 {len(partitions)} 个分区")
                 
                 # 遍历分区，查找对应的逻辑磁盘
                 for partition in partitions:
-                    logger.info(f"检查分区: {partition.DeviceID}")
+                    # logger.debug(f"检查分区: {partition.DeviceID}")
                     
                     # 使用关联查询获取该分区对应的逻辑磁盘
                     try:
@@ -212,21 +212,21 @@ def get_usb_drive_letter(device_id):
                         for assoc in partition.associators("Win32_LogicalDiskToPartition"):
                             if hasattr(assoc, 'DeviceID'):
                                 logical_disk = assoc
-                                logger.info(f"找到逻辑磁盘: {logical_disk.DeviceID}, 类型: {logical_disk.DriveType}")
+                                # logger.debug(f"找到逻辑磁盘: {logical_disk.DeviceID}, 类型: {logical_disk.DriveType}")
                                 
                                 # 检查是否为可移动磁盘 (DriveType = 2) 或其他可能的USB设备
                                 if logical_disk.DriveType == 2:
-                                    logger.info(f"确认U盘盘符: {logical_disk.DeviceID}")
+                                    # logger.debug(f"确认U盘盘符: {logical_disk.DeviceID}")
                                     return logical_disk.DeviceID
                                 # 如果不是DriveType=2，但设备是USB设备，也尝试返回
                                 elif hasattr(disk_drive, 'InterfaceType') and "USB" in str(disk_drive.InterfaceType).upper():
-                                    logger.info(f"USB设备但DriveType不为2，盘符: {logical_disk.DeviceID}")
+                                    # logger.debug(f"USB设备但DriveType不为2，盘符: {logical_disk.DeviceID}")
                                     return logical_disk.DeviceID
                     except Exception as e:
                         logger.error(f"关联查询失败: {e}")
         
         # 方法2：通过PNPDeviceID匹配
-        logger.info("方法1失败，尝试通过PNPDeviceID匹配")
+        logger.debug("方法1失败，尝试通过PNPDeviceID匹配")
         target_disk = None
         for disk_drive in c.Win32_DiskDrive():
             if disk_drive.DeviceID == device_id:
@@ -234,13 +234,13 @@ def get_usb_drive_letter(device_id):
                 break
         
         if target_disk and hasattr(target_disk, 'PNPDeviceID'):
-            logger.info(f"目标磁盘PNPDeviceID: {target_disk.PNPDeviceID}")
+            # logger.debug(f"目标磁盘PNPDeviceID: {target_disk.PNPDeviceID}")
             # 查找所有逻辑磁盘
             for logical_disk in c.Win32_LogicalDisk():
                 # 优先检查可移动磁盘
                 if logical_disk.DriveType == 2:
-                    logger.info(f"找到可移动磁盘: {logical_disk.DeviceID}")
-                    logger.info(f"通过方法2确认U盘盘符: {logical_disk.DeviceID}")
+                    # logger.debug(f"找到可移动磁盘: {logical_disk.DeviceID}")
+                    # logger.debug(f"通过方法2确认U盘盘符: {logical_disk.DeviceID}")
                     return logical_disk.DeviceID
                 # 如果没有可移动磁盘，检查是否有USB设备对应的逻辑磁盘
                 elif hasattr(target_disk, 'InterfaceType') and "USB" in str(target_disk.InterfaceType).upper():
@@ -252,14 +252,14 @@ def get_usb_drive_letter(device_id):
                                 # 从依赖项中获取分区信息
                                 partition_info = partition_assoc.Dependent
                                 if "Disk #" + str(target_disk.Index) in partition_info:
-                                    logger.info(f"找到USB设备对应的逻辑磁盘: {logical_disk.DeviceID}")
-                                    logger.info(f"通过方法2确认U盘盘符: {logical_disk.DeviceID}")
+                                    # logger.debug(f"找到USB设备对应的逻辑磁盘: {logical_disk.DeviceID}")
+                                    # logger.debug(f"通过方法2确认U盘盘符: {logical_disk.DeviceID}")
                                     return logical_disk.DeviceID
                     except Exception as e:
                         logger.error(f"检查逻辑磁盘关联失败: {e}")
         
         # 方法3：直接查找所有逻辑磁盘并尝试匹配USB设备
-        logger.info("方法2失败，尝试直接查找所有逻辑磁盘")
+        logger.debug("方法2失败，尝试直接查找所有逻辑磁盘")
         removable_disks = []
         usb_logical_disks = []
         
@@ -268,23 +268,23 @@ def get_usb_drive_letter(device_id):
                 # 优先收集可移动磁盘
                 if logical_disk.DriveType == 2:
                     removable_disks.append(logical_disk.DeviceID)
-                    logger.info(f"找到可移动磁盘: {logical_disk.DeviceID}")
+                    # logger.debug(f"找到可移动磁盘: {logical_disk.DeviceID}")
                 
                 # 同时收集所有逻辑磁盘，用于后续USB设备匹配
                 usb_logical_disks.append(logical_disk.DeviceID)
-                logger.info(f"找到逻辑磁盘: {logical_disk.DeviceID}, 类型: {logical_disk.DriveType}")
+                # logger.debug(f"找到逻辑磁盘: {logical_disk.DeviceID}, 类型: {logical_disk.DriveType}")
         
         # 优先返回可移动磁盘
         if len(removable_disks) == 1:
-            logger.info(f"通过方法3确认U盘盘符: {removable_disks[0]}")
+            # logger.debug(f"通过方法3确认U盘盘符: {removable_disks[0]}")
             return removable_disks[0]
         elif len(removable_disks) > 1:
-            logger.info(f"找到多个可移动磁盘，返回第一个: {removable_disks[0]}")
+            # logger.debug(f"找到多个可移动磁盘，返回第一个: {removable_disks[0]}")
             return removable_disks[0]
         
         # 如果没有可移动磁盘，尝试找到目标USB设备对应的逻辑磁盘
         if target_disk and hasattr(target_disk, 'Index'):
-            logger.info(f"尝试匹配磁盘索引 {target_disk.Index} 对应的逻辑磁盘")
+            # logger.debug(f"尝试匹配磁盘索引 {target_disk.Index} 对应的逻辑磁盘")
             for disk_letter in usb_logical_disks:
                 # 检查这个逻辑磁盘是否属于目标磁盘
                 try:
@@ -293,19 +293,19 @@ def get_usb_drive_letter(device_id):
                             if hasattr(partition_assoc, 'Dependent'):
                                 partition_info = partition_assoc.Dependent
                                 if "Disk #" + str(target_disk.Index) in partition_info:
-                                    logger.info(f"找到目标磁盘对应的逻辑磁盘: {disk_letter}")
-                                    logger.info(f"通过方法3确认U盘盘符: {disk_letter}")
+                                    # logger.debug(f"找到目标磁盘对应的逻辑磁盘: {disk_letter}")
+                                    # logger.debug(f"通过方法3确认U盘盘符: {disk_letter}")
                                     return disk_letter
                 except Exception as e:
                     logger.error(f"检查逻辑磁盘 {disk_letter} 失败: {e}")
         
         # 最后的备选方案：如果有USB设备且只有一个逻辑磁盘，返回它
         if len(usb_logical_disks) == 1:
-            logger.info(f"只有一个逻辑磁盘，返回: {usb_logical_disks[0]}")
+            # logger.debug(f"只有一个逻辑磁盘，返回: {usb_logical_disks[0]}")
             return usb_logical_disks[0]
         # 如果有多个逻辑磁盘，返回第一个
         elif len(usb_logical_disks) > 1:
-            logger.info(f"有多个逻辑磁盘，返回第一个: {usb_logical_disks[0]}")
+            # logger.debug(f"有多个逻辑磁盘，返回第一个: {usb_logical_disks[0]}")
             return usb_logical_disks[0]
         
         logger.error(f"未找到设备ID {device_id} 对应的U盘盘符")
@@ -335,7 +335,7 @@ def bind_usb_device(selected_device, usb_mount_path, require_key_file=True):
     try:
         # 添加调试日志
         logger.info(f"开始绑定U盘，selected_device: {selected_device}, 类型: {type(selected_device)}")
-        logger.info(f"usb_mount_path: {usb_mount_path}")
+        # logger.debug(f"usb_mount_path: {usb_mount_path}")
         
         # 检查selected_device是否为字典类型
         if not isinstance(selected_device, dict):
@@ -436,7 +436,7 @@ def bind_usb_device(selected_device, usb_mount_path, require_key_file=True):
         # 如果不存在usb_binding数组，则创建
         if "usb_binding" not in existing_settings:
             existing_settings["usb_binding"] = []
-            logger.info("创建新的usb_binding数组")
+            # logger.debug("创建新的usb_binding数组")
         
         # 检查现有usb_binding数组的数据类型
         # logger.debug(f"现有usb_binding数组: {existing_settings['usb_binding']}, 类型: {type(existing_settings['usb_binding'])}")
@@ -456,7 +456,7 @@ def bind_usb_device(selected_device, usb_mount_path, require_key_file=True):
         
         if not device_exists:
             existing_settings["usb_binding"].append(usb_config)
-            logger.info(f"成功添加USB配置到绑定列表")
+            # logger.debug(f"成功添加USB配置到绑定列表: {usb_config}")
         else:
             logger.error("该U盘已经绑定过，不能重复绑定")
             return False
@@ -1244,7 +1244,7 @@ class USBDeviceListWidget(ListWidget):
                 with open(enc_set_file, "r", encoding='utf-8') as f:
                     settings = json.load(f)
                     usb_bindings = settings.get("usb_binding", [])
-                    logger.info(f"从配置文件读取到usb_bindings: {usb_bindings}, 类型: {type(usb_bindings)}")
+                    # logger.debug(f"从配置文件读取到usb_bindings: {usb_bindings}, 类型: {type(usb_bindings)}")
                     if usb_bindings:
                         # 收集所有已绑定的完整设备信息
                         if isinstance(usb_bindings, dict):
@@ -1258,13 +1258,13 @@ class USBDeviceListWidget(ListWidget):
                                     "SerialNumber": serial_number,
                                     "Model": model
                                 })
-                                logger.info(f"从字典中添加设备到绑定列表: {device_id}")
+                                # logger.debug(f"从字典中添加设备到绑定列表: {device_id}")
                             else:
                                 logger.error("usb_bindings字典中缺少必要的设备信息")
                         elif isinstance(usb_bindings, list):
                             # 如果usb_bindings是列表，遍历处理每个元素
                             for i, usb_binding in enumerate(usb_bindings):
-                                logger.info(f"处理usb_binding[{i}]: {usb_binding}, 类型: {type(usb_binding)}")
+                                # logger.debug(f"处理usb_binding[{i}]: {usb_binding}, 类型: {type(usb_binding)}")
                                 if isinstance(usb_binding, dict):
                                     device_id = usb_binding.get("DeviceID")
                                     serial_number = usb_binding.get("SerialNumber")
@@ -1314,8 +1314,7 @@ class USBDeviceListWidget(ListWidget):
         current_item = self.currentItem()
         if current_item:
             device_data = current_item.data(Qt.UserRole)
-            # 添加调试日志
-            logger.info(f"获取选中的设备数据: {device_data}, 类型: {type(device_data)}")
+            # logger.debug(f"获取选中的设备数据: {device_data}, 类型: {type(device_data)}")
             # 确保返回的是字典类型
             if isinstance(device_data, dict):
                 return device_data
@@ -1379,7 +1378,7 @@ class USBBindDialog(MessageBoxBase):
         """验证绑定信息"""
         selected_device = self.deviceListWidget.get_selected_device()
         # 添加调试日志
-        logger.info(f"绑定对话框获取选中的设备: {selected_device}, 类型: {type(selected_device)}")
+        # logger.debug(f"绑定对话框获取选中的设备: {selected_device}, 类型: {type(selected_device)}")
         if not selected_device:
             self.warningLabel.setText("请选择要绑定的U盘")
             self.warningLabel.show()
@@ -1388,7 +1387,7 @@ class USBBindDialog(MessageBoxBase):
         # 自动获取盘符
         try:
             drive_letter = get_usb_drive_letter(selected_device["设备ID"])
-            logger.info(f"获取到盘符: {drive_letter}")
+            # logger.debug(f"获取到盘符: {drive_letter}")
         except Exception as e:
             logger.error(f"获取盘符时发生错误: {e}")
             self.warningLabel.setText("获取U盘盘符时发生错误")
@@ -1402,7 +1401,7 @@ class USBBindDialog(MessageBoxBase):
         
         # 获取是否需要.key文件的选项
         require_key_file = self.requireKeyFileCheckBox.isChecked()
-        logger.info(f"用户选择是否需要.key文件: {require_key_file}")
+        # logger.debug(f"用户选择是否需要.key文件: {require_key_file}")
         
         # 执行绑定
         try:
@@ -2535,7 +2534,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
             self.show_hide_verification_switch.blockSignals(False)
             self.usb_auth_switch.blockSignals(False)
             
-            logger.info("安全设置加载完成")
+            # logger.debug("安全设置加载完成")
             
             # 如果U盘认证已启用，启动监控线程
             if usb_auth_enabled:
@@ -2555,7 +2554,7 @@ class password_SettingsCard(GroupHeaderCardWidget):
         self.restart_verification_switch.setChecked(self.default_settings["restart_verification_enabled"])
         self.show_hide_verification_switch.setChecked(self.default_settings["show_hide_verification_enabled"])
         self.usb_auth_switch.setChecked(self.default_settings["usb_auth_enabled"])
-        logger.info("已应用默认安全设置")
+        # logger.debug("已应用默认安全设置")
 
     def save_settings(self):
         # 先读取现有设置

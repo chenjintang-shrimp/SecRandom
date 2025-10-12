@@ -74,12 +74,10 @@ def configure_logging():
     )
 
     logger.info("=" * 50)
-    logger.info("日志系统配置完成")
+    # logger.debug("日志系统配置完成")
 
 def log_software_info():
     """记录软件启动成功信息和相关元信息"""
-    # 打印分隔线，增强日志可读性
-    logger.info("=" * 50)
     # 记录软件启动成功信息
     logger.info("软件启动成功")
     # 记录软件相关元信息
@@ -99,11 +97,11 @@ if cfg.get(cfg.dpiScale) == "Auto":
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-    logger.info(" DPI缩放已设置为自动模式")
+    # logger.debug("DPI缩放已设置为自动模式")
 else:
     os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
     os.environ["QT_SCALE_FACTOR"] = str(cfg.get(cfg.dpiScale))
-    logger.info(f" DPI缩放已设置为{cfg.get(cfg.dpiScale)}倍")
+    # logger.debug(f"DPI缩放已设置为{cfg.get(cfg.dpiScale)}倍")
 
 # ==================================================
 # IPC通信相关函数
@@ -329,7 +327,7 @@ def clean_expired_data():
     """清理过期历史记录，避免阻塞启动过程"""
     # 使用QTimer在后台清理历史记录
     QTimer.singleShot(0, _clean_expired_data)
-    logger.info("已启动后台任务清理过期历史记录")
+    # logger.debug("已启动后台任务清理过期历史记录")
 
 def _clean_expired_data():
     """实际执行清理过期历史记录的函数"""
@@ -351,7 +349,7 @@ def run_startup_window():
         startup_window = StartupWindow()
         startup_window.show()
         startup_process = startup_window.get_startup_process()
-        logger.info("启动窗口已显示")
+        # logger.debug("启动窗口已显示")
     except Exception as e:
         logger.error(f"启动启动窗口时发生异常: {e}")
 
@@ -489,7 +487,6 @@ if __name__ == "__main__":
     try:
         # 首先配置日志系统，确保日志能正确记录
         configure_logging()
-        logger.info("日志系统配置完成")
 
         # 启动窗口
         QTimer.singleShot(0, run_startup_window)

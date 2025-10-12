@@ -110,8 +110,6 @@ class aboutCard(GroupHeaderCardWidget):
             w.yesButton.setText("知道啦👌")
             w.cancelButton.hide()
             w.buttonLayout.insertStretch(1)
-            if w.exec():
-                logger.info("用户点击了知道啦👌")
         # 安全地删除worker对象，避免重复删除导致的错误
         if hasattr(self, 'update_worker') and self.update_worker is not None:
             try:
@@ -629,11 +627,11 @@ class DonationDialog(QDialog):
     def on_image_download_complete(self, filename, success):
         """ 图片下载完成后的回调函数 """
         if success:
-            logger.info(f"图片下载完成: {filename}")
+            # logger.debug(f"图片下载完成: {filename}")
             # 下载成功后刷新界面
             self.refresh_donation_cards()
-        else:
-            logger.error(f"图片下载失败: {filename}")
+        # else:
+        #     logger.debug(f"图片下载失败: {filename}")
     
     def refresh_donation_cards(self):
         """ 刷新捐赠卡片以重新加载图片 """
@@ -663,7 +661,7 @@ class DonationDialog(QDialog):
             
             # 强制更新界面
             self.update()
-            logger.info("捐赠卡片已刷新，图片重新加载")
+            # logger.debug("捐赠卡片已刷新，图片重新加载")
     
     class DownloadWorker(QThread):
         """ 图片下载工作线程 """
@@ -690,33 +688,33 @@ class DonationDialog(QDialog):
                 current_md5 = self.calculate_file_md5(local_path)
                 
                 if current_md5 is None:
-                    logger.error(f"文件不存在: {local_path}")
+                    # logger.debug(f"文件不存在: {local_path}")
                     # 文件不存在，直接下载
                     if self.download_file_from_github(filename, local_path):
-                        logger.info(f"成功下载缺失的文件: {filename}")
+                        # logger.debug(f"成功下载缺失的文件: {filename}")
                         # 发送下载完成信号
                         self.dialog.image_download_complete.emit(filename, True)
                     else:
-                        logger.error(f"下载失败: {filename}")
+                        # logger.debug(f"下载失败: {filename}")
                         self.dialog.image_download_complete.emit(filename, False)
                 elif current_md5 != self.dialog.CORRECT_MD5.get(filename):
-                    logger.error(f"MD5不匹配: {filename} (当前: {current_md5}, 期望: {self.dialog.CORRECT_MD5.get(filename)})")
+                    # logger.debug(f"MD5不匹配: {filename} (当前: {current_md5}, 期望: {self.dialog.CORRECT_MD5.get(filename)})")
                     # MD5不匹配，重新下载
                     if self.download_file_from_github(filename, local_path):
                         # 验证下载后的文件MD5
                         new_md5 = self.calculate_file_md5(local_path)
                         if new_md5 == self.dialog.CORRECT_MD5.get(filename):
-                            logger.info(f"成功更新文件: {filename}")
+                            # logger.debug(f"成功更新文件: {filename}")
                             # 发送下载完成信号
                             self.dialog.image_download_complete.emit(filename, True)
                         else:
-                            logger.error(f"下载后MD5仍不匹配: {filename} (当前: {new_md5}, 期望: {self.dialog.CORRECT_MD5.get(filename)})")
+                            # logger.debug(f"下载后MD5仍不匹配: {filename} (当前: {new_md5}, 期望: {self.dialog.CORRECT_MD5.get(filename)})")
                             self.dialog.image_download_complete.emit(filename, False)
                     else:
                         logger.error(f"更新文件失败: {filename}")
                         self.dialog.image_download_complete.emit(filename, False)
-                else:
-                    logger.info(f"文件MD5验证通过: {filename}")
+                # else:
+                    # logger.debug(f"文件MD5验证通过: {filename}")
         
         def calculate_file_md5(self, file_path):
             """计算文件的MD5值"""
@@ -730,14 +728,14 @@ class DonationDialog(QDialog):
             except FileNotFoundError:
                 return None
             except Exception as e:
-                logger.error(f"计算MD5失败 {file_path}: {str(e)}")
+                # logger.debug(f"计算MD5失败 {file_path}: {str(e)}")
                 return None
         
         def download_file_from_github(self, filename, local_path):
             """从GitHub下载文件"""
             try:
                 url = self.dialog.GITHUB_BASE_URL + filename
-                logger.info(f"正在下载文件: {url}")
+                # logger.debug(f"正在下载文件: {url}")
                 
                 # 尝试正常下载（启用SSL验证）
                 response = requests.get(url, timeout=30)
@@ -750,12 +748,12 @@ class DonationDialog(QDialog):
                 with open(local_path, 'wb') as f:
                     f.write(response.content)
                 
-                logger.info(f"成功下载文件: {filename}")
+                # logger.debug(f"成功下载文件: {filename}")
                 return True
                 
             except requests.exceptions.SSLError as e:
-                logger.error(f"SSL证书验证失败 {filename}: {str(e)}")
-                logger.info("尝试禁用SSL验证重新下载...")
+                # logger.debug(f"SSL证书验证失败 {filename}: {str(e)}")
+                # logger.debug("尝试禁用SSL验证重新下载...")
                 
                 try:
                     # 禁用SSL验证重试
@@ -769,26 +767,26 @@ class DonationDialog(QDialog):
                     with open(local_path, 'wb') as f:
                         f.write(response.content)
                     
-                    logger.info(f"成功下载文件(禁用SSL验证): {filename}")
+                    # logger.debug(f"成功下载文件(禁用SSL验证): {filename}")
                     return True
                     
                 except Exception as e2:
-                    logger.error(f"禁用SSL验证后下载仍失败 {filename}: {str(e2)}")
-                    logger.error("建议检查网络环境或防火墙设置")
+                    # logger.debug(f"禁用SSL验证后下载仍失败 {filename}: {str(e2)}")
+                    # logger.debug("建议检查网络环境或防火墙设置")
                     return False
                     
             except requests.exceptions.ConnectionError as e:
-                logger.error(f"网络连接错误 {filename}: {str(e)}")
-                logger.error("建议检查网络连接和代理设置")
+                # logger.debug(f"网络连接错误 {filename}: {str(e)}")
+                # logger.debug("建议检查网络连接和代理设置")
                 return False
                 
             except requests.exceptions.Timeout as e:
-                logger.error(f"下载超时 {filename}: {str(e)}")
-                logger.error("建议检查网络连接或稍后重试")
+                # logger.debug(f"下载超时 {filename}: {str(e)}")
+                # logger.debug("建议检查网络连接或稍后重试")
                 return False
                 
             except Exception as e:
-                logger.error(f"下载文件失败 {filename}: {str(e)}")
+                # logger.debug(f"下载文件失败 {filename}: {str(e)}")
                 return False
 
     def create_donation_card(self, title, image_path, description):

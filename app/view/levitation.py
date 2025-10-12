@@ -2405,7 +2405,7 @@ class LevitationWindow(QWidget):
         self.keep_top_timer = QTimer(self)
         self.keep_top_timer.timeout.connect(self._keep_window_on_top)
         self.keep_top_timer.start(100)  # 减少间隔时间，提高响应速度
-        logger.info("浮窗置顶定时器已启动")
+        # logger.debug("浮窗置顶定时器已启动")
 
     def _keep_window_on_top(self):
         """保持窗口置顶

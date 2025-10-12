@@ -2933,7 +2933,7 @@ class ImportVocabularyDialog(QDialog):
         self.dragging = False
 
     def update_theme_style(self):
-        # 🌟 星穹铁道白露：主题样式更新 ~ 现在包含自定义标题栏啦！
+        
         colors = {'text': '#F5F5F5', 'bg': '#111116', 'title_bg': '#2D2D2D'} if is_dark else {'text': '#111116', 'bg': '#F5F5F5', 'title_bg': '#E0E0E0'}
         self.setStyleSheet(f"""
             QDialog, QDialog * {{

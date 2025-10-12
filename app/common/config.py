@@ -399,7 +399,7 @@ def setThemeColor(color):
     cfg.themeColor.value = hex_color
     # 保存配置
     qconfig.save()
-    logger.info(f"主题色已设置为: {hex_color}")
+    # logger.debug(f"主题色已设置为: {hex_color}")
 
 def themeColor():
     """获取当前主题色
