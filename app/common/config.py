@@ -127,11 +127,12 @@ def check_for_updates(channel=None):
             latest_version_tag = latest_release['tag_name']
 
         latest_version = latest_version_tag.lstrip('v')
+        version_text = f"Dev Version-{NEXT_VERSION}" if VERSION == "v0.0.0.0" else VERSION
         if Version(latest_version) > Version(current_version):
-            logger.info(f"发现新版本: 当前版本 {current_version}, 最新版本 {latest_version_tag}")
+            logger.info(f"发现新版本: 当前版本 {version_text}, 最新版本 {latest_version_tag}")
             return True, latest_version_tag
         else:
-            logger.info(f"当前版本 {current_version} 已经是最新版本")
+            logger.info(f"当前版本 {version_text} 已经是最新版本")
             return False, None
     except requests.exceptions.RequestException as e:
         logger.error(f"网络请求失败: {e}")
@@ -346,6 +347,7 @@ YEAR = 2025
 MONTH = 4
 AUTHOR = "lzy98276"
 VERSION = "v0.0.0.0"
+NEXT_VERSION = "v1.3.1.0"
 APPLY_NAME = "SecRandom"
 GITHUB_WEB = "https://github.com/SECTL/SecRandom"
 BILIBILI_WEB = "https://space.bilibili.com/520571577"

@@ -10,7 +10,7 @@ import os
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
+from app.common.config import YEAR, MONTH, AUTHOR, VERSION, NEXT_VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
 from app.common.update_notification import show_update_notification
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, get_update_channel, set_update_channel
 from app.common.path_utils import path_manager, open_file, remove_file
@@ -30,7 +30,8 @@ class aboutCard(GroupHeaderCardWidget):
         self.about_bilibili_Button.setFont(QFont(load_custom_font(), 12))
 
         # 查看当前软件版本号
-        self.about_version_label = BodyLabel(f"当前版本: {VERSION}")
+        version_text = f"Dev Version-{NEXT_VERSION}" if VERSION == "v0.0.0.0" else VERSION
+        self.about_version_label = BodyLabel(f"当前版本：{version_text}")
         self.about_version_label.setFont(QFont(load_custom_font(), 12))
 
         # 查看当前软件版权所属

@@ -21,7 +21,7 @@ from loguru import logger
 # ==================================================
 # 内部模块导入
 # ==================================================
-from app.common.config import cfg, VERSION, load_custom_font
+from app.common.config import cfg, VERSION, NEXT_VERSION, load_custom_font
 from app.common.path_utils import path_manager
 from qfluentwidgets import qconfig, Theme
 
@@ -98,7 +98,8 @@ class StartupWindow(QDialog):
         title_version_layout.addWidget(self.title_label)
         
         # 添加版本号标签到标题下方
-        self.version_label = BodyLabel(f"{VERSION}")
+        version_text = f"Dev Version-{NEXT_VERSION}" if VERSION == "v0.0.0.0" else VERSION
+        self.version_label = BodyLabel(f"{version_text}")
         self.version_label.setAlignment(Qt.AlignLeft)
         self.version_label.setFont(QFont(load_custom_font(), 10))
         title_version_layout.addWidget(self.version_label)

@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from qfluentwidgets import *
-from app.common.config import get_theme_icon, load_custom_font, check_for_updates, VERSION, is_dark_theme, themeColor
+from app.common.config import get_theme_icon, load_custom_font, check_for_updates, is_dark_theme, themeColor
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
 from app.common.update_notification import UpdateNotification

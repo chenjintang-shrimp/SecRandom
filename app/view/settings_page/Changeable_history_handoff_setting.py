@@ -2,7 +2,7 @@ from qfluentwidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import cfg, AUTHOR, YEAR
 from app.common.config import load_custom_font
 
 from app.view.settings_page.Changeable_history import changeable_history

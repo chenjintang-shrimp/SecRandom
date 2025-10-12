@@ -23,7 +23,7 @@ from PyQt5.QtNetwork import *
 from qfluentwidgets import *
 
 # 内部模块
-from app.common.config import YEAR, MONTH, AUTHOR, VERSION, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
+from app.common.config import YEAR, MONTH, AUTHOR, APPLY_NAME, GITHUB_WEB, BILIBILI_WEB
 from app.common.config import get_theme_icon, load_custom_font, check_for_updates, get_update_channel
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir

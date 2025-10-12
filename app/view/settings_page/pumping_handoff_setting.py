@@ -3,7 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from loguru import logger
 
-from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import cfg, AUTHOR, YEAR
 from app.common.config import load_custom_font
 
 from app.common.pumping_people_setting import pumping_people_SettinsCard

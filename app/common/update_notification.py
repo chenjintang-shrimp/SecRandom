@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 from loguru import logger
 
-from app.common.config import get_theme_icon, load_custom_font, check_for_updates, VERSION, themeColor, is_dark_theme
+from app.common.config import get_theme_icon, load_custom_font, check_for_updates, VERSION, NEXT_VERSION, themeColor, is_dark_theme
 from app.common.path_utils import path_manager, open_file
 
 def show_update_notification(latest_version, auto_close=True):
@@ -79,7 +79,8 @@ class UpdateNotification(QDialog):
         self.title_label.setStyleSheet("border: none; background: transparent;")
 
         # 版本信息
-        self.version_label = BodyLabel(f"📌 当前版本: {VERSION}\n🚀 发现新版本 {self.latest_version}\n✨ 修复已知问题，优化体验\n💡 建议立即更新以获得最佳体验")
+        version_text = f"Dev Version-{NEXT_VERSION}" if VERSION == "v0.0.0.0" else VERSION
+        self.version_label = BodyLabel(f"📌 当前版本: {version_text}\n🚀 发现新版本 {self.latest_version}\n✨ 修复已知问题，优化体验\n💡 建议立即更新以获得最佳体验")
         self.version_label.setFont(QFont(load_custom_font(), 12))
         self.version_label.setStyleSheet("border: none; background: transparent;")
         self.version_label.setAlignment(Qt.AlignCenter)
@@ -103,7 +104,7 @@ class UpdateNotification(QDialog):
         btn_layout.setSpacing(10)
 
         # 稍后提醒按钮
-        later_btn = PushButton("今日不提醒")
+        later_btn = PushButton("今日不再提醒")
         later_btn.setObjectName("later_btn")
         later_btn.setFont(QFont(load_custom_font(), 12))
         later_btn.clicked.connect(self.remind_later)
@@ -327,7 +328,7 @@ class UpdateNotification(QDialog):
         super().mousePressEvent(event)
 
     def remind_later(self):
-        """今日不提醒按钮点击事件"""
+        """今日不再提醒按钮点击事件"""
         # 获取配置文件路径
         config_file = path_manager.get_settings_path("update_reminder.json")
         

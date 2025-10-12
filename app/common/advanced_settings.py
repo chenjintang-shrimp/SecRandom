@@ -16,7 +16,7 @@ from loguru import logger
 
 import winreg
 
-from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
+from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION, NEXT_VERSION
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
 
@@ -195,6 +195,8 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                             }
                             zipf.writestr(f"_error_{relative_path.replace('/', '_')}.json", 
                                         json.dumps(error_info, ensure_ascii=False, indent=2))
+
+                version_text = f"Dev Version-{NEXT_VERSION}" if VERSION == "v0.0.0.0" else VERSION
                 
                 # 创建结构化的系统信息报告 - 使用JSON格式便于程序解析
                 system_info = {
@@ -203,7 +205,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                         "software": "SecRandom",                                                # 软件名称
                         "export_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),            # 人类可读时间
                         "export_timestamp": datetime.now().isoformat(),                         # ISO标准时间戳
-                        "version": VERSION,                                                     # 当前软件版本
+                        "version": version_text,                                                     # 当前软件版本
                         "export_type": "diagnostic",                                            # 导出类型（诊断数据）
                     },
                     # 【系统环境信息】详细的运行环境数据
@@ -228,7 +230,7 @@ class advanced_settingsCard(GroupHeaderCardWidget):
                     }
                 }
                 # 将系统信息写入JSON文件，使用中文编码确保兼容性
-                diagnostic_filename = f"SecRandom_诊断报告_{VERSION}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                diagnostic_filename = f"SecRandom_诊断报告_{version_text}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
                 zipf.writestr(diagnostic_filename, json.dumps(system_info, ensure_ascii=False, indent=2))
             
             # 显示成功提示

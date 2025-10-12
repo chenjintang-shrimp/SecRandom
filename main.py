@@ -30,7 +30,7 @@ from pathlib import Path
 # ==================================================
 # 内部模块导入
 # ==================================================
-from app.common.config import cfg, VERSION, load_custom_font, WEBSITE, APPLY_NAME
+from app.common.config import cfg, VERSION, NEXT_VERSION, load_custom_font, WEBSITE, APPLY_NAME
 from app.view.startup_window import StartupWindow
 from app.view.SecRandom import Window
 from app.common.url_handler import process_url_if_exists
@@ -84,7 +84,7 @@ def log_software_info():
     software_info = {
         "作者": "lzy98276",
         "Github地址": "https://github.com/SECTL/SecRandom",
-        "版本": VERSION
+        "版本": f"Dev Version-{NEXT_VERSION}" if VERSION == "v0.0.0.0" else VERSION
     }
     for key, value in software_info.items():
         logger.info(f"软件{key}: {value}")

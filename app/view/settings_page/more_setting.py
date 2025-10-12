@@ -7,7 +7,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import cfg, AUTHOR, YEAR
 from app.common.config import get_theme_icon, load_custom_font
 
 from app.common.foundation_settings import foundation_settingsCard

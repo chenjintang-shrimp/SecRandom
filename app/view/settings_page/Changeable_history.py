@@ -10,7 +10,7 @@ import math
 import json
 from loguru import logger
 
-from app.common.config import cfg, AUTHOR, VERSION, YEAR
+from app.common.config import cfg, AUTHOR, YEAR
 from app.common.config import get_theme_icon, load_custom_font
 from app.common.path_utils import path_manager, open_file, remove_file
 

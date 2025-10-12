@@ -13,7 +13,7 @@ from pathlib import Path
 from datetime import datetime
 from loguru import logger
 import winreg
-from app.common.config import get_theme_icon, load_custom_font, is_dark_theme, VERSION
+from app.common.config import get_theme_icon, load_custom_font, is_dark_theme
 from app.common.path_utils import path_manager
 from app.common.path_utils import open_file, ensure_dir
 from app.common.global_signals import font_signal
