@@ -482,6 +482,9 @@ if __name__ == "__main__":
     import gc
     gc.enable()  # 确保垃圾回收已启用
 
+    # 配置应用程序在最后一个窗口关闭时不退出
+    app.setQuitOnLastWindowClosed(False)
+
     font_signal.font_changed.connect(apply_font_settings)
     
     try:
