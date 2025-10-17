@@ -2111,7 +2111,7 @@ class LevitationWindow(QWidget):
                 settings = json.load(f)
                 
             # 检查是否启用自动关闭
-            auto_close_enabled = settings['instant_draw'].get('flash_window_auto_close', Ture)
+            auto_close_enabled = settings['instant_draw'].get('flash_window_auto_close', True)
             close_time_setting = settings['instant_draw'].get('flash_window_close_time', 3)
             close_after_click = settings['instant_draw'].get('close_after_click', False)
             
@@ -3359,10 +3359,51 @@ class DraggableWidget(QWidget):
         self._long_press_timer.setSingleShot(True)
         self._long_press_timer.timeout.connect(self._on_long_press)
         self._long_press_triggered = False  # 标记是否触发长按
+        self._init_keep_top_timer()  # 初始化保持置顶定时器
         
     def setFixedX(self, x):
         """设置固定的x坐标"""
         self._fixed_x = x
+        
+    def _init_keep_top_timer(self):
+        """初始化保持置顶定时器
+        优化：减少定时器间隔并提高置顶效率"""
+        # 优化：减少定时器间隔从200ms到100ms，提高响应速度
+        self.keep_top_timer = QTimer(self)
+        self.keep_top_timer.timeout.connect(self._keep_window_on_top)
+        self.keep_top_timer.start(100)  # 减少间隔时间，提高响应速度
+        
+    def _keep_window_on_top(self):
+        """保持窗口置顶
+        优化：简化置顶逻辑，提高效率"""
+        try:
+            # 优化：只执行必要的置顶操作，移除不必要的条件判断
+            self.raise_()  # 将窗口提升到最前面
+            # 注释掉激活窗口的操作，避免干扰用户当前操作
+            # self.activateWindow()  # 激活窗口
+        except Exception as e:
+            logger.error(f"保持窗口置顶失败: {e}")
+        
+    def closeEvent(self, event):
+        """窗口关闭事件 - 清理所有定时器资源"""
+        # 停止保持置顶定时器
+        if hasattr(self, 'keep_top_timer') and self.keep_top_timer:
+            if self.keep_top_timer.isActive():
+                self.keep_top_timer.stop()
+            self.keep_top_timer.deleteLater()
+            self.keep_top_timer = None
+            logger.info("DraggableWidget置顶定时器已停止并清理")
+        
+        # 停止长按检测计时器
+        if hasattr(self, '_long_press_timer') and self._long_press_timer:
+            if self._long_press_timer.isActive():
+                self._long_press_timer.stop()
+            self._long_press_timer.deleteLater()
+            self._long_press_timer = None
+            logger.info("DraggableWidget长按计时器已停止并清理")
+        
+        # 调用父类的closeEvent
+        super().closeEvent(event)
         
     def _on_long_press(self):
         """长按触发事件"""
