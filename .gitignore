@@ -172,15 +172,6 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
-/app/resource/history
-/app/resource/Temp
-/app/resource/list
-/app/SecRandom
-/app/SecRandom
-/app/Settings
-/app/resource/reward
-/.vercel
-/app/resource/music
-/app/cache
-/app/resource/images
 /logs
+/.vercel
+/app/resources/list
