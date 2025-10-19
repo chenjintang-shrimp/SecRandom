@@ -175,3 +175,4 @@ cython_debug/
 /logs
 /.vercel
 /app/resources/list
+/config
