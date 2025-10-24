@@ -19,7 +19,6 @@ from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.personalised import *
 
-
 class PageTemplate(QFrame):
     # 暂时禁用实例缓存以解决初始化问题
     # _instances = {}
@@ -99,7 +98,6 @@ class PageTemplate(QFrame):
         if message:
             custom_label = BodyLabel(message)
             custom_label.setAlignment(Qt.AlignCenter)
-            custom_label.setFont(QFont(load_custom_font(), 12))
             center_layout.addWidget(custom_label)
         
         empty_layout.addWidget(center_container)
@@ -290,7 +288,6 @@ class PivotPageTemplate(QFrame):
             
             error_title = BodyLabel("页面加载失败")
             error_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            error_title.setFont(QFont(load_custom_font(), 16))
             
             error_content = BodyLabel(f"无法加载页面 {page_name}: {str(e)}")
             error_content.setAlignment(Qt.AlignmentFlag.AlignCenter)

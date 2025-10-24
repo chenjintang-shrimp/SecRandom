@@ -16,6 +16,9 @@ from qfluentwidgets import *
 from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.personalised import *
+from app.tools.settings_access import *
+from app.tools.settings_default import *
+from app.Language.obtain_language import *
 
 # ==================================================
 # 主页

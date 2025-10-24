@@ -19,6 +19,7 @@ from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.settings_default import *
 from app.common.config import cfg
+from app.Language.obtain_language import *
 
 from app.view.main.window import MainWindow
 from app.view.settings.settings import SettingsWindow
@@ -84,38 +85,14 @@ def check_single_instance():
 # 字体设置相关函数
 # ==================================================
 def apply_font_settings():
-    """应用字体设置，加载并应用保存的字体（后台创建，不阻塞进程）"""
-    try:
-        # # 读取字体设置文件
-        # settings_file = get_settings_path()
-        # ensure_dir(settings_file.parent)
-        
-        font_family = DEFAULT_FONT_NAME_PRIMARY
-        
-        # if file_exists(settings_file):
-        #     try:
-        #         with open_file(settings_file, 'r', encoding='utf-8') as f:
-        #             settings = json.load(f)
-        #             personal_settings = settings.get('personal', {})
-        #             custom_font_family = personal_settings.get('font_family', '')
-        #             if custom_font_family:
-        #                 font_family = custom_font_family
-        #     except Exception as e:
-        #         logger.error(f"读取字体设置失败: {e}")
-        
-        # 应用字体设置（后台创建，不阻塞进程）
-        logger.info(f"字体设置: {font_family}")
-        # 用QTimer在后台应用字体，不阻塞主进程
-        QTimer.singleShot(FONT_APPLY_DELAY, lambda: apply_font_to_application(font_family))
-    except Exception as e:
-        logger.error(f"初始化字体设置失败: {e}")
-        # 发生错误时使用默认字体
-        logger.info("初始化字体设置: 发生错误，使用默认字体")
-        # 用QTimer在后台应用字体，不阻塞主进程
-        QTimer.singleShot(FONT_APPLY_DELAY, lambda: apply_font_to_application(DEFAULT_FONT_NAME_PRIMARY))
+    """应用字体设置"""
+    font_family = DEFAULT_FONT_NAME_PRIMARY
+    logger.info(f"字体设置: {font_family}")
+    setFontFamilies([font_family])
+    QTimer.singleShot(FONT_APPLY_DELAY, lambda: apply_font_to_application(font_family))
 
 def apply_font_to_application(font_family):
-    """应用字体设置到整个应用程序
+    """应用字体设置到整个应用程序，只更新字体不是指定font_family的控件
     
     Args:
         font_family (str): 字体家族名称
@@ -151,50 +128,67 @@ def apply_font_to_application(font_family):
         
         # 获取所有顶级窗口并更新它们的字体
         widgets_updated = 0
+        widgets_skipped = 0
         for widget in QApplication.allWidgets():
             if isinstance(widget, QWidget):
-                update_widget_fonts(widget, app_font)
-                widgets_updated += 1
+                if update_widget_fonts(widget, app_font, font_family):
+                    widgets_updated += 1
+                else:
+                    widgets_skipped += 1
             
-        logger.info(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件字体")
+        logger.info(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件字体, 跳过了{widgets_skipped}个已有相同字体的控件")
     except Exception as e:
         logger.error(f"应用字体失败: {e}")
 
-def update_widget_fonts(widget, font):
+def update_widget_fonts(widget, font, font_family):
     """更新控件及其子控件的字体，优化版本减少内存占用，特别处理ComboBox等控件
     
     Args:
         widget: 要更新字体的控件
         font: 要应用的字体
+        font_family: 目标字体家族名称
+        
+    Returns:
+        bool: 是否更新了控件的字体
     """
     if widget is None:
-        return
+        return False
         
     try:
         # 检查控件是否有font属性，只有有font属性的控件才尝试设置字体
         if not hasattr(widget, 'font') or not hasattr(widget, 'setFont'):
-            return
+            return False
             
         # 获取控件当前字体
         current_widget_font = widget.font()
         
-        # 创建新字体，只修改字体家族，保持原有字体大小和其他属性
-        new_font = QFont(font.family(), current_widget_font.pointSize())
-        # 保持原有字体的粗体和斜体属性
-        new_font.setBold(current_widget_font.bold())
-        new_font.setItalic(current_widget_font.italic())
-        
-        # 更新当前控件的字体
-        widget.setFont(new_font)
+        # 检查当前字体是否已经是目标字体家族，如果是则跳过
+        if current_widget_font.family() == font_family:
+            updated = False
+        else:
+            # 创建新字体，只修改字体家族，保持原有字体大小和其他属性
+            new_font = QFont(font.family(), current_widget_font.pointSize())
+            # 保持原有字体的粗体和斜体属性
+            new_font.setBold(current_widget_font.bold())
+            new_font.setItalic(current_widget_font.italic())
+            
+            # 更新当前控件的字体
+            widget.setFont(new_font)
+            updated = True
         
         # 如果控件有子控件，递归更新子控件的字体
         if isinstance(widget, QWidget):
             children = widget.children()
             for child in children:
                 if isinstance(child, QWidget):
-                    update_widget_fonts(child, font)
+                    child_updated = update_widget_fonts(child, font, font_family)
+                    if child_updated:
+                        updated = True
+        
+        return updated
     except Exception as e:
         logger.error(f"更新控件字体时发生异常: {e}")
+        return False
 
 def start_main_window():
     """创建主窗口实例"""

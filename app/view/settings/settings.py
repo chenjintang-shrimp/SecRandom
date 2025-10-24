@@ -18,6 +18,7 @@ from app.tools.path_utils import *
 from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
+from app.Language.obtain_language import *
 
 from app.tools.extract import _is_non_class_time
 
@@ -106,19 +107,19 @@ class SettingsWindow(MSFluentWindow):
     def initNavigation(self):
         """初始化导航系统
         根据用户设置构建个性化菜单导航"""
-        self.addSubInterface(self.homeInterface, get_theme_icon("ic_fluent_home_20_filled"), get_setting_name("home", "title"), position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.homeInterface, get_theme_icon("ic_fluent_home_20_filled"), get_content_name("home", "title"), position=NavigationItemPosition.TOP)
         
-        self.addSubInterface(self.basicSettingsInterface, get_theme_icon("ic_fluent_wrench_settings_20_filled"), get_setting_name("basic_settings", "title"), position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.basicSettingsInterface, get_theme_icon("ic_fluent_wrench_settings_20_filled"), get_content_name("basic_settings", "title"), position=NavigationItemPosition.TOP)
 
-        self.addSubInterface(self.listManagementInterface, get_theme_icon("ic_fluent_list_20_filled"), get_setting_name("list_management", "title"), position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.listManagementInterface, get_theme_icon("ic_fluent_list_20_filled"), get_content_name("list_management", "title"), position=NavigationItemPosition.TOP)
         
-        self.addSubInterface(self.extractionSettingsInterface, get_theme_icon("ic_fluent_archive_20_filled"), get_setting_name("extraction_settings", "title"), position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.extractionSettingsInterface, get_theme_icon("ic_fluent_archive_20_filled"), get_content_name("extraction_settings", "title"), position=NavigationItemPosition.TOP)
 
-        self.addSubInterface(self.safetySettingsInterface, get_theme_icon("ic_fluent_shield_20_filled"), get_setting_name("safety_settings", "title"), position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.safetySettingsInterface, get_theme_icon("ic_fluent_shield_20_filled"), get_content_name("safety_settings", "title"), position=NavigationItemPosition.TOP)
         
-        self.addSubInterface(self.customSettingsInterface, get_theme_icon("ic_fluent_person_edit_20_filled"), get_setting_name("custom_settings", "title"), position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.customSettingsInterface, get_theme_icon("ic_fluent_person_edit_20_filled"), get_content_name("custom_settings", "title"), position=NavigationItemPosition.TOP)
 
-        self.addSubInterface(self.aboutInterface, get_theme_icon("ic_fluent_info_20_filled"), get_setting_name("about", "title"), position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.aboutInterface, get_theme_icon("ic_fluent_info_20_filled"), get_content_name("about", "title"), position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
         """窗口关闭事件处理

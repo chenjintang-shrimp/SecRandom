@@ -18,6 +18,7 @@ from app.tools.path_utils import *
 from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
+from app.Language.obtain_language import *
 from app.tools.list import *
 
 # ==================================================
@@ -26,13 +27,12 @@ from app.tools.list import *
 class lottery_list(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_setting_name("lottery_list", "title"))
+        self.setTitle(get_content_name("lottery_list", "title"))
         self.setBorderRadius(8)
 
         # 设置班级名称按钮
-        self.pool_name_button = PushButton(get_setting_name("lottery_list", "set_pool_name"))
+        self.pool_name_button = PushButton(get_content_name("lottery_list", "set_pool_name"))
         self.pool_name_button.clicked.connect(lambda: self.set_pool_name())
-        self.pool_name_button.setFont(QFont(load_custom_font(), 12))
 
         # 选择奖池下拉框
         self.pool_name_combo = ComboBox()
@@ -40,43 +40,38 @@ class lottery_list(GroupHeaderCardWidget):
         self.pool_name_combo.setCurrentIndex(readme_settings("lottery_list", "select_pool_name"))
         if not get_pool_name_list():
             self.pool_name_combo.setCurrentIndex(-1)
-            self.pool_name_combo.setPlaceholderText(get_setting_name("lottery_list", "select_pool_name"))
+            self.pool_name_combo.setPlaceholderText(get_content_name("lottery_list", "select_pool_name"))
         self.pool_name_combo.currentIndexChanged.connect(lambda: update_settings("lottery_list", "select_pool_name", self.pool_name_combo.currentIndex()))
-        self.pool_name_combo.setFont(QFont(load_custom_font(), 12))
 
         # 导入奖品名单按钮
-        self.import_prize_button = PushButton(get_setting_name("lottery_list", "import_prize_name"))
+        self.import_prize_button = PushButton(get_content_name("lottery_list", "import_prize_name"))
         self.import_prize_button.clicked.connect(lambda: self.import_prize_name())
-        self.import_prize_button.setFont(QFont(load_custom_font(), 12))
 
         # 奖品设置按钮
-        self.prize_setting_button = PushButton(get_setting_name("lottery_list", "prize_setting"))
+        self.prize_setting_button = PushButton(get_content_name("lottery_list", "prize_setting"))
         self.prize_setting_button.clicked.connect(lambda: self.prize_setting())
-        self.prize_setting_button.setFont(QFont(load_custom_font(), 12))
 
         # 奖品权重设置按钮
-        self.prize_weight_setting_button = PushButton(get_setting_name("lottery_list", "prize_weight_setting"))
+        self.prize_weight_setting_button = PushButton(get_content_name("lottery_list", "prize_weight_setting"))
         self.prize_weight_setting_button.clicked.connect(lambda: self.prize_weight_setting())
-        self.prize_weight_setting_button.setFont(QFont(load_custom_font(), 12))
 
         # 导出奖品名单按钮
-        self.export_prize_button = PushButton(get_setting_name("lottery_list", "export_prize_name"))
+        self.export_prize_button = PushButton(get_content_name("lottery_list", "export_prize_name"))
         self.export_prize_button.clicked.connect(lambda: self.export_prize_name())
-        self.export_prize_button.setFont(QFont(load_custom_font(), 12))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_slide_text_edit_20_filled"), 
-                        get_setting_name("lottery_list", "set_pool_name"), get_setting_description("lottery_list", "set_pool_name"), self.pool_name_button)
+                        get_content_name("lottery_list", "set_pool_name"), get_content_description("lottery_list", "set_pool_name"), self.pool_name_button)
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), 
-                        get_setting_name("lottery_list", "select_pool_name"), get_setting_description("lottery_list", "select_pool_name"), self.pool_name_combo)
+                        get_content_name("lottery_list", "select_pool_name"), get_content_description("lottery_list", "select_pool_name"), self.pool_name_combo)
         self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), 
-                        get_setting_name("lottery_list", "import_prize_name"), get_setting_description("lottery_list", "import_prize_name"), self.import_prize_button)
+                        get_content_name("lottery_list", "import_prize_name"), get_content_description("lottery_list", "import_prize_name"), self.import_prize_button)
         self.addGroup(get_theme_icon("ic_fluent_rename_20_filled"), 
-                        get_setting_name("lottery_list", "prize_setting"), get_setting_description("lottery_list", "prize_setting"), self.prize_setting_button)
+                        get_content_name("lottery_list", "prize_setting"), get_content_description("lottery_list", "prize_setting"), self.prize_setting_button)
         self.addGroup(get_theme_icon("ic_fluent_person_board_20_filled"), 
-                        get_setting_name("lottery_list", "prize_weight_setting"), get_setting_description("lottery_list", "prize_weight_setting"), self.prize_weight_setting_button)
+                        get_content_name("lottery_list", "prize_weight_setting"), get_content_description("lottery_list", "prize_weight_setting"), self.prize_weight_setting_button)
         self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), 
-                        get_setting_name("lottery_list", "export_prize_name"), get_setting_description("lottery_list", "export_prize_name"), self.export_prize_button)
+                        get_content_name("lottery_list", "export_prize_name"), get_content_description("lottery_list", "export_prize_name"), self.export_prize_button)
         
         # 设置文件系统监视器
         self.setup_file_watcher()
@@ -129,6 +124,6 @@ class lottery_list(GroupHeaderCardWidget):
             self.pool_name_combo.setCurrentIndex(index)
         elif not pool_list:
             self.pool_name_combo.setCurrentIndex(-1)
-            self.pool_name_combo.setPlaceholderText(get_setting_name("lottery_list", "select_pool_name"))
+            self.pool_name_combo.setPlaceholderText(get_content_name("lottery_list", "select_pool_name"))
         
         logger.debug(f"奖池列表已刷新，共 {len(pool_list)} 个奖池")

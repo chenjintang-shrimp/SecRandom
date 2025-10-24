@@ -20,6 +20,7 @@ from app.tools.path_utils import *
 from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
+from app.Language.obtain_language import *
 from app.tools.list import *
 
 # ==================================================
@@ -34,7 +35,7 @@ class roll_call_table(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
-        self.setTitle(get_setting_name("roll_call_table", "title"))
+        self.setTitle(get_content_name("roll_call_table", "title"))
         self.setBorderRadius(8)
         # 创建班级选择区域
         QTimer.singleShot(APPLY_DELAY, self.create_class_selection)
@@ -60,13 +61,12 @@ class roll_call_table(GroupHeaderCardWidget):
         self.class_comboBox.setCurrentIndex(readme_settings("roll_call_list", "select_class_name"))
         if not get_class_name_list():
             self.class_comboBox.setCurrentIndex(-1)
-            self.class_comboBox.setPlaceholderText(get_setting_name("roll_call_list", "select_class_name"))
+            self.class_comboBox.setPlaceholderText(get_content_name("roll_call_list", "select_class_name"))
         self.class_comboBox.currentIndexChanged.connect(lambda: update_settings("roll_call_list", "select_class_name", self.class_comboBox.currentIndex()))
         self.class_comboBox.currentTextChanged.connect(self.refresh_data)
-        self.class_comboBox.setFont(QFont(load_custom_font(), 12))
 
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), 
-                        get_setting_name("roll_call_list", "select_class_name"), get_setting_description("roll_call_list", "select_class_name"), self.class_comboBox)
+                        get_content_name("roll_call_list", "select_class_name"), get_content_description("roll_call_list", "select_class_name"), self.class_comboBox)
         
     def create_table(self):
         """创建表格区域"""
@@ -82,7 +82,7 @@ class roll_call_table(GroupHeaderCardWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.verticalHeader().hide()
 
-        self.table.setHorizontalHeaderLabels(get_setting_name("roll_call_table", "HeaderLabels"))
+        self.table.setHorizontalHeaderLabels(get_content_name("roll_call_table", "HeaderLabels"))
         self.table.horizontalHeader().resizeSection(0, 80)
         # 设置表格属性
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
@@ -90,7 +90,6 @@ class roll_call_table(GroupHeaderCardWidget):
             self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
         for i in range(self.table.columnCount()):
             self.table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.table.horizontalHeader().setFont(QFont(load_custom_font(), 12))
         # 连接单元格修改信号
         self.table.cellChanged.connect(self.save_table_data)
         self.layout().addWidget(self.table)
@@ -143,7 +142,7 @@ class roll_call_table(GroupHeaderCardWidget):
             self.class_comboBox.setCurrentIndex(index)
         elif not class_list:
             self.class_comboBox.setCurrentIndex(-1)
-            self.class_comboBox.setPlaceholderText(get_setting_name("roll_call_list", "select_class_name"))
+            self.class_comboBox.setPlaceholderText(get_content_name("roll_call_list", "select_class_name"))
         
         logger.debug(f"班级列表已刷新，共 {len(class_list)} 个班级")
         # 只有在表格已经创建时才刷新数据
@@ -180,32 +179,27 @@ class roll_call_table(GroupHeaderCardWidget):
                 checkbox_item = QTableWidgetItem()
                 checkbox_item.setCheckState(Qt.CheckState.Checked if student.get('exist', True) else Qt.CheckState.Unchecked)
                 checkbox_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                checkbox_item.setFont(QFont(load_custom_font(), 12))
                 self.table.setItem(row, 0, checkbox_item)
                 
                 # 学号
                 id_item = QTableWidgetItem(str(student.get('id', row + 1)))
                 id_item.setFlags(id_item.flags() & ~Qt.ItemFlag.ItemIsEditable)  # 学号不可编辑
                 id_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                id_item.setFont(QFont(load_custom_font(), 12))
                 self.table.setItem(row, 1, id_item)
                 
                 # 姓名
                 name_item = QTableWidgetItem(student.get('name', ''))
                 name_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                name_item.setFont(QFont(load_custom_font(), 12))
                 self.table.setItem(row, 2, name_item)
                 
                 # 性别
                 gender_item = QTableWidgetItem(student.get('gender', ''))
                 gender_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                gender_item.setFont(QFont(load_custom_font(), 12))
                 self.table.setItem(row, 3, gender_item)
                 
                 # 小组
                 group_item = QTableWidgetItem(student.get('group', ''))
                 group_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                group_item.setFont(QFont(load_custom_font(), 12))
                 self.table.setItem(row, 4, group_item)
                 
             # 调整列宽
@@ -309,14 +303,12 @@ class roll_call_table(GroupHeaderCardWidget):
             if col == 2:  # 姓名列
                 item.setText(str(matched_key) if matched_key else student_name)
                 item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                item.setFont(QFont(load_custom_font(), 12))
             else:
                 original_value = ""
                 if matched_key:
                     original_value = student_data[matched_key]['gender'] if col == 3 else student_data[matched_key]['group'] if col == 4 else ""
                 item.setText(str(original_value))
                 item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                item.setFont(QFont(load_custom_font(), 12))
             self.table.blockSignals(False)  # 恢复信号
             
             # 即使保存失败也要重新启用文件监视器

@@ -19,7 +19,7 @@ from app.tools.path_utils import *
 from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
-
+from app.Language.obtain_language import *
 
 # ==================================================
 # 贡献者对话框类
@@ -53,9 +53,8 @@ class ContributorDialog(QDialog):
         title_layout.setContentsMargins(10, 0, 10, 0)
         
         # 窗口标题
-        self.title_label = BodyLabel(get_setting_name("about", "contributor"))
+        self.title_label = BodyLabel(get_content_name("about", "contributor"))
         self.title_label.setObjectName("TitleLabel")
-        self.title_label.setFont(QFont(load_custom_font(), 12))
         
         # 窗口控制按钮
         self.close_btn = QPushButton("✕")
@@ -104,58 +103,57 @@ class ContributorDialog(QDialog):
         contributors = [
             {
                 'name': 'lzy98276',
-                'role': get_any_position_value("about", "contributor", Language, "contributor_role_1"),
+                'role': get_any_position_value("about", "contributor", "contributor_role_1"),
                 'github': 'https://github.com/lzy98276',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor1.png'))
 
             },
             {
                 'name': 'QiKeZhiCao',
-                'role': get_any_position_value("about", "contributor", Language, "contributor_role_2"),
+                'role': get_any_position_value("about", "contributor", "contributor_role_2"),
                 'github': 'https://github.com/QiKeZhiCao',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor2.png'))
             },
             {
                 'name': 'Fox-block-offcial',
-                'role': get_any_position_value("about", "contributor", Language, "contributor_role_3"),
+                'role': get_any_position_value("about", "contributor", "contributor_role_3"),
                 'github': 'https://github.com/Fox-block-offcial',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor3.png'))
             },
             {
                 'name': 'yuanbenxin',
-                'role': get_any_position_value("about", "contributor", Language, "contributor_role_4"),
+                'role': get_any_position_value("about", "contributor", "contributor_role_4"),
                 'github': 'https://github.com/yuanbenxin',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor4.png'))
             },
             {
                 'name': 'zhangjianjian7',
-                'role': get_any_position_value("about", "contributor", Language, "contributor_role_5"),
+                'role': get_any_position_value("about", "contributor", "contributor_role_5"),
                 'github': 'https://github.com/zhangjianjian7',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor5.png'))
             },
             {
                 'name': 'Jursin',
-                'role': get_any_position_value("about", "contributor", Language, "contributor_role_6"),
+                'role': get_any_position_value("about", "contributor", "contributor_role_6"),
                 'github': 'https://github.com/jursin',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor6.png'))
             },
             {
                 'name': 'LHGS-github',
-                'role': get_any_position_value("about", "contributor", Language, "contributor_role_7"),
+                'role': get_any_position_value("about", "contributor", "contributor_role_7"),
                 'github': 'https://github.com/LHGS-github',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor7.png'))
             },
             {
                 'name': 'real01bit',
-                'role': get_any_position_value("about", "contributor", Language, "contributor_role_8"),
+                'role': get_any_position_value("about", "contributor", "contributor_role_8"),
                 'github': 'https://github.com/real01bit',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor8.png'))
             }
         ]
         
         # 计算所有职责文本的行数，让它们变得整齐划一
-        font = QFont(load_custom_font(), 12)  # 使用和职责文本相同的字体设置
-        fm = QFontMetrics(font)
+        fm = QFontMetrics(self.font())
         max_lines = 0
         role_lines = []
 
@@ -318,7 +316,6 @@ class ContributorDialog(QDialog):
     def closeEvent(self, event):
         if not self.saved:
             w = Dialog('未保存内容', '确定要关闭吗？', self)
-            w.setFont(QFont(load_custom_font(), 12))
             w.yesButton.setText("确定")
             w.cancelButton.setText("取消")
             w.yesButton = PrimaryPushButton('确定')
@@ -368,7 +365,6 @@ class ContributorDialog(QDialog):
 
         # 昵称作为GitHub链接
         name = HyperlinkButton(contributor['github'], contributor['name'], self)
-        name.setFont(QFont(load_custom_font(), 14))
         name.setStyleSheet('text-decoration: underline; color: #0066cc; background: transparent; border: none; padding: 0;')
         cardLayout.addWidget(name, 0, Qt.AlignmentFlag.AlignCenter)
 
@@ -378,7 +374,6 @@ class ContributorDialog(QDialog):
             role_text = ''
         role = BodyLabel(role_text)
         role.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        role.setFont(QFont(load_custom_font(), 12))
         role.setWordWrap(True)
         role.setMaximumWidth(500)
         cardLayout.addWidget(role, 0, Qt.AlignmentFlag.AlignCenter)

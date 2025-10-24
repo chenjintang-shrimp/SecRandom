@@ -18,6 +18,7 @@ from app.tools.path_utils import *
 from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
+from app.Language.obtain_language import *
 from app.tools.list import *
 
 # ==================================================
@@ -26,13 +27,12 @@ from app.tools.list import *
 class roll_call_list(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_setting_name("roll_call_list", "title"))
+        self.setTitle(get_content_name("roll_call_list", "title"))
         self.setBorderRadius(8)
 
         # 设置班级名称按钮
-        self.class_name_button = PushButton(get_setting_name("roll_call_list", "set_class_name"))
+        self.class_name_button = PushButton(get_content_name("roll_call_list", "set_class_name"))
         self.class_name_button.clicked.connect(lambda: self.set_class_name())
-        self.class_name_button.setFont(QFont(load_custom_font(), 12))
 
         # 选择班级下拉框
         self.class_name_combo = ComboBox()
@@ -40,50 +40,44 @@ class roll_call_list(GroupHeaderCardWidget):
         self.class_name_combo.setCurrentIndex(readme_settings("roll_call_list", "select_class_name"))
         if not get_class_name_list():
             self.class_name_combo.setCurrentIndex(-1)
-            self.class_name_combo.setPlaceholderText(get_setting_name("roll_call_list", "select_class_name"))
+            self.class_name_combo.setPlaceholderText(get_content_name("roll_call_list", "select_class_name"))
         self.class_name_combo.currentIndexChanged.connect(lambda: update_settings("roll_call_list", "select_class_name", self.class_name_combo.currentIndex()))
-        self.class_name_combo.setFont(QFont(load_custom_font(), 12))
 
         # 导入学生名单按钮
-        self.import_student_button = PushButton(get_setting_name("roll_call_list", "import_student_name"))
+        self.import_student_button = PushButton(get_content_name("roll_call_list", "import_student_name"))
         self.import_student_button.clicked.connect(lambda: self.import_student_name())
-        self.import_student_button.setFont(QFont(load_custom_font(), 12))
 
         # 姓名设置按钮
-        self.name_setting_button = PushButton(get_setting_name("roll_call_list", "name_setting"))
+        self.name_setting_button = PushButton(get_content_name("roll_call_list", "name_setting"))
         self.name_setting_button.clicked.connect(lambda: self.name_setting())
-        self.name_setting_button.setFont(QFont(load_custom_font(), 12))
 
         # 性别设置按钮
-        self.gender_setting_button = PushButton(get_setting_name("roll_call_list", "gender_setting"))
+        self.gender_setting_button = PushButton(get_content_name("roll_call_list", "gender_setting"))
         self.gender_setting_button.clicked.connect(lambda: self.gender_setting())
-        self.gender_setting_button.setFont(QFont(load_custom_font(), 12))
 
         # 小组设置按钮
-        self.group_setting_button = PushButton(get_setting_name("roll_call_list", "group_setting"))
+        self.group_setting_button = PushButton(get_content_name("roll_call_list", "group_setting"))
         self.group_setting_button.clicked.connect(lambda: self.group_setting())
-        self.group_setting_button.setFont(QFont(load_custom_font(), 12))
 
         # 导出学生名单按钮
-        self.export_student_button = PushButton(get_setting_name("roll_call_list", "export_student_name"))
+        self.export_student_button = PushButton(get_content_name("roll_call_list", "export_student_name"))
         self.export_student_button.clicked.connect(lambda: self.export_student_name())
-        self.export_student_button.setFont(QFont(load_custom_font(), 12))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_slide_text_edit_20_filled"), 
-                        get_setting_name("roll_call_list", "set_class_name"), get_setting_description("roll_call_list", "set_class_name"), self.class_name_button)
+                        get_content_name("roll_call_list", "set_class_name"), get_content_description("roll_call_list", "set_class_name"), self.class_name_button)
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), 
-                        get_setting_name("roll_call_list", "select_class_name"), get_setting_description("roll_call_list", "select_class_name"), self.class_name_combo)
+                        get_content_name("roll_call_list", "select_class_name"), get_content_description("roll_call_list", "select_class_name"), self.class_name_combo)
         self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), 
-                        get_setting_name("roll_call_list", "import_student_name"), get_setting_description("roll_call_list", "import_student_name"), self.import_student_button)
+                        get_content_name("roll_call_list", "import_student_name"), get_content_description("roll_call_list", "import_student_name"), self.import_student_button)
         self.addGroup(get_theme_icon("ic_fluent_rename_20_filled"), 
-                        get_setting_name("roll_call_list", "name_setting"), get_setting_description("roll_call_list", "name_setting"), self.name_setting_button)
+                        get_content_name("roll_call_list", "name_setting"), get_content_description("roll_call_list", "name_setting"), self.name_setting_button)
         self.addGroup(get_theme_icon("ic_fluent_person_board_20_filled"), 
-                        get_setting_name("roll_call_list", "gender_setting"), get_setting_description("roll_call_list", "gender_setting"), self.gender_setting_button)
+                        get_content_name("roll_call_list", "gender_setting"), get_content_description("roll_call_list", "gender_setting"), self.gender_setting_button)
         self.addGroup(get_theme_icon("ic_fluent_tab_group_20_filled"), 
-                        get_setting_name("roll_call_list", "group_setting"), get_setting_description("roll_call_list", "group_setting"), self.group_setting_button)
+                        get_content_name("roll_call_list", "group_setting"), get_content_description("roll_call_list", "group_setting"), self.group_setting_button)
         self.addGroup(get_theme_icon("ic_fluent_people_list_20_filled"), 
-                        get_setting_name("roll_call_list", "export_student_name"), get_setting_description("roll_call_list", "export_student_name"), self.export_student_button)
+                        get_content_name("roll_call_list", "export_student_name"), get_content_description("roll_call_list", "export_student_name"), self.export_student_button)
         
         # 设置文件系统监视器
         self.setup_file_watcher()
@@ -136,6 +130,6 @@ class roll_call_list(GroupHeaderCardWidget):
             self.class_name_combo.setCurrentIndex(index)
         elif not class_list:
             self.class_name_combo.setCurrentIndex(-1)
-            self.class_name_combo.setPlaceholderText(get_setting_name("roll_call_list", "select_class_name"))
+            self.class_name_combo.setPlaceholderText(get_content_name("roll_call_list", "select_class_name"))
         
         logger.debug(f"班级列表已刷新，共 {len(class_list)} 个班级")

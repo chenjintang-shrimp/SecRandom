@@ -17,6 +17,7 @@ from qfluentwidgets import *
 from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.personalised import *
+from app.Language.obtain_language import *
 
 from app.tools.extract import _is_non_class_time
 

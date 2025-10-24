@@ -18,6 +18,7 @@ from app.tools.path_utils import *
 from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
+from app.Language.obtain_language import *
 
 # ==================================================
 # 抽奖设置
@@ -46,57 +47,50 @@ class lottery_settings(QWidget):
 class lottery_extraction_function(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_setting_name("lottery_settings", "extraction_function"))
+        self.setTitle(get_content_name("lottery_settings", "extraction_function"))
         self.setBorderRadius(8)
 
         # 抽取模式下拉框
         self.draw_mode_combo = ComboBox()
-        self.draw_mode_combo.addItems(get_setting_combo_name("lottery_settings", "draw_mode"))
+        self.draw_mode_combo.addItems(get_content_combo_name("lottery_settings", "draw_mode"))
         self.draw_mode_combo.setCurrentIndex(readme_settings("lottery_settings", "draw_mode"))
         self.draw_mode_combo.currentIndexChanged.connect(self.on_draw_mode_changed)
-        self.draw_mode_combo.setFont(QFont(load_custom_font(), 12))
 
         # 清除抽取记录方式下拉框
         self.clear_record_combo = ComboBox()
-        self.clear_record_combo.addItems(get_setting_combo_name("lottery_settings", "clear_record"))
+        self.clear_record_combo.addItems(get_content_combo_name("lottery_settings", "clear_record"))
         self.clear_record_combo.setCurrentIndex(readme_settings("lottery_settings", "clear_record"))
         self.clear_record_combo.currentIndexChanged.connect(lambda: update_settings("lottery_settings", "clear_record", self.clear_record_combo.currentIndex()))
-        self.clear_record_combo.setFont(QFont(load_custom_font(), 12))
 
         # 半重复抽取次数输入框
         self.half_repeat_spin = SpinBox()
-        self.half_repeat_spin.setFixedWidth(180)
         self.half_repeat_spin.setRange(0, 100)
         self.half_repeat_spin.setValue(readme_settings("lottery_settings", "half_repeat"))
         self.half_repeat_spin.valueChanged.connect(lambda: update_settings("lottery_settings", "half_repeat", self.half_repeat_spin.value()))
-        self.half_repeat_spin.setFont(QFont(load_custom_font(), 12))
 
         # 抽取后定时清除时间输入框
         self.clear_time_spin = SpinBox()
-        self.clear_time_spin.setFixedWidth(180)
         self.clear_time_spin.setRange(0, 25600)
         self.clear_time_spin.setValue(readme_settings("lottery_settings", "clear_time"))
         self.clear_time_spin.valueChanged.connect(lambda: update_settings("lottery_settings", "clear_time", self.clear_time_spin.value()))
-        self.clear_time_spin.setFont(QFont(load_custom_font(), 12))
 
         # 抽取方式下拉框
         self.draw_type_combo = ComboBox()
-        self.draw_type_combo.addItems(get_setting_combo_name("lottery_settings", "draw_type"))
+        self.draw_type_combo.addItems(get_content_combo_name("lottery_settings", "draw_type"))
         self.draw_type_combo.setCurrentIndex(readme_settings("lottery_settings", "draw_type"))
         self.draw_type_combo.currentIndexChanged.connect(lambda: update_settings("lottery_settings", "draw_type", self.draw_type_combo.currentIndex()))
-        self.draw_type_combo.setFont(QFont(load_custom_font(), 12))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_document_bullet_list_cube_20_filled"),
-                        get_setting_name("lottery_settings", "draw_mode"), get_setting_description("lottery_settings", "draw_mode"), self.draw_mode_combo)
+                        get_content_name("lottery_settings", "draw_mode"), get_content_description("lottery_settings", "draw_mode"), self.draw_mode_combo)
         self.addGroup(get_theme_icon("ic_fluent_text_clear_formatting_20_filled"),
-                        get_setting_name("lottery_settings", "clear_record"), get_setting_description("lottery_settings", "clear_record"), self.clear_record_combo)
+                        get_content_name("lottery_settings", "clear_record"), get_content_description("lottery_settings", "clear_record"), self.clear_record_combo)
         self.addGroup(get_theme_icon("ic_fluent_clipboard_bullet_list_20_filled"),
-                        get_setting_name("lottery_settings", "half_repeat"), get_setting_description("lottery_settings", "half_repeat"), self.half_repeat_spin)
+                        get_content_name("lottery_settings", "half_repeat"), get_content_description("lottery_settings", "half_repeat"), self.half_repeat_spin)
         self.addGroup(get_theme_icon("ic_fluent_timer_off_20_filled"),
-                        get_setting_name("lottery_settings", "clear_time"), get_setting_description("lottery_settings", "clear_time"), self.clear_time_spin)
+                        get_content_name("lottery_settings", "clear_time"), get_content_description("lottery_settings", "clear_time"), self.clear_time_spin)
         self.addGroup(get_theme_icon("ic_fluent_drawer_add_20_filled"),
-                        get_setting_name("lottery_settings", "draw_type"), get_setting_description("lottery_settings", "draw_type"), self.draw_type_combo)
+                        get_content_name("lottery_settings", "draw_type"), get_content_description("lottery_settings", "draw_type"), self.draw_type_combo)
         
         # 初始化时调用一次，确保界面状态与设置一致
         self.on_draw_mode_changed()
@@ -115,7 +109,7 @@ class lottery_extraction_function(GroupHeaderCardWidget):
             self.clear_record_combo.setEnabled(False)
             # 清空当前选项
             self.clear_record_combo.clear()
-            self.clear_record_combo.addItems(get_any_position_value("lottery_settings", "clear_record", Language, "combo_items_other"))
+            self.clear_record_combo.addItems(get_any_position_value("lottery_settings", "clear_record", "combo_items_other"))
             # 强制设置为"无需清除"（索引2）
             self.clear_record_combo.setCurrentIndex(2)
             # 更新设置
@@ -136,7 +130,7 @@ class lottery_extraction_function(GroupHeaderCardWidget):
             self.clear_record_combo.clear()
             
             # 添加前两个选项（不包含"无需清除"）
-            self.clear_record_combo.addItems(get_setting_combo_name("lottery_settings", "clear_record"))
+            self.clear_record_combo.addItems(get_content_combo_name("lottery_settings", "clear_record"))
             
             # 设置默认选择第一个选项
             self.clear_record_combo.setCurrentIndex(0)
@@ -165,29 +159,26 @@ class lottery_extraction_function(GroupHeaderCardWidget):
 class lottery_display_settings(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_setting_name("lottery_settings", "display_settings"))
+        self.setTitle(get_content_name("lottery_settings", "display_settings"))
         self.setBorderRadius(8)
 
         # 字体大小输入框
         self.font_size_spin = SpinBox()
-        self.font_size_spin.setFixedWidth(180)
         self.font_size_spin.setRange(10, 1000)
         self.font_size_spin.setValue(readme_settings("lottery_settings", "font_size"))
         self.font_size_spin.valueChanged.connect(lambda: update_settings("lottery_settings", "font_size", self.font_size_spin.value()))
-        self.font_size_spin.setFont(QFont(load_custom_font(), 12))
 
         # 结果显示格式下拉框
         self.display_format_combo = ComboBox()
-        self.display_format_combo.addItems(get_setting_combo_name("lottery_settings", "display_format"))
+        self.display_format_combo.addItems(get_content_combo_name("lottery_settings", "display_format"))
         self.display_format_combo.setCurrentIndex(readme_settings("lottery_settings", "display_format"))
         self.display_format_combo.currentIndexChanged.connect(lambda: update_settings("lottery_settings", "display_format", self.display_format_combo.currentIndex()))
-        self.display_format_combo.setFont(QFont(load_custom_font(), 12))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_text_font_20_filled"),
-                        get_setting_name("lottery_settings", "font_size"), get_setting_description("lottery_settings", "font_size"), self.font_size_spin)
+                        get_content_name("lottery_settings", "font_size"), get_content_description("lottery_settings", "font_size"), self.font_size_spin)
         self.addGroup(get_theme_icon("ic_fluent_slide_text_sparkle_20_filled"),
-                        get_setting_name("lottery_settings", "display_format"), get_setting_description("lottery_settings", "display_format"), self.display_format_combo)
+                        get_content_name("lottery_settings", "display_format"), get_content_description("lottery_settings", "display_format"), self.display_format_combo)
 
 
 class lottery_animation_settings(QWidget):
@@ -218,60 +209,53 @@ class lottery_animation_settings(QWidget):
 class lottery_basic_animation_settings(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_setting_name("lottery_settings", "basic_animation_settings"))
+        self.setTitle(get_content_name("lottery_settings", "basic_animation_settings"))
         self.setBorderRadius(8)
 
         # 动画模式下拉框
         self.animation_combo = ComboBox()
-        self.animation_combo.addItems(get_setting_combo_name("lottery_settings", "animation"))
+        self.animation_combo.addItems(get_content_combo_name("lottery_settings", "animation"))
         self.animation_combo.setCurrentIndex(readme_settings("lottery_settings", "animation"))
         self.animation_combo.currentIndexChanged.connect(lambda: update_settings("lottery_settings", "animation", self.animation_combo.currentIndex()))
-        self.animation_combo.setFont(QFont(load_custom_font(), 12))
 
         # 动画间隔输入框
         self.animation_interval_spin = SpinBox()
-        self.animation_interval_spin.setFixedWidth(180)
         self.animation_interval_spin.setRange(1, 2000)
         self.animation_interval_spin.setValue(readme_settings("lottery_settings", "animation_interval"))
         self.animation_interval_spin.valueChanged.connect(lambda: update_settings("lottery_settings", "animation_interval", self.animation_interval_spin.value()))
-        self.animation_interval_spin.setFont(QFont(load_custom_font(), 12))
 
         # 自动播放次数输入框
         self.autoplay_count_spin = SpinBox()
-        self.autoplay_count_spin.setFixedWidth(180)
         self.autoplay_count_spin.setRange(0, 100)
         self.autoplay_count_spin.setValue(readme_settings("lottery_settings", "autoplay_count"))
         self.autoplay_count_spin.valueChanged.connect(lambda: update_settings("lottery_settings", "autoplay_count", self.autoplay_count_spin.value()))
-        self.autoplay_count_spin.setFont(QFont(load_custom_font(), 12))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_sanitize_20_filled"),
-                        get_setting_name("lottery_settings", "animation"), get_setting_description("lottery_settings", "animation"), self.animation_combo)
+                        get_content_name("lottery_settings", "animation"), get_content_description("lottery_settings", "animation"), self.animation_combo)
         self.addGroup(get_theme_icon("ic_fluent_timeline_20_filled"),
-                        get_setting_name("lottery_settings", "animation_interval"), get_setting_description("lottery_settings", "animation_interval"), self.animation_interval_spin)
+                        get_content_name("lottery_settings", "animation_interval"), get_content_description("lottery_settings", "animation_interval"), self.animation_interval_spin)
         self.addGroup(get_theme_icon("ic_fluent_slide_play_20_filled"),
-                        get_setting_name("lottery_settings", "autoplay_count"), get_setting_description("lottery_settings", "autoplay_count"), self.autoplay_count_spin)
+                        get_content_name("lottery_settings", "autoplay_count"), get_content_description("lottery_settings", "autoplay_count"), self.autoplay_count_spin)
 
 
 class lottery_color_theme_settings(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_setting_name("lottery_settings", "color_theme_settings"))
+        self.setTitle(get_content_name("lottery_settings", "color_theme_settings"))
         self.setBorderRadius(8)
 
         # 动画颜色主题下拉框
         self.animation_color_theme_combo = ComboBox()
-        self.animation_color_theme_combo.addItems(get_setting_combo_name("lottery_settings", "animation_color_theme"))
+        self.animation_color_theme_combo.addItems(get_content_combo_name("lottery_settings", "animation_color_theme"))
         self.animation_color_theme_combo.setCurrentIndex(readme_settings("lottery_settings", "animation_color_theme"))
         self.animation_color_theme_combo.currentIndexChanged.connect(lambda: update_settings("lottery_settings", "animation_color_theme", self.animation_color_theme_combo.currentIndex()))
-        self.animation_color_theme_combo.setFont(QFont(load_custom_font(), 12))
 
         # 结果颜色主题下拉框
         self.result_color_theme_combo = ComboBox()
-        self.result_color_theme_combo.addItems(get_setting_combo_name("lottery_settings", "result_color_theme"))
+        self.result_color_theme_combo.addItems(get_content_combo_name("lottery_settings", "result_color_theme"))
         self.result_color_theme_combo.setCurrentIndex(readme_settings("lottery_settings", "result_color_theme"))
-        self.result_color_theme_combo.currentIndexChanged.connect(lambda: update_settings("lottery_settings", "result_color_theme", self.result_color_theme_combo.currentIndex()))
-        self.result_color_theme_combo.setFont(QFont(load_custom_font(), 12))    
+        self.result_color_theme_combo.currentIndexChanged.connect(lambda: update_settings("lottery_settings", "result_color_theme", self.result_color_theme_combo.currentIndex()))    
 
         # 动画固定颜色
         self.animation_fixed_color_button = ColorConfigItem("Theme", "Color", readme_settings("lottery_settings", "animation_fixed_color"))
@@ -281,22 +265,22 @@ class lottery_color_theme_settings(GroupHeaderCardWidget):
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_color_20_filled"),
-                        get_setting_name("lottery_settings", "animation_color_theme"), get_setting_description("lottery_settings", "animation_color_theme"), self.animation_color_theme_combo)
+                        get_content_name("lottery_settings", "animation_color_theme"), get_content_description("lottery_settings", "animation_color_theme"), self.animation_color_theme_combo)
         self.addGroup(get_theme_icon("ic_fluent_color_20_filled"),
-                        get_setting_name("lottery_settings", "result_color_theme"), get_setting_description("lottery_settings", "result_color_theme"), self.result_color_theme_combo)
+                        get_content_name("lottery_settings", "result_color_theme"), get_content_description("lottery_settings", "result_color_theme"), self.result_color_theme_combo)
 
         self.animationColorCard = ColorSettingCard(
             self.animation_fixed_color_button,
             get_theme_icon("ic_fluent_text_color_20_filled"),
-            self.tr(get_setting_name("lottery_settings", "animation_fixed_color")),
-            self.tr(get_setting_description("lottery_settings", "animation_fixed_color")),
+            self.tr(get_content_name("lottery_settings", "animation_fixed_color")),
+            self.tr(get_content_description("lottery_settings", "animation_fixed_color")),
             self
         )
         self.resultColorCard = ColorSettingCard(
             self.result_fixed_color_button,
             get_theme_icon("ic_fluent_text_color_20_filled"),
-            self.tr(get_setting_name("lottery_settings", "result_fixed_color")),
-            self.tr(get_setting_description("lottery_settings", "result_fixed_color")),
+            self.tr(get_content_name("lottery_settings", "result_fixed_color")),
+            self.tr(get_content_description("lottery_settings", "result_fixed_color")),
             self
         )
 
@@ -306,27 +290,25 @@ class lottery_color_theme_settings(GroupHeaderCardWidget):
 class lottery_lottery_image_settings(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_setting_name("lottery_settings", "lottery_image_settings"))
+        self.setTitle(get_content_name("lottery_settings", "lottery_image_settings"))
         self.setBorderRadius(8)
 
         # 奖品图片开关
         self.lottery_image_switch = SwitchButton()
-        self.lottery_image_switch.setOffText(get_setting_switchbutton_name("lottery_settings", "lottery_image", "disable"))
-        self.lottery_image_switch.setOnText(get_setting_switchbutton_name("lottery_settings", "lottery_image", "enable"))
+        self.lottery_image_switch.setOffText(get_content_switchbutton_name("lottery_settings", "lottery_image", "disable"))
+        self.lottery_image_switch.setOnText(get_content_switchbutton_name("lottery_settings", "lottery_image", "enable"))
         self.lottery_image_switch.setChecked(readme_settings("lottery_settings", "lottery_image"))
         self.lottery_image_switch.checkedChanged.connect(lambda: update_settings("lottery_settings", "lottery_image", self.lottery_image_switch.isChecked()))
-        self.lottery_image_switch.setFont(QFont(load_custom_font(), 12))
 
         # 打开奖品图片文件夹按钮
-        self.open_lottery_image_folder_button = PushButton(get_setting_name("lottery_settings", "open_lottery_image_folder"))
+        self.open_lottery_image_folder_button = PushButton(get_content_name("lottery_settings", "open_lottery_image_folder"))
         self.open_lottery_image_folder_button.clicked.connect(lambda: self.open_lottery_image_folder())
-        self.open_lottery_image_folder_button.setFont(QFont(load_custom_font(), 12))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_image_circle_20_filled"),
-                        get_setting_name("lottery_settings", "lottery_image"), get_setting_description("lottery_settings", "lottery_image"), self.lottery_image_switch)
+                        get_content_name("lottery_settings", "lottery_image"), get_content_description("lottery_settings", "lottery_image"), self.lottery_image_switch)
         self.addGroup(get_theme_icon("ic_fluent_folder_open_20_filled"),
-                        get_setting_name("lottery_settings", "open_lottery_image_folder"), get_setting_description("lottery_settings", "open_lottery_image_folder"), self.open_lottery_image_folder_button)
+                        get_content_name("lottery_settings", "open_lottery_image_folder"), get_content_description("lottery_settings", "open_lottery_image_folder"), self.open_lottery_image_folder_button)
 
     def open_lottery_image_folder(self):
         """打开奖品图片文件夹"""
@@ -341,116 +323,100 @@ class lottery_lottery_image_settings(GroupHeaderCardWidget):
 class lottery_music_settings(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_setting_name("lottery_settings", "music_settings"))
+        self.setTitle(get_content_name("lottery_settings", "music_settings"))
         self.setBorderRadius(8)
 
         # 动画音乐开关
         self.animation_music_switch = SwitchButton()
-        self.animation_music_switch.setOffText(get_setting_switchbutton_name("lottery_settings", "animation_music", "disable"))
-        self.animation_music_switch.setOnText(get_setting_switchbutton_name("lottery_settings", "animation_music", "enable"))
+        self.animation_music_switch.setOffText(get_content_switchbutton_name("lottery_settings", "animation_music", "disable"))
+        self.animation_music_switch.setOnText(get_content_switchbutton_name("lottery_settings", "animation_music", "enable"))
         self.animation_music_switch.setChecked(readme_settings("lottery_settings", "animation_music"))
         self.animation_music_switch.checkedChanged.connect(lambda: update_settings("lottery_settings", "animation_music", self.animation_music_switch.isChecked()))
-        self.animation_music_switch.setFont(QFont(load_custom_font(), 12))
 
         # 结果音乐开关
         self.result_music_switch = SwitchButton()
-        self.result_music_switch.setOffText(get_setting_switchbutton_name("lottery_settings", "result_music", "disable"))
-        self.result_music_switch.setOnText(get_setting_switchbutton_name("lottery_settings", "result_music", "enable"))
+        self.result_music_switch.setOffText(get_content_switchbutton_name("lottery_settings", "result_music", "disable"))
+        self.result_music_switch.setOnText(get_content_switchbutton_name("lottery_settings", "result_music", "enable"))
         self.result_music_switch.setChecked(readme_settings("lottery_settings", "result_music"))
         self.result_music_switch.checkedChanged.connect(lambda: update_settings("lottery_settings", "result_music", self.result_music_switch.isChecked()))
-        self.result_music_switch.setFont(QFont(load_custom_font(), 12))
 
         # 动画音乐文件夹按钮
-        self.open_animation_music_folder_button = PushButton(get_setting_name("lottery_settings", "open_animation_music_folder"))
+        self.open_animation_music_folder_button = PushButton(get_content_name("lottery_settings", "open_animation_music_folder"))
         self.open_animation_music_folder_button.clicked.connect(lambda: self.open_animation_music_folder())
-        self.open_animation_music_folder_button.setFont(QFont(load_custom_font(), 12))  
 
         # 结果音乐文件夹按钮
-        self.open_result_music_folder_button = PushButton(get_setting_name("lottery_settings", "open_result_music_folder"))
+        self.open_result_music_folder_button = PushButton(get_content_name("lottery_settings", "open_result_music_folder"))
         self.open_result_music_folder_button.clicked.connect(lambda: self.open_result_music_folder())
-        self.open_result_music_folder_button.setFont(QFont(load_custom_font(), 12))
 
         # 动画音乐音量
         self.animation_music_volume_spin = SpinBox()
-        self.animation_music_volume_spin.setFixedWidth(180)
         self.animation_music_volume_spin.setMinimum(0)
         self.animation_music_volume_spin.setMaximum(100)
         self.animation_music_volume_spin.setSuffix("%")
         self.animation_music_volume_spin.setValue(readme_settings("lottery_settings", "animation_music_volume"))
         self.animation_music_volume_spin.valueChanged.connect(lambda: update_settings("lottery_settings", "animation_music_volume", self.animation_music_volume_spin.value()))
-        self.animation_music_volume_spin.setFont(QFont(load_custom_font(), 12))
 
         # 结果音乐音量
         self.result_music_volume_spin = SpinBox()
-        self.result_music_volume_spin.setFixedWidth(180)
         self.result_music_volume_spin.setMinimum(0)
         self.result_music_volume_spin.setMaximum(100)
         self.result_music_volume_spin.setSuffix("%")
         self.result_music_volume_spin.setValue(readme_settings("lottery_settings", "result_music_volume"))
         self.result_music_volume_spin.valueChanged.connect(lambda: update_settings("lottery_settings", "result_music_volume", self.result_music_volume_spin.value()))
-        self.result_music_volume_spin.setFont(QFont(load_custom_font(), 12))
 
         # 动画音乐淡入时间
         self.animation_music_fade_in_spin = SpinBox()
-        self.animation_music_fade_in_spin.setFixedWidth(180)
         self.animation_music_fade_in_spin.setMinimum(0)
         self.animation_music_fade_in_spin.setMaximum(1000)
         self.animation_music_fade_in_spin.setSuffix("ms")
         self.animation_music_fade_in_spin.setValue(readme_settings("lottery_settings", "animation_music_fade_in"))
         self.animation_music_fade_in_spin.valueChanged.connect(lambda: update_settings("lottery_settings", "animation_music_fade_in", self.animation_music_fade_in_spin.value()))
-        self.animation_music_fade_in_spin.setFont(QFont(load_custom_font(), 12))
 
         # 结果音乐淡入时间
         self.result_music_fade_in_spin = SpinBox()
-        self.result_music_fade_in_spin.setFixedWidth(180)
         self.result_music_fade_in_spin.setMinimum(0)
         self.result_music_fade_in_spin.setMaximum(1000)
         self.result_music_fade_in_spin.setSuffix("ms")
         self.result_music_fade_in_spin.setValue(readme_settings("lottery_settings", "result_music_fade_in"))
         self.result_music_fade_in_spin.valueChanged.connect(lambda: update_settings("lottery_settings", "result_music_fade_in", self.result_music_fade_in_spin.value()))
-        self.result_music_fade_in_spin.setFont(QFont(load_custom_font(), 12))
 
         # 动画音乐淡出时间
         self.animation_music_fade_out_spin = SpinBox()
-        self.animation_music_fade_out_spin.setFixedWidth(180)
         self.animation_music_fade_out_spin.setMinimum(0)
         self.animation_music_fade_out_spin.setMaximum(1000)
         self.animation_music_fade_out_spin.setSuffix("ms")
         self.animation_music_fade_out_spin.setValue(readme_settings("lottery_settings", "animation_music_fade_out"))
         self.animation_music_fade_out_spin.valueChanged.connect(lambda: update_settings("lottery_settings", "animation_music_fade_out", self.animation_music_fade_out_spin.value()))
-        self.animation_music_fade_out_spin.setFont(QFont(load_custom_font(), 12))
 
         # 结果音乐淡出时间
         self.result_music_fade_out_spin = SpinBox()
-        self.result_music_fade_out_spin.setFixedWidth(180)
         self.result_music_fade_out_spin.setMinimum(0)
         self.result_music_fade_out_spin.setMaximum(1000)
         self.result_music_fade_out_spin.setSuffix("ms")
         self.result_music_fade_out_spin.setValue(readme_settings("lottery_settings", "result_music_fade_out"))
         self.result_music_fade_out_spin.valueChanged.connect(lambda: update_settings("lottery_settings", "result_music_fade_out", self.result_music_fade_out_spin.value()))
-        self.result_music_fade_out_spin.setFont(QFont(load_custom_font(), 12))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"),
-                        get_setting_name("lottery_settings", "animation_music"), get_setting_description("lottery_settings", "animation_music"), self.animation_music_switch)
+                        get_content_name("lottery_settings", "animation_music"), get_content_description("lottery_settings", "animation_music"), self.animation_music_switch)
         self.addGroup(get_theme_icon("ic_fluent_music_note_2_20_filled"),
-                        get_setting_name("lottery_settings", "result_music"), get_setting_description("lottery_settings", "result_music"), self.result_music_switch)
+                        get_content_name("lottery_settings", "result_music"), get_content_description("lottery_settings", "result_music"), self.result_music_switch)
         self.addGroup(get_theme_icon("ic_fluent_folder_open_20_filled"),
-                        get_setting_name("lottery_settings", "open_animation_music_folder"), get_setting_description("lottery_settings", "open_animation_music_folder"), self.open_animation_music_folder_button)
+                        get_content_name("lottery_settings", "open_animation_music_folder"), get_content_description("lottery_settings", "open_animation_music_folder"), self.open_animation_music_folder_button)
         self.addGroup(get_theme_icon("ic_fluent_folder_open_20_filled"),
-                        get_setting_name("lottery_settings", "open_result_music_folder"), get_setting_description("lottery_settings", "open_result_music_folder"), self.open_result_music_folder_button)
+                        get_content_name("lottery_settings", "open_result_music_folder"), get_content_description("lottery_settings", "open_result_music_folder"), self.open_result_music_folder_button)
         self.addGroup(get_theme_icon("ic_fluent_speaker_2_20_filled"),
-                        get_setting_name("lottery_settings", "animation_music_volume"), get_setting_description("lottery_settings", "animation_music_volume"), self.animation_music_volume_spin)
+                        get_content_name("lottery_settings", "animation_music_volume"), get_content_description("lottery_settings", "animation_music_volume"), self.animation_music_volume_spin)
         self.addGroup(get_theme_icon("ic_fluent_speaker_2_20_filled"),
-                        get_setting_name("lottery_settings", "result_music_volume"), get_setting_description("lottery_settings", "result_music_volume"), self.result_music_volume_spin)
+                        get_content_name("lottery_settings", "result_music_volume"), get_content_description("lottery_settings", "result_music_volume"), self.result_music_volume_spin)
         self.addGroup(get_theme_icon("ic_fluent_arrow_up_20_filled"),
-                        get_setting_name("lottery_settings", "animation_music_fade_in"), get_setting_description("lottery_settings", "animation_music_fade_in"), self.animation_music_fade_in_spin)
+                        get_content_name("lottery_settings", "animation_music_fade_in"), get_content_description("lottery_settings", "animation_music_fade_in"), self.animation_music_fade_in_spin)
         self.addGroup(get_theme_icon("ic_fluent_arrow_up_20_filled"),
-                        get_setting_name("lottery_settings", "result_music_fade_in"), get_setting_description("lottery_settings", "result_music_fade_in"), self.result_music_fade_in_spin)
+                        get_content_name("lottery_settings", "result_music_fade_in"), get_content_description("lottery_settings", "result_music_fade_in"), self.result_music_fade_in_spin)
         self.addGroup(get_theme_icon("ic_fluent_arrow_down_20_filled"),
-                        get_setting_name("lottery_settings", "animation_music_fade_out"), get_setting_description("lottery_settings", "animation_music_fade_out"), self.animation_music_fade_out_spin)
+                        get_content_name("lottery_settings", "animation_music_fade_out"), get_content_description("lottery_settings", "animation_music_fade_out"), self.animation_music_fade_out_spin)
         self.addGroup(get_theme_icon("ic_fluent_arrow_down_20_filled"),
-                        get_setting_name("lottery_settings", "result_music_fade_out"), get_setting_description("lottery_settings", "result_music_fade_out"), self.result_music_fade_out_spin)
+                        get_content_name("lottery_settings", "result_music_fade_out"), get_content_description("lottery_settings", "result_music_fade_out"), self.result_music_fade_out_spin)
 
     def open_animation_music_folder(self):
         """打开动画音乐文件夹"""

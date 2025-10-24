@@ -7,6 +7,7 @@
 """
 
 import json
+from loguru import logger
 
 from app.tools.variable import *
 from app.tools.path_utils import *
@@ -38,105 +39,6 @@ def get_default_setting(first_level_key: str, second_level_key: str):
     if first_level_key in DEFAULT_SETTINGS:
         if second_level_key in DEFAULT_SETTINGS[first_level_key]:
             return DEFAULT_SETTINGS[first_level_key][second_level_key]["default_value"]
-    return None
-
-def get_setting_name(first_level_key: str, second_level_key: str):
-    """根据键获取设置项的名称
-    
-    Args:
-        first_level_key: 第一层的键
-        second_level_key: 第二层的键
-        
-    Returns:
-        设置项的名称，如果不存在则返回None
-    """
-    if first_level_key in DEFAULT_SETTINGS:
-        if second_level_key in DEFAULT_SETTINGS[first_level_key]:
-            return DEFAULT_SETTINGS[first_level_key][second_level_key][Language]["name"]
-    return None
-
-def get_setting_description(first_level_key: str, second_level_key: str):
-    """根据键获取设置项的描述
-    
-    Args:
-        first_level_key: 第一层的键
-        second_level_key: 第二层的键
-        
-    Returns:
-        设置项的描述，如果不存在则返回None
-    """
-    if first_level_key in DEFAULT_SETTINGS:
-        if second_level_key in DEFAULT_SETTINGS[first_level_key]:
-            return DEFAULT_SETTINGS[first_level_key][second_level_key][Language]["description"]
-    return None
-
-def get_setting_pushbutton_name(first_level_key: str, second_level_key: str):
-    """根据键获取设置项的按钮名称
-    
-    Args:
-        first_level_key: 第一层的键
-        second_level_key: 第二层的键
-        
-    Returns:
-        设置项的按钮名称，如果不存在则返回None
-    """
-    if first_level_key in DEFAULT_SETTINGS:
-        if second_level_key in DEFAULT_SETTINGS[first_level_key]:
-            return DEFAULT_SETTINGS[first_level_key][second_level_key][Language]["pushbutton_name"]
-    return None
-
-def get_setting_switchbutton_name(first_level_key: str, second_level_key: str, is_enable: str):
-    """根据键获取设置项的开关按钮名称
-    
-    Args:
-        first_level_key: 第一层的键
-        second_level_key: 第二层的键
-        is_enable: 是否启用开关按钮("enable"或"disable")
-        
-    Returns:
-        设置项的开关按钮名称，如果不存在则返回None
-    """
-    if first_level_key in DEFAULT_SETTINGS:
-        if second_level_key in DEFAULT_SETTINGS[first_level_key]:
-            return DEFAULT_SETTINGS[first_level_key][second_level_key][Language]["switchbutton_name"][is_enable]
-    return None
-
-def get_setting_combo_name(first_level_key: str, second_level_key: str):
-    """根据键获取设置项的下拉框内容
-    
-    Args:
-        first_level_key: 第一层的键
-        second_level_key: 第二层的键
-        
-    Returns:
-        设置项的下拉框内容，如果不存在则返回None
-    """
-    if first_level_key in DEFAULT_SETTINGS:
-        if second_level_key in DEFAULT_SETTINGS[first_level_key]:
-            return DEFAULT_SETTINGS[first_level_key][second_level_key][Language]["combo_items"]
-    return None
-
-def get_any_position_value(first_level_key: str, second_level_key: str, *keys):
-    """根据层级键获取任意位置的值
-    
-    Args:
-        first_level_key: 第一层的键
-        second_level_key: 第二层的键
-        *keys: 后续任意层级的键
-        
-    Returns:
-        指定位置的值，如果不存在则返回None
-    """
-    if first_level_key in DEFAULT_SETTINGS:
-        current = DEFAULT_SETTINGS[first_level_key]
-        if second_level_key in current:
-            current = current[second_level_key]
-            for key in keys:
-                if isinstance(current, dict) and key in current:
-                    current = current[key]
-                else:
-                    return None
-            return current
     return None
 
 # ==================================================
