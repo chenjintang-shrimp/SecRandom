@@ -122,17 +122,43 @@ class basic_settings_personalised(GroupHeaderCardWidget):
         self.setTitle(get_content_name("basic_settings", "personalised"))
         self.setBorderRadius(8)
 
-        # 主题色
-        self.theme_color_button = ColorConfigItem("Theme", "Color", readme_settings("basic_settings", "theme"))
+        # 字体设置卡片
+        self.fontComboBox = ComboBox()
+        self.fontComboBox.addItems(["HarmonyOS Sans SC"] + sorted(QFontDatabase.families()))
+        self.fontComboBox.setCurrentText(readme_settings("fontFamily", "font"))
+        self.fontComboBox.currentTextChanged.connect(lambda font: update_settings("fontFamily", "font", font))
 
-        # 添加设置项到分组
-
-        self.themeColorCard = ColorSettingCard(
-            self.theme_color_button,    
-            get_theme_icon("ic_fluent_text_color_20_filled"),
+        # 主题设置卡片
+        self.themeCard = OptionsSettingCard(
+            cfg.themeMode,
+            get_theme_icon("ic_fluent_color_20_filled"),
             self.tr(get_content_name("basic_settings", "theme")),
             self.tr(get_content_description("basic_settings", "theme")),
-            self
+            texts=["浅色", "深色", "跟随系统设置"]
         )
 
+        # 主题色设置卡片
+        self.themeColorCard = ColorSettingCard(
+            cfg.themeColor,
+            get_theme_icon("ic_fluent_color_20_filled"),
+            self.tr(get_content_name("basic_settings", "theme_color")),
+            self.tr(get_content_description("basic_settings", "theme_color"))
+        )
+
+        # 界面缩放设置卡片
+        self.zoomCard = OptionsSettingCard(
+            cfg.dpiScale,
+            get_theme_icon("ic_fluent_zoom_fit_20_filled"),
+            self.tr(get_content_name("basic_settings", "zoom")),
+            self.tr(get_content_description("basic_settings", "zoom")),
+            texts=["100%", "125%", "150%", "175%", "200%", self.tr("使用系统设置")]
+        )
+
+        # 添加设置项到分组
+        self.addGroup(get_theme_icon("ic_fluent_database_arrow_down_20_filled"), 
+                        get_content_name("basic_settings", "font"), get_content_description("basic_settings", "font"), self.fontComboBox)
+
+        # 添加卡片到布局
+        self.vBoxLayout.addWidget(self.themeCard)
         self.vBoxLayout.addWidget(self.themeColorCard)
+        self.vBoxLayout.addWidget(self.zoomCard)

@@ -64,7 +64,7 @@ class Config(QConfig):
         "Window", "DpiScale", "Auto", OptionsValidator([1, 1.25, 1.5, 1.75, 2, "Auto"]), restart=True)
     themeColor = ColorConfigItem(
         "Theme", "Color", DEFAULT_THEME_COLOR)
-
+        
 # 创建全局配置实例
 cfg = Config()
 

@@ -46,12 +46,24 @@ DEFAULT_SETTINGS = {
         "import_all_data": {
             "default_value": None
         },
+        "dpiScale": {
+            "default_value": "Auto"
+        },
+        "font": {
+            "default_value": DEFAULT_FONT_NAME_PRIMARY
+        },
         "theme": {
+            "default_value": "Auto"
+        },
+        "theme_color": {
             "default_value": DEFAULT_THEME_COLOR
+        },
+        "zoom": {
+            "default_value": 1.0
         },
         "language": {
             "default_value": "ZH_CN"
-        }
+        },
     },
     "list_management": {
         "title": {

@@ -76,14 +76,30 @@ ZH_CN = {
             "description": "设置是否在启动时导入所有数据",
             "pushbutton_name": "导入所有数据"
         },
+        "dpiScale": {
+            "name": "DPI缩放",
+            "description": "设置软件DPI缩放比例"
+        },
+        "font": {
+            "name": "字体",
+            "description": "软件字体"
+        },
         "theme": {
             "name": "主题",
             "description": "软件主题"
         },
+        "theme_color": {
+            "name": "主题色",
+            "description": "软件主题色"
+        },
+        "zoom": {
+            "name": "界面缩放",
+            "description": "设置软件界面缩放比例"
+        },
         "language": {
             "name": "语言",
             "description": "软件语言"
-        }
+        },
     },
     "list_management": {
         "title": {
