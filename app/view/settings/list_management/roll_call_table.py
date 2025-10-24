@@ -112,7 +112,7 @@ class roll_call_table(GroupHeaderCardWidget):
         
         # 连接信号
         self.file_watcher.directoryChanged.connect(self.on_directory_changed)
-        logger.debug(f"已设置文件监视器，监控目录: {roll_call_list_dir}")
+        # logger.debug(f"已设置文件监视器，监控目录: {roll_call_list_dir}")
 
     def on_directory_changed(self, path):
         """当目录内容发生变化时调用此方法
@@ -120,7 +120,7 @@ class roll_call_table(GroupHeaderCardWidget):
         Args:
             path: 发生变化的目录路径
         """
-        logger.debug(f"检测到目录变化: {path}")
+        # logger.debug(f"检测到目录变化: {path}")
         # 延迟刷新，避免文件操作未完成
         QTimer.singleShot(1000, self.refresh_class_list)
         
@@ -144,7 +144,7 @@ class roll_call_table(GroupHeaderCardWidget):
             self.class_comboBox.setCurrentIndex(-1)
             self.class_comboBox.setPlaceholderText(get_content_name("roll_call_list", "select_class_name"))
         
-        logger.debug(f"班级列表已刷新，共 {len(class_list)} 个班级")
+        # logger.debug(f"班级列表已刷新，共 {len(class_list)} 个班级")
         # 只有在表格已经创建时才刷新数据
         if hasattr(self, 'table'):
             self.refresh_data()
@@ -285,7 +285,7 @@ class roll_call_table(GroupHeaderCardWidget):
                 
             with open_file(student_file, 'w', encoding='utf-8') as f:
                 json.dump(student_data, f, ensure_ascii=False, indent=4)
-            logger.debug(f"学生数据更新成功: {student_name}")
+            # logger.debug(f"学生数据更新成功: {student_name}")
             
             # 保存成功后设置列宽
             self.table.blockSignals(True)

@@ -36,7 +36,7 @@ class PathManager:
     def __init__(self):
         """初始化路径管理器"""
         self._app_root = self._get_app_root()
-        logger.info(f"应用程序根目录: {self._app_root}")
+        logger.debug(f"应用程序根目录: {self._app_root}")
     
     def _get_app_root(self) -> Path:
         """获取应用程序根目录

@@ -112,7 +112,7 @@ class lottery_table(GroupHeaderCardWidget):
         
         # 连接信号
         self.file_watcher.directoryChanged.connect(self.on_directory_changed)
-        logger.debug(f"已设置文件监视器，监控目录: {lottery_list_dir}")
+        # logger.debug(f"已设置文件监视器，监控目录: {lottery_list_dir}")
 
     def on_directory_changed(self, path):
         """当目录内容发生变化时调用此方法
@@ -120,7 +120,7 @@ class lottery_table(GroupHeaderCardWidget):
         Args:
             path: 发生变化的目录路径
         """
-        logger.debug(f"检测到目录变化: {path}")
+        # logger.debug(f"检测到目录变化: {path}")
         # 延迟刷新，避免文件操作未完成
         QTimer.singleShot(1000, self.refresh_lottery_list)
         
@@ -144,7 +144,7 @@ class lottery_table(GroupHeaderCardWidget):
             self.lottery_comboBox.setCurrentIndex(-1)
             self.lottery_comboBox.setPlaceholderText(get_content_name("lottery_list", "select_pool_name"))
         
-        logger.debug(f"抽奖名单列表已刷新，共 {len(lottery_list)} 个抽奖名单")
+        # logger.debug(f"抽奖名单列表已刷新，共 {len(lottery_list)} 个抽奖名单")
         # 只有在表格已经创建时才刷新数据
         if hasattr(self, 'table'):
             self.refresh_data()
@@ -277,7 +277,7 @@ class lottery_table(GroupHeaderCardWidget):
                 
             with open_file(pool_file, 'w', encoding='utf-8') as f:
                 json.dump(pool_data, f, ensure_ascii=False, indent=4)
-            logger.debug(f"抽奖池数据更新成功: {pool_name}")
+            # logger.debug(f"抽奖池数据更新成功: {pool_name}")
             
             # 保存成功后设置列宽
             self.table.blockSignals(True)

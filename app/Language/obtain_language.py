@@ -5,23 +5,26 @@
 该模块包含所有应用程序内容文本的默认值配置
 使用层级结构组织内容文本项，第一层为分类，第二层为具体内容文本项
 """
-from app.tools.path_utils import get_resources_path
+from app.tools.language_manager import get_language_data, set_current_language, preload_languages, get_language_manager
 from app.tools.settings_access import readme_settings
 from app.Language.ZH_CN import ZH_CN
-import json
 
+from loguru import logger
+
+# 获取当前语言设置
 language = readme_settings("basic_settings", "language")
-if language == "ZH_CN" or language is None:
-    Language = ZH_CN
-else:
-    # 获取语言文件路径并加载JSON内容
-    language_file_path = get_resources_path("Language", f"{language}.json")
-    try:
-        with open(language_file_path, 'r', encoding='utf-8') as f:
-            Language = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        # 如果文件不存在或解析失败，回退到中文
-        Language = ZH_CN  
+
+# 确保语言管理器已初始化
+get_language_manager()
+
+# 设置当前语言
+set_current_language(language)
+
+# 预加载当前语言
+preload_languages()
+
+# 获取语言数据
+Language = get_language_data()  
 
 # ==================================================
 # 便捷函数
@@ -38,6 +41,7 @@ def get_content_name(first_level_key: str, second_level_key: str):
     """
     if first_level_key in Language:
         if second_level_key in Language[first_level_key]:
+            # logger.debug(f"获取内容文本项: {first_level_key}.{second_level_key}")
             return Language[first_level_key][second_level_key]["name"]
     return None
 
@@ -53,6 +57,7 @@ def get_content_description(first_level_key: str, second_level_key: str):
     """
     if first_level_key in Language:
         if second_level_key in Language[first_level_key]:
+            # logger.debug(f"获取内容文本项描述: {first_level_key}.{second_level_key}")
             return Language[first_level_key][second_level_key]["description"]
     return None
 
@@ -68,6 +73,7 @@ def get_content_pushbutton_name(first_level_key: str, second_level_key: str):
     """
     if first_level_key in Language:
         if second_level_key in Language[first_level_key]:
+            # logger.debug(f"获取内容文本项按钮名称: {first_level_key}.{second_level_key}")
             return Language[first_level_key][second_level_key]["pushbutton_name"]
     return None
 
@@ -84,6 +90,7 @@ def get_content_switchbutton_name(first_level_key: str, second_level_key: str, i
     """
     if first_level_key in Language:
         if second_level_key in Language[first_level_key]:
+            # logger.debug(f"获取内容文本项开关按钮名称: {first_level_key}.{second_level_key}")
             return Language[first_level_key][second_level_key]["switchbutton_name"][is_enable]
     return None
 
@@ -99,6 +106,7 @@ def get_content_combo_name(first_level_key: str, second_level_key: str):
     """
     if first_level_key in Language:
         if second_level_key in Language[first_level_key]:
+            # logger.debug(f"获取内容文本项下拉框内容: {first_level_key}.{second_level_key}")
             return Language[first_level_key][second_level_key]["combo_items"]
     return None
 
@@ -119,6 +127,7 @@ def get_any_position_value(first_level_key: str, second_level_key: str, *keys):
             current = current[second_level_key]
             for key in keys:
                 if isinstance(current, dict) and key in current:
+                    # logger.debug(f"获取内容文本项: {first_level_key}.{second_level_key}.{key}")
                     current = current[key]
                 else:
                     return None

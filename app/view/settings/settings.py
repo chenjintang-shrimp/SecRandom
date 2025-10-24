@@ -56,7 +56,9 @@ class SettingsWindow(MSFluentWindow):
 
         self._position_window()
         
-        self.createSubInterface()
+        QTimer.singleShot(APP_INIT_DELAY, lambda: (
+            self.createSubInterface()
+        ))
 
     def _position_window(self):
         """窗口定位

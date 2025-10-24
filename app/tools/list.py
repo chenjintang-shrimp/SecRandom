@@ -41,7 +41,7 @@ def get_class_name_list() -> List[str]:
         # 按字母顺序排序
         class_files.sort()
         
-        logger.debug(f"找到 {len(class_files)} 个班级: {class_files}")
+        # logger.debug(f"找到 {len(class_files)} 个班级: {class_files}")
         return class_files
     
     except Exception as e:
@@ -89,7 +89,7 @@ def get_student_list(class_name: str) -> List[Dict[str, Any]]:
         # 按ID排序
         student_list.sort(key=lambda x: x["id"])
         
-        logger.debug(f"班级 {class_name} 共有 {len(student_list)} 名学生")
+        # logger.debug(f"班级 {class_name} 共有 {len(student_list)} 名学生")
         return student_list
     
     except Exception as e:
@@ -128,7 +128,7 @@ def get_pool_name_list() -> List[str]:
         # 按字母顺序排序
         pool_files.sort()
         
-        logger.debug(f"找到 {len(pool_files)} 个奖池: {pool_files}")
+        # logger.debug(f"找到 {len(pool_files)} 个奖池: {pool_files}")
         return pool_files
     
     except Exception as e:
@@ -175,7 +175,7 @@ def get_pool_data(pool_name: str) -> Dict[str, Any]:
         # 按ID排序
         pool_list.sort(key=lambda x: x["id"])
         
-        logger.debug(f"奖池 {pool_name} 共有 {len(pool_list)} 个奖品")
+        # logger.debug(f"奖池 {pool_name} 共有 {len(pool_list)} 个奖品")
         return pool_list
     
     except Exception as e:

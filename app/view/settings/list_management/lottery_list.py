@@ -94,7 +94,7 @@ class lottery_list(GroupHeaderCardWidget):
         
         # 连接信号
         self.file_watcher.directoryChanged.connect(self.on_directory_changed)
-        logger.debug(f"已设置文件监视器，监控目录: {lottery_list_dir}")
+        # logger.debug(f"已设置文件监视器，监控目录: {lottery_list_dir}")
 
     def on_directory_changed(self, path):
         """当目录内容发生变化时调用此方法
@@ -102,7 +102,7 @@ class lottery_list(GroupHeaderCardWidget):
         Args:
             path: 发生变化的目录路径
         """
-        logger.debug(f"检测到目录变化: {path}")
+        # logger.debug(f"检测到目录变化: {path}")
         # 延迟刷新，避免文件操作未完成导致的错误
         QTimer.singleShot(500, self.refresh_pool_list)
 
@@ -126,4 +126,4 @@ class lottery_list(GroupHeaderCardWidget):
             self.pool_name_combo.setCurrentIndex(-1)
             self.pool_name_combo.setPlaceholderText(get_content_name("lottery_list", "select_pool_name"))
         
-        logger.debug(f"奖池列表已刷新，共 {len(pool_list)} 个奖池")
+        # logger.debug(f"奖池列表已刷新，共 {len(pool_list)} 个奖池")

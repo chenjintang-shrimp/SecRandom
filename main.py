@@ -18,6 +18,10 @@ from pathlib import Path
 from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.settings_default import *
+from app.tools.settings_access import *
+from app.tools.font_manager import *
+from app.tools.language_manager import preload_languages as preload_langs
+
 from app.common.config import cfg
 from app.Language.obtain_language import *
 
@@ -85,14 +89,26 @@ def check_single_instance():
 # 字体设置相关函数
 # ==================================================
 def apply_font_settings():
-    """应用字体设置"""
+    """应用字体设置 - 优化版本，使用字体管理器异步加载"""
     font_family = DEFAULT_FONT_NAME_PRIMARY
-    logger.info(f"字体设置: {font_family}")
     setFontFamilies([font_family])
+    
+    # 获取字体管理器
+    font_manager = get_font_manager()
+    
+    # 连接字体加载完成信号
+    font_manager.font_loaded.connect(lambda font_name, success: 
+    logger.debug(f"字体 {font_name} 加载{'成功' if success else '失败'}")
+    )
+    
+    # 预加载默认字体
+    preload_fonts([font_family])
+    
+    # 延迟应用字体，确保字体已加载
     QTimer.singleShot(FONT_APPLY_DELAY, lambda: apply_font_to_application(font_family))
 
 def apply_font_to_application(font_family):
-    """应用字体设置到整个应用程序，只更新字体不是指定font_family的控件
+    """应用字体设置到整个应用程序，优化版本使用字体管理器
     
     Args:
         font_family (str): 字体家族名称
@@ -101,30 +117,11 @@ def apply_font_to_application(font_family):
         # 获取当前应用程序默认字体
         current_font = QApplication.font()
         
-        # 创建字体对象，只修改字体家族，保持原有字体大小
-        app_font = QFont(font_family)
-        app_font.setPointSize(current_font.pointSize())
+        # 获取字体管理器
+        font_manager = get_font_manager()
         
-        # 使用从variable.py导入的字体配置映射表
-        font_config_map = FONT_CONFIG_MAP
-        
-        # 如果字体在配置映射表中，则加载对应的字体文件
-        if font_family in font_config_map:
-            config = font_config_map[font_family]
-            font_path = get_resources_path('font', config['filename'])
-            if font_path and file_exists(font_path):
-                font_id = QFontDatabase.addApplicationFont(str(font_path))
-                if font_id >= 0:
-                    font_families = QFontDatabase.applicationFontFamilies(font_id)
-                    if font_families:
-                        app_font = QFont(font_families[0])
-                        app_font.setPointSize(current_font.pointSize())
-                    else:
-                        logger.error(f"无法从字体文件获取字体家族: {font_path}")
-                else:
-                    logger.error(f"无法加载字体文件: {font_path}")
-            else:
-                logger.error(f"{config['display_name']}字体文件不存在: {font_path}")
+        # 使用字体管理器获取字体对象
+        app_font = font_manager.get_font(font_family, current_font.pointSize())
         
         # 获取所有顶级窗口并更新它们的字体
         widgets_updated = 0
@@ -222,7 +219,7 @@ def show_settings_window():
 # 应用程序初始化相关函数
 # ==================================================
 def initialize_app():
-    """初始化应用程序，使用QTimer避免阻塞主线程"""
+    """初始化应用程序，使用QTimer避免阻塞主线程，实现并行加载"""
     # 设置工作目录为程序所在目录，解决URL协议唤醒时工作目录错误的问题
     program_dir = str(get_app_root())
     
@@ -231,28 +228,51 @@ def initialize_app():
         os.chdir(program_dir)
         logger.info(f"工作目录已设置为: {program_dir}")
     
-    # # 检查单实例
-    # global shared_memory
-    # shared_memory = check_single_instance()
+    # 初始化设置缓存 - 优先级最高，不延迟
+    initialize_settings_cache()
+    
+    # 并行加载资源
+    # 预加载默认设置
+    QTimer.singleShot(APP_INIT_DELAY, lambda: (
+        preload_default_settings()
+    ))
+    
+    # 预加载字体
+    QTimer.singleShot(APP_INIT_DELAY, lambda: (
+        preload_fonts([DEFAULT_FONT_NAME_PRIMARY])
+    ))
+    
+    # 预加载语言
+    QTimer.singleShot(APP_INIT_DELAY, lambda: (
+        preload_langs()
+    ))
     
     # 管理设置文件，确保其存在且完整
-    QTimer.singleShot(APP_INIT_DELAY, manage_settings_file)
+    QTimer.singleShot(APP_INIT_DELAY, lambda: (
+        manage_settings_file()
+    ))
 
     # 创建主窗口实例
-    QTimer.singleShot(APP_INIT_DELAY, start_main_window)
+    QTimer.singleShot(APP_INIT_DELAY, lambda: (
+        start_main_window()
+    ))
 
     # 创建设置窗口实例
-    QTimer.singleShot(APP_INIT_DELAY, create_settings_window)
+    QTimer.singleShot(APP_INIT_DELAY, lambda: (
+        create_settings_window()
+    ))
 
     # 应用字体设置
-    QTimer.singleShot(APP_INIT_DELAY, apply_font_settings)
+    QTimer.singleShot(APP_INIT_DELAY, lambda: (
+        apply_font_settings()
+    ))
 
 # ==================================================
 # 主程序入口
 # ==================================================
 def main_async():
     """主异步函数，用于启动应用程序"""
-    QTimer.singleShot(0, initialize_app)
+    QTimer.singleShot(APP_INIT_DELAY, initialize_app)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

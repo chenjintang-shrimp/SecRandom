@@ -127,12 +127,12 @@ def manage_settings_file():
                     if second_level_value["default_value"] is not None:
                         updated_settings[first_level_key][second_level_key] = second_level_value["default_value"]
                         settings_updated = True
-                        logger.debug(f"添加缺失的设置项: {first_level_key}.{second_level_key} = {second_level_value['default_value']}")
+                        # logger.debug(f"添加缺失的设置项: {first_level_key}.{second_level_key} = {second_level_value['default_value']}")
         
         # 移除多余的设置项
         for first_level_key in list(current_settings.keys()):
             if first_level_key not in default_settings:
-                logger.debug(f"移除多余的设置分类: {first_level_key}")
+                # logger.debug(f"移除多余的设置分类: {first_level_key}")
                 settings_updated = True
                 if first_level_key in updated_settings:
                     del updated_settings[first_level_key]
@@ -140,17 +140,18 @@ def manage_settings_file():
                 
             for second_level_key in list(current_settings[first_level_key].keys()):
                 if second_level_key not in default_settings[first_level_key]:
-                    logger.debug(f"移除多余的设置项: {first_level_key}.{second_level_key}")
+                    # logger.debug(f"移除多余的设置项: {first_level_key}.{second_level_key}")
                     settings_updated = True
                     if first_level_key in updated_settings and second_level_key in updated_settings[first_level_key]:
                         del updated_settings[first_level_key][second_level_key]
         
         if settings_updated:
-            logger.debug("设置文件已更新")
+            # logger.debug("设置文件已更新")
             with open_file(settings_file, 'w', encoding='utf-8') as f:
                 json.dump(updated_settings, f, indent=4, ensure_ascii=False)
         else:
-            logger.debug("设置文件已是最新，无需更新")
+            # logger.debug("设置文件已是最新，无需更新")
+            pass
             
     except Exception as e:
         logger.error(f"管理设置文件时发生错误: {e}")

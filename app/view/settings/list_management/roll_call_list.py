@@ -100,7 +100,7 @@ class roll_call_list(GroupHeaderCardWidget):
         
         # 连接信号
         self.file_watcher.directoryChanged.connect(self.on_directory_changed)
-        logger.debug(f"已设置文件监视器，监控目录: {roll_call_list_dir}")
+        # logger.debug(f"已设置文件监视器，监控目录: {roll_call_list_dir}")
 
     def on_directory_changed(self, path):
         """当目录内容发生变化时调用此方法
@@ -108,7 +108,7 @@ class roll_call_list(GroupHeaderCardWidget):
         Args:
             path: 发生变化的目录路径
         """
-        logger.debug(f"检测到目录变化: {path}")
+        # logger.debug(f"检测到目录变化: {path}")
         # 延迟刷新，避免文件操作未完成
         QTimer.singleShot(500, self.refresh_class_list)
 
@@ -132,4 +132,4 @@ class roll_call_list(GroupHeaderCardWidget):
             self.class_name_combo.setCurrentIndex(-1)
             self.class_name_combo.setPlaceholderText(get_content_name("roll_call_list", "select_class_name"))
         
-        logger.debug(f"班级列表已刷新，共 {len(class_list)} 个班级")
+        # logger.debug(f"班级列表已刷新，共 {len(class_list)} 个班级")
