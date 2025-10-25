@@ -112,8 +112,8 @@ jobs:
           # 创建app目录
           mkdir -p zip_dist/SecRandom/app
           
-          # 复制app/resource文件夹到zip_dist/SecRandom目录下
-          Copy-Item -Recurse -Force app/resource zip_dist/SecRandom/app
+          # 复制app/resources文件夹到zip_dist/SecRandom目录下
+          Copy-Item -Recurse -Force app/resources zip_dist/SecRandom/app
           
           # 复制 LICENSE 文件到zip_dist/SecRandom目录下
           Copy-Item LICENSE zip_dist/SecRandom/
