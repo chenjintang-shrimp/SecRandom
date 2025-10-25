@@ -128,7 +128,7 @@ class SettingsWindow(MSFluentWindow):
         拦截窗口关闭事件，隐藏窗口并保存窗口大小"""
         self.hide()
         event.ignore()
-        self.save_window_size(self.width(), self.height())
+        # self.save_window_size(self.width(), self.height())
 
     def resizeEvent(self, event):
         """窗口大小变化事件处理
@@ -140,8 +140,8 @@ class SettingsWindow(MSFluentWindow):
     def save_window_size(self, setting_window_width, setting_window_height):
         """保存窗口大小
         记录当前窗口尺寸，下次启动时自动恢复"""
-        cfg.setting_window_size = (setting_window_width, setting_window_height)
-        cfg.save()
+        self.setting_window_size = (setting_window_width, setting_window_height)
+        self.save()
 
     def show_settings_window(self):
         """显示设置窗口"""

@@ -12,7 +12,7 @@ from loguru import logger
 
 from app.tools.variable import *
 from app.tools.path_utils import *
-from app.common.config import cfg
+from app.tools.settings_access import *
 
 # ==================================================
 # 字体设置相关函数
@@ -229,9 +229,9 @@ def setThemeColor(color):
         return
     
     # 设置主题色
-    cfg.themeColor.value = hex_color
+    themeColor.value = hex_color
     # 保存配置
-    qconfig.save()
+    update_settings("basic_settings", "theme_color", hex_color)
 
 def themeColor():
     """获取当前主题色
@@ -241,7 +241,7 @@ def themeColor():
     """
     try:
         # 获取当前主题色
-        return cfg.themeColor.value
+        return themeColor.value
     except Exception as e:
         logger.error(f"获取主题色失败: {e}")
         # 返回默认主题色

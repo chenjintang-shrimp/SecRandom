@@ -39,7 +39,7 @@ class PageTemplate(QFrame):
         QTimer.singleShot(0, self.create_ui_components)
 
     def __connectSignalToSlot(self):
-        cfg.themeChanged.connect(setTheme)
+        qconfig.themeChanged.connect(setTheme)
     
     def create_ui_components(self):
         """后台创建UI组件，避免堵塞进程"""
@@ -156,7 +156,7 @@ class PivotPageTemplate(QFrame):
     
     def __connectSignalToSlot(self):
         """连接信号与槽"""
-        cfg.themeChanged.connect(setTheme)
+        qconfig.themeChanged.connect(setTheme)
     
     def create_ui_components(self):
         """创建UI组件"""

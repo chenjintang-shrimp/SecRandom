@@ -2,257 +2,172 @@
 # 导入模块
 # ==================================================
 import os
-import threading
-from typing import Dict, Optional, Any
+import json
+from typing import Dict, Optional, Any, List
 from loguru import logger
-from PyQt6.QtCore import QObject, pyqtSignal
 
 from app.tools.path_utils import get_resources_path
 from app.tools.settings_access import readme_settings
 from app.Language.ZH_CN import ZH_CN
-import json
 
 # ==================================================
-# 语言管理器类
+# 简化的语言管理器类
 # ==================================================
-class LanguageManager(QObject):
-    """语言管理器 - 单例模式，负责语言文件加载和管理"""
-    
-    # 定义信号，用于通知语言加载完成
-    language_loaded = pyqtSignal(str, bool)  # 语言代码, 是否成功
+class SimpleLanguageManager:
+    """负责获取当前语言和全部语言"""
     
     def __init__(self):
-        super().__init__()
-        self._loaded_languages: Dict[str, Dict[str, Any]] = {}  # 语言代码 -> 语言数据
-        self._loading_languages: Dict[str, bool] = {}  # 正在加载的语言
         self._current_language: Optional[str] = None
-        self._language_lock = threading.RLock()
         
         # 默认加载中文
-        self._loaded_languages["ZH_CN"] = ZH_CN
+        self._loaded_languages: Dict[str, Dict[str, Any]] = {
+            "ZH_CN": ZH_CN
+        }
+        
+        # 加载resources/Language文件夹下的所有语言文件
+        self._load_all_languages()
     
-    def load_language_async(self, language_code: str) -> None:
-        """异步加载语言文件
-        
-        Args:
-            language_code: 语言代码
-        """
-        # 检查语言是否已加载或正在加载
-        with self._language_lock:
-            if language_code in self._loaded_languages:
-                self.language_loaded.emit(language_code, True)
-                return
-            
-            if language_code in self._loading_languages:
-                return  # 已在加载中
-        
-        # 启动线程加载语言
-        threading.Thread(
-            target=self._load_language_thread,
-            args=(language_code,),
-            daemon=True
-        ).start()
-    
-    def _load_language_thread(self, language_code: str) -> None:
-        """在线程中加载语言文件
-        
-        Args:
-            language_code: 语言代码
-        """
+    def _load_all_languages(self) -> None:
+        """加载resources/Language文件夹下的所有语言文件"""
         try:
-            with self._language_lock:
-                if language_code in self._loading_languages:
-                    return  # 已被其他线程加载
-                
-                self._loading_languages[language_code] = True
+            # 获取语言文件夹路径
+            language_dir = get_resources_path("Language")
             
-            # 获取语言文件路径
-            language_file_path = get_resources_path("Language", f"{language_code}.json")
-            
-            # 检查语言文件是否存在
-            if not language_file_path or not os.path.exists(language_file_path):
-                logger.warning(f"语言文件不存在: {language_file_path}")
-                with self._language_lock:
-                    self._loading_languages.pop(language_code, None)
-                self.language_loaded.emit(language_code, False)
+            if not language_dir or not os.path.exists(language_dir):
                 return
             
-            # 加载语言文件
-            with open(language_file_path, 'r', encoding='utf-8') as f:
-                language_data = json.load(f)
-                
-                with self._language_lock:
-                    self._loaded_languages[language_code] = language_data
-                    self._loading_languages.pop(language_code, None)
-                
-                logger.info(f"语言 {language_code} 加载成功")
-                self.language_loaded.emit(language_code, True)
-                
+            # 遍历文件夹中的所有.json文件
+            for filename in os.listdir(language_dir):
+                if filename.endswith('.json'):
+                    language_code = filename[:-5]  # 去掉.json后缀
+                    
+                    # 跳过已加载的语言
+                    if language_code in self._loaded_languages:
+                        continue
+                    
+                    file_path = os.path.join(language_dir, filename)
+                    
+                    try:
+                        # 加载语言文件
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            language_data = json.load(f)
+                            self._loaded_languages[language_code] = language_data
+                    except Exception as e:
+                        logger.error(f"加载语言文件 {filename} 时出错: {e}")
+        
         except Exception as e:
-            logger.error(f"加载语言 {language_code} 时发生异常: {e}")
-            with self._language_lock:
-                self._loading_languages.pop(language_code, None)
-            self.language_loaded.emit(language_code, False)
+            logger.error(f"加载语言文件夹时出错: {e}")
     
-    def get_language_data(self, language_code: Optional[str] = None) -> Dict[str, Any]:
-        """获取语言数据
+    def get_current_language(self) -> str:
+        """获取当前语言代码
         
-        Args:
-            language_code: 语言代码，如果为None则使用当前语言
-            
         Returns:
-            语言数据字典
+            当前语言代码
         """
-        # 如果没有指定语言代码，使用当前语言
-        if language_code is None:
-            language_code = self._current_language
-            
         # 如果当前语言未设置，从设置中获取
-        if language_code is None:
-            language_code = readme_settings("basic_settings", "language")
-            if language_code is None:
-                language_code = "ZH_CN"
-            self._current_language = language_code
+        if self._current_language is None:
+            self._current_language = readme_settings("basic_settings", "language")
+            if self._current_language is None:
+                self._current_language = "ZH_CN"
         
-        # 如果语言未加载，尝试加载
+        return self._current_language
+    
+    def get_current_language_data(self) -> Dict[str, Any]:
+        """获取当前语言数据
+        
+        Returns:
+            当前语言数据字典
+        """
+        language_code = self.get_current_language()
+        
+        # 如果语言未加载，返回默认中文
         if language_code not in self._loaded_languages:
-            # 如果语言不在加载中，启动异步加载
-            if language_code not in self._loading_languages:
-                self.load_language_async(language_code)
-            
-            # 返回默认中文
             return ZH_CN
         
-        # 返回已加载的语言
         return self._loaded_languages[language_code]
     
-    def set_current_language(self, language_code: str) -> None:
-        """设置当前语言
+    def get_all_languages(self) -> Dict[str, Dict[str, Any]]:
+        """获取所有已加载的语言数据
         
-        Args:
-            language_code: 语言代码
+        Returns:
+            包含所有语言数据的字典，键为语言代码，值为语言数据字典
         """
-        self._current_language = language_code
-        
-        # 如果语言未加载，异步加载
-        if language_code not in self._loaded_languages:
-            self.load_language_async(language_code)
+        return dict(self._loaded_languages)
     
-    def is_language_loaded(self, language_code: str) -> bool:
-        """检查语言是否已加载
+    def get_language_info(self, language_code: str) -> Optional[Dict[str, Any]]:
+        """获取指定语言的信息（translate_JSON_file字段）
         
         Args:
             language_code: 语言代码
             
         Returns:
-            bool: 是否已加载
+            语言信息字典，如果语言不存在则返回None
         """
-        with self._language_lock:
-            return language_code in self._loaded_languages
-    
-    def preload_languages(self, language_codes: list = None) -> None:
-        """预加载常用语言
+        if language_code not in self._loaded_languages:
+            return None
         
-        Args:
-            language_codes: 要预加载的语言代码列表，如果为None则预加载当前语言
-        """
-        if language_codes is None:
-            # 获取当前语言设置
-            current_language = readme_settings("basic_settings", "language")
-            if current_language:
-                language_codes = [current_language]
-            else:
-                language_codes = ["ZH_CN"]
+        language_data = self._loaded_languages[language_code]
         
-        for language_code in language_codes:
-            if not self.is_language_loaded(language_code):
-                self.load_language_async(language_code)
+        # 返回translate_JSON_file字段，如果不存在则返回空字典
+        return language_data.get("translate_JSON_file", {})
 
-# 创建全局语言管理器实例 - 使用模块级变量实现单例模式
-_language_manager = None
-_language_manager_lock = threading.Lock()
+# 创建全局语言管理器实例
+_simple_language_manager = None
 
-def get_language_manager() -> LanguageManager:
-    """获取全局语言管理器实例"""
-    global _language_manager
-    if _language_manager is None:
-        with _language_manager_lock:
-            if _language_manager is None:
-                _language_manager = LanguageManager()
-    return _language_manager
+def get_simple_language_manager() -> SimpleLanguageManager:
+    """获取全局简化语言管理器实例"""
+    global _simple_language_manager
+    if _simple_language_manager is None:
+        _simple_language_manager = SimpleLanguageManager()
+    return _simple_language_manager
 
 # ==================================================
-# 语言管理辅助函数
+# 简化的语言管理辅助函数
 # ==================================================
-def load_language_async(language_code: str) -> None:
-    """异步加载语言文件
+def get_current_language() -> str:
+    """获取当前语言代码
     
-    Args:
-        language_code: 语言代码
-    """
-    get_language_manager().load_language_async(language_code)
-
-def get_language_data(language_code: Optional[str] = None) -> Dict[str, Any]:
-    """获取语言数据
-    
-    Args:
-        language_code: 语言代码，如果为None则使用当前语言
-        
     Returns:
-        语言数据字典
+        当前语言代码
     """
-    return get_language_manager().get_language_data(language_code)
+    return get_simple_language_manager().get_current_language()
 
-def set_current_language(language_code: str) -> None:
-    """设置当前语言
+def get_all_languages() -> Dict[str, Dict[str, Any]]:
+    """获取所有已加载的语言数据
     
-    Args:
-        language_code: 语言代码
-    """
-    get_language_manager().set_current_language(language_code)
-
-def is_language_loaded(language_code: str) -> bool:
-    """检查语言是否已加载
-    
-    Args:
-        language_code: 语言代码
-        
     Returns:
-        bool: 是否已加载
+        包含所有语言数据的字典，键为语言代码，值为语言数据字典
     """
-    return get_language_manager().is_language_loaded(language_code)
+    return get_simple_language_manager().get_all_languages()
 
-def preload_languages(language_codes: list = None) -> None:
-    """预加载常用语言
+def get_all_languages_name() -> List[str]:
+    """获取所有已加载的语言名称
     
-    Args:
-        language_codes: 要预加载的语言代码列表，如果为None则预加载当前语言
+    Returns:
+        包含所有语言名称的列表，每个元素为语言名称
     """
-    get_language_manager().preload_languages(language_codes)
+    language_names = []
+    for code, data in get_all_languages().items():
+        language_info = data.get("translate_JSON_file", {})
+        name = language_info.get("name", code)
+        language_names.append(name)
+    return language_names
 
-def set_current_language(language_code: str) -> None:
-    """设置当前语言
+def get_current_language_data() -> Dict[str, Any]:
+    """获取当前语言数据
     
-    Args:
-        language_code: 语言代码
+    Returns:
+        当前语言数据字典
     """
-    _language_manager.set_current_language(language_code)
+    return get_simple_language_manager().get_current_language_data()
 
-def is_language_loaded(language_code: str) -> bool:
-    """检查语言是否已加载
+def get_language_info(language_code: str) -> Optional[Dict[str, Any]]:
+    """获取指定语言的信息（translate_JSON_file字段）
     
     Args:
         language_code: 语言代码
         
     Returns:
-        bool: 是否已加载
+        语言信息字典，如果语言不存在则返回None
     """
-    return _language_manager.is_language_loaded(language_code)
-
-def preload_languages(language_codes: list = None) -> None:
-    """预加载常用语言
-    
-    Args:
-        language_codes: 要预加载的语言代码列表，如果为None则预加载当前语言
-    """
-    _language_manager.preload_languages(language_codes)
+    return get_simple_language_manager().get_language_info(language_code)

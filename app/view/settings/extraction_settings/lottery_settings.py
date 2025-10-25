@@ -259,9 +259,11 @@ class lottery_color_theme_settings(GroupHeaderCardWidget):
 
         # 动画固定颜色
         self.animation_fixed_color_button = ColorConfigItem("Theme", "Color", readme_settings("lottery_settings", "animation_fixed_color"))
+        self.animation_fixed_color_button.valueChanged.connect(lambda color: update_settings("lottery_settings", "animation_fixed_color", color.name()))
         
         # 结果固定颜色
         self.result_fixed_color_button = ColorConfigItem("Theme", "Color", readme_settings("lottery_settings", "result_fixed_color"))
+        self.result_fixed_color_button.valueChanged.connect(lambda color: update_settings("lottery_settings", "result_fixed_color", color.name()))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_color_20_filled"),

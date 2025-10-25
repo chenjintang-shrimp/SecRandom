@@ -19,10 +19,7 @@ from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
-from app.tools.font_manager import *
-from app.tools.language_manager import preload_languages as preload_langs
 
-from app.common.config import cfg
 from app.Language.obtain_language import *
 
 from app.view.main.window import MainWindow
@@ -58,15 +55,16 @@ def configure_logging():
 # 显示调节
 # ==================================================
 """根据设置自动调整DPI缩放模式"""
-if cfg.get(cfg.dpiScale) == "Auto":
+dpiScale = readme_settings("basic_settings", "dpiScale")
+if dpiScale == "Auto":
     QApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
     os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
     logger.debug("DPI缩放已设置为自动模式")
 else:
     os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
-    os.environ["QT_SCALE_FACTOR"] = str(cfg.get(cfg.dpiScale))
-    logger.debug(f"DPI缩放已设置为{cfg.get(cfg.dpiScale)}倍")
+    os.environ["QT_SCALE_FACTOR"] = str(dpiScale)
+    logger.debug(f"DPI缩放已设置为{dpiScale}倍")
 
 # ==================================================
 # 单实例检查相关函数
@@ -90,21 +88,8 @@ def check_single_instance():
 # ==================================================
 def apply_font_settings():
     """应用字体设置 - 优化版本，使用字体管理器异步加载"""
-    font_family = DEFAULT_FONT_NAME_PRIMARY
+    font_family = readme_settings("basic_settings", "font")
     setFontFamilies([font_family])
-    
-    # 获取字体管理器
-    font_manager = get_font_manager()
-    
-    # 连接字体加载完成信号
-    font_manager.font_loaded.connect(lambda font_name, success: 
-    logger.debug(f"字体 {font_name} 加载{'成功' if success else '失败'}")
-    )
-    
-    # 预加载默认字体
-    preload_fonts([font_family])
-    
-    # 延迟应用字体，确保字体已加载
     QTimer.singleShot(FONT_APPLY_DELAY, lambda: apply_font_to_application(font_family))
 
 def apply_font_to_application(font_family):
@@ -114,16 +99,8 @@ def apply_font_to_application(font_family):
         font_family (str): 字体家族名称
     """
     try:
-        # 获取当前应用程序默认字体
         current_font = QApplication.font()
-        
-        # 获取字体管理器
-        font_manager = get_font_manager()
-        
-        # 使用字体管理器获取字体对象
-        app_font = font_manager.get_font(font_family, current_font.pointSize())
-        
-        # 获取所有顶级窗口并更新它们的字体
+        app_font = QFont(font_family, current_font.pointSize())
         widgets_updated = 0
         widgets_skipped = 0
         for widget in QApplication.allWidgets():
@@ -132,8 +109,7 @@ def apply_font_to_application(font_family):
                     widgets_updated += 1
                 else:
                     widgets_skipped += 1
-            
-        logger.info(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件字体, 跳过了{widgets_skipped}个已有相同字体的控件")
+        logger.debug(f"已应用字体: {font_family}, 更新了{widgets_updated}个控件字体, 跳过了{widgets_skipped}个已有相同字体的控件")
     except Exception as e:
         logger.error(f"应用字体失败: {e}")
 
@@ -152,28 +128,18 @@ def update_widget_fonts(widget, font, font_family):
         return False
         
     try:
-        # 检查控件是否有font属性，只有有font属性的控件才尝试设置字体
         if not hasattr(widget, 'font') or not hasattr(widget, 'setFont'):
             return False
-            
-        # 获取控件当前字体
         current_widget_font = widget.font()
-        
-        # 检查当前字体是否已经是目标字体家族，如果是则跳过
         if current_widget_font.family() == font_family:
             updated = False
         else:
-            # 创建新字体，只修改字体家族，保持原有字体大小和其他属性
             new_font = QFont(font.family(), current_widget_font.pointSize())
-            # 保持原有字体的粗体和斜体属性
             new_font.setBold(current_widget_font.bold())
             new_font.setItalic(current_widget_font.italic())
-            
-            # 更新当前控件的字体
             widget.setFont(new_font)
             updated = True
-        
-        # 如果控件有子控件，递归更新子控件的字体
+
         if isinstance(widget, QWidget):
             children = widget.children()
             for child in children:
@@ -181,7 +147,6 @@ def update_widget_fonts(widget, font, font_family):
                     child_updated = update_widget_fonts(child, font, font_family)
                     if child_updated:
                         updated = True
-        
         return updated
     except Exception as e:
         logger.error(f"更新控件字体时发生异常: {e}")
@@ -228,28 +193,18 @@ def initialize_app():
         os.chdir(program_dir)
         logger.info(f"工作目录已设置为: {program_dir}")
     
-    # 初始化设置缓存 - 优先级最高，不延迟
-    initialize_settings_cache()
-    
     # 并行加载资源
-    # 预加载默认设置
-    QTimer.singleShot(APP_INIT_DELAY, lambda: (
-        preload_default_settings()
-    ))
-    
-    # 预加载字体
-    QTimer.singleShot(APP_INIT_DELAY, lambda: (
-        preload_fonts([DEFAULT_FONT_NAME_PRIMARY])
-    ))
-    
-    # 预加载语言
-    QTimer.singleShot(APP_INIT_DELAY, lambda: (
-        preload_langs()
-    ))
-    
     # 管理设置文件，确保其存在且完整
+    manage_settings_file()
+
+    # 加载主题
     QTimer.singleShot(APP_INIT_DELAY, lambda: (
-        manage_settings_file()
+        setTheme({"LIGHT": Theme.LIGHT, "DARK": Theme.DARK, "AUTO": Theme.AUTO}.get(readme_settings("basic_settings", "theme"), Theme.LIGHT))
+    ))
+
+    # 加载主题颜色
+    QTimer.singleShot(APP_INIT_DELAY, lambda: (
+        setThemeColor(readme_settings("basic_settings", "theme_color"))
     ))
 
     # 创建主窗口实例
@@ -288,6 +243,9 @@ if __name__ == "__main__":
         main_async()
         
         app.exec()
+        
+        # 停止系统主题监听器
+        stop_system_theme_listener()
         
         gc.collect()
         

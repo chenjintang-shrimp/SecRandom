@@ -122,15 +122,14 @@ class MainWindow(MSFluentWindow):
     def resizeEvent(self, event):
         """窗口大小变化事件处理
         检测窗口大小变化，但不启动尺寸记录倒计时，减少IO操作"""
-        # 优化：移除窗口大小变化时的自动保存，减少IO操作
         self.resize_timer.start(500)
         super().resizeEvent(event)
 
     def save_window_size(self, width, height):
         """保存窗口大小
         记录当前窗口尺寸，下次启动时自动恢复"""
-        cfg.window_size = (width, height)
-        cfg.save()
+        self.window_size = (width, height)
+        self.save()
 
     def toggle_window(self):
         """切换窗口显示状态

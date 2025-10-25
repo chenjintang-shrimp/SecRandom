@@ -54,19 +54,3 @@ def restore_volume(volume_value):
             comtypes.CoUninitialize()
     except Exception as e:
         logger.error(f"Windows音量控制失败: {e}")
-
-# ==================================================
-# 配置类和实例
-# ==================================================
-class Config(QConfig):
-    """应用程序配置类"""
-    dpiScale = OptionsConfigItem(
-        "Window", "DpiScale", "Auto", OptionsValidator([1, 1.25, 1.5, 1.75, 2, "Auto"]), restart=True)
-    themeColor = ColorConfigItem(
-        "Theme", "Color", DEFAULT_THEME_COLOR)
-        
-# 创建全局配置实例
-cfg = Config()
-
-# 设置默认主题模式
-cfg.themeMode.value = Theme.AUTO
