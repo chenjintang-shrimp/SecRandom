@@ -35,13 +35,13 @@ class basic_settings(QWidget):
         self.basic_function_widget = basic_settings_function(self)
         self.vBoxLayout.addWidget(self.basic_function_widget)
 
-        # 添加数据管理组件
-        self.data_management_widget = basic_settings_data_management(self)
-        self.vBoxLayout.addWidget(self.data_management_widget)
-
         # 添加个性化设置组件
         self.personalised_widget = basic_settings_personalised(self)
         self.vBoxLayout.addWidget(self.personalised_widget)
+
+        # 添加数据管理组件
+        self.data_management_widget = basic_settings_data_management(self)
+        self.vBoxLayout.addWidget(self.data_management_widget)
 
 class basic_settings_function(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -77,44 +77,6 @@ class basic_settings_function(GroupHeaderCardWidget):
                         get_content_name("basic_settings", "check_update"), get_content_description("basic_settings", "check_update"), self.check_update_switch)
         self.addGroup(get_theme_icon("ic_fluent_window_play_20_filled"), 
                         get_content_name("basic_settings", "show_startup_window"), get_content_description("basic_settings", "show_startup_window"), self.show_startup_window_switch)
-
-class basic_settings_data_management(GroupHeaderCardWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setTitle(get_content_name("basic_settings", "data_management"))
-        self.setBorderRadius(8)
-
-        # 导出诊断数据按钮
-        self.export_diagnostic_data_button = PushButton(get_content_pushbutton_name("basic_settings", "export_diagnostic_data"))
-        self.export_diagnostic_data_button.clicked.connect(lambda: self.export_diagnostic_data())
-
-        # 导出设置按钮
-        self.export_settings_button = PushButton(get_content_pushbutton_name("basic_settings", "export_settings"))
-        self.export_settings_button.clicked.connect(lambda: self.export_settings())
-
-        # 导入设置按钮
-        self.import_settings_button = PushButton(get_content_pushbutton_name("basic_settings", "import_settings"))
-        self.import_settings_button.clicked.connect(lambda: self.import_settings())
-
-        # 导出软件所有数据按钮
-        self.export_all_data_button = PushButton(get_content_pushbutton_name("basic_settings", "export_all_data"))
-        self.export_all_data_button.clicked.connect(lambda: self.export_all_data())
-
-        # 导入软件所有数据按钮
-        self.import_all_data_button = PushButton(get_content_pushbutton_name("basic_settings", "import_all_data"))
-        self.import_all_data_button.clicked.connect(lambda: self.import_all_data())
-
-        # 添加设置项到分组
-        self.addGroup(get_theme_icon("ic_fluent_database_arrow_down_20_filled"), 
-                        get_content_name("basic_settings", "export_diagnostic_data"), get_content_description("basic_settings", "export_diagnostic_data"), self.export_diagnostic_data_button)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_clockwise_dashes_settings_20_filled"), 
-                        get_content_name("basic_settings", "export_settings"), get_content_description("basic_settings", "export_settings"), self.export_settings_button)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_clockwise_dashes_settings_20_filled"), 
-                        get_content_name("basic_settings", "import_settings"), get_content_description("basic_settings", "import_settings"), self.import_settings_button)
-        self.addGroup(get_theme_icon("ic_fluent_database_window_20_filled"), 
-                        get_content_name("basic_settings", "export_all_data"), get_content_description("basic_settings", "export_all_data"), self.export_all_data_button)
-        self.addGroup(get_theme_icon("ic_fluent_database_window_20_filled"), 
-                        get_content_name("basic_settings", "import_all_data"), get_content_description("basic_settings", "import_all_data"), self.import_all_data_button)
 
 class basic_settings_personalised(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -172,3 +134,41 @@ class basic_settings_personalised(GroupHeaderCardWidget):
                         get_content_name("basic_settings", "font"), get_content_description("basic_settings", "font"), self.fontComboBox)
         # 添加卡片到布局
         self.vBoxLayout.addWidget(self.themeColorCard)
+
+class basic_settings_data_management(GroupHeaderCardWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setTitle(get_content_name("basic_settings", "data_management"))
+        self.setBorderRadius(8)
+
+        # 导出诊断数据按钮
+        self.export_diagnostic_data_button = PushButton(get_content_pushbutton_name("basic_settings", "export_diagnostic_data"))
+        self.export_diagnostic_data_button.clicked.connect(lambda: self.export_diagnostic_data())
+
+        # 导出设置按钮
+        self.export_settings_button = PushButton(get_content_pushbutton_name("basic_settings", "export_settings"))
+        self.export_settings_button.clicked.connect(lambda: self.export_settings())
+
+        # 导入设置按钮
+        self.import_settings_button = PushButton(get_content_pushbutton_name("basic_settings", "import_settings"))
+        self.import_settings_button.clicked.connect(lambda: self.import_settings())
+
+        # 导出软件所有数据按钮
+        self.export_all_data_button = PushButton(get_content_pushbutton_name("basic_settings", "export_all_data"))
+        self.export_all_data_button.clicked.connect(lambda: self.export_all_data())
+
+        # 导入软件所有数据按钮
+        self.import_all_data_button = PushButton(get_content_pushbutton_name("basic_settings", "import_all_data"))
+        self.import_all_data_button.clicked.connect(lambda: self.import_all_data())
+
+        # 添加设置项到分组
+        self.addGroup(get_theme_icon("ic_fluent_database_arrow_down_20_filled"), 
+                        get_content_name("basic_settings", "export_diagnostic_data"), get_content_description("basic_settings", "export_diagnostic_data"), self.export_diagnostic_data_button)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_clockwise_dashes_settings_20_filled"), 
+                        get_content_name("basic_settings", "export_settings"), get_content_description("basic_settings", "export_settings"), self.export_settings_button)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_clockwise_dashes_settings_20_filled"), 
+                        get_content_name("basic_settings", "import_settings"), get_content_description("basic_settings", "import_settings"), self.import_settings_button)
+        self.addGroup(get_theme_icon("ic_fluent_database_window_20_filled"), 
+                        get_content_name("basic_settings", "export_all_data"), get_content_description("basic_settings", "export_all_data"), self.export_all_data_button)
+        self.addGroup(get_theme_icon("ic_fluent_database_window_20_filled"), 
+                        get_content_name("basic_settings", "import_all_data"), get_content_description("basic_settings", "import_all_data"), self.import_all_data_button)

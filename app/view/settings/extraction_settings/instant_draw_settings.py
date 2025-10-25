@@ -64,13 +64,17 @@ class instant_draw_extraction_function(GroupHeaderCardWidget):
 
         # 半重复抽取次数输入框
         self.half_repeat_spin = SpinBox()
+        self.half_repeat_spin.setFixedWidth(WIDTH_SPINBOX)
         self.half_repeat_spin.setRange(0, 100)
+        self.half_repeat_spin.setSuffix("次")
         self.half_repeat_spin.setValue(readme_settings("instant_draw_settings", "half_repeat"))
         self.half_repeat_spin.valueChanged.connect(lambda: update_settings("instant_draw_settings", "half_repeat", self.half_repeat_spin.value()))
 
         # 抽取后定时清除时间输入框
         self.clear_time_spin = SpinBox()
+        self.clear_time_spin.setFixedWidth(WIDTH_SPINBOX)
         self.clear_time_spin.setRange(0, 25600)
+        self.clear_time_spin.setSuffix("秒")
         self.clear_time_spin.setValue(readme_settings("instant_draw_settings", "clear_time"))
         self.clear_time_spin.valueChanged.connect(lambda: update_settings("instant_draw_settings", "clear_time", self.clear_time_spin.value()))
 
@@ -164,7 +168,9 @@ class instant_draw_display_settings(GroupHeaderCardWidget):
 
         # 字体大小输入框
         self.font_size_spin = SpinBox()
+        self.font_size_spin.setFixedWidth(WIDTH_SPINBOX)
         self.font_size_spin.setRange(10, 1000)
+        self.font_size_spin.setSuffix("px")
         self.font_size_spin.setValue(readme_settings("instant_draw_settings", "font_size"))
         self.font_size_spin.valueChanged.connect(lambda: update_settings("instant_draw_settings", "font_size", self.font_size_spin.value()))
 
@@ -228,13 +234,17 @@ class instant_draw_basic_animation_settings(GroupHeaderCardWidget):
 
         # 动画间隔输入框
         self.animation_interval_spin = SpinBox()
+        self.animation_interval_spin.setFixedWidth(WIDTH_SPINBOX)
         self.animation_interval_spin.setRange(1, 2000)
+        self.animation_interval_spin.setSuffix("ms")
         self.animation_interval_spin.setValue(readme_settings("instant_draw_settings", "animation_interval"))
         self.animation_interval_spin.valueChanged.connect(lambda: update_settings("instant_draw_settings", "animation_interval", self.animation_interval_spin.value()))
 
         # 自动播放次数输入框
         self.autoplay_count_spin = SpinBox()
+        self.autoplay_count_spin.setFixedWidth(WIDTH_SPINBOX)
         self.autoplay_count_spin.setRange(0, 100)
+        self.autoplay_count_spin.setSuffix("次")
         self.autoplay_count_spin.setValue(readme_settings("instant_draw_settings", "autoplay_count"))
         self.autoplay_count_spin.valueChanged.connect(lambda: update_settings("instant_draw_settings", "autoplay_count", self.autoplay_count_spin.value()))
 
@@ -360,48 +370,48 @@ class instant_draw_music_settings(GroupHeaderCardWidget):
 
         # 动画音乐音量
         self.animation_music_volume_spin = SpinBox()
-        self.animation_music_volume_spin.setMinimum(0)
-        self.animation_music_volume_spin.setMaximum(100)
+        self.animation_music_volume_spin.setFixedWidth(WIDTH_SPINBOX)
+        self.animation_music_volume_spin.setRange(0, 100)
         self.animation_music_volume_spin.setSuffix("%")
         self.animation_music_volume_spin.setValue(readme_settings("instant_draw_settings", "animation_music_volume"))
         self.animation_music_volume_spin.valueChanged.connect(lambda: update_settings("instant_draw_settings", "animation_music_volume", self.animation_music_volume_spin.value()))
 
         # 结果音乐音量
         self.result_music_volume_spin = SpinBox()
-        self.result_music_volume_spin.setMinimum(0)
-        self.result_music_volume_spin.setMaximum(100)
+        self.result_music_volume_spin.setFixedWidth(WIDTH_SPINBOX)
+        self.result_music_volume_spin.setRange(0, 100)
         self.result_music_volume_spin.setSuffix("%")
         self.result_music_volume_spin.setValue(readme_settings("instant_draw_settings", "result_music_volume"))
         self.result_music_volume_spin.valueChanged.connect(lambda: update_settings("instant_draw_settings", "result_music_volume", self.result_music_volume_spin.value()))
 
         # 动画音乐淡入时间
         self.animation_music_fade_in_spin = SpinBox()
-        self.animation_music_fade_in_spin.setMinimum(0)
-        self.animation_music_fade_in_spin.setMaximum(1000)
+        self.animation_music_fade_in_spin.setFixedWidth(WIDTH_SPINBOX)
+        self.animation_music_fade_in_spin.setRange(0, 1000)
         self.animation_music_fade_in_spin.setSuffix("ms")
         self.animation_music_fade_in_spin.setValue(readme_settings("instant_draw_settings", "animation_music_fade_in"))
         self.animation_music_fade_in_spin.valueChanged.connect(lambda: update_settings("instant_draw_settings", "animation_music_fade_in", self.animation_music_fade_in_spin.value()))
 
         # 结果音乐淡入时间
         self.result_music_fade_in_spin = SpinBox()
-        self.result_music_fade_in_spin.setMinimum(0)
-        self.result_music_fade_in_spin.setMaximum(1000)
+        self.result_music_fade_in_spin.setFixedWidth(WIDTH_SPINBOX)
+        self.result_music_fade_in_spin.setRange(0, 1000)
         self.result_music_fade_in_spin.setSuffix("ms")
         self.result_music_fade_in_spin.setValue(readme_settings("instant_draw_settings", "result_music_fade_in"))
         self.result_music_fade_in_spin.valueChanged.connect(lambda: update_settings("instant_draw_settings", "result_music_fade_in", self.result_music_fade_in_spin.value()))
 
         # 动画音乐淡出时间
         self.animation_music_fade_out_spin = SpinBox()
-        self.animation_music_fade_out_spin.setMinimum(0)
-        self.animation_music_fade_out_spin.setMaximum(1000)
+        self.animation_music_fade_out_spin.setFixedWidth(WIDTH_SPINBOX)
+        self.animation_music_fade_out_spin.setRange(0, 1000)
         self.animation_music_fade_out_spin.setSuffix("ms")
         self.animation_music_fade_out_spin.setValue(readme_settings("instant_draw_settings", "animation_music_fade_out"))
         self.animation_music_fade_out_spin.valueChanged.connect(lambda: update_settings("instant_draw_settings", "animation_music_fade_out", self.animation_music_fade_out_spin.value()))
 
         # 结果音乐淡出时间
         self.result_music_fade_out_spin = SpinBox()
-        self.result_music_fade_out_spin.setMinimum(0)
-        self.result_music_fade_out_spin.setMaximum(1000)
+        self.result_music_fade_out_spin.setFixedWidth(WIDTH_SPINBOX)
+        self.result_music_fade_out_spin.setRange(0, 1000)
         self.result_music_fade_out_spin.setSuffix("ms")
         self.result_music_fade_out_spin.setValue(readme_settings("instant_draw_settings", "result_music_fade_out"))
         self.result_music_fade_out_spin.valueChanged.connect(lambda: update_settings("instant_draw_settings", "result_music_fade_out", self.result_music_fade_out_spin.value()))

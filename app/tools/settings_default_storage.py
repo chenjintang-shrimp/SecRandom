@@ -4,6 +4,48 @@ from app.tools.variable import *
 # 默认设置列表
 # ==================================================
 DEFAULT_SETTINGS = {
+    "window": {
+        "height": {
+            "default_value": 800
+        },
+        "width": {
+            "default_value": 600
+        },
+        "is_maximized": {
+            "default_value": False
+        },
+        "pre_maximized_height": {
+            "default_value": 800
+        },
+        "pre_maximized_width": {
+            "default_value": 600
+        },
+    },
+    "settings": {
+        "height": {
+            "default_value": 800
+        },
+        "width": {
+            "default_value": 600
+        },
+        "is_maximized": {
+            "default_value": False
+        },
+        "pre_maximized_height": {
+            "default_value": 800
+        },
+        "pre_maximized_width": {
+            "default_value": 600
+        },
+    },
+    "float_position": {
+        "height": {
+            "default_value": "screen_height_half"
+        },
+        "width": {
+            "default_value": "screen_width_half"
+        },
+    },
     "home": {
         "title": {
             "default_value": None
@@ -502,6 +544,9 @@ DEFAULT_SETTINGS = {
         "display_format": {
             "default_value": 0
         },
+        "show_random": {
+            "default_value": 0
+        },
         "animation": {
             "default_value": 1
         },
@@ -706,6 +751,47 @@ DEFAULT_SETTINGS = {
         },
         "lottery_quantity_label": {
             "default_value": True
+        }
+    },
+    "floating_window_management": {
+        "title": {
+            "default_value": None
+        },
+        "basic_settings": {
+            "default_value": None
+        },
+        "appearance_settings": {
+            "default_value": None
+        },
+        "edge_settings": {
+            "default_value": None
+        },
+        "startup_display_floating_window": {
+            "default_value": True
+        },
+        "floating_window_opacity": {
+            "default_value": 80
+        },
+        "reset_floating_window_position_button": {
+            "default_value": None
+        },
+        "floating_window_button_control": {
+            "default_value": 4
+        },
+        "floating_window_placement": {
+            "default_value": 1
+        },
+        "floating_window_display_style": {
+            "default_value": 0
+        },
+        "floating_window_stick_to_edge": {
+            "default_value": True
+        },
+        "floating_window_stick_to_edge_recover_seconds": {
+            "default_value": 5
+        },
+        "floating_window_stick_to_edge_display_style": {
+            "default_value": 1
         }
     },
     "about": {

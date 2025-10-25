@@ -1309,6 +1309,94 @@ ZH_CN = {
             }
         }
     },
+    "floating_window_management": {
+        "title": {
+            "name": "浮窗管理",
+            "description": "配置浮窗管理相关设置"
+        },
+        "basic_settings": {
+            "name": "基本设置",
+            "description": "配置浮窗管理基本设置"
+        },
+        "appearance_settings": {
+            "name": "外观设置",
+            "description": "配置浮窗管理外观设置"
+        },
+        "edge_settings": {
+            "name": "贴边设置",
+            "description": "配置浮窗管理贴边设置"
+        },
+        "startup_display_floating_window": {
+            "name": "软件启动时显示浮窗",
+            "description": "配置软件启动时是否显示浮窗",
+            "switchbutton_name": {
+                "enable": "显示",
+                "disable": "隐藏"
+            }
+        },
+        "floating_window_opacity": {
+            "name": "浮窗透明度",
+            "description": "配置浮窗透明度"
+        },
+        "reset_floating_window_position_button": {
+            "name": "重置浮窗位置按钮",
+            "description": "点击后将浮窗位置重置为默认位置",
+            "pushbutton_name": "重置位置"
+        },
+        "floating_window_button_control": {
+            "name": "浮窗控件配置",
+            "description": "配置浮窗中显示的按钮",
+            "combo_items": [
+                "显示 拖动",
+                "显示 主界面",
+                "显示 闪抽",
+                "显示 拖动+主界面",
+                "显示 主界面+闪抽",
+                "显示 拖动+闪抽",
+                "显示 拖动+主界面+闪抽",
+                "显示 即抽"
+            ]
+        },
+        "floating_window_placement": {
+            "name": "浮窗排列",
+            "description": "配置浮窗控件排列",
+            "combo_items": [
+                "矩形排列",
+                "竖向排列",
+                "横向排列"
+            ]
+        },
+        "floating_window_display_style": {
+            "name": "浮窗显示样式",
+            "description": "配置浮窗控件显示样式",
+            "combo_items": [
+                "图标+文字",
+                "图标",
+                "文字"
+            ]
+        },
+        "floating_window_stick_to_edge": {
+            "name": "贴边设置",
+            "description": "配置浮窗是否贴边",
+            "switchbutton_name": {
+                "enable": "贴边",
+                "disable": "不贴边"
+            }
+        },
+        "floating_window_stick_to_edge_recover_seconds": {
+            "name": "贴边收纳时间",
+            "description": "配置浮窗贴边后收纳时间"
+        },
+        "floating_window_stick_to_edge_display_style": {
+            "name": "贴边显示样式",
+            "description": "配置浮窗贴边后显示样式",
+            "combo_items": [
+                "图标",
+                "文字",
+                "箭头"
+            ]
+        }
+    },
     "about": {
         "title": {
             "name": "关于",
