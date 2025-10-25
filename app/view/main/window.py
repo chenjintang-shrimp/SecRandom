@@ -18,11 +18,9 @@ from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.personalised import *
 from app.Language.obtain_language import *
+from app.view.tray.tray import Tray
 
 from app.tools.extract import _is_non_class_time
-
-from app.page_building.main_window_page import about_page
-from app.view.settings.settings import SettingsWindow
 
 # ==================================================
 # 主窗口类
@@ -30,9 +28,8 @@ from app.view.settings.settings import SettingsWindow
 class MainWindow(MSFluentWindow):
     """主窗口类
     程序的核心控制中心"""
-    
-    # 定义信号，用于请求显示设置窗口
     showSettingsRequested = pyqtSignal()
+    showSettingsRequestedAbout = pyqtSignal()
     
     def __init__(self):
         super().__init__()
@@ -45,14 +42,17 @@ class MainWindow(MSFluentWindow):
         self.resize_timer.timeout.connect(lambda: self.save_window_size(self.width(), self.height()))
 
         # 设置窗口属性
-        window_width = 800
-        window_height = 600
-        self.resize(window_width, window_height)
         self.setMinimumSize(MINIMUM_WINDOW_SIZE[0], MINIMUM_WINDOW_SIZE[1])
         self.setWindowTitle('SecRandom')
         self.setWindowIcon(QIcon(str(get_resources_path('assets/icon', 'secrandom-icon-paper.png'))))
 
         self._position_window()
+
+        # 导入并创建托盘图标
+        tray_icon = Tray(self)
+        tray_icon.showSettingsRequested.connect(self.showSettingsRequested.emit)
+        tray_icon.showSettingsRequestedAbout.connect(self.showSettingsRequestedAbout.emit)
+        tray_icon.show_tray_icon()
         
         QTimer.singleShot(APP_INIT_DELAY, lambda: (
             self.createSubInterface()
@@ -100,31 +100,11 @@ class MainWindow(MSFluentWindow):
         self.settingsInterface = QWidget(self)
         self.settingsInterface.setObjectName("settingsInterface")
 
-        self.aboutInterface = about_page(self)
-        self.aboutInterface.setObjectName("aboutInterface")
-
-        # self.pumping_peopleInterface = pumping_people(self)
-        # self.pumping_peopleInterface.setObjectName("pumping_peopleInterface")
-
-        # self.pumping_rewardInterface = pumping_reward(self)
-        # self.pumping_rewardInterface.setObjectName("pumping_rewardInterface")
-
-        # self.history_handoff_settingInterface = history_handoff_setting(self)
-        # self.history_handoff_settingInterface.setObjectName('history_handoff_settingInterface')
-
         self.initNavigation()
 
     def initNavigation(self):
         """初始化导航系统
         根据用户设置构建个性化菜单导航"""
-        # self.addSubInterface(self.pumping_peopleInterface, get_theme_icon("ic_fluent_people_community_20_filled"), '点名', position=NavigationItemPosition.TOP)
-
-        # self.addSubInterface(self.pumping_rewardInterface, get_theme_icon("ic_fluent_reward_20_filled"), '抽奖', position=NavigationItemPosition.TOP)
-
-        # self.addSubInterface(self.history_handoff_settingInterface, get_theme_icon("ic_fluent_chat_history_20_filled"), '历史记录', position=NavigationItemPosition.BOTTOM)
-        
-        self.addSubInterface(self.aboutInterface, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
-
         settings_item = self.addSubInterface(self.settingsInterface, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.BOTTOM)
         settings_item.clicked.connect(self.showSettingsRequested.emit)
 
@@ -249,3 +229,8 @@ class MainWindow(MSFluentWindow):
         # 完全退出当前应用程序
         QApplication.quit()
         sys.exit(0)
+
+    def show_about_tab(self):
+        """显示关于页面
+        打开设置窗口并导航到关于页面"""
+        self.showSettingsRequestedAbout.emit()

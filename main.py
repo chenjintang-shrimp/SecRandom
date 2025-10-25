@@ -158,8 +158,8 @@ def start_main_window():
     try:
         # 创建主窗口实例
         main_window = MainWindow()
-        # 连接信号到处理函数
         main_window.showSettingsRequested.connect(show_settings_window)
+        main_window.showSettingsRequestedAbout.connect(show_settings_window_about)
         main_window.show()
     except Exception as e:
         logger.error(f"创建主窗口失败: {e}", exc_info=True)
@@ -179,6 +179,13 @@ def show_settings_window():
         settings_window.show_settings_window()
     except Exception as e:
         logger.error(f"显示设置窗口失败: {e}", exc_info=True)
+
+def show_settings_window_about():
+    """显示关于窗口"""
+    try:
+        settings_window.show_settings_window_about()
+    except Exception as e:
+        logger.error(f"显示关于窗口失败: {e}", exc_info=True)
 
 # ==================================================
 # 应用程序初始化相关函数

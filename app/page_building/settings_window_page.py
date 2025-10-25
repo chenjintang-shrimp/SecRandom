@@ -7,6 +7,7 @@ from app.page_building.page_template import PageTemplate, PivotPageTemplate
 # 导入自定义页面内容组件
 from app.view.settings.home import home
 from app.view.settings.basic_settings import basic_settings
+from app.view.settings.about import about
 
 # 导入默认设置
 from app.tools.settings_default import *
@@ -63,9 +64,12 @@ class custom_settings_page(PivotPageTemplate):
     def __init__(self, parent: QFrame = None):
         page_config = {
             "page_management": get_content_name("page_management", "title"),
-            "floating_window_management": get_content_name("floating_window_management", "title"),
-            "sidebar_management": get_content_name("sidebar_management", "title"),
-            "personalised_settings": get_content_name("personalised_settings", "title")
+            "floating_window_management": get_content_name("floating_window_management", "title")
         }
         super().__init__(page_config, parent)
         self.set_base_path("app.view.settings.custom_settings")
+
+class about_page(PageTemplate):
+    """创建关于页面"""
+    def __init__(self, parent: QFrame = None):
+        super().__init__(content_widget_class=about, parent=parent)

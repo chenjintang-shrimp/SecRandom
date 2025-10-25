@@ -23,7 +23,6 @@ from app.Language.obtain_language import *
 from app.tools.extract import _is_non_class_time
 
 from app.page_building.settings_window_page import *
-from app.page_building.main_window_page import about_page
 
 # ==================================================
 # 主窗口类
@@ -31,13 +30,11 @@ from app.page_building.main_window_page import about_page
 class SettingsWindow(MSFluentWindow):
     """主窗口类
     程序的核心控制中心"""
-
-    # 定义信号，用于接收显示窗口的请求
     showSettingsRequested = pyqtSignal()
+    showSettingsRequestedAbout = pyqtSignal()
     
     def __init__(self, parent=None):
         super().__init__()
-        # 设置窗口对象名称，方便其他组件查找
         self.setObjectName("settingWindow")
         self.parent = parent
 
@@ -63,7 +60,6 @@ class SettingsWindow(MSFluentWindow):
     def _position_window(self):
         """窗口定位
         根据屏幕尺寸和用户设置自动计算最佳位置"""
-        # 如果之前是最大化状态，先恢复到最大化前的大小，然后再最大化
         is_maximized = readme_settings("settings", "is_maximized")
         if is_maximized:
             pre_maximized_width = readme_settings("settings", "pre_maximized_width")
@@ -145,18 +141,11 @@ class SettingsWindow(MSFluentWindow):
         拦截窗口关闭事件，隐藏窗口并保存窗口大小"""
         self.hide()
         event.ignore()
-        
-        # 保存当前窗口状态
         is_maximized = self.isMaximized()
         update_settings("settings", "is_maximized", is_maximized)
-        
-        # 如果是最大化状态，保存当前窗口大小作为最大化前的大小
         if is_maximized:
-            # 最大化状态下，窗口大小是屏幕大小，不需要保存
-            # 使用之前保存的最大化前的大小
             pass
         else:
-            # 非最大化状态，保存当前窗口大小
             self.save_window_size(self.width(), self.height())
 
     def resizeEvent(self, event):
@@ -173,23 +162,15 @@ class SettingsWindow(MSFluentWindow):
         if event.type() == QEvent.Type.WindowStateChange:
             is_currently_maximized = self.isMaximized()
             was_maximized = readme_settings("settings", "is_maximized")
-            
-            # 如果最大化状态发生变化
             if is_currently_maximized != was_maximized:
-                # 更新最大化状态
                 update_settings("settings", "is_maximized", is_currently_maximized)
-                
-                # 如果进入最大化，保存当前窗口大小作为最大化前的大小
                 if is_currently_maximized:
-                    # 获取正常状态下的窗口大小
                     normal_geometry = self.normalGeometry()
                     update_settings("settings", "pre_maximized_width", normal_geometry.width())
                     update_settings("settings", "pre_maximized_height", normal_geometry.height())
-                # 如果退出最大化，恢复到最大化前的大小
                 else:
                     pre_maximized_width = readme_settings("settings", "pre_maximized_width")
                     pre_maximized_height = readme_settings("settings", "pre_maximized_height")
-                    # 延迟执行，确保在最大化状态完全退出后再调整大小
                     QTimer.singleShot(100, lambda: self.resize(pre_maximized_width, pre_maximized_height))
         
         super().changeEvent(event)
@@ -197,7 +178,6 @@ class SettingsWindow(MSFluentWindow):
     def save_window_size(self, setting_window_width, setting_window_height):
         """保存窗口大小
         记录当前窗口尺寸，下次启动时自动恢复"""
-        # 只有在非最大化状态下才保存窗口大小
         if not self.isMaximized():
             update_settings("settings", "height", setting_window_height)
             update_settings("settings", "width", setting_window_width)
@@ -212,3 +192,16 @@ class SettingsWindow(MSFluentWindow):
             self.show()
             self.activateWindow()
             self.raise_()
+
+    def show_settings_window_about(self):
+        """显示关于窗口"""
+        if self.isMinimized():
+            self.showNormal()
+            self.activateWindow()
+            self.raise_()
+        else:
+            self.show()
+            self.activateWindow()
+            self.raise_()
+
+        self.switchTo(self.aboutInterface)

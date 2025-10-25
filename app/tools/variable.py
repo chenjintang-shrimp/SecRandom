@@ -80,3 +80,6 @@ RESULT_MUSIC_FOLDER = "music/result_music"  # 结果音乐文件夹名
 DONATION_URL = "https://afdian.com/a/lzy0983"  # 捐赠链接
 
 WIDTH_SPINBOX = 180  # 自旋框宽度
+
+# 菜单自动关闭时间（毫秒）
+MENU_AUTO_CLOSE_TIMEOUT = 5000
