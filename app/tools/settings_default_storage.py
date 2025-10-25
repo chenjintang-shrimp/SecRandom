@@ -605,6 +605,82 @@ DEFAULT_SETTINGS = {
             "default_value": 300
         }
     },
+    "notification_settings": {
+        "title": {
+            "default_value": None
+        }
+    },
+    "roll_call_notification_settings": {
+        "title": {
+            "default_value": None
+        },
+        "basic_settings": {
+            "default_value": None
+        },
+        "window_mode": {
+            "default_value": None
+        },
+        "floating_window_mode": {
+            "default_value": None
+        },
+        "notification_mode": {
+            "default_value": 0
+        },
+        "animation": {
+            "default_value": True
+        },
+        "window_position": {
+            "default_value": 0
+        },
+        "horizontal_offset": {
+            "default_value": 0
+        },
+        "vertical_offset": {
+            "default_value": 0
+        },
+        "transparency": {
+            "default_value": 0.6
+        },
+        "enabled_first_monitor": {
+            "default_value": "OFF"
+        },
+        "enabled_first_monitor_window_position": {
+            "default_value": 1
+        },
+        "enabled_second_monitor": {
+            "default_value": "OFF"
+        },
+        "enabled_second_monitor_window_position": {
+            "default_value": 1
+        },
+        "enabled_third_monitor": {
+            "default_value": "OFF"
+        },
+        "enabled_third_monitor_window_position": {
+            "default_value": 1
+        },
+        "floating_window_transparency": {
+            "default_value": 0.6
+        },
+        "floating_window_enabled_first_monitor": {
+            "default_value": "OFF"
+        },
+        "floating_window_enabled_first_monitor_window_position": {
+            "default_value": 1
+        },
+        "floating_window_enabled_second_monitor": {
+            "default_value": "OFF"
+        },
+        "floating_window_enabled_second_monitor_window_position": {
+            "default_value": 1
+        },
+        "floating_window_enabled_third_monitor": {
+            "default_value": "OFF"
+        },
+        "floating_window_enabled_third_monitor_window_position": {
+            "default_value": 1
+        }
+    },
     "safety_settings": {
         "title": {
             "default_value": None
