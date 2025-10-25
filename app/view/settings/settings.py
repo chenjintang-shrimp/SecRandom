@@ -108,6 +108,9 @@ class SettingsWindow(MSFluentWindow):
         self.extractionSettingsInterface = extraction_settings_page(self)
         self.extractionSettingsInterface.setObjectName("extractionSettingsInterface")
 
+        self.notificationSettingsInterface = notification_settings_page(self)
+        self.notificationSettingsInterface.setObjectName("notificationSettingsInterface")
+
         self.safetySettingsInterface = safety_settings_page(self)
         self.safetySettingsInterface.setObjectName("safetySettingsInterface")
 
@@ -129,6 +132,8 @@ class SettingsWindow(MSFluentWindow):
         self.addSubInterface(self.listManagementInterface, get_theme_icon("ic_fluent_list_20_filled"), get_content_name("list_management", "title"), position=NavigationItemPosition.TOP)
         
         self.addSubInterface(self.extractionSettingsInterface, get_theme_icon("ic_fluent_archive_20_filled"), get_content_name("extraction_settings", "title"), position=NavigationItemPosition.TOP)
+        
+        self.addSubInterface(self.notificationSettingsInterface, get_theme_icon("ic_fluent_notification_20_filled"), get_content_name("notification_settings", "title"), position=NavigationItemPosition.TOP)
 
         self.addSubInterface(self.safetySettingsInterface, get_theme_icon("ic_fluent_shield_20_filled"), get_content_name("safety_settings", "title"), position=NavigationItemPosition.TOP)
         

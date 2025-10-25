@@ -59,39 +59,11 @@ class advanced_safety_strong_protection(GroupHeaderCardWidget):
         self.encryption_strong_mode_combo.setCurrentIndex(readme_settings("advanced_safety_settings", "encryption_strong_mode"))
         self.encryption_strong_mode_combo.currentIndexChanged.connect(lambda: update_settings("advanced_safety_settings", "encryption_strong_mode", self.encryption_strong_mode_combo.currentIndex()))
 
-        # 是否开启强力防删除名单开关
-        self.strong_list_switch = SwitchButton()
-        self.strong_list_switch.setOffText(get_content_switchbutton_name("advanced_safety_settings", "strong_list_switch", "disable"))
-        self.strong_list_switch.setOnText(get_content_switchbutton_name("advanced_safety_settings", "strong_list_switch", "enable"))
-        self.strong_list_switch.setChecked(readme_settings("advanced_safety_settings", "strong_list_switch"))
-        self.strong_list_switch.checkedChanged.connect(lambda: update_settings("advanced_safety_settings", "strong_list_switch", self.strong_list_switch.isChecked()))
-
-        # 是否开启强力防删除历史记录开关
-        self.strong_history_switch = SwitchButton()
-        self.strong_history_switch.setOffText(get_content_switchbutton_name("advanced_safety_settings", "strong_history_switch", "disable"))
-        self.strong_history_switch.setOnText(get_content_switchbutton_name("advanced_safety_settings", "strong_history_switch", "enable"))
-        self.strong_history_switch.setChecked(readme_settings("advanced_safety_settings", "strong_history_switch"))
-        self.strong_history_switch.checkedChanged.connect(lambda: update_settings("advanced_safety_settings", "strong_history_switch", self.strong_history_switch.isChecked()))
-
-        # 是否开启强力防删除临时已抽取记录开关
-        self.strong_temp_switch = SwitchButton()
-        self.strong_temp_switch.setOffText(get_content_switchbutton_name("advanced_safety_settings", "strong_temp_switch", "disable"))
-        self.strong_temp_switch.setOnText(get_content_switchbutton_name("advanced_safety_settings", "strong_temp_switch", "enable"))
-        self.strong_temp_switch.setChecked(readme_settings("advanced_safety_settings", "strong_temp_switch"))
-        self.strong_temp_switch.checkedChanged.connect(lambda: update_settings("advanced_safety_settings", "strong_temp_switch", self.strong_temp_switch.isChecked()))
-
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_lock_closed_key_20_filled"), 
                         get_content_name("advanced_safety_settings", "encryption_strong_switch"), get_content_description("advanced_safety_settings", "encryption_strong_switch"), self.encryption_strong_switch)
         self.addGroup(get_theme_icon("ic_fluent_haptic_strong_20_filled"), 
                         get_content_name("advanced_safety_settings", "encryption_strong_mode"), get_content_description("advanced_safety_settings", "encryption_strong_mode"), self.encryption_strong_mode_combo)
-        self.addGroup(get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"), 
-                        get_content_name("advanced_safety_settings", "strong_list_switch"), get_content_description("advanced_safety_settings", "strong_list_switch"), self.strong_list_switch)
-        self.addGroup(get_theme_icon("ic_fluent_document_data_lock_20_filled"), 
-                        get_content_name("advanced_safety_settings", "strong_history_switch"), get_content_description("advanced_safety_settings", "strong_history_switch"), self.strong_history_switch)
-        self.addGroup(get_theme_icon("ic_fluent_document_lock_20_filled"), 
-                        get_content_name("advanced_safety_settings", "strong_temp_switch"), get_content_description("advanced_safety_settings", "strong_temp_switch"), self.strong_temp_switch)
-
 
 class advanced_safety_data_encryption(GroupHeaderCardWidget):
     def __init__(self, parent=None):

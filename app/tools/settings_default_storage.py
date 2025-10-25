@@ -670,15 +670,6 @@ DEFAULT_SETTINGS = {
         "encryption_strong_mode": {
             "default_value": 0
         },
-        "strong_list_switch": {
-            "default_value": False
-        },
-        "strong_history_switch": {
-            "default_value": False
-        },
-        "strong_temp_switch": {
-            "default_value": False
-        },
         "encryption_list_switch": {
             "default_value": False
         },
@@ -792,6 +783,86 @@ DEFAULT_SETTINGS = {
         },
         "floating_window_stick_to_edge_display_style": {
             "default_value": 1
+        }
+    },
+    "sidebar_tray_management": {
+        "title": {
+            "default_value": None
+        }
+    },
+    "sidebar_management_window": {
+        "title": {
+            "default_value": None
+        },
+        "roll_call_sidebar_position": {
+            "default_value": 1
+        },
+        "custom_roll_call_sidebar_position": {
+            "default_value": 1
+        },
+        "lottery_sidebar_position": {
+            "default_value": 1
+        },
+        "main_window_history": {
+            "default_value": 1
+        },
+        "settings_icon": {
+            "default_value": 1
+        },
+    },
+    "sidebar_management_settings": {
+        "title": {
+            "default_value": None
+        },
+        "home": {
+            "default_value": 0
+        },
+        "base_settings": {
+            "default_value": 0
+        },
+        "name_management": {
+            "default_value": 0
+        },
+        "draw_settings": {
+            "default_value": 0
+        },
+        "notification_service": {
+            "default_value": 1
+        },
+        "security_settings": {
+            "default_value": 1
+        },
+        "personal_settings": {
+            "default_value": 1
+        },
+        "voice_settings": {
+            "default_value": 1
+        },
+        "settings_history": {
+            "default_value": 1
+        },
+        "more_settings": {
+            "default_value": 1
+        }
+    },
+    "tray_management": {
+        "title": {
+            "default_value": None
+        },
+        "show_hide_main_window": {
+            "default_value": True
+        },
+        "open_settings": {
+            "default_value": True
+        },
+        "show_hide_float_window": {
+            "default_value": True
+        },
+        "restart": {
+            "default_value": True
+        },
+        "exit": {
+            "default_value": True
         }
     },
     "about": {
