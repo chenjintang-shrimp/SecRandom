@@ -629,6 +629,9 @@ DEFAULT_SETTINGS = {
         "animation": {
             "default_value": True
         },
+        "enabled_monitor": {
+            "default_value": "OFF"
+        },
         "window_position": {
             "default_value": 0
         },
@@ -641,44 +644,220 @@ DEFAULT_SETTINGS = {
         "transparency": {
             "default_value": 0.6
         },
-        "enabled_first_monitor": {
+        "floating_window_enabled_monitor": {
             "default_value": "OFF"
         },
-        "enabled_first_monitor_window_position": {
-            "default_value": 1
+        "floating_window_position": {
+            "default_value": 0
         },
-        "enabled_second_monitor": {
-            "default_value": "OFF"
+        "floating_window_horizontal_offset": {
+            "default_value": 0
         },
-        "enabled_second_monitor_window_position": {
-            "default_value": 1
-        },
-        "enabled_third_monitor": {
-            "default_value": "OFF"
-        },
-        "enabled_third_monitor_window_position": {
-            "default_value": 1
+        "floating_window_vertical_offset": {
+            "default_value": 0
         },
         "floating_window_transparency": {
             "default_value": 0.6
+        }
+    },
+    "quick_draw_notification_settings": {
+        "title": {
+            "default_value": None
         },
-        "floating_window_enabled_first_monitor": {
+        "basic_settings": {
+            "default_value": None
+        },
+        "window_mode": {
+            "default_value": None
+        },
+        "floating_window_mode": {
+            "default_value": None
+        },
+        "notification_mode": {
+            "default_value": 0
+        },
+        "animation": {
+            "default_value": True
+        },
+        "enabled_monitor": {
             "default_value": "OFF"
         },
-        "floating_window_enabled_first_monitor_window_position": {
-            "default_value": 1
+        "window_position": {
+            "default_value": 0
         },
-        "floating_window_enabled_second_monitor": {
+        "horizontal_offset": {
+            "default_value": 0
+        },
+        "vertical_offset": {
+            "default_value": 0
+        },
+        "transparency": {
+            "default_value": 0.6
+        },
+        "floating_window_enabled_monitor": {
             "default_value": "OFF"
         },
-        "floating_window_enabled_second_monitor_window_position": {
-            "default_value": 1
+        "floating_window_position": {
+            "default_value": 0
         },
-        "floating_window_enabled_third_monitor": {
+        "floating_window_horizontal_offset": {
+            "default_value": 0
+        },
+        "floating_window_vertical_offset": {
+            "default_value": 0
+        },
+        "floating_window_transparency": {
+            "default_value": 0.6
+        }
+    },
+    "instant_draw_notification_settings": {
+        "title": {
+            "default_value": None
+        },
+        "basic_settings": {
+            "default_value": None
+        },
+        "window_mode": {
+            "default_value": None
+        },
+        "floating_window_mode": {
+            "default_value": None
+        },
+        "notification_mode": {
+            "default_value": 0
+        },
+        "animation": {
+            "default_value": True
+        },
+        "enabled_monitor": {
             "default_value": "OFF"
         },
-        "floating_window_enabled_third_monitor_window_position": {
-            "default_value": 1
+        "window_position": {
+            "default_value": 0
+        },
+        "horizontal_offset": {
+            "default_value": 0
+        },
+        "vertical_offset": {
+            "default_value": 0
+        },
+        "transparency": {
+            "default_value": 0.6
+        },
+        "floating_window_enabled_monitor": {
+            "default_value": "OFF"
+        },
+        "floating_window_position": {
+            "default_value": 0
+        },
+        "floating_window_horizontal_offset": {
+            "default_value": 0
+        },
+        "floating_window_vertical_offset": {
+            "default_value": 0
+        },
+        "floating_window_transparency": {
+            "default_value": 0.6
+        }
+    },
+    "custom_draw_notification_settings": {
+        "title": {
+            "default_value": None
+        },
+        "basic_settings": {
+            "default_value": None
+        },
+        "window_mode": {
+            "default_value": None
+        },
+        "floating_window_mode": {
+            "default_value": None
+        },
+        "notification_mode": {
+            "default_value": 0
+        },
+        "animation": {
+            "default_value": True
+        },
+        "enabled_monitor": {
+            "default_value": "OFF"
+        },
+        "window_position": {
+            "default_value": 0
+        },
+        "horizontal_offset": {
+            "default_value": 0
+        },
+        "vertical_offset": {
+            "default_value": 0
+        },
+        "transparency": {
+            "default_value": 0.6
+        },
+        "floating_window_enabled_monitor": {
+            "default_value": "OFF"
+        },
+        "floating_window_position": {
+            "default_value": 0
+        },
+        "floating_window_horizontal_offset": {
+            "default_value": 0
+        },
+        "floating_window_vertical_offset": {
+            "default_value": 0
+        },
+        "floating_window_transparency": {
+            "default_value": 0.6
+        }
+    },
+    "lottery_notification_settings": {
+        "title": {
+            "default_value": None
+        },
+        "basic_settings": {
+            "default_value": None
+        },
+        "window_mode": {
+            "default_value": None
+        },
+        "floating_window_mode": {
+            "default_value": None
+        },
+        "notification_mode": {
+            "default_value": 0
+        },
+        "animation": {
+            "default_value": True
+        },
+        "enabled_monitor": {
+            "default_value": "OFF"
+        },
+        "window_position": {
+            "default_value": 0
+        },
+        "horizontal_offset": {
+            "default_value": 0
+        },
+        "vertical_offset": {
+            "default_value": 0
+        },
+        "transparency": {
+            "default_value": 0.6
+        },
+        "floating_window_enabled_monitor": {
+            "default_value": "OFF"
+        },
+        "floating_window_position": {
+            "default_value": 0
+        },
+        "floating_window_horizontal_offset": {
+            "default_value": 0
+        },
+        "floating_window_vertical_offset": {
+            "default_value": 0
+        },
+        "floating_window_transparency": {
+            "default_value": 0.6
         }
     },
     "safety_settings": {

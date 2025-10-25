@@ -20,3 +20,6 @@ from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
 
+# ==================================================
+# 更多通知设置类
+# ==================================================
