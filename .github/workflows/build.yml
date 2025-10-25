@@ -88,7 +88,7 @@ jobs:
               -D `
               -i ./resources/secrandom-icon-paper.ico `
               -n SecRandom `
-              --add-data ./app/resource:app/resource `
+              --add-data ./app/resources:app/resources `
               --add-data LICENSE:. `
               --version-file=version_info.txt
             if ($LASTEXITCODE -ne 0) { 
