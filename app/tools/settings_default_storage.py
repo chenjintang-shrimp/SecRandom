@@ -865,6 +865,46 @@ DEFAULT_SETTINGS = {
             "default_value": True
         }
     },
+    "voice_settings": {
+        "title": {
+            "default_value": None
+        },
+    },
+    "basic_voice_settings": {
+        "title": {
+            "default_value": None
+        },
+        "voice_engine_group": {
+            "default_value": None
+        },
+        "volume_group": {
+            "default_value": None
+        },
+        "system_volume_group": {
+            "default_value": None
+        },
+        "voice_engine": {
+            "default_value": 0
+        },
+        "edge_tts_voice_name": {
+            "default_value": "zh-CN-XiaoxiaoNeural"
+        },
+        "voice_playback": {
+            "default_value": 0
+        },
+        "volume_size": {
+            "default_value": 80
+        },
+        "speech_rate": {
+            "default_value": 100
+        },
+        "system_volume_control": {
+            "default_value": 0
+        },
+        "system_volume_size": {
+            "default_value": 80
+        }
+    },
     "about": {
         "title": {
             "default_value": None

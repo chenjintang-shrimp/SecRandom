@@ -110,9 +110,9 @@ class more_settings_page(PivotPageTemplate):
     """创建更多设置页面"""
     def __init__(self, parent: QFrame = None):
         page_config = {
-            "advanced_settings": get_content_name("advanced_settings", "title"),
-            "experimental_features": get_content_name("experimental_features", "title"),
-            "debug": get_content_name("debug", "title")
+            "debug": get_content_name("debug", "title"),
+            # "advanced_settings": get_content_name("advanced_settings", "title"),
+            # "experimental_features": get_content_name("experimental_features", "title"),
         }
         super().__init__(page_config, parent)
         self.set_base_path("app.view.settings.more_settings")   

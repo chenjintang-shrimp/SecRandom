@@ -108,14 +108,23 @@ class SettingsWindow(MSFluentWindow):
         self.extractionSettingsInterface = extraction_settings_page(self)
         self.extractionSettingsInterface.setObjectName("extractionSettingsInterface")
 
-        self.notificationSettingsInterface = notification_settings_page(self)
-        self.notificationSettingsInterface.setObjectName("notificationSettingsInterface")
+        # self.notificationSettingsInterface = notification_settings_page(self)
+        # self.notificationSettingsInterface.setObjectName("notificationSettingsInterface")
 
         self.safetySettingsInterface = safety_settings_page(self)
         self.safetySettingsInterface.setObjectName("safetySettingsInterface")
 
         self.customSettingsInterface = custom_settings_page(self)
         self.customSettingsInterface.setObjectName("customSettingsInterface") 
+
+        # self.voiceSettingsInterface = voice_settings_page(self)
+        # self.voiceSettingsInterface.setObjectName("voiceSettingsInterface")
+
+        # self.historyInterface = history_page(self)
+        # self.historyInterface.setObjectName("historyInterface")
+
+        self.moreSettingsInterface = more_settings_page(self)
+        self.moreSettingsInterface.setObjectName("moreSettingsInterface")
 
         self.aboutInterface = about_page(self)
         self.aboutInterface.setObjectName("aboutInterface")
@@ -133,11 +142,17 @@ class SettingsWindow(MSFluentWindow):
         
         self.addSubInterface(self.extractionSettingsInterface, get_theme_icon("ic_fluent_archive_20_filled"), get_content_name("extraction_settings", "title"), position=NavigationItemPosition.TOP)
         
-        self.addSubInterface(self.notificationSettingsInterface, get_theme_icon("ic_fluent_notification_20_filled"), get_content_name("notification_settings", "title"), position=NavigationItemPosition.TOP)
+        # self.addSubInterface(self.notificationSettingsInterface, get_theme_icon("ic_fluent_notification_20_filled"), get_content_name("notification_settings", "title"), position=NavigationItemPosition.TOP)
 
         self.addSubInterface(self.safetySettingsInterface, get_theme_icon("ic_fluent_shield_20_filled"), get_content_name("safety_settings", "title"), position=NavigationItemPosition.TOP)
         
         self.addSubInterface(self.customSettingsInterface, get_theme_icon("ic_fluent_person_edit_20_filled"), get_content_name("custom_settings", "title"), position=NavigationItemPosition.TOP)
+        
+        # self.addSubInterface(self.voiceSettingsInterface, get_theme_icon("ic_fluent_voice_20_filled"), get_content_name("voice_settings", "title"), position=NavigationItemPosition.TOP)
+        
+        # self.addSubInterface(self.historyInterface, get_theme_icon("ic_fluent_history_20_filled"), get_content_name("history", "title"), position=NavigationItemPosition.TOP)
+        
+        self.addSubInterface(self.moreSettingsInterface, get_theme_icon("ic_fluent_more_horizontal_20_filled"), get_content_name("more_settings", "title"), position=NavigationItemPosition.TOP)
 
         self.addSubInterface(self.aboutInterface, get_theme_icon("ic_fluent_info_20_filled"), get_content_name("about", "title"), position=NavigationItemPosition.BOTTOM)
 
