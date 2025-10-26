@@ -76,6 +76,44 @@
 - **GitHub 镜像源(ghfast.top)** - 国内加速镜像，速度快且稳定
 - **GitHub 镜像源(gh-proxy.com)** - 国内加速镜像，适合网络环境特殊的用户
 
+## 🛠️ 开发环境搭建
+
+### 使用 uv 包管理器（推荐）
+
+该项目现已支持使用 [uv](https://github.com/astral-sh/uv) 包管理器进行依赖管理，这是一种更快速的 Python 包管理方案。
+
+1. 安装 uv：
+   ```bash
+   # 在 Windows 上使用 pip 安装
+   pip install uv
+   
+   # 或者使用官方安装脚本
+   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+   ```
+
+2. 克隆项目并进入项目目录：
+   ```bash
+   git clone https://github.com/SECTL/SecRandom.git
+   cd SecRandom
+   ```
+
+3. 安装依赖：
+   ```bash
+   uv sync
+   ```
+
+4. 运行程序：
+   ```bash
+   uv run python main.py
+   ```
+
+### 传统方式安装依赖
+
+如果你不想使用 uv，也可以继续使用传统的 pip 方式安装依赖：
+
+```bash
+pip install -r requirements.txt
+```
 
 ## 📸 软件截图(v1.1.0.1)
 <details>
@@ -113,62 +151,4 @@
 ### 触发构建
 在提交信息中包含 `进行打包` 即可触发自动构建流程。
 
-</details>
-
-## 🙏 贡献者和特别感谢
-
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="16.66%"><a href="https://github.com/lzy98276"><img src="app/resource/icon/contributor1.png" width="100px;" alt="lzy98276"/><br /><sub><b>lzy98276 (黎泽懿_Aionflux)</b></sub></a><br /><a href="#content-lzy98276" title="Content">🖋</a> <a href="#design-lzy98276" title="Design">🎨</a> <a href="#ideas-lzy98276" title="Ideas, Planning, & Feedback">🤔</a> <a href="#maintenance-lzy98276" title="Maintenance">🚧</a> <a href="#doc-lzy98276" title="Documentation">📖</a> <a href="#bug-lzy98276" title="Bug reports">🐛</a></td>
-      <td align="center" valign="top" width="16.66%"><a href="https://github.com/QiKeZhiCao"><img src="app/resource/icon/contributor2.png" width="100px;" alt="QiKeZhiCao"/><br /><sub><b>QiKeZhiCao (弃稞之草)</b></sub></a><br /><a href="#ideas-QiKeZhiCao" title="Ideas, Planning, & Feedback">🤔</a> <a href="#maintenance-QiKeZhiCao" title="Maintenance">🚧</a></td>
-      <td align="center" valign="top" width="16.66%"><a href="https://github.com/Fox-block-offcial"><img src="app/resource/icon/contributor3.png" width="100px;" alt="Fox-block-offcial"/><br /><sub><b>Fox-block-offcial</b></sub></a><br /><a href="#bug-Fox-block-offcial" title="Bug reports">🐛</a> <a href="#testing-Fox-block-offcial" title="Testing">⚠️</a></td>
-      <td align="center" valign="top" width="16.66%"><a href="https://github.com/yuanbenxin"><img src="app/resource/icon/contributor4.png" width="100px;" alt="yuanbenxin"/><br /><sub><b>yuanbenxin (本新同学)</b></sub></a><br /><a href="#code-yuanbenxin" title="Code">💻</a> <a href="#design-yuanbenxin" title="Design">🎨</a> <a href="#maintenance-yuanbenxin" title="Maintenance">🚧</a> <a href="#doc-yuanbenxin" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="16.66%"><a href="https://github.com/zhangjianjian7"><img src="app/resource/icon/contributor5.png" width="100px;" alt="zhangjianjian7"/><br /><sub><b>zhangjianjian7 (叶背影)</b></sub></a><br /><a href="#doc-zhangjianjian7" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="16.66%"><a href="https://github.com/jursin"><img src="app/resource/icon/contributor6.png" width="100px;" alt="Jursin"/><br /><sub><b>Jursin</b></sub></a><br /><a href="#code-jursin" title="Code">💻</a> <a href="#design-jursin" title="Design">🎨</a> <a href="#maintenance-jursin" title="Maintenance">🚧</a> <a href="#doc-jursin" title="Documentation">📖</a></td>
-    </tr>
-  </tbody>
-</table>
-
-## 💝 捐献支持
-
-如果您觉得 SecRandom 对您有帮助，欢迎支持我们的开发工作！
-
-- **支付宝/微信支付**
-
-  <image src="app/resource/assets/contribution/Alipay.png" height="196"/> <image src="app/resource/assets/contribution/WeChat_Pay.png" height="196"/>
-
-## 📞 联系方式
-
-* 📧 [邮箱](mailto:lzy.12@foxmail.com)
-* 👥 [QQ群 833875216](https://qm.qq.com/q/iWcfaPHn7W)
-* 🎥 [B站主页](https://space.bilibili.com/520571577)
-* 🐛 [问题反馈](https://github.com/SECTL/SecRandom/issues)
-
-## 📄 官方文档
-
-- 📄 **[SecRandom 官方文档](https://secrandom.netlify.app)**
-- [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/SECTL/SecRandom)
-
-
-## 🏆 贡献值
-
->[!TIP]
->
-> 📊 **贡献值计算公式**：贡献值 = 文档提交新增行数 x5 + 主程序提交新增行数 x5 + 处理issue x5
-> 
-> 📅 **统计时间范围**：2025.08.01 - 2026.01.31 (中国时间 UTC+8)
-> 
-> 🏗️ **统计仓库**：SECTL/SecRandom, SECTL/SecRandom-docs
-
-## ✨ Star历程
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark">
-  <img alt="Star History" src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date">
-</picture>
-
-**Copyright © 2025 SECTL**
+```
