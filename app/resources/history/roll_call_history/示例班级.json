@@ -1,0 +1,95 @@
+{
+    "metadata": {
+        "class_name": "示例班级",
+        "created_time": "2025-06-18 00:00:00",
+        "last_updated": "2025-06-18 00:00:00"
+    },
+    "students": {
+        "示例学生": {
+            "id": 1,
+            "gender": "男",
+            "group": "第一小组",
+            "total_count": 1,
+            "group_gender_count": 0,
+            "last_drawn_time": "2025-10-18 13:26:30",
+            "rounds_missed": 0,
+            "history": [
+                {
+                    "draw_time": "2025-10-18 13:26:30",
+                    "draw_mode": "抽取全班学生",
+                    "draw_people_count": 1,
+                    "draw_gender": "抽取所有性别",
+                    "draw_group": "抽取所有小组"
+                }
+            ]
+        },
+        "学生03": {
+            "id": 3,
+            "gender": "女",
+            "group": "第二小组",
+            "total_count": 1,
+            "group_gender_count": 0,
+            "last_drawn_time": "2025-10-25 18:12:33",
+            "rounds_missed": 0,
+            "history": [
+                {
+                    "draw_time": "2025-10-25 18:12:33",
+                    "draw_mode": "抽取全班学生",
+                    "draw_people_count": 5,
+                    "draw_gender": "抽取所有性别",
+                    "draw_group": "抽取所有小组"
+                }
+            ]
+        },
+        "学生19": {
+            "id": 19,
+            "gender": "男",
+            "group": "第三小组",
+            "total_count": 1,
+            "group_gender_count": 0,
+            "last_drawn_time": "2025-10-25 18:12:33",
+            "rounds_missed": 0,
+            "history": [
+                {
+                    "draw_time": "2025-10-25 18:12:33",
+                    "draw_mode": "抽取全班学生",
+                    "draw_people_count": 5,
+                    "draw_gender": "抽取所有性别",
+                    "draw_group": "抽取所有小组"
+                }
+            ]
+        }
+    },
+    "draw_sessions": [
+        {
+            "session_id": "session_20251018_132630",
+            "draw_time": "2025-10-18 13:26:30",
+            "draw_mode": "抽取全班学生",
+            "draw_people_count": 1,
+            "draw_gender": "抽取所有性别",
+            "draw_group": "抽取所有小组",
+            "selected_students": ["示例学生"]
+        },
+        {
+            "session_id": "session_20251025_181233",
+            "draw_time": "2025-10-25 18:12:33",
+            "draw_mode": "抽取全班学生",
+            "draw_people_count": 5,
+            "draw_gender": "抽取所有性别",
+            "draw_group": "抽取所有小组",
+            "selected_students": ["学生03", "学生19", "学生18", "学生17", "学生20"]
+        }
+    ],
+    "statistics": {
+        "total_draws": 2,
+        "group_stats": {
+            "第一小组": 1,
+            "第二小组": 1,
+            "第三小组": 1
+        },
+        "gender_stats": {
+            "男": 2,
+            "女": 1
+        }
+    }
+}

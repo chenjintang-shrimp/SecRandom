@@ -139,6 +139,9 @@ DEFAULT_SETTINGS = {
         "title": {
             "default_value": None
         },
+        "select_class_name": {
+            "default_value": 0
+        },
         "HeaderLabels": {
             "default_value": None
         }
@@ -174,6 +177,9 @@ DEFAULT_SETTINGS = {
     "lottery_table": {
         "title": {
             "default_value": None
+        },
+        "select_pool_name": {
+            "default_value": 0
         },
         "HeaderLabels": {
             "default_value": None
@@ -1158,6 +1164,94 @@ DEFAULT_SETTINGS = {
         },
         "system_volume_size": {
             "default_value": 80
+        }
+    },
+    "history": {
+        "title": {
+            "default_value": None
+        }
+    },
+    "history_management": {
+        "title": {
+            "default_value": None
+        },
+        "roll_call": {
+            "default_value": None
+        },
+        "lottery_history": {
+            "default_value": None
+        },
+        "show_roll_call_history": {
+            "default_value": True
+        },
+        "select_class_name": {
+            "default_value": 0
+        },
+        "clear_roll_call_history": {
+            "default_value": None
+        },
+        "show_lottery_history": {
+            "default_value": True
+        },
+        "select_pool_name": {
+            "default_value": 0
+        },
+        "clear_lottery_history": {
+            "default_value": None
+        }
+    },
+    "roll_call_history_table": {
+        "title": {
+            "default_value": None
+        },
+        "select_class_name": {
+            "default_value": 0
+        },
+        "select_mode": {
+            "default_value": 0
+        },
+        "HeaderLabels_all_not_weight": {
+            "default_value": None
+        },
+        "HeaderLabels_all_weight": {
+            "default_value": None
+        },
+        "HeaderLabels_time": {
+            "default_value": None
+        },
+        "HeaderLabels_Individual": {
+            "default_value": None
+        },
+        "clear_history": {
+            "default_value": None
+        },
+        "confirm_clear_title": {
+            "default_value": None
+        },
+        "confirm_clear_message": {
+            "default_value": None
+        },
+        "clear_success_title": {
+            "default_value": None
+        },
+        "clear_success_message": {
+            "default_value": None
+        },
+        "clear_error_title": {
+            "default_value": None
+        },
+        "clear_error_message": {
+            "default_value": None
+        }
+    },
+    "more_settings": {
+        "title": {
+            "default_value": None
+        },
+    },
+    "debug":{
+        "title": {
+            "default_value": None
         }
     },
     "about": {

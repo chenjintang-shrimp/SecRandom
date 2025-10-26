@@ -1,0 +1,171 @@
+{
+    "roll_call": {
+        "示例学生": {
+            "total_number_of_times": 1,
+            "total_number_auxiliary": 0,
+            "last_drawn_time": "2025-10-18 13:26:30",
+            "rounds_missed": 0,
+            "time": [
+                {
+                    "draw_max": 1,
+                    "draw_time": "2025-10-18 13:26:30",
+                    "draw_people_numbers": 1,
+                    "draw_group": "抽取全班学生",
+                    "draw_gender": "抽取所有性别"
+                }
+            ]
+        },
+        "学生03": {
+            "total_number_of_times": 1,
+            "total_number_auxiliary": 0,
+            "last_drawn_time": "2025-10-25 18:12:33",
+            "rounds_missed": 0,
+            "time": [
+                {
+                    "draw_max": 1,
+                    "draw_time": "2025-10-25 18:12:33",
+                    "draw_people_numbers": 5,
+                    "draw_group": "抽取全班学生",
+                    "draw_gender": "抽取所有性别"
+                }
+            ]
+        },
+        "学生19": {
+            "total_number_of_times": 1,
+            "total_number_auxiliary": 0,
+            "last_drawn_time": "2025-10-25 18:12:33",
+            "rounds_missed": 0,
+            "time": [
+                {
+                    "draw_max": 1,
+                    "draw_time": "2025-10-25 18:12:33",
+                    "draw_people_numbers": 5,
+                    "draw_group": "抽取全班学生",
+                    "draw_gender": "抽取所有性别"
+                }
+            ]
+        },
+        "学生18": {
+            "total_number_of_times": 1,
+            "total_number_auxiliary": 0,
+            "last_drawn_time": "2025-10-25 18:12:33",
+            "rounds_missed": 0,
+            "time": [
+                {
+                    "draw_max": 1,
+                    "draw_time": "2025-10-25 18:12:33",
+                    "draw_people_numbers": 5,
+                    "draw_group": "抽取全班学生",
+                    "draw_gender": "抽取所有性别"
+                }
+            ]
+        },
+        "学生17": {
+            "total_number_of_times": 1,
+            "total_number_auxiliary": 0,
+            "last_drawn_time": "2025-10-25 18:12:33",
+            "rounds_missed": 0,
+            "time": [
+                {
+                    "draw_max": 1,
+                    "draw_time": "2025-10-25 18:12:33",
+                    "draw_people_numbers": 5,
+                    "draw_group": "抽取全班学生",
+                    "draw_gender": "抽取所有性别"
+                }
+            ]
+        },
+        "学生20": {
+            "total_number_of_times": 1,
+            "total_number_auxiliary": 0,
+            "last_drawn_time": "2025-10-25 18:12:33",
+            "rounds_missed": 0,
+            "time": [
+                {
+                    "draw_max": 1,
+                    "draw_time": "2025-10-25 18:12:33",
+                    "draw_people_numbers": 5,
+                    "draw_group": "抽取全班学生",
+                    "draw_gender": "抽取所有性别"
+                }
+            ]
+        }
+    },
+    "draw_group": {},
+    "group_stats": {
+        "第一小组": 1,
+        "第六小组": 2,
+        "第二小组": 2,
+        "第四小组": 1,
+        "第八小组": 1,
+        "第七小组": 1,
+        "第五小组": 2
+    },
+    "gender_stats": {
+        "男": 4,
+        "女": 6
+    },
+    "total_stats": 10,
+    "instant_draw": {
+        "学生35": {
+            "total_number_of_times": 1,
+            "total_number_auxiliary": 0,
+            "last_drawn_time": "2025-10-18 20:53:58",
+            "rounds_missed": 3,
+            "time": [
+                {
+                    "draw_max": 1,
+                    "draw_time": "2025-10-18 20:53:58",
+                    "draw_people_numbers": 1,
+                    "draw_group": "抽取全班学生",
+                    "draw_gender": "抽取所有性别"
+                }
+            ]
+        },
+        "学生21": {
+            "total_number_of_times": 1,
+            "total_number_auxiliary": 0,
+            "last_drawn_time": "2025-10-18 20:54:12",
+            "rounds_missed": 2,
+            "time": [
+                {
+                    "draw_max": 1,
+                    "draw_time": "2025-10-18 20:54:12",
+                    "draw_people_numbers": 1,
+                    "draw_group": "抽取全班学生",
+                    "draw_gender": "抽取所有性别"
+                }
+            ]
+        },
+        "学生10": {
+            "total_number_of_times": 1,
+            "total_number_auxiliary": 0,
+            "last_drawn_time": "2025-10-18 20:59:45",
+            "rounds_missed": 1,
+            "time": [
+                {
+                    "draw_max": 1,
+                    "draw_time": "2025-10-18 20:59:45",
+                    "draw_people_numbers": 1,
+                    "draw_group": "抽取全班学生",
+                    "draw_gender": "抽取所有性别"
+                }
+            ]
+        },
+        "学生50": {
+            "total_number_of_times": 1,
+            "total_number_auxiliary": 0,
+            "last_drawn_time": "2025-10-18 20:59:50",
+            "rounds_missed": 0,
+            "time": [
+                {
+                    "draw_max": 1,
+                    "draw_time": "2025-10-18 20:59:50",
+                    "draw_people_numbers": 1,
+                    "draw_group": "抽取全班学生",
+                    "draw_gender": "抽取所有性别"
+                }
+            ]
+        }
+    }
+}

@@ -58,15 +58,15 @@ class roll_call_table(GroupHeaderCardWidget):
     def create_class_selection(self):
         """创建班级选择区域"""
         self.class_comboBox = ComboBox()
-        self.class_comboBox.setCurrentIndex(readme_settings("roll_call_list", "select_class_name"))
+        self.class_comboBox.setCurrentIndex(readme_settings("roll_call_table", "select_class_name"))
         if not get_class_name_list():
             self.class_comboBox.setCurrentIndex(-1)
-            self.class_comboBox.setPlaceholderText(get_content_name("roll_call_list", "select_class_name"))
-        self.class_comboBox.currentIndexChanged.connect(lambda: update_settings("roll_call_list", "select_class_name", self.class_comboBox.currentIndex()))
+            self.class_comboBox.setPlaceholderText(get_content_name("roll_call_table", "select_class_name"))
+        self.class_comboBox.currentIndexChanged.connect(lambda: update_settings("roll_call_table", "select_class_name", self.class_comboBox.currentIndex()))
         self.class_comboBox.currentTextChanged.connect(self.refresh_data)
 
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), 
-                        get_content_name("roll_call_list", "select_class_name"), get_content_description("roll_call_list", "select_class_name"), self.class_comboBox)
+                        get_content_name("roll_call_table", "select_class_name"), get_content_description("roll_call_table", "select_class_name"), self.class_comboBox)
         
     def create_table(self):
         """创建表格区域"""

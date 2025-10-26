@@ -57,15 +57,15 @@ class lottery_table(GroupHeaderCardWidget):
     def create_lottery_selection(self):
         """创建抽奖名单选择区域"""
         self.lottery_comboBox = ComboBox()
-        self.lottery_comboBox.setCurrentIndex(readme_settings("lottery_list", "select_pool_name"))
+        self.lottery_comboBox.setCurrentIndex(readme_settings("lottery_table", "select_pool_name"))
         if not get_pool_name_list():
             self.lottery_comboBox.setCurrentIndex(-1)
-            self.lottery_comboBox.setPlaceholderText(get_content_name("lottery_list", "select_pool_name"))
-        self.lottery_comboBox.currentIndexChanged.connect(lambda: update_settings("lottery_list", "select_pool_name", self.lottery_comboBox.currentIndex()))
+            self.lottery_comboBox.setPlaceholderText(get_content_name("lottery_table", "select_pool_name"))
+        self.lottery_comboBox.currentIndexChanged.connect(lambda: update_settings("lottery_table", "select_pool_name", self.lottery_comboBox.currentIndex()))
         self.lottery_comboBox.currentTextChanged.connect(self.refresh_data)
 
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), 
-                        get_content_name("lottery_list", "select_pool_name"), get_content_description("lottery_list", "select_pool_name"), self.lottery_comboBox)
+                        get_content_name("lottery_table", "select_pool_name"), get_content_description("lottery_table", "select_pool_name"), self.lottery_comboBox)
         
     def create_table(self):
         """创建表格区域"""

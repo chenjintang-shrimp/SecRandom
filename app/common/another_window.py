@@ -127,9 +127,9 @@ class ContributorDialog(QDialog):
                 'avatar': str(get_resources_path('assets/contribution', 'contributor4.png'))
             },
             {
-                'name': 'zhangjianjian7',
+                'name': 'LeafS',
                 'role': get_any_position_value("about", "contributor", "contributor_role_5"),
-                'github': 'https://github.com/zhangjianjian7',
+                'github': 'https://github.com/LeafS825',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor5.png'))
             },
             {

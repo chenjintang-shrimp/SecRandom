@@ -120,8 +120,8 @@ class SettingsWindow(MSFluentWindow):
         # self.voiceSettingsInterface = voice_settings_page(self)
         # self.voiceSettingsInterface.setObjectName("voiceSettingsInterface")
 
-        # self.historyInterface = history_page(self)
-        # self.historyInterface.setObjectName("historyInterface")
+        self.historyInterface = history_page(self)
+        self.historyInterface.setObjectName("historyInterface")
 
         self.moreSettingsInterface = more_settings_page(self)
         self.moreSettingsInterface.setObjectName("moreSettingsInterface")
@@ -150,7 +150,7 @@ class SettingsWindow(MSFluentWindow):
         
         # self.addSubInterface(self.voiceSettingsInterface, get_theme_icon("ic_fluent_voice_20_filled"), get_content_name("voice_settings", "title"), position=NavigationItemPosition.TOP)
         
-        # self.addSubInterface(self.historyInterface, get_theme_icon("ic_fluent_history_20_filled"), get_content_name("history", "title"), position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.historyInterface, get_theme_icon("ic_fluent_history_20_filled"), get_content_name("history", "title"), position=NavigationItemPosition.TOP)
         
         self.addSubInterface(self.moreSettingsInterface, get_theme_icon("ic_fluent_more_horizontal_20_filled"), get_content_name("more_settings", "title"), position=NavigationItemPosition.TOP)
 

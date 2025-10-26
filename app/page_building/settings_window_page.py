@@ -100,8 +100,8 @@ class history_page(PivotPageTemplate):
     def __init__(self, parent: QFrame = None):
         page_config = {
             "history_management": get_content_name("history_management", "title"),
-            "roll_call_history": get_content_name("roll_call_history", "title"),
-            "lottery_history": get_content_name("lottery_history", "title")
+            "roll_call_history_table": get_content_name("roll_call_history_table", "title"),
+            "lottery_history_table": get_content_name("lottery_history_table", "title")
         }
         super().__init__(page_config, parent)
         self.set_base_path("app.view.settings.history")
