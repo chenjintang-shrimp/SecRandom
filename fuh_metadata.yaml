@@ -1,0 +1,16 @@
+latest:
+  release: v1.3.1.5
+  beta: v1.3.1.5
+
+latest_no:
+  release: 1
+  beta: 1
+
+subchannels:
+  arch:
+    - x86
+    - x64
+  struct:
+    - dir
+
+name_format: SecRandom-Windows-[version]-[arch]-[struct].zip
