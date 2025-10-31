@@ -35,7 +35,7 @@ class roll_call_history_table(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
-        self.setTitle(get_content_name("roll_call_history_table", "title"))
+        self.setTitle(get_content_name_async("roll_call_history_table", "title"))
         self.setBorderRadius(8)
         # 创建班级选择区域
         QTimer.singleShot(APPLY_DELAY, self.create_class_selection)
@@ -61,36 +61,36 @@ class roll_call_history_table(GroupHeaderCardWidget):
     def create_class_selection(self):
         """创建班级选择区域"""
         self.class_comboBox = ComboBox()
-        self.class_comboBox.setCurrentIndex(readme_settings("roll_call_history_table", "select_class_name"))
+        self.class_comboBox.setCurrentIndex(readme_settings_async("roll_call_history_table", "select_class_name"))
         if not get_class_name_history():
             self.class_comboBox.setCurrentIndex(-1)
-            self.class_comboBox.setPlaceholderText(get_content_name("roll_call_history_table", "select_class_name"))
+            self.class_comboBox.setPlaceholderText(get_content_name_async("roll_call_history_table", "select_class_name"))
         self.class_comboBox.currentIndexChanged.connect(self.on_class_changed)
         self.class_comboBox.currentTextChanged.connect(lambda: self.on_class_changed(-1))
 
         # 选择查看模式
         self.mode_comboBox = ComboBox()
-        self.mode_comboBox.addItems(get_content_combo_name("roll_call_history_table", "select_mode"))
-        self.mode_comboBox.setCurrentIndex(readme_settings("roll_call_history_table", "select_mode"))
+        self.mode_comboBox.addItems(get_content_combo_name_async("roll_call_history_table", "select_mode"))
+        self.mode_comboBox.setCurrentIndex(readme_settings_async("roll_call_history_table", "select_mode"))
         self.mode_comboBox.currentIndexChanged.connect(lambda: update_settings("roll_call_history_table", "select_mode", self.mode_comboBox.currentIndex()))
         self.mode_comboBox.currentTextChanged.connect(self.refresh_data)
 
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), 
-                        get_content_name("roll_call_history_table", "select_class_name"), get_content_description("roll_call_history_table", "select_class_name"), self.class_comboBox)
+                        get_content_name_async("roll_call_history_table", "select_class_name"), get_content_description_async("roll_call_history_table", "select_class_name"), self.class_comboBox)
         self.addGroup(get_theme_icon("ic_fluent_reading_mode_mobile_20_filled"), 
-                        get_content_name("roll_call_history_table", "select_mode"), get_content_description("roll_call_history_table", "select_mode"), self.mode_comboBox)
+                        get_content_name_async("roll_call_history_table", "select_mode"), get_content_description_async("roll_call_history_table", "select_mode"), self.mode_comboBox)
         
     def create_buttons(self):
         """创建按钮区域"""
         # 创建清除历史记录按钮
-        self.clear_button = PushButton(get_content_name("roll_call_history_table", "clear_history"))
+        self.clear_button = PushButton(get_content_name_async("roll_call_history_table", "clear_history"))
         self.clear_button.clicked.connect(self.clear_history)
         self.clear_button.setEnabled(False)
         
         # 添加按钮到布局
         self.addGroup(get_theme_icon("ic_fluent_delete_20_filled"), 
-                        get_content_name("roll_call_history_table", "clear_history"), 
-                        get_content_description("roll_call_history_table", "clear_history"), 
+                        get_content_name_async("roll_call_history_table", "clear_history"), 
+                        get_content_description_async("roll_call_history_table", "clear_history"), 
                         self.clear_button)
         
     def clear_history(self):
@@ -102,8 +102,8 @@ class roll_call_history_table(GroupHeaderCardWidget):
         # 确认对话框
         reply = QMessageBox.question(
             self,
-            get_content_name("roll_call_history_table", "confirm_clear_title"),
-            get_content_name("roll_call_history_table", "confirm_clear_message").format(class_name=class_name),
+            get_content_name_async("roll_call_history_table", "confirm_clear_title"),
+            get_content_name_async("roll_call_history_table", "confirm_clear_message").format(class_name=class_name),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
@@ -117,8 +117,8 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 # 显示成功消息
                 QMessageBox.information(
                     self,
-                    get_content_name("roll_call_history_table", "clear_success_title"),
-                    get_content_name("roll_call_history_table", "clear_success_message").format(class_name=class_name)
+                    get_content_name_async("roll_call_history_table", "clear_success_title"),
+                    get_content_name_async("roll_call_history_table", "clear_success_message").format(class_name=class_name)
                 )
                 # 刷新数据
                 self.refresh_class_history()
@@ -126,8 +126,8 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 # 显示错误消息
                 QMessageBox.critical(
                     self,
-                    get_content_name("roll_call_history_table", "clear_error_title"),
-                    get_content_name("roll_call_history_table", "clear_error_message").format(class_name=class_name)
+                    get_content_name_async("roll_call_history_table", "clear_error_title"),
+                    get_content_name_async("roll_call_history_table", "clear_error_message").format(class_name=class_name)
                 )
         
     def create_table(self):
@@ -157,14 +157,14 @@ class roll_call_history_table(GroupHeaderCardWidget):
         # 检查mode_comboBox是否存在
         if not hasattr(self, 'mode_comboBox'):
             # 如果mode_comboBox不存在，使用默认模式
-            headers = get_content_name("roll_call_history_table", "HeaderLabels_all_not_weight")
+            headers = get_content_name_async("roll_call_history_table", "HeaderLabels_all_not_weight")
             self.table.setColumnCount(len(headers))
             self.table.setHorizontalHeaderLabels(headers)
             return
             
         # 获取当前选择的模式
         mode_index = self.mode_comboBox.currentIndex()
-        mode_items = get_content_combo_name("roll_call_history_table", "select_mode")
+        mode_items = get_content_combo_name_async("roll_call_history_table", "select_mode")
         
         if mode_index >= 0 and mode_index < len(mode_items):
             mode = mode_items[mode_index]
@@ -172,27 +172,27 @@ class roll_call_history_table(GroupHeaderCardWidget):
             # 根据模式设置表格头和列数
             if mode == "全部":
                 # 默认显示不包含权重的全部信息
-                headers = get_content_name("roll_call_history_table", "HeaderLabels_all_not_weight")
+                headers = get_content_name_async("roll_call_history_table", "HeaderLabels_all_not_weight")
                 self.table.setColumnCount(len(headers))
                 self.table.setHorizontalHeaderLabels(headers)
             elif mode == "时间":
                 # 显示时间模式
-                headers = get_content_name("roll_call_history_table", "HeaderLabels_time")
+                headers = get_content_name_async("roll_call_history_table", "HeaderLabels_time")
                 self.table.setColumnCount(len(headers))
                 self.table.setHorizontalHeaderLabels(headers)
             elif mode == "个人":
                 # 显示个人统计模式
-                headers = get_content_name("roll_call_history_table", "HeaderLabels_Individual")
+                headers = get_content_name_async("roll_call_history_table", "HeaderLabels_Individual")
                 self.table.setColumnCount(len(headers))
                 self.table.setHorizontalHeaderLabels(headers)
             else:
                 # 默认使用不包含权重的全部信息
-                headers = get_content_name("roll_call_history_table", "HeaderLabels_all_not_weight")
+                headers = get_content_name_async("roll_call_history_table", "HeaderLabels_all_not_weight")
                 self.table.setColumnCount(len(headers))
                 self.table.setHorizontalHeaderLabels(headers)
         else:
             # 默认使用不包含权重的全部信息
-            headers = get_content_name("roll_call_history_table", "HeaderLabels_all_not_weight")
+            headers = get_content_name_async("roll_call_history_table", "HeaderLabels_all_not_weight")
             self.table.setColumnCount(len(headers))
             self.table.setHorizontalHeaderLabels(headers)
         
@@ -248,7 +248,7 @@ class roll_call_history_table(GroupHeaderCardWidget):
             self.class_comboBox.setCurrentIndex(index)
         elif not class_history:
             self.class_comboBox.setCurrentIndex(-1)
-            self.class_comboBox.setPlaceholderText(get_content_name("roll_call_history_table", "select_class_name"))
+            self.class_comboBox.setPlaceholderText(get_content_name_async("roll_call_history_table", "select_class_name"))
         
         # 启用或禁用清除按钮
         if hasattr(self, 'clear_button'):
@@ -306,7 +306,7 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 
             # 获取当前选择的模式
             mode_index = self.mode_comboBox.currentIndex()
-            mode_items = get_content_combo_name("roll_call_history_table", "select_mode")
+            mode_items = get_content_combo_name_async("roll_call_history_table", "select_mode")
             
             if mode_index >= 0 and mode_index < len(mode_items):
                 mode = mode_items[mode_index]
