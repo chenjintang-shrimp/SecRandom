@@ -49,7 +49,7 @@ class basic_voice_settings(QWidget):
 class basic_settings_voice_engine(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_content_name("basic_voice_settings", "voice_engine_group"))
+        self.setTitle(get_content_name_async("basic_voice_settings", "voice_engine_group"))
         self.setBorderRadius(8)
         
         # 初始化异步更新相关变量
@@ -57,14 +57,14 @@ class basic_settings_voice_engine(GroupHeaderCardWidget):
 
         # 语音引擎设置
         self.voice_engine = ComboBox()
-        self.voice_engine.addItems(get_content_combo_name("basic_voice_settings", "voice_engine"))
-        self.voice_engine.setCurrentText(readme_settings("basic_voice_settings", "voice_engine"))
+        self.voice_engine.addItems(get_content_combo_name_async("basic_voice_settings", "voice_engine"))
+        self.voice_engine.setCurrentText(readme_settings_async("basic_voice_settings", "voice_engine"))
         self.voice_engine.currentTextChanged.connect(self.on_voice_engine_changed)
         
         # 初始化Edge TTS语音名称设置
         self.edge_tts_voice_name = ComboBox()
-        self.edge_tts_voice_name.addItems(get_content_combo_name("basic_voice_settings", "edge_tts_voice_name"))
-        self.edge_tts_voice_name.setCurrentText(readme_settings("basic_voice_settings", "edge_tts_voice_name"))
+        self.edge_tts_voice_name.addItems(get_content_combo_name_async("basic_voice_settings", "edge_tts_voice_name"))
+        self.edge_tts_voice_name.setCurrentText(readme_settings_async("basic_voice_settings", "edge_tts_voice_name"))
         self.edge_tts_voice_name.currentTextChanged.connect(lambda text: update_settings("basic_voice_settings", "edge_tts_voice_name", text))
         
         # 根据当前语音引擎设置Edge TTS语音名称的可用性
@@ -77,26 +77,26 @@ class basic_settings_voice_engine(GroupHeaderCardWidget):
 
         # 语音播放设备设置
         self.voice_playback = ComboBox()
-        self.voice_playback.addItems(get_content_combo_name("basic_voice_settings", "voice_playback"))
-        self.voice_playback.setCurrentText(readme_settings("basic_voice_settings", "voice_playback"))
+        self.voice_playback.addItems(get_content_combo_name_async("basic_voice_settings", "voice_playback"))
+        self.voice_playback.setCurrentText(readme_settings_async("basic_voice_settings", "voice_playback"))
         self.voice_playback.currentTextChanged.connect(lambda text: update_settings("basic_voice_settings", "voice_playback", text))
 
         # 语速调节设置
         self.speech_rate = SpinBox()
         self.speech_rate.setRange(0, 100)
         self.speech_rate.setSuffix("wpm")
-        self.speech_rate.setValue(int(readme_settings("basic_voice_settings", "speech_rate")))
+        self.speech_rate.setValue(int(readme_settings_async("basic_voice_settings", "speech_rate")))
         self.speech_rate.valueChanged.connect(lambda value: update_settings("basic_voice_settings", "speech_rate", value))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_speaker_2_20_filled"), 
-                        get_content_name("basic_voice_settings", "voice_engine"), get_content_description("basic_voice_settings", "voice_engine"), self.voice_engine)
+                        get_content_name_async("basic_voice_settings", "voice_engine"), get_content_description_async("basic_voice_settings", "voice_engine"), self.voice_engine)
         self.addGroup(get_theme_icon("ic_fluent_mic_record_20_filled"), 
-                        get_content_name("basic_voice_settings", "edge_tts_voice_name"), get_content_description("basic_voice_settings", "edge_tts_voice_name"), self.edge_tts_voice_name)
+                        get_content_name_async("basic_voice_settings", "edge_tts_voice_name"), get_content_description_async("basic_voice_settings", "edge_tts_voice_name"), self.edge_tts_voice_name)
         self.addGroup(get_theme_icon("ic_fluent_speaker_0_20_filled"), 
-                        get_content_name("basic_voice_settings", "voice_playback"), get_content_description("basic_voice_settings", "voice_playback"), self.voice_playback)
+                        get_content_name_async("basic_voice_settings", "voice_playback"), get_content_description_async("basic_voice_settings", "voice_playback"), self.voice_playback)
         self.addGroup(get_theme_icon("ic_fluent_speed_high_20_filled"), 
-                        get_content_name("basic_voice_settings", "speech_rate"), get_content_description("basic_voice_settings", "speech_rate"), self.speech_rate)
+                        get_content_name_async("basic_voice_settings", "speech_rate"), get_content_description_async("basic_voice_settings", "speech_rate"), self.speech_rate)
     
     def on_voice_engine_changed(self, text):
         """语音引擎改变时的处理函数"""
@@ -225,41 +225,41 @@ class basic_settings_voice_engine(GroupHeaderCardWidget):
 class basic_settings_volume(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_content_name("basic_voice_settings", "volume_group"))
+        self.setTitle(get_content_name_async("basic_voice_settings", "volume_group"))
         self.setBorderRadius(8)
 
         # 音量大小设置
         self.volume_size = SpinBox()
         self.volume_size.setRange(0, 100)
         self.volume_size.setSuffix("%")
-        self.volume_size.setValue(int(readme_settings("basic_voice_settings", "volume_size")))
+        self.volume_size.setValue(int(readme_settings_async("basic_voice_settings", "volume_size")))
         self.volume_size.valueChanged.connect(lambda value: update_settings("basic_voice_settings", "volume_size", value))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_speaker_mute_20_filled"), 
-                        get_content_name("basic_voice_settings", "volume_size"), get_content_description("basic_voice_settings", "volume_size"), self.volume_size)
+                        get_content_name_async("basic_voice_settings", "volume_size"), get_content_description_async("basic_voice_settings", "volume_size"), self.volume_size)
 
 class basic_settings_system_volume(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_content_name("basic_voice_settings", "system_volume_group"))
+        self.setTitle(get_content_name_async("basic_voice_settings", "system_volume_group"))
         self.setBorderRadius(8)
 
         # 系统音量控制类型设置
         self.system_volume_control = ComboBox()
-        self.system_volume_control.addItems(get_content_combo_name("basic_voice_settings", "system_volume_control"))
-        self.system_volume_control.setCurrentText(readme_settings("basic_voice_settings", "system_volume_control"))
+        self.system_volume_control.addItems(get_content_combo_name_async("basic_voice_settings", "system_volume_control"))
+        self.system_volume_control.setCurrentText(readme_settings_async("basic_voice_settings", "system_volume_control"))
         self.system_volume_control.currentTextChanged.connect(lambda text: update_settings("basic_voice_settings", "system_volume_control", text))
 
         # 系统音量大小设置
         self.system_volume_size = SpinBox()
         self.system_volume_size.setRange(0, 100)
         self.system_volume_size.setSuffix("%")
-        self.system_volume_size.setValue(int(readme_settings("basic_voice_settings", "system_volume_size")))
+        self.system_volume_size.setValue(int(readme_settings_async("basic_voice_settings", "system_volume_size")))
         self.system_volume_size.valueChanged.connect(lambda value: update_settings("basic_voice_settings", "system_volume_size", value))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_speaker_settings_20_filled"), 
-                        get_content_name("basic_voice_settings", "system_volume_control"), get_content_description("basic_voice_settings", "system_volume_control"), self.system_volume_control)
+                        get_content_name_async("basic_voice_settings", "system_volume_control"), get_content_description_async("basic_voice_settings", "system_volume_control"), self.system_volume_control)
         self.addGroup(get_theme_icon("ic_fluent_speaker_1_20_filled"), 
-                        get_content_name("basic_voice_settings", "system_volume_size"), get_content_description("basic_voice_settings", "system_volume_size"), self.system_volume_size)
+                        get_content_name_async("basic_voice_settings", "system_volume_size"), get_content_description_async("basic_voice_settings", "system_volume_size"), self.system_volume_size)

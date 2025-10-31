@@ -53,7 +53,7 @@ class ContributorDialog(QDialog):
         title_layout.setContentsMargins(10, 0, 10, 0)
         
         # 窗口标题
-        self.title_label = BodyLabel(get_content_name("about", "contributor"))
+        self.title_label = BodyLabel(get_content_name_async("about", "contributor"))
         self.title_label.setObjectName("TitleLabel")
         
         # 窗口控制按钮
@@ -103,50 +103,50 @@ class ContributorDialog(QDialog):
         contributors = [
             {
                 'name': 'lzy98276',
-                'role': get_any_position_value("about", "contributor", "contributor_role_1"),
+                'role': get_any_position_value_async("about", "contributor", "contributor_role_1"),
                 'github': 'https://github.com/lzy98276',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor1.png'))
 
             },
             {
                 'name': 'QiKeZhiCao',
-                'role': get_any_position_value("about", "contributor", "contributor_role_2"),
+                'role': get_any_position_value_async("about", "contributor", "contributor_role_2"),
                 'github': 'https://github.com/QiKeZhiCao',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor2.png'))
             },
             {
                 'name': 'Fox-block-offcial',
-                'role': get_any_position_value("about", "contributor", "contributor_role_3"),
+                'role': get_any_position_value_async("about", "contributor", "contributor_role_3"),
                 'github': 'https://github.com/Fox-block-offcial',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor3.png'))
             },
             {
                 'name': 'yuanbenxin',
-                'role': get_any_position_value("about", "contributor", "contributor_role_4"),
+                'role': get_any_position_value_async("about", "contributor", "contributor_role_4"),
                 'github': 'https://github.com/yuanbenxin',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor4.png'))
             },
             {
                 'name': 'LeafS',
-                'role': get_any_position_value("about", "contributor", "contributor_role_5"),
+                'role': get_any_position_value_async("about", "contributor", "contributor_role_5"),
                 'github': 'https://github.com/LeafS825',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor5.png'))
             },
             {
                 'name': 'Jursin',
-                'role': get_any_position_value("about", "contributor", "contributor_role_6"),
+                'role': get_any_position_value_async("about", "contributor", "contributor_role_6"),
                 'github': 'https://github.com/jursin',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor6.png'))
             },
             {
                 'name': 'LHGS-github',
-                'role': get_any_position_value("about", "contributor", "contributor_role_7"),
+                'role': get_any_position_value_async("about", "contributor", "contributor_role_7"),
                 'github': 'https://github.com/LHGS-github',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor7.png'))
             },
             {
                 'name': 'real01bit',
-                'role': get_any_position_value("about", "contributor", "contributor_role_8"),
+                'role': get_any_position_value_async("about", "contributor", "contributor_role_8"),
                 'github': 'https://github.com/real01bit',
                 'avatar': str(get_resources_path('assets/contribution', 'contributor8.png'))
             }

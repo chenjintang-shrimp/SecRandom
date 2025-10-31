@@ -55,16 +55,19 @@ def configure_logging():
 # 显示调节
 # ==================================================
 """根据设置自动调整DPI缩放模式"""
-dpiScale = readme_settings("basic_settings", "dpiScale")
-if dpiScale == "Auto":
-    QApplication.setHighDpiScaleFactorRoundingPolicy(
-        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
-    os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
-    logger.debug("DPI缩放已设置为自动模式")
-else:
-    os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
-    os.environ["QT_SCALE_FACTOR"] = str(dpiScale)
-    logger.debug(f"DPI缩放已设置为{dpiScale}倍")
+def configure_dpi_scale():
+    """配置DPI缩放模式"""
+    dpiScale = readme_settings("basic_settings", "dpiScale")
+    
+    if dpiScale == "Auto":
+        QApplication.setHighDpiScaleFactorRoundingPolicy(
+            Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+        os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
+        logger.debug("DPI缩放已设置为自动模式")
+    else:
+        os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
+        os.environ["QT_SCALE_FACTOR"] = str(dpiScale)
+        logger.debug(f"DPI缩放已设置为{dpiScale}倍")
 
 # ==================================================
 # 单实例检查相关函数
@@ -88,7 +91,9 @@ def check_single_instance():
 # ==================================================
 def apply_font_settings():
     """应用字体设置 - 优化版本，使用字体管理器异步加载"""
+    from app.tools.settings_access import readme_settings
     font_family = readme_settings("basic_settings", "font")
+    
     setFontFamilies([font_family])
     QTimer.singleShot(FONT_APPLY_DELAY, lambda: apply_font_to_application(font_family))
 
@@ -169,7 +174,6 @@ def create_settings_window():
     global settings_window
     try:
         settings_window = SettingsWindow()
-        show_settings_window()
     except Exception as e:
         logger.error(f"创建设置窗口失败: {e}", exc_info=True)
 
@@ -203,6 +207,9 @@ def initialize_app():
     # 并行加载资源
     # 管理设置文件，确保其存在且完整
     manage_settings_file()
+
+    # 配置DPI缩放模式
+    configure_dpi_scale()
 
     # 加载主题
     QTimer.singleShot(APP_INIT_DELAY, lambda: (
@@ -245,8 +252,10 @@ if __name__ == "__main__":
     app.setQuitOnLastWindowClosed(APP_QUIT_ON_LAST_WINDOW_CLOSED)
     
     try:
+        # 首先配置日志系统
         configure_logging()
-
+        
+        # 初始化应用程序
         main_async()
         
         app.exec()

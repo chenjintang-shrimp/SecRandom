@@ -61,16 +61,16 @@ class MainWindow(MSFluentWindow):
     def _position_window(self):
         """窗口定位
         根据屏幕尺寸和用户设置自动计算最佳位置"""
-        is_maximized = readme_settings("window", "is_maximized")
+        is_maximized = readme_settings_async("window", "is_maximized")
         if is_maximized:
-            pre_maximized_width = readme_settings("window", "pre_maximized_width")
-            pre_maximized_height = readme_settings("window", "pre_maximized_height")
+            pre_maximized_width = readme_settings_async("window", "pre_maximized_width")
+            pre_maximized_height = readme_settings_async("window", "pre_maximized_height")
             self.resize(pre_maximized_width, pre_maximized_height)
             self._center_window()
             QTimer.singleShot(100, self.showMaximized)
         else:
-            window_width = readme_settings("window", "width")
-            window_height = readme_settings("window", "height")
+            window_width = readme_settings_async("window", "width")
+            window_height = readme_settings_async("window", "height")
             self.resize(window_width, window_height)
             self._center_window()
 
@@ -140,7 +140,7 @@ class MainWindow(MSFluentWindow):
         # 检查是否是窗口状态变化
         if event.type() == QEvent.Type.WindowStateChange:
             is_currently_maximized = self.isMaximized()
-            was_maximized = readme_settings("window", "is_maximized")
+            was_maximized = readme_settings_async("window", "is_maximized")
             
             # 如果最大化状态发生变化
             if is_currently_maximized != was_maximized:
@@ -155,8 +155,8 @@ class MainWindow(MSFluentWindow):
                     update_settings("window", "pre_maximized_height", normal_geometry.height())
                 # 如果退出最大化，恢复到最大化前的大小
                 else:
-                    pre_maximized_width = readme_settings("window", "pre_maximized_width")
-                    pre_maximized_height = readme_settings("window", "pre_maximized_height")
+                    pre_maximized_width = readme_settings_async("window", "pre_maximized_width")
+                    pre_maximized_height = readme_settings_async("window", "pre_maximized_height")
                     # 延迟执行，确保在最大化状态完全退出后再调整大小
                     QTimer.singleShot(100, lambda: self.resize(pre_maximized_width, pre_maximized_height))
         

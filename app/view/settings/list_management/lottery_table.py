@@ -34,7 +34,7 @@ class lottery_table(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
-        self.setTitle(get_content_name("lottery_table", "title"))
+        self.setTitle(get_content_name_async("lottery_table", "title"))
         self.setBorderRadius(8)
         # 创建抽奖名单选择区域
         QTimer.singleShot(APPLY_DELAY, self.create_lottery_selection)
@@ -57,15 +57,15 @@ class lottery_table(GroupHeaderCardWidget):
     def create_lottery_selection(self):
         """创建抽奖名单选择区域"""
         self.lottery_comboBox = ComboBox()
-        self.lottery_comboBox.setCurrentIndex(readme_settings("lottery_table", "select_pool_name"))
+        self.lottery_comboBox.setCurrentIndex(readme_settings_async("lottery_table", "select_pool_name"))
         if not get_pool_name_list():
             self.lottery_comboBox.setCurrentIndex(-1)
-            self.lottery_comboBox.setPlaceholderText(get_content_name("lottery_table", "select_pool_name"))
+            self.lottery_comboBox.setPlaceholderText(get_content_name_async("lottery_table", "select_pool_name"))
         self.lottery_comboBox.currentIndexChanged.connect(lambda: update_settings("lottery_table", "select_pool_name", self.lottery_comboBox.currentIndex()))
         self.lottery_comboBox.currentTextChanged.connect(self.refresh_data)
 
         self.addGroup(get_theme_icon("ic_fluent_class_20_filled"), 
-                        get_content_name("lottery_table", "select_pool_name"), get_content_description("lottery_table", "select_pool_name"), self.lottery_comboBox)
+                        get_content_name_async("lottery_table", "select_pool_name"), get_content_description_async("lottery_table", "select_pool_name"), self.lottery_comboBox)
         
     def create_table(self):
         """创建表格区域"""
@@ -81,7 +81,7 @@ class lottery_table(GroupHeaderCardWidget):
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.verticalHeader().hide()
 
-        self.table.setHorizontalHeaderLabels(get_content_name("lottery_table", "HeaderLabels"))
+        self.table.setHorizontalHeaderLabels(get_content_name_async("lottery_table", "HeaderLabels"))
         self.table.horizontalHeader().resizeSection(0, 80)
         # 设置表格属性
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
@@ -141,7 +141,7 @@ class lottery_table(GroupHeaderCardWidget):
             self.lottery_comboBox.setCurrentIndex(index)
         elif not lottery_list:
             self.lottery_comboBox.setCurrentIndex(-1)
-            self.lottery_comboBox.setPlaceholderText(get_content_name("lottery_list", "select_pool_name"))
+            self.lottery_comboBox.setPlaceholderText(get_content_name_async("lottery_list", "select_pool_name"))
         
         # logger.debug(f"抽奖名单列表已刷新，共 {len(lottery_list)} 个抽奖名单")
         # 只有在表格已经创建时才刷新数据
