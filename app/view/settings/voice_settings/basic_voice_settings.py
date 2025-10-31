@@ -95,7 +95,7 @@ class basic_settings_voice_engine(GroupHeaderCardWidget):
                         get_content_name_async("basic_voice_settings", "edge_tts_voice_name"), get_content_description_async("basic_voice_settings", "edge_tts_voice_name"), self.edge_tts_voice_name)
         self.addGroup(get_theme_icon("ic_fluent_speaker_0_20_filled"), 
                         get_content_name_async("basic_voice_settings", "voice_playback"), get_content_description_async("basic_voice_settings", "voice_playback"), self.voice_playback)
-        self.addGroup(get_theme_icon("ic_fluent_speed_high_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_top_speed_20_filled"), 
                         get_content_name_async("basic_voice_settings", "speech_rate"), get_content_description_async("basic_voice_settings", "speech_rate"), self.speech_rate)
     
     def on_voice_engine_changed(self, text):

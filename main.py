@@ -161,7 +161,6 @@ def start_main_window():
     """创建主窗口实例"""
     global main_window
     try:
-        # 创建主窗口实例
         main_window = MainWindow()
         main_window.showSettingsRequested.connect(show_settings_window)
         main_window.showSettingsRequestedAbout.connect(show_settings_window_about)
@@ -196,7 +195,6 @@ def show_settings_window_about():
 # ==================================================
 def initialize_app():
     """初始化应用程序，使用QTimer避免阻塞主线程，实现并行加载"""
-    # 设置工作目录为程序所在目录，解决URL协议唤醒时工作目录错误的问题
     program_dir = str(get_app_root())
     
     # 更改当前工作目录
@@ -250,6 +248,9 @@ if __name__ == "__main__":
     gc.enable()
 
     app.setQuitOnLastWindowClosed(APP_QUIT_ON_LAST_WINDOW_CLOSED)
+    
+    # 解决Dialog和FluentWindow共存时的窗口拉伸问题
+    app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
     
     try:
         # 首先配置日志系统

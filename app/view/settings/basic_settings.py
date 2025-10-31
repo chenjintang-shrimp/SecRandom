@@ -132,7 +132,7 @@ class basic_settings_personalised(GroupHeaderCardWidget):
                         get_content_name_async("basic_settings", "language"), get_content_description_async("basic_settings", "language"), self.language)
         self.addGroup(get_theme_icon("ic_fluent_text_font_20_filled"), 
                         get_content_name_async("basic_settings", "font"), get_content_description_async("basic_settings", "font"), self.fontComboBox)
-        self.addGroup(get_theme_icon("ic_fluent_scale_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_zoom_fit_20_filled"), 
                         get_content_name_async("basic_settings", "dpiScale"), get_content_description_async("basic_settings", "dpiScale"), self.dpiScale)
         # 添加卡片到布局
         self.vBoxLayout.addWidget(self.themeColorCard)

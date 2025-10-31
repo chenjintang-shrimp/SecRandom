@@ -148,7 +148,7 @@ class SettingsWindow(MSFluentWindow):
         
         self.addSubInterface(self.customSettingsInterface, get_theme_icon("ic_fluent_person_edit_20_filled"), get_content_name_async("custom_settings", "title"), position=NavigationItemPosition.TOP)
         
-        self.addSubInterface(self.voiceSettingsInterface, get_theme_icon("ic_fluent_voice_20_filled"), get_content_name_async("voice_settings", "title"), position=NavigationItemPosition.TOP)
+        self.addSubInterface(self.voiceSettingsInterface, get_theme_icon("ic_fluent_person_voice_20_filled"), get_content_name_async("voice_settings", "title"), position=NavigationItemPosition.TOP)
         
         self.addSubInterface(self.historyInterface, get_theme_icon("ic_fluent_history_20_filled"), get_content_name_async("history", "title"), position=NavigationItemPosition.TOP)
         
