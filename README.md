@@ -76,44 +76,6 @@
 - **GitHub 镜像源(ghfast.top)** - 国内加速镜像，速度快且稳定
 - **GitHub 镜像源(gh-proxy.com)** - 国内加速镜像，适合网络环境特殊的用户
 
-## 🛠️ 开发环境搭建
-
-### 使用 uv 包管理器（推荐）
-
-该项目现已支持使用 [uv](https://github.com/astral-sh/uv) 包管理器进行依赖管理，这是一种更快速的 Python 包管理方案。
-
-1. 安装 uv：
-   ```bash
-   # 在 Windows 上使用 pip 安装
-   pip install uv
-   
-   # 或者使用官方安装脚本
-   powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-   ```
-
-2. 克隆项目并进入项目目录：
-   ```bash
-   git clone https://github.com/SECTL/SecRandom.git
-   cd SecRandom
-   ```
-
-3. 安装依赖：
-   ```bash
-   uv sync
-   ```
-
-4. 运行程序：
-   ```bash
-   uv run python main.py
-   ```
-
-### 传统方式安装依赖
-
-如果你不想使用 uv，也可以继续使用传统的 pip 方式安装依赖：
-
-```bash
-pip install -r requirements.txt
-```
 
 ## 📸 软件截图(v1.1.0.1)
 <details>
@@ -201,6 +163,7 @@ pip install -r requirements.txt
 > 📅 **统计时间范围**：2025.08.01 - 2026.01.31 (中国时间 UTC+8)
 > 
 > 🏗️ **统计仓库**：SECTL/SecRandom, SECTL/SecRandom-docs
+
 ## ✨ Star历程
 
 <picture>
