@@ -1222,27 +1222,9 @@ DEFAULT_SETTINGS = {
         "HeaderLabels_Individual": {
             "default_value": None
         },
-        "clear_history": {
-            "default_value": None
+        "select_weight": {
+            "default_value": False
         },
-        "confirm_clear_title": {
-            "default_value": None
-        },
-        "confirm_clear_message": {
-            "default_value": None
-        },
-        "clear_success_title": {
-            "default_value": None
-        },
-        "clear_success_message": {
-            "default_value": None
-        },
-        "clear_error_title": {
-            "default_value": None
-        },
-        "clear_error_message": {
-            "default_value": None
-        }
     },
     "more_settings": {
         "title": {

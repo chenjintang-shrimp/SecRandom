@@ -20,6 +20,7 @@ from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
+from app.tools.list import *
 
 # ==================================================
 # 历史记录处理函数
@@ -217,25 +218,48 @@ def get_student_history(class_name: str) -> List[Dict[str, Any]]:
     Returns:
         List[Dict[str, Any]]: 学生历史记录列表
     """
-    # 加载历史记录数据
     history_data = load_history_data("roll_call", class_name)
-    students = []
+    student_list = get_student_list(class_name)
+    students_history = {}
     students_dict = history_data.get("students", {})
     if isinstance(students_dict, dict):
         for name, info in students_dict.items():
-            students.append({
+            students_history[name] = {
                 "name": name,
-                "gender": info.get("gender", "未知"),
-                "group": info.get("group", "未分组"),
+                "gender": info.get("gender", ""),
+                "group": info.get("group", ""),
                 "total_count": info.get("total_count", 0),
                 "group_gender_count": info.get("group_gender_count", 0),
                 "last_drawn_time": info.get("last_drawn_time", ""),
                 "rounds_missed": info.get("rounds_missed", 0),
                 "history": info.get("history", [])
-            })
+            }
     elif isinstance(students_dict, list):
-        students = students_dict
-    return students
+        for student in students_dict:
+            name = student.get("name", "")
+            if name:
+                students_history[name] = student
+
+    result = []
+    for student in student_list:
+        name = student["name"]
+        if name in students_history:
+            result.append(students_history[name])
+        else:
+            result.append({
+                "name": name,
+                "gender": student.get("gender", ""),
+                "group": student.get("group", ""),
+                "total_count": 0,
+                "group_gender_count": 0,
+                "last_drawn_time": "",
+                "rounds_missed": 0,
+                "history": []
+            })
+
+    result.sort(key=lambda x: next((s["id"] for s in student_list if s["name"] == x["name"]), 0))
+    
+    return result
 
 def get_draw_sessions_history(class_name: str) -> List[Dict[str, Any]]:
     """获取指定班级的抽取会话历史记录
@@ -246,7 +270,6 @@ def get_draw_sessions_history(class_name: str) -> List[Dict[str, Any]]:
     Returns:
         List[Dict[str, Any]]: 抽取会话历史记录列表
     """
-    # 加载历史记录数据
     history_data = load_history_data("roll_call", class_name)
     sessions = []
     students_dict = history_data.get("students", {})
@@ -258,42 +281,50 @@ def get_draw_sessions_history(class_name: str) -> List[Dict[str, Any]]:
                     sessions.append({
                         "draw_time": session_info.get("draw_time", ""),
                         "draw_method": session_info.get("draw_method", ""),
-                    "draw_people_numbers": session_info.get("draw_people_numbers", 0),
-                    "draw_group": session_info.get("draw_group", ""),
-                    "draw_gender": session_info.get("draw_gender", ""),
-                    "draw_people": session_info.get("draw_people", [])
-                })
+                        "draw_people_numbers": session_info.get("draw_people_numbers", 0),
+                        "draw_group": session_info.get("draw_group", ""),
+                        "draw_gender": session_info.get("draw_gender", ""),
+                        "draw_people": session_info.get("draw_people", [])
+                    })
     if not isinstance(sessions, list):
         sessions = []
     sessions.sort(key=lambda x: x.get("draw_time", ""), reverse=True)
     return sessions
 
-def get_individual_statistics(class_name: str) -> List[Dict[str, Any]]:
+def get_individual_statistics(class_name: str, students_name: str) -> List[Dict[str, Any]]:
     """获取指定班级的个人统计记录
     
     Args:
         class_name: 班级名称
+        students_name: 学生姓名
         
     Returns:
         List[Dict[str, Any]]: 个人统计记录列表
     """
     history_data = load_history_data("roll_call", class_name)
-    individual_stats = []
+    students_stats = []
     students_dict = history_data.get("students", {})
-    if isinstance(students_dict, dict):
-        for student_name, student_info in students_dict.items():
-            individual_stats.append({
-                "name": student_name,
-                "gender": student_info.get("gender", "未知"),
-                "group": student_info.get("group", "未分组"),
-                "total_count": student_info.get("total_count", 0),
-                "last_drawn_time": student_info.get("last_drawn_time", ""),
-                "group_gender_count": student_info.get("group_gender_count", 0),
-                "rounds_missed": student_info.get("rounds_missed", 0)
-            })
-    if not isinstance(individual_stats, list):
-        individual_stats = []
-    return individual_stats
+    if not isinstance(students_dict, dict):
+        return students_stats
+    student_info = students_dict.get(students_name)
+    if not student_info:
+        return students_stats
+    student_history = student_info.get("history", [])
+    if not isinstance(student_history, list):
+        return students_stats
+    for session_info in student_history:
+        if not isinstance(session_info, dict):
+            continue
+        students_stats.append({
+            "draw_time": session_info.get("draw_time", ""),
+            "draw_method": session_info.get("draw_method", ""),
+            "draw_people_numbers": session_info.get("draw_people_numbers", 0),
+            "draw_group": session_info.get("draw_group", ""),
+            "draw_gender": session_info.get("draw_gender", ""),
+            "draw_people": session_info.get("draw_people", [])
+        })
+    
+    return students_stats
 
 def save_roll_call_history(class_name: str, students: List[Dict[str, Any]], 
                           selected_students: List[Dict[str, Any]], 
@@ -411,3 +442,24 @@ def save_roll_call_history(class_name: str, students: List[Dict[str, Any]],
     except Exception as e:
         logger.error(f"保存点名历史记录失败: {e}")
         return False
+
+def get_all_names(history_type: str, list_name: str) -> list:
+    """获取历史记录中所有名称
+    
+    Args:
+        history_type: 历史记录类型
+        list_name: 列表名称
+        
+    Returns:
+        list: 所有名称列表
+    """
+    try:
+        if history_type == "roll_call":
+            list_name_data = get_student_list(list_name)
+            return [item["name"] for item in list_name_data if "name" in item]
+        else:
+            list_name_data = load_history_data(history_type, list_name)
+            return list(list_name_data.get('lotterys', {}).keys())
+    except Exception as e:
+        logger.error(f"获取历史记录中所有名称失败: {e}")
+        return []

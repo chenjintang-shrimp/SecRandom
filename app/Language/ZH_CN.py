@@ -2195,8 +2195,7 @@ ZH_CN = {
             "description": "选择要查看的历史记录模式",
             "combo_items": [
                 "全部",
-                "时间",
-                "个人"
+                "时间"
             ]
         },
         "HeaderLabels_all_not_weight": {
@@ -2240,33 +2239,13 @@ ZH_CN = {
             ],
             "description": "点名历史记录表格的列标题"
         },
-        "clear_history": {
-            "name": "清除历史记录",
-            "description": "清除当前班级的所有点名历史记录"
-        },
-        "confirm_clear_title": {
-            "name": "确认清除",
-            "description": "确认清除历史记录对话框的标题"
-        },
-        "confirm_clear_message": {
-            "name": "确定要清除班级 '{class_name}' 的所有历史记录吗？此操作不可撤销！",
-            "description": "确认清除历史记录对话框的提示信息"
-        },
-        "clear_success_title": {
-            "name": "清除成功",
-            "description": "清除历史记录成功对话框的标题"
-        },
-        "clear_success_message": {
-            "name": "班级 '{class_name}' 的历史记录已成功清除！",
-            "description": "清除历史记录成功对话框的提示信息"
-        },
-        "clear_error_title": {
-            "name": "清除失败",
-            "description": "清除历史记录失败对话框的标题"
-        },
-        "clear_error_message": {
-            "name": "清除班级 '{class_name}' 的历史记录时发生错误！",
-            "description": "清除历史记录失败对话框的提示信息"
+        "select_weight": {
+            "name": "是否显示权重",
+            "description": "选择是否显示权重在表格中",
+            "switchbutton_name": {
+                "enable": "显示",
+                "disable": "隐藏"
+            }
         }
     },
     "more_settings": {
