@@ -79,6 +79,7 @@ MENU_AUTO_CLOSE_TIMEOUT = 5000                # 菜单自动关闭时间（毫�
 LANGUAGE_ZH_CN = "ZH_CN"                      # 中文
 LANGUAGE_EN_US = "EN_US"                      # 英文
 DEFAULT_LANGUAGE = LANGUAGE_ZH_CN             # 默认语言为中文
+LANGUAGE_MODULE_DIR= "app/Language/modules"   # 模块化语言文件路径
 
 # ==================== 共享内存相关常量 ====================
 SHARED_MEMORY_KEY = "SecRandomSharedMemory"   # 共享内存键名
