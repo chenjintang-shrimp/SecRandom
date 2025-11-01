@@ -29,7 +29,6 @@ class list_management_page(PivotPageTemplate):
         page_config = {
             "roll_call_list": get_content_name_async("roll_call_list", "title"),
             "roll_call_table": get_content_name_async("roll_call_table", "title"),
-            "custom_draw_list": get_content_name_async("custom_draw_list", "title"),
             "lottery_list": get_content_name_async("lottery_list", "title"),
             "lottery_table": get_content_name_async("lottery_table", "title")
         }

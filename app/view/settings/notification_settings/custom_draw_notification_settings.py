@@ -48,7 +48,14 @@ class basic_settings(GroupHeaderCardWidget):
         super().__init__(parent)
         self.setTitle(get_content_name_async("custom_draw_notification_settings", "basic_settings"))
         self.setBorderRadius(8)
-        
+
+        # 是否需要调用通知服务
+        self.call_notification_service_switch = SwitchButton()
+        self.call_notification_service_switch.setOffText(get_content_switchbutton_name_async("custom_draw_notification_settings", "call_notification_service", "disable"))
+        self.call_notification_service_switch.setOnText(get_content_switchbutton_name_async("custom_draw_notification_settings", "call_notification_service", "enable"))
+        self.call_notification_service_switch.setChecked(readme_settings_async("custom_draw_notification_settings", "call_notification_service"))
+        self.call_notification_service_switch.checkedChanged.connect(lambda: update_settings("custom_draw_notification_settings", "call_notification_service", self.call_notification_service_switch.isChecked()))
+
         # 选择通知模式下拉框
         self.notification_mode_combo_box = ComboBox()
         self.notification_mode_combo_box.addItems(get_content_combo_name_async("custom_draw_notification_settings", "notification_mode"))
@@ -63,6 +70,8 @@ class basic_settings(GroupHeaderCardWidget):
         self.animation_switch.checkedChanged.connect(lambda: update_settings("custom_draw_notification_settings", "animation", self.animation_switch.isChecked()))
 
         # 添加设置项到分组
+        self.addGroup(get_theme_icon("ic_fluent_comment_20_filled"), 
+                        get_content_name_async("custom_draw_notification_settings", "call_notification_service"), get_content_description_async("custom_draw_notification_settings", "call_notification_service"), self.call_notification_service_switch)
         self.addGroup(get_theme_icon("ic_fluent_comment_20_filled"), 
                         get_content_name_async("custom_draw_notification_settings", "notification_mode"), get_content_description_async("custom_draw_notification_settings", "notification_mode"), self.notification_mode_combo_box)
         self.addGroup(get_theme_icon("ic_fluent_sanitize_20_filled"), 

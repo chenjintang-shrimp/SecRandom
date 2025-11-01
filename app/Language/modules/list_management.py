@@ -32,11 +32,6 @@ roll_call_table = {
     }
 }
 
-# 自定义抽签语言配置
-custom_draw_list = {
-    "ZH_CN": {"title": {"name": "自定义抽签", "description": "自定义抽签"}}
-}
-
 # 抽奖名单语言配置
 lottery_list = {
     "ZH_CN": {

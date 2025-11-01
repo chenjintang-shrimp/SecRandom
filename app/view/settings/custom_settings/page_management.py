@@ -39,6 +39,10 @@ class page_management(QWidget):
         self.page_management_lottery = page_management_lottery(self)
         self.vBoxLayout.addWidget(self.page_management_lottery)
 
+        # 添加自定义抽页面管理组件
+        self.page_management_custom = page_management_custom(self)
+        self.vBoxLayout.addWidget(self.page_management_custom)
+
 class page_management_roll_call(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -196,3 +200,92 @@ class page_management_lottery(GroupHeaderCardWidget):
                         get_content_name_async("page_management", "lottery_list"), get_content_description_async("page_management", "lottery_list"), self.lottery_list_combo_switch)
         self.addGroup(get_theme_icon("ic_fluent_slide_text_person_20_filled"), 
                         get_content_name_async("page_management", "lottery_quantity_label"), get_content_description_async("page_management", "lottery_quantity_label"), self.lottery_quantity_label_switch)
+
+
+class page_management_custom(GroupHeaderCardWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setTitle(get_content_name_async("page_management", "custom"))
+        self.setBorderRadius(8)
+
+        # 点名控制面板位置下拉框
+        self.custom_method_combo = ComboBox()
+        self.custom_method_combo.addItems(get_content_combo_name_async("page_management", "custom_method"))
+        self.custom_method_combo.setCurrentIndex(readme_settings_async("page_management", "custom_method"))
+        self.custom_method_combo.currentIndexChanged.connect(lambda: update_settings("page_management", "custom_method", self.custom_method_combo.currentIndex()))
+
+        # 重置已抽取名单按钮是否显示开关
+        self.reset_custom_button_switch = SwitchButton()
+        self.reset_custom_button_switch.setOffText(get_content_switchbutton_name_async("page_management", "reset_custom", "disable"))
+        self.reset_custom_button_switch.setOnText(get_content_switchbutton_name_async("page_management", "reset_custom", "enable"))
+        self.reset_custom_button_switch.setChecked(readme_settings_async("page_management", "reset_custom"))
+        self.reset_custom_button_switch.checkedChanged.connect(lambda: update_settings("page_management", "reset_custom", self.reset_custom_button_switch.isChecked()))  
+
+        # 增加/减少抽取数量控制条是否显示开关
+        self.custom_quantity_control_switch = SwitchButton()
+        self.custom_quantity_control_switch.setOffText(get_content_switchbutton_name_async("page_management", "custom_quantity_control", "disable"))
+        self.custom_quantity_control_switch.setOnText(get_content_switchbutton_name_async("page_management", "custom_quantity_control", "enable"))
+        self.custom_quantity_control_switch.setChecked(readme_settings_async("page_management", "custom_quantity_control"))
+        self.custom_quantity_control_switch.checkedChanged.connect(lambda: update_settings("page_management", "custom_quantity_control", self.custom_quantity_control_switch.isChecked()))
+
+        # 开始按钮是否显示开关
+        self.custom_start_button_switch = SwitchButton()
+        self.custom_start_button_switch.setOffText(get_content_switchbutton_name_async("page_management", "custom_start_button", "disable"))
+        self.custom_start_button_switch.setOnText(get_content_switchbutton_name_async("page_management", "custom_start_button", "enable"))
+        self.custom_start_button_switch.setChecked(readme_settings_async("page_management", "custom_start_button")) 
+        self.custom_start_button_switch.checkedChanged.connect(lambda: update_settings("page_management", "custom_start_button", self.custom_start_button_switch.isChecked()))
+
+        # 名单切换下拉框是否显示开关
+        self.custom_list_combo_switch = SwitchButton()
+        self.custom_list_combo_switch.setOffText(get_content_switchbutton_name_async("page_management", "custom_list", "disable"))
+        self.custom_list_combo_switch.setOnText(get_content_switchbutton_name_async("page_management", "custom_list", "enable"))
+        self.custom_list_combo_switch.setChecked(readme_settings_async("page_management", "custom_list"))
+        self.custom_list_combo_switch.checkedChanged.connect(lambda: update_settings("page_management", "custom_list", self.custom_list_combo_switch.isChecked()))
+        
+        # 抽取范围的起始值下拉框是否显示开关
+        self.custom_range_start_combo_switch = SwitchButton()
+        self.custom_range_start_combo_switch.setOffText(get_content_switchbutton_name_async("page_management", "custom_range_start", "disable"))
+        self.custom_range_start_combo_switch.setOnText(get_content_switchbutton_name_async("page_management", "custom_range_start", "enable"))
+        self.custom_range_start_combo_switch.setChecked(readme_settings_async("page_management", "custom_range_start"))
+        self.custom_range_start_combo_switch.checkedChanged.connect(lambda: update_settings("page_management", "custom_range_start", self.custom_range_start_combo_switch.isChecked()))
+
+        # 抽取范围的终止值下拉框是否显示开关
+        self.custom_range_end_combo_switch = SwitchButton()
+        self.custom_range_end_combo_switch.setOffText(get_content_switchbutton_name_async("page_management", "custom_range_end", "disable"))
+        self.custom_range_end_combo_switch.setOnText(get_content_switchbutton_name_async("page_management", "custom_range_end", "enable"))
+        self.custom_range_end_combo_switch.setChecked(readme_settings_async("page_management", "custom_range_end"))
+        self.custom_range_end_combo_switch.checkedChanged.connect(lambda: update_settings("page_management", "custom_range_end", self.custom_range_end_combo_switch.isChecked()))
+
+        # 抽取模式选择下拉框是否显示开关
+        self.draw_custom_method_combo_switch = SwitchButton()
+        self.draw_custom_method_combo_switch.setOffText(get_content_switchbutton_name_async("page_management", "`draw_custom_method`", "disable"))
+        self.draw_custom_method_combo_switch.setOnText(get_content_switchbutton_name_async("page_management", "draw_custom_method", "enable"))
+        self.draw_custom_method_combo_switch.setChecked(readme_settings_async("page_management", "draw_custom_method"))
+        self.draw_custom_method_combo_switch.checkedChanged.connect(lambda: update_settings("page_management", "draw_custom_method", self.draw_custom_method_combo_switch.isChecked()))
+
+        # 数量标签是否显示开关
+        self.custom_quantity_label_switch = SwitchButton()
+        self.custom_quantity_label_switch.setOffText(get_content_switchbutton_name_async("page_management", "custom_quantity_label", "disable"))
+        self.custom_quantity_label_switch.setOnText(get_content_switchbutton_name_async("page_management", "custom_quantity_label", "enable"))
+        self.custom_quantity_label_switch.setChecked(readme_settings_async("page_management", "custom_quantity_label"))
+        self.custom_quantity_label_switch.checkedChanged.connect(lambda: update_settings("page_management", "custom_quantity_label", self.custom_quantity_label_switch.isChecked()))
+
+        # 添加设置项到分组
+        self.addGroup(get_theme_icon("ic_fluent_window_multiple_swap_20_filled"), 
+                        get_content_name_async("page_management", "custom_method"), get_content_description_async("page_management", "custom_method"), self.custom_method_combo)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_reset_20_filled"), 
+                        get_content_name_async("page_management", "reset_custom"), get_content_description_async("page_management", "reset_custom"), self.reset_custom_button_switch)
+        self.addGroup(get_theme_icon("ic_fluent_arrow_autofit_content_20_filled"), 
+                        get_content_name_async("page_management", "custom_quantity_control"), get_content_description_async("page_management", "custom_quantity_control"), self.custom_quantity_control_switch)
+        self.addGroup(get_theme_icon("ic_fluent_slide_play_20_filled"), 
+                        get_content_name_async("page_management", "custom_start_button"), get_content_description_async("page_management", "custom_start_button"), self.custom_start_button_switch)
+        self.addGroup(get_theme_icon("ic_fluent_notepad_person_20_filled"), 
+                        get_content_name_async("page_management", "custom_list"), get_content_description_async("page_management", "custom_list"), self.custom_list_combo_switch)
+        self.addGroup(get_theme_icon("ic_fluent_slide_text_person_20_filled"), 
+                        get_content_name_async("page_management", "custom_range_start"), get_content_description_async("page_management", "custom_range_start"), self.custom_range_start_combo_switch)
+        self.addGroup(get_theme_icon("ic_fluent_slide_text_person_20_filled"), 
+                        get_content_name_async("page_management", "custom_range_end"), get_content_description_async("page_management", "custom_range_end"), self.custom_range_end_combo_switch)
+        self.addGroup(get_theme_icon("ic_fluent_slide_text_person_20_filled"), 
+                        get_content_name_async("page_management", "draw_custom_method"), get_content_description_async("page_management", "draw_custom_method"), self.draw_custom_method_combo_switch)
+        self.addGroup(get_theme_icon("ic_fluent_slide_text_person_20_filled"), 
+                        get_content_name_async("page_management", "custom_quantity_label"), get_content_description_async("page_management", "custom_quantity_label"), self.custom_quantity_label_switch)
