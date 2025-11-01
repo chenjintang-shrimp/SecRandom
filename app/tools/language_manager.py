@@ -30,11 +30,6 @@ class SimpleLanguageManager:
             self._loaded_languages: Dict[str, Dict[str, Any]] = {
                 "ZH_CN": merged_zh_cn
             }
-        else:
-            self._loaded_languages: Dict[str, Dict[str, Any]] = {
-                "ZH_CN": ZH_CN
-            }
-        
         # 加载resources/Language文件夹下的所有语言文件
         self._load_all_languages()
     
