@@ -23,12 +23,12 @@ basic_settings = {
         "export_diagnostic_data": {
             "name": "导出诊断数据",
             "description": "导出诊断数据",
-            "pushbutton_name": "导出",
+            "pushbutton_name": "点击以导出",
         },
         "export_settings": {
             "name": "导出设置",
             "description": "导出设置到文件",
-            "pushbutton_name": "导出",
+            "pushbutton_name": "点击以导出",
         },
         "import_settings": {
             "name": "导入设置",
@@ -38,7 +38,7 @@ basic_settings = {
         "export_all_data": {
             "name": "导出所有数据",
             "description": "导出所有数据",
-            "pushbutton_name": "导出",
+            "pushbutton_name": "点击以导出",
         },
         "import_all_data": {
             "name": "导入所有数据",

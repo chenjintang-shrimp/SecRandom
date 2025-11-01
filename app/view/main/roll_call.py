@@ -29,10 +29,11 @@ class roll_call(QWidget):
         self.initUI()
 
     def initUI(self):
-
+        pass
     def stary_draw(self):
         """绘制点名界面"""
         self.setWindowTitle(get_content_name_async("roll_call", "title"))
         self.setWindowIcon(get_theme_icon("ic_fluent_people_20_filled"))
         self.setGeometry(100, 100, 800, 600)
         self.show()
+        pass
