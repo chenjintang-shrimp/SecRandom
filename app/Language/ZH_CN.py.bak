@@ -2254,6 +2254,56 @@ ZH_CN = {
             "description": "更多设置"
         },
     },
+    "advanced_settings": {
+        "title": {
+            "name": "进阶设置",
+            "description": "进阶设置"
+        },
+        "fair_draw": {
+            "name": "公平抽奖",
+            "description": "启用公平抽奖算法",
+            "switchbutton_name": {
+                "enable": "启用",
+                "disable": "禁用"
+            }
+        },
+        "fair_draw_group": {
+            "name": "公平抽奖组",
+            "description": "配置公平抽奖组相关设置",
+            "switchbutton_name": {
+                "enable": "启用",
+                "disable": "禁用"
+            }
+        },
+        "fair_draw_gender": {
+            "name": "启用公平抽奖性别",
+            "description": "启用公平抽奖性别功能",
+            "switchbutton_name": {
+                "enable": "启用",
+                "disable": "禁用"
+            }
+        },
+        "fair_draw_time": {
+            "name": "公平抽奖时间",
+            "description": "配置公平抽奖时间相关设置",
+            "switchbutton_name": {
+                "enable": "启用",
+                "disable": "禁用"
+            }
+        },
+        "base_weight": {
+            "name": "基础权重",
+            "description": "设置每个选项的基础权重"
+        },
+        "min_weight": {
+            "name": "权重范围最小值",
+            "description": "设置每个选项的权重范围最小值"
+        },
+        "max_weight": {
+            "name": "权重范围最大值",
+            "description": "设置每个选项的权重范围最大值"
+        },
+    },
     "debug":{
         "title": {
             "name": "调试设置",

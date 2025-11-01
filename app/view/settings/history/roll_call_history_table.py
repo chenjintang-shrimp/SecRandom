@@ -40,9 +40,10 @@ class roll_call_history_table(GroupHeaderCardWidget):
         self.setBorderRadius(8)
         
         # 初始化数据加载器
+        class_history = get_all_history_names("roll_call")
         self.data_loader = None
-        self.current_class_name = ""
-        self.current_mode = get_content_combo_name_async("roll_call_history_table", "select_mode")
+        self.current_class_name = class_history[0] if class_history else ''
+        self.current_mode = 0
         self.batch_size = 30  # 每次加载的行数
         self.current_row = 0  # 当前加载到的行数
         self.total_rows = 0   # 总行数
@@ -69,10 +70,22 @@ class roll_call_history_table(GroupHeaderCardWidget):
     def create_class_selection(self):
         """创建班级选择区域"""
         self.class_comboBox = ComboBox()
-        self.class_comboBox.setCurrentIndex(readme_settings_async("roll_call_history_table", "select_class_name"))
-        if not get_all_history_names("roll_call"):
+        
+        # 获取班级历史列表并填充下拉框
+        class_history = get_all_history_names("roll_call")
+        self.class_comboBox.addItems(class_history)
+        
+        # 设置默认选择
+        if class_history:
+            saved_index = readme_settings_async("roll_call_history_table", "select_class_name")
+            self.class_comboBox.setCurrentIndex(0)
+            self.current_class_name = class_history[0]
+        else:
+            # 如果没有班级历史，设置占位符
             self.class_comboBox.setCurrentIndex(-1)
             self.class_comboBox.setPlaceholderText(get_content_name_async("roll_call_history_table", "select_class_name"))
+            self.current_class_name = ""
+            
         self.class_comboBox.currentIndexChanged.connect(self.on_class_changed)
         self.class_comboBox.currentTextChanged.connect(lambda: self.on_class_changed(-1))
 
@@ -80,8 +93,7 @@ class roll_call_history_table(GroupHeaderCardWidget):
         self.all_names = get_all_names("roll_call", self.class_comboBox.currentText())
         self.mode_comboBox = ComboBox()
         self.mode_comboBox.addItems(get_content_combo_name_async("roll_call_history_table", "select_mode") + self.all_names)
-        self.mode_comboBox.setCurrentIndex(readme_settings_async("roll_call_history_table", "select_mode"))
-        self.mode_comboBox.currentIndexChanged.connect(lambda: update_settings("roll_call_history_table", "select_mode", self.mode_comboBox.currentIndex()))
+        self.mode_comboBox.setCurrentIndex(0)
         self.mode_comboBox.currentIndexChanged.connect(self.refresh_data)
 
         # 选择是否查看权重
@@ -112,6 +124,10 @@ class roll_call_history_table(GroupHeaderCardWidget):
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.verticalHeader().hide()
+        
+        # 初始化排序状态
+        self.sort_column = -1
+        self.sort_order = Qt.SortOrder.AscendingOrder
 
         # 根据当前选择的模式设置表格头
         self.update_table_headers()
@@ -120,6 +136,10 @@ class roll_call_history_table(GroupHeaderCardWidget):
         for i in range(self.table.columnCount()):
             self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
             self.table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.horizontalHeader().setSectionsClickable(True)
+        
+        # 初始状态下不显示排序指示器
+        self.table.horizontalHeader().setSortIndicatorShown(False)
             
         # 连接滚动事件，用于分段加载
         self.table.verticalScrollBar().valueChanged.connect(self._on_scroll)
@@ -154,9 +174,32 @@ class roll_call_history_table(GroupHeaderCardWidget):
         Args:
             column: 被点击的列索引
         """
-        # 保存当前排序状态
+        # 如果正在加载数据，不处理排序
+        if self.is_loading:
+            return
+            
+        # 获取当前排序状态，优先使用我们自己的状态变量
+        current_sort_column = self.sort_column if self.sort_column >= 0 else -1
+        current_sort_order = self.sort_order if self.sort_column >= 0 else Qt.SortOrder.AscendingOrder
+        
+        # 如果点击的是同一列，则切换排序顺序；否则设置为升序
+        if column == current_sort_column:
+            # 切换排序顺序
+            if current_sort_order == Qt.SortOrder.AscendingOrder:
+                new_sort_order = Qt.SortOrder.DescendingOrder
+            else:
+                new_sort_order = Qt.SortOrder.AscendingOrder
+        else:
+            # 点击不同列，设置为升序
+            new_sort_order = Qt.SortOrder.AscendingOrder
+            
+        # 更新排序状态
         self.sort_column = column
-        self.sort_order = self.table.horizontalHeader().sortIndicatorOrder()
+        self.sort_order = new_sort_order
+        
+        # 设置排序指示器
+        self.table.horizontalHeader().setSortIndicator(column, new_sort_order)
+        self.table.horizontalHeader().setSortIndicatorShown(True)
         
         # 重置数据加载状态
         self.current_row = 0
@@ -164,6 +207,56 @@ class roll_call_history_table(GroupHeaderCardWidget):
         
         # 重新加载数据
         self.refresh_data()
+    
+    def _sort_current_data(self):
+        """对已加载的数据进行排序，不重新加载数据"""
+        # 获取当前表格中的所有数据
+        table_data = []
+        for row in range(self.table.rowCount()):
+            row_data = []
+            for col in range(self.table.columnCount()):
+                item = self.table.item(row, col)
+                if item:
+                    row_data.append(item.text())
+                else:
+                    row_data.append("")
+            table_data.append(row_data)
+        
+        # 如果没有数据，直接返回
+        if not table_data:
+            return
+        
+        # 根据排序状态对数据进行排序
+        def sort_key(row):
+            # 尝试将数据转换为数字，如果失败则使用字符串比较
+            try:
+                # 对于权重列（列索引5），需要特殊处理
+                if self.sort_column == 5 and self.current_mode == 0:
+                    # 权重列可能包含非数字字符，尝试提取数字部分
+                    weight_str = row[self.sort_column]
+                    # 移除可能的前导零
+                    weight_str = weight_str.lstrip('0')
+                    if not weight_str:
+                        return 0.0
+                    return float(weight_str)
+                else:
+                    return float(row[self.sort_column])
+            except (ValueError, IndexError):
+                return row[self.sort_column]
+        
+        # 应用排序
+        reverse_order = (self.sort_order == Qt.SortOrder.DescendingOrder)
+        table_data.sort(key=sort_key, reverse=reverse_order)
+        
+        # 清空表格
+        self.table.setRowCount(0)
+        
+        # 重新填充排序后的数据
+        self.table.setRowCount(len(table_data))
+        for row_idx, row_data in enumerate(table_data):
+            for col_idx, cell_data in enumerate(row_data):
+                item = create_table_item(cell_data)
+                self.table.setItem(row_idx, col_idx, item)
     
     def _load_more_data(self):
         """加载更多数据"""
@@ -182,7 +275,7 @@ class roll_call_history_table(GroupHeaderCardWidget):
         if hasattr(self, 'mode_comboBox'):
             self.current_mode = self.mode_comboBox.currentIndex()
         else:
-            self.current_mode = readme_settings_async("roll_call_history_table", "select_mode")
+            self.current_mode = 0
         
         if self.current_mode == 0:
             self._load_more_students_data()
@@ -200,6 +293,9 @@ class roll_call_history_table(GroupHeaderCardWidget):
         # 数据加载完成后启用排序
         if self.current_row >= self.total_rows:
             self.table.setSortingEnabled(True)
+            if self.sort_column >= 0:
+                self.table.horizontalHeader().setSortIndicator(self.sort_column, self.sort_order)
+                self.table.horizontalHeader().setSortIndicatorShown(True)
         
         self.is_loading = False
     
@@ -250,6 +346,40 @@ class roll_call_history_table(GroupHeaderCardWidget):
             
             students_weight_data = calculate_weight(students_data)
             max_weight_length = max(len(str(student.get('next_weight', '1.0'))) for student in students_weight_data) if students_weight_data else 0
+            
+            # 根据排序状态对数据进行排序
+            if self.sort_column >= 0:
+                # 定义排序键函数
+                def sort_key(student):
+                    if self.sort_column == 0:  # 学号
+                        return student.get('id', '')
+                    elif self.sort_column == 1:  # 姓名
+                        return student.get('name', '')
+                    elif self.sort_column == 2:  # 性别
+                        return student.get('gender', '')
+                    elif self.sort_column == 3:  # 小组
+                        return student.get('group', '')
+                    elif self.sort_column == 4:  # 总次数
+                        return student.get('total_count', 0)
+                    elif self.sort_column == 5:  # 权重
+                        # 使用学生ID和姓名在权重数据中查找对应的权重
+                        for weight_student in students_weight_data:
+                            if weight_student.get('id') == student.get('id') and weight_student.get('name') == student.get('name'):
+                                return weight_student.get('next_weight', 1.0)
+                        return 1.0
+                    return ''
+                
+                # 应用排序
+                reverse_order = (self.sort_order == Qt.SortOrder.DescendingOrder)
+                students_data.sort(key=sort_key, reverse=reverse_order)
+                # 同步排序权重数据
+                sorted_weight_data = []
+                for student in students_data:
+                    for weight_student in students_weight_data:
+                        if weight_student.get('id') == student.get('id') and weight_student.get('name') == student.get('name'):
+                            sorted_weight_data.append(weight_student)
+                            break
+                students_weight_data = sorted_weight_data
             
             # 计算本次加载的行范围
             start_row = self.current_row
@@ -343,7 +473,28 @@ class roll_call_history_table(GroupHeaderCardWidget):
                                 'group': group
                             })
 
-            students_data.sort(key=lambda x: x.get('draw_time', ''), reverse=True)
+            # 根据排序状态对数据进行排序
+            if self.sort_column >= 0:
+                # 定义排序键函数
+                def sort_key(student):
+                    if self.sort_column == 0:  # 时间
+                        return student.get('draw_time', '')
+                    elif self.sort_column == 1:  # 学号
+                        return student.get('id', '')
+                    elif self.sort_column == 2:  # 姓名
+                        return student.get('name', '')
+                    elif self.sort_column == 3:  # 性别
+                        return student.get('gender', '')
+                    elif self.sort_column == 4:  # 小组
+                        return student.get('group', '')
+                    return ''
+                
+                # 应用排序
+                reverse_order = (self.sort_order == Qt.SortOrder.DescendingOrder)
+                students_data.sort(key=sort_key, reverse=reverse_order)
+            else:
+                # 默认按时间降序排序
+                students_data.sort(key=lambda x: x.get('draw_time', ''), reverse=True)
             
             # 计算本次加载的行范围
             start_row = self.current_row
@@ -431,7 +582,29 @@ class roll_call_history_table(GroupHeaderCardWidget):
                                 'draw_gender': str(record.get('draw_gender', '')),
                                 'draw_group': str(record.get('draw_group', ''))
                             })
-            students_data.sort(key=lambda x: x.get('draw_time', ''), reverse=True)
+            
+            # 根据排序状态对数据进行排序
+            if self.sort_column >= 0:
+                # 定义排序键函数
+                def sort_key(student):
+                    if self.sort_column == 0:  # 时间
+                        return student.get('draw_time', '')
+                    elif self.sort_column == 1:  # 模式
+                        return student.get('draw_method', '')
+                    elif self.sort_column == 2:  # 人数
+                        return int(student.get('draw_people_numbers', 0))
+                    elif self.sort_column == 3:  # 性别
+                        return student.get('draw_gender', '')
+                    elif self.sort_column == 4:  # 小组
+                        return student.get('draw_group', '')
+                    return ''
+                
+                # 应用排序
+                reverse_order = (self.sort_order == Qt.SortOrder.DescendingOrder)
+                students_data.sort(key=sort_key, reverse=reverse_order)
+            else:
+                # 默认按时间降序排序
+                students_data.sort(key=lambda x: x.get('draw_time', ''), reverse=True)
             
             # 计算本次加载的行范围
             start_row = self.current_row
@@ -502,31 +675,58 @@ class roll_call_history_table(GroupHeaderCardWidget):
         """刷新班级下拉框列表"""
         if not hasattr(self, 'class_comboBox'):
             return
+        
+        # 保存当前选择的班级名称和索引
         current_class_name = self.class_comboBox.currentText()
+        current_index = self.class_comboBox.currentIndex()
+        
+        # 获取最新的班级历史列表
         class_history = get_all_history_names("roll_call")
+        
+        # 清空并重新填充下拉框
         self.class_comboBox.clear()
         self.class_comboBox.addItems(class_history)
+        
+        # 如果之前选择的班级还在列表中，则重新选择它
         if current_class_name and current_class_name in class_history:
             index = class_history.index(current_class_name)
             self.class_comboBox.setCurrentIndex(index)
-        elif not class_history:
+            # 更新current_class_name
+            self.current_class_name = current_class_name
+        elif class_history and current_index >= 0 and current_index < len(class_history):
+            # 如果之前选择的索引仍然有效，使用相同的索引
+            self.class_comboBox.setCurrentIndex(current_index)
+            # 更新current_class_name
+            self.current_class_name = class_history[current_index]
+        elif class_history:
+            # 如果之前选择的班级不在列表中，选择第一个班级
+            self.class_comboBox.setCurrentIndex(0)
+            # 更新current_class_name
+            self.current_class_name = class_history[0]
+        else:
+            # 如果没有班级历史，设置占位符
             self.class_comboBox.setCurrentIndex(-1)
             self.class_comboBox.setPlaceholderText(get_content_name_async("roll_call_history_table", "select_class_name"))
+            # 更新current_class_name
+            self.current_class_name = ""
+            
         if hasattr(self, 'clear_button'):
-            self.clear_button.setEnabled(bool(current_class_name))
+            self.clear_button.setEnabled(bool(self.current_class_name))
             
     def on_class_changed(self, index):
         """班级选择变化时刷新表格数据"""
         if not hasattr(self, 'class_comboBox'):
             return
-        if index >= 0:
-            update_settings("roll_call_history_table", "select_class_name", index)
+            
+        # 启用或禁用清除按钮
         if hasattr(self, 'clear_button'):
             self.clear_button.setEnabled(self.class_comboBox.currentIndex() >= 0)
+            
+        # 更新当前班级名称
         self.current_class_name = self.class_comboBox.currentText()
+        
+        # 刷新表格数据
         self.refresh_data()
-        if hasattr(self, 'table'):
-            self.refresh_data()
             
     def refresh_data(self):
         """刷新表格数据"""
@@ -549,7 +749,7 @@ class roll_call_history_table(GroupHeaderCardWidget):
         
         try:
             if not hasattr(self, 'mode_comboBox'):
-                self.current_mode = readme_settings_async("roll_call_history_table", "select_mode")
+                self.current_mode = 0
                 if self.current_mode == 0:
                     students = get_student_history(class_name)
                     if students:
@@ -616,6 +816,11 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeMode.Stretch)
                 self.table.horizontalHeader().setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
                 
+            # 如果有排序设置，应用排序
+            if self.sort_column >= 0:
+                self.table.horizontalHeader().setSortIndicator(self.sort_column, self.sort_order)
+                self.table.horizontalHeader().setSortIndicatorShown(True)
+                
         except Exception as e:
             logger.error(f"刷新表格数据失败: {str(e)}")
         finally:
@@ -629,20 +834,42 @@ class roll_call_history_table(GroupHeaderCardWidget):
         if hasattr(self, 'mode_comboBox'):
             self.current_mode = self.mode_comboBox.currentIndex()
         else:
-            self.current_mode = readme_settings_async("roll_call_history_table", "select_mode")
+            self.current_mode = 0
             
         if self.current_mode == 0:
             if readme_settings_async("roll_call_history_table", "select_weight"):
                 headers = get_content_name_async("roll_call_history_table", "HeaderLabels_all_weight")
             else:
                 headers = get_content_name_async("roll_call_history_table", "HeaderLabels_all_not_weight")
-            self.table.setColumnCount(len(headers))
-            self.table.setHorizontalHeaderLabels(headers)
+            
+            if headers is not None:
+                self.table.setColumnCount(len(headers))
+                self.table.setHorizontalHeaderLabels(headers)
+            else:
+                # 如果获取headers失败，使用默认值
+                if readme_settings_async("roll_call_history_table", "select_weight"):
+                    headers = ["学号", "姓名", "性别", "小组", "总次数", "权重"]
+                else:
+                    headers = ["学号", "姓名", "性别", "小组", "总次数"]
+                self.table.setColumnCount(len(headers))
+                self.table.setHorizontalHeaderLabels(headers)
         elif self.current_mode == 1:
-            headers = get_content_name_async("roll_call_history_table", "HeaderLabels_Session")
-            self.table.setColumnCount(len(headers))
-            self.table.setHorizontalHeaderLabels(headers)
+            headers = get_content_name_async("roll_call_history_table", "HeaderLabels_time")
+            if headers is not None:
+                self.table.setColumnCount(len(headers))
+                self.table.setHorizontalHeaderLabels(headers)
+            else:
+                # 如果获取headers失败，使用默认值
+                headers = ["时间", "学号", "姓名", "性别", "小组"]
+                self.table.setColumnCount(len(headers))
+                self.table.setHorizontalHeaderLabels(headers)
         else:
             headers = get_content_name_async("roll_call_history_table", "HeaderLabels_Individual")
-            self.table.setColumnCount(len(headers))
-            self.table.setHorizontalHeaderLabels(headers)
+            if headers is not None:
+                self.table.setColumnCount(len(headers))
+                self.table.setHorizontalHeaderLabels(headers)
+            else:
+                # 如果获取headers失败，使用默认值
+                headers = ["时间", "模式", "人数", "性别", "小组"]
+                self.table.setColumnCount(len(headers))
+                self.table.setHorizontalHeaderLabels(headers)

@@ -109,8 +109,8 @@ class more_settings_page(PivotPageTemplate):
     """创建更多设置页面"""
     def __init__(self, parent: QFrame = None):
         page_config = {
-            "debug": get_content_name_async("debug", "title"),
-            # "advanced_settings": get_content_name_async("advanced_settings", "title"),
+            "advanced_settings": get_content_name_async("advanced_settings", "title"),
+            # "debug": get_content_name_async("debug", "title"),
             # "experimental_features": get_content_name_async("experimental_features", "title"),
         }
         super().__init__(page_config, parent)

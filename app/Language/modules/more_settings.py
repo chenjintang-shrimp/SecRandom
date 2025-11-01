@@ -5,6 +5,24 @@ more_settings = {
     }
 }
 
+# 进阶设置语言配置
+advanced_settings = {
+        "ZH_CN": {
+            "title": {"name": "进阶设置", "description": "进阶设置"},
+            "fair_draw": {"name": "公平抽取", "description": "启用公平抽取算法",
+                "switchbutton_name": {"enable": "启用", "disable": "禁用"}},
+            "fair_draw_group": {"name": "公平抽取组", "description": "配置公平抽取组相关设置",
+                "switchbutton_name": {"enable": "启用", "disable": "禁用"}},
+            "fair_draw_gender": {"name": "启用公平抽取性别", "description": "启用公平抽取性别功能",
+                "switchbutton_name": {"enable": "启用","disable": "禁用"}},
+            "fair_draw_time": {"name": "公平抽取时间", "description": "配置公平抽取时间相关设置",
+                "switchbutton_name": {"enable": "启用","disable": "禁用"}},
+            "base_weight": {"name": "基础权重", "description": "设置每个选项的基础权重"},
+            "min_weight": {"name": "权重范围最小值", "description": "设置每个选项的权重范围最小值"},
+            "max_weight": {"name": "权重范围最大值", "description": "设置每个选项的权重范围最大值"},
+        }
+    }
+
 # 调试设置语言配置
 debug = {"ZH_CN": {"title": {"name": "调试设置", "description": "调试设置"}}}
 
