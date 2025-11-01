@@ -12,7 +12,7 @@ from loguru import logger
 from typing import Any, Optional
 
 # 获取语言数据
-Language = get_current_language_data()  
+Language = get_current_language_data()
 
 # ==================================================
 # 异步语言读取工作线程

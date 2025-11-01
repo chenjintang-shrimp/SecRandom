@@ -1208,7 +1208,7 @@ DEFAULT_SETTINGS = {
             "default_value": 0
         },
         "select_mode": {
-            "default_value": 0
+            "default_value": None
         },
         "HeaderLabels_all_not_weight": {
             "default_value": None
@@ -1229,6 +1229,32 @@ DEFAULT_SETTINGS = {
     "more_settings": {
         "title": {
             "default_value": None
+        },
+    },
+    "advanced_settings": {
+        "title": {
+            "default_value": None
+        },
+        "fair_draw": {
+            "default_value": True
+        },
+        "fair_draw_group": {
+            "default_value": True
+        },
+        "fair_draw_gender": {
+            "default_value": True
+        },
+        "fair_draw_time": {
+            "default_value": True
+        },
+        "base_weight": {
+            "default_value": 1.00
+        },
+        "min_weight": {
+            "default_value": 0.50
+        },
+        "max_weight": {
+            "default_value": 5.00
         },
     },
     "debug":{

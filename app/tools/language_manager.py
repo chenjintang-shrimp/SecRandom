@@ -25,15 +25,9 @@ class SimpleLanguageManager:
         
         # 默认加载中文，从模块文件动态生成
         merged_zh_cn = self._merge_language_files("ZH_CN")
-        # 如果合并结果不为空，则使用合并结果，否则使用默认的ZH_CN
-        if merged_zh_cn:
-            self._loaded_languages: Dict[str, Dict[str, Any]] = {
-                "ZH_CN": merged_zh_cn
-            }
-        else:
-            self._loaded_languages: Dict[str, Dict[str, Any]] = {
-                "ZH_CN": ZH_CN
-            }
+        self._loaded_languages: Dict[str, Dict[str, Any]] = {
+            "ZH_CN": merged_zh_cn
+        }
         
         # 加载resources/Language文件夹下的所有语言文件
         self._load_all_languages()
