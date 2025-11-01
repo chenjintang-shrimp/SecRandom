@@ -27,6 +27,11 @@ from app.tools.variable import *
 from app.tools.path_utils import *
 
 # ==================================================
+# 常量定义
+# ==================================================
+PULSE_CLIENT_NAME = 'secrandom-volume-control'
+
+# ==================================================
 # 系统功能相关函数
 # ==================================================
 def restore_volume(volume_value):
@@ -73,7 +78,7 @@ def restore_volume(volume_value):
                 logger.warning("pulsectl未安装，无法控制音量")
                 return
             
-            with pulsectl.Pulse('secrandom-volume-control') as pulse:
+            with pulsectl.Pulse(PULSE_CLIENT_NAME) as pulse:
                 # 获取默认sink（输出设备）
                 sinks = pulse.sink_list()
                 if not sinks:
