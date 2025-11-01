@@ -33,14 +33,14 @@ roll_call_settings = {
             "combo_items": ["重复抽取", "不重复抽取", "半重复抽取"],
         },
         "clear_record": {
-            "name": "清除抽取记录方式",
-            "description": "设置清除点名抽取记录的方式",
+            "name": "自动清除点名抽取记录",
+            "description": "设置何时自动清除点名抽取记录",
             "combo_items": ["重启后清除", "直到全部抽取完"],
             "combo_items_other": ["重启后清除", "直到全部抽取完", "无需清除"],
         },
         "half_repeat": {
             "name": "半重复抽取次数",
-            "description": "设置半重复抽取的次数",
+            "description": "设置一个学生在重置抽取记录前最多能被抽取几次",
         },
         "clear_time": {
             "name": "抽取后定时清除时间",
