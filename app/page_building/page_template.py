@@ -180,6 +180,7 @@ class PivotPageTemplate(QFrame):
         
         # 连接信号
         self.stacked_widget.currentChanged.connect(self.on_current_index_changed)
+        self.pivot.currentItemChanged.connect(self.on_pivot_item_changed)
         
         self.ui_created = True
         
@@ -236,10 +237,10 @@ class PivotPageTemplate(QFrame):
         self.stacked_widget.addWidget(scroll_area)
         
         # 添加到 Pivot
-        self.pivot.addItem(
+        self.pivot.insertItem(
+            -1,  # 在末尾插入
             routeKey=page_name,
-            text=display_name,
-            onClick=lambda: self.switch_to_page(page_name)
+            text=display_name
         )
         
         # 存储滑动区域引用
@@ -324,6 +325,10 @@ class PivotPageTemplate(QFrame):
         if widget:
             self.pivot.setCurrentItem(widget.objectName())
             self.current_page = widget.objectName()
+    
+    def on_pivot_item_changed(self, route_key: str):
+        """Pivot项改变时的处理"""
+        self.switch_to_page(route_key)
     
     def get_current_page(self) -> str:
         """获取当前页面名称"""

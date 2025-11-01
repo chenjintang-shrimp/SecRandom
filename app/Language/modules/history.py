@@ -68,12 +68,20 @@ roll_call_history_table = {
             "name": ["学号", "姓名", "性别", "小组", "总次数", "权重"],
             "description": "点名历史记录表格的列标题",
         },
-        "HeaderLabels_time": {
+        "HeaderLabels_time_not_weight": {
             "name": ["时间", "学号", "姓名", "性别", "小组"],
             "description": "点名历史记录表格的列标题",
         },
-        "HeaderLabels_Individual": {
+        "HeaderLabels_time_weight": {
+            "name": ["时间", "学号", "姓名", "性别", "小组", "权重"],
+            "description": "点名历史记录表格的列标题",
+        },
+        "HeaderLabels_Individual_not_weight": {
             "name": ["时间", "模式", "人数", "性别", "小组"],
+            "description": "点名历史记录表格的列标题",
+        },
+        "HeaderLabels_Individual_weight": {
+            "name": ["时间", "模式", "人数", "性别", "小组", "权重"],
             "description": "点名历史记录表格的列标题",
         },
         "select_weight": {
@@ -83,6 +91,37 @@ roll_call_history_table = {
                 "enable": "显示",
                 "disable": "隐藏"
             }
+        },
+    }
+}
+
+# 抽奖历史记录表格语言配置
+lottery_history_table = {
+    "ZH_CN": {
+        "title": {
+            "name": "抽奖历史记录表格",
+            "description": "用于展示和管理抽奖历史记录的表格",
+        },
+        "select_pool_name": {
+            "name": "选择奖池",
+            "description": "选择要显示历史记录的奖池",
+        },
+        "select_mode": {
+            "name": "选择查看模式",
+            "description": "选择要查看的历史记录模式",
+            "combo_items": ["全部", "时间"],
+        },
+        "HeaderLabels_all_weight": {
+            "name": ["序号", "名称", "总次数", "权重"],
+            "description": "抽奖历史记录表格的列标题",
+        },
+        "HeaderLabels_time_weight": {
+            "name": ["时间", "序号", "名称", "权重"],
+            "description": "抽奖历史记录表格的列标题",
+        },
+        "HeaderLabels_Individual_weight": {
+            "name": ["时间", "模式", "数量", "权重"],
+            "description": "抽奖历史记录表格的列标题",
         },
     }
 }

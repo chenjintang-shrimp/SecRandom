@@ -83,6 +83,7 @@ class basic_settings_voice_engine(GroupHeaderCardWidget):
 
         # 语速调节设置
         self.speech_rate = SpinBox()
+        self.speech_rate.setFixedWidth(WIDTH_SPINBOX)
         self.speech_rate.setRange(0, 100)
         self.speech_rate.setSuffix("wpm")
         self.speech_rate.setValue(int(readme_settings_async("basic_voice_settings", "speech_rate")))
@@ -230,13 +231,14 @@ class basic_settings_volume(GroupHeaderCardWidget):
 
         # 音量大小设置
         self.volume_size = SpinBox()
+        self.volume_size.setFixedWidth(WIDTH_SPINBOX)
         self.volume_size.setRange(0, 100)
         self.volume_size.setSuffix("%")
         self.volume_size.setValue(int(readme_settings_async("basic_voice_settings", "volume_size")))
         self.volume_size.valueChanged.connect(lambda value: update_settings("basic_voice_settings", "volume_size", value))
 
         # 添加设置项到分组
-        self.addGroup(get_theme_icon("ic_fluent_speaker_mute_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_speaker_edit_20_filled"), 
                         get_content_name_async("basic_voice_settings", "volume_size"), get_content_description_async("basic_voice_settings", "volume_size"), self.volume_size)
 
 class basic_settings_system_volume(GroupHeaderCardWidget):
@@ -253,6 +255,7 @@ class basic_settings_system_volume(GroupHeaderCardWidget):
 
         # 系统音量大小设置
         self.system_volume_size = SpinBox()
+        self.system_volume_size.setFixedWidth(WIDTH_SPINBOX)
         self.system_volume_size.setRange(0, 100)
         self.system_volume_size.setSuffix("%")
         self.system_volume_size.setValue(int(readme_settings_async("basic_voice_settings", "system_volume_size")))
@@ -261,5 +264,5 @@ class basic_settings_system_volume(GroupHeaderCardWidget):
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_speaker_settings_20_filled"), 
                         get_content_name_async("basic_voice_settings", "system_volume_control"), get_content_description_async("basic_voice_settings", "system_volume_control"), self.system_volume_control)
-        self.addGroup(get_theme_icon("ic_fluent_speaker_1_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_speaker_edit_20_filled"), 
                         get_content_name_async("basic_voice_settings", "system_volume_size"), get_content_description_async("basic_voice_settings", "system_volume_size"), self.system_volume_size)

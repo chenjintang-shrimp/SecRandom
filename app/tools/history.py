@@ -74,7 +74,6 @@ def save_history_data(history_type: str, file_name: str, data: Dict[str, Any]) -
         bool: 保存是否成功
     """
     file_path = get_history_file_path(history_type, file_name)
-    
     try:
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
@@ -94,44 +93,15 @@ def get_all_history_names(history_type: str) -> List[str]:
     """
     try:
         history_dir = get_path(f"app/resources/history/{history_type}_history")
-        
         if not history_dir.exists():
             return []
-        
-        # 获取所有JSON文件
         history_files = list(history_dir.glob("*.json"))
-        
-        # 提取名称（去掉文件扩展名）
         names = [file.stem for file in history_files]
-        
-        # 按字母顺序排序
         names.sort()
-        
         return names
-    
     except Exception as e:
         logger.error(f"获取历史记录名称列表失败: {e}")
         return []
-
-def clear_history(history_type: str, file_name: str) -> bool:
-    """清除指定历史记录
-    
-    Args:
-        history_type: 历史记录类型 (roll_call, lottery 等)
-        file_name: 文件名（不含扩展名）
-        
-    Returns:
-        bool: 清除是否成功
-    """
-    file_path = get_history_file_path(history_type, file_name)
-    
-    try:
-        if file_path.exists():
-            file_path.unlink()
-        return True
-    except Exception as e:
-        logger.error(f"清除历史记录失败: {e}")
-        return False
 
 def calculate_weight(students: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """计算学生的权重
@@ -190,141 +160,88 @@ def create_table_item(value: Union[str, int, float],
     Returns:
         QTableWidgetItem: 表格项对象
     """
-    # 格式化显示值
     display_value = format_table_item(value, is_percentage)
-    
-    # 创建表格项
     item = QTableWidgetItem(display_value)
-    
-    # 设置字体
     from app.tools.personalised import load_custom_font
     item.setFont(QFont(load_custom_font(), font_size))
-    
-    # 设置对齐方式
     if is_centered:
         item.setTextAlignment(Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter)
-    
-    # 设置不可编辑
     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-    
     return item
 
-def get_student_history(class_name: str) -> List[Dict[str, Any]]:
-    """获取指定班级的学生历史记录
+def get_name_history(history_type: str, class_name: str) -> int:
+    """获取指定班级的名称历史记录数量
     
     Args:
+        history_type: 历史记录类型 (roll_call, lottery 等)
+        class_name: 班级名称/奖池名称
+        
+    Returns:
+        int: 名称历史记录数量
+    """
+    if history_type == "roll_call":
+        student_list = get_student_list(class_name)
+        return len(student_list) if student_list else 0
+    elif history_type == "lottery":
+        student_list = get_pool_list(class_name)
+        return len(student_list) if student_list else 0
+    else:
+        return 0
+
+def get_draw_sessions_history(history_type: str, class_name: str) -> int:
+    """获取指定班级的抽取会话历史记录数量
+    
+    Args:
+        history_type: 历史记录类型 (roll_call, lottery 等)
         class_name: 班级名称
         
     Returns:
-        List[Dict[str, Any]]: 学生历史记录列表
+        int: 抽取会话历史记录数量
     """
-    history_data = load_history_data("roll_call", class_name)
-    student_list = get_student_list(class_name)
-    students_history = {}
-    students_dict = history_data.get("students", {})
-    if isinstance(students_dict, dict):
-        for name, info in students_dict.items():
-            students_history[name] = {
-                "name": name,
-                "gender": info.get("gender", ""),
-                "group": info.get("group", ""),
-                "total_count": info.get("total_count", 0),
-                "group_gender_count": info.get("group_gender_count", 0),
-                "last_drawn_time": info.get("last_drawn_time", ""),
-                "rounds_missed": info.get("rounds_missed", 0),
-                "history": info.get("history", [])
-            }
-    elif isinstance(students_dict, list):
-        for student in students_dict:
-            name = student.get("name", "")
-            if name:
-                students_history[name] = student
-
-    result = []
-    for student in student_list:
-        name = student["name"]
-        if name in students_history:
-            result.append(students_history[name])
-        else:
-            result.append({
-                "name": name,
-                "gender": student.get("gender", ""),
-                "group": student.get("group", ""),
-                "total_count": 0,
-                "group_gender_count": 0,
-                "last_drawn_time": "",
-                "rounds_missed": 0,
-                "history": []
-            })
-
-    result.sort(key=lambda x: next((s["id"] for s in student_list if s["name"] == x["name"]), 0))
-    
-    return result
-
-def get_draw_sessions_history(class_name: str) -> List[Dict[str, Any]]:
-    """获取指定班级的抽取会话历史记录
-    
-    Args:
-        class_name: 班级名称
-        
-    Returns:
-        List[Dict[str, Any]]: 抽取会话历史记录列表
-    """
-    history_data = load_history_data("roll_call", class_name)
-    sessions = []
-    students_dict = history_data.get("students", {})
+    history_data = load_history_data(history_type, class_name)
+    session_count = 0
+    if history_type == "roll_call":
+        key = "students"
+    elif history_type == "lottery":
+        key = "lotterys"
+    else:
+        return 0
+    students_dict = history_data.get(key, {})
     if isinstance(students_dict, dict):
         for student_name, student_info in students_dict.items():
             session_list = student_info.get("history", [])
-            for session_info in session_list:
-                if isinstance(session_info, dict):
-                    sessions.append({
-                        "draw_time": session_info.get("draw_time", ""),
-                        "draw_method": session_info.get("draw_method", ""),
-                        "draw_people_numbers": session_info.get("draw_people_numbers", 0),
-                        "draw_group": session_info.get("draw_group", ""),
-                        "draw_gender": session_info.get("draw_gender", ""),
-                        "draw_people": session_info.get("draw_people", [])
-                    })
-    if not isinstance(sessions, list):
-        sessions = []
-    sessions.sort(key=lambda x: x.get("draw_time", ""), reverse=True)
-    return sessions
+            if isinstance(session_list, list):
+                session_count += len(session_list)
+    return session_count
 
-def get_individual_statistics(class_name: str, students_name: str) -> List[Dict[str, Any]]:
-    """获取指定班级的个人统计记录
+def get_individual_statistics(history_type: str, class_name: str, students_name: str) -> int:
+    """获取指定班级的个人统计记录数量
     
     Args:
-        class_name: 班级名称
-        students_name: 学生姓名
+        history_type: 历史记录类型 (roll_call, lottery 等)
+        class_name: 班级名称/奖池名称
+        students_name: 学生姓名/奖品名称
         
     Returns:
-        List[Dict[str, Any]]: 个人统计记录列表
+        int: 个人统计记录数量
     """
-    history_data = load_history_data("roll_call", class_name)
-    students_stats = []
-    students_dict = history_data.get("students", {})
+    history_data = load_history_data(history_type, class_name)
+    if history_type == "roll_call":
+        key = "students"
+    elif history_type == "lottery":
+        key = "lotterys"
+    else:
+        return 0
+    students_dict = history_data.get(key, {})
     if not isinstance(students_dict, dict):
-        return students_stats
+        return 0
     student_info = students_dict.get(students_name)
     if not student_info:
-        return students_stats
+        return 0
     student_history = student_info.get("history", [])
     if not isinstance(student_history, list):
-        return students_stats
-    for session_info in student_history:
-        if not isinstance(session_info, dict):
-            continue
-        students_stats.append({
-            "draw_time": session_info.get("draw_time", ""),
-            "draw_method": session_info.get("draw_method", ""),
-            "draw_people_numbers": session_info.get("draw_people_numbers", 0),
-            "draw_group": session_info.get("draw_group", ""),
-            "draw_gender": session_info.get("draw_gender", ""),
-            "draw_people": session_info.get("draw_people", [])
-        })
-    
-    return students_stats
+        return 0
+    return len(student_history)
 
 def save_roll_call_history(class_name: str, students: List[Dict[str, Any]], 
                           selected_students: List[Dict[str, Any]], 

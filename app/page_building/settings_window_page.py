@@ -100,7 +100,7 @@ class history_page(PivotPageTemplate):
         page_config = {
             "history_management": get_content_name_async("history_management", "title"),
             "roll_call_history_table": get_content_name_async("roll_call_history_table", "title"),
-            # "lottery_history_table": get_content_name_async("lottery_history_table", "title")
+            "lottery_history_table": get_content_name_async("lottery_history_table", "title")
         }
         super().__init__(page_config, parent)
         self.set_base_path("app.view.settings.history")

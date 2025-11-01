@@ -345,7 +345,7 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 })
             
             students_weight_data = calculate_weight(students_data)
-            max_weight_length = max(len(str(student.get('next_weight', '1.0'))) for student in students_weight_data) if students_weight_data else 0
+            max_weight_length = max(len(str(student.get('next_weight', ''))) for student in students_weight_data) if students_weight_data else 0
             
             # 根据排序状态对数据进行排序
             if self.sort_column >= 0:
@@ -415,7 +415,7 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 
                 # 如果需要显示权重
                 if self.table.columnCount() > 5:
-                    weight_item = create_table_item(str(students_weight_data[i].get('next_weight', '1.0')).zfill(max_weight_length))
+                    weight_item = create_table_item(str(students_weight_data[i].get('next_weight', '')).zfill(max_weight_length))
                     self.table.setItem(row, 5, weight_item)
             
             # 更新当前行数
@@ -470,8 +470,11 @@ class roll_call_history_table(GroupHeaderCardWidget):
                                 'id': str(student_id).zfill(max_id_length),
                                 'name': name,
                                 'gender': gender,
-                                'group': group
+                                'group': group,
+                                'weight': record.get('weight', '')
                             })
+
+            max_weight_length = max(len(str(student.get('weight', ''))) for student in students_data)
 
             # 根据排序状态对数据进行排序
             if self.sort_column >= 0:
@@ -487,6 +490,8 @@ class roll_call_history_table(GroupHeaderCardWidget):
                         return student.get('gender', '')
                     elif self.sort_column == 4:  # 小组
                         return student.get('group', '')
+                    elif self.sort_column == 5:  # 权重
+                        return student.get('weight', '')
                     return ''
                 
                 # 应用排序
@@ -529,6 +534,11 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 group = student.get('group', '')
                 group_item = create_table_item(str(group) if group else '')
                 self.table.setItem(row, 4, group_item)
+
+                # 如果需要显示权重
+                if self.table.columnCount() > 5:
+                    weight_item = create_table_item(str(student.get('weight', '')).zfill(max_weight_length))
+                    self.table.setItem(row, 5, weight_item)
 
             # 更新当前行数
             self.current_row = end_row
@@ -580,9 +590,12 @@ class roll_call_history_table(GroupHeaderCardWidget):
                                 'draw_method': str(record.get('draw_method', '')),
                                 'draw_people_numbers': str(record.get('draw_people_numbers', 0)),
                                 'draw_gender': str(record.get('draw_gender', '')),
-                                'draw_group': str(record.get('draw_group', ''))
+                                'draw_group': str(record.get('draw_group', '')),
+                                'weight': record.get('weight', '')
                             })
             
+            max_weight_length = max(len(str(student.get('weight', ''))) for student in students_data)
+
             # 根据排序状态对数据进行排序
             if self.sort_column >= 0:
                 # 定义排序键函数
@@ -590,13 +603,15 @@ class roll_call_history_table(GroupHeaderCardWidget):
                     if self.sort_column == 0:  # 时间
                         return student.get('draw_time', '')
                     elif self.sort_column == 1:  # 模式
-                        return student.get('draw_method', '')
+                        return str(student.get('draw_method', ''))
                     elif self.sort_column == 2:  # 人数
                         return int(student.get('draw_people_numbers', 0))
                     elif self.sort_column == 3:  # 性别
-                        return student.get('draw_gender', '')
+                        return str(student.get('draw_gender', ''))
                     elif self.sort_column == 4:  # 小组
-                        return student.get('draw_group', '')
+                        return str(student.get('draw_group', ''))
+                    elif self.sort_column == 5:  # 权重
+                        return float(student.get('weight', ''))
                     return ''
                 
                 # 应用排序
@@ -639,6 +654,12 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 draw_group = student.get('draw_group', '')
                 group_item = create_table_item(draw_group if draw_group else '')
                 self.table.setItem(row, 4, group_item)
+
+                # 如果需要显示权重
+                if self.table.columnCount() > 5:
+                    weight_item = create_table_item(str(student.get('weight', '')).zfill(max_weight_length))
+                    self.table.setItem(row, 5, weight_item)
+
 
             # 更新当前行数
             self.current_row = end_row
@@ -751,18 +772,20 @@ class roll_call_history_table(GroupHeaderCardWidget):
             if not hasattr(self, 'mode_comboBox'):
                 self.current_mode = 0
                 if self.current_mode == 0:
-                    students = get_student_history(class_name)
-                    if students:
-                        self.total_rows = len(students)
+                    # 获取学生记录数量
+                    students_count = get_name_history("roll_call", class_name)
+                    if students_count:
+                        self.total_rows = students_count
                         # 设置初始行数为批次大小或总行数，取较小值
                         initial_rows = min(self.batch_size, self.total_rows)
                         self.table.setRowCount(initial_rows)
                         # 加载第一批数据
                         self._load_more_students_data()
                 elif self.current_mode == 1:
-                    sessions = get_draw_sessions_history(class_name)
-                    if sessions:
-                        self.total_rows = len(sessions)
+                    # 获取会话记录数量
+                    sessions_count = get_draw_sessions_history("roll_call", class_name)
+                    if sessions_count:
+                        self.total_rows = sessions_count
                         # 设置初始行数为批次大小或总行数，取较小值
                         initial_rows = min(self.batch_size, self.total_rows)
                         self.table.setRowCount(initial_rows)
@@ -771,9 +794,10 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 else:
                     # 当模式值大于等于2时，从设置中获取学生姓名
                     self.current_student_name = readme_settings_async("roll_call_history_table", "select_student_name")
-                    stats = get_individual_statistics(class_name, self.current_student_name)
-                    if stats:
-                        self.total_rows = len(stats)
+                    # 获取个人统计记录数量
+                    stats_count = get_individual_statistics("roll_call", class_name, self.current_student_name)
+                    if stats_count:
+                        self.total_rows = stats_count
                         # 设置初始行数为批次大小或总行数，取较小值
                         initial_rows = min(self.batch_size, self.total_rows)
                         self.table.setRowCount(initial_rows)
@@ -783,27 +807,29 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 
             self.current_mode = self.mode_comboBox.currentIndex()
             if self.current_mode == 0:
-                students = get_student_history(class_name)
-                if students:
-                    self.total_rows = len(students)
+                # 获取学生记录数量
+                students_count = get_name_history("roll_call", class_name)
+                if students_count:
+                    self.total_rows = students_count
                     # 设置初始行数为批次大小或总行数，取较小值
                     initial_rows = min(self.batch_size, self.total_rows)
                     self.table.setRowCount(initial_rows)
                     # 加载第一批数据
                     self._load_more_students_data()
             elif self.current_mode == 1:
-                sessions = get_draw_sessions_history(class_name)
-                if sessions:
-                    self.total_rows = len(sessions)
+                # 获取会话记录数量
+                sessions_count = get_draw_sessions_history("roll_call", class_name)
+                if sessions_count:
+                    self.total_rows = sessions_count
                     # 设置初始行数为批次大小或总行数，取较小值
                     initial_rows = min(self.batch_size, self.total_rows)
                     self.table.setRowCount(initial_rows)
                     # 加载第一批数据
                     self._load_more_sessions_data()
             else:
-                stats = get_individual_statistics(class_name, self.mode_comboBox.currentText())
+                stats = get_individual_statistics("roll_call", class_name, self.mode_comboBox.currentText())
                 if stats:
-                    self.total_rows = len(stats)
+                    self.total_rows = stats
                     # 设置初始行数为批次大小或总行数，取较小值
                     initial_rows = min(self.batch_size, self.total_rows)
                     self.table.setRowCount(initial_rows)
@@ -841,35 +867,19 @@ class roll_call_history_table(GroupHeaderCardWidget):
                 headers = get_content_name_async("roll_call_history_table", "HeaderLabels_all_weight")
             else:
                 headers = get_content_name_async("roll_call_history_table", "HeaderLabels_all_not_weight")
-            
-            if headers is not None:
-                self.table.setColumnCount(len(headers))
-                self.table.setHorizontalHeaderLabels(headers)
-            else:
-                # 如果获取headers失败，使用默认值
-                if readme_settings_async("roll_call_history_table", "select_weight"):
-                    headers = ["学号", "姓名", "性别", "小组", "总次数", "权重"]
-                else:
-                    headers = ["学号", "姓名", "性别", "小组", "总次数"]
-                self.table.setColumnCount(len(headers))
-                self.table.setHorizontalHeaderLabels(headers)
+            self.table.setColumnCount(len(headers))
+            self.table.setHorizontalHeaderLabels(headers)
         elif self.current_mode == 1:
-            headers = get_content_name_async("roll_call_history_table", "HeaderLabels_time")
-            if headers is not None:
-                self.table.setColumnCount(len(headers))
-                self.table.setHorizontalHeaderLabels(headers)
+            if readme_settings_async("roll_call_history_table", "select_weight"):
+                headers = get_content_name_async("roll_call_history_table", "HeaderLabels_time_weight")
             else:
-                # 如果获取headers失败，使用默认值
-                headers = ["时间", "学号", "姓名", "性别", "小组"]
-                self.table.setColumnCount(len(headers))
-                self.table.setHorizontalHeaderLabels(headers)
+                headers = get_content_name_async("roll_call_history_table", "HeaderLabels_time_not_weight")
+            self.table.setColumnCount(len(headers))
+            self.table.setHorizontalHeaderLabels(headers)
         else:
-            headers = get_content_name_async("roll_call_history_table", "HeaderLabels_Individual")
-            if headers is not None:
-                self.table.setColumnCount(len(headers))
-                self.table.setHorizontalHeaderLabels(headers)
+            if readme_settings_async("roll_call_history_table", "select_weight"):
+                headers = get_content_name_async("roll_call_history_table", "HeaderLabels_Individual_weight")
             else:
-                # 如果获取headers失败，使用默认值
-                headers = ["时间", "模式", "人数", "性别", "小组"]
-                self.table.setColumnCount(len(headers))
-                self.table.setHorizontalHeaderLabels(headers)
+                headers = get_content_name_async("roll_call_history_table", "HeaderLabels_Individual_not_weight")
+            self.table.setColumnCount(len(headers))
+            self.table.setHorizontalHeaderLabels(headers)

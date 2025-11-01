@@ -39,7 +39,7 @@ class advanced_settings(QWidget):
 class advanced_fair_draw(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_content_name_async("advanced_settings", "fair_draw"))
+        self.setTitle(get_content_name_async("advanced_settings", "advanced_fair_draw"))
         self.setBorderRadius(8)
 
         # 总抽取次数是否纳入计算
