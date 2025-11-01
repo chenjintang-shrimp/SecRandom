@@ -629,6 +629,9 @@ DEFAULT_SETTINGS = {
         "floating_window_mode": {
             "default_value": None
         },
+        "call_notification_service": {
+            "default_value": False
+        },
         "notification_mode": {
             "default_value": 0
         },
@@ -779,6 +782,9 @@ DEFAULT_SETTINGS = {
         "floating_window_mode": {
             "default_value": None
         },
+        "call_notification_service": {
+            "default_value": False
+        },
         "notification_mode": {
             "default_value": 0
         },
@@ -828,6 +834,9 @@ DEFAULT_SETTINGS = {
         },
         "floating_window_mode": {
             "default_value": None
+        },
+        "call_notification_service": {
+            "default_value": False
         },
         "notification_mode": {
             "default_value": 0
@@ -1003,6 +1012,33 @@ DEFAULT_SETTINGS = {
         },
         "lottery_quantity_label": {
             "default_value": True
+        },
+        "custom_method": {
+            "default_value": 1
+        },
+        "reset_custom": {
+            "default_value": True
+        },
+        "custom_quantity_control": {
+            "default_value": True
+        },
+        "custom_start_button": {
+            "default_value": True
+        },
+        "custom_list": {
+            "default_value": True
+        },
+        "custom_range_start": {
+            "default_value": True
+        },
+        "custom_range_end": {
+            "default_value": True
+        },
+        "draw_custom_method": {
+            "default_value": True
+        },
+        "custom_quantity_label": {
+            "default_value": True
         }
     },
     "floating_window_management": {
@@ -1022,13 +1058,13 @@ DEFAULT_SETTINGS = {
             "default_value": True
         },
         "floating_window_opacity": {
-            "default_value": 80
+            "default_value": 0.8
         },
         "reset_floating_window_position_button": {
             "default_value": None
         },
         "floating_window_button_control": {
-            "default_value": 4
+            "default_value": 5
         },
         "floating_window_placement": {
             "default_value": 1

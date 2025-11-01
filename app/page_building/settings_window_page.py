@@ -29,7 +29,6 @@ class list_management_page(PivotPageTemplate):
         page_config = {
             "roll_call_list": get_content_name_async("roll_call_list", "title"),
             "roll_call_table": get_content_name_async("roll_call_table", "title"),
-            "custom_draw_list": get_content_name_async("custom_draw_list", "title"),
             "lottery_list": get_content_name_async("lottery_list", "title"),
             "lottery_table": get_content_name_async("lottery_table", "title")
         }
@@ -100,7 +99,7 @@ class history_page(PivotPageTemplate):
         page_config = {
             "history_management": get_content_name_async("history_management", "title"),
             "roll_call_history_table": get_content_name_async("roll_call_history_table", "title"),
-            # "lottery_history_table": get_content_name_async("lottery_history_table", "title")
+            "lottery_history_table": get_content_name_async("lottery_history_table", "title")
         }
         super().__init__(page_config, parent)
         self.set_base_path("app.view.settings.history")
