@@ -76,22 +76,13 @@ roll_call_settings = {
             "description": "设置点名动画自动播放的次数",
         },
         "animation_color_theme": {
-            "name": "动画颜色主题",
-            "description": "设置点名动画的颜色主题",
-            "combo_items": ["关闭", "随机颜色", "固定颜色"],
-        },
-        "result_color_theme": {
-            "name": "结果颜色主题",
-            "description": "设置点名结果显示的颜色主题",
+            "name": "动画/结果颜色主题",
+            "description": "设置点名动画/结果的颜色主题",
             "combo_items": ["关闭", "随机颜色", "固定颜色"],
         },
         "animation_fixed_color": {
-            "name": "动画固定颜色",
-            "description": "设置点名动画的固定颜色",
-        },
-        "result_fixed_color": {
-            "name": "结果固定颜色",
-            "description": "设置点名结果显示的固定颜色",
+            "name": "动画/结果固定颜色",
+            "description": "设置点名动画/结果的固定颜色",
         },
         "student_image": {
             "name": "显示学生图片",

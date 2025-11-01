@@ -263,31 +263,19 @@ class roll_call_color_theme_settings(GroupHeaderCardWidget):
         self.setTitle(get_content_name_async("roll_call_settings", "color_theme_settings"))
         self.setBorderRadius(8)
 
-        # 动画颜色主题下拉框
+        # 颜色主题下拉框
         self.animation_color_theme_combo = ComboBox()
         self.animation_color_theme_combo.addItems(get_content_combo_name_async("roll_call_settings", "animation_color_theme"))
         self.animation_color_theme_combo.setCurrentIndex(readme_settings_async("roll_call_settings", "animation_color_theme"))
         self.animation_color_theme_combo.currentIndexChanged.connect(lambda: update_settings("roll_call_settings", "animation_color_theme", self.animation_color_theme_combo.currentIndex()))
 
-        # 结果颜色主题下拉框
-        self.result_color_theme_combo = ComboBox()
-        self.result_color_theme_combo.addItems(get_content_combo_name_async("roll_call_settings", "result_color_theme"))
-        self.result_color_theme_combo.setCurrentIndex(readme_settings_async("roll_call_settings", "result_color_theme"))
-        self.result_color_theme_combo.currentIndexChanged.connect(lambda: update_settings("roll_call_settings", "result_color_theme", self.result_color_theme_combo.currentIndex()))
-
         # 动画固定颜色
         self.animation_fixed_color_button = ColorConfigItem("roll_call_settings", "animation_fixed_color", readme_settings_async("roll_call_settings", "animation_fixed_color"))
         self.animation_fixed_color_button.valueChanged.connect(lambda color: update_settings("roll_call_settings", "animation_fixed_color", color.name()))
-        
-        # 结果固定颜色
-        self.result_fixed_color_button = ColorConfigItem("roll_call_settings", "result_fixed_color", readme_settings_async("roll_call_settings", "result_fixed_color"))
-        self.result_fixed_color_button.valueChanged.connect(lambda color: update_settings("roll_call_settings", "result_fixed_color", color.name()))
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_color_20_filled"),
                         get_content_name_async("roll_call_settings", "animation_color_theme"), get_content_description_async("roll_call_settings", "animation_color_theme"), self.animation_color_theme_combo)
-        self.addGroup(get_theme_icon("ic_fluent_color_20_filled"),
-                        get_content_name_async("roll_call_settings", "result_color_theme"), get_content_description_async("roll_call_settings", "result_color_theme"), self.result_color_theme_combo)
 
         self.animationColorCard = ColorSettingCard(
             self.animation_fixed_color_button,
@@ -296,16 +284,8 @@ class roll_call_color_theme_settings(GroupHeaderCardWidget):
             self.tr(get_content_description_async("roll_call_settings", "animation_fixed_color")),
             self
         )
-        self.resultColorCard = ColorSettingCard(
-            self.result_fixed_color_button,
-            get_theme_icon("ic_fluent_text_color_20_filled"),
-            self.tr(get_content_name_async("roll_call_settings", "result_fixed_color")),
-            self.tr(get_content_description_async("roll_call_settings", "result_fixed_color")),
-            self
-        )
 
         self.vBoxLayout.addWidget(self.animationColorCard)
-        self.vBoxLayout.addWidget(self.resultColorCard)
 
 class roll_call_student_image_settings(GroupHeaderCardWidget):
     def __init__(self, parent=None):

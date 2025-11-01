@@ -228,3 +228,108 @@ def get_pool_list(pool_name: str) -> List[Dict[str, Any]]:
     except Exception as e:
         logger.error(f"获取奖池列表失败: {e}")
         return []
+
+# ==================================================
+# 学生数据处理函数
+# ==================================================
+def filter_students_data(data: Dict[str, Any], group_index: int, gender_index: int) -> List[Dict[str, Any]]:
+    """根据小组和性别条件过滤学生数据
+    
+    根据指定的小组和性别索引条件过滤学生数据，返回包含完整学生信息的列表
+    
+    Args:
+        data: 学生数据字典，键为学生姓名，值为包含学生信息的字典
+        group_index: 小组筛选索引，0表示抽取全班学生，1表示抽取小组组号，大于1表示具体的小组索引
+        gender_index: 性别筛选索引，0表示抽取所有性别，1表示男性，2表示女性
+        
+    Returns:
+        List[Tuple]: 包含(id, name, gender, group, exist)的元组列表
+    """
+    students_data = []
+    
+    try:
+        # 获取所有小组列表
+        groups = set()
+        for student_name, student_info in data.items():
+            if isinstance(student_info, dict) and 'id' in student_info:
+                group = student_info.get('group', '')
+                if group:  # 只添加非空小组
+                    groups.add(group)
+        sorted_groups = sorted(list(groups), key=lambda x: str(x))
+        
+        # 处理全班学生抽取 (group_index = 0)
+        if group_index == 0:
+            if gender_index == 0:  # 抽取所有性别
+                for student_name, student_info in data.items():
+                    if isinstance(student_info, dict) and 'id' in student_info:
+                        id = student_info.get('id', '')
+                        name = student_name.replace('【', '').replace('】', '')
+                        gender = student_info.get('gender', '')
+                        group = student_info.get('group', '')
+                        exist = student_info.get('exist', True)
+                        students_data.append((id, name, gender, group, exist))
+            else:  # 抽取特定性别
+                gender_value = '男' if gender_index == 1 else '女'
+                for student_name, student_info in data.items():
+                    if isinstance(student_info, dict) and 'id' in student_info:
+                        id = student_info.get('id', '')
+                        name = student_name.replace('【', '').replace('】', '')
+                        gender = student_info.get('gender', '')
+                        group = student_info.get('group', '')
+                        exist = student_info.get('exist', True)
+                        if gender == gender_value:
+                            students_data.append((id, name, gender, group, exist))
+        
+        # 处理小组组号抽取 (group_index = 1)
+        elif group_index == 1:
+            groups_set = set()
+            for student_name, student_info in data.items():
+                if isinstance(student_info, dict) and 'id' in student_info:
+                    id = student_info.get('id', '')
+                    name = student_name.replace('【', '').replace('】', '')
+                    gender = student_info.get('gender', '')
+                    group = student_info.get('group', '')
+                    exist = student_info.get('exist', True)
+                    if group:  # 只添加非空小组
+                        groups_set.add((id, name, gender, group, exist))
+                        students_data.append((id, name, gender, group, exist))
+            
+            # 对小组进行排序
+            students_data = sorted(list(groups_set), key=lambda x: str(x))
+        
+        # 处理指定小组抽取 (group_index > 1)
+        else:
+            # 获取指定的小组名称
+            if 0 < group_index - 2 < len(sorted_groups):
+                group_name = sorted_groups[group_index - 2]
+                
+                if gender_index == 0:  # 抽取所有性别
+                    for student_name, student_info in data.items():
+                        if isinstance(student_info, dict) and 'id' in student_info:
+                            id = student_info.get('id', '')
+                            name = student_name.replace('【', '').replace('】', '')
+                            gender = student_info.get('gender', '')
+                            group = student_info.get('group', '')
+                            exist = student_info.get('exist', True)
+                            if group == group_name:
+                                students_data.append((id, name, gender, group, exist))
+                else:  # 抽取特定性别
+                    gender_value = '男' if gender_index == 1 else '女'
+                    for student_name, student_info in data.items():
+                        if isinstance(student_info, dict) and 'id' in student_info:
+                            id = student_info.get('id', '')
+                            name = student_name.replace('【', '').replace('】', '')
+                            gender = student_info.get('gender', '')
+                            group = student_info.get('group', '')
+                            exist = student_info.get('exist', True)
+                            if gender == gender_value and group == group_name:
+                                students_data.append((id, name, gender, group, exist))
+
+        # 过滤学生信息的exist为False的学生
+        students_data = list(filter(lambda x: x[4], students_data))
+        
+        return students_data
+    
+    except Exception as e:
+        logger.error(f"过滤学生数据失败: {e}")
+        return []

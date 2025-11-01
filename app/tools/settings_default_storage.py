@@ -248,13 +248,7 @@ DEFAULT_SETTINGS = {
         "animation_color_theme": {
             "default_value": 0
         },
-        "result_color_theme": {
-            "default_value": 0
-        },
         "animation_fixed_color": {
-            "default_value": DEFAULT_THEME_COLOR
-        },
-        "result_fixed_color": {
             "default_value": DEFAULT_THEME_COLOR
         },
         "student_image": {
