@@ -84,4 +84,7 @@ dev-dependencies = [
     "pytest>=6.0",
     "black",
     "flake8",
+    "pyright>=1.1.407",
+    "pre-commit>=3.5.0",
+    "ruff>=0.14.3",
 ]
