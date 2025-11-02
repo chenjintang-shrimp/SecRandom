@@ -105,9 +105,6 @@ class MainWindow(MSFluentWindow):
         self.settingsInterface = QWidget(self)
         self.settingsInterface.setObjectName("settingsInterface")
 
-        self.about_page = about_page(self)
-        self.about_page.setObjectName("about_page")
-
         self.initNavigation()
 
     def initNavigation(self):
@@ -118,8 +115,6 @@ class MainWindow(MSFluentWindow):
         settings_item = self.addSubInterface(self.settingsInterface, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.BOTTOM)
         settings_item.clicked.connect(self.showSettingsRequested.emit)
         settings_item.clicked.connect(lambda: self.stackWidget.setCurrentWidget(self.roll_call_page))
-
-        self.addSubInterface(self.about_page, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
         """窗口关闭事件处理
