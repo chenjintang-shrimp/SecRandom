@@ -248,7 +248,13 @@ DEFAULT_SETTINGS = {
         "animation_color_theme": {
             "default_value": 0
         },
+        "result_color_theme": {
+            "default_value": 0
+        },
         "animation_fixed_color": {
+            "default_value": DEFAULT_THEME_COLOR
+        },
+        "result_fixed_color": {
             "default_value": DEFAULT_THEME_COLOR
         },
         "student_image": {
@@ -623,9 +629,6 @@ DEFAULT_SETTINGS = {
         "floating_window_mode": {
             "default_value": None
         },
-        "call_notification_service": {
-            "default_value": False
-        },
         "notification_mode": {
             "default_value": 0
         },
@@ -776,9 +779,6 @@ DEFAULT_SETTINGS = {
         "floating_window_mode": {
             "default_value": None
         },
-        "call_notification_service": {
-            "default_value": False
-        },
         "notification_mode": {
             "default_value": 0
         },
@@ -828,9 +828,6 @@ DEFAULT_SETTINGS = {
         },
         "floating_window_mode": {
             "default_value": None
-        },
-        "call_notification_service": {
-            "default_value": False
         },
         "notification_mode": {
             "default_value": 0
@@ -1006,33 +1003,6 @@ DEFAULT_SETTINGS = {
         },
         "lottery_quantity_label": {
             "default_value": True
-        },
-        "custom_method": {
-            "default_value": 1
-        },
-        "reset_custom": {
-            "default_value": True
-        },
-        "custom_quantity_control": {
-            "default_value": True
-        },
-        "custom_start_button": {
-            "default_value": True
-        },
-        "custom_list": {
-            "default_value": True
-        },
-        "custom_range_start": {
-            "default_value": True
-        },
-        "custom_range_end": {
-            "default_value": True
-        },
-        "draw_custom_method": {
-            "default_value": True
-        },
-        "custom_quantity_label": {
-            "default_value": True
         }
     },
     "floating_window_management": {
@@ -1052,13 +1022,13 @@ DEFAULT_SETTINGS = {
             "default_value": True
         },
         "floating_window_opacity": {
-            "default_value": 0.8
+            "default_value": 80
         },
         "reset_floating_window_position_button": {
             "default_value": None
         },
         "floating_window_button_control": {
-            "default_value": 5
+            "default_value": 4
         },
         "floating_window_placement": {
             "default_value": 1
@@ -1238,7 +1208,7 @@ DEFAULT_SETTINGS = {
             "default_value": 0
         },
         "select_mode": {
-            "default_value": None
+            "default_value": 0
         },
         "HeaderLabels_all_not_weight": {
             "default_value": None
@@ -1252,39 +1222,31 @@ DEFAULT_SETTINGS = {
         "HeaderLabels_Individual": {
             "default_value": None
         },
-        "select_weight": {
-            "default_value": False
+        "clear_history": {
+            "default_value": None
         },
+        "confirm_clear_title": {
+            "default_value": None
+        },
+        "confirm_clear_message": {
+            "default_value": None
+        },
+        "clear_success_title": {
+            "default_value": None
+        },
+        "clear_success_message": {
+            "default_value": None
+        },
+        "clear_error_title": {
+            "default_value": None
+        },
+        "clear_error_message": {
+            "default_value": None
+        }
     },
     "more_settings": {
         "title": {
             "default_value": None
-        },
-    },
-    "advanced_settings": {
-        "title": {
-            "default_value": None
-        },
-        "fair_draw": {
-            "default_value": True
-        },
-        "fair_draw_group": {
-            "default_value": True
-        },
-        "fair_draw_gender": {
-            "default_value": True
-        },
-        "fair_draw_time": {
-            "default_value": True
-        },
-        "base_weight": {
-            "default_value": 1.00
-        },
-        "min_weight": {
-            "default_value": 0.50
-        },
-        "max_weight": {
-            "default_value": 5.00
         },
     },
     "debug":{

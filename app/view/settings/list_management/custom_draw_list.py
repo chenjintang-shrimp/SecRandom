@@ -16,12 +16,12 @@ from app.tools.settings_access import *
 from app.Language.obtain_language import *
 
 # ==================================================
-# 自定义抽设置
+# 自定义抽奖名单
 # ==================================================
-class custom_draw_settings(GroupHeaderCardWidget):
+class custom_draw_list(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setTitle(get_content_name_async("custom_draw_settings", "title"))
+        self.setTitle(get_content_name_async("custom_draw_list", "title"))
         self.setBorderRadius(8)
 
         # 开机自启设置
