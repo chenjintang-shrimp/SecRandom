@@ -32,12 +32,8 @@ def is_wayland():
         wayland_display = os.environ.get('WAYLAND_DISPLAY')
         xdg_session_type = os.environ.get('XDG_SESSION_TYPE')
         
-        # 检查Qt平台
-        platform_name = QGuiApplication.platformName()
-        
-        return (wayland_display is not None or 
-                xdg_session_type == 'wayland' or 
-                platform_name == 'wayland')
+        # 仅依赖环境变量检测，避免调用Qt函数可能导致的问题
+        return (wayland_display is not None or xdg_session_type == 'wayland')
     return False
 
 # ==================================================
