@@ -7,22 +7,43 @@ more_settings = {
 
 # 进阶设置语言配置
 advanced_settings = {
-        "ZH_CN": {
-            "title": {"name": "进阶设置", "description": "进阶设置"},
-            "advanced_fair_draw": {"name": "公平抽取", "description": "公平抽取算法设置页面"},
-            "fair_draw": {"name": "按总抽取次数公平抽取", "description": "是否启用根据总抽取次数进行公平抽取",
-                "switchbutton_name": {"enable": "", "disable": ""}},
-            "fair_draw_group": {"name": "按组公平抽取", "description": "是否启用按组参与公平抽取计算",
-                "switchbutton_name": {"enable": "", "disable": ""}},
-            "fair_draw_gender": {"name": "按性别公平抽取", "description": "是否启用按性别参与公平抽取计算",
-                "switchbutton_name": {"enable": "","disable": ""}},
-            "fair_draw_time": {"name": "按时间公平抽取", "description": "是否启用按时间参与公平抽取计算",
-                "switchbutton_name": {"enable": "","disable": ""}},
-            "base_weight": {"name": "基础权重", "description": "设置每个选项的基础权重"},
-            "min_weight": {"name": "权重范围最小值", "description": "设置每个选项的权重范围最小值"},
-            "max_weight": {"name": "权重范围最大值", "description": "设置每个选项的权重范围最大值"},
-        }
+    "ZH_CN": {
+        "title": {"name": "进阶设置", "description": "进阶设置"},
+        "advanced_fair_draw": {
+            "name": "公平抽取",
+            "description": "公平抽取算法设置页面",
+        },
+        "fair_draw": {
+            "name": "按总抽取次数公平抽取",
+            "description": "是否启用根据总抽取次数进行公平抽取",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "fair_draw_group": {
+            "name": "按组公平抽取",
+            "description": "是否启用按组参与公平抽取计算",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "fair_draw_gender": {
+            "name": "按性别公平抽取",
+            "description": "是否启用按性别参与公平抽取计算",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "fair_draw_time": {
+            "name": "按时间公平抽取",
+            "description": "是否启用按时间参与公平抽取计算",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "base_weight": {"name": "基础权重", "description": "设置每个选项的基础权重"},
+        "min_weight": {
+            "name": "权重范围最小值",
+            "description": "设置每个选项的权重范围最小值",
+        },
+        "max_weight": {
+            "name": "权重范围最大值",
+            "description": "设置每个选项的权重范围最大值",
+        },
     }
+}
 
 # 调试设置语言配置
 debug = {"ZH_CN": {"title": {"name": "调试设置", "description": "调试设置"}}}

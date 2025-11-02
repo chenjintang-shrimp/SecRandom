@@ -1,4 +1,4 @@
-# Windows 依赖配置 - 支持 Python 3.8.10
+# Linux 依赖配置 - 支持 Python 3.8.10
 
 # === GUI框架 ===
 PyQt6==6.7.1
@@ -42,13 +42,9 @@ pyqrcode~=1.2.1
 pypng~=0.20220715.0
 colorthief==0.2.1
 
-# === Windows特定依赖 ===
-pywin32==310; platform_system == "Windows"
-win32_setctime==1.2.0; platform_system == "Windows"
-winshell==0.6; platform_system == "Windows"
-comtypes==1.4.10
-wmi==1.5.1
-pycaw==20240210; platform_system == "Windows"
+# === Linux特定依赖 ===
+# Linux音频控制替代pycaw
+pulsectl==24.8.0; platform_system == "Linux"
 
 # === 其他依赖 ===
 sip~=6.8.6
