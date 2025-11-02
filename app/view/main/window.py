@@ -98,7 +98,6 @@ class MainWindow(MSFluentWindow):
     def createSubInterface(self):
         """创建子界面
         搭建子界面导航系统"""
-
         self.roll_call_page = roll_call_page(self)
         self.roll_call_page.setObjectName("roll_call_page")
 
