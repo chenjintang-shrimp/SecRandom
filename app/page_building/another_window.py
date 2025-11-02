@@ -26,7 +26,7 @@ def create_contributor_window(title):
         创建的窗口实例
     """
     window = SimpleWindowTemplate(title)
-    window.add_page_from_template("contributor", contributor_window_template)
+    window.add_page_from_template("contributor", contributor_window_template, width=700, height=500)
     window.switch_to_page("contributor")
     _window_instances["contributor"] = window
     window.windowClosed.connect(lambda: _window_instances.pop("contributor", None))

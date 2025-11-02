@@ -64,25 +64,20 @@ class SimpleWindowTemplate(FramelessWindow):
     # 信号定义
     windowClosed = pyqtSignal()
     
-    def __init__(self, title: str = "窗口", parent: Optional[QWidget] = None):
+    def __init__(self, title: str = "窗口", width: int = 700, height: int = 500, parent: Optional[QWidget] = None):
         """
         初始化简单窗口模板
         
         Args:
             title: 窗口标题
+            width: 窗口宽度
+            height: 窗口高度
             parent: 父窗口
         """
         super().__init__(parent)
         
         # 保存父窗口引用
         self.parent_window = parent
-        
-        # 设置标题栏
-        self.setTitleBar(StandardTitleBar(self))
-        
-        # 设置窗口属性
-        self.setWindowTitle(title)
-        self.setMinimumSize(800, 600)
         
         # 存储页面
         self.pages: Dict[str, Type] = {}
@@ -104,13 +99,16 @@ class SimpleWindowTemplate(FramelessWindow):
         self.create_ui_components()
         
         # 初始化窗口
-        self.initWindow()
+        self.initWindow(title)
     
-    def initWindow(self) -> None:
+    def initWindow(self, title: str, width: int = 700, height: int = 500) -> None:
         """初始化窗口"""
+        self.setTitleBar(StandardTitleBar(self))
+        self.setMinimumSize(MINIMUM_WINDOW_SIZE[0], MINIMUM_WINDOW_SIZE[1])
+        self.resize(width, height)
+        self.setWindowIcon(QIcon(str(get_resources_path('assets/icon', 'secrandom-icon-paper.png'))))
+        self.setWindowTitle(title)
         self.titleBar.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
-        
-        # 居中显示窗口
         if self.parent_window is None:
             screen = QApplication.primaryScreen().availableGeometry()
             w, h = screen.width(), screen.height()
@@ -120,10 +118,6 @@ class SimpleWindowTemplate(FramelessWindow):
         """连接信号与槽"""
         try:
             qconfig.themeChanged.connect(setTheme)
-            logger.debug("主题变化信号连接成功")
-        except RuntimeError as e:
-            logger.error(f"连接主题变化信号时出错: {e}")
-            logger.warning("可能是因为QConfig对象已被删除")
         except Exception as e:
             logger.error(f"连接信号时发生未知错误: {e}")
     
@@ -137,7 +131,6 @@ class SimpleWindowTemplate(FramelessWindow):
             
             # 添加默认页面到堆叠窗口
             self.stacked_widget.addWidget(self.default_page)
-            logger.debug("UI组件创建成功")
         except Exception as e:
             logger.error(f"创建UI组件时出错: {e}")
             raise
@@ -175,8 +168,6 @@ class SimpleWindowTemplate(FramelessWindow):
             # 存储页面
             self.page_instances[page_name] = page_instance
             self.pages[page_name] = page_class
-            
-            logger.debug(f"从模板成功添加页面: {page_name}")
             return page_instance
         except Exception as e:
             logger.error(f"创建页面 {page_name} 时出错: {e}")
@@ -213,8 +204,6 @@ class SimpleWindowTemplate(FramelessWindow):
             
             # 存储页面
             self.page_instances[page_name] = widget
-            
-            logger.debug(f"从控件成功添加页面: {page_name}")
             return widget
         except Exception as e:
             logger.error(f"添加页面 {page_name} 到堆叠窗口时出错: {e}")
@@ -238,8 +227,6 @@ class SimpleWindowTemplate(FramelessWindow):
         page = self.page_instances.get(page_name, None)
         if page is None:
             logger.debug(f"请求的页面 {page_name} 不存在")
-        else:
-            logger.debug(f"成功获取页面: {page_name}")
             
         return page
     
@@ -269,7 +256,6 @@ class SimpleWindowTemplate(FramelessWindow):
             if self.stacked_widget.currentWidget() == page:
                 if self.default_page:
                     self.stacked_widget.setCurrentWidget(self.default_page)
-                    logger.debug(f"由于页面 {page_name} 被删除，已切换到默认页面")
                 else:
                     logger.warning(f"删除当前显示的页面 {page_name} 但没有默认页面可切换")
             
@@ -280,8 +266,6 @@ class SimpleWindowTemplate(FramelessWindow):
             del self.page_instances[page_name]
             if page_name in self.pages:
                 del self.pages[page_name]
-                
-            logger.debug(f"页面 {page_name} 移除成功")
             return True
         except Exception as e:
             logger.error(f"移除页面 {page_name} 时出错: {e}")
@@ -304,12 +288,6 @@ class SimpleWindowTemplate(FramelessWindow):
             
         if page_name not in self.page_instances:
             logger.warning(f"尝试切换到不存在的页面: {page_name}")
-            # 列出所有可用页面用于调试
-            if self.page_instances:
-                available_pages = ", ".join(self.page_instances.keys())
-                logger.debug(f"可用页面: {available_pages}")
-            else:
-                logger.debug("没有可用的页面")
             return False
             
         try:
@@ -318,12 +296,10 @@ class SimpleWindowTemplate(FramelessWindow):
             
             # 检查是否已经在目标页面
             if current_page == target_page:
-                logger.debug(f"已经在页面 {page_name}，无需切换")
                 return True
                 
             # 切换页面
             self.stacked_widget.setCurrentWidget(target_page)
-            logger.debug(f"成功切换到页面: {page_name}")
             return True
         except Exception as e:
             logger.error(f"切换到页面 {page_name} 时出错: {e}")
