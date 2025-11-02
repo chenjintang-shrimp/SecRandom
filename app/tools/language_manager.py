@@ -6,9 +6,13 @@ import json
 from typing import Dict, Optional, Any, List
 from loguru import logger
 
-from app.tools.path_utils import get_resources_path
+from app.tools.path_utils import get_path, get_resources_path
 from app.tools.settings_access import readme_settings
-from app.Language.ZH_CN import ZH_CN
+# from app.Language.ZH_CN import ZH_CN
+import glob
+import importlib.util
+
+from app.tools.variable import LANGUAGE_MODULE_DIR
 
 # ==================================================
 # 简化的语言管理器类
@@ -19,13 +23,71 @@ class SimpleLanguageManager:
     def __init__(self):
         self._current_language: Optional[str] = None
 
-        # 默认加载中文
+        # 默认加载中文，从模块文件动态生成
+        merged_zh_cn = self._merge_language_files("ZH_CN")
         self._loaded_languages: Dict[str, Dict[str, Any]] = {
-            "ZH_CN": ZH_CN
+            "ZH_CN": merged_zh_cn
         }
 
         # 加载resources/Language文件夹下的所有语言文件
         self._load_all_languages()
+
+
+    def _merge_language_files(self, language_code: Optional[str]) -> Dict[str, Any]:
+        """
+        从模块化语言文件中合并生成完整的语言字典
+
+        Args:
+            language_code: 语言代码，默认为"ZH_CN"
+
+        Returns:
+            合并后的语言字典
+        """
+        merged = {}
+        language_code = "ZH_CN" if not language_code else language_code
+        language_dir = get_path(LANGUAGE_MODULE_DIR)
+
+        # 检查语言目录是否存在
+        if not os.path.exists(language_dir):
+            logger.warning(f"语言模块目录不存在: {language_dir}")
+            return merged
+
+        # 获取所有Python模块文件
+        language_module_files = glob.glob(os.path.join(language_dir, "*.py"))
+        language_module_files = [f for f in language_module_files if not f.endswith("__init__.py")]
+
+        # 遍历所有模块文件并动态导入
+        for file_path in language_module_files:
+            try:
+                # 从文件名获取模块名（去掉.py扩展名）
+                language_module_name = os.path.basename(file_path)[:-3]
+
+                # 动态导入模块
+                spec = importlib.util.spec_from_file_location(language_module_name, file_path)
+                if spec is None:
+                    logger.warning(f"无法创建模块规范: {file_path}")
+                    continue
+
+                module = importlib.util.module_from_spec(spec)
+                if spec.loader is None:
+                    logger.warning(f"模块加载器为空: {file_path}")
+                    continue
+
+                spec.loader.exec_module(module)
+
+                # 遍历模块中的所有属性
+                for attr_name in dir(module):
+                    attr_value = getattr(module, attr_name)
+                    # 如果属性是字典且包含目标语言代码
+                    if isinstance(attr_value, dict) and language_code in attr_value:
+                        # 将模块内容合并到结果字典中
+                        merged[attr_name] = attr_value[language_code]
+
+            except Exception as e:
+                logger.error(f"导入语言模块 {file_path} 时出错: {e}")
+                continue
+
+        return merged
 
     def _load_all_languages(self) -> None:
         """加载resources/Language文件夹下的所有语言文件"""
@@ -82,7 +144,7 @@ class SimpleLanguageManager:
 
         # 如果语言未加载，返回默认中文
         if language_code not in self._loaded_languages:
-            return ZH_CN
+            return self._loaded_languages["ZH_CN"]
 
         return self._loaded_languages[language_code]
 
