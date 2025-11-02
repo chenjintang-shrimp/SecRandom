@@ -25,16 +25,17 @@ from app.tools.extract import _is_non_class_time
 # ==================================================
 # 平台检测
 # ==================================================
-def is_wayland():
-    """检测是否在Wayland环境下运行"""
-    if sys.platform.startswith('linux'):
-        # 检查环境变量
-        wayland_display = os.environ.get('WAYLAND_DISPLAY')
-        xdg_session_type = os.environ.get('XDG_SESSION_TYPE')
-        
-        # 仅依赖环境变量检测，避免调用Qt函数可能导致的问题
-        return (wayland_display is not None or xdg_session_type == 'wayland')
-    return False
+def _is_wayland_session():
+    """检测是否在Wayland会话中运行
+    
+    仅检查环境变量，不调用任何Qt函数，确保在Qt初始化前也可以安全调用
+    """
+    if not sys.platform.startswith('linux'):
+        return False
+    
+    # 检查Wayland相关环境变量
+    return (os.environ.get('WAYLAND_DISPLAY') is not None or 
+            os.environ.get('XDG_SESSION_TYPE') == 'wayland')
 
 # ==================================================
 # 托盘图标管理器类
@@ -56,9 +57,12 @@ class Tray(QSystemTrayIcon):
         """
         super().__init__(parent)
         self.main_window = parent
-        self.is_wayland = is_wayland()
-        if self.is_wayland:
+        
+        # 检测Wayland环境（仅在Linux上）
+        self._is_wayland = _is_wayland_session()
+        if self._is_wayland:
             logger.info("检测到Wayland环境，启用Wayland兼容模式")
+        
         self.setIcon(QIcon(str(get_resources_path('assets/icon', 'secrandom-icon-paper.png'))))
         self.setToolTip('SecRandom')
         self._create_menu()
@@ -76,16 +80,17 @@ class Tray(QSystemTrayIcon):
     def _create_menu(self):
         """创建托盘右键菜单"""
         # Wayland需要菜单为独立窗口，否则会出现点击和定位问题
-        if self.is_wayland:
-            self.tray_menu = RoundMenu(parent=None)
-            # 设置Wayland特定的窗口标志
+        # X11使用父窗口以保持原有行为
+        menu_parent = None if self._is_wayland else self.main_window
+        self.tray_menu = RoundMenu(parent=menu_parent)
+        
+        # Wayland环境下设置特定的窗口标志
+        if self._is_wayland:
             self.tray_menu.setWindowFlags(
                 Qt.WindowType.Popup | 
                 Qt.WindowType.FramelessWindowHint |
                 Qt.WindowType.NoDropShadowWindowHint
             )
-        else:
-            self.tray_menu = RoundMenu(parent=self.main_window)
         
         # 关于SecRandom
         self.tray_menu.addAction(Action('SecRandom', triggered=self.showSettingsRequestedAbout.emit))
@@ -106,16 +111,14 @@ class Tray(QSystemTrayIcon):
         当用户点击托盘图标时，显示菜单"""
         if reason in (QSystemTrayIcon.ActivationReason.Trigger, 
                      QSystemTrayIcon.ActivationReason.Context):
-            if self.is_wayland:
-                # Wayland环境：使用exec_()在光标位置显示菜单
+            pos = QCursor.pos()
+            
+            if self._is_wayland:
+                # Wayland环境：使用exec()在光标位置显示菜单
                 # 这样可以避免菜单出现在屏幕中央的问题
-                pos = QCursor.pos()
-                # 使用QMenu的exec_静态方法，这在Wayland下工作得更好
                 self.tray_menu.exec(pos)
-                # Wayland下不需要手动管理菜单关闭，系统会处理
             else:
-                # X11环境：使用原有的popup方式
-                pos = QCursor.pos()
+                # X11/Windows环境：使用原有的popup方式，带智能定位
                 screen = QApplication.primaryScreen().availableGeometry()
                 menu_size = self.tray_menu.sizeHint()
                 if pos.x() + menu_size.width() > screen.right():
