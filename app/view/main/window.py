@@ -105,6 +105,9 @@ class MainWindow(MSFluentWindow):
         self.settingsInterface = QWidget(self)
         self.settingsInterface.setObjectName("settingsInterface")
 
+        self.about_page = about_page(self)
+        self.about_page.setObjectName("about_page")
+
         self.initNavigation()
 
     def initNavigation(self):
@@ -114,6 +117,9 @@ class MainWindow(MSFluentWindow):
 
         settings_item = self.addSubInterface(self.settingsInterface, get_theme_icon("ic_fluent_settings_20_filled"), '设置', position=NavigationItemPosition.BOTTOM)
         settings_item.clicked.connect(self.showSettingsRequested.emit)
+        settings_item.clicked.connect(lambda: self.stackWidget.setCurrentWidget(self.roll_call_page))
+
+        self.addSubInterface(self.about_page, get_theme_icon("ic_fluent_info_20_filled"), '关于', position=NavigationItemPosition.BOTTOM)
 
     def closeEvent(self, event):
         """窗口关闭事件处理
@@ -124,20 +130,14 @@ class MainWindow(MSFluentWindow):
         # 保存当前窗口状态
         is_maximized = self.isMaximized()
         update_settings("window", "is_maximized", is_maximized)
-        
-        # 如果是最大化状态，保存当前窗口大小作为最大化前的大小
         if is_maximized:
-            # 最大化状态下，窗口大小是屏幕大小，不需要保存
-            # 使用之前保存的最大化前的大小
             pass
         else:
-            # 非最大化状态，保存当前窗口大小
             self.save_window_size(self.width(), self.height())
 
     def resizeEvent(self, event):
         """窗口大小变化事件处理
         检测窗口大小变化，但不启动尺寸记录倒计时，减少IO操作"""
-        # 正常的窗口大小变化处理
         self.resize_timer.start(500)
         super().resizeEvent(event)
         

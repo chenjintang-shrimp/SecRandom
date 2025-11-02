@@ -121,5 +121,13 @@ SUPPORTED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.svg']  # 支持的图�
 STUDENT_ID_FORMAT = "{num:02}"                 # 学号格式化字符串
 NAME_SPACING = "    "                          # 姓名之间的间距
 
+# ==================== 贡献者页面相关常量 ====================
+CONTRIBUTOR_CARD_MIN_WIDTH = 250          # 贡献者卡片最小宽度
+CONTRIBUTOR_MAX_COLUMNS = 12              # 贡献者页面最大列数限制
+CONTRIBUTOR_CARD_SPACING = 20             # 贡献者卡片间距
+CONTRIBUTOR_CARD_MARGIN = 15               # 贡献者卡片内边距
+CONTRIBUTOR_AVATAR_RADIUS = 64             # 贡献者头像半径
+CONTRIBUTOR_MAX_ROLE_WIDTH = 500           # 贡献者职责文本最大宽度
+
 # ==================== 全局变量 ====================
 main_window = None                            # 全局主窗口引用

@@ -21,7 +21,7 @@ from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
 
-from app.common.another_window import ContributorDialog
+from app.page_building.another_window import create_contributor_window
 
 # ==================================================
 # 关于卡片类
@@ -81,9 +81,8 @@ class about(GroupHeaderCardWidget):
 
     def show_contributors(self):
         """ 显示贡献人员 """
-        w = ContributorDialog(self)
-        if w.exec():
-            pass
+        contributor_window = create_contributor_window(title=get_content_name_async("about", "contributor"))
+        contributor_window.show()
 
     def open_donation_url(self):
         """ 打开捐赠链接 """
