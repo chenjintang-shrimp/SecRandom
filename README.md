@@ -57,9 +57,9 @@
 - ✅ **多名单管理**：支持导入/导出名单，轻松管理不同班级/团队
 
 ### 💻 **系统兼容性**
-- ✅ **全平台支持**：完美兼容 Windows 7/10/11 系统
+- ✅ **全平台支持**：完美兼容 Windows 7/10/11 系统，Linux 系统支持正在开发中
 - ✅ **多架构适配**：原生支持 x64、x86 架构
-- ✅ **开机自启**：支持开机自动启动，随时可用
+- ✅ **开机自启**：支持开机自动启动，随时可用（Windows）
 
 ## 📥 下载
 
@@ -112,6 +112,59 @@
 
 ### 触发构建
 在提交信息中包含 `进行打包` 即可触发自动构建流程。
+
+### Linux 平台支持
+
+SecRandom 正在移植到 Linux 平台。Linux 版本使用 PulseAudio 进行音频控制。
+
+#### Linux 系统要求
+- Ubuntu 20.04 或更高版本（推荐 Ubuntu 22.04）
+- Python 3.8.10
+- PulseAudio 音频系统
+- X11 或 Wayland 显示服务器
+
+#### Linux 安装步骤
+
+1. 安装系统依赖：
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+    libpulse-dev \
+    pulseaudio \
+    libportaudio2 \
+    libsndfile1 \
+    libasound2-dev \
+    portaudio19-dev \
+    libxcb-xinerama0 \
+    libxcb-cursor0 \
+    libxkbcommon-x11-0 \
+    libgl1-mesa-glx \
+    libegl1 \
+    libdbus-1-3 \
+    python3.8 \
+    python3.8-venv \
+    python3-pip
+```
+
+2. 克隆仓库并安装依赖：
+```bash
+git clone https://github.com/SECTL/SecRandom.git
+cd SecRandom
+git checkout linux-port
+python3.8 -m venv venv
+source venv/bin/activate
+pip install -r requirements-linux.txt
+```
+
+3. 运行应用程序：
+```bash
+python main.py
+```
+
+#### Linux 已知限制
+- 开机自启功能需要手动配置（可以使用 systemd 或桌面环境的自启动设置）
+- 某些 Windows 特定功能可能不可用
+- 音频控制依赖 PulseAudio，其他音频系统可能需要额外配置
 
 </details>
 
