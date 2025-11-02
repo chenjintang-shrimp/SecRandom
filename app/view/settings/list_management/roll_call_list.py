@@ -21,6 +21,8 @@ from app.tools.settings_access import *
 from app.Language.obtain_language import *
 from app.tools.list import *
 
+# from app.page_building.another_window import create_import_student_name_window
+
 # ==================================================
 # 点名名单
 # ==================================================
@@ -61,7 +63,7 @@ class roll_call_list(GroupHeaderCardWidget):
 
         # 导出学生名单按钮
         self.export_student_button = PushButton(get_content_name_async("roll_call_list", "export_student_name"))
-        self.export_student_button.clicked.connect(lambda: self.export_student_name())
+        self.export_student_button.clicked.connect(lambda: self.export_student_list())
 
         # 添加设置项到分组
         self.addGroup(get_theme_icon("ic_fluent_slide_text_edit_20_filled"), 
@@ -82,9 +84,72 @@ class roll_call_list(GroupHeaderCardWidget):
         # 设置文件系统监视器
         self.setup_file_watcher()
 
+    # # 学生名单导入功能
+    # def import_student_list(self):
+    #     create_import_student_name_window(get_content_name_async("roll_call_list", "import_student_name"))
+
+    # 学生名单导出功能
+    def export_student_list(self):
+        class_name = self.class_name_combo.currentText()
+        if not class_name:
+            InfoBar.warning(
+                title='导出失败',
+                content='请先选择要导出的班级',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+            return
+
+        file_path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "保存学生名单",
+            f"{class_name}_学生名单-SecRandom",
+            "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件（仅姓名） (*.txt)"
+        )
+        
+        if not file_path:
+            return
+            
+        export_type = "excel" if "Excel 文件 (*.xlsx)" in selected_filter else \
+                     "csv" if "CSV 文件 (*.csv)" in selected_filter else "txt"
+        
+        if export_type == "excel" and not file_path.endswith('.xlsx'):
+            file_path += '.xlsx'
+        elif export_type == "csv" and not file_path.endswith('.csv'):
+            file_path += '.csv'
+        elif export_type == "txt" and not file_path.endswith('.txt'):
+            file_path += '.txt'
+        
+        success, message = export_student_data(class_name, file_path, export_type)
+        
+        if success:
+            InfoBar.success(
+                title='导出成功',
+                content=f'学生名单已导出到: {file_path}',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self
+            )
+            logger.info(f"学生名单导出成功: {file_path}")
+        else:
+            InfoBar.error(
+                title='导出失败',
+                content=message,
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+            logger.error(f"学生名单导出失败: {message}")
+
     def setup_file_watcher(self):
         """设置文件系统监视器，监控班级名单文件夹的变化"""
-        # 获取班级名单文件夹路径
         roll_call_list_dir = get_path("app/resources/list/roll_call_list")
         
         # 确保目录存在

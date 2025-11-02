@@ -3,8 +3,9 @@
 # ==================================================
 import os
 import json
+import pandas as pd
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple, Optional
 from loguru import logger
 
 from app.tools.path_utils import *
@@ -355,3 +356,172 @@ def filter_students_data(data: Dict[str, Any], group_index: int, group_filter: s
     except Exception as e:
         logger.error(f"过滤学生数据失败: {e}")
         return []
+
+# ==================================================
+# 学生数据导出函数
+# ==================================================
+def export_student_data(class_name: str, file_path: str, export_format: str) -> Tuple[bool, str]:
+    """导出学生数据到指定文件
+    
+    从 app/resources/list/roll_call_list 文件夹中读取指定班级的名单文件，
+    并根据指定格式导出到文件
+    
+    Args:
+        class_name: 班级名称
+        file_path: 导出文件路径
+        export_format: 导出格式 ('excel', 'csv', 'txt')
+        
+    Returns:
+        Tuple[bool, str]: (是否成功, 成功/错误消息)
+    """
+    try:
+        # 获取班级名单文件路径
+        roll_call_list_dir = get_path("app/resources/list/roll_call_list")
+        class_file_path = roll_call_list_dir / f"{class_name}.json"
+        
+        # 如果文件不存在，返回错误
+        if not class_file_path.exists():
+            error_msg = f"班级文件 '{class_name}.json' 不存在"
+            logger.error(error_msg)
+            return False, error_msg
+        
+        # 读取JSON文件
+        with open(class_file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        if not data:
+            error_msg = "当前班级没有学生数据"
+            logger.warning(error_msg)
+            return False, error_msg
+        
+        # 根据导出格式处理数据
+        if export_format.lower() == 'excel':
+            return _export_to_excel(data, file_path)
+        elif export_format.lower() == 'csv':
+            return _export_to_csv(data, file_path)
+        elif export_format.lower() == 'txt':
+            return _export_to_txt(data, file_path)
+        else:
+            error_msg = f"不支持的导出格式: {export_format}"
+            logger.error(error_msg)
+            return False, error_msg
+            
+    except FileNotFoundError:
+        error_msg = f"班级文件 '{class_name}.json' 不存在"
+        logger.error(error_msg)
+        return False, error_msg
+    except json.JSONDecodeError:
+        error_msg = f"班级文件 '{class_name}.json' 格式错误"
+        logger.error(error_msg)
+        return False, error_msg
+    except Exception as e:
+        error_msg = f"导出学生名单时出错: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
+
+def _export_to_excel(data: Dict[str, Any], file_path: str) -> Tuple[bool, str]:
+    """导出学生数据为Excel文件
+    
+    Args:
+        data: 学生数据字典
+        file_path: 导出文件路径
+        
+    Returns:
+        Tuple[bool, str]: (是否成功, 成功/错误消息)
+    """
+    try:
+        # 转换为DataFrame
+        export_data = []
+        for name, info in data.items():
+            export_data.append({
+                '学号': info['id'],
+                '姓名': name,
+                '性别': info['gender'],
+                '所处小组': info['group']
+            })
+        
+        df = pd.DataFrame(export_data)
+        
+        # 确保文件扩展名正确
+        if not file_path.endswith('.xlsx'):
+            file_path += '.xlsx'
+        
+        # 保存为xlsx文件
+        df.to_excel(file_path, index=False, engine='openpyxl')
+        
+        success_msg = f"学生名单已导出到: {file_path}"
+        logger.info(success_msg)
+        return True, success_msg
+        
+    except Exception as e:
+        error_msg = f"导出Excel文件时出错: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
+
+def _export_to_csv(data: Dict[str, Any], file_path: str) -> Tuple[bool, str]:
+    """导出学生数据为CSV文件
+    
+    Args:
+        data: 学生数据字典
+        file_path: 导出文件路径
+        
+    Returns:
+        Tuple[bool, str]: (是否成功, 成功/错误消息)
+    """
+    try:
+        # 转换为DataFrame
+        export_data = []
+        for name, info in data.items():
+            export_data.append({
+                '学号': info['id'],
+                '姓名': name,
+                '性别': info['gender'],
+                '所处小组': info['group']
+            })
+        
+        df = pd.DataFrame(export_data)
+        
+        # 确保文件扩展名正确
+        if not file_path.endswith('.csv'):
+            file_path += '.csv'
+        
+        # 保存为CSV文件
+        df.to_csv(file_path, index=False, encoding='utf-8-sig')
+        
+        success_msg = f"学生名单已导出到: {file_path}"
+        logger.info(success_msg)
+        return True, success_msg
+        
+    except Exception as e:
+        error_msg = f"导出CSV文件时出错: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
+
+def _export_to_txt(data: Dict[str, Any], file_path: str) -> Tuple[bool, str]:
+    """导出学生数据为TXT文件（仅姓名）
+    
+    Args:
+        data: 学生数据字典
+        file_path: 导出文件路径
+        
+    Returns:
+        Tuple[bool, str]: (是否成功, 成功/错误消息)
+    """
+    try:
+        # 确保文件扩展名正确
+        if not file_path.endswith('.txt'):
+            file_path += '.txt'
+        
+        # 提取姓名并保存为TXT文件，每行一个姓名
+        with open(file_path, 'w', encoding='utf-8') as f:
+            for name in data.keys():
+                f.write(f"{name}\n")
+        
+        success_msg = f"学生名单已导出到: {file_path}"
+        logger.info(success_msg)
+        return True, success_msg
+        
+    except Exception as e:
+        error_msg = f"导出TXT文件时出错: {str(e)}"
+        logger.error(error_msg)
+        return False, error_msg
