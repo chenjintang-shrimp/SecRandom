@@ -13,23 +13,20 @@ from loguru import logger
 
 # 平台特定导入
 if sys.platform == 'win32':
-    from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
-    import comtypes
-    from comtypes import POINTER
+    try:
+        from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+        import comtypes
+        from comtypes import POINTER
+    except ImportError:
+        pass  # Windows libraries not available
 elif sys.platform.startswith('linux'):
     try:
         import pulsectl
     except ImportError:
-        logger.warning("pulsectl not available, audio control will be disabled")
         pulsectl = None
 
 from app.tools.variable import *
 from app.tools.path_utils import *
-
-# ==================================================
-# 常量定义
-# ==================================================
-PULSE_CLIENT_NAME = 'secrandom-volume-control'
 
 # ==================================================
 # 系统功能相关函数
@@ -70,7 +67,6 @@ def restore_volume(volume_value):
                 comtypes.CoUninitialize()
         except Exception as e:
             logger.error(f"Windows音量控制失败: {e}")
-    
     elif sys.platform.startswith('linux'):
         # Linux音频控制 (使用PulseAudio)
         try:
@@ -78,7 +74,7 @@ def restore_volume(volume_value):
                 logger.warning("pulsectl未安装，无法控制音量")
                 return
             
-            with pulsectl.Pulse(PULSE_CLIENT_NAME) as pulse:
+            with pulsectl.Pulse('secrandom-volume-control') as pulse:
                 # 获取默认sink（输出设备）
                 sinks = pulse.sink_list()
                 if not sinks:
@@ -103,6 +99,5 @@ def restore_volume(volume_value):
                 logger.info(f"Linux音量设置为: {volume_value}%")
         except Exception as e:
             logger.error(f"Linux音量控制失败: {e}")
-    
     else:
         logger.warning(f"不支持的平台: {sys.platform}，音量控制功能不可用")
