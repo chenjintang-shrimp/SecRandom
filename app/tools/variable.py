@@ -1,19 +1,21 @@
 # 定义非设置项的初始变量
 
 # 软件基本信息
-APPLY_NAME = "SecRandom" # 软件名称
-YEAR = 2025 # 软件发布年份
-MONTH = 4 # 软件发布月份
-AUTHOR = "lzy98276" # 软件作者
-VERSION = "v0.0.0.0" # 软件当前版本
-NEXT_VERSION = "v2.0.0.0" # 软件下一个版本
-APP_DESCRIPTION = "一个易用的班级抽号软件，专为教育场景设计，让课堂点名更高效透明" # 软件描述
-GITHUB_WEB = "https://github.com/SECTL/SecRandom" # 软件GitHub仓库
-BILIBILI_WEB = "https://space.bilibili.com/520571577" # 软件作者Bilibili空间
-WEBSITE = "https://secrandom.netlify.app" # 软件官方网站
-APP_COPYRIGHT = f"Copyright © {YEAR} {AUTHOR}. All rights reserved." # 软件版权信息
-APP_LICENSE = "GPL-3.0 License" # 软件许可证
-APP_EMAIL = "lzy.12@foxmail.com" # 软件作者邮箱
+APPLY_NAME = "SecRandom"  # 软件名称
+YEAR = 2025  # 软件发布年份
+MONTH = 4  # 软件发布月份
+AUTHOR = "lzy98276"  # 软件作者
+VERSION = "v0.0.0.0"  # 软件当前版本
+NEXT_VERSION = "v2.0.0.0"  # 软件下一个版本
+APP_DESCRIPTION = (
+    "一个易用的班级抽号软件，专为教育场景设计，让课堂点名更高效透明"  # 软件描述
+)
+GITHUB_WEB = "https://github.com/SECTL/SecRandom"  # 软件GitHub仓库
+BILIBILI_WEB = "https://space.bilibili.com/520571577"  # 软件作者Bilibili空间
+WEBSITE = "https://secrandom.netlify.app"  # 软件官方网站
+APP_COPYRIGHT = f"Copyright © {YEAR} {AUTHOR}. All rights reserved."  # 软件版权信息
+APP_LICENSE = "GPL-3.0 License"  # 软件许可证
+APP_EMAIL = "lzy.12@foxmail.com"  # 软件作者邮箱
 
 # UI相关默认值
 DEFAULT_THEME_COLOR = "#66CCFF"  # 天依蓝 - 默认主题色
@@ -35,18 +37,18 @@ LOG_DIR = "logs"  # 日志目录名
 LOG_FILENAME_FORMAT = "SecRandom_{time:YYYY-MM-DD-HH-mm-ss}.log"  # 日志文件名格式
 
 # 共享内存相关默认值
-SHARED_MEMORY_KEY = "SecRandomSharedMemory"  # 共享内存键名 
+SHARED_MEMORY_KEY = "SecRandomSharedMemory"  # 共享内存键名
 
 # 字体配置映射表 - 提高可维护性
 FONT_CONFIG_MAP = {
     DEFAULT_FONT_NAME_ALT: {
-        'filename': DEFAULT_FONT_FILENAME_ALT,
-        'display_name': DEFAULT_FONT_NAME_ALT
+        "filename": DEFAULT_FONT_FILENAME_ALT,
+        "display_name": DEFAULT_FONT_NAME_ALT,
     },
     DEFAULT_FONT_NAME_PRIMARY: {
-        'filename': DEFAULT_FONT_FILENAME_PRIMARY,
-        'display_name': DEFAULT_FONT_NAME_PRIMARY
-    }
+        "filename": DEFAULT_FONT_FILENAME_PRIMARY,
+        "display_name": DEFAULT_FONT_NAME_PRIMARY,
+    },
 }
 
 # 日志相关常量
