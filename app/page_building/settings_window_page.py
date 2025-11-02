@@ -114,7 +114,7 @@ class more_settings_page(PivotPageTemplate):
             # "experimental_features": get_content_name_async("experimental_features", "title"),
         }
         super().__init__(page_config, parent)
-        self.set_base_path("app.view.settings.more_settings")   
+        self.set_base_path("app.view.settings.more_settings")
 
 class about_page(PageTemplate):
     """创建关于页面"""

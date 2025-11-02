@@ -1,12 +1,7 @@
 # ==================================================
 # 导入库
 # ==================================================
-import json
-import os
-import sys
-import subprocess
 
-from loguru import logger
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
@@ -71,11 +66,11 @@ class basic_settings_function(GroupHeaderCardWidget):
         self.show_startup_window_switch.checkedChanged.connect(lambda: update_settings("basic_settings", "show_startup_window", self.show_startup_window_switch.isChecked()))
 
         # 添加设置项到分组
-        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_arrow_sync_20_filled"),
                         get_content_name_async("basic_settings", "autostart"), get_content_description_async("basic_settings", "autostart"), self.autostart_switch)
-        self.addGroup(get_theme_icon("ic_fluent_cloud_sync_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_cloud_sync_20_filled"),
                         get_content_name_async("basic_settings", "check_update"), get_content_description_async("basic_settings", "check_update"), self.check_update_switch)
-        self.addGroup(get_theme_icon("ic_fluent_window_play_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_window_play_20_filled"),
                         get_content_name_async("basic_settings", "show_startup_window"), get_content_description_async("basic_settings", "show_startup_window"), self.show_startup_window_switch)
 
 class basic_settings_personalised(GroupHeaderCardWidget):
@@ -126,13 +121,13 @@ class basic_settings_personalised(GroupHeaderCardWidget):
         )
 
         # 添加设置项到分组
-        self.addGroup(get_theme_icon("ic_fluent_dark_theme_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_dark_theme_20_filled"),
                         get_content_name_async("basic_settings", "theme"), get_content_description_async("basic_settings", "theme"), self.theme)
-        self.addGroup(get_theme_icon("ic_fluent_local_language_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_local_language_20_filled"),
                         get_content_name_async("basic_settings", "language"), get_content_description_async("basic_settings", "language"), self.language)
-        self.addGroup(get_theme_icon("ic_fluent_text_font_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_text_font_20_filled"),
                         get_content_name_async("basic_settings", "font"), get_content_description_async("basic_settings", "font"), self.fontComboBox)
-        self.addGroup(get_theme_icon("ic_fluent_scale_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_scale_20_filled"),
                         get_content_name_async("basic_settings", "dpiScale"), get_content_description_async("basic_settings", "dpiScale"), self.dpiScale)
         # 添加卡片到布局
         self.vBoxLayout.addWidget(self.themeColorCard)
@@ -164,13 +159,13 @@ class basic_settings_data_management(GroupHeaderCardWidget):
         self.import_all_data_button.clicked.connect(lambda: self.import_all_data())
 
         # 添加设置项到分组
-        self.addGroup(get_theme_icon("ic_fluent_database_arrow_down_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_database_arrow_down_20_filled"),
                         get_content_name_async("basic_settings", "export_diagnostic_data"), get_content_description_async("basic_settings", "export_diagnostic_data"), self.export_diagnostic_data_button)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_clockwise_dashes_settings_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_arrow_clockwise_dashes_settings_20_filled"),
                         get_content_name_async("basic_settings", "export_settings"), get_content_description_async("basic_settings", "export_settings"), self.export_settings_button)
-        self.addGroup(get_theme_icon("ic_fluent_arrow_clockwise_dashes_settings_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_arrow_clockwise_dashes_settings_20_filled"),
                         get_content_name_async("basic_settings", "import_settings"), get_content_description_async("basic_settings", "import_settings"), self.import_settings_button)
-        self.addGroup(get_theme_icon("ic_fluent_database_window_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_database_window_20_filled"),
                         get_content_name_async("basic_settings", "export_all_data"), get_content_description_async("basic_settings", "export_all_data"), self.export_all_data_button)
-        self.addGroup(get_theme_icon("ic_fluent_database_window_20_filled"), 
+        self.addGroup(get_theme_icon("ic_fluent_database_window_20_filled"),
                         get_content_name_async("basic_settings", "import_all_data"), get_content_description_async("basic_settings", "import_all_data"), self.import_all_data_button)

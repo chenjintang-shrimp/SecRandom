@@ -35,7 +35,7 @@ LOG_DIR = "logs"  # 日志目录名
 LOG_FILENAME_FORMAT = "SecRandom_{time:YYYY-MM-DD-HH-mm-ss}.log"  # 日志文件名格式
 
 # 共享内存相关默认值
-SHARED_MEMORY_KEY = "SecRandomSharedMemory"  # 共享内存键名 
+SHARED_MEMORY_KEY = "SecRandomSharedMemory"  # 共享内存键名
 
 # 字体配置映射表 - 提高可维护性
 FONT_CONFIG_MAP = {
