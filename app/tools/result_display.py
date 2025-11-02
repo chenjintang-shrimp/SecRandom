@@ -22,9 +22,20 @@ from app.Language.obtain_language import *
 # ==================================================
 # 结果显示工具类
 # ==================================================
-
 class ResultDisplayUtils:
     """结果显示工具类，提供通用的结果显示功能"""
+    _color_cache = {}
+    @staticmethod
+    def _clear_color_cache():
+        """清除颜色缓存"""
+        ResultDisplayUtils._color_cache.clear()
+
+    @staticmethod
+    def _init_theme_listener():
+        """初始化主题变化监听器"""
+        if not hasattr(ResultDisplayUtils, '_theme_listener_initialized'):
+            qconfig.themeChanged.connect(ResultDisplayUtils._clear_color_cache)
+            ResultDisplayUtils._theme_listener_initialized = True
     
     @staticmethod
     def _create_avatar_widget(image_path, name, font_size):
@@ -88,7 +99,7 @@ class ResultDisplayUtils:
         """
         # 创建水平布局
         h_layout = QHBoxLayout()
-        h_layout.setSpacing(8)
+        h_layout.setSpacing(AVATAR_LABEL_SPACING)
         h_layout.setContentsMargins(0, 0, 0, 0)
         
         # 创建容器widget
@@ -119,9 +130,7 @@ class ResultDisplayUtils:
             animation_color: 动画颜色模式
         """
         fixed_color = readme_settings_async("roll_call_settings", "animation_fixed_color")
-        # 根据label类型应用不同的样式设置
         if isinstance(label, QWidget) and hasattr(label, 'layout') and label.layout() is not None:
-            # 如果是容器类型，对容器内的文本标签应用样式
             layout = label.layout()
             if layout:
                 for i in range(layout.count()):
@@ -138,7 +147,6 @@ class ResultDisplayUtils:
                             
                         widget.setStyleSheet(style_sheet)
         else:
-            # 如果是普通的BodyLabel，直接应用样式
             label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             style_sheet = f"font-size: {font_size}pt; "
             fixed_color = readme_settings_async("roll_call_settings", "animation_fixed_color")
@@ -173,8 +181,7 @@ class ResultDisplayUtils:
         for num, selected, exist in selected_students:
             current_image_path = None
             if show_student_image:
-                image_extensions = ['.png', '.jpg', '.jpeg', '.svg']
-                for ext in image_extensions:
+                for ext in SUPPORTED_IMAGE_EXTENSIONS:
                     temp_path = get_resources_path("images", f"students/{selected}{ext}")
                     if file_exists(temp_path):
                         current_image_path = str(temp_path)
@@ -183,9 +190,9 @@ class ResultDisplayUtils:
                         current_image_path = None
                         continue
 
-            student_id_str = f"{num:02}"
+            student_id_str = STUDENT_ID_FORMAT.format(num=num)
             if len(str(selected)) == 2 and group_index == 0:
-                name = f"{str(selected)[0]}    {str(selected)[1]}"
+                name = f"{str(selected)[0]}{NAME_SPACING}{str(selected)[1]}"
             else:
                 name = str(selected)
             text = ResultDisplayUtils._format_student_text(display_format, student_id_str, name, draw_count)
@@ -201,13 +208,45 @@ class ResultDisplayUtils:
         return student_labels
     
     @staticmethod
-    def _generate_vibrant_color():
-        """生成鲜艳的颜色"""
-        hue = random.random()
-        saturation = 0.7 + random.random() * 0.3  # 0.7-1.0 之间
-        lightness = 0.4 + random.random() * 0.2  # 0.4-0.6 之间
-        r, g, b = colorsys.hsv_to_rgb(hue, saturation, lightness)
-        return f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
+    def _generate_vibrant_color(min_saturation=DEFAULT_MIN_SATURATION, max_saturation=DEFAULT_MAX_SATURATION, 
+                               min_value=DEFAULT_MIN_VALUE, max_value=DEFAULT_MAX_VALUE, use_cache=True):
+        """生成鲜艳直观的颜色
+        
+        根据当前主题自动调整颜色明亮程度：
+        - 浅色主题：降低亮度范围，避免颜色过于明亮导致看不清
+        - 深色主题：使用正常亮度范围，确保颜色在深色背景上清晰可见
+        
+        参数:
+            min_saturation: 最小饱和度 (默认DEFAULT_MIN_SATURATION)
+            max_saturation: 最大饱和度 (默认DEFAULT_MAX_SATURATION)
+            min_value: 最小亮度值 (默认DEFAULT_MIN_VALUE)
+            max_value: 最大亮度值 (默认DEFAULT_MAX_VALUE)
+            use_cache: 是否使用颜色缓存 (默认True)
+            
+        返回:
+            str: RGB格式的颜色字符串，如"rgb(255,100,50)"
+        """
+        ResultDisplayUtils._init_theme_listener()
+        if qconfig.theme == Theme.LIGHT: # 浅色主题
+            adjusted_min_value = min(min_value * LIGHT_VALUE_MULTIPLIER, LIGHT_THEME_MAX_VALUE)
+            adjusted_max_value = min(max_value * LIGHT_MAX_VALUE_MULTIPLIER, LIGHT_THEME_ADJUSTED_MAX_VALUE)
+        elif qconfig.theme == Theme.AUTO: # 自动主题
+            lightness = QApplication.palette().color(QPalette.Window).lightness()
+            if lightness > LIGHTNESS_THRESHOLD:  # 浅色主题
+                adjusted_min_value = min(min_value * LIGHT_VALUE_MULTIPLIER, LIGHT_THEME_MAX_VALUE)
+                adjusted_max_value = min(max_value * LIGHT_MAX_VALUE_MULTIPLIER, LIGHT_THEME_ADJUSTED_MAX_VALUE)
+            else:  # 深色主题
+                adjusted_min_value = min(min_value * DARK_VALUE_MULTIPLIER, DARK_THEME_MIN_VALUE)
+                adjusted_max_value = max(max_value * DARK_MAX_VALUE_MULTIPLIER, DARK_THEME_MAX_VALUE)
+        else: # 深色主题或其他主题
+            adjusted_min_value = min(min_value * DARK_VALUE_MULTIPLIER, DARK_THEME_MIN_VALUE)
+            adjusted_max_value = max(max_value * DARK_MAX_VALUE_MULTIPLIER, DARK_THEME_MAX_VALUE)
+        h = random.random()
+        s = random.uniform(min_saturation, max_saturation)
+        v = random.uniform(adjusted_min_value, adjusted_max_value)
+        r, g, b = (int(c * 255) for c in colorsys.hsv_to_rgb(h, s, v))
+        color_str = RGB_COLOR_FORMAT.format(r=r, g=g, b=b)
+        return color_str
     
     @staticmethod
     def display_results_in_grid(result_grid, student_labels, alignment=None):
@@ -221,15 +260,34 @@ class ResultDisplayUtils:
         """
         if alignment is None:
             alignment = Qt.AlignmentFlag.AlignCenter
-
         result_grid.setAlignment(alignment)
         while result_grid.count():
             item = result_grid.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-
-        columns = 3
+        container = QWidget()
+        grid_layout = QGridLayout()
+        grid_layout.setSpacing(GRID_LAYOUT_SPACING)  # 设置统一的间距
+        grid_layout.setHorizontalSpacing(GRID_HORIZONTAL_SPACING)  # 设置水平间距
+        grid_layout.setVerticalSpacing(GRID_VERTICAL_SPACING)   # 设置垂直间距
+        container.setLayout(grid_layout)
+        if student_labels:
+            parent_widget = result_grid.parentWidget()
+            if parent_widget:
+                available_width = parent_widget.width() - GRID_ITEM_MARGIN
+            else:
+                available_width = DEFAULT_AVAILABLE_WIDTH
+            total_width = sum(label.sizeHint().width() for label in student_labels) + \
+                         len(student_labels) * GRID_ITEM_SPACING
+            if total_width > available_width:
+                avg_label_width = total_width / len(student_labels)
+                max_columns = max(1, int(available_width // avg_label_width))
+            else:
+                max_columns = len(student_labels)
+        else:
+            max_columns = 1
         for i, label in enumerate(student_labels):
-            row = i // columns
-            col = i % columns
-            result_grid.addWidget(label, row, col)
+            row = i // max_columns
+            col = i % max_columns
+            grid_layout.addWidget(label, row, col)
+        result_grid.addWidget(container)
