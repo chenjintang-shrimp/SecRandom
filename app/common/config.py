@@ -1,7 +1,8 @@
 # ==================================================
 # 导入模块
 # ==================================================
-from qfluentwidgets import *
+import json
+from qfluentwidgets import * 
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import *
@@ -15,13 +16,12 @@ from comtypes import POINTER
 from app.tools.variable import *
 from app.tools.path_utils import *
 
-
 # ==================================================
 # 系统功能相关函数
 # ==================================================
 def restore_volume(volume_value):
     """跨平台音量恢复函数
-
+    
     Args:
         volume_value (int): 音量值 (0-100)
     """
@@ -29,18 +29,17 @@ def restore_volume(volume_value):
     try:
         # 初始化COM库
         comtypes.CoInitialize()
-
+        
         # 获取默认音频设备
         devices = AudioUtilities.GetSpeakers()
         interface = devices.Activate(
-            IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None
-        )
+            IAudioEndpointVolume._iid_, comtypes.CLSCTX_ALL, None)
         volume = comtypes.cast(interface, POINTER(IAudioEndpointVolume))
-
+        
         try:
             # 取消静音
             volume.SetMute(0, None)
-
+            
             # 设置音量
             volume.SetMasterVolumeLevelScalar(volume_value / 100.0, None)
             logger.info(f"Windows音量设置为: {volume_value}%")
@@ -50,7 +49,7 @@ def restore_volume(volume_value):
             volume = None
             interface = None
             devices = None
-
+            
             # 释放COM库
             comtypes.CoUninitialize()
     except Exception as e:
