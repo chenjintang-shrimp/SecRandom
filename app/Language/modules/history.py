@@ -87,10 +87,7 @@ roll_call_history_table = {
         "select_weight": {
             "name": "是否显示权重",
             "description": "选择是否显示权重在表格中",
-            "switchbutton_name": {
-                "enable": "显示",
-                "disable": "隐藏"
-            }
+            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
         },
     }
 }

@@ -88,7 +88,7 @@
   - pycaw: 音频控制
   - pywin32: Windows API 访问
   - comtypes: COM 接口
-  
+
 - **Linux**:
   - pulsectl: PulseAudio 音频控制
   - 标准 Linux 系统库

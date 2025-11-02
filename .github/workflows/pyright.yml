@@ -1,12 +1,13 @@
-name: Ruff
+name: Pyright
 
 on:
     push:
-        branches: [master]
+        branches: [main, develop]
     pull_request:
+        branches: [main]
 
 jobs:
-    ruff:
+    pyright:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -21,8 +22,11 @@ jobs:
               with:
                   enable-cache: true
 
-            - name: Install Ruff via uv
-              run: uv pip install ruff
+            - name: Install dependencies with uv
+              run: |
+                  uv pip install pyright
+                  # 如果有项目依赖
+                  uv pip install -r requirements.txt  # 或 uv sync（若用 pyproject.toml + uv project）
 
-            - name: Run Ruff
-              run: ruff check --output-format=github .
+            - name: Run Pyright
+              run: pyright

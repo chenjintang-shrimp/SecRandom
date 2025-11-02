@@ -1,12 +1,7 @@
 # ==================================================
 # 导入库
 # ==================================================
-import json
-import os
-import sys
-import subprocess
 
-from loguru import logger
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import *
 from PyQt6.QtCore import *
@@ -19,6 +14,7 @@ from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
+
 
 # ==================================================
 # 调试设置
@@ -34,8 +30,12 @@ class debug(GroupHeaderCardWidget):
         self.all_monitor_combo_box.addItems(self.get_monitor_list())
 
         # 添加设置项到分组
-        self.addGroup(get_theme_icon("ic_fluent_panel_separate_window_20_filled"), 
-                        "显示器列表", "显示所有显示器列表(DEBUG)", self.all_monitor_combo_box)
+        self.addGroup(
+            get_theme_icon("ic_fluent_panel_separate_window_20_filled"),
+            "显示器列表",
+            "显示所有显示器列表(DEBUG)",
+            self.all_monitor_combo_box,
+        )
 
     def get_monitor_list(self):
         # 获取所有显示器名称

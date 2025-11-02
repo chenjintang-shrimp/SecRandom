@@ -1,6 +1,6 @@
 name: Linux构建
 
-on: 
+on:
   push:
     branches:
       - linux-port
@@ -29,13 +29,13 @@ jobs:
     steps:
       - name: 检出仓库
         uses: actions/checkout@v4.2.2
-        
+
       - name: 安装 Python
         uses: actions/setup-python@v5.3.0
         with:
           python-version: '3.8.10'
           architecture: ${{ matrix.arch }}
-          
+
       - name: 安装 uv
         uses: astral-sh/setup-uv@v4
 
@@ -71,24 +71,24 @@ jobs:
           # 创建虚拟环境
           echo "创建虚拟环境..."
           uv venv
-          
+
           # 激活虚拟环境
           echo "激活虚拟环境..."
           source .venv/bin/activate
-          
+
           # 安装依赖
           echo "安装项目依赖..."
           uv pip install -r requirements-linux.txt
-          
+
           # 安装 pyinstaller
           echo "安装 PyInstaller..."
           uv pip install pyinstaller
-          
+
           # 清理之前的构建文件
           echo "清理之前的构建文件..."
           rm -rf dist build zip_dist
           echo "构建环境准备完成"
-          
+
           # 目录模式打包
           echo "开始目录模式打包..."
           pyinstaller main.py \
@@ -103,22 +103,22 @@ jobs:
       - name: 打包操作
         run: |
           echo "开始打包操作..."
-          
+
           # 创建zip_dist/SecRandom目录
           mkdir -p zip_dist/SecRandom
-          
+
           # 复制dist/SecRandom目录下的所有文件到zip_dist/SecRandom目录下
           cp -r dist/SecRandom/* zip_dist/SecRandom/
-          
+
           # 创建app目录
           mkdir -p zip_dist/SecRandom/app
-          
+
           # 复制app/resources文件夹到zip_dist/SecRandom目录下
           cp -r app/resources zip_dist/SecRandom/app/
-          
+
           # 复制 LICENSE 文件到zip_dist/SecRandom目录下
           cp LICENSE zip_dist/SecRandom/
-          
+
           # 使用 tar 压缩文件
           mkdir -p zip
           cd zip_dist
