@@ -88,7 +88,7 @@ lottery_list = {
             "pushbutton_name":"点击以设置"
         },
         "export_prize_name": {
-            "name": "导出奖品名单", 
+            "name": "导出奖品名单",
             "description": "导出奖品名单",
             "pushbutton_name": "点击以导出"
         },

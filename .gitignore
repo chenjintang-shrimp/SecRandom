@@ -176,5 +176,3 @@ cython_debug/
 /.vercel
 /app/resources/list
 /config
-/app/resources/history
-/TEMP

@@ -27,7 +27,7 @@ class roll_call_list(GroupHeaderCardWidget):
 
         # 设置班级名称按钮
         self.class_name_button = PushButton(
-            get_content_pushbutton_name_async("roll_call_list", "sett_class_name")
+            get_content_pushbutton_name_async("roll_call_list", "set_class_name")
         )
         self.class_name_button.clicked.connect(lambda: self.set_class_name())
 

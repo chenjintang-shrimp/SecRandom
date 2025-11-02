@@ -4,14 +4,14 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout
 from PyQt6.QtGui import QFontDatabase
 from qfluentwidgets import (
-    GroupHeaderCardWidget, 
-    SwitchButton, 
-    ComboBox, 
-    ColorConfigItem, 
-    ColorSettingCard, 
-    PushButton, 
-    Theme, 
-    setTheme, 
+    GroupHeaderCardWidget,
+    SwitchButton,
+    ComboBox,
+    ColorConfigItem,
+    ColorSettingCard,
+    PushButton,
+    Theme,
+    setTheme,
     setThemeColor
 )
 

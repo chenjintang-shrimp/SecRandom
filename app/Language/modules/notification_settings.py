@@ -164,7 +164,7 @@ quick_draw_notification_settings = {
         "floating_window_enabled_monitor": {
             "name": "选择窗口显示的显示器",
             "description": "选择闪抽通知窗口显示的显示器"
-        }, 
+        },
         "floating_window_position": {
             "name": "窗口位置",
             "description": "设置闪抽通知窗口的位置",
@@ -263,7 +263,7 @@ instant_draw_notification_settings = {
         "floating_window_enabled_monitor": {
             "name": "选择窗口显示的显示器",
             "description": "选择即抽通知窗口显示的显示器"
-        }, 
+        },
         "floating_window_position": {
             "name": "窗口位置",
             "description": "设置即抽通知窗口的位置",
@@ -367,7 +367,7 @@ custom_draw_notification_settings = {
         "floating_window_enabled_monitor": {
             "name": "选择窗口显示的显示器",
             "description": "选择自定义抽通知窗口显示的显示器"
-        }, 
+        },
         "floating_window_position": {
             "name": "窗口位置",
             "description": "设置自定义抽通知窗口的位置",
@@ -471,7 +471,7 @@ lottery_notification_settings = {
         "floating_window_enabled_monitor": {
             "name": "选择窗口显示的显示器",
             "description": "选择抽奖通知窗口显示的显示器"
-        }, 
+        },
         "floating_window_position": {
             "name": "窗口位置",
             "description": "设置抽奖通知窗口的位置",
