@@ -328,6 +328,19 @@ wheels = [
 ]
 
 [[package]]
+name = "imageio"
+version = "2.35.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/82/bf/d0ddda79819405428f40e4bc9245c2b936a3a2b23d83b6e42d83822ef822/imageio-2.35.1.tar.gz", hash = "sha256:4952dfeef3c3947957f6d5dedb1f4ca31c6e509a476891062396834048aeed2a", size = 389686, upload-time = "2024-08-19T02:35:27.783Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1e/b7/02adac4e42a691008b5cfb31db98c190e1fc348d1521b9be4429f9454ed1/imageio-2.35.1-py3-none-any.whl", hash = "sha256:6eb2e5244e7a16b85c10b5c2fe0f7bf961b40fcb9f1a9fd1bd1d2c2f8fb3cd65", size = 315378, upload-time = "2024-08-19T02:35:25.923Z" },
+]
+
+[[package]]
 name = "iniconfig"
 version = "2.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3443,6 +3456,7 @@ dependencies = [
     { name = "comtypes", marker = "sys_platform == 'win32'" },
     { name = "darkdetect" },
     { name = "edge-tts" },
+    { name = "imageio" },
     { name = "jinja2" },
     { name = "keyboard" },
     { name = "loguru" },
@@ -3502,6 +3516,7 @@ requires-dist = [
     { name = "darkdetect", specifier = "==0.8.0" },
     { name = "edge-tts", specifier = "==7.0.2" },
     { name = "flake8", marker = "extra == 'dev'" },
+    { name = "imageio", specifier = ">=2.35.1" },
     { name = "jinja2", specifier = "~=3.1.6" },
     { name = "keyboard", specifier = "==0.13.5" },
     { name = "loguru", specifier = "==0.7.3" },

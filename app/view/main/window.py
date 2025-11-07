@@ -6,17 +6,18 @@ import subprocess
 
 import loguru
 from loguru import logger
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
-from qfluentwidgets import *
+from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import QTimer, QEvent, pyqtSignal
+from qfluentwidgets import MSFluentWindow, NavigationItemPosition
 
-from app.tools.variable import *
-from app.tools.path_utils import *
-from app.tools.personalised import *
-from app.Language.obtain_language import *
-from app.page_building.main_window_page import *
+from app.tools.variable import MINIMUM_WINDOW_SIZE, APP_INIT_DELAY
+from app.tools.path_utils import get_resources_path
+from app.tools.path_utils import get_app_root
+from app.tools.personalised import get_theme_icon
+from app.Language.obtain_language import get_content_name_async
+from app.Language.obtain_language import readme_settings_async, update_settings
+from app.page_building.main_window_page import roll_call_page
 from app.view.tray.tray import Tray
 
 

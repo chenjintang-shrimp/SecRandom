@@ -3,21 +3,32 @@
 # ==================================================
 
 from loguru import logger
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
-from qfluentwidgets import *
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import QTimer, QEvent, pyqtSignal
+from qfluentwidgets import MSFluentWindow, NavigationItemPosition
 
-from app.tools.variable import *
-from app.tools.path_utils import *
-from app.tools.personalised import *
-from app.tools.settings_default import *
-from app.tools.settings_access import *
-from app.Language.obtain_language import *
+from app.tools.variable import MINIMUM_WINDOW_SIZE, APP_INIT_DELAY
+from app.tools.path_utils import get_resources_path
+from app.tools.personalised import get_theme_icon
+from app.Language.obtain_language import get_content_name_async
+from app.tools.settings_access import readme_settings_async, update_settings
+from app.Language.obtain_language import get_content_name_async
 
 
-from app.page_building.settings_window_page import *
+from app.page_building.settings_window_page import (
+    home_page,
+    basic_settings_page,
+    list_management_page,
+    extraction_settings_page,
+    notification_settings_page,
+    safety_settings_page,
+    custom_settings_page,
+    voice_settings_page,
+    history_page,
+    more_settings_page,
+    about_page,
+)
 
 
 # ==================================================
