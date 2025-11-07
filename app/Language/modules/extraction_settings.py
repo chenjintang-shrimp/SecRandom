@@ -32,13 +32,13 @@ roll_call_settings = {
         },
         "clear_record": {
             "name": "清除抽取记录方式",
-            "description": "设置清除点名抽取记录的方式",
+            "description": "设置何时清除抽取记录",
             "combo_items": ["重启后清除", "直到全部抽取完"],
             "combo_items_other": ["重启后清除", "直到全部抽取完", "无需清除"],
         },
         "half_repeat": {
             "name": "半重复抽取次数",
-            "description": "设置半重复抽取的次数",
+            "description": "设置名单中每人被抽中多少次后清除抽取记录",
         },
         "clear_time": {
             "name": "抽取后定时清除时间",
@@ -49,7 +49,7 @@ roll_call_settings = {
             "description": "设置点名抽取的方式",
             "combo_items": ["随机抽取", "公平抽取"],
         },
-        "font_size": {"name": "字体大小", "description": "设置点名结果显示的字体大小"},
+        "font_size": {"name": "字体大小", "description": "设置点名结果的字体大小"},
         "display_format": {
             "name": "结果显示格式",
             "description": "设置点名结果的显示格式",
@@ -171,7 +171,7 @@ quick_draw_settings = {
         },
         "half_repeat": {
             "name": "半重复抽取次数",
-            "description": "设置半重复抽取的次数",
+            "description": "设置名单中每人被抽中多少次后清除抽取记录",
         },
         "clear_time": {
             "name": "抽取后定时清除时间",
@@ -245,11 +245,11 @@ quick_draw_settings = {
         },
         "open_animation_music_folder": {
             "name": "打开动画音乐文件夹",
-            "description": "管理动画音乐文件并支持随机播放功能",
+            "description": "管理动画音乐文件，支持随机播放",
         },
         "open_result_music_folder": {
             "name": "打开结果音乐文件夹",
-            "description": "管理结果音乐文件并支持随机播放功能",
+            "description": "管理结果音乐文件，支持随机播放",
         },
         "animation_music_volume": {
             "name": "动画音乐音量",
@@ -281,10 +281,10 @@ quick_draw_settings = {
 # 即抽设置
 instant_draw_settings = {
     "ZH_CN": {
-        "title": {"name": "即抽设置", "description": "即时抽取功能的相关设置"},
+        "title": {"name": "即抽设置", "description": "即抽功能的相关设置"},
         "extraction_function": {
             "name": "抽取功能",
-            "description": "即抽抽取功能相关设置",
+            "description": "即抽功能相关设置",
         },
         "display_settings": {"name": "显示设置", "description": "即抽结果显示相关设置"},
         "basic_animation_settings": {
@@ -313,7 +313,7 @@ instant_draw_settings = {
         },
         "half_repeat": {
             "name": "半重复抽取次数",
-            "description": "设置半重复抽取的次数",
+            "description": "设置名单中每人被抽中多少次后清除抽取记录",
         },
         "clear_time": {
             "name": "抽取后定时清除时间",
@@ -324,7 +324,7 @@ instant_draw_settings = {
             "description": "设置即抽抽取的方式",
             "combo_items": ["随机抽取", "公平抽取"],
         },
-        "font_size": {"name": "字体大小", "description": "设置即抽结果显示的字体大小"},
+        "font_size": {"name": "字体大小", "description": "设置即抽结果的字体大小"},
         "display_format": {
             "name": "结果显示格式",
             "description": "设置即抽结果的显示格式",
@@ -387,11 +387,11 @@ instant_draw_settings = {
         },
         "open_animation_music_folder": {
             "name": "打开动画音乐文件夹",
-            "description": "管理动画音乐文件并支持随机播放功能",
+            "description": "管理动画音乐文件，支持随机播放",
         },
         "open_result_music_folder": {
             "name": "打开结果音乐文件夹",
-            "description": "管理结果音乐文件并支持随机播放功能",
+            "description": "管理结果音乐文件，支持随机播放",
         },
         "animation_music_volume": {
             "name": "动画音乐音量",
@@ -460,7 +460,7 @@ lottery_settings = {
         },
         "half_repeat": {
             "name": "半重复抽取次数",
-            "description": "设置半重复抽取的次数",
+            "description": "设置名单中每人被抽中多少次后清除抽取记录",
         },
         "clear_time": {
             "name": "抽取后定时清除时间",
@@ -509,8 +509,8 @@ lottery_settings = {
             "description": "设置抽奖结果显示的固定颜色",
         },
         "lottery_image": {
-            "name": "显示学生图片",
-            "description": "设置是否显示学生图片",
+            "name": "显示奖品图片",
+            "description": "设置是否显示奖品图片",
             "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
         },
         "open_lottery_image_folder": {
