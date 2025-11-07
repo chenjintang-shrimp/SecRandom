@@ -65,8 +65,7 @@ jobs:
 
           # 安装依赖
           echo "安装项目依赖..."
-          uv pip install -r requirements-windows.txt
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv sync
 
           # 安装 pyinstaller
           echo "安装 PyInstaller..."
