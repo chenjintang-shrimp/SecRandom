@@ -21,7 +21,7 @@ Language = get_current_language_data()
 class LanguageReaderWorker(QObject):
     """语言读取工作线程"""
 
-    finished = pyqtSignal(object)  # 信号，传递读取结果
+    finished = Signal(object)  # 信号，传递读取结果
 
     def __init__(
         self,
@@ -96,8 +96,8 @@ class AsyncLanguageReader(QObject):
     """异步语言读取器，提供简洁的异步读取方式"""
 
     # 定义信号
-    finished = pyqtSignal(object)  # 读取完成信号，携带结果
-    error = pyqtSignal(str)  # 错误信号
+    finished = Signal(object)  # 读取完成信号，携带结果
+    error = Signal(str)  # 错误信号
 
     def __init__(
         self,

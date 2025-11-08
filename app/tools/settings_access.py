@@ -2,10 +2,10 @@
 # 导入模块
 # ==================================================
 from qfluentwidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 
 import json
 import asyncio
@@ -23,7 +23,7 @@ from app.tools.settings_default import *
 class SettingsReaderWorker(QObject):
     """设置读取工作线程"""
 
-    finished = pyqtSignal(object)  # 信号，传递读取结果
+    finished = Signal(object)  # 信号，传递读取结果
 
     def __init__(self, first_level_key: str, second_level_key: str):
         super().__init__()
@@ -74,8 +74,8 @@ class SettingsReaderWorker(QObject):
 class AsyncSettingsReader(QObject):
     """异步设置读取器，提供简洁的异步读取方式"""
 
-    finished = pyqtSignal(object)  # 读取完成信号，携带结果
-    error = pyqtSignal(str)  # 错误信号
+    finished = Signal(object)  # 读取完成信号，携带结果
+    error = Signal(str)  # 错误信号
 
     def __init__(self, first_level_key: str, second_level_key: str):
         super().__init__()

@@ -3,9 +3,9 @@
 # ==================================================
 
 from loguru import logger
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import QTimer, QEvent, pyqtSignal
+from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import QTimer, QEvent, Signal
 from qfluentwidgets import MSFluentWindow, NavigationItemPosition
 
 from app.tools.variable import MINIMUM_WINDOW_SIZE, APP_INIT_DELAY
@@ -43,8 +43,8 @@ class SettingsWindow(MSFluentWindow):
     """主窗口类
     程序的核心控制中心"""
 
-    showSettingsRequested = pyqtSignal()
-    showSettingsRequestedAbout = pyqtSignal()
+    showSettingsRequested = Signal()
+    showSettingsRequestedAbout = Signal()
 
     def __init__(self, parent=None):
         super().__init__()

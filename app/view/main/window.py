@@ -6,9 +6,9 @@ import subprocess
 
 import loguru
 from loguru import logger
-from PyQt6.QtWidgets import QApplication, QWidget
-from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import QTimer, QEvent, pyqtSignal
+from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import QTimer, QEvent, Signal
 from qfluentwidgets import MSFluentWindow, NavigationItemPosition
 
 from app.tools.variable import MINIMUM_WINDOW_SIZE, APP_INIT_DELAY
@@ -28,8 +28,8 @@ class MainWindow(MSFluentWindow):
     """主窗口类
     程序的核心控制中心"""
 
-    showSettingsRequested = pyqtSignal()
-    showSettingsRequestedAbout = pyqtSignal()
+    showSettingsRequested = Signal()
+    showSettingsRequestedAbout = Signal()
 
     def __init__(self):
         super().__init__()

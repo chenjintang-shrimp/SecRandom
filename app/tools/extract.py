@@ -2,15 +2,15 @@
 # 导入模块
 # ==================================================
 from qfluentwidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 
 import json
 from typing import Dict
 from loguru import logger
-from PyQt6.QtCore import QDateTime
+from PySide6.QtCore import QDateTime
 
 from app.tools.path_utils import *
 

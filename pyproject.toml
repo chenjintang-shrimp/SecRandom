@@ -6,12 +6,9 @@ readme = "README.md"
 requires-python = "==3.8.10"
 
 dependencies = [
-    # GUI框架
-    "PyQt6==6.7.1",
-    "PyQt6-Qt6==6.7.3",
-    "PyQt6_sip==13.8.0",
-    "PyQt6-Fluent-Widgets==1.9.1",
-    "PyQt6-Frameless-Window==0.7.4",
+    "PySide6-Fluent-Widgets==1.9.1",
+    "pyside6>=6.6.3.1",
+    "pysidesix-frameless-window>=0.7.4",
     "darkdetect==0.8.0",
     # 核心库
     "asyncio~=3.4.3",

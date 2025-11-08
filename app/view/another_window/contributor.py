@@ -3,9 +3,9 @@
 # ==================================================
 
 from loguru import logger
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
 from qfluentwidgets import *
 
 from app.tools.variable import *

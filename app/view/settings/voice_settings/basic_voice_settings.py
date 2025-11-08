@@ -6,10 +6,10 @@ import edge_tts
 import aiohttp
 
 from loguru import logger
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 from qfluentwidgets import *
 
 from app.tools.variable import *
@@ -200,7 +200,7 @@ class basic_settings_voice_engine(GroupHeaderCardWidget):
             # 无论成功或失败，都要重置更新标志
             self._is_updating_voices = False
 
-    @pyqtSlot(list, str)
+    @Slot(list, str)
     def _update_voice_combo_box(self, voices, current_voice):
         """在主线程中更新语音列表下拉框"""
         try:

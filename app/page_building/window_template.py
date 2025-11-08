@@ -4,10 +4,10 @@
 from typing import Dict, Optional, Type
 
 from loguru import logger
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 from qfluentwidgets import *
 from qframelesswindow import *
 
@@ -59,7 +59,7 @@ class SimpleWindowTemplate(FramelessWindow):
     """
 
     # 信号定义
-    windowClosed = pyqtSignal()
+    windowClosed = Signal()
 
     def __init__(
         self,
