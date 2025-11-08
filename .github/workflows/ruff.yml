@@ -18,6 +18,9 @@ jobs:
 
             - name: Setup Python
               run: uv python install 3.8.10
+
+            - name: Set up venv
+              run: uv venv
             - name: Install Ruff via uv
               run: uv pip install ruff
 
