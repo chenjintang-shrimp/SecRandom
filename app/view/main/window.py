@@ -36,6 +36,9 @@ class MainWindow(MSFluentWindow):
         # 设置窗口对象名称，方便其他组件查找
         self.setObjectName("MainWindow")
 
+        self.roll_call_page = None
+        self.settingsInterface = None
+
         # resize_timer的初始化
         self.resize_timer = QTimer(self)
         self.resize_timer.setSingleShot(True)
@@ -129,9 +132,7 @@ class MainWindow(MSFluentWindow):
             position=NavigationItemPosition.BOTTOM,
         )
         settings_item.clicked.connect(self.showSettingsRequested.emit)
-        settings_item.clicked.connect(
-            lambda: self.stackWidget.setCurrentWidget(self.roll_call_page)
-        )
+        settings_item.clicked.connect(lambda: self.switchTo(self.roll_call_page))
 
     def closeEvent(self, event):
         """窗口关闭事件处理

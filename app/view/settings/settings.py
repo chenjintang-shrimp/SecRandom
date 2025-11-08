@@ -15,6 +15,12 @@ from app.Language.obtain_language import get_content_name_async
 from app.tools.settings_access import readme_settings_async, update_settings
 from app.Language.obtain_language import get_content_name_async
 
+from app.tools.variable import *
+from app.tools.path_utils import *
+from app.tools.personalised import *
+from app.tools.settings_default import *
+from app.tools.settings_access import *
+from app.Language.obtain_language import *
 
 from app.page_building.settings_window_page import (
     home_page,
@@ -46,6 +52,19 @@ class SettingsWindow(MSFluentWindow):
         self.setObjectName("settingWindow")
         self.parent = parent
 
+        # 初始化变量
+        self.homeInterface = None
+        self.basicSettingsInterface = None
+        self.listManagementInterface = None
+        self.extractionSettingsInterface = None
+        self.notificationSettingsInterface = None
+        self.safetySettingsInterface = None
+        self.customSettingsInterface = None
+        self.voiceSettingsInterface = None
+        self.historyInterface = None
+        self.moreSettingsInterface = None
+        self.aboutInterface = None
+
         # resize_timer的初始化
         self.resize_timer = QTimer(self)
         self.resize_timer.setSingleShot(True)
@@ -63,8 +82,15 @@ class SettingsWindow(MSFluentWindow):
             QIcon(str(get_resources_path("assets/icon", "secrandom-icon-paper.png")))
         )
 
+        # 窗口定位
         self._position_window()
 
+        # 启动页面
+        self.splashScreen = SplashScreen(self.windowIcon(), self)
+        self.splashScreen.setIconSize(QSize(192, 192))
+        self.show()
+
+        # 初始化子界面
         QTimer.singleShot(APP_INIT_DELAY, lambda: (self.createSubInterface()))
 
     def _position_window(self):
@@ -226,6 +252,8 @@ class SettingsWindow(MSFluentWindow):
             get_content_name_async("about", "title"),
             position=NavigationItemPosition.BOTTOM,
         )
+
+        self.splashScreen.finish()
 
     def closeEvent(self, event):
         """窗口关闭事件处理
