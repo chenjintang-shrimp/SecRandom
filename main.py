@@ -171,8 +171,8 @@ def start_main_window():
     global main_window
     try:
         main_window = MainWindow()
-        main_window.showSettingsRequested.connect(show_settings_window)
-        main_window.showSettingsRequestedAbout.connect(show_settings_window_about)
+        main_window.showSettingsRequested.connect(lambda: show_settings_window())
+        main_window.showSettingsRequestedAbout.connect(lambda: show_settings_window_about)
         main_window.show()
     except Exception as e:
         logger.error(f"创建主窗口失败: {e}", exc_info=True)

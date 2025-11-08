@@ -102,7 +102,7 @@ class SimpleWindowTemplate(FramelessWindow):
         self.create_ui_components()
 
         # 初始化窗口
-        self.initWindow(title)
+        self.initWindow(title, width, height)
 
     def initWindow(self, title: str, width: int = 700, height: int = 500) -> None:
         """初始化窗口"""
@@ -149,6 +149,8 @@ class SimpleWindowTemplate(FramelessWindow):
         Args:
             page_name: 页面名称（唯一标识）
             page_class: 页面类
+            width: 页面宽度
+            height: 页面高度
 
         Returns:
             页面实例，如果创建失败则返回None

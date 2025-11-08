@@ -134,8 +134,10 @@ class MainWindow(MSFluentWindow):
             "设置",
             position=NavigationItemPosition.BOTTOM,
         )
-        settings_item.clicked.connect(self.showSettingsRequested.emit)
-        settings_item.clicked.connect(lambda: self.switchTo(self.roll_call_page))
+        settings_item.clicked.connect(lambda: self.showSettingsRequested.emit())
+        settings_item.clicked.connect(
+            lambda: self.switchTo(self.roll_call_page)
+        )
 
     def closeEvent(self, event):
         """窗口关闭事件处理

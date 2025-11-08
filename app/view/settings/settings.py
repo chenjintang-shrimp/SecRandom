@@ -86,7 +86,7 @@ class SettingsWindow(MSFluentWindow):
 
         # 启动页面
         self.splashScreen = SplashScreen(self.windowIcon(), self)
-        self.splashScreen.setIconSize(QSize(192, 192))
+        self.splashScreen.setIconSize(QSize(256, 256))
         self.show()
 
         # 初始化子界面

@@ -145,7 +145,7 @@ class about(GroupHeaderCardWidget):
 
     def show_contributors(self):
         """显示贡献人员"""
-        create_contributor_window(title=get_content_name_async("about", "contributor"))
+        create_contributor_window()
 
     def open_donation_url(self):
         """打开捐赠链接"""

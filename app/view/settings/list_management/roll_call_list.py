@@ -17,8 +17,7 @@ from app.tools.settings_access import *
 from app.Language.obtain_language import *
 from app.tools.list import *
 
-# from app.page_building.another_window import create_import_student_name_window
-
+from app.page_building.another_window import create_import_student_name_window
 
 # ==================================================
 # 点名名单
@@ -38,19 +37,20 @@ class roll_call_list(GroupHeaderCardWidget):
         # 选择班级下拉框
         self.class_name_combo = ComboBox()
         self.refresh_class_list()  # 初始化班级列表
-        self.class_name_combo.setCurrentIndex(
-            readme_settings_async("roll_call_list", "select_class_name")
-        )
         if not get_class_name_list():
             self.class_name_combo.setCurrentIndex(-1)
             self.class_name_combo.setPlaceholderText(
                 get_content_name_async("roll_call_list", "select_class_name")
             )
+        else:
+            self.class_name_combo.setCurrentText(
+                readme_settings_async("roll_call_list", "select_class_name")
+            )
         self.class_name_combo.currentIndexChanged.connect(
             lambda: update_settings(
                 "roll_call_list",
                 "select_class_name",
-                self.class_name_combo.currentIndex(),
+                self.class_name_combo.currentText(),
             )
         )
 
@@ -131,9 +131,9 @@ class roll_call_list(GroupHeaderCardWidget):
         # 设置文件系统监视器
         self.setup_file_watcher()
 
-    # # 学生名单导入功能
-    # def import_student_list(self):
-    #     create_import_student_name_window(get_content_name_async("roll_call_list", "import_student_name"))
+    # 学生名单导入功能
+    def import_student_name(self):
+        create_import_student_name_window()
 
     # 学生名单导出功能
     def export_student_list(self):
