@@ -39,6 +39,9 @@ class MainWindow(MSFluentWindow):
         self.roll_call_page = None
         self.settingsInterface = None
 
+        self.roll_call_page = None
+        self.settingsInterface = None
+
         # resize_timer的初始化
         self.resize_timer = QTimer(self)
         self.resize_timer.setSingleShot(True)

@@ -21,7 +21,6 @@ from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
-
 from app.page_building.settings_window_page import (
     home_page,
     basic_settings_page,
