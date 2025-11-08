@@ -29,6 +29,7 @@ class SetClassNameWindow(QWidget):
         
         # 初始化变量
         self.saved = False
+        self.initial_class_names = []  # 保存初始加载的班级列表
         
         # 初始化UI
         self.init_ui()
@@ -83,8 +84,10 @@ class SetClassNameWindow(QWidget):
             class_names = get_class_name_list()
             if class_names:
                 self.text_edit.setPlainText("\n".join(class_names))
+                self.initial_class_names = class_names.copy()  # 保存初始班级列表
         except Exception as e:
             logger.error(f"加载班级名称失败: {str(e)}")
+            self.initial_class_names = []  # 出错时设为空列表
         
         input_layout.addWidget(self.text_edit)
         
@@ -116,6 +119,44 @@ class SetClassNameWindow(QWidget):
         """连接信号与槽"""
         self.save_button.clicked.connect(self.__save_class_names)
         self.cancel_button.clicked.connect(self.__cancel)
+        self.text_edit.textChanged.connect(self.__on_text_changed)  # 添加文本变化监听
+    
+    def __on_text_changed(self):
+        """检测文本变化，提示班级消失"""
+        try:
+            # 获取当前文本编辑框中的班级名称
+            current_text = self.text_edit.toPlainText().strip()
+            current_class_names = [name.strip() for name in current_text.split('\n') if name.strip()] if current_text else []
+            
+            # 检查是否有班级消失（存在于初始列表但不存在于当前列表）
+            disappeared_classes = [name for name in self.initial_class_names if name not in current_class_names]
+            
+            # 如果有班级消失，显示提示
+            if disappeared_classes:
+                if len(disappeared_classes) == 1:
+                    # 单个班级消失
+                    message = get_content_name_async("set_class_name", "class_disappeared_message").format(
+                        class_name=disappeared_classes[0]
+                    )
+                else:
+                    # 多个班级消失
+                    message = get_content_name_async("set_class_name", "multiple_classes_disappeared_message").format(
+                        count=len(disappeared_classes),
+                        class_names="\n".join(disappeared_classes)
+                    )
+                
+                # 显示提示
+                config = NotificationConfig(
+                    title=get_content_name_async("set_class_name", "class_disappeared_title"),
+                    content=message,
+                    duration=3000
+                )
+                show_notification(NotificationType.WARNING, config, parent=self)
+                
+                # 更新初始班级列表为当前列表，避免重复提示
+                self.initial_class_names = current_class_names.copy()
+        except Exception as e:
+            logger.error(f"检测班级变化失败: {e}")
     
     def __save_class_names(self):
         """保存班级名称"""
@@ -161,6 +202,65 @@ class SetClassNameWindow(QWidget):
             roll_call_list_dir = get_path("app/resources/list/roll_call_list")
             roll_call_list_dir.mkdir(parents=True, exist_ok=True)
             
+            # 获取现有的班级名称
+            existing_class_names = get_class_name_list()
+            
+            # 检查是否有被删除的班级
+            deleted_classes = [name for name in existing_class_names if name not in class_names]
+            
+            # 如果有被删除的班级，询问用户是否确认删除
+            if deleted_classes:
+                # 创建确认对话框
+                if len(deleted_classes) == 1:
+                    # 单个班级删除
+                    dialog = MessageBox(
+                        get_content_name_async("set_class_name", "delete_class_title"),
+                        get_content_name_async("set_class_name", "delete_class_message").format(
+                            class_name=deleted_classes[0]
+                        ),
+                        self
+                    )
+                    
+                    dialog.yesButton.setText(get_content_name_async("set_class_name", "delete_class_button"))
+                    dialog.cancelButton.setText(get_content_name_async("set_class_name", "delete_cancel_button"))
+                else:
+                    # 多个班级删除
+                    dialog = MessageBox(
+                        get_content_name_async("set_class_name", "delete_multiple_classes_title"),
+                        get_content_name_async("set_class_name", "delete_multiple_classes_message").format(
+                            count=len(deleted_classes),
+                            class_names="\n".join(deleted_classes)
+                        ),
+                        self
+                    )
+                    
+                    dialog.yesButton.setText(get_content_name_async("set_class_name", "delete_class_button"))
+                    dialog.cancelButton.setText(get_content_name_async("set_class_name", "delete_cancel_button"))
+                
+                # 显示对话框并获取用户选择
+                if dialog.exec():
+                    # 用户确认删除，删除班级文件
+                    deleted_count = 0
+                    for class_name in deleted_classes:
+                        class_file = roll_call_list_dir / f"{class_name}.json"
+                        if class_file.exists():
+                            class_file.unlink()
+                            deleted_count += 1
+                    
+                    # 显示删除成功消息
+                    if deleted_count > 0:
+                        config = NotificationConfig(
+                            title=get_content_name_async("set_class_name", "delete_success_title"),
+                            content=get_content_name_async("set_class_name", "delete_success_message").format(
+                                count=deleted_count
+                            ),
+                            duration=3000
+                        )
+                        show_notification(NotificationType.SUCCESS, config, parent=self)
+                else:
+                    # 用户取消删除，不执行任何操作
+                    return
+            
             # 创建或更新班级文件
             created_count = 0
             for class_name in class_names:
@@ -181,7 +281,8 @@ class SetClassNameWindow(QWidget):
                     duration=3000
                 )
                 show_notification(NotificationType.SUCCESS, config, parent=self)
-            else:
+            elif not deleted_classes:
+                # 没有创建新班级也没有删除班级
                 config = NotificationConfig(
                     title=get_content_name_async("set_class_name", "info_title"),
                     content=get_content_name_async("set_class_name", "no_new_classes_message"),
@@ -191,15 +292,6 @@ class SetClassNameWindow(QWidget):
             
             # 标记为已保存
             self.saved = True
-            
-            # 获取父窗口并关闭
-            parent = self.parent()
-            while parent:
-                # 查找SimpleWindowTemplate类型的父窗口
-                if hasattr(parent, 'windowClosed') and hasattr(parent, 'close'):
-                    parent.close()
-                    break
-                parent = parent.parent()
             
         except Exception as e:
             # 显示错误消息

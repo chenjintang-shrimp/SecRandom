@@ -154,6 +154,39 @@ class roll_call_list(GroupHeaderCardWidget):
         )
         show_notification(NotificationType.INFO, config, parent=self)
 
+    # 姓名设置
+    def name_setting(self):
+        create_name_setting_window()
+        # 显示通知
+        config = NotificationConfig(
+            title="姓名设置",
+            content="已打开姓名设置窗口",
+            duration=3000
+        )
+        show_notification(NotificationType.INFO, config, parent=self)
+
+    # 性别设置
+    def gender_setting(self):
+        create_gender_setting_window()
+        # 显示通知
+        config = NotificationConfig(
+            title="性别设置",
+            content="已打开性别设置窗口",
+            duration=3000
+        )
+        show_notification(NotificationType.INFO, config, parent=self)
+
+    # 小组设置
+    def group_setting(self):
+        create_group_setting_window()
+        # 显示通知
+        config = NotificationConfig(
+            title="小组设置",
+            content="已打开小组设置窗口",
+            duration=3000
+        )
+        show_notification(NotificationType.INFO, config, parent=self)
+
     # 学生名单导出功能
     def export_student_list(self):
         class_name = self.class_name_combo.currentText()

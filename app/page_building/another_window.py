@@ -4,6 +4,9 @@ from app.page_building.window_template import SimpleWindowTemplate
 from app.view.another_window.contributor import contributor_page
 from app.view.another_window.import_student_name import ImportStudentNameWindow
 from app.view.another_window.set_class_name import SetClassNameWindow
+from app.view.another_window.name_setting import NameSettingWindow
+from app.view.another_window.gender_setting import GenderSettingWindow
+from app.view.another_window.group_setting import GroupSettingWindow
 from app.Language.obtain_language import *
 
 # 全局变量，用于保持窗口引用，防止被垃圾回收
@@ -34,6 +37,7 @@ def create_set_class_name_window():
     window.show()
     return
 
+
 # ==================================================
 # 导入学生名单导入窗口
 # ==================================================
@@ -58,6 +62,85 @@ def create_import_student_name_window():
     window.windowClosed.connect(lambda: _window_instances.pop("import_student_name", None))
     window.show()
     return
+
+
+# ==================================================
+# 姓名设置窗口
+# ==================================================
+class name_setting_window_template(PageTemplate):
+    """姓名设置窗口类
+    使用PageTemplate创建姓名设置页面"""
+    def __init__(self, parent=None):
+        super().__init__(content_widget_class=NameSettingWindow, parent=parent)
+
+def create_name_setting_window():
+    """
+    创建姓名设置窗口
+
+    Returns:
+        创建的窗口实例
+    """
+    title = get_content_name_async("name_setting", "title")
+    window = SimpleWindowTemplate(title, width=800, height=600)
+    window.add_page_from_template("name_setting", name_setting_window_template)
+    window.switch_to_page("name_setting")
+    _window_instances["name_setting"] = window
+    window.windowClosed.connect(lambda: _window_instances.pop("name_setting", None))
+    window.show()
+    return
+
+
+# ==================================================
+# 性别设置窗口
+# ==================================================
+class gender_setting_window_template(PageTemplate):
+    """性别设置窗口类
+    使用PageTemplate创建性别设置页面"""
+    def __init__(self, parent=None):
+        super().__init__(content_widget_class=GenderSettingWindow, parent=parent)
+
+def create_gender_setting_window():
+    """
+    创建性别设置窗口
+
+    Returns:
+        创建的窗口实例
+    """
+    title = get_content_name_async("gender_setting", "title")
+    window = SimpleWindowTemplate(title, width=800, height=600)
+    window.add_page_from_template("gender_setting", gender_setting_window_template)
+    window.switch_to_page("gender_setting")
+    _window_instances["gender_setting"] = window
+    window.windowClosed.connect(lambda: _window_instances.pop("gender_setting", None))
+    window.show()
+    return
+
+
+# ==================================================
+# 小组设置窗口
+# ==================================================
+class group_setting_window_template(PageTemplate):
+    """小组设置窗口类
+    使用PageTemplate创建小组设置页面"""
+    def __init__(self, parent=None):
+        super().__init__(content_widget_class=GroupSettingWindow, parent=parent)
+
+def create_group_setting_window():
+    """
+    创建小组设置窗口
+
+    Returns:
+        创建的窗口实例
+    """
+    title = get_content_name_async("group_setting", "title")
+    window = SimpleWindowTemplate(title, width=800, height=600)
+    window.add_page_from_template("group_setting", group_setting_window_template)
+    window.switch_to_page("group_setting")
+    _window_instances["group_setting"] = window
+    window.windowClosed.connect(lambda: _window_instances.pop("group_setting", None))
+    window.show()
+    return
+
 
 
 # ==================================================
