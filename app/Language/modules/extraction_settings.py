@@ -90,49 +90,7 @@ roll_call_settings = {
         "open_student_image_folder": {
             "name": "学生图片文件夹",
             "description": "管理学生图片文件,图片文件名需与学生姓名一致",
-        },
-        "animation_music": {
-            "name": "动画音乐",
-            "description": "设置是否播放动画音乐",
-            "switchbutton_name": {"enable": "播放", "disable": "关闭"},
-        },
-        "result_music": {
-            "name": "结果音乐",
-            "description": "设置是否播放结果音乐",
-            "switchbutton_name": {"enable": "播放", "disable": "关闭"},
-        },
-        "open_animation_music_folder": {
-            "name": "打开动画音乐文件夹",
-            "description": "管理动画音乐文件并支持随机播放功能",
-        },
-        "open_result_music_folder": {
-            "name": "打开结果音乐文件夹",
-            "description": "管理结果音乐文件并支持随机播放功能",
-        },
-        "animation_music_volume": {
-            "name": "动画音乐音量",
-            "description": "设置动画音乐的音量",
-        },
-        "result_music_volume": {
-            "name": "结果音乐音量",
-            "description": "设置结果音乐的音量",
-        },
-        "animation_music_fade_in": {
-            "name": "动画音乐淡入时间",
-            "description": "设置动画音乐淡入的时间",
-        },
-        "result_music_fade_in": {
-            "name": "结果音乐淡入时间",
-            "description": "设置结果音乐淡入的时间",
-        },
-        "animation_music_fade_out": {
-            "name": "动画音乐淡出时间",
-            "description": "设置动画音乐淡出的时间",
-        },
-        "result_music_fade_out": {
-            "name": "结果音乐淡出时间",
-            "description": "设置结果音乐淡出的时间",
-        },
+        }
     }
 }
 
@@ -232,49 +190,7 @@ quick_draw_settings = {
         "open_student_image_folder": {
             "name": "学生图片文件夹",
             "description": "管理学生图片文件,图片文件名需与学生姓名一致",
-        },
-        "animation_music": {
-            "name": "动画音乐",
-            "description": "设置是否播放动画音乐",
-            "switchbutton_name": {"enable": "播放", "disable": "关闭"},
-        },
-        "result_music": {
-            "name": "结果音乐",
-            "description": "设置是否播放结果音乐",
-            "switchbutton_name": {"enable": "播放", "disable": "关闭"},
-        },
-        "open_animation_music_folder": {
-            "name": "打开动画音乐文件夹",
-            "description": "管理动画音乐文件并支持随机播放功能",
-        },
-        "open_result_music_folder": {
-            "name": "打开结果音乐文件夹",
-            "description": "管理结果音乐文件并支持随机播放功能",
-        },
-        "animation_music_volume": {
-            "name": "动画音乐音量",
-            "description": "设置动画音乐的音量",
-        },
-        "result_music_volume": {
-            "name": "结果音乐音量",
-            "description": "设置结果音乐的音量",
-        },
-        "animation_music_fade_in": {
-            "name": "动画音乐淡入时间",
-            "description": "设置动画音乐淡入的时间",
-        },
-        "result_music_fade_in": {
-            "name": "结果音乐淡入时间",
-            "description": "设置结果音乐淡入的时间",
-        },
-        "animation_music_fade_out": {
-            "name": "动画音乐淡出时间",
-            "description": "设置动画音乐淡出的时间",
-        },
-        "result_music_fade_out": {
-            "name": "结果音乐淡出时间",
-            "description": "设置结果音乐淡出的时间",
-        },
+        }
     }
 }
 
@@ -374,49 +290,7 @@ instant_draw_settings = {
         "open_student_image_folder": {
             "name": "学生图片文件夹",
             "description": "管理学生图片文件,图片文件名需与学生姓名一致",
-        },
-        "animation_music": {
-            "name": "动画音乐",
-            "description": "设置是否播放动画音乐",
-            "switchbutton_name": {"enable": "播放", "disable": "关闭"},
-        },
-        "result_music": {
-            "name": "结果音乐",
-            "description": "设置是否播放结果音乐",
-            "switchbutton_name": {"enable": "播放", "disable": "关闭"},
-        },
-        "open_animation_music_folder": {
-            "name": "打开动画音乐文件夹",
-            "description": "管理动画音乐文件并支持随机播放功能",
-        },
-        "open_result_music_folder": {
-            "name": "打开结果音乐文件夹",
-            "description": "管理结果音乐文件并支持随机播放功能",
-        },
-        "animation_music_volume": {
-            "name": "动画音乐音量",
-            "description": "设置动画音乐的音量",
-        },
-        "result_music_volume": {
-            "name": "结果音乐音量",
-            "description": "设置结果音乐的音量",
-        },
-        "animation_music_fade_in": {
-            "name": "动画音乐淡入时间",
-            "description": "设置动画音乐淡入的时间",
-        },
-        "result_music_fade_in": {
-            "name": "结果音乐淡入时间",
-            "description": "设置结果音乐淡入的时间",
-        },
-        "animation_music_fade_out": {
-            "name": "动画音乐淡出时间",
-            "description": "设置动画音乐淡出的时间",
-        },
-        "result_music_fade_out": {
-            "name": "结果音乐淡出时间",
-            "description": "设置结果音乐淡出的时间",
-        },
+        }
     }
 }
 
@@ -516,48 +390,6 @@ lottery_settings = {
         "open_lottery_image_folder": {
             "name": "奖品图片文件夹",
             "description": "管理奖品图片文件,图片文件名需与奖品名称一致",
-        },
-        "animation_music": {
-            "name": "动画音乐",
-            "description": "设置是否播放动画音乐",
-            "switchbutton_name": {"enable": "播放", "disable": "关闭"},
-        },
-        "result_music": {
-            "name": "结果音乐",
-            "description": "设置是否播放结果音乐",
-            "switchbutton_name": {"enable": "播放", "disable": "关闭"},
-        },
-        "open_animation_music_folder": {
-            "name": "打开动画音乐文件夹",
-            "description": "管理动画音乐文件并支持随机播放功能",
-        },
-        "open_result_music_folder": {
-            "name": "打开结果音乐文件夹",
-            "description": "管理结果音乐文件并支持随机播放功能",
-        },
-        "animation_music_volume": {
-            "name": "动画音乐音量",
-            "description": "设置动画音乐的音量",
-        },
-        "result_music_volume": {
-            "name": "结果音乐音量",
-            "description": "设置结果音乐的音量",
-        },
-        "animation_music_fade_in": {
-            "name": "动画音乐淡入时间",
-            "description": "设置动画音乐淡入的时间",
-        },
-        "result_music_fade_in": {
-            "name": "结果音乐淡入时间",
-            "description": "设置结果音乐淡入的时间",
-        },
-        "animation_music_fade_out": {
-            "name": "动画音乐淡出时间",
-            "description": "设置动画音乐淡出的时间",
-        },
-        "result_music_fade_out": {
-            "name": "结果音乐淡出时间",
-            "description": "设置结果音乐淡出的时间",
-        },
+        }
     }
 }
