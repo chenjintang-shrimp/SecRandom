@@ -15,9 +15,10 @@ from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
+from app.tools.config import *
 from app.tools.list import *
 
-from app.page_building.another_window import create_import_student_name_window
+from app.page_building.another_window import *
 
 # ==================================================
 # 点名名单
@@ -131,23 +132,38 @@ class roll_call_list(GroupHeaderCardWidget):
         # 设置文件系统监视器
         self.setup_file_watcher()
 
+    # 班级名称设置
+    def set_class_name(self):
+        create_set_class_name_window()
+        # 显示通知
+        config = NotificationConfig(
+            title="班级名称设置",
+            content="已打开班级名称设置窗口",
+            duration=3000
+        )
+        show_notification(NotificationType.INFO, config, parent=self)
+
     # 学生名单导入功能
     def import_student_name(self):
         create_import_student_name_window()
+        # 显示通知
+        config = NotificationConfig(
+            title="学生名单导入",
+            content="已打开学生名单导入窗口",
+            duration=3000
+        )
+        show_notification(NotificationType.INFO, config, parent=self)
 
     # 学生名单导出功能
     def export_student_list(self):
         class_name = self.class_name_combo.currentText()
         if not class_name:
-            InfoBar.warning(
+            config = NotificationConfig(
                 title="导出失败",
                 content="请先选择要导出的班级",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
+                duration=3000
             )
+            show_notification(NotificationType.WARNING, config, parent=self)
             return
 
         file_path, selected_filter = QFileDialog.getSaveFileName(
@@ -178,26 +194,20 @@ class roll_call_list(GroupHeaderCardWidget):
         success, message = export_student_data(class_name, file_path, export_type)
 
         if success:
-            InfoBar.success(
+            config = NotificationConfig(
                 title="导出成功",
                 content=f"学生名单已导出到: {file_path}",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=5000,
-                parent=self,
+                duration=3000
             )
+            show_notification(NotificationType.SUCCESS, config, parent=self)
             logger.info(f"学生名单导出成功: {file_path}")
         else:
-            InfoBar.error(
+            config = NotificationConfig(
                 title="导出失败",
                 content=message,
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self,
+                duration=3000
             )
+            show_notification(NotificationType.ERROR, config, parent=self)
             logger.error(f"学生名单导出失败: {message}")
 
     def setup_file_watcher(self):

@@ -1,3 +1,27 @@
+# 班级名称设置窗口
+set_class_name = {
+    "ZH_CN": {
+        "title": {"name": "班级名称设置", "description": "设置班级名称窗口标题"},
+        "description": {"name": "在此窗口中，您可以添加、编辑或删除班级名称。\n每个班级名称将创建一个对应的JSON文件，用于存储该班级的学生名单信息。\n\n请每行输入一个班级名称，例如：\n高一1班\n高一2班\n高一3班", "description": "班级名称设置窗口描述"},
+        "input_title": {"name": "班级名称列表", "description": "班级名称输入区域标题"},
+        "input_placeholder": {"name": "请输入班级名称，每行一个班级名称", "description": "班级名称输入框占位符"},
+        "save_button": {"name": "保存", "description": "保存按钮文本"},
+        "cancel_button": {"name": "取消", "description": "取消按钮文本"},
+        "error_title": {"name": "错误", "description": "错误消息标题"},
+        "success_title": {"name": "成功", "description": "成功消息标题"},
+        "info_title": {"name": "提示", "description": "信息消息标题"},
+        "no_class_names_error": {"name": "请至少输入一个班级名称", "description": "未输入班级名称时的错误提示"},
+        "invalid_names_error": {"name": "以下班级名称包含非法字符或是保留字: {names}", "description": "班级名称验证失败时的错误提示"},
+        "save_error": {"name": "保存班级名称失败", "description": "保存班级名称时的错误提示"},
+        "success_message": {"name": "成功创建 {count} 个新班级", "description": "成功创建班级时的提示消息"},
+        "no_new_classes_message": {"name": "所有班级名称都已存在，没有创建新班级", "description": "没有创建新班级时的提示消息"},
+        "unsaved_changes_title": {"name": "未保存的更改", "description": "未保存更改对话框标题"},
+        "unsaved_changes_message": {"name": "您有未保存的更改，确定要关闭窗口吗？", "description": "未保存更改对话框内容"},
+        "discard_button": {"name": "放弃更改", "description": "放弃更改按钮文本"},
+        "continue_editing_button": {"name": "继续编辑", "description": "继续编辑按钮文本"},
+    },
+}
+
 # 导入学生姓名语言配置
 import_student_name = {
     "ZH_CN": {
@@ -46,3 +70,4 @@ import_student_name = {
         "existing_data_option_cancel": {"name": "取消导入", "description": "取消导入选项"},
     }
 }
+
