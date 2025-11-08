@@ -149,6 +149,7 @@ def create_group_setting_window():
 class contributor_window_template(PageTemplate):
     """贡献者窗口类
     使用PageTemplate创建贡献者页面"""
+
     def __init__(self, parent=None):
         super().__init__(content_widget_class=contributor_page, parent=parent)
 
