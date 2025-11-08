@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-20.04
             arch: x64
             pack_mode: dir
 
@@ -78,7 +78,7 @@ jobs:
 
           # 安装依赖
           echo "安装项目依赖..."
-          uv pip install -r requirements-linux.txt
+          uv sync
 
           # 安装 pyinstaller
           echo "安装 PyInstaller..."

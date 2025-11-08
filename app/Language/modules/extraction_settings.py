@@ -9,22 +9,25 @@ roll_call_settings = {
         "title": {"name": "点名设置", "description": "点名设置"},
         "extraction_function": {
             "name": "抽取功能",
-            "description": "点名抽取功能相关设置",
+            "description": "设置点名的抽取功能",
         },
-        "display_settings": {"name": "显示设置", "description": "点名结果显示相关设置"},
+        "display_settings": {
+            "name": "显示设置",
+            "description": "设置点名结果的显示方式",
+        },
         "basic_animation_settings": {
             "name": "动画设置",
-            "description": "点名动画效果相关设置",
+            "description": "设置点名的动画效果",
         },
         "color_theme_settings": {
             "name": "颜色主题设置",
-            "description": "点名结果显示的颜色主题相关设置",
+            "description": "设置点名结果的颜色主题",
         },
         "student_image_settings": {
             "name": "学生头像设置",
-            "description": "点名结果显示的学生头像相关设置",
+            "description": "设置点名结果中学生头像的显示",
         },
-        "music_settings": {"name": "音乐设置", "description": "点名音乐相关设置"},
+        "music_settings": {"name": "音乐设置", "description": "设置点名时播放的音乐"},
         "draw_mode": {
             "name": "抽取模式",
             "description": "设置点名抽取的模式",
@@ -32,24 +35,24 @@ roll_call_settings = {
         },
         "clear_record": {
             "name": "清除抽取记录方式",
-            "description": "设置清除点名抽取记录的方式",
+            "description": "设置何时清除抽取记录",
             "combo_items": ["重启后清除", "直到全部抽取完"],
             "combo_items_other": ["重启后清除", "直到全部抽取完", "无需清除"],
         },
         "half_repeat": {
             "name": "半重复抽取次数",
-            "description": "设置半重复抽取的次数",
+            "description": "设置名单中每人被抽中多少次后清除抽取记录",
         },
         "clear_time": {
             "name": "抽取后定时清除时间",
-            "description": "设置抽取后定时清除记录的时间(秒)",
+            "description": "设置抽取后定时清除记录的时间（秒）",
         },
         "draw_type": {
             "name": "抽取方式",
             "description": "设置点名抽取的方式",
             "combo_items": ["随机抽取", "公平抽取"],
         },
-        "font_size": {"name": "字体大小", "description": "设置点名结果显示的字体大小"},
+        "font_size": {"name": "字体大小", "description": "设置点名结果的字体大小"},
         "display_format": {
             "name": "结果显示格式",
             "description": "设置点名结果的显示格式",
@@ -67,7 +70,7 @@ roll_call_settings = {
         },
         "animation_interval": {
             "name": "动画间隔",
-            "description": "设置点名动画的间隔时间(毫秒)",
+            "description": "设置点名动画的间隔时间（毫秒）",
         },
         "autoplay_count": {
             "name": "自动播放次数",
@@ -89,8 +92,8 @@ roll_call_settings = {
         },
         "open_student_image_folder": {
             "name": "学生图片文件夹",
-            "description": "管理学生图片文件,图片文件名需与学生姓名一致",
-        }
+            "description": "管理学生图片文件，图片文件名需与学生姓名一致",
+        },
     }
 }
 
@@ -100,22 +103,25 @@ quick_draw_settings = {
         "title": {"name": "闪抽设置", "description": "闪抽设置"},
         "extraction_function": {
             "name": "抽取功能",
-            "description": "闪抽抽取功能相关设置",
+            "description": "设置闪抽的抽取功能",
         },
-        "display_settings": {"name": "显示设置", "description": "闪抽结果显示相关设置"},
+        "display_settings": {
+            "name": "显示设置",
+            "description": "设置闪抽结果的显示方式",
+        },
         "basic_animation_settings": {
             "name": "动画设置",
-            "description": "闪抽动画效果相关设置",
+            "description": "设置闪抽的动画效果",
         },
         "color_theme_settings": {
             "name": "颜色主题设置",
-            "description": "闪抽结果显示的颜色主题相关设置",
+            "description": "设置闪抽结果的颜色主题",
         },
         "student_image_settings": {
             "name": "学生头像设置",
-            "description": "闪抽结果显示的学生头像相关设置",
+            "description": "设置闪抽结果中学生头像的显示",
         },
-        "music_settings": {"name": "音乐设置", "description": "闪抽音乐相关设置"},
+        "music_settings": {"name": "音乐设置", "description": "设置闪抽时播放的音乐"},
         "draw_mode": {
             "name": "抽取模式",
             "description": "设置闪抽抽取的模式",
@@ -129,7 +135,7 @@ quick_draw_settings = {
         },
         "half_repeat": {
             "name": "半重复抽取次数",
-            "description": "设置半重复抽取的次数",
+            "description": "设置名单中每人被抽中多少次后清除抽取记录",
         },
         "clear_time": {
             "name": "抽取后定时清除时间",
@@ -190,32 +196,35 @@ quick_draw_settings = {
         "open_student_image_folder": {
             "name": "学生图片文件夹",
             "description": "管理学生图片文件,图片文件名需与学生姓名一致",
-        }
+        },
     }
 }
 
 # 即抽设置
 instant_draw_settings = {
     "ZH_CN": {
-        "title": {"name": "即抽设置", "description": "即时抽取功能的相关设置"},
+        "title": {"name": "即抽设置", "description": "即抽功能的相关设置"},
         "extraction_function": {
             "name": "抽取功能",
-            "description": "即抽抽取功能相关设置",
+            "description": "设置即抽的抽取功能",
         },
-        "display_settings": {"name": "显示设置", "description": "即抽结果显示相关设置"},
+        "display_settings": {
+            "name": "显示设置",
+            "description": "设置即抽结果的显示方式",
+        },
         "basic_animation_settings": {
             "name": "动画设置",
-            "description": "即抽动画效果相关设置",
+            "description": "设置即抽的动画效果",
         },
         "color_theme_settings": {
             "name": "颜色主题设置",
-            "description": "即抽结果显示的颜色主题相关设置",
+            "description": "设置即抽结果的颜色主题",
         },
         "student_image_settings": {
             "name": "学生头像设置",
-            "description": "即抽结果显示的学生头像相关设置",
+            "description": "设置即抽结果中学生头像的显示",
         },
-        "music_settings": {"name": "音乐设置", "description": "即抽音乐相关设置"},
+        "music_settings": {"name": "音乐设置", "description": "设置即抽时播放的音乐"},
         "draw_mode": {
             "name": "抽取模式",
             "description": "设置即抽抽取的模式",
@@ -229,7 +238,7 @@ instant_draw_settings = {
         },
         "half_repeat": {
             "name": "半重复抽取次数",
-            "description": "设置半重复抽取的次数",
+            "description": "设置名单中每人被抽中多少次后清除抽取记录",
         },
         "clear_time": {
             "name": "抽取后定时清除时间",
@@ -240,7 +249,7 @@ instant_draw_settings = {
             "description": "设置即抽抽取的方式",
             "combo_items": ["随机抽取", "公平抽取"],
         },
-        "font_size": {"name": "字体大小", "description": "设置即抽结果显示的字体大小"},
+        "font_size": {"name": "字体大小", "description": "设置即抽结果的字体大小"},
         "display_format": {
             "name": "结果显示格式",
             "description": "设置即抽结果的显示格式",
@@ -290,7 +299,7 @@ instant_draw_settings = {
         "open_student_image_folder": {
             "name": "学生图片文件夹",
             "description": "管理学生图片文件,图片文件名需与学生姓名一致",
-        }
+        },
     }
 }
 
@@ -305,22 +314,25 @@ lottery_settings = {
         "title": {"name": "抽奖设置", "description": "抽奖设置"},
         "extraction_function": {
             "name": "抽取功能",
-            "description": "抽奖抽取功能相关设置",
+            "description": "设置抽奖的抽取功能",
         },
-        "display_settings": {"name": "显示设置", "description": "抽奖结果显示相关设置"},
+        "display_settings": {
+            "name": "显示设置",
+            "description": "设置抽奖结果的显示方式",
+        },
         "basic_animation_settings": {
             "name": "动画设置",
-            "description": "抽奖动画效果相关设置",
+            "description": "设置抽奖的动画效果",
         },
         "color_theme_settings": {
             "name": "颜色主题设置",
-            "description": "抽奖结果显示的颜色主题相关设置",
+            "description": "设置抽奖结果的颜色主题",
         },
         "student_image_settings": {
             "name": "奖品图片设置",
-            "description": "抽奖结果显示的奖品图片相关设置",
+            "description": "设置抽奖结果中奖品图片的显示",
         },
-        "music_settings": {"name": "音乐设置", "description": "抽奖音乐相关设置"},
+        "music_settings": {"name": "音乐设置", "description": "设置抽奖时播放的音乐"},
         "draw_mode": {
             "name": "抽取模式",
             "description": "设置抽奖抽取的模式",
@@ -334,7 +346,7 @@ lottery_settings = {
         },
         "half_repeat": {
             "name": "半重复抽取次数",
-            "description": "设置半重复抽取的次数",
+            "description": "设置名单中每人被抽中多少次后清除抽取记录",
         },
         "clear_time": {
             "name": "抽取后定时清除时间",
@@ -383,13 +395,13 @@ lottery_settings = {
             "description": "设置抽奖结果显示的固定颜色",
         },
         "lottery_image": {
-            "name": "显示学生图片",
-            "description": "设置是否显示学生图片",
+            "name": "显示奖品图片",
+            "description": "设置是否显示奖品图片",
             "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
         },
         "open_lottery_image_folder": {
             "name": "奖品图片文件夹",
             "description": "管理奖品图片文件,图片文件名需与奖品名称一致",
-        }
+        },
     }
 }
