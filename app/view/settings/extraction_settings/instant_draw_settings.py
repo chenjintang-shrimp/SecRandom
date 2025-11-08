@@ -319,6 +319,7 @@ class instant_draw_animation_settings(QWidget):
         self.student_image_widget = instant_draw_student_image_settings(self)
         self.vBoxLayout.addWidget(self.student_image_widget)
 
+
 class instant_draw_basic_animation_settings(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)

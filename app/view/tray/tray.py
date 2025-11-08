@@ -2,18 +2,13 @@
 # 导入库
 # ==================================================
 
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
-from qfluentwidgets import *
+from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
+from PyQt6.QtGui import QIcon, QCursor
+from PyQt6.QtCore import QTimer, QEvent, QPoint, pyqtSignal
+from qfluentwidgets import RoundMenu, Action
 
-from app.tools.variable import *
-from app.tools.path_utils import *
-from app.tools.personalised import *
-from app.tools.settings_default import *
-from app.tools.settings_access import *
-from app.Language.obtain_language import *
+from app.tools.variable import MENU_AUTO_CLOSE_TIMEOUT
+from app.tools.path_utils import get_resources_path
 
 
 # ==================================================

@@ -2,18 +2,30 @@
 # 导入库
 # ==================================================
 
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
-from qfluentwidgets import *
+from PyQt6.QtWidgets import QWidget, QVBoxLayout
+from PyQt6.QtGui import QFontDatabase
+from qfluentwidgets import (
+    GroupHeaderCardWidget,
+    SwitchButton,
+    ComboBox,
+    PushButton,
+    ColorConfigItem,
+    ColorSettingCard,
+    Theme,
+    setTheme,
+    setThemeColor,
+)
 
-from app.tools.variable import *
-from app.tools.path_utils import *
-from app.tools.personalised import *
-from app.tools.settings_default import *
-from app.tools.settings_access import *
-from app.Language.obtain_language import *
+from app.tools.personalised import get_theme_icon
+from app.tools.settings_access import readme_settings_async, update_settings
+from app.Language.obtain_language import (
+    get_all_languages_name,
+    get_content_combo_name_async,
+    get_content_description_async,
+    get_content_name_async,
+    get_content_pushbutton_name_async,
+    get_content_switchbutton_name_async,
+)
 
 
 # ==================================================

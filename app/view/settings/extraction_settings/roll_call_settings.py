@@ -315,6 +315,7 @@ class roll_call_animation_settings(QWidget):
         self.student_image_widget = roll_call_student_image_settings(self)
         self.vBoxLayout.addWidget(self.student_image_widget)
 
+
 class roll_call_basic_animation_settings(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
