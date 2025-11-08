@@ -7,18 +7,18 @@ notification_settings = {
 roll_call_notification_settings = {
     "ZH_CN": {
         "title": {"name": "点名通知设置", "description": "点名通知设置"},
-        "basic_settings": {"name": "基础设置", "description": "基础设置"},
+        "basic_settings": {"name": "基础设置", "description": "配置通知显示的基础参数"},
         "window_mode": {
             "name": "窗口模式",
-            "description": "设置点名通知窗口的显示方式",
+            "description": "配置点名通知窗口的显示方式",
         },
         "floating_window_mode": {
             "name": "浮动窗口模式",
-            "description": "设置点名通知浮动窗口的行为",
+            "description": "配置点名通知浮动窗口的行为",
         },
         "call_notification_service": {  # TODO: 待完善
             "name": "调用通知服务",
-            "description": "是否调用系统通知服务发送点名结果通知",
+            "description": "启用后将调用系统通知服务发送点名结果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
         },
         "notification_mode": {
@@ -27,13 +27,13 @@ roll_call_notification_settings = {
             "combo_items": ["窗口", "浮动窗口"],
         },
         "animation": {
-            "name": "动画",
-            "description": "设置点名通知窗口的动画效果",
+            "name": "动画效果",
+            "description": "控制点名通知窗口是否显示动画效果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
         },
         "enabled_monitor": {
-            "name": "选择显示点名通知的显示器",
-            "description": "选择点名通知窗口显示的显示器",
+            "name": "显示器选择",
+            "description": "选择用于显示点名通知的显示器",
         },
         "window_position": {
             "name": "窗口位置",
@@ -52,19 +52,19 @@ roll_call_notification_settings = {
         },
         "horizontal_offset": {
             "name": "水平偏移",
-            "description": "设置点名通知窗口相对默认位置的水平偏移量（像素）",
+            "description": "调整点名通知窗口相对默认位置的水平偏移量（像素）",
         },
         "vertical_offset": {
             "name": "垂直偏移",
-            "description": "设置点名通知窗口相对默认位置的垂直偏移量（像素）",
+            "description": "调整点名通知窗口相对默认位置的垂直偏移量（像素）",
         },
         "transparency": {
             "name": "透明度",
-            "description": "设置点名通知窗口的透明度，数值越小越透明（0-100）",
+            "description": "调整点名通知窗口的透明度，数值越小越透明（0-100）",
         },
         "floating_window_enabled_monitor": {
-            "name": "选择显示点名通知的显示器",
-            "description": "选择点名通知浮动窗口显示的显示器",
+            "name": "显示器选择",
+            "description": "选择用于显示点名通知浮动窗口的显示器",
         },
         "floating_window_position": {
             "name": "浮动窗口位置",
@@ -82,15 +82,15 @@ roll_call_notification_settings = {
         },
         "floating_window_horizontal_offset": {
             "name": "水平偏移",
-            "description": "设置点名通知浮动窗口相对默认位置的水平偏移量（像素）",
+            "description": "调整点名通知浮动窗口相对默认位置的水平偏移量（像素）",
         },
         "floating_window_vertical_offset": {
             "name": "垂直偏移",
-            "description": "设置点名通知浮动窗口相对默认位置的垂直偏移量（像素）",
+            "description": "调整点名通知浮动窗口相对默认位置的垂直偏移量（像素）",
         },
         "floating_window_transparency": {
-            "name": "浮动窗口透明度",
-            "description": "设置点名通知浮动窗口的透明度，数值越小越透明（0-100）",
+            "name": "透明度",
+            "description": "调整点名通知浮动窗口的透明度，数值越小越透明（0-100）",
         },
     }
 }

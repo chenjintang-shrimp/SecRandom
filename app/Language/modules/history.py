@@ -1,6 +1,8 @@
 # 历史记录语言配置
 history = {
-    "ZH_CN": {"title": {"name": "历史记录", "description": "查看和管理历史记录"}}
+    "ZH_CN": {
+        "title": {"name": "历史记录", "description": "查看和管理点名及抽奖的历史记录"}
+    }
 }
 
 # 历史记录管理语言配置
@@ -17,7 +19,7 @@ history_management = {
         },
         "show_roll_call_history": {
             "name": "启用点名历史记录",
-            "description": "是否显示点名历史记录功能",
+            "description": "控制是否显示点名历史记录功能",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
         },
         "select_class_name": {
@@ -26,12 +28,12 @@ history_management = {
         },
         "clear_roll_call_history": {
             "name": "清除点名历史记录",
-            "description": "清除当前班级的点名历史记录",
+            "description": "清除所选班级的点名历史记录",
             "pushbutton_name": "清除",
         },
         "show_lottery_history": {
             "name": "启用抽奖历史记录",
-            "description": "是否显示抽奖历史记录功能",
+            "description": "控制是否显示抽奖历史记录功能",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
         },
         "select_pool_name": {
@@ -40,7 +42,7 @@ history_management = {
         },
         "clear_lottery_history": {
             "name": "清除抽奖历史记录",
-            "description": "清除当前奖池的抽奖历史记录",
+            "description": "清除所选奖池的抽奖历史记录",
             "pushbutton_name": "清除",
         },
     }
