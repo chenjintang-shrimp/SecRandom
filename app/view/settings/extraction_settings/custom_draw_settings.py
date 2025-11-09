@@ -14,6 +14,7 @@ from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
 
+
 # ==================================================
 # 自定义抽设置
 # ==================================================
