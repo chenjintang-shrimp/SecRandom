@@ -47,7 +47,6 @@ class roll_call(QWidget):
                 self.file_watcher.removePaths(self.file_watcher.files())
         except Exception as e:
             logger.error(f"清理文件监控器失败: {e}")
-        
         super().closeEvent(event)
 
     def initUI(self):
