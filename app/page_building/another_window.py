@@ -1,4 +1,5 @@
 # 导入页面模板
+from PyQt6.QtCore import QTimer
 from app.page_building.page_template import PageTemplate
 from app.page_building.window_template import SimpleWindowTemplate
 from app.view.another_window.contributor import contributor_page
@@ -7,6 +8,7 @@ from app.view.another_window.set_class_name import SetClassNameWindow
 from app.view.another_window.name_setting import NameSettingWindow
 from app.view.another_window.gender_setting import GenderSettingWindow
 from app.view.another_window.group_setting import GroupSettingWindow
+from app.view.another_window.remaining_list import RemainingListPage
 from app.Language.obtain_language import *
 
 # 全局变量，用于保持窗口引用，防止被垃圾回收
@@ -167,3 +169,62 @@ def create_contributor_window():
     window.windowClosed.connect(lambda: _window_instances.pop("contributor", None))
     window.show()
     return
+
+
+# ==================================================
+# 剩余名单窗口
+# ==================================================
+class remaining_list_window_template(PageTemplate):
+    """剩余名单窗口类
+    使用PageTemplate创建剩余名单页面"""
+    def __init__(self, parent=None):
+        super().__init__(content_widget_class=RemainingListPage, parent=parent)
+
+def create_remaining_list_window(class_name: str, group_filter: str, gender_filter: str, half_repeat: int = 0, group_index: int = 0, gender_index: int = 0):
+    """
+    创建剩余名单窗口
+
+    Args:
+        class_name: 班级名称
+        group_filter: 分组筛选条件
+        gender_filter: 性别筛选条件
+        half_repeat: 重复抽取次数
+        group_index: 分组索引
+        gender_index: 性别索引
+
+    Returns:
+        创建的窗口实例和页面实例
+    """
+    title = "剩余名单"
+    window = SimpleWindowTemplate(title, width=800, height=600)
+    window.add_page_from_template("remaining_list", remaining_list_window_template)
+    window.switch_to_page("remaining_list")
+    
+    # 获取页面实例并更新数据
+    page = None
+    
+    def setup_page():
+        nonlocal page
+        page_template = window.get_page("remaining_list")
+        if page_template and hasattr(page_template, 'contentWidget'):
+            page = page_template.contentWidget
+            if hasattr(page, 'update_remaining_list'):
+                page.update_remaining_list(class_name, group_filter, gender_filter, half_repeat, group_index, gender_index)
+    
+    # 使用延迟调用确保内容控件已创建
+    QTimer.singleShot(100, setup_page)
+    
+    _window_instances["remaining_list"] = window
+    window.windowClosed.connect(lambda: _window_instances.pop("remaining_list", None))
+    window.show()
+    
+    # 创建一个回调函数，用于在页面设置完成后获取页面实例
+    def get_page_callback(callback):
+        def check_page():
+            if page is not None:
+                callback(page)
+            else:
+                QTimer.singleShot(50, check_page)
+        check_page()
+    
+    return window, get_page_callback
