@@ -63,20 +63,27 @@ class SimpleLanguageManager:
                 # 从文件名获取模块名（去掉.py扩展名）
                 language_module_name = os.path.basename(file_path)[:-3]
 
-                # 动态导入模块
-                spec = importlib.util.spec_from_file_location(
-                    language_module_name, file_path
-                )
-                if spec is None:
-                    logger.warning(f"无法创建模块规范: {file_path}")
-                    continue
+                # 尝试直接导入（适用于打包环境）
+                try:
+                    module = __import__(
+                        f"app.Language.modules.{language_module_name}",
+                        fromlist=[language_module_name],
+                    )
+                except ImportError:
+                    # 如果直接导入失败，使用动态加载（开发环境）
+                    spec = importlib.util.spec_from_file_location(
+                        language_module_name, file_path
+                    )
+                    if spec is None:
+                        logger.warning(f"无法创建模块规范: {file_path}")
+                        continue
 
-                module = importlib.util.module_from_spec(spec)
-                if spec.loader is None:
-                    logger.warning(f"模块加载器为空: {file_path}")
-                    continue
+                    module = importlib.util.module_from_spec(spec)
+                    if spec.loader is None:
+                        logger.warning(f"模块加载器为空: {file_path}")
+                        continue
 
-                spec.loader.exec_module(module)
+                    spec.loader.exec_module(module)
 
                 # 遍历模块中的所有属性
                 for attr_name in dir(module):

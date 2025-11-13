@@ -46,7 +46,11 @@ class PathManager:
         """
         if getattr(sys, "frozen", False):
             # 打包后的可执行文件
-            return Path(sys.executable).parent
+            # PyInstaller 会设置 sys._MEIPASS 指向临时解压目录
+            if hasattr(sys, "_MEIPASS"):
+                return Path(sys._MEIPASS)
+            else:
+                return Path(sys.executable).parent
         else:
             # 开发环境
             return Path(__file__).parent.parent.parent

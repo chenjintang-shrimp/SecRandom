@@ -3,7 +3,6 @@
 # === GUI框架 ===
 PySide6==6.7.1
 PySide6-Qt6==6.7.3
-PyQt6_sip==13.8.0
 PySide6-Fluent-Widgets==1.9.1
 PySide6-Frameless-Window==0.7.4
 darkdetect==0.8.0
