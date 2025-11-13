@@ -336,3 +336,16 @@ class ResultDisplayUtils:
             col = i % max_columns
             grid_layout.addWidget(label, row, col)
         result_grid.addWidget(container)
+
+    @staticmethod
+    def clear_grid(result_grid):
+        """
+        清空网格布局中的所有小部件
+
+        参数:
+            result_grid: QGridLayout 网格布局
+        """
+        while result_grid.count():
+            item = result_grid.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()

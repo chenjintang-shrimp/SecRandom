@@ -10,6 +10,5 @@ from app.view.main.roll_call import roll_call
 
 class roll_call_page(PageTemplate):
     """创建班级点名页面"""
-
     def __init__(self, parent: QFrame = None):
         super().__init__(content_widget_class=roll_call, parent=parent)

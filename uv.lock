@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = "==3.8.10"
 
 [[package]]
@@ -3466,6 +3466,7 @@ dependencies = [
     { name = "packaging" },
     { name = "pandas" },
     { name = "pillow" },
+    { name = "pre-commit" },
     { name = "psutil" },
     { name = "pulsectl", marker = "sys_platform == 'linux'" },
     { name = "pycaw", marker = "sys_platform == 'win32'" },
@@ -3526,6 +3527,7 @@ requires-dist = [
     { name = "packaging", specifier = "==25.0" },
     { name = "pandas", specifier = "~=2.0.3" },
     { name = "pillow", specifier = "~=10.4.0" },
+    { name = "pre-commit", specifier = ">=3.5.0" },
     { name = "psutil", specifier = "~=7.0.0" },
     { name = "pulsectl", marker = "sys_platform == 'linux'", specifier = "==24.8.0" },
     { name = "pycaw", marker = "sys_platform == 'win32'", specifier = "==20240210" },

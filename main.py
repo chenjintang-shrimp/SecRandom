@@ -15,8 +15,8 @@ from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
-
 from app.Language.obtain_language import *
+from app.tools.config import *
 
 from app.view.main.window import MainWindow
 from app.view.settings.settings import SettingsWindow
@@ -171,8 +171,8 @@ def start_main_window():
     global main_window
     try:
         main_window = MainWindow()
-        main_window.showSettingsRequested.connect(show_settings_window)
-        main_window.showSettingsRequestedAbout.connect(show_settings_window_about)
+        main_window.showSettingsRequested.connect(lambda: show_settings_window())
+        main_window.showSettingsRequestedAbout.connect(lambda: show_settings_window_about)
         main_window.show()
     except Exception as e:
         logger.error(f"创建主窗口失败: {e}", exc_info=True)
@@ -240,6 +240,9 @@ def initialize_app():
         lambda: (setThemeColor(readme_settings("basic_settings", "theme_color"))),
     )
 
+    # 清除重启记录
+    QTimer.singleShot(APP_INIT_DELAY, lambda: (remove_record("", "", "", "restart")))
+
     # 创建主窗口实例
     QTimer.singleShot(APP_INIT_DELAY, lambda: (start_main_window()))
 
@@ -278,9 +281,6 @@ if __name__ == "__main__":
         main_async()
 
         app.exec()
-
-        # 停止系统主题监听器
-        stop_system_theme_listener()
 
         gc.collect()
 
