@@ -13,7 +13,6 @@ from app.tools.path_utils import get_resources_path
 from app.tools.personalised import get_theme_icon
 from app.Language.obtain_language import get_content_name_async
 from app.tools.settings_access import readme_settings_async, update_settings
-from app.Language.obtain_language import get_content_name_async
 
 from app.tools.variable import *
 from app.tools.path_utils import *
@@ -86,7 +85,7 @@ class SettingsWindow(MSFluentWindow):
 
         # 启动页面
         self.splashScreen = SplashScreen(self.windowIcon(), self)
-        self.splashScreen.setIconSize(QSize(192, 192))
+        self.splashScreen.setIconSize(QSize(256, 256))
         self.show()
 
         # 初始化子界面

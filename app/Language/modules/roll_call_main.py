@@ -2,6 +2,11 @@
 roll_call = {
     "ZH_CN": {
         "title": {"name": "点名", "description": "点名"},
+        "reset_button": {
+            "name": "重置",
+            "description": "重置人数",
+            "pushbutton_name": "重置",
+        },
         "start_button": {
             "name": "开始",
             "description": "开始点名",
@@ -21,6 +26,18 @@ roll_call = {
             "name": "性别",
             "description": "选择性别范围",
             "combo_items": ["抽取全部性别"],
+        },
+        "remaining_button": {
+            "name": "查看剩余名单",
+            "description": "显示剩余名窗口单",
+            "pushbutton_name": "查看剩余名单8",
+        },
+        "many_count_label": {
+            "name": "总/剩余人数",
+            "description": "显示总人数和剩余人数",
+            "text_0": "总人数: {total_count} | 剩余人数: {remaining_count}" ,
+            "text_1": "总人数: {total_count}",
+            "text_2": "剩余人数: {remaining_count}",
         },
     }
 }

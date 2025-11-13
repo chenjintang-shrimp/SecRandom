@@ -46,7 +46,7 @@ DEFAULT_SETTINGS = {
     "roll_call_list": {
         "title": {"default_value": None},
         "set_class_name": {"default_value": None},
-        "select_class_name": {"default_value": 0},
+        "select_class_name": {"default_value": ""},
         "import_student_name": {"default_value": None},
         "name_setting": {"default_value": None},
         "gender_setting": {"default_value": None},

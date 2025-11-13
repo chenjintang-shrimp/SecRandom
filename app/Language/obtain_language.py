@@ -4,6 +4,25 @@
 """
 该模块包含所有应用程序内容文本的默认值配置
 使用层级结构组织内容文本项，第一层为分类，第二层为具体内容文本项
+
+便捷函数总结：
+1. 同步函数：
+   - get_content_name(first_level_key, second_level_key): 获取内容文本项的名称
+   - get_content_description(first_level_key, second_level_key): 获取内容文本项的描述
+   - get_content_pushbutton_name(first_level_key, second_level_key): 获取内容文本项的按钮名称
+   - get_content_switchbutton_name_async(first_level_key, second_level_key, is_enable): 获取内容文本项的开关按钮名称
+   - get_content_combo_name_async(first_level_key, second_level_key): 获取内容文本项的下拉框内容
+   - get_any_position_value(first_level_key, second_level_key, *keys): 根据层级键获取任意位置的值
+
+2. 异步函数：
+   - get_content_name_async(first_level_key, second_level_key, timeout=1000): 异步获取内容文本项的名称
+   - get_content_description_async(first_level_key, second_level_key, timeout=1000): 异步获取内容文本项的描述
+   - get_content_pushbutton_name_async(first_level_key, second_level_key, timeout=1000): 异步获取内容文本项的按钮名称
+   - get_content_switchbutton_name_async(first_level_key, second_level_key, is_enable, timeout=1000): 异步获取内容文本项的开关按钮名称
+   - get_content_combo_name_async(first_level_key, second_level_key, timeout=1000): 异步获取内容文本项的下拉框内容
+   - get_any_position_value_async(first_level_key, second_level_key, *keys, timeout=1000): 异步根据层级键获取任意位置的值
+
+注意：所有异步函数在失败时会自动回退到对应的同步方法，确保功能稳定性。
 """
 
 from app.tools.language_manager import *
