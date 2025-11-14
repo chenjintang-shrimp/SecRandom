@@ -11,7 +11,9 @@ from app.tools.settings_access import readme_settings
 
 # from app.Language.ZH_CN import ZH_CN
 import glob
+import importlib
 import importlib.util
+import pkgutil
 
 from app.tools.variable import LANGUAGE_MODULE_DIR
 
@@ -46,33 +48,58 @@ class SimpleLanguageManager:
         language_code = "ZH_CN" if not language_code else language_code
         language_dir = get_path(LANGUAGE_MODULE_DIR)
 
-        # 检查语言目录是否存在
-        if not os.path.exists(language_dir):
+        module_entries: List[tuple[str, Optional[str]]] = []
+
+        if os.path.isdir(language_dir):
+            # 开发环境：直接从文件系统查找
+            language_module_files = glob.glob(os.path.join(language_dir, "*.py"))
+            for file_path in language_module_files:
+                if file_path.endswith("__init__.py"):
+                    continue
+                module_entries.append(
+                    (os.path.splitext(os.path.basename(file_path))[0], file_path)
+                )
+        else:
+            # 打包环境：利用包信息进行枚举
             logger.warning(f"语言模块目录不存在: {language_dir}")
+            try:
+                language_package = importlib.import_module("app.Language.modules")
+                discovered = {
+                    name.rsplit(".", 1)[-1]
+                    for _, name, is_pkg in pkgutil.walk_packages(
+                        getattr(language_package, "__path__", []),
+                        language_package.__name__ + ".",
+                    )
+                    if not is_pkg and not name.endswith(".__init__")
+                }
+                if discovered:
+                    module_entries.extend(
+                        (module_name, None) for module_name in sorted(discovered)
+                    )
+                else:
+                    logger.warning("未能通过 pkgutil.walk_packages 发现语言模块")
+            except Exception as discovery_error:
+                logger.error(f"枚举语言模块失败: {discovery_error}")
+
+        if not module_entries:
+            logger.warning("未找到任何语言模块，返回空语言数据")
             return merged
 
-        # 获取所有Python模块文件
-        language_module_files = glob.glob(os.path.join(language_dir, "*.py"))
-        language_module_files = [
-            f for f in language_module_files if not f.endswith("__init__.py")
-        ]
-
-        # 遍历所有模块文件并动态导入
-        for file_path in language_module_files:
+        # 遍历所有模块并导入
+        for module_name, file_path in module_entries:
             try:
-                # 从文件名获取模块名（去掉.py扩展名）
-                language_module_name = os.path.basename(file_path)[:-3]
-
-                # 尝试直接导入（适用于打包环境）
+                # 优先使用标准导入（适用于打包环境）
                 try:
                     module = __import__(
-                        f"app.Language.modules.{language_module_name}",
-                        fromlist=[language_module_name],
+                        f"app.Language.modules.{module_name}",
+                        fromlist=[module_name],
                     )
                 except ImportError:
-                    # 如果直接导入失败，使用动态加载（开发环境）
+                    if not file_path:
+                        raise
+                    # 如果直接导入失败且存在文件路径，使用动态加载（开发环境）
                     spec = importlib.util.spec_from_file_location(
-                        language_module_name, file_path
+                        module_name, file_path
                     )
                     if spec is None:
                         logger.warning(f"无法创建模块规范: {file_path}")

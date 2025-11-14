@@ -49,6 +49,7 @@ class PathManager:
             # PyInstaller 会设置 sys._MEIPASS 指向临时解压目录
             if hasattr(sys, "_MEIPASS"):
                 return Path(sys._MEIPASS)
+            # Nuitka 打包的可执行文件，使用可执行文件所在目录
             else:
                 return Path(sys.executable).parent
         else:
