@@ -3,6 +3,7 @@
 # ==================================================
 import os
 import sys
+import time
 
 from PySide6.QtGui import *
 from PySide6.QtCore import *
@@ -18,8 +19,12 @@ from app.tools.settings_access import *
 from app.Language.obtain_language import *
 from app.tools.config import *
 
-from app.view.main.window import MainWindow
-from app.view.settings.settings import SettingsWindow
+# 避免在模块导入时加载大量UI相关模块，使用延迟导入以缩短启动时的阻塞
+# MainWindow 和 SettingsWindow 会在需要时动态导入
+
+# 全局窗口引用（延迟创建）
+main_window = None
+settings_window = None
 
 
 # 添加项目根目录到Python路径
@@ -170,12 +175,20 @@ def start_main_window():
     """创建主窗口实例"""
     global main_window
     try:
+        # 延迟导入主窗口类，避免在模块导入阶段加载大量UI代码
+        from app.view.main.window import MainWindow
+
         main_window = MainWindow()
         main_window.showSettingsRequested.connect(lambda: show_settings_window())
         main_window.showSettingsRequestedAbout.connect(
             lambda: show_settings_window_about
         )
         main_window.show()
+        try:
+            elapsed = time.perf_counter() - app_start_time
+            logger.info(f"主窗口创建并显示完成，启动耗时: {elapsed:.3f}s")
+        except Exception:
+            pass
     except Exception as e:
         logger.error(f"创建主窗口失败: {e}", exc_info=True)
 
@@ -184,6 +197,9 @@ def create_settings_window():
     """创建设置窗口实例"""
     global settings_window
     try:
+        # 延迟导入设置窗口，按需创建
+        from app.view.settings.settings import SettingsWindow
+
         settings_window = SettingsWindow()
     except Exception as e:
         logger.error(f"创建设置窗口失败: {e}", exc_info=True)
@@ -192,7 +208,12 @@ def create_settings_window():
 def show_settings_window():
     """显示设置窗口"""
     try:
-        settings_window.show_settings_window()
+        # 按需创建设置窗口以减少启动阶段开销
+        global settings_window
+        if settings_window is None:
+            create_settings_window()
+        if settings_window is not None:
+            settings_window.show_settings_window()
     except Exception as e:
         logger.error(f"显示设置窗口失败: {e}", exc_info=True)
 
@@ -200,7 +221,11 @@ def show_settings_window():
 def show_settings_window_about():
     """显示关于窗口"""
     try:
-        settings_window.show_settings_window_about()
+        global settings_window
+        if settings_window is None:
+            create_settings_window()
+        if settings_window is not None:
+            settings_window.show_settings_window_about()
     except Exception as e:
         logger.error(f"显示关于窗口失败: {e}", exc_info=True)
 
@@ -228,11 +253,18 @@ def initialize_app():
     QTimer.singleShot(
         APP_INIT_DELAY,
         lambda: (
-            setTheme(
-                {"LIGHT": Theme.LIGHT, "DARK": Theme.DARK, "AUTO": Theme.AUTO}.get(
-                    readme_settings("basic_settings", "theme"), Theme.LIGHT
+            # 读取主题设置并安全映射到Theme
+            (
+                lambda: (
+                    setTheme(Theme.DARK)
+                    if readme_settings("basic_settings", "theme") == "DARK"
+                    else (
+                        setTheme(Theme.AUTO)
+                        if readme_settings("basic_settings", "theme") == "AUTO"
+                        else setTheme(Theme.LIGHT)
+                    )
                 )
-            )
+            )()
         ),
     )
 
@@ -248,11 +280,13 @@ def initialize_app():
     # 创建主窗口实例
     QTimer.singleShot(APP_INIT_DELAY, lambda: (start_main_window()))
 
-    # 创建设置窗口实例
-    QTimer.singleShot(APP_INIT_DELAY, lambda: (create_settings_window()))
+    # 注意: 不预创建设置窗口，改为按需延迟创建以减少启动开销
 
     # 应用字体设置
     QTimer.singleShot(APP_INIT_DELAY, lambda: (apply_font_settings()))
+
+    # 记录初始化完成时间（辅助诊断）
+    logger.info("应用初始化调度已启动，主窗口将在延迟后创建")
 
 
 # ==================================================
@@ -264,6 +298,9 @@ def main_async():
 
 
 if __name__ == "__main__":
+    # 记录应用启动时间，用于诊断各阶段耗时
+    app_start_time = time.perf_counter()
+
     app = QApplication(sys.argv)
 
     import gc

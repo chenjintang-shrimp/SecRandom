@@ -106,25 +106,19 @@ class roll_call(QWidget):
         self.list_combobox = ComboBox()
         self.list_combobox.setFont(QFont(load_custom_font(), 12))
         self.list_combobox.setFixedSize(165, 45)
-        self.list_combobox.addItems(get_class_name_list())
+        # 延迟填充班级列表，避免启动时进行文件IO
         self.list_combobox.currentTextChanged.connect(self.on_class_changed)
 
         self.range_combobox = ComboBox()
         self.range_combobox.setFont(QFont(load_custom_font(), 12))
         self.range_combobox.setFixedSize(165, 45)
-        self.range_combobox.addItems(
-            get_content_combo_name_async("roll_call", "range_combobox")
-            + get_group_list(self.list_combobox.currentText())
-        )
+        # 延迟填充范围选项
         self.range_combobox.currentTextChanged.connect(self.on_filter_changed)
 
         self.gender_combobox = ComboBox()
         self.gender_combobox.setFont(QFont(load_custom_font(), 12))
         self.gender_combobox.setFixedSize(165, 45)
-        self.gender_combobox.addItems(
-            get_content_combo_name_async("roll_call", "gender_combobox")
-            + get_gender_list(self.list_combobox.currentText())
-        )
+        # 延迟填充性别选项
         self.gender_combobox.currentTextChanged.connect(self.on_filter_changed)
 
         self.remaining_button = PushButton(
@@ -134,23 +128,15 @@ class roll_call(QWidget):
         self.remaining_button.setFixedSize(165, 45)
         self.remaining_button.clicked.connect(lambda: self.show_remaining_list())
 
-        number_count = len(get_student_list(self.list_combobox.currentText()))
-        self.total_count = number_count
-
-        self.remaining_count = calculate_remaining_count(
-            half_repeat=readme_settings("roll_call_settings", "half_repeat"),
-            class_name=self.list_combobox.currentText(),
-            gender_filter=self.gender_combobox.currentText(),
-            group_filter=self.range_combobox.currentText(),
-            total_count=number_count,
-        )
+        # 初始时不进行昂贵的数据加载，改为延迟填充
+        self.total_count = 0
+        self.remaining_count = 0
 
         text_template = get_any_position_value(
             "roll_call", "many_count_label", "text_0"
         )
-        formatted_text = text_template.format(
-            total_count=number_count, remaining_count=self.remaining_count
-        )
+        # 使用占位值，实际文本将在 populate_lists 中更新
+        formatted_text = text_template.format(total_count=0, remaining_count=0)
         self.many_count_label = BodyLabel(formatted_text)
         self.many_count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.many_count_label.setFont(QFont(load_custom_font(), 10))
@@ -191,6 +177,9 @@ class roll_call(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(scroll, 1)
         main_layout.addWidget(control_widget)
+
+        # 在事件循环中延迟填充下拉框和初始统计，减少启动阻塞
+        QTimer.singleShot(0, self.populate_lists)
 
     def on_class_changed(self):
         """当班级选择改变时，更新范围选择、性别选择和人数显示"""
@@ -674,3 +663,55 @@ class roll_call(QWidget):
 
         except Exception as e:
             logger.error(f"刷新班级列表失败: {e}")
+
+    def populate_lists(self):
+        """在后台填充班级/范围/性别下拉框并更新人数统计"""
+        try:
+            # 填充班级列表
+            class_list = get_class_name_list()
+            self.list_combobox.blockSignals(True)
+            self.list_combobox.clear()
+            if class_list:
+                self.list_combobox.addItems(class_list)
+                self.list_combobox.setCurrentIndex(0)
+            self.list_combobox.blockSignals(False)
+
+            # 填充范围和性别选项
+            self.range_combobox.blockSignals(True)
+            self.range_combobox.clear()
+            self.range_combobox.addItems(
+                get_content_combo_name_async("roll_call", "range_combobox")
+                + get_group_list(self.list_combobox.currentText())
+            )
+            self.range_combobox.blockSignals(False)
+
+            self.gender_combobox.blockSignals(True)
+            self.gender_combobox.clear()
+            self.gender_combobox.addItems(
+                get_content_combo_name_async("roll_call", "gender_combobox")
+                + get_gender_list(self.list_combobox.currentText())
+            )
+            self.gender_combobox.blockSignals(False)
+
+            # 更新人数统计
+            number_count = len(get_student_list(self.list_combobox.currentText()))
+            self.total_count = number_count
+
+            self.remaining_count = calculate_remaining_count(
+                half_repeat=readme_settings("roll_call_settings", "half_repeat"),
+                class_name=self.list_combobox.currentText(),
+                gender_filter=self.gender_combobox.currentText(),
+                group_filter=self.range_combobox.currentText(),
+                total_count=number_count,
+            )
+
+            text_template = get_any_position_value(
+                "roll_call", "many_count_label", "text_0"
+            )
+            formatted_text = text_template.format(
+                total_count=number_count, remaining_count=self.remaining_count
+            )
+            self.many_count_label.setText(formatted_text)
+
+        except Exception as e:
+            logger.error(f"延迟填充列表失败: {e}")

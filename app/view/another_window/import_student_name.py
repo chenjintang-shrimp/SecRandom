@@ -3,7 +3,6 @@
 # ==================================================
 import os
 import json
-import pandas as pd
 from typing import Dict, List, Any
 
 from loguru import logger
@@ -362,9 +361,23 @@ class ImportStudentNameWindow(QWidget):
         file_ext = os.path.splitext(file_path)[1].lower()
 
         if file_ext in [".xlsx", ".xls"]:
+            # 延迟导入 pandas，避免在模块导入时加载大型 C 扩展
+            try:
+                import pandas as pd
+            except Exception as e:
+                logger.error(f"加载 Excel 需要 pandas 库，但导入失败: {e}")
+                raise
+
             # 加载Excel文件
             self.data = pd.read_excel(file_path)
         elif file_ext == ".csv":
+            # 延迟导入 pandas，避免在模块导入时加载大型 C 扩展
+            try:
+                import pandas as pd
+            except Exception as e:
+                logger.error(f"加载 CSV 需要 pandas 库，但导入失败: {e}")
+                raise
+
             # 加载CSV文件
             self.data = pd.read_csv(file_path)
         else:

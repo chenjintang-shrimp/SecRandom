@@ -50,22 +50,9 @@ class lottery_extraction_function(GroupHeaderCardWidget):
 
         # 抽取模式下拉框
         self.draw_mode_combo = ComboBox()
-        self.draw_mode_combo.addItems(
-            get_content_combo_name_async("lottery_settings", "draw_mode")
-        )
-        self.draw_mode_combo.setCurrentIndex(
-            readme_settings_async("lottery_settings", "draw_mode")
-        )
         self.draw_mode_combo.currentIndexChanged.connect(self.on_draw_mode_changed)
 
-        # 清除抽取记录方式下拉框
         self.clear_record_combo = ComboBox()
-        self.clear_record_combo.addItems(
-            get_content_combo_name_async("lottery_settings", "clear_record")
-        )
-        self.clear_record_combo.setCurrentIndex(
-            readme_settings_async("lottery_settings", "clear_record")
-        )
         self.clear_record_combo.currentIndexChanged.connect(
             lambda: update_settings(
                 "lottery_settings",
@@ -102,14 +89,7 @@ class lottery_extraction_function(GroupHeaderCardWidget):
             )
         )
 
-        # 抽取方式下拉框
         self.draw_type_combo = ComboBox()
-        self.draw_type_combo.addItems(
-            get_content_combo_name_async("lottery_settings", "draw_type")
-        )
-        self.draw_type_combo.setCurrentIndex(
-            readme_settings_async("lottery_settings", "draw_type")
-        )
         self.draw_type_combo.currentIndexChanged.connect(
             lambda: update_settings(
                 "lottery_settings", "draw_type", self.draw_type_combo.currentIndex()
@@ -148,8 +128,83 @@ class lottery_extraction_function(GroupHeaderCardWidget):
             self.draw_type_combo,
         )
 
-        # 初始化时调用一次，确保界面状态与设置一致
-        self.on_draw_mode_changed()
+        # 初始化时在后台加载选项并回填
+        QTimer.singleShot(0, self._start_background_load)
+
+    def _start_background_load(self):
+        class _Signals(QObject):
+            loaded = Signal(dict)
+
+        class _Loader(QRunnable):
+            def __init__(self, fn, signals):
+                super().__init__()
+                self.fn = fn
+                self.signals = signals
+
+            def run(self):
+                try:
+                    data = self.fn()
+                    self.signals.loaded.emit(data)
+                except Exception as e:
+                    logger.error(f"后台加载 lottery_settings 数据失败: {e}")
+
+        def _collect():
+            data = {}
+            try:
+                data["draw_mode_items"] = get_content_combo_name_async(
+                    "lottery_settings", "draw_mode"
+                )
+                data["draw_mode_index"] = readme_settings_async(
+                    "lottery_settings", "draw_mode"
+                )
+                data["clear_record_items"] = get_content_combo_name_async(
+                    "lottery_settings", "clear_record"
+                )
+                data["clear_record_index"] = readme_settings_async(
+                    "lottery_settings", "clear_record"
+                )
+                data["half_repeat_value"] = readme_settings_async(
+                    "lottery_settings", "half_repeat"
+                )
+                data["clear_time_value"] = readme_settings_async(
+                    "lottery_settings", "clear_time"
+                )
+                data["draw_type_items"] = get_content_combo_name_async(
+                    "lottery_settings", "draw_type"
+                )
+                data["draw_type_index"] = readme_settings_async(
+                    "lottery_settings", "draw_type"
+                )
+            except Exception as e:
+                logger.error(f"收集 lottery_settings 初始数据失败: {e}")
+            return data
+
+        signals = _Signals()
+        signals.loaded.connect(self._on_background_loaded)
+        runnable = _Loader(_collect, signals)
+        QThreadPool.globalInstance().start(runnable)
+
+    def _on_background_loaded(self, data: dict):
+        try:
+            if "draw_mode_items" in data:
+                self.draw_mode_combo.addItems(data.get("draw_mode_items", []))
+                self.draw_mode_combo.setCurrentIndex(data.get("draw_mode_index", 0))
+            if "clear_record_items" in data:
+                self.clear_record_combo.addItems(data.get("clear_record_items", []))
+                self.clear_record_combo.setCurrentIndex(
+                    data.get("clear_record_index", 0)
+                )
+            if "half_repeat_value" in data:
+                self.half_repeat_spin.setValue(data.get("half_repeat_value", 0))
+            if "clear_time_value" in data:
+                self.clear_time_spin.setValue(data.get("clear_time_value", 0))
+            if "draw_type_items" in data:
+                self.draw_type_combo.addItems(data.get("draw_type_items", []))
+                self.draw_type_combo.setCurrentIndex(data.get("draw_type_index", 0))
+
+            self.on_draw_mode_changed()
+        except Exception as e:
+            logger.error(f"回填 lottery_settings 数据失败: {e}")
 
     def on_draw_mode_changed(self):
         """当抽取模式改变时的处理逻辑"""

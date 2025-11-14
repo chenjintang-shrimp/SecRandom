@@ -2,6 +2,9 @@
 # 导入库
 # ==================================================
 import importlib
+import time
+
+from loguru import logger
 
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
@@ -78,9 +81,37 @@ class PageTemplate(QFrame):
         if not self.ui_created or self.content_created or not self.content_widget_class:
             return
 
-        self.contentWidget = self.content_widget_class(self)
-        self.inner_layout_personal.addWidget(self.contentWidget)
-        self.content_created = True
+        # 支持传入三种类型的 content_widget_class:
+        # 1) 直接的类 / 可调用对象 -> content_widget_class(self)
+        # 2) 字符串形式的导入路径，如 'app.view.settings.home:home' 或 'app.view.settings.home.home'
+        #    -> 动态导入模块并获取类
+        start = time.perf_counter()
+        try:
+            content_cls = None
+            content_name = None
+            if isinstance(self.content_widget_class, str):
+                path = self.content_widget_class
+                content_name = path
+                if ":" in path:
+                    module_name, attr = path.split(":", 1)
+                else:
+                    module_name, attr = path.rsplit(".", 1)
+                module = importlib.import_module(module_name)
+                content_cls = getattr(module, attr)
+            else:
+                content_cls = self.content_widget_class
+                content_name = getattr(content_cls, "__name__", str(content_cls))
+
+            # 实例化并添加到布局
+            self.contentWidget = content_cls(self)
+            self.inner_layout_personal.addWidget(self.contentWidget)
+            self.content_created = True
+
+            elapsed = time.perf_counter() - start
+            logger.info(f"创建内容组件 {content_name} 耗时: {elapsed:.3f}s")
+        except Exception as e:
+            elapsed = time.perf_counter() - start
+            logger.error(f"创建内容组件失败 ({elapsed:.3f}s): {e}")
 
     def create_empty_content(self, message="该页面正在开发中，敬请期待！"):
         """创建空页面内容"""
@@ -275,6 +306,7 @@ class PivotPageTemplate(QFrame):
         """
         try:
             # 动态导入页面组件
+            start = time.perf_counter()
             module = importlib.import_module(f"{self.base_path}.{page_name}")
             content_widget_class = getattr(module, page_name)
 
@@ -292,6 +324,9 @@ class PivotPageTemplate(QFrame):
 
             # 添加实际内容到内部布局
             inner_layout.addWidget(widget)
+
+            elapsed = time.perf_counter() - start
+            logger.info(f"加载页面组件 {page_name} 耗时: {elapsed:.3f}s")
 
             # 如果当前页面就是正在加载的页面，确保滑动区域是当前可见的
             if self.current_page == page_name:

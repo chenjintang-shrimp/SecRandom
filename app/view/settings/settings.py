@@ -8,7 +8,12 @@ from PySide6.QtGui import QIcon
 from PySide6.QtCore import QTimer, QEvent, Signal
 from qfluentwidgets import MSFluentWindow, NavigationItemPosition
 
-from app.tools.variable import MINIMUM_WINDOW_SIZE, APP_INIT_DELAY
+from app.tools.variable import (
+    MINIMUM_WINDOW_SIZE,
+    APP_INIT_DELAY,
+    SETTINGS_WARMUP_INTERVAL_MS,
+    SETTINGS_WARMUP_MAX_PRELOAD,
+)
 from app.tools.path_utils import get_resources_path
 from app.tools.personalised import get_theme_icon
 from app.Language.obtain_language import get_content_name_async
@@ -20,19 +25,6 @@ from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
-from app.page_building.settings_window_page import (
-    home_page,
-    basic_settings_page,
-    list_management_page,
-    extraction_settings_page,
-    notification_settings_page,
-    safety_settings_page,
-    custom_settings_page,
-    voice_settings_page,
-    history_page,
-    more_settings_page,
-    about_page,
-)
 
 
 # ==================================================
@@ -134,42 +126,199 @@ class SettingsWindow(MSFluentWindow):
     def createSubInterface(self):
         """创建子界面
         搭建子界面导航系统"""
-        self.homeInterface = home_page(self)
-        self.homeInterface.setObjectName("homeInterface")
+        # 延迟创建页面：先创建轻量占位容器并注册工厂
+        from app.page_building import settings_window_page
 
-        self.basicSettingsInterface = basic_settings_page(self)
-        self.basicSettingsInterface.setObjectName("basicSettingsInterface")
+        # 存储占位 -> factory 映射
+        self._deferred_factories = {}
 
-        self.listManagementInterface = list_management_page(self)
-        self.listManagementInterface.setObjectName("listManagementInterface")
+        def make_placeholder(name: str):
+            w = QWidget()
+            w.setObjectName(name)
+            # 使用空布局以便后续将真正页面加入
+            layout = QVBoxLayout(w)
+            layout.setContentsMargins(0, 0, 0, 0)
+            return w
 
-        self.extractionSettingsInterface = extraction_settings_page(self)
-        self.extractionSettingsInterface.setObjectName("extractionSettingsInterface")
-
-        self.notificationSettingsInterface = notification_settings_page(self)
-        self.notificationSettingsInterface.setObjectName(
-            "notificationSettingsInterface"
+        self.homeInterface = make_placeholder("homeInterface")
+        self._deferred_factories["homeInterface"] = (
+            lambda parent=self.homeInterface: settings_window_page.home_page(parent)
         )
 
-        self.safetySettingsInterface = safety_settings_page(self)
-        self.safetySettingsInterface.setObjectName("safetySettingsInterface")
+        self.basicSettingsInterface = make_placeholder("basicSettingsInterface")
+        self._deferred_factories["basicSettingsInterface"] = (
+            lambda parent=self.basicSettingsInterface: settings_window_page.basic_settings_page(
+                parent
+            )
+        )
 
-        self.customSettingsInterface = custom_settings_page(self)
-        self.customSettingsInterface.setObjectName("customSettingsInterface")
+        self.listManagementInterface = make_placeholder("listManagementInterface")
+        self._deferred_factories["listManagementInterface"] = (
+            lambda parent=self.listManagementInterface: settings_window_page.list_management_page(
+                parent
+            )
+        )
 
-        self.voiceSettingsInterface = voice_settings_page(self)
-        self.voiceSettingsInterface.setObjectName("voiceSettingsInterface")
+        self.extractionSettingsInterface = make_placeholder(
+            "extractionSettingsInterface"
+        )
+        self._deferred_factories["extractionSettingsInterface"] = (
+            lambda parent=self.extractionSettingsInterface: settings_window_page.extraction_settings_page(
+                parent
+            )
+        )
 
-        self.historyInterface = history_page(self)
-        self.historyInterface.setObjectName("historyInterface")
+        self.notificationSettingsInterface = make_placeholder(
+            "notificationSettingsInterface"
+        )
+        self._deferred_factories["notificationSettingsInterface"] = (
+            lambda parent=self.notificationSettingsInterface: settings_window_page.notification_settings_page(
+                parent
+            )
+        )
 
-        self.moreSettingsInterface = more_settings_page(self)
-        self.moreSettingsInterface.setObjectName("moreSettingsInterface")
+        self.safetySettingsInterface = make_placeholder("safetySettingsInterface")
+        self._deferred_factories["safetySettingsInterface"] = (
+            lambda parent=self.safetySettingsInterface: settings_window_page.safety_settings_page(
+                parent
+            )
+        )
 
-        self.aboutInterface = about_page(self)
-        self.aboutInterface.setObjectName("aboutInterface")
+        self.customSettingsInterface = make_placeholder("customSettingsInterface")
+        self._deferred_factories["customSettingsInterface"] = (
+            lambda parent=self.customSettingsInterface: settings_window_page.custom_settings_page(
+                parent
+            )
+        )
 
+        self.voiceSettingsInterface = make_placeholder("voiceSettingsInterface")
+        self._deferred_factories["voiceSettingsInterface"] = (
+            lambda parent=self.voiceSettingsInterface: settings_window_page.voice_settings_page(
+                parent
+            )
+        )
+
+        self.historyInterface = make_placeholder("historyInterface")
+        self._deferred_factories["historyInterface"] = (
+            lambda parent=self.historyInterface: settings_window_page.history_page(
+                parent
+            )
+        )
+
+        self.moreSettingsInterface = make_placeholder("moreSettingsInterface")
+        self._deferred_factories["moreSettingsInterface"] = (
+            lambda parent=self.moreSettingsInterface: settings_window_page.more_settings_page(
+                parent
+            )
+        )
+
+        self.aboutInterface = make_placeholder("aboutInterface")
+        self._deferred_factories["aboutInterface"] = (
+            lambda parent=self.aboutInterface: settings_window_page.about_page(parent)
+        )
+
+        # 把占位注册到导航，但不要在此刻实例化真实页面
         self.initNavigation()
+
+        # 连接堆叠窗口切换信号，在首次切换到占位时创建真实页面
+        try:
+            self.stackedWidget.currentChanged.connect(self._on_stacked_widget_changed)
+        except Exception:
+            pass
+
+        # 在窗口显示后启动后台预热，分批创建其余页面，避免一次性阻塞
+        try:
+            QTimer.singleShot(300, lambda: self._background_warmup_pages())
+        except Exception:
+            pass
+
+    def _on_stacked_widget_changed(self, index: int):
+        """当导航切换到某个占位页时，按需创建真实页面内容"""
+        try:
+            widget = self.stackedWidget.widget(index)
+            if not widget:
+                return
+            name = widget.objectName()
+            # 如果有延迟工厂且容器尚未填充内容，则创建真实页面
+            if (
+                name in getattr(self, "_deferred_factories", {})
+                and widget.layout()
+                and widget.layout().count() == 0
+            ):
+                factory = self._deferred_factories.pop(name)
+                try:
+                    real_page = factory()
+                    # real_page 会在其内部创建内容（PageTemplate 会在事件循环中再创建内部内容），
+                    # 我们把它作为子控件加入占位容器
+                    widget.layout().addWidget(real_page)
+                    logger.info(f"设置页面已按需创建: {name}")
+                except Exception as e:
+                    logger.error(f"延迟创建设置页面 {name} 失败: {e}")
+        except Exception as e:
+            logger.error(f"处理堆叠窗口改变失败: {e}")
+
+    def _background_warmup_pages(
+        self,
+        interval_ms: int = SETTINGS_WARMUP_INTERVAL_MS,
+        max_preload: int = SETTINGS_WARMUP_MAX_PRELOAD,
+    ):
+        """分批（间隔）创建剩余的设置页面，减少单次阻塞。
+
+        参数:
+            interval_ms: 每个页面创建间隔（毫秒）
+        """
+        try:
+            # 复制键避免在迭代时修改字典
+            names = list(getattr(self, "_deferred_factories", {}).keys())
+            if not names:
+                return
+            # 仅预热有限数量的页面，避免一次性占用主线程
+            names_to_preload = names[:max_preload]
+            logger.info(f"后台预热将创建 {len(names_to_preload)} / {len(names)} 个页面")
+            # 仅为要预热的页面调度创建，避免一次性调度所有页面
+            for i, name in enumerate(names_to_preload):
+                # 延迟创建，避免短时间内占用主线程
+                QTimer.singleShot(
+                    interval_ms * i,
+                    (lambda n=name: self._create_deferred_page(n)),
+                )
+        except Exception as e:
+            logger.error(f"后台预热设置页面失败: {e}")
+
+    def _create_deferred_page(self, name: str):
+        """根据名字创建对应延迟工厂并把结果加入占位容器"""
+        try:
+            if name not in getattr(self, "_deferred_factories", {}):
+                return
+            factory = self._deferred_factories.pop(name)
+            # 找到对应占位容器
+            container = None
+            for w in [
+                self.homeInterface,
+                self.basicSettingsInterface,
+                self.listManagementInterface,
+                self.extractionSettingsInterface,
+                self.notificationSettingsInterface,
+                self.safetySettingsInterface,
+                self.customSettingsInterface,
+                self.voiceSettingsInterface,
+                self.historyInterface,
+                self.moreSettingsInterface,
+                self.aboutInterface,
+            ]:
+                if w and w.objectName() == name:
+                    container = w
+                    break
+            if container is None:
+                return
+            try:
+                real_page = factory()
+                container.layout().addWidget(real_page)
+                logger.info(f"后台预热创建设置页面: {name}")
+            except Exception as e:
+                logger.error(f"创建延迟页面 {name} 失败: {e}")
+        except Exception as e:
+            logger.error(f"_create_deferred_page 失败: {e}")
 
     def initNavigation(self):
         """初始化导航系统
