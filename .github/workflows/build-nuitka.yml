@@ -1,0 +1,214 @@
+name: 构建 (Nuitka)
+
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+
+concurrency:
+    group: build-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    builder_matrix:
+        # 仅在push或pull_request事件包含'进行打包'时执行，workflow_dispatch无条件执行
+        if: |
+            github.event_name == 'workflow_dispatch' ||
+            contains(github.event.head_commit.message, 'nuitka进行打包') ||
+            (github.event_name == 'pull_request' && contains(github.event.pull_request.title, '进行打包'))
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - os: windows-2022
+                      arch: x64
+                      pack_mode: dir
+                    - os: windows-2022
+                      arch: x86
+                      pack_mode: dir
+
+        runs-on: ${{ matrix.os }}
+        steps:
+            - name: 检出仓库
+              uses: actions/checkout@v4.2.2
+            - name: 安装 Python
+              uses: actions/setup-python@v5.3.0
+              with:
+                  python-version: "3.8.10"
+                  architecture: ${{ matrix.arch }}
+            - name: 安装 uv
+              uses: astral-sh/setup-uv@v4
+
+            - name: 初始化 zip 文件夹
+              run: mkdir zip
+
+            - name: 更新 version_info.txt
+              if: startsWith(github.ref_name, 'v')
+              run: |
+                  python update_version.py
+              env:
+                  VERSION: ${{ github.ref_name }}
+
+            - name: 运行 Windows 构建 (PyInstaller)
+              if: ${{ matrix.os == 'windows-2022' }}
+              run: |
+                  echo "开始 Windows 构建流程..."
+                  # 直接运行打包脚本build_pyinstaller.py
+                  uv sync
+                  uv run build_pyinstaller.py
+
+            - name: 打包操作
+              if: ${{ matrix.os == 'windows-2022'}}
+              run: |
+                  echo "开始打包操作..."
+
+                  # 创建zip_dist/SecRandom目录
+                  mkdir -p zip_dist/SecRandom
+
+                  # 复制dist/SecRandom目录下的所有文件到zip_dist/SecRandom目录下
+                  Copy-Item -Recurse -Force dist/SecRandom/* zip_dist/SecRandom/
+
+                  # 创建app目录
+                  mkdir -p zip_dist/SecRandom/app
+
+                  # 复制app/resources文件夹到zip_dist/SecRandom目录下
+                  Copy-Item -Recurse -Force app/resources zip_dist/SecRandom/app
+
+                  # 复制 LICENSE 文件到zip_dist/SecRandom目录下
+                  Copy-Item LICENSE zip_dist/SecRandom/
+
+                  # 使用 zip 压缩文件
+                  mkdir zip -Force
+                  $outputZip = "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip"
+                  Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath $outputZip -Force
+                  echo "目录模式打包完成: $outputZip"
+
+            - name: 上传应用程序
+              if: ${{ github.event_name != 'pull_request' }}
+              uses: actions/upload-artifact@v4.4.2
+              with:
+                  name: windows-2022-${{ matrix.arch }}-${{ matrix.pack_mode }}
+                  path: ./zip
+
+    release:
+        needs: [builder_matrix]
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - name: Check out repository
+              uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            - name: 设置 git-cliff
+              uses: kenji-miyake/setup-git-cliff@v1
+
+            - name: 生成 changelog
+              id: generate-changelog
+              run: |
+                  git cliff
+
+            - name: 准备发布
+              run: |
+                  echo "准备发布目录..."
+                  mkdir -p release
+                  mkdir -p artifacts
+
+            - name: 下载 artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  path: artifacts
+                  run-id: ${{ github.run_id }}
+
+            - name: 准备 artifacts
+              run: |
+                  echo "整理构建产物..."
+                  # Windows 构建产物
+                  mv artifacts/windows-2022-x64-dir/* release/ 2>/dev/null || echo "未找到 Windows x64-dir 构建产物"
+                  mv artifacts/windows-2022-x86-dir/* release/ 2>/dev/null || echo "未找到 Windows x86-dir 构建产物"
+                  echo "构建产物整理完成"
+                  ls -la release/
+
+            - name: 计算 SHA256 值
+              run: |
+                  echo "开始计算SHA256校验值..."
+                  cd release
+                  echo "" > SHA256SUMS.txt
+                  for file in *; do
+                    if [ -f "$file" ]; then
+                      echo "计算 $file 的SHA256值..."
+                      sha256sum "$file" >> SHA256SUMS.txt
+                    fi
+                  done
+                  echo "SHA256校验值计算完成："
+                  cat SHA256SUMS.txt
+
+            - name: 验证 SHA256SUMS.txt 文件
+              run: |
+                  echo "验证SHA256SUMS.txt文件..."
+                  cd release
+                  if [ ! -f "SHA256SUMS.txt" ]; then
+                    echo "错误：在release目录中未找到SHA256SUMS.txt文件"
+                    exit 1
+                  fi
+                  if [ ! -s "SHA256SUMS.txt" ]; then
+                    echo "错误：SHA256SUMS.txt文件为空"
+                    exit 1
+                  fi
+                  echo "SHA256SUMS.txt文件验证通过"
+                  cd ..
+
+            - name: 生成 需发布 的表格信息
+              run: |
+                  cd release
+                  echo "" >> ../CHANGELOG.md
+                  echo "Full Changelog: [v1.3.0.5...${{ github.ref_name }}](https://github.com/SECTL/SecRandom/compare/v1.3.0.5...${{ github.ref_name }})" >> ../CHANGELOG.md
+                  echo "" >> ../CHANGELOG.md
+                  echo "**国内 下载链接**" >> ../CHANGELOG.md
+                  echo "| 平台/打包方式 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
+                  echo "| --- | --- | --- |" >> ../CHANGELOG.md
+                  echo "| Windows | x64, x86 | [下载](https://www.123684.com/s/9529jv-U4Fxh) |" >> ../CHANGELOG.md
+                  echo "" >> ../CHANGELOG.md
+                  echo "**Github 镜像 下载链接**" >> ../CHANGELOG.md
+                  echo "| 镜像源 | 平台/打包方式 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
+                  echo "| --- | --- | --- | --- |" >> ../CHANGELOG.md
+                  echo "| ghfast.top | Windows 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
+                  echo "| ghfast.top | Windows 目录模式 | x86 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x86-dir.zip) |" >> ../CHANGELOG.md
+                  echo "| gh-proxy.com | Windows 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
+                  echo "| gh-proxy.com | Windows 目录模式 | x86 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x86-dir.zip) |" >> ../CHANGELOG.md
+                  echo "" >> ../CHANGELOG.md
+                  echo "**SHA256 校验值-请核对下载的文件的SHA256值是否正确**" >> ../CHANGELOG.md
+                  echo "| 文件名 | SHA256 值 |" >> ../CHANGELOG.md
+                  echo "| --- | --- |" >> ../CHANGELOG.md
+                  while read -r line; do
+                    hash=$(echo "$line" | awk '{print $1}')
+                    file=$(echo "$line" | awk '{print $2}')
+                    echo "| $file | $hash |" >> ../CHANGELOG.md
+                  done < SHA256SUMS.txt
+                  rm SHA256SUMS.txt
+                  cd ..
+
+            - name: 确定发布类型
+              id: release-type
+              run: |
+                  if [[ "${{ github.ref }}" == *"beta"* || "${{ github.ref }}" == *"alpha"* ]]; then
+                    echo "is_beta=true" >> $GITHUB_ENV
+                  else
+                    echo "is_beta=false" >> $GITHUB_ENV
+                  fi
+
+            - name: 发布
+              uses: softprops/action-gh-release@v2
+              with:
+                  token: ${{ secrets.Releases_BOT }}
+                  files: release/*
+                  body_path: CHANGELOG.md
+                  draft: false
+                  prerelease: ${{ env.is_beta == 'true' }}
+                  tag_name: ${{ github.ref_name }}
+                  name: SecRandom 新版本 - ${{ github.ref_name }}
+                  fail_on_unmatched_files: true
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -3,7 +3,7 @@
 # ==================================================
 
 from loguru import logger
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from qfluentwidgets import SearchLineEdit
 
 

@@ -133,3 +133,8 @@ CONTRIBUTOR_MAX_ROLE_WIDTH = 500  # 贡献者职责文本最大宽度
 
 # ==================== 全局变量 ====================
 main_window = None  # 全局主窗口引用
+
+# ==================== Settings 背景预热配置 ====================
+# 后台预热设置页面的默认时间间隔（毫秒）和默认最大预热页数
+SETTINGS_WARMUP_INTERVAL_MS = 800
+SETTINGS_WARMUP_MAX_PRELOAD = 1

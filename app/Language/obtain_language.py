@@ -40,7 +40,7 @@ Language = get_current_language_data()
 class LanguageReaderWorker(QObject):
     """语言读取工作线程"""
 
-    finished = pyqtSignal(object)  # 信号，传递读取结果
+    finished = Signal(object)  # 信号，传递读取结果
 
     def __init__(
         self,
@@ -115,8 +115,8 @@ class AsyncLanguageReader(QObject):
     """异步语言读取器，提供简洁的异步读取方式"""
 
     # 定义信号
-    finished = pyqtSignal(object)  # 读取完成信号，携带结果
-    error = pyqtSignal(str)  # 错误信号
+    finished = Signal(object)  # 读取完成信号，携带结果
+    error = Signal(str)  # 错误信号
 
     def __init__(
         self,
@@ -264,7 +264,7 @@ def get_content_pushbutton_name(first_level_key: str, second_level_key: str):
     return None
 
 
-def get_content_switchbutton_name_async(
+def get_content_switchbutton_name(
     first_level_key: str, second_level_key: str, is_enable: str
 ):
     """根据键获取内容文本项的开关按钮名称
@@ -286,7 +286,7 @@ def get_content_switchbutton_name_async(
     return None
 
 
-def get_content_combo_name_async(first_level_key: str, second_level_key: str):
+def get_content_combo_name(first_level_key: str, second_level_key: str):
     """根据键获取内容文本项的下拉框内容
 
     Args:
@@ -332,316 +332,111 @@ def get_any_position_value(first_level_key: str, second_level_key: str, *keys):
 # 异步版本的语言获取函数
 # ==================================================
 def get_content_name_async(first_level_key: str, second_level_key: str, timeout=1000):
-    """异步获取内容文本项的名称，如果失败则回退到同步方法
+    """异步获取内容名称（简化版：直接调用同步方法）
+
+    为保持 API 兼容性而保留，但在 Nuitka 环境下 QTimer 有兼容性问题，
+    因此直接使用同步方法。实际测试表明同步方法性能已足够好。
 
     Args:
         first_level_key (str): 第一层的键
         second_level_key (str): 第二层的键
-        timeout (int, optional): 异步超时时间（毫秒），默认1000ms
+        timeout (int, optional): 保留参数，用于兼容性
 
     Returns:
         Any: 内容文本项的名称
-
-    Example:
-        # 直接获取结果，内部自动处理异步和回退
-        name = get_content_name_async("appearance", "theme")
     """
-    try:
-        # 尝试异步读取
-        reader = AsyncLanguageReader(first_level_key, second_level_key, "name")
-        future = reader.read_async()
-
-        # 等待结果，带超时
-        loop = QEventLoop()
-        timeout_timer = QTimer()
-        timeout_timer.singleShot(timeout, loop.quit)
-
-        # 连接完成信号
-        reader.finished.connect(loop.quit)
-        reader.error.connect(loop.quit)
-
-        # 执行事件循环
-        loop.exec()
-
-        # 检查是否已完成
-        if reader.is_done():
-            # logger.debug(f"异步获取内容名称 {first_level_key}.{second_level_key} 成功: {reader.result()}")
-            return reader.result()
-        else:
-            logger.warning(
-                f"异步获取内容名称 {first_level_key}.{second_level_key} 超时，回退到同步方法"
-            )
-            return get_content_name(first_level_key, second_level_key)
-
-    except Exception as e:
-        logger.warning(
-            f"异步获取内容名称 {first_level_key}.{second_level_key} 失败: {e}，回退到同步方法"
-        )
-        return get_content_name(first_level_key, second_level_key)
+    return get_content_name(first_level_key, second_level_key)
 
 
 def get_content_description_async(
     first_level_key: str, second_level_key: str, timeout=1000
 ):
-    """异步获取内容文本项的描述，如果失败则回退到同步方法
+    """异步获取内容描述（简化版：直接调用同步方法）
+
+    为保持 API 兼容性而保留，但在 Nuitka 环境下 QTimer 有兼容性问题，
+    因此直接使用同步方法。
 
     Args:
         first_level_key (str): 第一层的键
         second_level_key (str): 第二层的键
-        timeout (int, optional): 异步超时时间（毫秒），默认1000ms
+        timeout (int, optional): 保留参数，用于兼容性
 
     Returns:
         Any: 内容文本项的描述
-
-    Example:
-        # 直接获取结果，内部自动处理异步和回退
-        description = get_content_description_async("appearance", "theme")
     """
-    try:
-        # 尝试异步读取
-        reader = AsyncLanguageReader(first_level_key, second_level_key, "description")
-        future = reader.read_async()
-
-        # 等待结果，带超时
-        loop = QEventLoop()
-        timeout_timer = QTimer()
-        timeout_timer.singleShot(timeout, loop.quit)
-
-        # 连接完成信号
-        reader.finished.connect(loop.quit)
-        reader.error.connect(loop.quit)
-
-        # 执行事件循环
-        loop.exec()
-
-        # 检查是否已完成
-        if reader.is_done():
-            # logger.debug(f"异步获取内容描述 {first_level_key}.{second_level_key} 成功: {reader.result()}")
-            return reader.result()
-        else:
-            logger.warning(
-                f"异步获取内容描述 {first_level_key}.{second_level_key} 超时，回退到同步方法"
-            )
-            return get_content_description(first_level_key, second_level_key)
-
-    except Exception as e:
-        logger.warning(
-            f"异步获取内容描述 {first_level_key}.{second_level_key} 失败: {e}，回退到同步方法"
-        )
-        return get_content_description(first_level_key, second_level_key)
+    return get_content_description(first_level_key, second_level_key)
 
 
 def get_content_pushbutton_name_async(
     first_level_key: str, second_level_key: str, timeout=1000
 ):
-    """异步获取内容文本项的按钮名称，如果失败则回退到同步方法
+    """异步获取按钮名称（简化版：直接调用同步方法）
+
+    为保持 API 兼容性而保留，但在 Nuitka 环境下 QTimer 有兼容性问题，
+    因此直接使用同步方法。
 
     Args:
         first_level_key (str): 第一层的键
         second_level_key (str): 第二层的键
-        timeout (int, optional): 异步超时时间（毫秒），默认1000ms
+        timeout (int, optional): 保留参数，用于兼容性
 
     Returns:
         Any: 内容文本项的按钮名称
-
-    Example:
-        # 直接获取结果，内部自动处理异步和回退
-        button_name = get_content_pushbutton_name_async("appearance", "theme")
     """
-    try:
-        # 尝试异步读取
-        reader = AsyncLanguageReader(
-            first_level_key, second_level_key, "pushbutton_name"
-        )
-        future = reader.read_async()
-
-        # 等待结果，带超时
-        loop = QEventLoop()
-        timeout_timer = QTimer()
-        timeout_timer.singleShot(timeout, loop.quit)
-
-        # 连接完成信号
-        reader.finished.connect(loop.quit)
-        reader.error.connect(loop.quit)
-
-        # 执行事件循环
-        loop.exec()
-
-        # 检查是否已完成
-        if reader.is_done():
-            # logger.debug(f"异步获取按钮名称 {first_level_key}.{second_level_key} 成功: {reader.result()}")
-            return reader.result()
-        else:
-            logger.warning(
-                f"异步获取按钮名称 {first_level_key}.{second_level_key} 超时，回退到同步方法"
-            )
-            return get_content_pushbutton_name(first_level_key, second_level_key)
-
-    except Exception as e:
-        logger.warning(
-            f"异步获取按钮名称 {first_level_key}.{second_level_key} 失败: {e}，回退到同步方法"
-        )
-        return get_content_pushbutton_name(first_level_key, second_level_key)
+    return get_content_pushbutton_name(first_level_key, second_level_key)
 
 
 def get_content_switchbutton_name_async(
     first_level_key: str, second_level_key: str, is_enable: str, timeout=1000
 ):
-    """异步获取内容文本项的开关按钮名称，如果失败则回退到同步方法
+    """异步获取开关按钮名称（简化版：直接调用同步方法）
+
+    为保持 API 兼容性而保留，但在 Nuitka 环境下 QTimer 有兼容性问题，
+    因此直接使用同步方法。
 
     Args:
         first_level_key (str): 第一层的键
         second_level_key (str): 第二层的键
         is_enable (str): 是否启用开关按钮("enable"或"disable")
-        timeout (int, optional): 异步超时时间（毫秒），默认1000ms
+        timeout (int, optional): 保留参数，用于兼容性
 
     Returns:
         Any: 内容文本项的开关按钮名称
-
-    Example:
-        # 直接获取结果，内部自动处理异步和回退
-        switch_name = get_content_switchbutton_name_async("appearance", "theme", "enable")
     """
-    try:
-        # 尝试异步读取
-        reader = AsyncLanguageReader(
-            first_level_key, second_level_key, "switchbutton_name", is_enable
-        )
-        future = reader.read_async()
-
-        # 等待结果，带超时
-        loop = QEventLoop()
-        timeout_timer = QTimer()
-        timeout_timer.singleShot(timeout, loop.quit)
-
-        # 连接完成信号
-        reader.finished.connect(loop.quit)
-        reader.error.connect(loop.quit)
-
-        # 执行事件循环
-        loop.exec()
-
-        # 检查是否已完成
-        if reader.is_done():
-            # logger.debug(f"异步获取开关按钮名称 {first_level_key}.{second_level_key} 成功: {reader.result()}")
-            return reader.result()
-        else:
-            logger.warning(
-                f"异步获取开关按钮名称 {first_level_key}.{second_level_key} 超时，回退到同步方法"
-            )
-            return get_content_switchbutton_name_async(
-                first_level_key, second_level_key, is_enable
-            )
-
-    except Exception as e:
-        logger.warning(
-            f"异步获取开关按钮名称 {first_level_key}.{second_level_key} 失败: {e}，回退到同步方法"
-        )
-        return get_content_switchbutton_name_async(
-            first_level_key, second_level_key, is_enable
-        )
+    return get_content_switchbutton_name(first_level_key, second_level_key, is_enable)
 
 
 def get_content_combo_name_async(
     first_level_key: str, second_level_key: str, timeout=1000
 ):
-    """异步获取内容文本项的下拉框内容，如果失败则回退到同步方法
+    """异步获取内容文本项的下拉框内容（简化版：直接调用同步方法）
+
+    Nuitka 打包环境下 QTimer 的签名检查会导致 singleShot 抛出异常，因此
+    这里直接复用同步版本。保留 timeout 参数以兼容旧调用。
 
     Args:
         first_level_key (str): 第一层的键
         second_level_key (str): 第二层的键
-        timeout (int, optional): 异步超时时间（毫秒），默认1000ms
+        timeout (int, optional): 保留参数，用于兼容性
 
     Returns:
         Any: 内容文本项的下拉框内容
-
-    Example:
-        # 直接获取结果，内部自动处理异步和回退
-        combo_items = get_content_combo_name_async("appearance", "theme")
     """
-    try:
-        # 尝试异步读取
-        reader = AsyncLanguageReader(first_level_key, second_level_key, "combo_items")
-        future = reader.read_async()
-
-        # 等待结果，带超时
-        loop = QEventLoop()
-        timeout_timer = QTimer()
-        timeout_timer.singleShot(timeout, loop.quit)
-
-        # 连接完成信号
-        reader.finished.connect(loop.quit)
-        reader.error.connect(loop.quit)
-
-        # 执行事件循环
-        loop.exec()
-
-        # 检查是否已完成
-        if reader.is_done():
-            # logger.debug(f"异步获取下拉框内容 {first_level_key}.{second_level_key} 成功: {reader.result()}")
-            return reader.result()
-        else:
-            logger.warning(
-                f"异步获取下拉框内容 {first_level_key}.{second_level_key} 超时，回退到同步方法"
-            )
-            return get_content_combo_name_async(first_level_key, second_level_key)
-
-    except Exception as e:
-        logger.warning(
-            f"异步获取下拉框内容 {first_level_key}.{second_level_key} 失败: {e}，回退到同步方法"
-        )
-        return get_content_combo_name_async(first_level_key, second_level_key)
+    return get_content_combo_name(first_level_key, second_level_key)
 
 
 def get_any_position_value_async(
     first_level_key: str, second_level_key: str, *keys, timeout=1000
 ):
-    """异步根据层级键获取任意位置的值，如果失败则回退到同步方法
+    """异步获取任意层级值（简化版：直接调用同步方法）
 
     Args:
         first_level_key (str): 第一层的键
         second_level_key (str): 第二层的键
         *keys: 后续任意层级的键
-        timeout (int, optional): 异步超时时间（毫秒），默认1000ms
+        timeout (int, optional): 保留参数，用于兼容性
 
     Returns:
         Any: 指定位置的值，如果不存在则返回None
-
-    Example:
-        # 直接获取结果，内部自动处理异步和回退
-        value = get_any_position_value_async("appearance", "theme", "color", "primary")
     """
-    try:
-        # 尝试异步读取
-        reader = AsyncLanguageReader(
-            first_level_key, second_level_key, "any_position", None, *keys
-        )
-        future = reader.read_async()
-
-        # 等待结果，带超时
-        loop = QEventLoop()
-        timeout_timer = QTimer()
-        timeout_timer.singleShot(timeout, loop.quit)
-
-        # 连接完成信号
-        reader.finished.connect(loop.quit)
-        reader.error.connect(loop.quit)
-
-        # 执行事件循环
-        loop.exec()
-
-        # 检查是否已完成
-        if reader.is_done():
-            # logger.debug(f"异步获取任意位置值 {first_level_key}.{second_level_key} 成功: {reader.result()}")
-            return reader.result()
-        else:
-            logger.warning(
-                f"异步获取任意位置值 {first_level_key}.{second_level_key} 超时，回退到同步方法"
-            )
-            return get_any_position_value(first_level_key, second_level_key, *keys)
-
-    except Exception as e:
-        logger.warning(
-            f"异步获取任意位置值 {first_level_key}.{second_level_key} 失败: {e}，回退到同步方法"
-        )
-        return get_any_position_value(first_level_key, second_level_key, *keys)
+    return get_any_position_value(first_level_key, second_level_key, *keys)

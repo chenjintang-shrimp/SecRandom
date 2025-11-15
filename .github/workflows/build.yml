@@ -1,4 +1,4 @@
-name: 构建
+name: 构建 (PyInstaller)
 
 on:
   push:
@@ -49,52 +49,13 @@ jobs:
         env:
           VERSION: ${{ github.ref_name }}
 
-      - name: 运行 Windows 构建
+      - name: 运行 Windows 构建 (PyInstaller)
         if: ${{ matrix.os == 'windows-2022' }}
         run: |
           echo "开始 Windows 构建流程..."
-          # 创建虚拟环境
-          echo "创建虚拟环境..."
-          uv venv
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-          # 激活虚拟环境
-          echo "激活虚拟环境..."
-          .venv/Scripts/activate
-
-          # 安装依赖
-          echo "安装项目依赖..."
+          # 直接运行打包脚本build_pyinstaller.py
           uv sync
-
-          # 安装 pyinstaller
-          echo "安装 PyInstaller..."
-          uv pip install pyinstaller
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-          # 清理之前的构建文件
-          echo "清理之前的构建文件..."
-          Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
-          Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
-          Remove-Item -Recurse -Force zip_dist -ErrorAction SilentlyContinue
-          echo "构建环境准备完成"
-          # 根据打包模式选择不同的PyInstaller参数
-          if ('${{ matrix.pack_mode }}' -eq 'dir') {
-            # 目录模式打包
-            echo "开始目录模式打包..."
-            pyinstaller main.py `
-              -w `
-              -D `
-              -i ./resources/secrandom-icon-paper.ico `
-              -n SecRandom `
-              --add-data ./app/resources:app/resources `
-              --add-data LICENSE:. `
-              --version-file=version_info.txt
-            if ($LASTEXITCODE -ne 0) {
-              echo "目录模式打包失败"
-              exit $LASTEXITCODE
-            }
-            echo "目录模式打包完成"
-          }
+          uv run build_pyinstaller.py
 
       - name: 打包操作
         if: ${{ matrix.os == 'windows-2022'}}

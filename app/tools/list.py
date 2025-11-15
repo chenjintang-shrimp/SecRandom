@@ -2,7 +2,6 @@
 # 导入模块
 # ==================================================
 import json
-import pandas as pd
 from typing import List, Dict, Any, Tuple
 from loguru import logger
 
@@ -462,6 +461,13 @@ def _export_to_excel(data: Dict[str, Any], file_path: str) -> Tuple[bool, str]:
                 }
             )
 
+        # 延迟导入 pandas，避免程序启动时加载大型 C 扩展
+        try:
+            import pandas as pd
+        except Exception as e:
+            logger.error(f"导出Excel需要 pandas 库，但导入失败: {e}")
+            return False, "导出失败: pandas 未安装或导入错误"
+
         df = pd.DataFrame(export_data)
 
         # 确保文件扩展名正确
@@ -503,6 +509,13 @@ def _export_to_csv(data: Dict[str, Any], file_path: str) -> Tuple[bool, str]:
                     "所处小组": info["group"],
                 }
             )
+
+        # 延迟导入 pandas，避免程序启动时加载大型 C 扩展
+        try:
+            import pandas as pd
+        except Exception as e:
+            logger.error(f"导出CSV需要 pandas 库，但导入失败: {e}")
+            return False, "导出失败: pandas 未安装或导入错误"
 
         df = pd.DataFrame(export_data)
 

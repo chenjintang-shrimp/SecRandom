@@ -2,9 +2,9 @@
 # 导入库
 # ==================================================
 
-from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
-from PyQt6.QtGui import QIcon, QCursor
-from PyQt6.QtCore import QTimer, QEvent, QPoint, pyqtSignal
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon
+from PySide6.QtGui import QIcon, QCursor
+from PySide6.QtCore import QTimer, QEvent, QPoint, Signal
 from qfluentwidgets import RoundMenu, Action
 
 from app.tools.variable import MENU_AUTO_CLOSE_TIMEOUT
@@ -21,8 +21,8 @@ class Tray(QSystemTrayIcon):
     继承自QSystemTrayIcon以简化实现。
     """
 
-    showSettingsRequested = pyqtSignal()
-    showSettingsRequestedAbout = pyqtSignal()
+    showSettingsRequested = Signal()
+    showSettingsRequestedAbout = Signal()
 
     def __init__(self, parent=None):
         """初始化系统托盘图标

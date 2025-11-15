@@ -2,10 +2,10 @@
 # 导入库
 # ==================================================
 
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 from qfluentwidgets import *
 
 from app.tools.variable import *
@@ -14,6 +14,8 @@ from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
+from loguru import logger
+import time
 
 
 # ==================================================
@@ -27,17 +29,67 @@ class page_management(QWidget):
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.vBoxLayout.setSpacing(10)
 
-        # 添加点名页面管理组件
-        self.page_management_roll_call = page_management_roll_call(self)
-        self.vBoxLayout.addWidget(self.page_management_roll_call)
+        # 延迟创建子组件：先插入占位容器并注册创建工厂，避免一次性阻塞
+        self._deferred_factories = {}
 
-        # 添加抽奖页面管理组件
-        self.page_management_lottery = page_management_lottery(self)
-        self.vBoxLayout.addWidget(self.page_management_lottery)
+        def make_placeholder(attr_name: str):
+            w = QWidget()
+            w.setObjectName(attr_name)
+            layout = QVBoxLayout(w)
+            layout.setContentsMargins(0, 0, 0, 0)
+            self.vBoxLayout.addWidget(w)
+            return w
 
-        # 添加自定义抽页面管理组件
-        self.page_management_custom = page_management_custom(self)
-        self.vBoxLayout.addWidget(self.page_management_custom)
+        # create placeholders
+        self.page_management_roll_call = make_placeholder("page_management_roll_call")
+        self._deferred_factories["page_management_roll_call"] = (
+            lambda parent=self: page_management_roll_call(parent)
+        )
+
+        self.page_management_lottery = make_placeholder("page_management_lottery")
+        self._deferred_factories["page_management_lottery"] = (
+            lambda parent=self: page_management_lottery(parent)
+        )
+
+        self.page_management_custom = make_placeholder("page_management_custom")
+        self._deferred_factories["page_management_custom"] = (
+            lambda parent=self: page_management_custom(parent)
+        )
+
+        # 分批异步创建真实子组件，间隔以减少主线程瞬时负载
+        try:
+            for i, name in enumerate(list(self._deferred_factories.keys())):
+                QTimer.singleShot(150 * i, lambda n=name: self._create_deferred(n))
+        except Exception as e:
+            logger.error(f"调度延迟创建子组件失败: {e}")
+
+    def _create_deferred(self, name: str):
+        """按需创建延迟注册的子组件并替换占位容器"""
+        try:
+            factories = getattr(self, "_deferred_factories", {})
+            if name not in factories:
+                return
+            factory = factories.pop(name)
+            start = time.perf_counter()
+            real_widget = factory()
+            elapsed = time.perf_counter() - start
+            # 找到占位容器
+            placeholder = getattr(self, name, None)
+            if placeholder is None:
+                # 没有占位则直接插入
+                self.vBoxLayout.addWidget(real_widget)
+            else:
+                # 替换属性引用为真实 widget
+                # 保证 placeholder 有 layout
+                layout = placeholder.layout()
+                if layout is not None:
+                    layout.addWidget(real_widget)
+                # 更新属性引用，方便后续直接访问
+                setattr(self, name, real_widget)
+
+            logger.info(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
+        except Exception as e:
+            logger.error(f"创建子组件 {name} 失败: {e}")
 
 
 class page_management_roll_call(GroupHeaderCardWidget):

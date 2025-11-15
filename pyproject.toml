@@ -6,12 +6,9 @@ readme = "README.md"
 requires-python = "==3.8.10"
 
 dependencies = [
-    # GUI框架
-    "PyQt6==6.7.1",
-    "PyQt6-Qt6==6.7.3",
-    "PyQt6_sip==13.8.0",
-    "PyQt6-Fluent-Widgets==1.9.1",
-    "PyQt6-Frameless-Window==0.7.4",
+    "PySide6-Fluent-Widgets==1.9.1",
+    "pyside6>=6.6.3.1",
+    "pysidesix-frameless-window>=0.7.4",
     "darkdetect==0.8.0",
     # 核心库
     "asyncio~=3.4.3",
@@ -54,7 +51,6 @@ dependencies = [
     "jinja2~=3.1.6",
     "nuitka>=2.8.4",
     "imageio>=2.35.1",
-    "pre-commit>=3.5.0",
 ]
 
 [project.optional-dependencies]
@@ -81,3 +77,26 @@ dev-dependencies = [
     "pre-commit>=3.5.0",
     "ruff>=0.14.3",
 ]
+
+[tool.ruff]
+lint.ignore=["F403","F405","E722","F841","F811","E402"]
+
+[tool.pyright]
+reportArgumentType = "none"
+reportUnknownMemberType = "none"
+reportMissingTypeStubs = "none"
+reportPrivateUsage = "none"
+reportWildcardImportFromLibrary = "warning" # 这个应该随着重构而去除 - 但是我一定要让他被看见！
+reportOptionalMemberAccess = "none" # 这就是为什么我讨厌Python - cjt
+reportIncompatibleMethodOverride = "warning" # lzy what r u doing
+reportAttributeAccessIssue = "none" # wtfu
+reportIncompatibleVariableOverride = "warning"
+reportUndefinedVariable="warning"
+reportOperatorIssue="none"
+reportOptionalOperand="none"
+reportFunctionMemberAccess="none"
+reportReturnType="none"
+reportPossiblyUnboundVariable="warning"
+reportRedeclaration="warning"
+reportCallIssue="warning"
+reportOptionalSubscript="none"

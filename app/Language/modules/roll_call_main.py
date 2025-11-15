@@ -35,7 +35,7 @@ roll_call = {
         "many_count_label": {
             "name": "总/剩余人数",
             "description": "显示总人数和剩余人数",
-            "text_0": "总人数: {total_count} | 剩余人数: {remaining_count}" ,
+            "text_0": "总人数: {total_count} | 剩余人数: {remaining_count}",
             "text_1": "总人数: {total_count}",
             "text_2": "剩余人数: {remaining_count}",
         },

@@ -4,10 +4,10 @@
 import json
 
 from loguru import logger
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 from qfluentwidgets import *
 
 from app.tools.variable import *
@@ -26,7 +26,7 @@ from app.tools.history import *
 class roll_call_history_table(GroupHeaderCardWidget):
     """点名历史记录表格卡片"""
 
-    refresh_signal = pyqtSignal()
+    refresh_signal = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)

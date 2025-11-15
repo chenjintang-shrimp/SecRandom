@@ -2,11 +2,14 @@
 # 导入库
 # ==================================================
 import importlib
+import time
 
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from loguru import logger
+
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 from qfluentwidgets import *
 
 from app.tools.variable import *
@@ -78,9 +81,37 @@ class PageTemplate(QFrame):
         if not self.ui_created or self.content_created or not self.content_widget_class:
             return
 
-        self.contentWidget = self.content_widget_class(self)
-        self.inner_layout_personal.addWidget(self.contentWidget)
-        self.content_created = True
+        # 支持传入三种类型的 content_widget_class:
+        # 1) 直接的类 / 可调用对象 -> content_widget_class(self)
+        # 2) 字符串形式的导入路径，如 'app.view.settings.home:home' 或 'app.view.settings.home.home'
+        #    -> 动态导入模块并获取类
+        start = time.perf_counter()
+        try:
+            content_cls = None
+            content_name = None
+            if isinstance(self.content_widget_class, str):
+                path = self.content_widget_class
+                content_name = path
+                if ":" in path:
+                    module_name, attr = path.split(":", 1)
+                else:
+                    module_name, attr = path.rsplit(".", 1)
+                module = importlib.import_module(module_name)
+                content_cls = getattr(module, attr)
+            else:
+                content_cls = self.content_widget_class
+                content_name = getattr(content_cls, "__name__", str(content_cls))
+
+            # 实例化并添加到布局
+            self.contentWidget = content_cls(self)
+            self.inner_layout_personal.addWidget(self.contentWidget)
+            self.content_created = True
+
+            elapsed = time.perf_counter() - start
+            logger.info(f"创建内容组件 {content_name} 耗时: {elapsed:.3f}s")
+        except Exception as e:
+            elapsed = time.perf_counter() - start
+            logger.error(f"创建内容组件失败 ({elapsed:.3f}s): {e}")
 
     def create_empty_content(self, message="该页面正在开发中，敬请期待！"):
         """创建空页面内容"""
@@ -275,6 +306,7 @@ class PivotPageTemplate(QFrame):
         """
         try:
             # 动态导入页面组件
+            start = time.perf_counter()
             module = importlib.import_module(f"{self.base_path}.{page_name}")
             content_widget_class = getattr(module, page_name)
 
@@ -283,10 +315,18 @@ class PivotPageTemplate(QFrame):
             widget.setObjectName(page_name)
 
             # 清除加载提示
-            inner_layout.removeItem(inner_layout.itemAt(0))
+            if inner_layout.count() > 0:
+                item = inner_layout.itemAt(0)
+                if item:
+                    inner_layout.removeItem(item)
+                    if item.widget():
+                        item.widget().deleteLater()
 
             # 添加实际内容到内部布局
             inner_layout.addWidget(widget)
+
+            elapsed = time.perf_counter() - start
+            logger.info(f"加载页面组件 {page_name} 耗时: {elapsed:.3f}s")
 
             # 如果当前页面就是正在加载的页面，确保滑动区域是当前可见的
             if self.current_page == page_name:
@@ -296,7 +336,12 @@ class PivotPageTemplate(QFrame):
             print(f"无法导入页面组件 {page_name}: {e}")
 
             # 清除加载提示
-            inner_layout.removeItem(inner_layout.itemAt(0))
+            if inner_layout.count() > 0:
+                item = inner_layout.itemAt(0)
+                if item:
+                    inner_layout.removeItem(item)
+                    if item.widget():
+                        item.widget().deleteLater()
 
             # 创建错误页面
             error_widget = QWidget()
@@ -320,11 +365,6 @@ class PivotPageTemplate(QFrame):
             # 如果当前页面就是正在加载的页面，确保滑动区域是当前可见的
             if self.current_page == page_name:
                 self.stacked_widget.setCurrentWidget(scroll_area)
-
-            # 删除占位符
-            placeholder_widget = inner_layout.itemAt(0).widget()
-            if placeholder_widget:
-                placeholder_widget.deleteLater()
 
     def switch_to_page(self, page_name: str):
         """切换到指定页面"""

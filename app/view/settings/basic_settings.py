@@ -2,8 +2,8 @@
 # 导入库
 # ==================================================
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout
-from PyQt6.QtGui import QFontDatabase
+from PySide6.QtWidgets import QWidget, QVBoxLayout
+from PySide6.QtGui import QFontDatabase
 from qfluentwidgets import (
     GroupHeaderCardWidget,
     SwitchButton,

@@ -2,10 +2,10 @@
 # 导入模块
 # ==================================================
 from qfluentwidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtNetwork import *
+from PySide6.QtGui import *
+from PySide6.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtNetwork import *
 
 import json
 import asyncio
@@ -23,7 +23,7 @@ from app.tools.settings_default import *
 class SettingsReaderWorker(QObject):
     """设置读取工作线程"""
 
-    finished = pyqtSignal(object)  # 信号，传递读取结果
+    finished = Signal(object)  # 信号，传递读取结果
 
     def __init__(self, first_level_key: str, second_level_key: str):
         super().__init__()
@@ -74,8 +74,8 @@ class SettingsReaderWorker(QObject):
 class AsyncSettingsReader(QObject):
     """异步设置读取器，提供简洁的异步读取方式"""
 
-    finished = pyqtSignal(object)  # 读取完成信号，携带结果
-    error = pyqtSignal(str)  # 错误信号
+    finished = Signal(object)  # 读取完成信号，携带结果
+    error = Signal(str)  # 错误信号
 
     def __init__(self, first_level_key: str, second_level_key: str):
         super().__init__()
@@ -170,44 +170,20 @@ def readme_settings(first_level_key: str, second_level_key: str):
 
 
 def readme_settings_async(first_level_key: str, second_level_key: str, timeout=1000):
-    """
-    异步读取设置值，如果失败则回退到同步方法
+    """异步读取设置（简化版：直接调用同步方法）
+
+    为保持 API 兼容性而保留，但在 Nuitka 环境下 QTimer 有兼容性问题，
+    因此直接使用同步方法。实际测试表明同步方法性能已足够好。
 
     Args:
         first_level_key (str): 第一层的键
         second_level_key (str): 第二层的键
-        timeout (int, optional): 异步超时时间（毫秒），默认1000ms
+        timeout (int, optional): 保留参数，用于兼容性
 
     Returns:
         Any: 设置值
-
-    Example:
-        # 直接获取结果，内部自动处理异步和回退
-        value = readme_settings_async("appearance", "theme")
     """
-    try:
-        reader = AsyncSettingsReader(first_level_key, second_level_key)
-        future = reader.read_async()
-        loop = QEventLoop()
-        timeout_timer = QTimer()
-        timeout_timer.singleShot(timeout, loop.quit)
-        reader.finished.connect(loop.quit)
-        reader.error.connect(loop.quit)
-        loop.exec()
-        if reader.is_done():
-            # logger.debug(f"异步读取设置 {first_level_key}.{second_level_key} 成功: {reader.result()}")
-            return reader.result()
-        else:
-            logger.warning(
-                f"异步读取设置 {first_level_key}.{second_level_key} 超时，回退到同步方法"
-            )
-            return readme_settings(first_level_key, second_level_key)
-
-    except Exception as e:
-        logger.warning(
-            f"异步读取设置 {first_level_key}.{second_level_key} 失败: {e}，回退到同步方法"
-        )
-        return readme_settings(first_level_key, second_level_key)
+    return readme_settings(first_level_key, second_level_key)
 
 
 def update_settings(first_level_key: str, second_level_key: str, value: Any):

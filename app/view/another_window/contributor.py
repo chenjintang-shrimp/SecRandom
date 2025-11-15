@@ -3,9 +3,9 @@
 # ==================================================
 
 from loguru import logger
-from PyQt6.QtWidgets import *
-from PyQt6.QtGui import *
-from PyQt6.QtCore import *
+from PySide6.QtWidgets import *
+from PySide6.QtGui import *
+from PySide6.QtCore import *
 from qfluentwidgets import *
 
 from app.tools.variable import *
@@ -15,11 +15,13 @@ from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
 
+
 # ==================================================
 # 贡献者页面类
 # ==================================================
 class contributor_page(QWidget):
     """贡献者信息页面 - 显示项目贡献者信息，采用响应式网格布局"""
+
     def __init__(self, parent=None):
         """初始化贡献者页面"""
         super().__init__(parent)
