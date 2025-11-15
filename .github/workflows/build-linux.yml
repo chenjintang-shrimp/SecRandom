@@ -1,12 +1,8 @@
-name: Linux构建
+name: 构建 (Linux / PyInstaller)
 
 on:
   push:
-    branches:
-      - linux-port
   pull_request:
-    branches:
-      - linux-port
   workflow_dispatch:
 
 concurrency:
@@ -15,8 +11,11 @@ concurrency:
 
 jobs:
   builder_matrix:
-    permissions:
-      contents: read
+    # 仅在 push 或 pull_request 事件包含 '进行打包' 时执行，workflow_dispatch 无条件执行
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '进行打包') ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.title, '进行打包'))
     strategy:
       fail-fast: false
       matrix:
@@ -126,3 +125,123 @@ jobs:
         with:
           name: linux-${{ matrix.arch }}-${{ matrix.pack_mode }}
           path: ./zip
+
+  release:
+    needs: [builder_matrix]
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: 设置 git-cliff
+        uses: kenji-miyake/setup-git-cliff@v1
+
+      - name: 生成 changelog
+        id: generate-changelog
+        run: |
+          git cliff
+
+      - name: 准备发布
+        run: |
+          echo "准备发布目录..."
+          mkdir -p release
+          mkdir -p artifacts
+
+      - name: 下载 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          # 下载当前 workflow run 的 artifacts
+          run-id: ${{ github.run_id }}
+
+      - name: 准备 artifacts
+        run: |
+          echo "整理构建产物..."
+          # Linux 构建产物
+          mv artifacts/linux-x64-dir/* release/ 2>/dev/null || echo "未找到 Linux x64-dir 构建产物"
+          echo "构建产物整理完成"
+          ls -la release/
+
+      - name: 计算 SHA256 值
+        run: |
+          echo "开始计算SHA256校验值..."
+          cd release
+          echo "" > SHA256SUMS.txt
+          for file in *; do
+            if [ -f "$file" ]; then
+              echo "计算 $file 的SHA256值..."
+              sha256sum "$file" >> SHA256SUMS.txt
+            fi
+          done
+          echo "SHA256校验值计算完成："
+          cat SHA256SUMS.txt
+
+      - name: 验证 SHA256SUMS.txt 文件
+        run: |
+          echo "验证SHA256SUMS.txt文件..."
+          cd release
+          if [ ! -f "SHA256SUMS.txt" ]; then
+            echo "错误：在release目录中未找到SHA256SUMS.txt文件"
+            exit 1
+          fi
+          if [ ! -s "SHA256SUMS.txt" ]; then
+            echo "错误：SHA256SUMS.txt文件为空"
+            exit 1
+          fi
+          echo "SHA256SUMS.txt文件验证通过"
+          cd ..
+
+      - name: 生成 需发布 的表格信息
+        run: |
+          cd release
+          echo "" >> ../CHANGELOG.md
+          echo "Full Changelog: [v1.3.0.5...${{ github.ref_name }}](https://github.com/${{ github.repository }}/compare/v1.3.0.5...${{ github.ref_name }})" >> ../CHANGELOG.md
+          echo "" >> ../CHANGELOG.md
+          echo "**国内 下载链接**" >> ../CHANGELOG.md
+          echo "| 平台/打包方式 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
+          echo "| --- | --- | --- |" >> ../CHANGELOG.md
+          echo "| Linux | x64 | [下载](https://www.123684.com/s/9529jv-U4Fxh) |" >> ../CHANGELOG.md
+          echo "" >> ../CHANGELOG.md
+          echo "**Github 镜像 下载链接**" >> ../CHANGELOG.md
+          echo "| 镜像源 | 平台/打包方式 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
+          echo "| --- | --- | --- | --- |" >> ../CHANGELOG.md
+          echo "| ghfast.top | Linux 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SecRandom-Linux-${{ github.ref_name }}-x64-dir.tar.gz) |" >> ../CHANGELOG.md
+          echo "| gh-proxy.com | Linux 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SecRandom-Linux-${{ github.ref_name }}-x64-dir.tar.gz) |" >> ../CHANGELOG.md
+          echo "" >> ../CHANGELOG.md
+          echo "**SHA256 校验值-请核对下载的文件的SHA256值是否正确**" >> ../CHANGELOG.md
+          echo "| 文件名 | SHA256 值 |" >> ../CHANGELOG.md
+          echo "| --- | --- |" >> ../CHANGELOG.md
+          while read -r line; do
+            hash=$(echo "$line" | awk '{print $1}')
+            file=$(echo "$line" | awk '{print $2}')
+            echo "| $file | $hash |" >> ../CHANGELOG.md
+          done < SHA256SUMS.txt
+          rm SHA256SUMS.txt
+          cd ..
+
+      - name: 确定发布类型
+        id: release-type
+        run: |
+          if [[ "${{ github.ref }}" == *"beta"* || "${{ github.ref }}" == *"alpha"* ]]; then
+            echo "is_beta=true" >> $GITHUB_ENV
+          else
+            echo "is_beta=false" >> $GITHUB_ENV
+          fi
+
+      - name: 发布
+        uses: softprops/action-gh-release@v2
+        with:
+          # use repository token by default; replace with Releases_BOT if you have a dedicated bot token
+          token: ${{ secrets.GITHUB_TOKEN }}
+          files: release/*
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') }}
+          tag_name: ${{ github.ref_name }}
+          name: SecRandom 新版本 - ${{ github.ref_name }}
+          fail_on_unmatched_files: true
