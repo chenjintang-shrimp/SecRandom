@@ -131,6 +131,8 @@ class SettingsWindow(MSFluentWindow):
 
         # 存储占位 -> factory 映射
         self._deferred_factories = {}
+        # 存储工厂的元信息（例如是否为 pivot 类型），用于预热策略调整
+        self._deferred_factories_meta = {}
 
         def make_placeholder(name: str):
             w = QWidget()
@@ -144,6 +146,7 @@ class SettingsWindow(MSFluentWindow):
         self._deferred_factories["homeInterface"] = (
             lambda parent=self.homeInterface: settings_window_page.home_page(parent)
         )
+        self._deferred_factories_meta["homeInterface"] = {"is_pivot": False}
 
         self.basicSettingsInterface = make_placeholder("basicSettingsInterface")
         self._deferred_factories["basicSettingsInterface"] = (
@@ -151,6 +154,7 @@ class SettingsWindow(MSFluentWindow):
                 parent
             )
         )
+        self._deferred_factories_meta["basicSettingsInterface"] = {"is_pivot": False}
 
         self.listManagementInterface = make_placeholder("listManagementInterface")
         self._deferred_factories["listManagementInterface"] = (
@@ -158,6 +162,7 @@ class SettingsWindow(MSFluentWindow):
                 parent
             )
         )
+        self._deferred_factories_meta["listManagementInterface"] = {"is_pivot": True}
 
         self.extractionSettingsInterface = make_placeholder(
             "extractionSettingsInterface"
@@ -167,6 +172,9 @@ class SettingsWindow(MSFluentWindow):
                 parent
             )
         )
+        self._deferred_factories_meta["extractionSettingsInterface"] = {
+            "is_pivot": True
+        }
 
         self.notificationSettingsInterface = make_placeholder(
             "notificationSettingsInterface"
@@ -176,6 +184,9 @@ class SettingsWindow(MSFluentWindow):
                 parent
             )
         )
+        self._deferred_factories_meta["notificationSettingsInterface"] = {
+            "is_pivot": True
+        }
 
         self.safetySettingsInterface = make_placeholder("safetySettingsInterface")
         self._deferred_factories["safetySettingsInterface"] = (
@@ -183,6 +194,7 @@ class SettingsWindow(MSFluentWindow):
                 parent
             )
         )
+        self._deferred_factories_meta["safetySettingsInterface"] = {"is_pivot": True}
 
         self.customSettingsInterface = make_placeholder("customSettingsInterface")
         self._deferred_factories["customSettingsInterface"] = (
@@ -190,6 +202,7 @@ class SettingsWindow(MSFluentWindow):
                 parent
             )
         )
+        self._deferred_factories_meta["customSettingsInterface"] = {"is_pivot": True}
 
         self.voiceSettingsInterface = make_placeholder("voiceSettingsInterface")
         self._deferred_factories["voiceSettingsInterface"] = (
@@ -197,6 +210,7 @@ class SettingsWindow(MSFluentWindow):
                 parent
             )
         )
+        self._deferred_factories_meta["voiceSettingsInterface"] = {"is_pivot": True}
 
         self.historyInterface = make_placeholder("historyInterface")
         self._deferred_factories["historyInterface"] = (
@@ -204,6 +218,7 @@ class SettingsWindow(MSFluentWindow):
                 parent
             )
         )
+        self._deferred_factories_meta["historyInterface"] = {"is_pivot": True}
 
         self.moreSettingsInterface = make_placeholder("moreSettingsInterface")
         self._deferred_factories["moreSettingsInterface"] = (
@@ -211,11 +226,13 @@ class SettingsWindow(MSFluentWindow):
                 parent
             )
         )
+        self._deferred_factories_meta["moreSettingsInterface"] = {"is_pivot": True}
 
         self.aboutInterface = make_placeholder("aboutInterface")
         self._deferred_factories["aboutInterface"] = (
             lambda parent=self.aboutInterface: settings_window_page.about_page(parent)
         )
+        self._deferred_factories_meta["aboutInterface"] = {"is_pivot": False}
 
         # 把占位注册到导航，但不要在此刻实例化真实页面
         self.initNavigation()
@@ -272,8 +289,19 @@ class SettingsWindow(MSFluentWindow):
             names = list(getattr(self, "_deferred_factories", {}).keys())
             if not names:
                 return
+            # 优先预热非 pivot（单页面）项，再预热 pivot 项，保持原有非 pivot 的异步加载策略
+            try:
+                meta = getattr(self, "_deferred_factories_meta", {})
+                non_pivot = [
+                    n for n in names if not meta.get(n, {}).get("is_pivot", False)
+                ]
+                pivot = [n for n in names if meta.get(n, {}).get("is_pivot", False)]
+                ordered = non_pivot + pivot
+            except Exception:
+                ordered = names
+
             # 仅预热有限数量的页面，避免一次性占用主线程
-            names_to_preload = names[:max_preload]
+            names_to_preload = ordered[:max_preload]
             logger.debug(
                 f"后台预热将创建 {len(names_to_preload)} / {len(names)} 个页面"
             )
