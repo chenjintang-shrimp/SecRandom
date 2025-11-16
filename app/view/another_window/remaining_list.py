@@ -264,6 +264,8 @@ class RemainingListPage(QWidget):
 
         # 初始化卡片列表
         self.cards = []
+        # 跟踪已添加到布局的卡片 key，防止重复添加
+        self._cards_set = set()
         # 缓存所有创建过的卡片，避免在布局切换时频繁创建/销毁
         self._card_cache = {}
 
@@ -473,9 +475,16 @@ class RemainingListPage(QWidget):
             batch_ready = Signal(list)
             finished = Signal()
 
+            def __init__(self):
+                super().__init__()
+                self.cancel_requested = False
+
         reporter = _BatchReporter()
-        reporter.batch_ready.connect(self._on_batch_ready)
-        reporter.finished.connect(self._on_render_finished)
+        # 使用闭包传递 reporter，让主线程槽可以区分不同任务的批次并忽略过期批次
+        reporter.batch_ready.connect(
+            lambda batch, rep=reporter: self._on_batch_ready(rep, batch)
+        )
+        reporter.finished.connect(lambda rep=reporter: self._on_render_finished(rep))
 
         # 启动后台任务
         task_students = list(self._pending_students)
@@ -492,6 +501,12 @@ class RemainingListPage(QWidget):
             def run(self):
                 try:
                     while self.students:
+                        # 检查取消请求，若已取消则尽快退出
+                        try:
+                            if getattr(self.reporter, "cancel_requested", False):
+                                break
+                        except Exception:
+                            pass
                         batch = []
                         for _ in range(self.batch_size):
                             if not self.students:
@@ -520,6 +535,12 @@ class RemainingListPage(QWidget):
 
                             batch.append(s)
                         # 发射信号到主线程，主线程负责创建 QWidget
+                        # 在发射前再次检查取消标志，避免发送过期批次
+                        try:
+                            if getattr(self.reporter, "cancel_requested", False):
+                                break
+                        except Exception:
+                            pass
                         try:
                             self.reporter.batch_ready.emit(batch)
                         except Exception:
@@ -534,6 +555,16 @@ class RemainingListPage(QWidget):
                     except Exception:
                         pass
 
+        # 请求取消之前正在运行的渲染任务（如果存在）
+        try:
+            if self._rendering and self._render_reporter is not None:
+                try:
+                    self._render_reporter.cancel_requested = True
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
         self._render_reporter = reporter
         task = StudentRenderTask(
             task_students, self._batch_size, reporter, self._student_info_text
@@ -545,42 +576,101 @@ class RemainingListPage(QWidget):
         # 该方法现在由后台任务通过 reporter 信号触发，已废弃
         return
 
-    def _on_batch_ready(self, batch: list):
-        """主线程槽：接收一批学生数据并创建卡片加入布局"""
+    def _on_batch_ready(self, reporter, batch: list):
+        """主线程槽：接收一批学生数据并创建卡片加入布局
+
+        参数:
+            reporter: 发出此批次的 reporter 对象，用于判断批次是否过期
+            batch: 学生数据列表（可能包含预计算字段）
+        """
+        # 如果 reporter 已请求取消，则忽略此批次
+        try:
+            if getattr(reporter, "cancel_requested", False):
+                return
+        except Exception:
+            pass
+
         if not batch:
             return
 
-        # 创建卡片并直接加入布局缓存
+        # 创建卡片并直接加入布局缓存（避免重复添加）
         for student in batch:
             key = student.get("name")
+            if key in self._cards_set:
+                # 已存在，跳过
+                continue
+
             card = self._card_cache.get(key)
             if card is None:
                 card = self.create_student_card(student)
                 if card is not None:
                     self._card_cache[key] = card
-            if card is not None:
-                self.cards.append(card)
 
-        # 将新卡片添加到布局（不清空已有布局）
+            if card is not None:
+                # 确保卡片不在另一个父控件下
+                try:
+                    if card.parent() is not None and card.parent() is not self:
+                        card.setParent(None)
+                except Exception:
+                    pass
+
+                self.cards.append(card)
+                self._cards_set.add(key)
+
+        # 将新卡片添加到布局（只放置尚未加入布局的卡片）
         try:
             columns = self._calculate_columns(
                 max(self.width(), self.sizeHint().width())
             )
-            start_index = len(self.cards) - len(batch)
-            for i, card in enumerate(self.cards[start_index:], start=start_index):
+
+            for i, card in enumerate(list(self.cards)):
+                # 如果卡片已经在布局中则跳过
+                try:
+                    if self.grid_layout.indexOf(card) != -1:
+                        continue
+                except Exception:
+                    pass
+
                 row = i // columns
                 col = i % columns
-                self.grid_layout.addWidget(card, row, col)
-                if not card.isVisible():
-                    card.show()
+
+                # 如果目标格位已有其它控件，先移除避免重叠
+                try:
+                    existing_item = self.grid_layout.itemAtPosition(row, col)
+                    if existing_item is not None:
+                        existing_widget = existing_item.widget()
+                        if existing_widget is not None and existing_widget is not card:
+                            try:
+                                self.grid_layout.removeWidget(existing_widget)
+                            except Exception:
+                                pass
+                            try:
+                                existing_widget.hide()
+                            except Exception:
+                                pass
+                except Exception:
+                    pass
+
+                try:
+                    self.grid_layout.addWidget(card, row, col)
+                    if not card.isVisible():
+                        card.show()
+                except Exception:
+                    logger.exception("向网格添加卡片失败")
 
             for col in range(columns):
                 self.grid_layout.setColumnStretch(col, 1)
         except Exception:
             logger.exception("增量渲染时布局更新失败")
 
-    def _on_render_finished(self):
-        """后台渲染完成后的槽"""
+    def _on_render_finished(self, reporter):
+        """后台渲染完成后的槽，接收 reporter 用于忽略过期任务"""
+        try:
+            if getattr(reporter, "cancel_requested", False):
+                return
+        except Exception:
+            pass
+
         self._rendering = False
         self._pending_students = []
         # 最后触发完整布局更新以修正位置
@@ -618,6 +708,11 @@ class RemainingListPage(QWidget):
                 except Exception:
                     pass
                 widget.hide()
+        # 清空已记录的已添加卡片集合
+        try:
+            self._cards_set.clear()
+        except Exception:
+            pass
 
     def create_student_card(self, student: Dict[str, Any]) -> CardWidget:
         """创建学生卡片
