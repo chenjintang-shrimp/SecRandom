@@ -177,7 +177,8 @@ class PivotPageTemplate(QFrame):
 
         self.page_config = page_config  # 页面配置字典
         self.ui_created = False
-        self.pages = {}  # 存储页面组件
+        self.pages = {}  # 存储页面组件 (scroll areas)
+        self.page_infos = {}  # 存储页面附加信息: display, layout, loaded
         self.current_page = None  # 当前页面
         self.base_path = "app.view.settings.list_management"  # 默认基础路径
 
@@ -222,9 +223,19 @@ class PivotPageTemplate(QFrame):
         for page_name, display_name in self.page_config.items():
             self.add_page(page_name, display_name)
 
-        # 如果有页面，设置第一个页面为当前页面
-        if self.pages:
-            first_page_name = next(iter(self.pages))
+        # 如果有页面，设置第一个页面为当前页面并仅加载第一个页面的内容
+        if self.page_infos:
+            first_page_name = next(iter(self.page_infos))
+            # 延迟一点点创建第一个页面的内容，避免阻塞
+            QTimer.singleShot(
+                0,
+                lambda n=first_page_name: self._load_page_content(
+                    n,
+                    self.page_infos[n]["display"],
+                    self.page_infos[n]["scroll"],
+                    self.page_infos[n]["layout"],
+                ),
+            )
             self.switch_to_page(first_page_name)
 
     def add_page(self, page_name: str, display_name: str):
@@ -279,14 +290,12 @@ class PivotPageTemplate(QFrame):
 
         # 存储滑动区域引用
         self.pages[page_name] = scroll_area
-
-        # 延迟加载实际页面组件
-        QTimer.singleShot(
-            0,
-            lambda: self._load_page_content(
-                page_name, display_name, scroll_area, inner_layout
-            ),
-        )
+        self.page_infos[page_name] = {
+            "display": display_name,
+            "scroll": scroll_area,
+            "layout": inner_layout,
+            "loaded": False,
+        }
 
     def _load_page_content(
         self,
@@ -314,16 +323,25 @@ class PivotPageTemplate(QFrame):
             widget = content_widget_class(self)
             widget.setObjectName(page_name)
 
-            # 清除加载提示
-            if inner_layout.count() > 0:
-                item = inner_layout.itemAt(0)
-                if item:
-                    inner_layout.removeItem(item)
-                    if item.widget():
-                        item.widget().deleteLater()
+            # 清除加载提示（使用安全的 takeAt 循环以避免 Qt C++ 对象提前删除问题）
+            try:
+                while inner_layout.count() > 0:
+                    item = inner_layout.takeAt(0)
+                    if not item:
+                        break
+                    w = item.widget()
+                    if w is not None:
+                        w.deleteLater()
+            except RuntimeError:
+                # 如果内部对象被底层 Qt 提前销毁，忽略并继续
+                pass
 
             # 添加实际内容到内部布局
             inner_layout.addWidget(widget)
+
+            # 标记为已加载
+            if page_name in self.page_infos:
+                self.page_infos[page_name]["loaded"] = True
 
             elapsed = time.perf_counter() - start
             logger.debug(f"加载页面组件 {page_name} 耗时: {elapsed:.3f}s")
@@ -335,13 +353,17 @@ class PivotPageTemplate(QFrame):
         except (ImportError, AttributeError) as e:
             print(f"无法导入页面组件 {page_name}: {e}")
 
-            # 清除加载提示
-            if inner_layout.count() > 0:
-                item = inner_layout.itemAt(0)
-                if item:
-                    inner_layout.removeItem(item)
-                    if item.widget():
-                        item.widget().deleteLater()
+            # 清除加载提示（安全地移除所有子项）
+            try:
+                while inner_layout.count() > 0:
+                    item = inner_layout.takeAt(0)
+                    if not item:
+                        break
+                    w = item.widget()
+                    if w is not None:
+                        w.deleteLater()
+            except RuntimeError:
+                pass
 
             # 创建错误页面
             error_widget = QWidget()
@@ -362,6 +384,10 @@ class PivotPageTemplate(QFrame):
             # 添加错误页面到内部布局
             inner_layout.addWidget(error_widget)
 
+            # 标记为已加载（虽然是错误页面，但不再重复尝试）
+            if page_name in self.page_infos:
+                self.page_infos[page_name]["loaded"] = True
+
             # 如果当前页面就是正在加载的页面，确保滑动区域是当前可见的
             if self.current_page == page_name:
                 self.stacked_widget.setCurrentWidget(scroll_area)
@@ -369,6 +395,14 @@ class PivotPageTemplate(QFrame):
     def switch_to_page(self, page_name: str):
         """切换到指定页面"""
         if page_name in self.pages:
+            # 按需加载：如果尚未加载该页面的实际内容，则先加载
+            info = self.page_infos.get(page_name)
+            if info and not info.get("loaded"):
+                # 调用加载函数（同步执行），传入存储的 inner_layout
+                self._load_page_content(
+                    page_name, info["display"], info["scroll"], info["layout"]
+                )
+
             self.stacked_widget.setCurrentWidget(self.pages[page_name])
             self.pivot.setCurrentItem(page_name)
             self.current_page = page_name

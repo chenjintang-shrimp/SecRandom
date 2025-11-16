@@ -227,10 +227,10 @@ def create_remaining_list_window(
             # 激活窗口并置于前台
             window.raise_()
             window.activateWindow()
-            
+
             # 获取页面实例并更新数据
             page = None
-            
+
             def setup_page():
                 nonlocal page
                 page_template = window.get_page("remaining_list")
@@ -245,10 +245,10 @@ def create_remaining_list_window(
                             group_index,
                             gender_index,
                         )
-            
+
             # 使用延迟调用确保内容控件已创建
             QTimer.singleShot(100, setup_page)
-            
+
             # 创建一个回调函数，用于在页面设置完成后获取页面实例
             def get_page_callback(callback):
                 def check_page():
@@ -258,13 +258,13 @@ def create_remaining_list_window(
                         QTimer.singleShot(50, check_page)
 
                 check_page()
-            
+
             return window, get_page_callback
         except Exception as e:
             # 如果窗口已损坏，从字典中移除并创建新窗口
             logger.error(f"激活剩余名单窗口失败: {e}")
             _window_instances.pop("remaining_list", None)
-    
+
     # 创建新窗口
     title = "剩余名单"
     window = SimpleWindowTemplate(title, width=800, height=600)

@@ -158,11 +158,11 @@ def get_group_members(class_name: str, group_name: str) -> List[Dict[str, Any]]:
     """
     student_list = get_student_list(class_name)
     group_members = []
-    
+
     for student in student_list:
         if student["group"] == group_name:
             group_members.append(student)
-    
+
     # 按ID排序
     group_members.sort(key=lambda x: x["id"])
     return group_members
@@ -366,7 +366,7 @@ def filter_students_data(
                             gender_index == 0 or gender == gender_filter
                         ):  # 根据性别条件过滤
                             groups_set.add(group)
-            
+
             # 对小组进行排序，按小组名称排序
             # 返回格式为 (id, name, gender, group, exist)，但小组模式下只需要小组名称
             students_data = []

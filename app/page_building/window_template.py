@@ -119,10 +119,10 @@ class SimpleWindowTemplate(FramelessWindow):
         custom_font = load_custom_font()
         title_font = QFont(custom_font, 9)
         self.titleBar.setFont(title_font)
-        
+
         # 确保在设置标题栏后应用当前主题和自定义字体
         self._apply_current_theme()
-        
+
         if self.parent_window is None:
             screen = QApplication.primaryScreen().availableGeometry()
             w, h = screen.width(), screen.height()
@@ -148,7 +148,7 @@ class SimpleWindowTemplate(FramelessWindow):
         try:
             # 获取当前主题设置
             current_theme = readme_settings("basic_settings", "theme")
-            
+
             # 根据主题设置窗口背景色
             if current_theme == "DARK":
                 # 深色主题 - 设置深色背景
@@ -158,12 +158,17 @@ class SimpleWindowTemplate(FramelessWindow):
                 # 自动主题 - 根据系统设置
                 try:
                     from darkdetect import isDark
+
                     if isDark():
                         self.setStyleSheet("background-color: #202020;")
-                        self.default_page.setStyleSheet("background-color: transparent;")
+                        self.default_page.setStyleSheet(
+                            "background-color: transparent;"
+                        )
                     else:
                         self.setStyleSheet("background-color: #ffffff;")
-                        self.default_page.setStyleSheet("background-color: transparent;")
+                        self.default_page.setStyleSheet(
+                            "background-color: transparent;"
+                        )
                 except:
                     # 如果检测失败，使用浅色主题
                     self.setStyleSheet("background-color: #ffffff;")
@@ -172,10 +177,10 @@ class SimpleWindowTemplate(FramelessWindow):
                 # 浅色主题
                 self.setStyleSheet("background-color: #ffffff;")
                 self.default_page.setStyleSheet("background-color: transparent;")
-            
+
             # 应用标题栏自定义字体和颜色
             self._set_titlebar_colors()
-                
+
             logger.debug(f"窗口主题已更新为: {current_theme}")
         except Exception as e:
             logger.error(f"应用主题时出错: {e}")
@@ -188,7 +193,7 @@ class SimpleWindowTemplate(FramelessWindow):
         try:
             # 判断是否为深色主题
             is_dark = is_dark_theme(qconfig)
-            
+
             if is_dark:
                 # 深色主题
                 title_color = "#ffffff"  # 白色文字
@@ -197,7 +202,7 @@ class SimpleWindowTemplate(FramelessWindow):
                 # 浅色主题
                 title_color = "#000000"  # 黑色文字
                 background_color = "#ffffff"
-            
+
             # 设置标题栏颜色样式
             titlebar_style = f"""
                 QWidget {{
@@ -228,8 +233,10 @@ class SimpleWindowTemplate(FramelessWindow):
                 }}
             """
             self.titleBar.setStyleSheet(titlebar_style)
-            
-            logger.debug(f"标题栏颜色已设置: 文字色={title_color}, 背景色={background_color}")
+
+            logger.debug(
+                f"标题栏颜色已设置: 文字色={title_color}, 背景色={background_color}"
+            )
         except Exception as e:
             logger.error(f"设置标题栏颜色失败: {e}")
 

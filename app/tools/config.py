@@ -646,7 +646,7 @@ def calculate_remaining_count(
         if group_index == 1:  # 全部小组
             # 获取所有小组列表
             group_list = get_group_list(class_name)
-            
+
             # 计算已被排除的小组数量
             excluded_count = 0
             for group_name in group_list:
@@ -656,7 +656,7 @@ def calculate_remaining_count(
                     and drawn_counts[group_name] >= half_repeat
                 ):
                     excluded_count += 1
-            
+
             # 计算实际剩余组数
             return max(0, len(group_list) - excluded_count)
         else:
@@ -672,7 +672,7 @@ def calculate_remaining_count(
                     if isinstance(student, dict) and "name" in student
                     else student
                 )
-                
+
                 # 如果学生已被抽取次数达到或超过设置值，则计入排除数量
                 if (
                     student_name in drawn_counts
