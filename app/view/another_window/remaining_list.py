@@ -6,10 +6,10 @@
 import json
 from typing import Dict, Any
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout
 from PySide6.QtGui import QFont
 from PySide6.QtCore import Signal, Qt, QTimer, QThread
-from qfluentwidgets import SubtitleLabel, BodyLabel, CardWidget, PushButton
+from qfluentwidgets import SubtitleLabel, BodyLabel, CardWidget
 from loguru import logger
 
 from app.tools.variable import (
@@ -254,30 +254,7 @@ class RemainingListPage(QWidget):
         # 缓存所有创建过的卡片，避免在布局切换时频繁创建/销毁
         self._card_cache = {}
 
-        # 分页状态（每页卡片数根据列数动态计算，但默认每页20）
-        self.current_page = 0
-        self.cards_per_page = 20
-
-        # 分页控制
-        pager_widget = QWidget()
-        pager_layout = QHBoxLayout(pager_widget)
-        pager_layout.setContentsMargins(0, 0, 0, 0)
-        pager_layout.setSpacing(10)
-
-        self.prev_page_btn = PushButton("上一页")
-        self.next_page_btn = PushButton("下一页")
-        self.page_label = BodyLabel("Page 1")
-        if self._font_family:
-            self.page_label.setFont(QFont(self._font_family, 10))
-
-        self.prev_page_btn.clicked.connect(self._go_prev_page)
-        self.next_page_btn.clicked.connect(self._go_next_page)
-
-        pager_layout.addWidget(self.prev_page_btn)
-        pager_layout.addWidget(self.page_label, alignment=Qt.AlignmentFlag.AlignCenter)
-        pager_layout.addWidget(self.next_page_btn)
-
-        self.main_layout.addWidget(pager_widget)
+        # 不再使用分页，所有卡片一次性展示
 
         # 预取学生信息文本，避免在创建每个卡片时重复请求
         try:
@@ -373,29 +350,8 @@ class RemainingListPage(QWidget):
         self.cards = []
         self._clear_grid_layout()
 
-        # 根据分页只创建当前页卡片
-        total_students = len(self.students) if self.students else 0
-        # 计算每页数量（尝试根据当前列数估算）
-        try:
-            cols = max(
-                1,
-                min(
-                    STUDENT_MAX_COLUMNS,
-                    max(
-                        1,
-                        self.width() // (STUDENT_CARD_MIN_WIDTH + STUDENT_CARD_SPACING),
-                    ),
-                ),
-            )
-            rows = 4
-            estimated_per_page = cols * rows
-            self.cards_per_page = max(10, estimated_per_page)
-        except Exception:
-            self.cards_per_page = 20
-
-        start = self.current_page * self.cards_per_page
-        end = start + self.cards_per_page
-        page_students = self.students[start:end]
+        # 一次性创建所有卡片（不分页）
+        page_students = self.students if self.students else []
 
         for student in page_students:
             # 使用缓存的卡片以减少创建销毁开销
@@ -408,30 +364,10 @@ class RemainingListPage(QWidget):
             if card is not None:
                 self.cards.append(card)
 
-        # 更新页码标签
-        total_pages = max(
-            1, (total_students + self.cards_per_page - 1) // self.cards_per_page
-        )
-        self.page_label.setText(f"第 {self.current_page + 1} / {total_pages} 页")
-        self.prev_page_btn.setEnabled(self.current_page > 0)
-        self.next_page_btn.setEnabled(self.current_page < total_pages - 1)
-
-        # 直接更新布局，不使用延迟
+        # 直接更新布局
         self.update_layout()
 
-    def _go_prev_page(self):
-        if self.current_page > 0:
-            self.current_page -= 1
-            self.update_ui()
-
-    def _go_next_page(self):
-        total_students = len(self.students) if self.students else 0
-        total_pages = max(
-            1, (total_students + self.cards_per_page - 1) // self.cards_per_page
-        )
-        if self.current_page < total_pages - 1:
-            self.current_page += 1
-            self.update_ui()
+    # 已移除分页功能，相关方法已删除
 
     def update_layout(self):
         """更新布局"""
