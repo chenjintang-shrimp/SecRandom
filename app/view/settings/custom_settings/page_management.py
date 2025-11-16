@@ -65,31 +65,91 @@ class page_management(QWidget):
 
     def _create_deferred(self, name: str):
         """按需创建延迟注册的子组件并替换占位容器"""
+        # 更严格的防护：在 factory 调用前后都检查父对象与占位状态
+        factories = getattr(self, "_deferred_factories", {})
+        if name not in factories:
+            return
+        # 尝试从 factories 中弹出 factory，若并发已移除则安全返回
         try:
-            factories = getattr(self, "_deferred_factories", {})
-            if name not in factories:
-                return
             factory = factories.pop(name)
+        except Exception:
+            return
+
+        # 快速检查当前窗口对象是否还存在（避免在被销毁时创建）
+        if self is None or not hasattr(self, "vBoxLayout"):
+            return
+
+        # 创建真实 widget 的过程可能在这段时间父对象被销毁，保护 factory 调用
+        try:
             start = time.perf_counter()
             real_widget = factory()
             elapsed = time.perf_counter() - start
-            # 找到占位容器
-            placeholder = getattr(self, name, None)
-            if placeholder is None:
-                # 没有占位则直接插入
-                self.vBoxLayout.addWidget(real_widget)
-            else:
-                # 替换属性引用为真实 widget
-                # 保证 placeholder 有 layout
-                layout = placeholder.layout()
-                if layout is not None:
-                    layout.addWidget(real_widget)
-                # 更新属性引用，方便后续直接访问
-                setattr(self, name, real_widget)
-
-            logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
+        except RuntimeError as e:
+            logger.error(f"创建子组件 {name} 失败（父对象可能已销毁）: {e}")
+            return
         except Exception as e:
-            logger.error(f"创建子组件 {name} 失败: {e}")
+            logger.error(f"创建子组件 {name} 未知错误: {e}")
+            return
+
+        # 找到占位容器
+        placeholder = getattr(self, name, None)
+        # 如果占位不存在或已被替换，则尝试安全插入到主 layout
+        if placeholder is None:
+            try:
+                self.vBoxLayout.addWidget(real_widget)
+            except RuntimeError as e:
+                logger.error(f"将子组件 {name} 插入主布局失败（父控件已销毁）: {e}")
+                return
+            setattr(self, name, real_widget)
+            logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
+            return
+
+        # 如果占位还存在，优先尝试将真实 widget 添加到占位的 layout 中
+        layout = None
+        try:
+            layout = placeholder.layout()
+        except Exception:
+            layout = None
+
+        if layout is None:
+            try:
+                # 占位已经无 layout，尝试直接在主布局中替换位置
+                # 找到占位在主布局中的索引并替换
+                index = -1
+                for i in range(self.vBoxLayout.count()):
+                    item = self.vBoxLayout.itemAt(i)
+                    if item and item.widget() is placeholder:
+                        index = i
+                        break
+                if index >= 0:
+                    try:
+                        # 移除占位并在同位置插入真实 widget
+                        item = self.vBoxLayout.takeAt(index)
+                        widget = item.widget() if item else None
+                        if widget is not None:
+                            widget.deleteLater()
+                        self.vBoxLayout.insertWidget(index, real_widget)
+                    except RuntimeError as e:
+                        logger.error(f"替换占位 {name} 失败（父控件已销毁）: {e}")
+                        return
+                else:
+                    # 未找到占位，回退到追加
+                    self.vBoxLayout.addWidget(real_widget)
+            except RuntimeError as e:
+                logger.error(f"将子组件 {name} 插入主布局失败（父控件已销毁）: {e}")
+                return
+            setattr(self, name, real_widget)
+            logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
+            return
+
+        # 正常情况下，使用占位的 layout 添加 widget
+        try:
+            layout.addWidget(real_widget)
+            setattr(self, name, real_widget)
+            logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
+        except RuntimeError as e:
+            logger.error(f"绑定子组件 {name} 到占位容器失败：父控件已销毁: {e}")
+            return
 
 
 class page_management_roll_call(GroupHeaderCardWidget):

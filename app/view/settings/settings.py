@@ -313,12 +313,28 @@ class SettingsWindow(MSFluentWindow):
                     break
             if container is None:
                 return
+            # 如果容器已经被销毁或没有 layout，则跳过
+            if not container or not hasattr(container, "layout"):
+                return
+            layout = container.layout()
+            if layout is None:
+                return
+
             try:
                 real_page = factory()
-                container.layout().addWidget(real_page)
-                logger.debug(f"后台预热创建设置页面: {name}")
+            except RuntimeError as e:
+                logger.error(f"创建延迟页面 {name} 失败（父容器可能已销毁）: {e}")
+                return
             except Exception as e:
                 logger.error(f"创建延迟页面 {name} 失败: {e}")
+                return
+
+            try:
+                layout.addWidget(real_page)
+                logger.debug(f"后台预热创建设置页面: {name}")
+            except RuntimeError as e:
+                logger.error(f"将延迟页面 {name} 插入容器失败（容器可能已销毁）: {e}")
+                return
         except Exception as e:
             logger.error(f"_create_deferred_page 失败: {e}")
 
