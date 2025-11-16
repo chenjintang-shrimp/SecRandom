@@ -30,7 +30,7 @@ roll_call = {
         "remaining_button": {
             "name": "查看剩余名单",
             "description": "显示剩余名窗口单",
-            "pushbutton_name": "查看剩余名单8",
+            "pushbutton_name": "查看剩余名单",
         },
         "many_count_label": {
             "name": "总/剩余人数",
@@ -38,6 +38,9 @@ roll_call = {
             "text_0": "总人数: {total_count} | 剩余人数: {remaining_count}",
             "text_1": "总人数: {total_count}",
             "text_2": "剩余人数: {remaining_count}",
+            "text_3": "总组数: {total_count} | 剩余组数: {remaining_count}",
+            "text_4": "总组数: {total_count}",
+            "text_5": "剩余组数: {remaining_count}",
         },
     }
 }

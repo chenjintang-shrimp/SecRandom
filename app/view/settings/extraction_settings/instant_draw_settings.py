@@ -78,20 +78,6 @@ class instant_draw_extraction_function(GroupHeaderCardWidget):
             )
         )
 
-        # 抽取后定时清除时间输入框
-        self.clear_time_spin = SpinBox()
-        self.clear_time_spin.setFixedWidth(WIDTH_SPINBOX)
-        self.clear_time_spin.setRange(0, 25600)
-        self.clear_time_spin.setSuffix("秒")
-        self.clear_time_spin.setValue(
-            readme_settings_async("instant_draw_settings", "clear_time")
-        )
-        self.clear_time_spin.valueChanged.connect(
-            lambda: update_settings(
-                "instant_draw_settings", "clear_time", self.clear_time_spin.value()
-            )
-        )
-
         # 抽取方式下拉框（延迟填充）
         self.draw_type_combo = ComboBox()
         self.draw_type_combo.currentIndexChanged.connect(
@@ -120,12 +106,6 @@ class instant_draw_extraction_function(GroupHeaderCardWidget):
             get_content_name_async("instant_draw_settings", "half_repeat"),
             get_content_description_async("instant_draw_settings", "half_repeat"),
             self.half_repeat_spin,
-        )
-        self.addGroup(
-            get_theme_icon("ic_fluent_timer_off_20_filled"),
-            get_content_name_async("instant_draw_settings", "clear_time"),
-            get_content_description_async("instant_draw_settings", "clear_time"),
-            self.clear_time_spin,
         )
         self.addGroup(
             get_theme_icon("ic_fluent_drawer_add_20_filled"),
@@ -174,9 +154,6 @@ class instant_draw_extraction_function(GroupHeaderCardWidget):
                 data["half_repeat_value"] = readme_settings_async(
                     "instant_draw_settings", "half_repeat"
                 )
-                data["clear_time_value"] = readme_settings_async(
-                    "instant_draw_settings", "clear_time"
-                )
                 data["draw_type_items"] = get_content_combo_name_async(
                     "instant_draw_settings", "draw_type"
                 )
@@ -204,8 +181,6 @@ class instant_draw_extraction_function(GroupHeaderCardWidget):
                 )
             if "half_repeat_value" in data:
                 self.half_repeat_spin.setValue(data.get("half_repeat_value", 0))
-            if "clear_time_value" in data:
-                self.clear_time_spin.setValue(data.get("clear_time_value", 0))
             if "draw_type_items" in data:
                 self.draw_type_combo.addItems(data.get("draw_type_items", []))
                 self.draw_type_combo.setCurrentIndex(data.get("draw_type_index", 0))

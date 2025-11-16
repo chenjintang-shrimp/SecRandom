@@ -12,6 +12,7 @@ from qfluentwidgets import *
 from qframelesswindow import *
 
 from app.tools.variable import *
+from app.tools.settings_access import *
 from app.tools.path_utils import *
 from app.tools.personalised import *
 from app.Language.obtain_language import *
@@ -114,6 +115,14 @@ class SimpleWindowTemplate(FramelessWindow):
         )
         self.setWindowTitle(title)
         self.titleBar.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
+        # 设置标题栏字体
+        custom_font = load_custom_font()
+        title_font = QFont(custom_font, 9)
+        self.titleBar.setFont(title_font)
+        
+        # 确保在设置标题栏后应用当前主题和自定义字体
+        self._apply_current_theme()
+        
         if self.parent_window is None:
             screen = QApplication.primaryScreen().availableGeometry()
             w, h = screen.width(), screen.height()
@@ -122,9 +131,107 @@ class SimpleWindowTemplate(FramelessWindow):
     def __connectSignalToSlot(self) -> None:
         """连接信号与槽"""
         try:
-            qconfig.themeChanged.connect(setTheme)
+            qconfig.themeChanged.connect(self._on_theme_changed)
         except Exception as e:
             logger.error(f"连接信号时发生未知错误: {e}")
+
+    def _on_theme_changed(self) -> None:
+        """主题变化时自动更新窗口背景"""
+        try:
+            # 强制刷新窗口背景
+            self._apply_current_theme()
+        except Exception as e:
+            logger.error(f"主题变化时更新窗口背景失败: {e}")
+
+    def _apply_current_theme(self) -> None:
+        """应用当前主题设置到窗口"""
+        try:
+            # 获取当前主题设置
+            current_theme = readme_settings("basic_settings", "theme")
+            
+            # 根据主题设置窗口背景色
+            if current_theme == "DARK":
+                # 深色主题 - 设置深色背景
+                self.setStyleSheet("background-color: #202020;")
+                self.default_page.setStyleSheet("background-color: transparent;")
+            elif current_theme == "AUTO":
+                # 自动主题 - 根据系统设置
+                try:
+                    from darkdetect import isDark
+                    if isDark():
+                        self.setStyleSheet("background-color: #202020;")
+                        self.default_page.setStyleSheet("background-color: transparent;")
+                    else:
+                        self.setStyleSheet("background-color: #ffffff;")
+                        self.default_page.setStyleSheet("background-color: transparent;")
+                except:
+                    # 如果检测失败，使用浅色主题
+                    self.setStyleSheet("background-color: #ffffff;")
+                    self.default_page.setStyleSheet("background-color: transparent;")
+            else:
+                # 浅色主题
+                self.setStyleSheet("background-color: #ffffff;")
+                self.default_page.setStyleSheet("background-color: transparent;")
+            
+            # 应用标题栏自定义字体和颜色
+            self._set_titlebar_colors()
+                
+            logger.debug(f"窗口主题已更新为: {current_theme}")
+        except Exception as e:
+            logger.error(f"应用主题时出错: {e}")
+            # 设置默认的浅色背景作为备选
+            self.setStyleSheet("background-color: #ffffff;")
+            self.default_page.setStyleSheet("background-color: transparent;")
+
+    def _set_titlebar_colors(self) -> None:
+        """设置标题栏颜色"""
+        try:
+            # 判断是否为深色主题
+            is_dark = is_dark_theme(qconfig)
+            
+            if is_dark:
+                # 深色主题
+                title_color = "#ffffff"  # 白色文字
+                background_color = "#202020"
+            else:
+                # 浅色主题
+                title_color = "#000000"  # 黑色文字
+                background_color = "#ffffff"
+            
+            # 设置标题栏颜色样式
+            titlebar_style = f"""
+                QWidget {{
+                    color: {title_color};
+                    background-color: {background_color};
+                }}
+                QLabel {{
+                    color: {title_color};
+                    background-color: transparent;
+                }}
+                QPushButton {{
+                    color: {title_color};
+                    background-color: transparent;
+                }}
+                QToolButton {{
+                    color: {title_color};
+                    background-color: transparent;
+                }}
+                #minimizeButton, #maximizeButton, #closeButton {{
+                    color: {title_color};
+                    background-color: transparent;
+                }}
+                #minimizeButton:hover, #maximizeButton:hover, #closeButton:hover {{
+                    background-color: rgba(255, 255, 255, 0.1);
+                }}
+                #closeButton:hover {{
+                    background-color: rgba(232, 17, 35, 0.8);
+                }}
+            """
+            self.titleBar.setStyleSheet(titlebar_style)
+            
+            logger.debug(f"标题栏颜色已设置: 文字色={title_color}, 背景色={background_color}")
+        except Exception as e:
+            logger.error(f"设置标题栏颜色失败: {e}")
 
     def create_ui_components(self) -> None:
         """创建UI组件"""

@@ -51,6 +51,7 @@ dependencies = [
     "jinja2~=3.1.6",
     "nuitka>=2.8.4",
     "imageio>=2.35.1",
+    "pre-commit>=3.5.0",
 ]
 
 [project.optional-dependencies]
@@ -77,26 +78,3 @@ dev-dependencies = [
     "pre-commit>=3.5.0",
     "ruff>=0.14.3",
 ]
-
-[tool.ruff]
-lint.ignore=["F403","F405","E722","F841","F811","E402"]
-
-[tool.pyright]
-reportArgumentType = "none"
-reportUnknownMemberType = "none"
-reportMissingTypeStubs = "none"
-reportPrivateUsage = "none"
-reportWildcardImportFromLibrary = "warning" # 这个应该随着重构而去除 - 但是我一定要让他被看见！
-reportOptionalMemberAccess = "none" # 这就是为什么我讨厌Python - cjt
-reportIncompatibleMethodOverride = "warning" # lzy what r u doing
-reportAttributeAccessIssue = "none" # wtfu
-reportIncompatibleVariableOverride = "warning"
-reportUndefinedVariable="warning"
-reportOperatorIssue="none"
-reportOptionalOperand="none"
-reportFunctionMemberAccess="none"
-reportReturnType="none"
-reportPossiblyUnboundVariable="warning"
-reportRedeclaration="warning"
-reportCallIssue="warning"
-reportOptionalSubscript="none"

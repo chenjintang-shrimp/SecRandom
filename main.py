@@ -19,19 +19,18 @@ from app.tools.settings_access import *
 from app.Language.obtain_language import *
 from app.tools.config import *
 
-# 避免在模块导入时加载大量UI相关模块，使用延迟导入以缩短启动时的阻塞
-# MainWindow 和 SettingsWindow 会在需要时动态导入
-
 # 全局窗口引用（延迟创建）
 main_window = None
 settings_window = None
+
+# 全局变量，用于存储本地服务器实例
+local_server = None
 
 
 # 添加项目根目录到Python路径
 project_root = str(get_app_root())
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
-
 
 # ==================================================
 # 日志配置相关函数
@@ -58,13 +57,10 @@ def configure_logging():
 # 显示调节
 # ==================================================
 """根据设置自动调整DPI缩放模式"""
-
-
 def configure_dpi_scale():
     """配置DPI缩放模式"""
     dpiScale = readme_settings("basic_settings", "dpiScale")
-
-    if dpiScale == "Auto":
+    if dpiScale == get_content_combo_name_async("basic_settings", "dpiScale")[-1]:
         QApplication.setHighDpiScaleFactorRoundingPolicy(
             Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
         )
@@ -83,29 +79,75 @@ def check_single_instance():
     """检查单实例，防止多个程序副本同时运行
 
     Returns:
-        QSharedMemory: 共享内存对象
+        tuple: (QSharedMemory, bool) 共享内存对象和是否为第一个实例
     """
     shared_memory = QSharedMemory(SHARED_MEMORY_KEY)
     if not shared_memory.create(1):
-        logger.info("检测到已有 SecRandom 实例正在运行")
+        logger.info("检测到已有 SecRandom 实例正在运行，尝试激活已有实例")
+        # 尝试附加到共享内存
+        if shared_memory.attach():
+            # 尝试通过本地套接字激活已有实例
+            try:
+                local_socket = QLocalSocket()
+                local_socket.connectToServer(SHARED_MEMORY_KEY)
+                if local_socket.waitForConnected(1000):
+                    # 发送激活窗口的信号
+                    local_socket.write(b"activate")
+                    local_socket.flush()
+                    local_socket.waitForBytesWritten(1000)
+                    logger.info("已发送激活信号到已有实例")
+                local_socket.disconnectFromServer()
+            except Exception as e:
+                logger.error(f"激活已有实例失败: {e}")
+            finally:
+                return shared_memory, False
+        else:
+            logger.error("无法附加到共享内存")
+            return shared_memory, False
 
     logger.info("单实例检查通过，可以安全启动程序")
+    return shared_memory, True
 
-    return shared_memory
 
+def setup_local_server():
+    """设置本地服务器，用于接收激活窗口的信号
+    
+    Returns:
+        QLocalServer: 本地服务器对象
+    """
+    server = QLocalServer()
+    if not server.listen(SHARED_MEMORY_KEY):
+        logger.error(f"无法启动本地服务器: {server.errorString()}")
+        return None
+    
+    def handle_new_connection():
+        """处理新的连接请求"""
+        socket = server.nextPendingConnection()
+        if socket:
+            if socket.waitForReadyRead(1000):
+                data = socket.readAll()
+                if data == b"activate":
+                    # 激活主窗口
+                    if main_window:
+                        main_window.show()
+                        main_window.raise_()
+                        main_window.activateWindow()
+                        logger.info("已激活主窗口")
+            socket.disconnectFromServer()
+    
+    server.newConnection.connect(handle_new_connection)
+    logger.info("本地服务器已启动，等待激活信号")
+    return server
 
 # ==================================================
 # 字体设置相关函数
 # ==================================================
 def apply_font_settings():
     """应用字体设置 - 优化版本，使用字体管理器异步加载"""
-    from app.tools.settings_access import readme_settings
-
     font_family = readme_settings("basic_settings", "font")
 
     setFontFamilies([font_family])
     QTimer.singleShot(FONT_APPLY_DELAY, lambda: apply_font_to_application(font_family))
-
 
 def apply_font_to_application(font_family):
     """应用字体设置到整个应用程序，优化版本使用字体管理器
@@ -186,7 +228,7 @@ def start_main_window():
         main_window.show()
         try:
             elapsed = time.perf_counter() - app_start_time
-            logger.info(f"主窗口创建并显示完成，启动耗时: {elapsed:.3f}s")
+            logger.debug(f"主窗口创建并显示完成，启动耗时: {elapsed:.3f}s")
         except Exception:
             pass
     except Exception as e:
@@ -197,9 +239,7 @@ def create_settings_window():
     """创建设置窗口实例"""
     global settings_window
     try:
-        # 延迟导入设置窗口，按需创建
         from app.view.settings.settings import SettingsWindow
-
         settings_window = SettingsWindow()
     except Exception as e:
         logger.error(f"创建设置窗口失败: {e}", exc_info=True)
@@ -208,7 +248,6 @@ def create_settings_window():
 def show_settings_window():
     """显示设置窗口"""
     try:
-        # 按需创建设置窗口以减少启动阶段开销
         global settings_window
         if settings_window is None:
             create_settings_window()
@@ -240,7 +279,7 @@ def initialize_app():
     # 更改当前工作目录
     if os.getcwd() != program_dir:
         os.chdir(program_dir)
-        logger.info(f"工作目录已设置为: {program_dir}")
+        logger.debug(f"工作目录已设置为: {program_dir}")
 
     # 并行加载资源
     # 管理设置文件，确保其存在且完整
@@ -280,13 +319,11 @@ def initialize_app():
     # 创建主窗口实例
     QTimer.singleShot(APP_INIT_DELAY, lambda: (start_main_window()))
 
-    # 注意: 不预创建设置窗口，改为按需延迟创建以减少启动开销
-
     # 应用字体设置
     QTimer.singleShot(APP_INIT_DELAY, lambda: (apply_font_settings()))
 
     # 记录初始化完成时间（辅助诊断）
-    logger.info("应用初始化调度已启动，主窗口将在延迟后创建")
+    logger.debug("应用初始化调度已启动，主窗口将在延迟后创建")
 
 
 # ==================================================
@@ -300,6 +337,21 @@ def main_async():
 if __name__ == "__main__":
     # 记录应用启动时间，用于诊断各阶段耗时
     app_start_time = time.perf_counter()
+
+    # 首先进行单实例检查
+    shared_memory, is_first_instance = check_single_instance()
+    
+    if not is_first_instance:
+        # 不是第一个实例，退出程序
+        logger.info("程序将退出，已有实例已激活")
+        sys.exit(0)
+    
+    # 设置本地服务器，用于接收激活窗口的信号
+    local_server = setup_local_server()
+    if not local_server:
+        logger.error("无法启动本地服务器，程序将退出")
+        shared_memory.detach()
+        sys.exit(1)
 
     app = QApplication(sys.argv)
 
@@ -321,6 +373,13 @@ if __name__ == "__main__":
 
         app.exec()
 
+        # 程序退出时释放共享内存
+        shared_memory.detach()
+        
+        # 关闭本地服务器
+        if local_server:
+            local_server.close()
+
         gc.collect()
 
         sys.exit()
@@ -328,6 +387,17 @@ if __name__ == "__main__":
         print(f"应用程序启动失败: {e}")
         try:
             logger.error(f"应用程序启动失败: {e}", exc_info=True)
+        except:
+            pass
+        # 程序异常退出时释放共享内存
+        try:
+            shared_memory.detach()
+        except:
+            pass
+        # 关闭本地服务器
+        try:
+            if local_server:
+                local_server.close()
         except:
             pass
         sys.exit(1)

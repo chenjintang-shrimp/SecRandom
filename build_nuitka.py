@@ -30,7 +30,7 @@ def _read_version() -> str:
     try:
         return VERSION_FILE.read_text(encoding="utf-8").strip()
     except FileNotFoundError:
-        return "0.0.0"
+        return "0.0.0.0"
 
 
 def _print_packaging_summary() -> None:
@@ -108,7 +108,7 @@ def get_nuitka_command():
         "--product-name=SecRandom",
         "--file-description=公平随机抽取系统",
         f"--product-version={version}",
-        "--copyright=Copyright (c) 2024",
+        "--copyright=Copyright (c) 2025",
         # **修复 QFluentWidgets 方法签名检测问题**
         # Nuitka 在 standalone 模式下会改变代码执行环境，
         # 导致 QFluentWidgets 的 overload.py 签名检测失败

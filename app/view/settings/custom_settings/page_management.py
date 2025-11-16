@@ -87,7 +87,7 @@ class page_management(QWidget):
                 # 更新属性引用，方便后续直接访问
                 setattr(self, name, real_widget)
 
-            logger.info(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
+            logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
         except Exception as e:
             logger.error(f"创建子组件 {name} 失败: {e}")
 

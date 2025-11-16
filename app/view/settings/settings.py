@@ -251,7 +251,7 @@ class SettingsWindow(MSFluentWindow):
                     # real_page 会在其内部创建内容（PageTemplate 会在事件循环中再创建内部内容），
                     # 我们把它作为子控件加入占位容器
                     widget.layout().addWidget(real_page)
-                    logger.info(f"设置页面已按需创建: {name}")
+                    logger.debug(f"设置页面已按需创建: {name}")
                 except Exception as e:
                     logger.error(f"延迟创建设置页面 {name} 失败: {e}")
         except Exception as e:
@@ -274,7 +274,7 @@ class SettingsWindow(MSFluentWindow):
                 return
             # 仅预热有限数量的页面，避免一次性占用主线程
             names_to_preload = names[:max_preload]
-            logger.info(f"后台预热将创建 {len(names_to_preload)} / {len(names)} 个页面")
+            logger.debug(f"后台预热将创建 {len(names_to_preload)} / {len(names)} 个页面")
             # 仅为要预热的页面调度创建，避免一次性调度所有页面
             for i, name in enumerate(names_to_preload):
                 # 延迟创建，避免短时间内占用主线程
@@ -314,7 +314,7 @@ class SettingsWindow(MSFluentWindow):
             try:
                 real_page = factory()
                 container.layout().addWidget(real_page)
-                logger.info(f"后台预热创建设置页面: {name}")
+                logger.debug(f"后台预热创建设置页面: {name}")
             except Exception as e:
                 logger.error(f"创建延迟页面 {name} 失败: {e}")
         except Exception as e:

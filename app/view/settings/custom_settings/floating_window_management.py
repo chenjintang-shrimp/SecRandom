@@ -151,7 +151,7 @@ class floating_window_basic_settings(GroupHeaderCardWidget):
 
     def reset_floating_window_position_button_clicked(self):
         # 这里应该实现重置浮窗位置的逻辑
-        logger.info("重置浮窗位置按钮被点击")
+        logger.debug("重置浮窗位置按钮被点击")
 
 
 # ==================================================

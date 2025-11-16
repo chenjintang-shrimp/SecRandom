@@ -131,6 +131,15 @@ CONTRIBUTOR_CARD_MARGIN = 15  # 贡献者卡片内边距
 CONTRIBUTOR_AVATAR_RADIUS = 64  # 贡献者头像半径
 CONTRIBUTOR_MAX_ROLE_WIDTH = 500  # 贡献者职责文本最大宽度
 
+# ==================== 学生卡片相关常量 ====================
+STUDENT_CARD_MIN_WIDTH = 200  # 学生卡片最小宽度
+STUDENT_CARD_FIXED_WIDTH = 180  # 学生卡片固定宽度
+STUDENT_CARD_FIXED_HEIGHT = 100  # 学生卡片固定高度
+STUDENT_MAX_COLUMNS = 8  # 学生页面最大列数限制
+STUDENT_CARD_SPACING = 15  # 学生卡片间距
+STUDENT_CARD_MARGIN = 12  # 学生卡片内边距
+STUDENT_AVATAR_RADIUS = 50  # 学生头像半径
+
 # ==================== 全局变量 ====================
 main_window = None  # 全局主窗口引用
 

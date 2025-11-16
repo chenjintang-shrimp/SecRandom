@@ -43,10 +43,6 @@ roll_call_settings = {
             "name": "半重复抽取次数",
             "description": "设置名单中每人被抽中多少次后清除抽取记录",
         },
-        "clear_time": {
-            "name": "抽取后定时清除时间",
-            "description": "设置抽取后定时清除记录的时间（秒）",
-        },
         "draw_type": {
             "name": "抽取方式",
             "description": "设置点名抽取的方式",
@@ -136,10 +132,6 @@ quick_draw_settings = {
         "half_repeat": {
             "name": "半重复抽取次数",
             "description": "设置名单中每人被抽中多少次后清除抽取记录",
-        },
-        "clear_time": {
-            "name": "抽取后定时清除时间",
-            "description": "设置抽取后定时清除记录的时间(秒)",
         },
         "draw_type": {
             "name": "抽取方式",
@@ -239,10 +231,6 @@ instant_draw_settings = {
         "half_repeat": {
             "name": "半重复抽取次数",
             "description": "设置名单中每人被抽中多少次后清除抽取记录",
-        },
-        "clear_time": {
-            "name": "抽取后定时清除时间",
-            "description": "设置抽取后定时清除记录的时间(秒)",
         },
         "draw_type": {
             "name": "抽取方式",
@@ -347,10 +335,6 @@ lottery_settings = {
         "half_repeat": {
             "name": "半重复抽取次数",
             "description": "设置名单中每人被抽中多少次后清除抽取记录",
-        },
-        "clear_time": {
-            "name": "抽取后定时清除时间",
-            "description": "设置抽取后定时清除记录的时间(秒)",
         },
         "draw_type": {
             "name": "抽取方式",

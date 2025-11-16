@@ -90,20 +90,6 @@ class roll_call_extraction_function(GroupHeaderCardWidget):
             )
         )
 
-        # 抽取后定时清除时间输入框
-        self.clear_time_spin = SpinBox()
-        self.clear_time_spin.setFixedWidth(WIDTH_SPINBOX)
-        self.clear_time_spin.setRange(0, 25600)
-        self.clear_time_spin.setSuffix("秒")
-        self.clear_time_spin.setValue(
-            readme_settings_async("roll_call_settings", "clear_time")
-        )
-        self.clear_time_spin.valueChanged.connect(
-            lambda: update_settings(
-                "roll_call_settings", "clear_time", self.clear_time_spin.value()
-            )
-        )
-
         # 抽取方式下拉框
         self.draw_type_combo = ComboBox()
         self.draw_type_combo.addItems(
@@ -136,12 +122,6 @@ class roll_call_extraction_function(GroupHeaderCardWidget):
             get_content_name_async("roll_call_settings", "half_repeat"),
             get_content_description_async("roll_call_settings", "half_repeat"),
             self.half_repeat_spin,
-        )
-        self.addGroup(
-            get_theme_icon("ic_fluent_timer_off_20_filled"),
-            get_content_name_async("roll_call_settings", "clear_time"),
-            get_content_description_async("roll_call_settings", "clear_time"),
-            self.clear_time_spin,
         )
         self.addGroup(
             get_theme_icon("ic_fluent_drawer_add_20_filled"),

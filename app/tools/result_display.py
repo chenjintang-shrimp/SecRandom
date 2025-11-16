@@ -16,7 +16,10 @@ from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
+from app.tools.list import *
 
+from random import SystemRandom
+system_random = SystemRandom()
 
 # ==================================================
 # 结果显示工具类
@@ -60,19 +63,45 @@ class ResultDisplayUtils:
         return avatar
 
     @staticmethod
-    def _format_student_text(display_format, student_id_str, name, draw_count):
+    def _format_student_text(class_name, display_format, student_id_str, name, draw_count, is_group_mode=False, show_random=0):
         """
         格式化学生显示文本
 
         参数:
             display_format: 显示格式 (0:学号+姓名, 1:仅姓名, 2:仅学号)
             student_id_str: 学号字符串
-            name: 学生姓名
+            name: 学生姓名或小组名称
             draw_count: 抽取人数
+            is_group_mode: 是否为小组模式
+            show_random: 随机组员显示格式 (0:不显示, 1:组名[换行]姓名, 2:组名[短横杠]姓名)
 
         返回:
             str: 格式化后的文本
         """
+        # 小组模式下，根据show_random设置显示格式
+        if is_group_mode:
+            # 获取小组成员列表
+            group_members = get_group_members(class_name, name)
+            
+            if show_random == 1:  # 组名[换行]随机选择的成员
+                if group_members:
+                    # 随机选择一个成员
+                    selected_member = system_random.choice(group_members)
+                    selected_name = selected_member["name"]
+                    return f"{name}\n{selected_name}"
+                else:
+                    return name
+            elif show_random == 2:  # 组名[短横杠]随机选择的成员
+                if group_members:
+                    # 随机选择一个成员
+                    selected_member = system_random.choice(group_members)
+                    selected_name = selected_member["name"]
+                    return f"{name} - {selected_name}"
+                else:
+                    return name
+            else:  # 不显示特殊格式 - 只显示组名
+                return f"{name}"
+            
         if display_format == 1:  # 仅显示姓名
             return f"{name}"
         elif display_format == 2:  # 仅显示学号
@@ -170,6 +199,7 @@ class ResultDisplayUtils:
 
     @staticmethod
     def create_student_label(
+        class_name,
         selected_students,
         draw_count=1,
         font_size=50,
@@ -177,6 +207,7 @@ class ResultDisplayUtils:
         display_format=0,
         show_student_image=False,
         group_index=0,
+        show_random=0,
     ):
         """
         创建学生显示标签
@@ -189,6 +220,7 @@ class ResultDisplayUtils:
             display_format: 显示格式 (0:学号+姓名, 1:仅姓名, 2:仅学号)
             show_student_image: 是否显示学生头像
             group_index: 小组索引 (0:全班, 1:随机小组, >1:指定小组)
+            show_random: 随机组员显示格式 (0:不显示, 1:组名[换行]姓名, 2:组名[短横杠]姓名)
 
         返回:
             list: 创建的标签列表
@@ -197,10 +229,12 @@ class ResultDisplayUtils:
 
         for num, selected, exist in selected_students:
             current_image_path = None
+            # 在小组模式下，尝试使用小组名称作为图片文件名
             if show_student_image:
+                image_name = str(selected)
                 for ext in SUPPORTED_IMAGE_EXTENSIONS:
                     temp_path = get_resources_path(
-                        "images", f"students/{selected}{ext}"
+                        "images", f"students/{image_name}{ext}"
                     )
                     if file_exists(temp_path):
                         current_image_path = str(temp_path)
@@ -209,20 +243,30 @@ class ResultDisplayUtils:
                         current_image_path = None
                         continue
 
-            student_id_str = STUDENT_ID_FORMAT.format(num=num)
+            # 处理学号格式化
+            if num is not None:
+                student_id_str = STUDENT_ID_FORMAT.format(num=num)
+            else:
+                student_id_str = ""
+                
+            # 处理不同模式下的名称显示
             if len(str(selected)) == 2 and group_index == 0:
                 name = f"{str(selected)[0]}{NAME_SPACING}{str(selected)[1]}"
             else:
                 name = str(selected)
+                
             text = ResultDisplayUtils._format_student_text(
-                display_format, student_id_str, name, draw_count
+                class_name, display_format, student_id_str, name, draw_count, is_group_mode=(group_index == 1), show_random=show_random
             )
+            
+            # 在小组模式下，只在没有成员显示时才显示头像
             if show_student_image:
                 label = ResultDisplayUtils._create_student_label_with_avatar(
                     current_image_path, name, font_size, draw_count, text
                 )
             else:
                 label = BodyLabel(text)
+                
             ResultDisplayUtils._apply_label_style(label, font_size, animation_color)
             student_labels.append(label)
 

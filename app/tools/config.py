@@ -17,7 +17,7 @@ from qfluentwidgets import InfoBar, InfoBarPosition, FluentIcon, InfoBarIcon
 from app.tools.path_utils import get_resources_path
 from app.tools.personalised import get_theme_icon
 from app.tools.settings_access import readme_settings_async
-from app.tools.list import get_student_list
+from app.tools.list import get_student_list, get_group_list
 
 
 # ======= 通知工具函数 =======
@@ -370,7 +370,7 @@ def record_drawn_student(class_name: str, gender: str, group: str, student_name)
     # 保存更新后的记录
     if updated_students:
         _save_drawn_records(file_path, drawn_records)
-        logger.debug(f"已记录学生: {', '.join(updated_students)}")
+        logger.debug(f"已记录学生/小组: {', '.join(updated_students)}")
     else:
         logger.debug("没有新的学生需要记录")
 
@@ -485,11 +485,9 @@ def read_drawn_record(class_name: str, gender: str, group: str):
 
             # 处理不同的数据结构
             if isinstance(data, dict):
-                # 新格式：字典，键为学生名称，值为抽取次数
                 # 转换为列表格式，每个元素为(名称, 次数)元组
                 drawn_records = [(name, count) for name, count in data.items()]
             elif isinstance(data, list):
-                # 旧格式：列表，只包含学生名称
                 # 转换为列表格式，每个元素为(名称, 1)元组
                 drawn_records = []
                 for item in data:
@@ -610,20 +608,22 @@ def calculate_remaining_count(
     half_repeat: int,
     class_name: str,
     gender_filter: str,
+    group_index: int,
     group_filter: str,
     total_count: int,
 ):
-    """根据half_repeat设置计算实际剩余人数
+    """根据half_repeat设置计算实际剩余人数或组数
 
     Args:
         half_repeat: 重复抽取次数
         class_name: 班级名称
         gender_filter: 性别筛选条件
+        group_index: 分组索引
         group_filter: 分组筛选条件
-        total_count: 总人数
+        total_count: 总人数或总组数
 
     Returns:
-        实际剩余人数
+        实际剩余人数或组数
     """
     # 根据half_repeat设置计算实际剩余人数
     if half_repeat > 0:  # 只有当设置值大于0时才计算排除后的剩余人数
@@ -642,26 +642,46 @@ def calculate_remaining_count(
                 count = record.get("count", 1)
                 drawn_counts[name] = count
 
-        # 计算已被排除的学生数量
-        excluded_count = 0
-        # 获取当前班级的学生列表
-        student_list = get_student_list(class_name)
-        for student in student_list:
-            # 从学生字典中提取姓名
-            student_name = (
-                student["name"]
-                if isinstance(student, dict) and "name" in student
-                else student
-            )
-            # 如果学生已被抽取次数达到或超过设置值，则计入排除数量
-            if (
-                student_name in drawn_counts
-                and drawn_counts[student_name] >= half_repeat
-            ):
-                excluded_count += 1
+        # 处理小组模式
+        if group_index == 1:  # 全部小组
+            # 获取所有小组列表
+            group_list = get_group_list(class_name)
+            
+            # 计算已被排除的小组数量
+            excluded_count = 0
+            for group_name in group_list:
+                # 如果小组已被抽取次数达到或超过设置值，则计入排除数量
+                if (
+                    group_name in drawn_counts
+                    and drawn_counts[group_name] >= half_repeat
+                ):
+                    excluded_count += 1
+            
+            # 计算实际剩余组数
+            return max(0, len(group_list) - excluded_count)
+        else:
+            # 处理学生模式
+            # 计算已被排除的学生数量
+            excluded_count = 0
+            # 获取当前班级的学生列表
+            student_list = get_student_list(class_name)
+            for student in student_list:
+                # 从学生字典中提取姓名
+                student_name = (
+                    student["name"]
+                    if isinstance(student, dict) and "name" in student
+                    else student
+                )
+                
+                # 如果学生已被抽取次数达到或超过设置值，则计入排除数量
+                if (
+                    student_name in drawn_counts
+                    and drawn_counts[student_name] >= half_repeat
+                ):
+                    excluded_count += 1
 
-        # 计算实际剩余人数
-        return max(0, total_count - excluded_count)
+            # 计算实际剩余人数
+            return max(0, total_count - excluded_count)
     else:
-        # 如果half_repeat为0，则不排除任何学生
+        # 如果half_repeat为0，则不排除任何学生或小组
         return total_count

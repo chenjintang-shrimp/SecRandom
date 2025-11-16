@@ -108,7 +108,7 @@ class PageTemplate(QFrame):
             self.content_created = True
 
             elapsed = time.perf_counter() - start
-            logger.info(f"创建内容组件 {content_name} 耗时: {elapsed:.3f}s")
+            logger.debug(f"创建内容组件 {content_name} 耗时: {elapsed:.3f}s")
         except Exception as e:
             elapsed = time.perf_counter() - start
             logger.error(f"创建内容组件失败 ({elapsed:.3f}s): {e}")
@@ -326,7 +326,7 @@ class PivotPageTemplate(QFrame):
             inner_layout.addWidget(widget)
 
             elapsed = time.perf_counter() - start
-            logger.info(f"加载页面组件 {page_name} 耗时: {elapsed:.3f}s")
+            logger.debug(f"加载页面组件 {page_name} 耗时: {elapsed:.3f}s")
 
             # 如果当前页面就是正在加载的页面，确保滑动区域是当前可见的
             if self.current_page == page_name:

@@ -143,6 +143,31 @@ def get_gender_list(class_name: str) -> List[str]:
     return gender_list
 
 
+def get_group_members(class_name: str, group_name: str) -> List[Dict[str, Any]]:
+    """获取指定班级中指定小组的成员列表
+
+    从 app/resources/list/roll_call_list 文件夹中读取指定班级的名单文件，
+    并返回指定小组的成员列表
+
+    Args:
+        class_name: 班级名称
+        group_name: 小组名称
+
+    Returns:
+        List[Dict[str, Any]]: 小组成员列表，每个成员是一个字典，包含姓名、ID、性别、小组等信息
+    """
+    student_list = get_student_list(class_name)
+    group_members = []
+    
+    for student in student_list:
+        if student["group"] == group_name:
+            group_members.append(student)
+    
+    # 按ID排序
+    group_members.sort(key=lambda x: x["id"])
+    return group_members
+
+
 # ==================================================
 # 奖池列表管理函数
 # ==================================================
@@ -333,20 +358,21 @@ def filter_students_data(
             groups_set = set()
             for student_name, student_info in data.items():
                 if isinstance(student_info, dict) and "id" in student_info:
-                    id = student_info.get("id", "")
-                    name = student_name
-                    gender = student_info.get("gender", "")
                     group = student_info.get("group", "")
+                    gender = student_info.get("gender", "")
                     exist = student_info.get("exist", True)
                     if group:  # 只添加非空小组
                         if (
                             gender_index == 0 or gender == gender_filter
                         ):  # 根据性别条件过滤
-                            groups_set.add((id, name, gender, group, exist))
-                            students_data.append((id, name, gender, group, exist))
-
-            # 对小组进行排序
-            students_data = sorted(list(groups_set), key=lambda x: str(x))
+                            groups_set.add(group)
+            
+            # 对小组进行排序，按小组名称排序
+            # 返回格式为 (id, name, gender, group, exist)，但小组模式下只需要小组名称
+            students_data = []
+            for group_name in sorted(groups_set):
+                # 在小组模式下，我们只需要小组名称，其他字段可以留空或使用默认值
+                students_data.append((None, group_name, None, group_name, True))
 
         # 处理指定小组抽取 (group_index >= 2)
         elif group_index >= 2:

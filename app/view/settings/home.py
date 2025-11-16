@@ -45,5 +45,5 @@ class home(QWidget):
 
     def on_search(self, text):
         """搜索框的回调函数"""
-        logger.info(f"搜索内容: {text}")
+        logger.debug(f"搜索内容: {text}")
         # 这里可以添加搜索功能的实现
