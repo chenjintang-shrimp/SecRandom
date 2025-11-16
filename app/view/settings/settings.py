@@ -274,7 +274,9 @@ class SettingsWindow(MSFluentWindow):
                 return
             # 仅预热有限数量的页面，避免一次性占用主线程
             names_to_preload = names[:max_preload]
-            logger.debug(f"后台预热将创建 {len(names_to_preload)} / {len(names)} 个页面")
+            logger.debug(
+                f"后台预热将创建 {len(names_to_preload)} / {len(names)} 个页面"
+            )
             # 仅为要预热的页面调度创建，避免一次性调度所有页面
             for i, name in enumerate(names_to_preload):
                 # 延迟创建，避免短时间内占用主线程

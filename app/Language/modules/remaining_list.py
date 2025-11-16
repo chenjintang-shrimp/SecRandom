@@ -7,7 +7,10 @@ remaining_list = {
             "description": "带班级名称的标题",
         },
         "count_label": {"name": "剩余人数：{count}", "description": "剩余人数标签文本"},
-        "group_count_label": {"name": "剩余组数：{count}", "description": "剩余组数标签文本"},
+        "group_count_label": {
+            "name": "剩余组数：{count}",
+            "description": "剩余组数标签文本",
+        },
         "no_students": {
             "name": "暂无未抽取的学生",
             "description": "没有剩余学生时的提示文本",

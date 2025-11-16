@@ -32,6 +32,7 @@ project_root = str(get_app_root())
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+
 # ==================================================
 # 日志配置相关函数
 # ==================================================
@@ -57,6 +58,8 @@ def configure_logging():
 # 显示调节
 # ==================================================
 """根据设置自动调整DPI缩放模式"""
+
+
 def configure_dpi_scale():
     """配置DPI缩放模式"""
     dpiScale = readme_settings("basic_settings", "dpiScale")
@@ -111,7 +114,7 @@ def check_single_instance():
 
 def setup_local_server():
     """设置本地服务器，用于接收激活窗口的信号
-    
+
     Returns:
         QLocalServer: 本地服务器对象
     """
@@ -119,7 +122,7 @@ def setup_local_server():
     if not server.listen(SHARED_MEMORY_KEY):
         logger.error(f"无法启动本地服务器: {server.errorString()}")
         return None
-    
+
     def handle_new_connection():
         """处理新的连接请求"""
         socket = server.nextPendingConnection()
@@ -134,10 +137,11 @@ def setup_local_server():
                         main_window.activateWindow()
                         logger.info("已激活主窗口")
             socket.disconnectFromServer()
-    
+
     server.newConnection.connect(handle_new_connection)
     logger.info("本地服务器已启动，等待激活信号")
     return server
+
 
 # ==================================================
 # 字体设置相关函数
@@ -148,6 +152,7 @@ def apply_font_settings():
 
     setFontFamilies([font_family])
     QTimer.singleShot(FONT_APPLY_DELAY, lambda: apply_font_to_application(font_family))
+
 
 def apply_font_to_application(font_family):
     """应用字体设置到整个应用程序，优化版本使用字体管理器
@@ -240,6 +245,7 @@ def create_settings_window():
     global settings_window
     try:
         from app.view.settings.settings import SettingsWindow
+
         settings_window = SettingsWindow()
     except Exception as e:
         logger.error(f"创建设置窗口失败: {e}", exc_info=True)
@@ -340,12 +346,12 @@ if __name__ == "__main__":
 
     # 首先进行单实例检查
     shared_memory, is_first_instance = check_single_instance()
-    
+
     if not is_first_instance:
         # 不是第一个实例，退出程序
         logger.info("程序将退出，已有实例已激活")
         sys.exit(0)
-    
+
     # 设置本地服务器，用于接收激活窗口的信号
     local_server = setup_local_server()
     if not local_server:
@@ -375,7 +381,7 @@ if __name__ == "__main__":
 
         # 程序退出时释放共享内存
         shared_memory.detach()
-        
+
         # 关闭本地服务器
         if local_server:
             local_server.close()

@@ -24,7 +24,9 @@ from app.tools.config import *
 from app.page_building.another_window import *
 
 from random import SystemRandom
+
 system_random = SystemRandom()
+
 
 # ==================================================
 # 班级点名类
@@ -34,15 +36,15 @@ class roll_call(QWidget):
         super().__init__(parent)
         self.file_watcher = QFileSystemWatcher()
         self.setup_file_watcher()
-        
+
         # 长按功能相关变量
         self.press_timer = QTimer()
         self.press_timer.timeout.connect(self.handle_long_press)
         self.long_press_interval = 100  # 长按时连续触发的间隔时间(毫秒)
-        self.long_press_delay = 500     # 开始长按前的延迟时间(毫秒)
-        self.is_long_pressing = False   # 是否正在长按
-        self.long_press_direction = 0   # 长按方向：1为增加，-1为减少
-        
+        self.long_press_delay = 500  # 开始长按前的延迟时间(毫秒)
+        self.is_long_pressing = False  # 是否正在长按
+        self.long_press_direction = 0  # 长按方向：1为增加，-1为减少
+
         self.initUI()
 
     def handle_long_press(self):
@@ -52,10 +54,10 @@ class roll_call(QWidget):
             self.press_timer.setInterval(self.long_press_interval)
             # 执行更新计数
             self.update_count(self.long_press_direction)
-    
+
     def start_long_press(self, direction):
         """开始长按
-        
+
         Args:
             direction (int): 长按方向，1为增加，-1为减少
         """
@@ -64,7 +66,7 @@ class roll_call(QWidget):
         # 设置初始延迟
         self.press_timer.setInterval(self.long_press_delay)
         self.press_timer.start()
-    
+
     def stop_long_press(self):
         """停止长按"""
         self.is_long_pressing = False
@@ -108,7 +110,7 @@ class roll_call(QWidget):
         self.minus_button.setFont(QFont(load_custom_font(), 20))
         self.minus_button.setFixedSize(45, 45)
         self.minus_button.clicked.connect(lambda: self.update_count(-1))
-        
+
         # 添加长按连续减功能
         self.minus_button.pressed.connect(lambda: self.start_long_press(-1))
         self.minus_button.released.connect(self.stop_long_press)
@@ -123,7 +125,7 @@ class roll_call(QWidget):
         self.plus_button.setFont(QFont(load_custom_font(), 20))
         self.plus_button.setFixedSize(45, 45)
         self.plus_button.clicked.connect(lambda: self.update_count(1))
-        
+
         # 添加长按连续加功能
         self.plus_button.pressed.connect(lambda: self.start_long_press(1))
         self.plus_button.released.connect(self.stop_long_press)
@@ -244,7 +246,9 @@ class roll_call(QWidget):
 
             # 性别
             self.gender_combobox.clear()
-            gender_options = get_content_combo_name_async("roll_call", "gender_combobox")
+            gender_options = get_content_combo_name_async(
+                "roll_call", "gender_combobox"
+            )
             gender_list = get_gender_list(self.list_combobox.currentText())
             # 如果有性别，才添加"抽取全部性别"选项
             if gender_list and gender_list != [""]:
@@ -252,18 +256,20 @@ class roll_call(QWidget):
                 self.gender_combobox.addItems(gender_options + gender_list)
             else:
                 # 只添加基础选项，跳过"抽取全部性别"
-                self.gender_combobox.addItems(gender_options[:1])  # 只添加"抽取全部性别"
+                self.gender_combobox.addItems(
+                    gender_options[:1]
+                )  # 只添加"抽取全部性别"
 
             # 根据当前选择的范围计算实际的总人数
             group_index = self.range_combobox.currentIndex()
             group_filter = self.range_combobox.currentText()
-            
+
             # 使用统一的方法更新剩余人数显示
             self.update_many_count_label()
-            
+
             # 获取当前选择的小组/性别
             group_index = self.range_combobox.currentIndex()
-            
+
             # 根据范围计算实际人数
             if group_index == 0:  # 全班
                 total_count = len(get_student_list(self.list_combobox.currentText()))
@@ -273,19 +279,19 @@ class roll_call(QWidget):
                 group_filter = self.range_combobox.currentText()
                 students = get_student_list(self.list_combobox.currentText())
                 total_count = len([s for s in students if s["group"] == group_filter])
-            
+
             # 根据总人数是否为0，启用或禁用开始按钮
             if total_count == 0:
                 self.start_button.setEnabled(False)
             else:
                 self.start_button.setEnabled(True)
-            
+
             # 根据总人数是否为0，启用或禁用开始按钮
             if total_count == 0:
                 self.start_button.setEnabled(False)
             else:
                 self.start_button.setEnabled(True)
-            
+
             # 更新剩余名单窗口
             if (
                 hasattr(self, "remaining_list_page")
@@ -303,10 +309,10 @@ class roll_call(QWidget):
         try:
             # 使用统一的方法更新剩余人数显示
             self.update_many_count_label()
-            
+
             # 获取当前选择的小组/性别
             group_index = self.range_combobox.currentIndex()
-            
+
             # 根据范围计算实际人数
             if group_index == 0:  # 全班
                 total_count = len(get_student_list(self.list_combobox.currentText()))
@@ -316,7 +322,7 @@ class roll_call(QWidget):
                 group_filter = self.range_combobox.currentText()
                 students = get_student_list(self.list_combobox.currentText())
                 total_count = len([s for s in students if s["group"] == group_filter])
-            
+
             # 根据总人数是否为0，启用或禁用开始按钮
             if total_count == 0:
                 self.start_button.setEnabled(False)
@@ -460,7 +466,7 @@ class roll_call(QWidget):
                 and hasattr(self.remaining_list_page, "count_changed")
             ):
                 self.remaining_list_page.count_changed.emit(self.remaining_count)
-            
+
             # 更新剩余名单窗口
             QTimer.singleShot(100, self._update_remaining_list_delayed)
 
@@ -511,28 +517,30 @@ class roll_call(QWidget):
                 "exist": student_tuple[4],
             }
             students_dict_list.append(student_dict)
-        
+
         # 获取抽取类型
         draw_type = readme_settings_async("roll_call_settings", "draw_type")
-        
+
         # 处理小组模式下的特殊逻辑
         if group_index == 1:
             # 小组模式下，students_data已经只包含小组信息
             # 直接使用小组数据进行抽取
             draw_count = min(self.current_count, len(students_dict_list))
-            
+
             selected_groups = []
             if draw_type == 1:
                 # 权重抽取模式下，所有小组权重相同
                 weights = [1.0] * len(students_dict_list)
-                
+
                 # 根据权重抽取小组
                 for _ in range(draw_count):
                     if not students_dict_list:
                         break
                     total_weight = sum(weights)
                     if total_weight <= 0:
-                        random_index = system_random.randint(0, len(students_dict_list) - 1)
+                        random_index = system_random.randint(
+                            0, len(students_dict_list) - 1
+                        )
                     else:
                         rand_value = system_random.uniform(0, total_weight)
                         cumulative_weight = 0
@@ -542,10 +550,12 @@ class roll_call(QWidget):
                             if rand_value <= cumulative_weight:
                                 random_index = i
                                 break
-                    
+
                     selected_group = students_dict_list[random_index]
-                    selected_groups.append((None, selected_group["name"], True))  # (id, name, exist)
-                    
+                    selected_groups.append(
+                        (None, selected_group["name"], True)
+                    )  # (id, name, exist)
+
                     students_dict_list.pop(random_index)
                     weights.pop(random_index)
             else:
@@ -555,16 +565,18 @@ class roll_call(QWidget):
                         break
                     random_index = system_random.randint(0, len(students_dict_list) - 1)
                     selected_group = students_dict_list[random_index]
-                    selected_groups.append((None, selected_group["name"], True))  # (id, name, exist)
-                    
+                    selected_groups.append(
+                        (None, selected_group["name"], True)
+                    )  # (id, name, exist)
+
                     students_dict_list.pop(random_index)
-            
+
             self.final_selected_students = selected_groups
             self.final_class_name = class_name
             self.final_selected_students_dict = []  # 小组模式下不存储学生字典
             self.final_group_filter = group_filter
             self.final_gender_filter = gender_filter
-            
+
             self.display_result(selected_groups, class_name)
             return
 
@@ -654,9 +666,7 @@ class roll_call(QWidget):
                 "roll_call_settings", "student_image"
             ),
             group_index=group_index,
-            show_random=readme_settings_async(
-                "roll_call_settings", "show_random"
-            ),
+            show_random=readme_settings_async("roll_call_settings", "show_random"),
         )
         ResultDisplayUtils.display_results_in_grid(self.result_grid, student_labels)
 
@@ -713,7 +723,7 @@ class roll_call(QWidget):
         # 获取当前选择的范围和性别
         group_index = self.range_combobox.currentIndex()
         group_filter = self.range_combobox.currentText()
-        
+
         # 根据范围计算实际人数
         if group_index == 0:  # 全班
             total_count = len(get_student_list(self.list_combobox.currentText()))
@@ -730,7 +740,7 @@ class roll_call(QWidget):
         group_index = self.range_combobox.currentIndex()
         group_filter = self.range_combobox.currentText()
         gender_filter = self.gender_combobox.currentText()
-        
+
         # 根据范围计算实际人数
         if group_index == 0:  # 全班
             total_count = len(get_student_list(self.list_combobox.currentText()))
@@ -750,7 +760,7 @@ class roll_call(QWidget):
         )
         if self.remaining_count == 0:
             self.remaining_count = total_count
-        
+
         # 根据是否为小组模式选择不同的文本模板
         if group_index == 1:  # 小组模式
             text_template = get_any_position_value(
@@ -764,7 +774,7 @@ class roll_call(QWidget):
             total_count=total_count, remaining_count=self.remaining_count
         )
         self.many_count_label.setText(formatted_text)
-        
+
         # 根据总人数是否为0，启用或禁用开始按钮
         if total_count == 0:
             self.start_button.setEnabled(False)
@@ -773,7 +783,10 @@ class roll_call(QWidget):
 
     def update_remaining_list_window(self):
         """更新剩余名单窗口的内容"""
-        if hasattr(self, "remaining_list_page") and self.remaining_list_page is not None:
+        if (
+            hasattr(self, "remaining_list_page")
+            and self.remaining_list_page is not None
+        ):
             try:
                 class_name = self.list_combobox.currentText()
                 group_filter = self.range_combobox.currentText()
@@ -781,7 +794,7 @@ class roll_call(QWidget):
                 group_index = self.range_combobox.currentIndex()
                 gender_index = self.gender_combobox.currentIndex()
                 half_repeat = readme_settings_async("roll_call_settings", "half_repeat")
-                
+
                 # 更新剩余名单页面内容
                 if hasattr(self.remaining_list_page, "update_remaining_list"):
                     self.remaining_list_page.update_remaining_list(
@@ -799,7 +812,10 @@ class roll_call(QWidget):
     def show_remaining_list(self):
         """显示剩余名单窗口"""
         # 如果窗口已存在，则激活该窗口并更新内容
-        if hasattr(self, "remaining_list_page") and self.remaining_list_page is not None:
+        if (
+            hasattr(self, "remaining_list_page")
+            and self.remaining_list_page is not None
+        ):
             try:
                 # 获取窗口实例
                 window = self.remaining_list_page.window()
@@ -813,7 +829,7 @@ class roll_call(QWidget):
             except Exception as e:
                 logger.error(f"激活剩余名单窗口失败: {e}")
                 # 如果激活失败，继续创建新窗口
-        
+
         # 创建新窗口
         class_name = self.list_combobox.currentText()
         group_filter = self.range_combobox.currentText()
@@ -915,13 +931,13 @@ class roll_call(QWidget):
             # 填充范围和性别选项
             self.range_combobox.blockSignals(True)
             self.range_combobox.clear()
-            
+
             # 获取基础选项
             base_options = get_content_combo_name_async("roll_call", "range_combobox")
-            
+
             # 获取小组列表
             group_list = get_group_list(self.list_combobox.currentText())
-            
+
             # 如果有小组，才添加"抽取全部小组"选项
             if group_list:
                 # 添加基础选项和小组列表
@@ -929,7 +945,7 @@ class roll_call(QWidget):
             else:
                 # 只添加基础选项，跳过"抽取全部小组"
                 self.range_combobox.addItems(base_options[:1])  # 只添加"抽取全部学生"
-                
+
             self.range_combobox.blockSignals(False)
 
             self.gender_combobox.blockSignals(True)
@@ -944,7 +960,7 @@ class roll_call(QWidget):
             group_index = self.range_combobox.currentIndex()
             group_filter = self.range_combobox.currentText()
             gender_filter = self.gender_combobox.currentText()
-            
+
             # 根据范围计算实际人数
             if group_index == 0:  # 全班
                 total_count = len(get_student_list(self.list_combobox.currentText()))
@@ -976,7 +992,7 @@ class roll_call(QWidget):
                 total_count=total_count, remaining_count=self.remaining_count
             )
             self.many_count_label.setText(formatted_text)
-            
+
             # 根据总人数是否为0，启用或禁用开始按钮
             if total_count == 0:
                 self.start_button.setEnabled(False)
