@@ -8,16 +8,22 @@ from typing import Dict, Any
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout
 from PySide6.QtGui import QFont
-from PySide6.QtCore import Signal, Qt, QTimer, QThread
+from PySide6.QtCore import (
+    Signal,
+    Qt,
+    QTimer,
+    QThread,
+    QRunnable,
+    QThreadPool,
+    QObject,
+)
 from qfluentwidgets import SubtitleLabel, BodyLabel, CardWidget
 from loguru import logger
 
 from app.tools.variable import (
     STUDENT_CARD_SPACING,
-    STUDENT_CARD_MIN_WIDTH,
     STUDENT_CARD_FIXED_WIDTH,
     STUDENT_CARD_FIXED_HEIGHT,
-    STUDENT_MAX_COLUMNS,
     STUDENT_CARD_MARGIN,
 )
 from app.tools.path_utils import get_path
@@ -208,6 +214,13 @@ class RemainingListPage(QWidget):
         # 预先设置为空；init_ui 中会尝试异步预取模板文本
         self._student_info_text = None
 
+        # 异步渲染相关状态（使用 QThreadPool）
+        self._pending_students = []
+        self._batch_size = 20  # 每批创建的卡片数量
+        self._rendering = False
+        self._thread_pool = QThreadPool.globalInstance()
+        self._render_reporter = None
+
         self.init_ui()
 
         # 延迟加载学生数据
@@ -346,26 +359,13 @@ class RemainingListPage(QWidget):
             # 显示人数
             self.count_label.setText(count_text.format(count=len(self.students)))
 
-        # 清空现有卡片
+        # 清空现有卡片并准备异步渲染
         self.cards = []
         self._clear_grid_layout()
 
-        # 一次性创建所有卡片（不分页）
-        page_students = self.students if self.students else []
-
-        for student in page_students:
-            # 使用缓存的卡片以减少创建销毁开销
-            key = student.get("name")
-            card = self._card_cache.get(key)
-            if card is None:
-                card = self.create_student_card(student)
-                if card is not None:
-                    self._card_cache[key] = card
-            if card is not None:
-                self.cards.append(card)
-
-        # 直接更新布局
-        self.update_layout()
+        # 将待渲染学生放入队列，启动增量渲染
+        self._pending_students = list(self.students) if self.students else []
+        self._start_incremental_render()
 
     # 已移除分页功能，相关方法已删除
 
@@ -407,27 +407,8 @@ class RemainingListPage(QWidget):
             self._clear_grid_layout()
 
             # 计算列数
-            def calculate_columns(width):
-                """根据窗口宽度和卡片尺寸动态计算列数"""
-                if width <= 0:
-                    return 1
-
-                # 计算可用宽度（减去左右边距）
-                available_width = width - 40  # 左右各20px边距
-
-                # 所有卡片使用相同的尺寸
-                card_actual_width = STUDENT_CARD_MIN_WIDTH + STUDENT_CARD_SPACING
-                max_cols = STUDENT_MAX_COLUMNS
-
-                # 计算最大可能列数（不超过最大列数限制）
-                cols = min(int(available_width // card_actual_width), max_cols)
-
-                # 至少显示1列
-                return max(cols, 1)
-
-            # 获取当前窗口宽度
             window_width = max(self.width(), self.sizeHint().width())
-            columns = calculate_columns(window_width)
+            columns = self._calculate_columns(window_width)
 
             # 添加卡片到网格布局
             for i, card in enumerate(self.cards):
@@ -463,6 +444,162 @@ class RemainingListPage(QWidget):
                 self.update()
             except Exception:
                 pass
+
+    def _calculate_columns(self, width: int) -> int:
+        """根据窗口宽度和卡片尺寸动态计算列数"""
+        try:
+            if width <= 0:
+                return 1
+
+            # 计算可用宽度（减去左右边距）
+            available_width = width - 40  # 左右各20px边距
+
+            # 所有卡片使用相同的尺寸
+            card_actual_width = STUDENT_CARD_FIXED_WIDTH + STUDENT_CARD_SPACING
+            max_cols = max(1, available_width // card_actual_width)
+
+            # 至少显示1列，且不超过一个合理上限
+            return max(1, min(int(max_cols), 6))
+        except Exception:
+            return 1
+
+    def _start_incremental_render(self):
+        """使用 QThreadPool 启动后台任务，按批准备数据并通过信号通知主线程创建控件"""
+        if self._rendering:
+            return
+
+        # 准备 reporter（QObject，携带信号）
+        class _BatchReporter(QObject):
+            batch_ready = Signal(list)
+            finished = Signal()
+
+        reporter = _BatchReporter()
+        reporter.batch_ready.connect(self._on_batch_ready)
+        reporter.finished.connect(self._on_render_finished)
+
+        # 启动后台任务
+        task_students = list(self._pending_students)
+
+        class StudentRenderTask(QRunnable):
+            def __init__(self, students, batch_size, reporter, info_template):
+                super().__init__()
+                self.students = students
+                self.batch_size = batch_size
+                self.reporter = reporter
+                self.info_template = info_template or "{id} {gender} {group}"
+                self.setAutoDelete(True)
+
+            def run(self):
+                try:
+                    while self.students:
+                        batch = []
+                        for _ in range(self.batch_size):
+                            if not self.students:
+                                break
+                            student = self.students.pop(0)
+                            # 在后台预格式化显示文本，减少主线程工作
+                            s = dict(student)
+                            try:
+                                s["info_text_pre"] = self.info_template.format(
+                                    id=s.get("id", ""),
+                                    gender=s.get("gender", ""),
+                                    group=s.get("group", ""),
+                                )
+                            except Exception:
+                                s["info_text_pre"] = (
+                                    f"{s.get('id', '')} {s.get('gender', '')} {s.get('group', '')}"
+                                )
+
+                            if s.get("is_group", False):
+                                members = s.get("members", [])
+                                members_names = [m.get("name", "") for m in members[:5]]
+                                members_text = "、".join(members_names)
+                                if len(members) > 5:
+                                    members_text += f" 等{len(members) - 5}名成员"
+                                s["members_text_pre"] = members_text
+
+                            batch.append(s)
+                        # 发射信号到主线程，主线程负责创建 QWidget
+                        try:
+                            self.reporter.batch_ready.emit(batch)
+                        except Exception:
+                            pass
+                    try:
+                        self.reporter.finished.emit()
+                    except Exception:
+                        pass
+                except Exception:
+                    try:
+                        self.reporter.finished.emit()
+                    except Exception:
+                        pass
+
+        self._render_reporter = reporter
+        task = StudentRenderTask(
+            task_students, self._batch_size, reporter, self._student_info_text
+        )
+        self._rendering = True
+        self._thread_pool.start(task)
+
+    def _render_next_batch(self):
+        # 该方法现在由后台任务通过 reporter 信号触发，已废弃
+        return
+
+    def _on_batch_ready(self, batch: list):
+        """主线程槽：接收一批学生数据并创建卡片加入布局"""
+        if not batch:
+            return
+
+        # 创建卡片并直接加入布局缓存
+        for student in batch:
+            key = student.get("name")
+            card = self._card_cache.get(key)
+            if card is None:
+                card = self.create_student_card(student)
+                if card is not None:
+                    self._card_cache[key] = card
+            if card is not None:
+                self.cards.append(card)
+
+        # 将新卡片添加到布局（不清空已有布局）
+        try:
+            columns = self._calculate_columns(
+                max(self.width(), self.sizeHint().width())
+            )
+            start_index = len(self.cards) - len(batch)
+            for i, card in enumerate(self.cards[start_index:], start=start_index):
+                row = i // columns
+                col = i % columns
+                self.grid_layout.addWidget(card, row, col)
+                if not card.isVisible():
+                    card.show()
+
+            for col in range(columns):
+                self.grid_layout.setColumnStretch(col, 1)
+        except Exception:
+            logger.exception("增量渲染时布局更新失败")
+
+    def _on_render_finished(self):
+        """后台渲染完成后的槽"""
+        self._rendering = False
+        self._pending_students = []
+        # 最后触发完整布局更新以修正位置
+        QTimer.singleShot(0, self.update_layout)
+
+    def _finalize_render(self):
+        """渲染完成后的收尾工作"""
+        # 停止定时器
+        try:
+            if self._render_timer is not None:
+                self._render_timer.stop()
+                self._render_timer = None
+        except Exception:
+            pass
+
+        self._rendering = False
+
+        # 最后触发完整布局更新以修正位置
+        QTimer.singleShot(0, self.update_layout)
 
     def _clear_grid_layout(self):
         """清空网格布局"""
@@ -527,12 +664,13 @@ class RemainingListPage(QWidget):
             layout.addWidget(count_label)
 
             # 小组成员列表
-            members_names = [
-                member["name"] for member in members[:5]
-            ]  # 最多显示5个成员
-            members_text = "、".join(members_names)
-            if len(members) > 5:
-                members_text += f" 等{len(members) - 5}名成员"
+            # 使用后台预计算的 members 文本（若存在）
+            members_text = student.get("members_text_pre")
+            if members_text is None:
+                members_names = [member.get("name", "") for member in members[:5]]
+                members_text = "、".join(members_names)
+                if len(members) > 5:
+                    members_text += f" 等{len(members) - 5}名成员"
 
             members_label = BodyLabel(members_text)
             members_label.setFont(QFont(load_custom_font(), 9))
@@ -552,16 +690,19 @@ class RemainingListPage(QWidget):
             )
             layout.setSpacing(5)
 
-            # 使用缓存的学生信息文本，若缓存不存在则回退到调用
-            if self._student_info_text is None:
-                try:
-                    student_info_text = get_any_position_value_async(
-                        "remaining_list", "student_info", "name"
-                    )
-                except Exception:
-                    student_info_text = "{id} {gender} {group}"
+            # 使用后台预计算的 info 文本（若存在），否则从模板生成
+            if student.get("info_text_pre") is not None:
+                student_info_text = student.get("info_text_pre")
             else:
-                student_info_text = self._student_info_text
+                if self._student_info_text is None:
+                    try:
+                        student_info_text = get_any_position_value_async(
+                            "remaining_list", "student_info", "name"
+                        )
+                    except Exception:
+                        student_info_text = "{id} {gender} {group}"
+                else:
+                    student_info_text = self._student_info_text
             # 学生姓名
             name_label = BodyLabel(student["name"])
             if self._font_family:
@@ -572,9 +713,14 @@ class RemainingListPage(QWidget):
             layout.addWidget(name_label)
 
             # 学生信息
-            info_text = student_info_text.format(
-                id=student["id"], gender=student["gender"], group=student["group"]
-            )
+            if isinstance(student_info_text, str) and "{" in student_info_text:
+                info_text = student_info_text.format(
+                    id=student.get("id", ""),
+                    gender=student.get("gender", ""),
+                    group=student.get("group", ""),
+                )
+            else:
+                info_text = student_info_text
             info_label = BodyLabel(info_text)
             if self._font_family:
                 info_label.setFont(QFont(self._font_family, 9))
