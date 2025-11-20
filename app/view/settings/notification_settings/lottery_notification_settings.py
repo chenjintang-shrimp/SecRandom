@@ -80,8 +80,10 @@ class basic_settings(GroupHeaderCardWidget):
                 "lottery_notification_settings", "notification_mode"
             )
         )
-        self.notification_mode_combo_box.setCurrentText(
-            get_content_name_async("lottery_notification_settings", "notification_mode")
+        self.notification_mode_combo_box.setCurrentIndex(
+            readme_settings_async(
+                "lottery_notification_settings", "notification_mode"
+            )
         )
         self.notification_mode_combo_box.currentIndexChanged.connect(
             lambda: update_settings(
@@ -175,7 +177,9 @@ class window_mode(GroupHeaderCardWidget):
         self.horizontal_offset_spin_spinbox.setRange(-25600, 25600)
         self.horizontal_offset_spin_spinbox.setSuffix("px")
         self.horizontal_offset_spin_spinbox.setValue(
-            readme_settings_async("lottery_notification_settings", "horizontal_offset")
+            readme_settings_async(
+                "lottery_notification_settings", "horizontal_offset"
+            )
         )
         self.horizontal_offset_spin_spinbox.valueChanged.connect(
             lambda: update_settings(
@@ -207,13 +211,30 @@ class window_mode(GroupHeaderCardWidget):
         self.window_transparency_spin_spinbox.setRange(0, 100)
         self.window_transparency_spin_spinbox.setSuffix("%")
         self.window_transparency_spin_spinbox.setValue(
-            readme_settings_async("lottery_notification_settings", "transparency") * 100
+            readme_settings_async("lottery_notification_settings", "transparency")
+            * 100
         )
         self.window_transparency_spin_spinbox.valueChanged.connect(
             lambda: update_settings(
                 "lottery_notification_settings",
                 "transparency",
                 self.window_transparency_spin_spinbox.value() / 100,
+            )
+        )
+
+        # 自动关闭时间
+        self.auto_close_time_spinbox = SpinBox()
+        self.auto_close_time_spinbox.setFixedWidth(WIDTH_SPINBOX)
+        self.auto_close_time_spinbox.setRange(0, 300)
+        self.auto_close_time_spinbox.setSuffix("秒")
+        self.auto_close_time_spinbox.setValue(
+            readme_settings_async("lottery_notification_settings", "auto_close_time")
+        )
+        self.auto_close_time_spinbox.valueChanged.connect(
+            lambda: update_settings(
+                "lottery_notification_settings",
+                "auto_close_time",
+                self.auto_close_time_spinbox.value(),
             )
         )
 
@@ -242,7 +263,9 @@ class window_mode(GroupHeaderCardWidget):
         # 添加设置项到分组
         self.addGroup(
             get_theme_icon("ic_fluent_window_text_20_filled"),
-            get_content_name_async("lottery_notification_settings", "enabled_monitor"),
+            get_content_name_async(
+                "lottery_notification_settings", "enabled_monitor"
+            ),
             get_content_description_async(
                 "lottery_notification_settings", "enabled_monitor"
             ),
@@ -250,7 +273,9 @@ class window_mode(GroupHeaderCardWidget):
         )
         self.addGroup(
             get_theme_icon("ic_fluent_position_to_back_20_filled"),
-            get_content_name_async("lottery_notification_settings", "window_position"),
+            get_content_name_async(
+                "lottery_notification_settings", "window_position"
+            ),
             get_content_description_async(
                 "lottery_notification_settings", "window_position"
             ),
@@ -268,7 +293,9 @@ class window_mode(GroupHeaderCardWidget):
         )
         self.addGroup(
             get_theme_icon("ic_fluent_align_stretch_vertical_20_filled"),
-            get_content_name_async("lottery_notification_settings", "vertical_offset"),
+            get_content_name_async(
+                "lottery_notification_settings", "vertical_offset"
+            ),
             get_content_description_async(
                 "lottery_notification_settings", "vertical_offset"
             ),
@@ -281,6 +308,14 @@ class window_mode(GroupHeaderCardWidget):
                 "lottery_notification_settings", "transparency"
             ),
             self.window_transparency_spin_spinbox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_time_picker_20_filled"),
+            get_content_name_async("lottery_notification_settings", "auto_close_time"),
+            get_content_description_async(
+                "lottery_notification_settings", "auto_close_time"
+            ),
+            self.auto_close_time_spinbox,
         )
 
     # 获取显示器列表
@@ -376,6 +411,22 @@ class floating_window_settings(GroupHeaderCardWidget):
             )
         )
 
+        # 浮动窗口自动关闭时间
+        self.floating_window_auto_close_time_spinbox = SpinBox()
+        self.floating_window_auto_close_time_spinbox.setFixedWidth(WIDTH_SPINBOX)
+        self.floating_window_auto_close_time_spinbox.setRange(0, 300)
+        self.floating_window_auto_close_time_spinbox.setSuffix("秒")
+        self.floating_window_auto_close_time_spinbox.setValue(
+            readme_settings_async("lottery_notification_settings", "floating_window_auto_close_time")
+        )
+        self.floating_window_auto_close_time_spinbox.valueChanged.connect(
+            lambda: update_settings(
+                "lottery_notification_settings",
+                "floating_window_auto_close_time",
+                self.floating_window_auto_close_time_spinbox.value(),
+            )
+        )
+
         # 选择启用的显示器下拉框
         self.enabled_monitor_combo_box = ComboBox()
         self.enabled_monitor_combo_box.addItems(self.get_monitor_list())
@@ -452,6 +503,14 @@ class floating_window_settings(GroupHeaderCardWidget):
                 "lottery_notification_settings", "floating_window_transparency"
             ),
             self.window_transparency_spin_spinbox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_time_picker_20_filled"),
+            get_content_name_async("lottery_notification_settings", "floating_window_auto_close_time"),
+            get_content_description_async(
+                "lottery_notification_settings", "floating_window_auto_close_time"
+            ),
+            self.floating_window_auto_close_time_spinbox,
         )
 
     # 获取显示器列表

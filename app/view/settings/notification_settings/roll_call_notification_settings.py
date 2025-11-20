@@ -82,8 +82,8 @@ class basic_settings(GroupHeaderCardWidget):
                 "roll_call_notification_settings", "notification_mode"
             )
         )
-        self.notification_mode_combo_box.setCurrentText(
-            get_content_name_async(
+        self.notification_mode_combo_box.setCurrentIndex(
+            readme_settings_async(
                 "roll_call_notification_settings", "notification_mode"
             )
         )
@@ -226,6 +226,22 @@ class window_mode(GroupHeaderCardWidget):
             )
         )
 
+        # 自动关闭时间
+        self.auto_close_time_spinbox = SpinBox()
+        self.auto_close_time_spinbox.setFixedWidth(WIDTH_SPINBOX)
+        self.auto_close_time_spinbox.setRange(0, 300)
+        self.auto_close_time_spinbox.setSuffix("秒")
+        self.auto_close_time_spinbox.setValue(
+            readme_settings_async("roll_call_notification_settings", "auto_close_time")
+        )
+        self.auto_close_time_spinbox.valueChanged.connect(
+            lambda: update_settings(
+                "roll_call_notification_settings",
+                "auto_close_time",
+                self.auto_close_time_spinbox.value(),
+            )
+        )
+
         # 选择启用的显示器下拉框
         self.enabled_monitor_combo_box = ComboBox()
         self.enabled_monitor_combo_box.addItems(self.get_monitor_list())
@@ -296,6 +312,14 @@ class window_mode(GroupHeaderCardWidget):
                 "roll_call_notification_settings", "transparency"
             ),
             self.window_transparency_spin_spinbox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_time_picker_20_filled"),
+            get_content_name_async("roll_call_notification_settings", "auto_close_time"),
+            get_content_description_async(
+                "roll_call_notification_settings", "auto_close_time"
+            ),
+            self.auto_close_time_spinbox,
         )
 
     # 获取显示器列表
@@ -391,6 +415,22 @@ class floating_window_settings(GroupHeaderCardWidget):
             )
         )
 
+        # 浮动窗口自动关闭时间
+        self.floating_window_auto_close_time_spinbox = SpinBox()
+        self.floating_window_auto_close_time_spinbox.setFixedWidth(WIDTH_SPINBOX)
+        self.floating_window_auto_close_time_spinbox.setRange(0, 300)
+        self.floating_window_auto_close_time_spinbox.setSuffix("秒")
+        self.floating_window_auto_close_time_spinbox.setValue(
+            readme_settings_async("roll_call_notification_settings", "floating_window_auto_close_time")
+        )
+        self.floating_window_auto_close_time_spinbox.valueChanged.connect(
+            lambda: update_settings(
+                "roll_call_notification_settings",
+                "floating_window_auto_close_time",
+                self.floating_window_auto_close_time_spinbox.value(),
+            )
+        )
+
         # 选择启用的显示器下拉框
         self.enabled_monitor_combo_box = ComboBox()
         self.enabled_monitor_combo_box.addItems(self.get_monitor_list())
@@ -467,6 +507,14 @@ class floating_window_settings(GroupHeaderCardWidget):
                 "roll_call_notification_settings", "floating_window_transparency"
             ),
             self.window_transparency_spin_spinbox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_time_picker_20_filled"),
+            get_content_name_async("roll_call_notification_settings", "floating_window_auto_close_time"),
+            get_content_description_async(
+                "roll_call_notification_settings", "floating_window_auto_close_time"
+            ),
+            self.floating_window_auto_close_time_spinbox,
         )
 
     # 获取显示器列表

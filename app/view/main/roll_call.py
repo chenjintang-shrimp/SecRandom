@@ -25,6 +25,8 @@ from app.page_building.another_window import *
 
 from random import SystemRandom
 
+# Add import for notification service
+
 system_random = SystemRandom()
 
 
@@ -429,7 +431,6 @@ class roll_call(QWidget):
                 save_roll_call_history(
                     class_name=self.final_class_name,
                     selected_students=self.final_selected_students,
-                    students_dict_list=self.final_students_dict_list,
                     group_filter=self.final_group_filter,
                     gender_filter=self.final_gender_filter,
                 )
@@ -482,6 +483,54 @@ class roll_call(QWidget):
 
         if hasattr(self, "final_selected_students"):
             self.display_result(self.final_selected_students, self.final_class_name)
+            
+            # 检查是否启用了通知服务
+            call_notification_service = readme_settings_async(
+                "roll_call_notification_settings", "call_notification_service"
+            )
+            if call_notification_service:
+                # 获取通知模式
+                notification_mode = readme_settings_async("roll_call_notification_settings", "notification_mode")
+                
+                # 读取所有相关设置并传递给通知服务
+                settings = {
+                    # 点名设置
+                    "font_size": readme_settings_async("roll_call_settings", "font_size"),
+                    "animation_color_theme": readme_settings_async("roll_call_settings", "animation_color_theme"),
+                    "display_format": readme_settings_async("roll_call_settings", "display_format"),
+                    "student_image": readme_settings_async("roll_call_settings", "student_image"),
+                    
+                    # 通知设置 - 根据通知模式选择适当的设置
+                    "notification_mode": notification_mode,
+                }
+                
+                # 根据通知模式选择适当的设置项
+                if notification_mode == 1:  # 浮动窗口模式
+                    settings.update({
+                        "transparency": readme_settings_async("roll_call_notification_settings", "floating_window_transparency"),
+                        "auto_close_time": readme_settings_async("roll_call_notification_settings", "floating_window_auto_close_time"),
+                        "enabled_monitor": readme_settings_async("roll_call_notification_settings", "floating_window_enabled_monitor"),
+                        "window_position": readme_settings_async("roll_call_notification_settings", "floating_window_position"),
+                        "horizontal_offset": readme_settings_async("roll_call_notification_settings", "floating_window_horizontal_offset"),
+                        "vertical_offset": readme_settings_async("roll_call_notification_settings", "floating_window_vertical_offset"),
+                    })
+                else:  # 窗口模式（默认）
+                    settings.update({
+                        "transparency": readme_settings_async("roll_call_notification_settings", "transparency"),
+                        "auto_close_time": readme_settings_async("roll_call_notification_settings", "auto_close_time"),
+                        "enabled_monitor": readme_settings_async("roll_call_notification_settings", "enabled_monitor"),
+                        "window_position": readme_settings_async("roll_call_notification_settings", "window_position"),
+                        "horizontal_offset": readme_settings_async("roll_call_notification_settings", "horizontal_offset"),
+                        "vertical_offset": readme_settings_async("roll_call_notification_settings", "vertical_offset"),
+                    })
+                
+                # 使用ResultDisplayUtils显示通知
+                ResultDisplayUtils.show_notification_if_enabled(
+                    self.final_class_name,
+                    self.final_selected_students,
+                    self.current_count,
+                    settings
+                )
 
     def animate_result(self):
         """动画过程中更新显示"""
@@ -578,6 +627,54 @@ class roll_call(QWidget):
             self.final_gender_filter = gender_filter
 
             self.display_result(selected_groups, class_name)
+            
+            # 检查是否启用了通知服务
+            call_notification_service = readme_settings_async(
+                "roll_call_notification_settings", "call_notification_service"
+            )
+            if call_notification_service:
+                # 获取通知模式
+                notification_mode = readme_settings_async("roll_call_notification_settings", "notification_mode")
+                
+                # 读取所有相关设置并传递给通知服务
+                settings = {
+                    # 点名设置
+                    "font_size": readme_settings_async("roll_call_settings", "font_size"),
+                    "animation_color_theme": readme_settings_async("roll_call_settings", "animation_color_theme"),
+                    "display_format": readme_settings_async("roll_call_settings", "display_format"),
+                    "student_image": readme_settings_async("roll_call_settings", "student_image"),
+                    
+                    # 通知设置 - 根据通知模式选择适当的设置
+                    "notification_mode": notification_mode,
+                }
+                
+                # 根据通知模式选择适当的设置项
+                if notification_mode == 1:  # 浮动窗口模式
+                    settings.update({
+                        "transparency": readme_settings_async("roll_call_notification_settings", "floating_window_transparency"),
+                        "auto_close_time": readme_settings_async("roll_call_notification_settings", "floating_window_auto_close_time"),
+                        "enabled_monitor": readme_settings_async("roll_call_notification_settings", "floating_window_enabled_monitor"),
+                        "window_position": readme_settings_async("roll_call_notification_settings", "floating_window_position"),
+                        "horizontal_offset": readme_settings_async("roll_call_notification_settings", "floating_window_horizontal_offset"),
+                        "vertical_offset": readme_settings_async("roll_call_notification_settings", "floating_window_vertical_offset"),
+                    })
+                else:  # 窗口模式（默认）
+                    settings.update({
+                        "transparency": readme_settings_async("roll_call_notification_settings", "transparency"),
+                        "auto_close_time": readme_settings_async("roll_call_notification_settings", "auto_close_time"),
+                        "enabled_monitor": readme_settings_async("roll_call_notification_settings", "enabled_monitor"),
+                        "window_position": readme_settings_async("roll_call_notification_settings", "window_position"),
+                        "horizontal_offset": readme_settings_async("roll_call_notification_settings", "horizontal_offset"),
+                        "vertical_offset": readme_settings_async("roll_call_notification_settings", "vertical_offset"),
+                    })
+                
+                # 使用ResultDisplayUtils显示通知
+                ResultDisplayUtils.show_notification_if_enabled(
+                    self.final_class_name,
+                    self.final_selected_students,
+                    self.current_count,
+                    settings
+                )
             return
 
         half_repeat = readme_settings_async("roll_call_settings", "half_repeat")
@@ -647,6 +744,54 @@ class roll_call(QWidget):
         self.final_gender_filter = gender_filter
 
         self.display_result(selected_students, class_name)
+        
+        # 检查是否启用了通知服务
+        call_notification_service = readme_settings_async(
+            "roll_call_notification_settings", "call_notification_service"
+        )
+        if call_notification_service:
+            # 获取通知模式
+            notification_mode = readme_settings_async("roll_call_notification_settings", "notification_mode")
+            
+            # 读取所有相关设置并传递给通知服务
+            settings = {
+                # 点名设置
+                "font_size": readme_settings_async("roll_call_settings", "font_size"),
+                "animation_color_theme": readme_settings_async("roll_call_settings", "animation_color_theme"),
+                "display_format": readme_settings_async("roll_call_settings", "display_format"),
+                "student_image": readme_settings_async("roll_call_settings", "student_image"),
+                
+                # 通知设置 - 根据通知模式选择适当的设置
+                "notification_mode": notification_mode,
+            }
+            
+            # 根据通知模式选择适当的设置项
+            if notification_mode == 1:  # 浮动窗口模式
+                settings.update({
+                    "transparency": readme_settings_async("roll_call_notification_settings", "floating_window_transparency"),
+                    "auto_close_time": readme_settings_async("roll_call_notification_settings", "floating_window_auto_close_time"),
+                    "enabled_monitor": readme_settings_async("roll_call_notification_settings", "floating_window_enabled_monitor"),
+                    "window_position": readme_settings_async("roll_call_notification_settings", "floating_window_position"),
+                    "horizontal_offset": readme_settings_async("roll_call_notification_settings", "floating_window_horizontal_offset"),
+                    "vertical_offset": readme_settings_async("roll_call_notification_settings", "floating_window_vertical_offset"),
+                })
+            else:  # 窗口模式（默认）
+                settings.update({
+                    "transparency": readme_settings_async("roll_call_notification_settings", "transparency"),
+                    "auto_close_time": readme_settings_async("roll_call_notification_settings", "auto_close_time"),
+                    "enabled_monitor": readme_settings_async("roll_call_notification_settings", "enabled_monitor"),
+                    "window_position": readme_settings_async("roll_call_notification_settings", "window_position"),
+                    "horizontal_offset": readme_settings_async("roll_call_notification_settings", "horizontal_offset"),
+                    "vertical_offset": readme_settings_async("roll_call_notification_settings", "vertical_offset"),
+                })
+            
+            # 使用ResultDisplayUtils显示通知
+            ResultDisplayUtils.show_notification_if_enabled(
+                self.final_class_name,
+                self.final_selected_students,
+                self.current_count,
+                settings
+            )
 
     def display_result(self, selected_students, class_name):
         """显示抽取结果"""

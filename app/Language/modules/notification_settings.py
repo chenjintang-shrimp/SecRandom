@@ -3,6 +3,13 @@ notification_settings = {
     "ZH_CN": {"title": {"name": "通知设置", "description": "通知设置"}}
 }
 
+# 通用通知文本
+notification_common = {
+    "ZH_CN": {
+        "notification_result": {"name": "通知结果", "description": "通用的通知结果窗口标题"}
+    }
+}
+
 # 点名通知设置语言配置
 roll_call_notification_settings = {
     "ZH_CN": {
@@ -30,6 +37,10 @@ roll_call_notification_settings = {
             "name": "动画效果",
             "description": "控制点名通知窗口是否显示动画效果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+        },
+        "auto_close_time": {
+            "name": "自动关闭时间",
+            "description": "设置通知窗口自动关闭的时间（秒），设为0表示不自动关闭",
         },
         "enabled_monitor": {
             "name": "显示器选择",
@@ -92,6 +103,10 @@ roll_call_notification_settings = {
             "name": "透明度",
             "description": "调整点名通知浮动窗口的透明度，数值越小越透明（0-100）",
         },
+        "floating_window_auto_close_time": {
+            "name": "浮动窗口自动关闭时间",
+            "description": "设置浮动窗口自动关闭的时间（秒），设为0表示不自动关闭",
+        },
     }
 }
 
@@ -123,6 +138,10 @@ quick_draw_notification_settings = {
             "name": "动画",
             "description": "设置闪抽通知窗口的显示动画效果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+        },
+        "auto_close_time": {
+            "name": "自动关闭时间",
+            "description": "设置通知窗口自动关闭的时间（秒），设为0表示不自动关闭",
         },
         "enabled_monitor": {
             "name": "选择闪抽通知显示的显示器",
@@ -185,6 +204,10 @@ quick_draw_notification_settings = {
             "name": "浮动窗口透明度",
             "description": "设置闪抽通知浮动窗口的透明度，数值越小越透明（0-100）",
         },
+        "floating_window_auto_close_time": {
+            "name": "浮动窗口自动关闭时间",
+            "description": "设置浮动窗口自动关闭的时间（秒），设为0表示不自动关闭",
+        },
     }
 }
 
@@ -216,6 +239,10 @@ instant_draw_notification_settings = {
             "name": "动画",
             "description": "设置即抽通知窗口的显示动画效果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+        },
+        "auto_close_time": {
+            "name": "自动关闭时间",
+            "description": "设置通知窗口自动关闭的时间（秒），设为0表示不自动关闭",
         },
         "enabled_monitor": {
             "name": "选择即抽通知显示的显示器",
@@ -278,6 +305,10 @@ instant_draw_notification_settings = {
             "name": "浮动窗口透明度",
             "description": "设置即抽通知浮动窗口的透明度，数值越小越透明（0-100）",
         },
+        "floating_window_auto_close_time": {
+            "name": "浮动窗口自动关闭时间",
+            "description": "设置浮动窗口自动关闭的时间（秒），设为0表示不自动关闭",
+        },
     }
 }
 
@@ -308,6 +339,10 @@ custom_draw_notification_settings = {
             "name": "动画",
             "description": "设置自定义抽取通知窗口的显示动画效果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+        },
+        "auto_close_time": {
+            "name": "自动关闭时间",
+            "description": "设置通知窗口自动关闭的时间（秒），设为0表示不自动关闭",
         },
         "enabled_monitor": {
             "name": "选择自定义抽取通知显示的显示器",
@@ -370,6 +405,10 @@ custom_draw_notification_settings = {
             "name": "浮动窗口透明度",
             "description": "设置自定义抽取通知浮动窗口的透明度，数值越小越透明（0-100）",
         },
+        "floating_window_auto_close_time": {
+            "name": "浮动窗口自动关闭时间",
+            "description": "设置浮动窗口自动关闭的时间（秒），设为0表示不自动关闭",
+        },
     }
 }
 
@@ -406,6 +445,10 @@ lottery_notification_settings = {
             "name": "动画",
             "description": "设置抽奖通知窗口的显示动画效果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+        },
+        "auto_close_time": {
+            "name": "自动关闭时间",
+            "description": "设置通知窗口自动关闭的时间（秒），设为0表示不自动关闭",
         },
         "enabled_monitor": {
             "name": "选择抽奖通知显示的显示器",
@@ -467,6 +510,10 @@ lottery_notification_settings = {
         "floating_window_transparency": {
             "name": "浮动窗口透明度",
             "description": "设置抽奖通知浮动窗口的透明度，数值越小越透明（0-100）",
+        },
+        "floating_window_auto_close_time": {
+            "name": "浮动窗口自动关闭时间",
+            "description": "设置浮动窗口自动关闭的时间（秒），设为0表示不自动关闭",
         },
     }
 }
