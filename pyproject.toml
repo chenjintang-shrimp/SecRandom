@@ -78,10 +78,3 @@ dev-dependencies = [
     "pre-commit>=3.5.0",
     "ruff>=0.14.3",
 ]
-
-[tool.ruff]
-# 忽略特定错误/警告（例如 F405: "name may be undefined, or defined from star imports"）
-ignore = ["F405","E722","E501","B012","F403","C901","B007","F841","C416","C414","E402"]
-# 可选：关闭某些规则或配置
-extend-ignore = []
-select = ["E", "F", "W", "C", "B", "B9"]
