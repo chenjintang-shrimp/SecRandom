@@ -358,6 +358,7 @@ DEFAULT_SETTINGS = {
         "roll_call_range": {"default_value": True},
         "roll_call_gender": {"default_value": True},
         "roll_call_quantity_label": {"default_value": True},
+        "roll_call_remaining_button": {"default_value": True},
         "lottery_method": {"default_value": 1},
         "show_lottery_name": {"default_value": False},
         "reset_lottery": {"default_value": True},
@@ -365,6 +366,7 @@ DEFAULT_SETTINGS = {
         "lottery_start_button": {"default_value": True},
         "lottery_list": {"default_value": True},
         "lottery_quantity_label": {"default_value": True},
+        "lottery_remaining_button": {"default_value": True},
         "custom_method": {"default_value": 1},
         "reset_custom": {"default_value": True},
         "custom_quantity_control": {"default_value": True},
@@ -374,6 +376,7 @@ DEFAULT_SETTINGS = {
         "custom_range_end": {"default_value": True},
         "draw_custom_method": {"default_value": True},
         "custom_quantity_label": {"default_value": True},
+        "custom_remaining_button": {"default_value": True},
     },
     "floating_window_management": {
         "title": {"default_value": None},

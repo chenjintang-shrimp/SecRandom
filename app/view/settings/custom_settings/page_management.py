@@ -22,6 +22,9 @@ import time
 # 页面管理
 # ==================================================
 class page_management(QWidget):
+    # 添加一个信号，当设置发生变化时发出
+    settingsChanged = Signal(str, str, object)  # (group, key, value)
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         # 创建垂直布局
@@ -155,6 +158,7 @@ class page_management(QWidget):
 class page_management_roll_call(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.setTitle(get_content_name_async("page_management", "roll_call"))
         self.setBorderRadius(8)
 
@@ -167,7 +171,7 @@ class page_management_roll_call(GroupHeaderCardWidget):
             readme_settings_async("page_management", "roll_call_method")
         )
         self.roll_call_method_combo.currentIndexChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "roll_call_method",
                 self.roll_call_method_combo.currentIndex(),
@@ -190,7 +194,7 @@ class page_management_roll_call(GroupHeaderCardWidget):
             readme_settings_async("page_management", "show_name")
         )
         self.show_name_button_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management", "show_name", self.show_name_button_switch.isChecked()
             )
         )
@@ -211,7 +215,7 @@ class page_management_roll_call(GroupHeaderCardWidget):
             readme_settings_async("page_management", "reset_roll_call")
         )
         self.reset_roll_call_button_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "reset_roll_call",
                 self.reset_roll_call_button_switch.isChecked(),
@@ -234,7 +238,7 @@ class page_management_roll_call(GroupHeaderCardWidget):
             readme_settings_async("page_management", "roll_call_quantity_control")
         )
         self.roll_call_quantity_control_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "roll_call_quantity_control",
                 self.roll_call_quantity_control_switch.isChecked(),
@@ -257,7 +261,7 @@ class page_management_roll_call(GroupHeaderCardWidget):
             readme_settings_async("page_management", "roll_call_start_button")
         )
         self.roll_call_start_button_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "roll_call_start_button",
                 self.roll_call_start_button_switch.isChecked(),
@@ -280,7 +284,7 @@ class page_management_roll_call(GroupHeaderCardWidget):
             readme_settings_async("page_management", "roll_call_list")
         )
         self.roll_call_list_combo_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "roll_call_list",
                 self.roll_call_list_combo_switch.isChecked(),
@@ -303,7 +307,7 @@ class page_management_roll_call(GroupHeaderCardWidget):
             readme_settings_async("page_management", "roll_call_range")
         )
         self.roll_call_range_combo_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "roll_call_range",
                 self.roll_call_range_combo_switch.isChecked(),
@@ -326,7 +330,7 @@ class page_management_roll_call(GroupHeaderCardWidget):
             readme_settings_async("page_management", "roll_call_gender")
         )
         self.roll_call_gender_combo_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "roll_call_gender",
                 self.roll_call_gender_combo_switch.isChecked(),
@@ -349,10 +353,33 @@ class page_management_roll_call(GroupHeaderCardWidget):
             readme_settings_async("page_management", "roll_call_quantity_label")
         )
         self.roll_call_quantity_label_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "roll_call_quantity_label",
                 self.roll_call_quantity_label_switch.isChecked(),
+            )
+        )
+
+        # 查看剩余名单按钮是否显示开关
+        self.roll_call_remaining_button_switch = SwitchButton()
+        self.roll_call_remaining_button_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "page_management", "roll_call_remaining_button", "disable"
+            )
+        )
+        self.roll_call_remaining_button_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "page_management", "roll_call_remaining_button", "enable"
+            )
+        )
+        self.roll_call_remaining_button_switch.setChecked(
+            readme_settings_async("page_management", "roll_call_remaining_button")
+        )
+        self.roll_call_remaining_button_switch.checkedChanged.connect(
+            lambda: self._update_settings_and_notify(
+                "page_management",
+                "roll_call_remaining_button",
+                self.roll_call_remaining_button_switch.isChecked(),
             )
         )
 
@@ -415,11 +442,24 @@ class page_management_roll_call(GroupHeaderCardWidget):
             ),
             self.roll_call_quantity_label_switch,
         )
+        self.addGroup(
+            get_theme_icon("ic_fluent_people_list_20_filled"),
+            get_content_name_async("page_management", "roll_call_remaining_button"),
+            get_content_description_async("page_management", "roll_call_remaining_button"),
+            self.roll_call_remaining_button_switch,
+        )
+
+    def _update_settings_and_notify(self, group, key, value):
+        """更新设置并通知父组件"""
+        update_settings(group, key, value)
+        if hasattr(self.parent, 'settingsChanged'):
+            self.parent.settingsChanged.emit(group, key, value)
 
 
 class page_management_lottery(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.setTitle(get_content_name_async("page_management", "lottery"))
         self.setBorderRadius(8)
 
@@ -432,7 +472,7 @@ class page_management_lottery(GroupHeaderCardWidget):
             readme_settings_async("page_management", "lottery_method")
         )
         self.lottery_method_combo.currentIndexChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "lottery_method",
                 self.lottery_method_combo.currentIndex(),
@@ -455,7 +495,7 @@ class page_management_lottery(GroupHeaderCardWidget):
             readme_settings_async("page_management", "show_lottery_name")
         )
         self.show_lottery_name_button_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "show_lottery_name",
                 self.show_lottery_name_button_switch.isChecked(),
@@ -478,7 +518,7 @@ class page_management_lottery(GroupHeaderCardWidget):
             readme_settings_async("page_management", "reset_lottery")
         )
         self.reset_lottery_button_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "reset_lottery",
                 self.reset_lottery_button_switch.isChecked(),
@@ -501,7 +541,7 @@ class page_management_lottery(GroupHeaderCardWidget):
             readme_settings_async("page_management", "lottery_quantity_control")
         )
         self.lottery_quantity_control_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "lottery_quantity_control",
                 self.lottery_quantity_control_switch.isChecked(),
@@ -524,7 +564,7 @@ class page_management_lottery(GroupHeaderCardWidget):
             readme_settings_async("page_management", "lottery_start_button")
         )
         self.lottery_start_button_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "lottery_start_button",
                 self.lottery_start_button_switch.isChecked(),
@@ -547,7 +587,7 @@ class page_management_lottery(GroupHeaderCardWidget):
             readme_settings_async("page_management", "lottery_list")
         )
         self.lottery_list_combo_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "lottery_list",
                 self.lottery_list_combo_switch.isChecked(),
@@ -570,10 +610,33 @@ class page_management_lottery(GroupHeaderCardWidget):
             readme_settings_async("page_management", "lottery_quantity_label")
         )
         self.lottery_quantity_label_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "lottery_quantity_label",
                 self.lottery_quantity_label_switch.isChecked(),
+            )
+        )
+
+        # 查看剩余名单按钮是否显示开关
+        self.lottery_remaining_button_switch = SwitchButton()
+        self.lottery_remaining_button_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "page_management", "lottery_remaining_button", "disable"
+            )
+        )
+        self.lottery_remaining_button_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "page_management", "lottery_remaining_button", "enable"
+            )
+        )
+        self.lottery_remaining_button_switch.setChecked(
+            readme_settings_async("page_management", "lottery_remaining_button")
+        )
+        self.lottery_remaining_button_switch.checkedChanged.connect(
+            lambda: self._update_settings_and_notify(
+                "page_management",
+                "lottery_remaining_button",
+                self.lottery_remaining_button_switch.isChecked(),
             )
         )
 
@@ -622,11 +685,24 @@ class page_management_lottery(GroupHeaderCardWidget):
             get_content_description_async("page_management", "lottery_quantity_label"),
             self.lottery_quantity_label_switch,
         )
+        self.addGroup(
+            get_theme_icon("ic_fluent_people_list_20_filled"),
+            get_content_name_async("page_management", "lottery_remaining_button"),
+            get_content_description_async("page_management", "lottery_remaining_button"),
+            self.lottery_remaining_button_switch,
+        )
+
+    def _update_settings_and_notify(self, group, key, value):
+        """更新设置并通知父组件"""
+        update_settings(group, key, value)
+        if hasattr(self.parent, 'settingsChanged'):
+            self.parent.settingsChanged.emit(group, key, value)
 
 
 class page_management_custom(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.setTitle(get_content_name_async("page_management", "custom"))
         self.setBorderRadius(8)
 
@@ -639,7 +715,7 @@ class page_management_custom(GroupHeaderCardWidget):
             readme_settings_async("page_management", "custom_method")
         )
         self.custom_method_combo.currentIndexChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "custom_method",
                 self.custom_method_combo.currentIndex(),
@@ -659,10 +735,10 @@ class page_management_custom(GroupHeaderCardWidget):
             )
         )
         self.reset_custom_button_switch.setChecked(
-            readme_settings_async("page_management", "reset_custom")
+            readme_settings_async("page_management", "reset_roll_call")
         )
         self.reset_custom_button_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "reset_custom",
                 self.reset_custom_button_switch.isChecked(),
@@ -685,7 +761,7 @@ class page_management_custom(GroupHeaderCardWidget):
             readme_settings_async("page_management", "custom_quantity_control")
         )
         self.custom_quantity_control_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "custom_quantity_control",
                 self.custom_quantity_control_switch.isChecked(),
@@ -708,7 +784,7 @@ class page_management_custom(GroupHeaderCardWidget):
             readme_settings_async("page_management", "custom_start_button")
         )
         self.custom_start_button_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "custom_start_button",
                 self.custom_start_button_switch.isChecked(),
@@ -731,7 +807,7 @@ class page_management_custom(GroupHeaderCardWidget):
             readme_settings_async("page_management", "custom_list")
         )
         self.custom_list_combo_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "custom_list",
                 self.custom_list_combo_switch.isChecked(),
@@ -754,7 +830,7 @@ class page_management_custom(GroupHeaderCardWidget):
             readme_settings_async("page_management", "custom_range_start")
         )
         self.custom_range_start_combo_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "custom_range_start",
                 self.custom_range_start_combo_switch.isChecked(),
@@ -777,7 +853,7 @@ class page_management_custom(GroupHeaderCardWidget):
             readme_settings_async("page_management", "custom_range_end")
         )
         self.custom_range_end_combo_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "custom_range_end",
                 self.custom_range_end_combo_switch.isChecked(),
@@ -800,7 +876,7 @@ class page_management_custom(GroupHeaderCardWidget):
             readme_settings_async("page_management", "draw_custom_method")
         )
         self.draw_custom_method_combo_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "draw_custom_method",
                 self.draw_custom_method_combo_switch.isChecked(),
@@ -823,10 +899,33 @@ class page_management_custom(GroupHeaderCardWidget):
             readme_settings_async("page_management", "custom_quantity_label")
         )
         self.custom_quantity_label_switch.checkedChanged.connect(
-            lambda: update_settings(
+            lambda: self._update_settings_and_notify(
                 "page_management",
                 "custom_quantity_label",
                 self.custom_quantity_label_switch.isChecked(),
+            )
+        )
+
+        # 查看剩余名单按钮是否显示开关
+        self.custom_remaining_button_switch = SwitchButton()
+        self.custom_remaining_button_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "page_management", "custom_remaining_button", "disable"
+            )
+        )
+        self.custom_remaining_button_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "page_management", "custom_remaining_button", "enable"
+            )
+        )
+        self.custom_remaining_button_switch.setChecked(
+            readme_settings_async("page_management", "custom_remaining_button")
+        )
+        self.custom_remaining_button_switch.checkedChanged.connect(
+            lambda: self._update_settings_and_notify(
+                "page_management",
+                "custom_remaining_button",
+                self.custom_remaining_button_switch.isChecked(),
             )
         )
 
@@ -885,3 +984,15 @@ class page_management_custom(GroupHeaderCardWidget):
             get_content_description_async("page_management", "custom_quantity_label"),
             self.custom_quantity_label_switch,
         )
+        self.addGroup(
+            get_theme_icon("ic_fluent_people_list_20_filled"),
+            get_content_name_async("page_management", "custom_remaining_button"),
+            get_content_description_async("page_management", "custom_remaining_button"),
+            self.custom_remaining_button_switch,
+        )
+
+    def _update_settings_and_notify(self, group, key, value):
+        """更新设置并通知父组件"""
+        update_settings(group, key, value)
+        if hasattr(self.parent, 'settingsChanged'):
+            self.parent.settingsChanged.emit(group, key, value)

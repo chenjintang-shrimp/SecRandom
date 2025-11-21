@@ -1,5 +1,6 @@
 # 导入库
 from PySide6.QtWidgets import QFrame
+from PySide6.QtCore import QTimer
 
 # 导入页面模板
 from app.page_building.page_template import PageTemplate
@@ -13,3 +14,34 @@ class roll_call_page(PageTemplate):
 
     def __init__(self, parent: QFrame = None):
         super().__init__(content_widget_class=roll_call, parent=parent)
+        self.roll_call_widget = None
+
+    def create_content(self):
+        """后台创建内容组件，避免堵塞进程"""
+        super().create_content()
+        # 获取点名组件实例并连接信号
+        if hasattr(self, 'contentWidget'):
+            self.roll_call_widget = self.contentWidget
+            # 连接设置变化信号
+            self.roll_call_widget.settingsChanged.connect(self.handle_settings_change)
+
+    def handle_settings_change(self):
+        """处理设置变化信号"""
+        # 清除页面缓存并重新创建
+        self.clear_content()
+        QTimer.singleShot(0, self._recreate_content)
+
+    def _recreate_content(self):
+        """重新创建内容"""
+        self.create_content()
+
+    def clear_content(self):
+        """清除内容"""
+        if self.inner_layout_personal.count() > 0:
+            item = self.inner_layout_personal.takeAt(0)
+            if item and item.widget():
+                widget = item.widget()
+                widget.setParent(None)
+                widget.deleteLater()
+        self.content_created = False
+        self.contentWidget = None

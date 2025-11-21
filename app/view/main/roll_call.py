@@ -32,11 +32,14 @@ system_random = SystemRandom()
 # 班级点名类
 # ==================================================
 class roll_call(QWidget):
+    # 添加一个信号，当设置发生变化时发出
+    settingsChanged = Signal()
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.file_watcher = QFileSystemWatcher()
         self.setup_file_watcher()
-
+        
         # 长按功能相关变量
         self.press_timer = QTimer()
         self.press_timer.timeout.connect(self.handle_long_press)
@@ -46,6 +49,7 @@ class roll_call(QWidget):
         self.long_press_direction = 0  # 长按方向：1为增加，-1为减少
 
         self.initUI()
+        self.setupSettingsListener()
 
     def handle_long_press(self):
         """处理长按事件"""
@@ -191,27 +195,69 @@ class roll_call(QWidget):
         control_layout = QVBoxLayout(control_widget)
         control_layout.setContentsMargins(0, 0, 0, 0)
         control_layout.addStretch()
-        control_layout.addWidget(
-            self.reset_button, alignment=Qt.AlignmentFlag.AlignCenter
+        
+        # 根据页面管理设置决定是否添加控件
+        self.add_control_widget_if_enabled(
+            control_layout, 
+            self.reset_button, 
+            "page_management", 
+            "reset_roll_call"
         )
-        control_layout.addWidget(count_widget, alignment=Qt.AlignmentFlag.AlignCenter)
-        control_layout.addWidget(
-            self.start_button, alignment=Qt.AlignmentFlag.AlignCenter
+        
+        self.add_control_widget_if_enabled(
+            control_layout, 
+            count_widget, 
+            "page_management", 
+            "roll_call_quantity_control"
         )
-        control_layout.addWidget(
-            self.list_combobox, alignment=Qt.AlignmentFlag.AlignCenter
+        
+        self.add_control_widget_if_enabled(
+            control_layout, 
+            self.start_button, 
+            "page_management", 
+            "roll_call_start_button"
         )
-        control_layout.addWidget(
-            self.range_combobox, alignment=Qt.AlignmentFlag.AlignCenter
+        
+        self.add_control_widget_if_enabled(
+            control_layout, 
+            self.list_combobox, 
+            "page_management", 
+            "roll_call_list"
         )
-        control_layout.addWidget(
-            self.gender_combobox, alignment=Qt.AlignmentFlag.AlignCenter
+        
+        self.add_control_widget_if_enabled(
+            control_layout, 
+            self.range_combobox, 
+            "page_management", 
+            "roll_call_range"
         )
-        control_layout.addWidget(
-            self.remaining_button, alignment=Qt.AlignmentFlag.AlignCenter
+        
+        self.add_control_widget_if_enabled(
+            control_layout, 
+            self.gender_combobox, 
+            "page_management", 
+            "roll_call_gender"
         )
-        control_layout.addWidget(
-            self.many_count_label, alignment=Qt.AlignmentFlag.AlignCenter
+        
+        self.add_control_widget_if_enabled(
+            control_layout, 
+            self.remaining_button, 
+            "page_management", 
+            "show_name"
+        )
+
+        self.add_control_widget_if_enabled(
+            control_layout, 
+            self.remaining_button, 
+            "page_management", 
+            "roll_call_remaining_button"
+        )
+        
+        self.add_control_widget_if_enabled(
+            control_layout, 
+            self.many_count_label, 
+            "page_management", 
+            "roll_call_quantity_label"
         )
 
         scroll = SmoothScrollArea()
@@ -220,11 +266,30 @@ class roll_call(QWidget):
 
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addWidget(scroll, 1)
-        main_layout.addWidget(control_widget)
+        
+        # 根据页面管理设置决定控制面板位置
+        roll_call_method = readme_settings_async("page_management", "roll_call_method")
+        
+        if roll_call_method == 0:  # 左侧
+            main_layout.addWidget(control_widget)
+            main_layout.addWidget(scroll, 1)
+        else:  # 右侧
+            main_layout.addWidget(scroll, 1)
+            main_layout.addWidget(control_widget)
 
         # 在事件循环中延迟填充下拉框和初始统计，减少启动阻塞
         QTimer.singleShot(0, self.populate_lists)
+
+    def add_control_widget_if_enabled(self, layout, widget, settings_group, setting_name):
+        """根据设置决定是否添加控件到布局"""
+        try:
+            is_enabled = readme_settings_async(settings_group, setting_name)
+            if is_enabled:
+                layout.addWidget(widget, alignment=Qt.AlignmentFlag.AlignCenter)
+        except Exception as e:
+            logger.error(f"添加控件 {setting_name} 时出错: {e}")
+            # 出错时默认添加控件
+            layout.addWidget(widget, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def on_class_changed(self):
         """当班级选择改变时，更新范围选择、性别选择和人数显示"""
@@ -810,3 +875,16 @@ class roll_call(QWidget):
 
         except Exception as e:
             logger.error(f"延迟填充列表失败: {e}")
+
+    def setupSettingsListener(self):
+        """设置设置监听器，监听页面管理设置变化"""
+        from app.tools.settings_access import get_settings_signals
+        settings_signals = get_settings_signals()
+        settings_signals.settingChanged.connect(self.onSettingsChanged)
+
+    def onSettingsChanged(self, first_level_key, second_level_key, value):
+        """当设置发生变化时的处理函数"""
+        # 只处理页面管理相关的设置变化
+        if first_level_key == "page_management" and second_level_key.startswith("roll_call"):
+            # 发出信号让父组件处理
+            self.settingsChanged.emit()

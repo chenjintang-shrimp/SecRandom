@@ -59,12 +59,12 @@ class MainWindow(MSFluentWindow):
         self._position_window()
 
         # 导入并创建托盘图标
-        tray_icon = Tray(self)
-        tray_icon.showSettingsRequested.connect(self.showSettingsRequested.emit)
-        tray_icon.showSettingsRequestedAbout.connect(
+        self.tray_icon = Tray(self)
+        self.tray_icon.showSettingsRequested.connect(self.showSettingsRequested.emit)
+        self.tray_icon.showSettingsRequestedAbout.connect(
             self.showSettingsRequestedAbout.emit
         )
-        tray_icon.show_tray_icon()
+        self.tray_icon.show_tray_icon()
 
         QTimer.singleShot(APP_INIT_DELAY, lambda: (self.createSubInterface()))
 
@@ -121,18 +121,26 @@ class MainWindow(MSFluentWindow):
     def initNavigation(self):
         """初始化导航系统
         根据用户设置构建个性化菜单导航"""
+        # 获取点名侧边栏位置设置
+        roll_call_sidebar_pos = readme_settings_async("sidebar_management_window", "roll_call_sidebar_position")
+        roll_call_position = NavigationItemPosition.TOP if (roll_call_sidebar_pos is None or roll_call_sidebar_pos != 1) else NavigationItemPosition.BOTTOM
+
         self.addSubInterface(
             self.roll_call_page,
             get_theme_icon("ic_fluent_people_20_filled"),
             get_content_name_async("roll_call", "title"),
-            position=NavigationItemPosition.TOP,
+            position=roll_call_position,
         )
+
+        # 获取设置图标位置设置
+        settings_icon_pos = readme_settings_async("sidebar_management_window", "settings_icon")
+        settings_position = NavigationItemPosition.BOTTOM if (settings_icon_pos == 1) else NavigationItemPosition.TOP
 
         settings_item = self.addSubInterface(
             self.settingsInterface,
             get_theme_icon("ic_fluent_settings_20_filled"),
             "设置",
-            position=NavigationItemPosition.BOTTOM,
+            position=settings_position,
         )
         settings_item.clicked.connect(lambda: self.showSettingsRequested.emit())
         settings_item.clicked.connect(lambda: self.switchTo(self.roll_call_page))

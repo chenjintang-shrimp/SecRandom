@@ -12,7 +12,7 @@ page_management = {
         "roll_call_method": {
             "name": "点名控制面板位置",
             "description": "设置点名控制面板的位置",
-            "combo_items": ["左侧", "右侧", "左侧底部", "右侧底部"],
+            "combo_items": ["左侧", "右侧"],
         },
         "show_name": {
             "name": "名称设置按钮",
@@ -54,10 +54,15 @@ page_management = {
             "description": "控制是否显示抽取人数/组数的标签",
             "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
         },
+        "roll_call_remaining_button": {
+            "name": "查看剩余名单按钮",
+            "description": "控制是否显示查看剩余名单按钮",
+            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+        },
         "lottery_method": {
             "name": "抽奖控制面板位置",
             "description": "设置抽奖控制面板的位置",
-            "combo_items": ["左侧", "右侧", "左侧底部", "右侧底部"],
+            "combo_items": ["左侧", "右侧"],
         },
         "show_lottery_name": {
             "name": "名称设置按钮",
@@ -89,10 +94,15 @@ page_management = {
             "description": "控制是否显示中奖数量标签",
             "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
         },
+        "lottery_remaining_button": {
+            "name": "查看剩余名单按钮",
+            "description": "控制是否显示查看剩余名单按钮",
+            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+        },
         "custom_method": {
             "name": "自定义抽控制面板位置",
             "description": "设置自定义抽控制面板的位置",
-            "combo_items": ["左侧", "右侧", "左侧底部", "右侧底部"],
+            "combo_items": ["左侧", "右侧"],
         },
         "reset_custom": {
             "name": "重置自定义抽按钮",
@@ -132,6 +142,11 @@ page_management = {
         "custom_quantity_label": {
             "name": "数量标签",
             "description": "控制是否显示自定义抽取人数/组数的标签",
+            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+        },
+        "custom_remaining_button": {
+            "name": "查看剩余名单按钮",
+            "description": "控制是否显示查看剩余名单按钮",
             "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
         },
     }

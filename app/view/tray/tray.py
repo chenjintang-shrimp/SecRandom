@@ -9,6 +9,7 @@ from qfluentwidgets import RoundMenu, Action
 
 from app.tools.variable import MENU_AUTO_CLOSE_TIMEOUT
 from app.tools.path_utils import get_resources_path
+from app.Language.obtain_language import readme_settings_async, get_content_name_async
 
 
 # ==================================================
@@ -36,7 +37,6 @@ class Tray(QSystemTrayIcon):
             QIcon(str(get_resources_path("assets/icon", "secrandom-icon-paper.png")))
         )
         self.setToolTip("SecRandom")
-        self._create_menu()
         self.activated.connect(self._on_tray_activated)
 
         # 初始化菜单自动关闭定时器
@@ -48,32 +48,6 @@ class Tray(QSystemTrayIcon):
         self.menu_timer.setSingleShot(True)
         self.menu_timer.timeout.connect(self._on_menu_timeout)
 
-    def _create_menu(self):
-        """创建托盘右键菜单"""
-        self.tray_menu = RoundMenu(parent=self.main_window)
-
-        # 关于SecRandom
-        self.tray_menu.addAction(
-            Action("SecRandom", triggered=self.showSettingsRequestedAbout.emit)
-        )
-        self.tray_menu.addSeparator()
-        # 主界面控制
-        self.tray_menu.addAction(
-            Action("暂时显示/隐藏主界面", triggered=self.main_window.toggle_window)
-        )
-        # 设置界面
-        self.tray_menu.addAction(
-            Action("打开设置界面", triggered=self.showSettingsRequested.emit)
-        )
-        self.tray_menu.addSeparator()
-        # 系统操作
-        self.tray_menu.addAction(Action("重启", triggered=self.main_window.restart_app))
-        self.tray_menu.addAction(
-            Action("退出", triggered=self.main_window.close_window_secrandom)
-        )
-
-        self.tray_menu.installEventFilter(self)
-
     def _on_tray_activated(self, reason):
         """处理托盘图标点击事件
         当用户点击托盘图标时，显示菜单"""
@@ -81,6 +55,9 @@ class Tray(QSystemTrayIcon):
             QSystemTrayIcon.ActivationReason.Trigger,
             QSystemTrayIcon.ActivationReason.Context,
         ):
+            # 每次都创建全新的菜单
+            self._create_fresh_menu()
+            
             pos = QCursor.pos()
             screen = QApplication.primaryScreen().availableGeometry()
             menu_size = self.tray_menu.sizeHint()
@@ -101,6 +78,84 @@ class Tray(QSystemTrayIcon):
             adjusted_pos = QPoint(adjusted_x, adjusted_y - 35)
             self.tray_menu.popup(adjusted_pos)
             self.menu_timer.start(MENU_AUTO_CLOSE_TIMEOUT)
+
+    def _create_fresh_menu(self):
+        """创建全新的托盘菜单"""
+        # 如果已有菜单，先删除
+        if hasattr(self, 'tray_menu'):
+            self.tray_menu.deleteLater()
+            
+        # 创建新菜单
+        self.tray_menu = RoundMenu(parent=self.main_window)
+        
+        # 关于SecRandom
+        self.about_action = Action("SecRandom", triggered=self.showSettingsRequestedAbout.emit)
+        self.tray_menu.addAction(self.about_action)
+
+        self.tray_menu.addSeparator()
+        
+        # 收集需要显示的菜单项
+        menu_items = []
+        
+        # 主界面控制
+        show_hide_main_window = readme_settings_async("tray_management", "show_hide_main_window")
+        if show_hide_main_window is not False:  # None or True
+            toggle_main_window_action = Action(
+                get_content_name_async("tray_management", "show_hide_main_window"), 
+                triggered=self.main_window.toggle_window
+            )
+            menu_items.append(toggle_main_window_action)
+            
+        # 设置界面
+        open_settings = readme_settings_async("tray_management", "open_settings")
+        if open_settings is not False:  # None or True
+            open_settings_action = Action(
+                get_content_name_async("tray_management", "open_settings"), 
+                triggered=self.showSettingsRequested.emit
+            )
+            menu_items.append(open_settings_action)
+            
+        # 暂时显示/隐藏浮窗
+        show_hide_float_window = readme_settings_async("tray_management", "show_hide_float_window")
+        if show_hide_float_window is not False:  # None or True
+            # 注意：暂时注释掉这个功能，因为主窗口缺少对应的方法
+            # show_hide_float_window_action = Action(
+            #     get_content_name_async("tray_management", "show_hide_float_window"), 
+            #     triggered=self.main_window.toggle_floating_window
+            # )
+            # menu_items.append(show_hide_float_window_action)
+            pass
+
+        if show_hide_main_window or open_settings or show_hide_float_window:  # 至少一个菜单项
+            separator = "separator"
+            menu_items.append(separator)
+            
+        # 重启
+        restart = readme_settings_async("tray_management", "restart")
+        if restart is not False:  # None or True
+            restart_action = Action(
+                get_content_name_async("tray_management", "restart"), 
+                triggered=self.main_window.restart_app
+            )
+            menu_items.append(restart_action)
+            
+        # 退出
+        exit_setting = readme_settings_async("tray_management", "exit")
+        if exit_setting is not False:  # None or True
+            exit_action = Action(
+                get_content_name_async("tray_management", "exit"), 
+                triggered=self.main_window.close_window_secrandom
+            )
+            menu_items.append(exit_action)
+            
+        # 添加菜单项（不使用分隔符）
+        for item in menu_items:
+            if item == "separator":  # 分割线
+                self.tray_menu.addSeparator()
+            else:
+                self.tray_menu.addAction(item)
+        
+        self.tray_menu.installEventFilter(self)
 
     def _on_menu_timeout(self):
         """菜单超时自动关闭
