@@ -27,17 +27,103 @@ class sidebar_tray_management(QWidget):
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.vBoxLayout.setSpacing(10)
 
-        # 添加侧边栏管理主界面组件
-        self.sidebar_management_window = sidebar_management_window(self)
-        self.vBoxLayout.addWidget(self.sidebar_management_window)
+        # 使用占位与延迟创建以减少首次打开时的卡顿
+        self._deferred_factories = {}
 
-        # 添加侧边栏管理设置组件
-        self.sidebar_management_settings = sidebar_management_settings(self)
-        self.vBoxLayout.addWidget(self.sidebar_management_settings)
+        def make_placeholder(attr_name: str):
+            w = QWidget()
+            w.setObjectName(attr_name)
+            layout = QVBoxLayout(w)
+            layout.setContentsMargins(0, 0, 0, 0)
+            self.vBoxLayout.addWidget(w)
+            return w
 
-        # 添加托盘管理组件
-        self.tray_management = tray_management(self)
-        self.vBoxLayout.addWidget(self.tray_management)
+        self.sidebar_management_window = make_placeholder("sidebar_management_window")
+        self._deferred_factories["sidebar_management_window"] = (
+            lambda: sidebar_management_window(self)
+        )
+
+        self.sidebar_management_settings = make_placeholder(
+            "sidebar_management_settings"
+        )
+        self._deferred_factories["sidebar_management_settings"] = (
+            lambda: sidebar_management_settings(self)
+        )
+
+        self.tray_management = make_placeholder("tray_management")
+        self._deferred_factories["tray_management"] = lambda: tray_management(self)
+
+        # 分批异步创建真实子组件
+        try:
+            for i, name in enumerate(list(self._deferred_factories.keys())):
+                QTimer.singleShot(120 * i, lambda n=name: self._create_deferred(n))
+        except Exception:
+            pass
+
+    def _create_deferred(self, name: str):
+        factories = getattr(self, "_deferred_factories", {})
+        if name not in factories:
+            return
+        try:
+            factory = factories.pop(name)
+        except Exception:
+            return
+        try:
+            real_widget = factory()
+        except Exception:
+            return
+
+        placeholder = getattr(self, name, None)
+        if placeholder is None:
+            try:
+                self.vBoxLayout.addWidget(real_widget)
+            except Exception:
+                pass
+            setattr(self, name, real_widget)
+            return
+
+        layout = None
+        try:
+            layout = placeholder.layout()
+        except Exception:
+            layout = None
+
+        if layout is None:
+            try:
+                index = -1
+                for i in range(self.vBoxLayout.count()):
+                    item = self.vBoxLayout.itemAt(i)
+                    if item and item.widget() is placeholder:
+                        index = i
+                        break
+                if index >= 0:
+                    try:
+                        item = self.vBoxLayout.takeAt(index)
+                        widget = item.widget() if item else None
+                        if widget is not None:
+                            widget.deleteLater()
+                        self.vBoxLayout.insertWidget(index, real_widget)
+                    except Exception:
+                        self.vBoxLayout.addWidget(real_widget)
+                else:
+                    self.vBoxLayout.addWidget(real_widget)
+            except Exception:
+                try:
+                    self.vBoxLayout.addWidget(real_widget)
+                except Exception:
+                    pass
+            setattr(self, name, real_widget)
+            return
+
+        try:
+            layout.addWidget(real_widget)
+            setattr(self, name, real_widget)
+        except Exception:
+            try:
+                self.vBoxLayout.addWidget(real_widget)
+                setattr(self, name, real_widget)
+            except Exception:
+                pass
 
 
 class sidebar_management_window(GroupHeaderCardWidget):

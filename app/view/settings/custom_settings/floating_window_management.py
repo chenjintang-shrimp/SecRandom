@@ -28,17 +28,111 @@ class floating_window_management(QWidget):
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.vBoxLayout.setSpacing(10)
 
-        # 添加基础设置组件
-        self.basic_settings = floating_window_basic_settings(self)
-        self.vBoxLayout.addWidget(self.basic_settings)
+        # 使用占位与延迟创建以减少首次打开时的卡顿
+        self._deferred_factories = {}
 
-        # 添加外观设置组件
-        self.appearance_settings = floating_window_appearance_settings(self)
-        self.vBoxLayout.addWidget(self.appearance_settings)
+        def make_placeholder(attr_name: str):
+            w = QWidget()
+            w.setObjectName(attr_name)
+            layout = QVBoxLayout(w)
+            layout.setContentsMargins(0, 0, 0, 0)
+            self.vBoxLayout.addWidget(w)
+            return w
 
-        # 添加贴边设置组件
-        self.edge_settings = floating_window_edge_settings(self)
-        self.vBoxLayout.addWidget(self.edge_settings)
+        # 创建占位并注册工厂
+        self.basic_settings = make_placeholder("basic_settings")
+        self._deferred_factories["basic_settings"] = (
+            lambda: floating_window_basic_settings(self)
+        )
+
+        self.appearance_settings = make_placeholder("appearance_settings")
+        self._deferred_factories["appearance_settings"] = (
+            lambda: floating_window_appearance_settings(self)
+        )
+
+        self.edge_settings = make_placeholder("edge_settings")
+        self._deferred_factories["edge_settings"] = (
+            lambda: floating_window_edge_settings(self)
+        )
+
+        # 分批异步创建真实子组件，间隔以减少主线程瞬时负载
+        try:
+            for i, name in enumerate(list(self._deferred_factories.keys())):
+                QTimer.singleShot(120 * i, lambda n=name: self._create_deferred(n))
+        except Exception as e:
+            logger = globals().get("logger")
+            if logger:
+                logger.error(f"调度延迟创建浮窗子组件失败: {e}")
+
+    def _create_deferred(self, name: str):
+        factories = getattr(self, "_deferred_factories", {})
+        if name not in factories:
+            return
+        try:
+            factory = factories.pop(name)
+        except Exception:
+            return
+
+        try:
+            real_widget = factory()
+        except Exception as e:
+            logger = globals().get("logger")
+            if logger:
+                logger.error(f"创建浮窗子组件 {name} 失败: {e}")
+            return
+
+        placeholder = getattr(self, name, None)
+        if placeholder is None:
+            try:
+                self.vBoxLayout.addWidget(real_widget)
+            except Exception:
+                pass
+            setattr(self, name, real_widget)
+            return
+
+        layout = None
+        try:
+            layout = placeholder.layout()
+        except Exception:
+            layout = None
+
+        if layout is None:
+            # 替换占位
+            try:
+                index = -1
+                for i in range(self.vBoxLayout.count()):
+                    item = self.vBoxLayout.itemAt(i)
+                    if item and item.widget() is placeholder:
+                        index = i
+                        break
+                if index >= 0:
+                    try:
+                        item = self.vBoxLayout.takeAt(index)
+                        widget = item.widget() if item else None
+                        if widget is not None:
+                            widget.deleteLater()
+                        self.vBoxLayout.insertWidget(index, real_widget)
+                    except Exception:
+                        self.vBoxLayout.addWidget(real_widget)
+                else:
+                    self.vBoxLayout.addWidget(real_widget)
+            except Exception:
+                try:
+                    self.vBoxLayout.addWidget(real_widget)
+                except Exception:
+                    pass
+            setattr(self, name, real_widget)
+            return
+
+        try:
+            layout.addWidget(real_widget)
+            setattr(self, name, real_widget)
+        except Exception:
+            try:
+                self.vBoxLayout.addWidget(real_widget)
+                setattr(self, name, real_widget)
+            except Exception:
+                pass
 
 
 # ==================================================

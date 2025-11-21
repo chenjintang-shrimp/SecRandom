@@ -407,6 +407,39 @@ class PivotPageTemplate(QFrame):
             self.pivot.setCurrentItem(page_name)
             self.current_page = page_name
 
+    def load_all_pages(self, interval_ms: int = 50, max_per_tick: int = 5):
+        """
+        分批异步加载该 PivotPageTemplate 下所有未加载的页面项，避免一次性阻塞UI。
+
+        Args:
+            interval_ms: 每个批次内相邻项的间隔毫秒数。
+            max_per_tick: 每个定时器回调中加载的最大项数（进一步减少主线程压力）。
+        """
+        try:
+            names = [n for n, info in self.page_infos.items() if not info.get("loaded")]
+            if not names:
+                return
+
+            # 调度分批加载
+            for i in range(0, len(names), max_per_tick):
+                batch = names[i : i + max_per_tick]
+                QTimer.singleShot(
+                    interval_ms * (i // max_per_tick),
+                    (
+                        lambda b=batch: [
+                            self._load_page_content(
+                                n,
+                                self.page_infos[n]["display"],
+                                self.page_infos[n]["scroll"],
+                                self.page_infos[n]["layout"],
+                            )
+                            for n in b
+                        ]
+                    ),
+                )
+        except Exception:
+            pass
+
     def on_current_index_changed(self, index: int):
         """堆叠窗口索引改变时的处理"""
         widget = self.stacked_widget.widget(index)

@@ -24,7 +24,7 @@ import time
 class page_management(QWidget):
     # 添加一个信号，当设置发生变化时发出
     settingsChanged = Signal(str, str, object)  # (group, key, value)
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         # 创建垂直布局
@@ -445,14 +445,16 @@ class page_management_roll_call(GroupHeaderCardWidget):
         self.addGroup(
             get_theme_icon("ic_fluent_people_list_20_filled"),
             get_content_name_async("page_management", "roll_call_remaining_button"),
-            get_content_description_async("page_management", "roll_call_remaining_button"),
+            get_content_description_async(
+                "page_management", "roll_call_remaining_button"
+            ),
             self.roll_call_remaining_button_switch,
         )
 
     def _update_settings_and_notify(self, group, key, value):
         """更新设置并通知父组件"""
         update_settings(group, key, value)
-        if hasattr(self.parent, 'settingsChanged'):
+        if hasattr(self.parent, "settingsChanged"):
             self.parent.settingsChanged.emit(group, key, value)
 
 
@@ -688,14 +690,16 @@ class page_management_lottery(GroupHeaderCardWidget):
         self.addGroup(
             get_theme_icon("ic_fluent_people_list_20_filled"),
             get_content_name_async("page_management", "lottery_remaining_button"),
-            get_content_description_async("page_management", "lottery_remaining_button"),
+            get_content_description_async(
+                "page_management", "lottery_remaining_button"
+            ),
             self.lottery_remaining_button_switch,
         )
 
     def _update_settings_and_notify(self, group, key, value):
         """更新设置并通知父组件"""
         update_settings(group, key, value)
-        if hasattr(self.parent, 'settingsChanged'):
+        if hasattr(self.parent, "settingsChanged"):
             self.parent.settingsChanged.emit(group, key, value)
 
 
@@ -994,5 +998,5 @@ class page_management_custom(GroupHeaderCardWidget):
     def _update_settings_and_notify(self, group, key, value):
         """更新设置并通知父组件"""
         update_settings(group, key, value)
-        if hasattr(self.parent, 'settingsChanged'):
+        if hasattr(self.parent, "settingsChanged"):
             self.parent.settingsChanged.emit(group, key, value)
