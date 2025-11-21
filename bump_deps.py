@@ -8,6 +8,7 @@ import json
 import subprocess
 import tomlkit
 import re
+import shutil
 
 PYPROJECT = "pyproject.toml"
 # 如果想强制全部改成 >=，把 REWRITE_OP 设成 True
@@ -15,11 +16,17 @@ REWRITE_OP = False
 NEW_OP = ">="  # 统一操作符
 
 # 1. 拿到最新版本 map
+uv_exe = shutil.which("uv")
+if uv_exe is None:
+    raise SystemExit(
+        "`uv` executable not found in PATH. Install 'uv' or add it to PATH."
+    )
+
 latest = {
     pkg["name"]: pkg["latest_version"]
     for pkg in json.loads(
         subprocess.check_output(
-            ["uv", "pip", "list", "--outdated", "--format=json"], text=True
+            [uv_exe, "pip", "list", "--outdated", "--format=json"], text=True
         )
     )
 }
@@ -57,5 +64,5 @@ for sect in ("dependencies", "dev-dependencies"):
 with open(PYPROJECT, "w", encoding="utf-8") as f:
     tomlkit.dump(doc, f)
 
-subprocess.check_call(["uv", "lock"])
+subprocess.check_call([uv_exe, "lock"])
 print("🎉 全部完成！")
