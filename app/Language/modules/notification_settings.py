@@ -6,7 +6,10 @@ notification_settings = {
 # 通用通知文本
 notification_common = {
     "ZH_CN": {
-        "notification_result": {"name": "通知结果", "description": "通用的通知结果窗口标题"}
+        "notification_result": {
+            "name": "通知结果",
+            "description": "通用的通知结果窗口标题",
+        }
     }
 }
 

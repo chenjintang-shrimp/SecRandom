@@ -75,13 +75,19 @@ class SettingsWindow(MSFluentWindow):
     def _init_interface_variables(self):
         """初始化界面变量"""
         interface_names = [
-            'homeInterface', 'basicSettingsInterface', 'listManagementInterface',
-            'extractionSettingsInterface', 'notificationSettingsInterface',
-            'safetySettingsInterface', 'customSettingsInterface',
-            'voiceSettingsInterface', 'historyInterface', 'moreSettingsInterface',
-            'aboutInterface'
+            "homeInterface",
+            "basicSettingsInterface",
+            "listManagementInterface",
+            "extractionSettingsInterface",
+            "notificationSettingsInterface",
+            "safetySettingsInterface",
+            "customSettingsInterface",
+            "voiceSettingsInterface",
+            "historyInterface",
+            "moreSettingsInterface",
+            "aboutInterface",
         ]
-        
+
         for name in interface_names:
             setattr(self, name, None)
 
@@ -147,26 +153,69 @@ class SettingsWindow(MSFluentWindow):
         # 获取所有设置值
         settings = {
             "home": readme_settings_async("sidebar_management_settings", "home"),
-            "base_settings": readme_settings_async("sidebar_management_settings", "base_settings"),
-            "name_management": readme_settings_async("sidebar_management_settings", "name_management"),
-            "draw_settings": readme_settings_async("sidebar_management_settings", "draw_settings"),
-            "notification_service": readme_settings_async("sidebar_management_settings", "notification_service"),
-            "security_settings": readme_settings_async("sidebar_management_settings", "security_settings"),
-            "personal_settings": readme_settings_async("sidebar_management_settings", "personal_settings"),
-            "voice_settings": readme_settings_async("sidebar_management_settings", "voice_settings"),
-            "settings_history": readme_settings_async("sidebar_management_settings", "settings_history"),
-            "more_settings": readme_settings_async("sidebar_management_settings", "more_settings"),
+            "base_settings": readme_settings_async(
+                "sidebar_management_settings", "base_settings"
+            ),
+            "name_management": readme_settings_async(
+                "sidebar_management_settings", "name_management"
+            ),
+            "draw_settings": readme_settings_async(
+                "sidebar_management_settings", "draw_settings"
+            ),
+            "notification_service": readme_settings_async(
+                "sidebar_management_settings", "notification_service"
+            ),
+            "security_settings": readme_settings_async(
+                "sidebar_management_settings", "security_settings"
+            ),
+            "personal_settings": readme_settings_async(
+                "sidebar_management_settings", "personal_settings"
+            ),
+            "voice_settings": readme_settings_async(
+                "sidebar_management_settings", "voice_settings"
+            ),
+            "settings_history": readme_settings_async(
+                "sidebar_management_settings", "settings_history"
+            ),
+            "more_settings": readme_settings_async(
+                "sidebar_management_settings", "more_settings"
+            ),
         }
 
         # 定义页面配置
         page_configs = [
             ("home", "homeInterface", "home_page", False),
             ("base_settings", "basicSettingsInterface", "basic_settings_page", False),
-            ("name_management", "listManagementInterface", "list_management_page", True),
-            ("draw_settings", "extractionSettingsInterface", "extraction_settings_page", True),
-            ("notification_service", "notificationSettingsInterface", "notification_settings_page", True),
-            ("security_settings", "safetySettingsInterface", "safety_settings_page", True),
-            ("personal_settings", "customSettingsInterface", "custom_settings_page", True),
+            (
+                "name_management",
+                "listManagementInterface",
+                "list_management_page",
+                True,
+            ),
+            (
+                "draw_settings",
+                "extractionSettingsInterface",
+                "extraction_settings_page",
+                True,
+            ),
+            (
+                "notification_service",
+                "notificationSettingsInterface",
+                "notification_settings_page",
+                True,
+            ),
+            (
+                "security_settings",
+                "safetySettingsInterface",
+                "safety_settings_page",
+                True,
+            ),
+            (
+                "personal_settings",
+                "customSettingsInterface",
+                "custom_settings_page",
+                True,
+            ),
             ("voice_settings", "voiceSettingsInterface", "voice_settings_page", True),
             ("settings_history", "historyInterface", "history_page", True),
             ("more_settings", "moreSettingsInterface", "more_settings_page", True),
@@ -179,24 +228,32 @@ class SettingsWindow(MSFluentWindow):
             if setting_value is None or setting_value != 2:
                 interface = make_placeholder(interface_attr)
                 setattr(self, interface_attr, interface)
-                
+
                 # 使用默认参数解决闭包问题
                 def make_factory(method_name=page_method, iface=interface):
-                    return lambda parent=iface: getattr(settings_window_page, method_name)(parent)
-                
+                    return lambda parent=iface: getattr(
+                        settings_window_page, method_name
+                    )(parent)
+
                 self._deferred_factories[interface_attr] = make_factory()
                 self._deferred_factories_meta[interface_attr] = {"is_pivot": is_pivot}
 
         self.aboutInterface = make_placeholder("aboutInterface")
-        
+
         def make_about_factory(iface=self.aboutInterface):
             return lambda parent=iface: settings_window_page.about_page(parent)
-            
+
         self._deferred_factories["aboutInterface"] = make_about_factory()
         self._deferred_factories_meta["aboutInterface"] = {"is_pivot": False}
 
         # 把占位注册到导航，但不要在此刻实例化真实页面
         self.initNavigation()
+
+        # 在窗口显示后启动针对非 pivot 页面的后台预热（分批创建）
+        try:
+            QTimer.singleShot(300, lambda: self._background_warmup_non_pivot())
+        except Exception:
+            pass
 
         # 连接堆叠窗口切换信号，在首次切换到占位时创建真实页面
         try:
@@ -229,6 +286,17 @@ class SettingsWindow(MSFluentWindow):
                     # real_page 会在其内部创建内容（PageTemplate 会在其内部事件循环中再创建内部内容），
                     # 我们把它作为子控件加入占位容器
                     widget.layout().addWidget(real_page)
+                    # 如果是 PivotPageTemplate，打开该顶层页面时预加载其所有 inner pivots（分批加载以避免卡顿）
+                    try:
+                        from app.page_building.page_template import PivotPageTemplate
+
+                        if isinstance(real_page, PivotPageTemplate):
+                            # 稍微延迟以确保 real_page 初始化完成
+                            QTimer.singleShot(
+                                50, lambda rp=real_page: rp.load_all_pages()
+                            )
+                    except Exception:
+                        pass
                     logger.debug(f"设置页面已按需创建: {name}")
                 except Exception as e:
                     logger.error(f"延迟创建设置页面 {name} 失败: {e}")
@@ -276,32 +344,60 @@ class SettingsWindow(MSFluentWindow):
         except Exception as e:
             logger.error(f"后台预热设置页面失败: {e}")
 
+    def _background_warmup_non_pivot(self, interval_ms: int = 80):
+        """
+        在设置窗口首次打开时，分批延时创建所有非 pivot（单页面）项，避免用户首次打开时卡顿。
+
+        Args:
+            interval_ms: 每个页面创建的间隔毫秒数。
+        """
+        try:
+            names = list(getattr(self, "_deferred_factories", {}).keys())
+            if not names:
+                return
+
+            meta = getattr(self, "_deferred_factories_meta", {})
+            non_pivot = [n for n in names if not meta.get(n, {}).get("is_pivot", False)]
+            # 逐个调度创建非 pivot 页面，分散开以减少瞬时主线程负载
+            for i, name in enumerate(non_pivot):
+                QTimer.singleShot(
+                    interval_ms * i, (lambda n=name: self._create_deferred_page(n))
+                )
+        except Exception as e:
+            logger.error(f"后台预热非 pivot 页面失败: {e}")
+
     def _create_deferred_page(self, name: str):
         """根据名字创建对应延迟工厂并把结果加入占位容器"""
         try:
             if name not in getattr(self, "_deferred_factories", {}):
                 return
             factory = self._deferred_factories.pop(name)
-            
+
             # 查找对应的容器
             container = None
             container_attrs = [
-                'homeInterface', 'basicSettingsInterface', 'listManagementInterface',
-                'extractionSettingsInterface', 'notificationSettingsInterface',
-                'safetySettingsInterface', 'customSettingsInterface',
-                'voiceSettingsInterface', 'historyInterface', 'moreSettingsInterface',
-                'aboutInterface'
+                "homeInterface",
+                "basicSettingsInterface",
+                "listManagementInterface",
+                "extractionSettingsInterface",
+                "notificationSettingsInterface",
+                "safetySettingsInterface",
+                "customSettingsInterface",
+                "voiceSettingsInterface",
+                "historyInterface",
+                "moreSettingsInterface",
+                "aboutInterface",
             ]
-            
+
             for attr in container_attrs:
                 container_obj = getattr(self, attr, None)
                 if container_obj and container_obj.objectName() == name:
                     container = container_obj
                     break
-                    
+
             if container is None:
                 return
-                
+
             # 如果容器已经被销毁或没有 layout，则跳过
             if not container or not hasattr(container, "layout"):
                 return
@@ -333,41 +429,140 @@ class SettingsWindow(MSFluentWindow):
         # 获取所有设置值
         settings = {
             "home": readme_settings_async("sidebar_management_settings", "home"),
-            "base_settings": readme_settings_async("sidebar_management_settings", "base_settings"),
-            "name_management": readme_settings_async("sidebar_management_settings", "name_management"),
-            "draw_settings": readme_settings_async("sidebar_management_settings", "draw_settings"),
-            "notification_service": readme_settings_async("sidebar_management_settings", "notification_service"),
-            "security_settings": readme_settings_async("sidebar_management_settings", "security_settings"),
-            "personal_settings": readme_settings_async("sidebar_management_settings", "personal_settings"),
-            "voice_settings": readme_settings_async("sidebar_management_settings", "voice_settings"),
-            "settings_history": readme_settings_async("sidebar_management_settings", "settings_history"),
-            "more_settings": readme_settings_async("sidebar_management_settings", "more_settings"),
+            "base_settings": readme_settings_async(
+                "sidebar_management_settings", "base_settings"
+            ),
+            "name_management": readme_settings_async(
+                "sidebar_management_settings", "name_management"
+            ),
+            "draw_settings": readme_settings_async(
+                "sidebar_management_settings", "draw_settings"
+            ),
+            "notification_service": readme_settings_async(
+                "sidebar_management_settings", "notification_service"
+            ),
+            "security_settings": readme_settings_async(
+                "sidebar_management_settings", "security_settings"
+            ),
+            "personal_settings": readme_settings_async(
+                "sidebar_management_settings", "personal_settings"
+            ),
+            "voice_settings": readme_settings_async(
+                "sidebar_management_settings", "voice_settings"
+            ),
+            "settings_history": readme_settings_async(
+                "sidebar_management_settings", "settings_history"
+            ),
+            "more_settings": readme_settings_async(
+                "sidebar_management_settings", "more_settings"
+            ),
         }
 
         # 定义导航项配置
         nav_configs = [
-            ("home", "homeInterface", "home_item", "ic_fluent_home_20_filled", "home", "title"),
-            ("base_settings", "basicSettingsInterface", "basic_settings_item", "ic_fluent_wrench_settings_20_filled", "basic_settings", "title"),
-            ("name_management", "listManagementInterface", "list_management_item", "ic_fluent_list_20_filled", "list_management", "title"),
-            ("draw_settings", "extractionSettingsInterface", "extraction_settings_item", "ic_fluent_archive_20_filled", "extraction_settings", "title"),
-            ("notification_service", "notificationSettingsInterface", "notification_settings_item", "ic_fluent_comment_note_20_filled", "notification_settings", "title"),
-            ("security_settings", "safetySettingsInterface", "safety_settings_item", "ic_fluent_shield_20_filled", "safety_settings", "title"),
-            ("personal_settings", "customSettingsInterface", "custom_settings_item", "ic_fluent_person_edit_20_filled", "custom_settings", "title"),
-            ("voice_settings", "voiceSettingsInterface", "voice_settings_item", "ic_fluent_person_voice_20_filled", "voice_settings", "title"),
-            ("settings_history", "historyInterface", "history_item", "ic_fluent_history_20_filled", "history", "title"),
-            ("more_settings", "moreSettingsInterface", "more_settings_item", "ic_fluent_more_horizontal_20_filled", "more_settings", "title"),
+            (
+                "home",
+                "homeInterface",
+                "home_item",
+                "ic_fluent_home_20_filled",
+                "home",
+                "title",
+            ),
+            (
+                "base_settings",
+                "basicSettingsInterface",
+                "basic_settings_item",
+                "ic_fluent_wrench_settings_20_filled",
+                "basic_settings",
+                "title",
+            ),
+            (
+                "name_management",
+                "listManagementInterface",
+                "list_management_item",
+                "ic_fluent_list_20_filled",
+                "list_management",
+                "title",
+            ),
+            (
+                "draw_settings",
+                "extractionSettingsInterface",
+                "extraction_settings_item",
+                "ic_fluent_archive_20_filled",
+                "extraction_settings",
+                "title",
+            ),
+            (
+                "notification_service",
+                "notificationSettingsInterface",
+                "notification_settings_item",
+                "ic_fluent_comment_note_20_filled",
+                "notification_settings",
+                "title",
+            ),
+            (
+                "security_settings",
+                "safetySettingsInterface",
+                "safety_settings_item",
+                "ic_fluent_shield_20_filled",
+                "safety_settings",
+                "title",
+            ),
+            (
+                "personal_settings",
+                "customSettingsInterface",
+                "custom_settings_item",
+                "ic_fluent_person_edit_20_filled",
+                "custom_settings",
+                "title",
+            ),
+            (
+                "voice_settings",
+                "voiceSettingsInterface",
+                "voice_settings_item",
+                "ic_fluent_person_voice_20_filled",
+                "voice_settings",
+                "title",
+            ),
+            (
+                "settings_history",
+                "historyInterface",
+                "history_item",
+                "ic_fluent_history_20_filled",
+                "history",
+                "title",
+            ),
+            (
+                "more_settings",
+                "moreSettingsInterface",
+                "more_settings_item",
+                "ic_fluent_more_horizontal_20_filled",
+                "more_settings",
+                "title",
+            ),
         ]
 
         # 根据设置添加导航项
-        for setting_key, interface_attr, item_attr, icon_name, module, name_key in nav_configs:
+        for (
+            setting_key,
+            interface_attr,
+            item_attr,
+            icon_name,
+            module,
+            name_key,
+        ) in nav_configs:
             setting_value = settings.get(setting_key)
             # 如果设置不为"不显示"(值不等于2)或者设置未定义，则添加导航项
             if setting_value is None or setting_value != 2:
                 interface = getattr(self, interface_attr, None)
                 if interface is not None:
                     # 确定位置：设置为1表示底部，其他情况为顶部
-                    position = NavigationItemPosition.BOTTOM if setting_value == 1 else NavigationItemPosition.TOP
-                    
+                    position = (
+                        NavigationItemPosition.BOTTOM
+                        if setting_value == 1
+                        else NavigationItemPosition.TOP
+                    )
+
                     nav_item = self.addSubInterface(
                         interface,
                         get_theme_icon(icon_name),

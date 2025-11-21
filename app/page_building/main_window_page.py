@@ -20,7 +20,7 @@ class roll_call_page(PageTemplate):
         """后台创建内容组件，避免堵塞进程"""
         super().create_content()
         # 获取点名组件实例并连接信号
-        if hasattr(self, 'contentWidget'):
+        if hasattr(self, "contentWidget"):
             self.roll_call_widget = self.contentWidget
             # 连接设置变化信号
             self.roll_call_widget.settingsChanged.connect(self.handle_settings_change)
