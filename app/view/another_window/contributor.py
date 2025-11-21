@@ -66,75 +66,85 @@ class contributor_page(QWidget):
                 ),
             },
             {
-                "name": "QiKeZhiCao",
+                "name": "chenjintang-shrimp",
                 "role": get_any_position_value_async(
                     "about", "contributor", "contributor_role_2"
                 ),
-                "github": "https://github.com/QiKeZhiCao",
+                "github": "https://github.com/chenjintang-shrimp",
                 "avatar": str(
                     get_resources_path("assets/contribution", "contributor2.png")
                 ),
             },
             {
-                "name": "Fox-block-offcial",
+                "name": "yuanbenxin",
                 "role": get_any_position_value_async(
                     "about", "contributor", "contributor_role_3"
                 ),
-                "github": "https://github.com/Fox-block-offcial",
+                "github": "https://github.com/yuanbenxin",
                 "avatar": str(
                     get_resources_path("assets/contribution", "contributor3.png")
                 ),
             },
             {
-                "name": "yuanbenxin",
+                "name": "LeafS",
                 "role": get_any_position_value_async(
                     "about", "contributor", "contributor_role_4"
                 ),
-                "github": "https://github.com/yuanbenxin",
+                "github": "https://github.com/LeafS825",
                 "avatar": str(
                     get_resources_path("assets/contribution", "contributor4.png")
                 ),
             },
             {
-                "name": "LeafS",
+                "name": "QiKeZhiCao",
                 "role": get_any_position_value_async(
                     "about", "contributor", "contributor_role_5"
                 ),
-                "github": "https://github.com/LeafS825",
+                "github": "https://github.com/QiKeZhiCao",
                 "avatar": str(
                     get_resources_path("assets/contribution", "contributor5.png")
                 ),
             },
             {
-                "name": "Jursin",
+                "name": "Fox-block-offcial",
                 "role": get_any_position_value_async(
                     "about", "contributor", "contributor_role_6"
                 ),
-                "github": "https://github.com/jursin",
+                "github": "https://github.com/Fox-block-offcial",
                 "avatar": str(
                     get_resources_path("assets/contribution", "contributor6.png")
                 ),
             },
             {
-                "name": "LHGS-github",
+                "name": "Jursin",
                 "role": get_any_position_value_async(
                     "about", "contributor", "contributor_role_7"
                 ),
-                "github": "https://github.com/LHGS-github",
+                "github": "https://github.com/jursin",
                 "avatar": str(
                     get_resources_path("assets/contribution", "contributor7.png")
                 ),
             },
             {
-                "name": "real01bit",
+                "name": "LHGS-github",
                 "role": get_any_position_value_async(
                     "about", "contributor", "contributor_role_8"
                 ),
-                "github": "https://github.com/real01bit",
+                "github": "https://github.com/LHGS-github",
                 "avatar": str(
                     get_resources_path("assets/contribution", "contributor8.png")
                 ),
             },
+            {
+                "name": "real01bit",
+                "role": get_any_position_value_async(
+                    "about", "contributor", "contributor_role_9"
+                ),
+                "github": "https://github.com/real01bit",
+                "avatar": str(
+                    get_resources_path("assets/contribution", "contributor9.png")
+                ),
+            }
         ]
 
         # 标准化职责文本长度
