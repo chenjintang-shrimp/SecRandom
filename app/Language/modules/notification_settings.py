@@ -33,41 +33,6 @@ roll_call_notification_settings = {
             "description": "控制点名通知窗口是否显示动画效果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
         },
-        "auto_close_time": {
-            "name": "自动关闭时间",
-            "description": "设置通知窗口自动关闭的时间（秒），设为0表示不自动关闭",
-        },
-        "enabled_monitor": {
-            "name": "显示器选择",
-            "description": "选择用于显示点名通知的显示器",
-        },
-        "window_position": {
-            "name": "窗口位置",
-            "description": "设置点名通知窗口在屏幕上的显示位置",
-            "combo_items": [
-                "中心",
-                "顶部",
-                "底部",
-                "左侧",
-                "右侧",
-                "顶部左侧",
-                "顶部右侧",
-                "底部左侧",
-                "底部右侧",
-            ],
-        },
-        "horizontal_offset": {
-            "name": "水平偏移",
-            "description": "调整点名通知窗口相对默认位置的水平偏移量（像素）",
-        },
-        "vertical_offset": {
-            "name": "垂直偏移",
-            "description": "调整点名通知窗口相对默认位置的垂直偏移量（像素）",
-        },
-        "transparency": {
-            "name": "透明度",
-            "description": "调整点名通知窗口的透明度，数值越小越透明（0-100）",
-        },
         "floating_window_enabled_monitor": {
             "name": "显示器选择",
             "description": "选择用于显示点名通知浮动窗口的显示器",
@@ -129,41 +94,6 @@ quick_draw_notification_settings = {
             "name": "动画",
             "description": "设置闪抽通知窗口的显示动画效果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
-        },
-        "auto_close_time": {
-            "name": "自动关闭时间",
-            "description": "设置通知窗口自动关闭的时间（秒），设为0表示不自动关闭",
-        },
-        "enabled_monitor": {
-            "name": "选择闪抽通知显示的显示器",
-            "description": "选择闪抽通知窗口显示的显示器",
-        },
-        "window_position": {
-            "name": "窗口位置",
-            "description": "设置闪抽通知窗口在屏幕上的显示位置",
-            "combo_items": [
-                "中心",
-                "顶部",
-                "底部",
-                "左侧",
-                "右侧",
-                "顶部左侧",
-                "顶部右侧",
-                "底部左侧",
-                "底部右侧",
-            ],
-        },
-        "horizontal_offset": {
-            "name": "水平偏移",
-            "description": "设置闪抽通知窗口相对默认位置的水平偏移量（像素）",
-        },
-        "vertical_offset": {
-            "name": "垂直偏移",
-            "description": "设置闪抽通知窗口相对默认位置的垂直偏移量（像素）",
-        },
-        "transparency": {
-            "name": "透明度",
-            "description": "设置闪抽通知窗口的透明度，数值越小越透明（0-100）",
         },
         "floating_window_enabled_monitor": {
             "name": "选择闪抽通知显示的显示器",
@@ -227,41 +157,6 @@ instant_draw_notification_settings = {
             "description": "设置即抽通知窗口的显示动画效果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
         },
-        "auto_close_time": {
-            "name": "自动关闭时间",
-            "description": "设置通知窗口自动关闭的时间（秒），设为0表示不自动关闭",
-        },
-        "enabled_monitor": {
-            "name": "选择即抽通知显示的显示器",
-            "description": "选择即抽通知窗口显示的显示器",
-        },
-        "window_position": {
-            "name": "窗口位置",
-            "description": "设置即抽通知窗口在屏幕上的显示位置",
-            "combo_items": [
-                "中心",
-                "顶部",
-                "底部",
-                "左侧",
-                "右侧",
-                "顶部左侧",
-                "顶部右侧",
-                "底部左侧",
-                "底部右侧",
-            ],
-        },
-        "horizontal_offset": {
-            "name": "水平偏移",
-            "description": "设置即抽通知窗口相对默认位置的水平偏移量（像素）",
-        },
-        "vertical_offset": {
-            "name": "垂直偏移",
-            "description": "设置即抽通知窗口相对默认位置的垂直偏移量（像素）",
-        },
-        "transparency": {
-            "name": "透明度",
-            "description": "设置即抽通知窗口的透明度，数值越小越透明（0-100）",
-        },
         "floating_window_enabled_monitor": {
             "name": "选择即抽通知显示的显示器",
             "description": "选择即抽通知浮动窗口显示的显示器",
@@ -322,41 +217,6 @@ custom_draw_notification_settings = {
             "name": "动画",
             "description": "设置自定义抽取通知窗口的显示动画效果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
-        },
-        "auto_close_time": {
-            "name": "自动关闭时间",
-            "description": "设置通知窗口自动关闭的时间（秒），设为0表示不自动关闭",
-        },
-        "enabled_monitor": {
-            "name": "选择自定义抽取通知显示的显示器",
-            "description": "选择自定义抽取通知窗口显示的显示器",
-        },
-        "window_position": {
-            "name": "窗口位置",
-            "description": "设置自定义抽取通知窗口在屏幕上的显示位置",
-            "combo_items": [
-                "中心",
-                "顶部",
-                "底部",
-                "左侧",
-                "右侧",
-                "顶部左侧",
-                "顶部右侧",
-                "底部左侧",
-                "底部右侧",
-            ],
-        },
-        "horizontal_offset": {
-            "name": "水平偏移",
-            "description": "设置自定义抽取通知窗口相对默认位置的水平偏移量（像素）",
-        },
-        "vertical_offset": {
-            "name": "垂直偏移",
-            "description": "设置自定义抽取通知窗口相对默认位置的垂直偏移量（像素）",
-        },
-        "transparency": {
-            "name": "透明度",
-            "description": "设置自定义抽取通知窗口的透明度，数值越小越透明（0-100）",
         },
         "floating_window_enabled_monitor": {
             "name": "选择自定义抽取通知显示的显示器",
@@ -424,41 +284,6 @@ lottery_notification_settings = {
             "name": "动画",
             "description": "设置抽奖通知窗口的显示动画效果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
-        },
-        "auto_close_time": {
-            "name": "自动关闭时间",
-            "description": "设置通知窗口自动关闭的时间（秒），设为0表示不自动关闭",
-        },
-        "enabled_monitor": {
-            "name": "选择抽奖通知显示的显示器",
-            "description": "选择抽奖通知窗口显示的显示器",
-        },
-        "window_position": {
-            "name": "窗口位置",
-            "description": "设置抽奖通知窗口在屏幕上的显示位置",
-            "combo_items": [
-                "中心",
-                "顶部",
-                "底部",
-                "左侧",
-                "右侧",
-                "顶部左侧",
-                "顶部右侧",
-                "底部左侧",
-                "底部右侧",
-            ],
-        },
-        "horizontal_offset": {
-            "name": "水平偏移",
-            "description": "设置抽奖通知窗口相对默认位置的水平偏移量（像素）",
-        },
-        "vertical_offset": {
-            "name": "垂直偏移",
-            "description": "设置抽奖通知窗口相对默认位置的垂直偏移量（像素）",
-        },
-        "transparency": {
-            "name": "透明度",
-            "description": "设置抽奖通知窗口的透明度，数值越小越透明（0-100）",
         },
         "floating_window_enabled_monitor": {
             "name": "选择抽奖通知显示的显示器",
