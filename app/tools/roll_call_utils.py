@@ -4,27 +4,17 @@
 import json
 from random import SystemRandom
 
-from app.tools.list import (
-    get_group_list, 
-    get_gender_list, 
-    get_student_list, 
-    get_group_members,
-    filter_students_data
-)
+from app.tools.list import get_group_list, get_student_list, filter_students_data
 from app.tools.history import calculate_weight
 from app.tools.config import (
     calculate_remaining_count,
     read_drawn_record,
-    reset_drawn_record
+    reset_drawn_record,
 )
 from app.tools.path_utils import get_resources_path, open_file
 from app.tools.settings_access import readme_settings_async
 
-from app.Language.obtain_language import (
-    get_content_combo_name_async,
-    get_content_pushbutton_name_async,
-    get_any_position_value
-)
+from app.Language.obtain_language import get_any_position_value
 
 system_random = SystemRandom()
 
@@ -36,12 +26,12 @@ class RollCallUtils:
     def get_total_count(list_combobox_text, range_combobox_index, range_combobox_text):
         """
         根据当前选择的范围计算实际人数
-        
+
         Args:
             list_combobox_text: 班级下拉框当前文本
             range_combobox_index: 范围下拉框当前索引
             range_combobox_text: 范围下拉框当前文本
-            
+
         Returns:
             int: 总人数
         """
@@ -51,35 +41,35 @@ class RollCallUtils:
             total_count = len(get_group_list(list_combobox_text))
         else:  # 特定小组 - 计算该小组的学生数量
             students = get_student_list(list_combobox_text)
-            total_count = len([s for s in students if s["group"] == range_combobox_text])
+            total_count = len(
+                [s for s in students if s["group"] == range_combobox_text]
+            )
         return total_count
 
     @staticmethod
     def update_many_count_label_text(
-        list_combobox_text, 
-        range_combobox_index, 
-        range_combobox_text, 
+        list_combobox_text,
+        range_combobox_index,
+        range_combobox_text,
         gender_combobox_text,
-        half_repeat_setting
+        half_repeat_setting,
     ):
         """
         更新多数量显示标签的文本
-        
+
         Args:
             list_combobox_text: 班级下拉框当前文本
             range_combobox_index: 范围下拉框当前索引
             range_combobox_text: 范围下拉框当前文本
             gender_combobox_text: 性别下拉框当前文本
             half_repeat_setting: 半重复设置值
-            
+
         Returns:
             tuple: (总人数, 剩余人数, 格式化文本)
         """
         # 根据范围计算实际人数
         total_count = RollCallUtils.get_total_count(
-            list_combobox_text, 
-            range_combobox_index, 
-            range_combobox_text
+            list_combobox_text, range_combobox_index, range_combobox_text
         )
 
         remaining_count = calculate_remaining_count(
@@ -90,7 +80,7 @@ class RollCallUtils:
             group_filter=range_combobox_text,
             total_count=total_count,
         )
-        
+
         if remaining_count == 0:
             remaining_count = total_count
 
@@ -103,11 +93,11 @@ class RollCallUtils:
             text_template = get_any_position_value(
                 "roll_call", "many_count_label", "text_0"
             )
-            
+
         formatted_text = text_template.format(
             total_count=total_count, remaining_count=remaining_count
         )
-        
+
         return total_count, remaining_count, formatted_text
 
     @staticmethod
@@ -118,11 +108,11 @@ class RollCallUtils:
         gender_index,
         gender_filter,
         current_count,
-        half_repeat
+        half_repeat,
     ):
         """
         抽取随机学生
-        
+
         Args:
             class_name: 班级名称
             group_index: 小组索引
@@ -131,7 +121,7 @@ class RollCallUtils:
             gender_filter: 性别过滤器
             current_count: 当前抽取数量
             half_repeat: 半重复设置
-            
+
         Returns:
             dict: 包含抽取结果的字典
         """
@@ -142,7 +132,7 @@ class RollCallUtils:
         students_data = filter_students_data(
             data, group_index, group_filter, gender_index, gender_filter
         )
-        
+
         if group_index == 1:
             # 小组模式下，按小组名称排序
             students_data = sorted(students_data, key=lambda x: x[3])  # x[3]是小组名称
@@ -161,14 +151,16 @@ class RollCallUtils:
 
             # 处理小组模式下的特殊逻辑
             draw_type = readme_settings_async("roll_call_settings", "draw_type")
-            selected_groups = RollCallUtils.draw_random_groups(students_dict_list, current_count, draw_type)
-            
+            selected_groups = RollCallUtils.draw_random_groups(
+                students_dict_list, current_count, draw_type
+            )
+
             return {
                 "selected_students": selected_groups,
                 "class_name": class_name,
                 "selected_students_dict": [],  # 小组模式下不存储学生字典
                 "group_filter": group_filter,
-                "gender_filter": gender_filter
+                "gender_filter": gender_filter,
             }
 
         # 首先将学生数据转换为字典列表
@@ -248,19 +240,19 @@ class RollCallUtils:
             "class_name": class_name,
             "selected_students_dict": selected_students_dict,
             "group_filter": group_filter,
-            "gender_filter": gender_filter
+            "gender_filter": gender_filter,
         }
 
     @staticmethod
     def draw_random_groups(students_dict_list, current_count, draw_type):
         """
         抽取随机小组
-        
+
         Args:
             students_dict_list: 学生字典列表
             current_count: 当前抽取数量
             draw_type: 抽取类型
-            
+
         Returns:
             list: 选中的小组列表
         """
@@ -279,9 +271,7 @@ class RollCallUtils:
                     break
                 total_weight = sum(weights)
                 if total_weight <= 0:
-                    random_index = system_random.randint(
-                        0, len(students_dict_list) - 1
-                    )
+                    random_index = system_random.randint(0, len(students_dict_list) - 1)
                 else:
                     rand_value = system_random.uniform(0, total_weight)
                     cumulative_weight = 0
@@ -318,7 +308,7 @@ class RollCallUtils:
     def prepare_notification_settings():
         """
         准备通知设置参数
-        
+
         Returns:
             dict: 通知设置参数
         """
@@ -326,26 +316,46 @@ class RollCallUtils:
         settings = {
             # 点名设置
             "font_size": readme_settings_async("roll_call_settings", "font_size"),
-            "animation_color_theme": readme_settings_async("roll_call_settings", "animation_color_theme"),
-            "display_format": readme_settings_async("roll_call_settings", "display_format"),
-            "student_image": readme_settings_async("roll_call_settings", "student_image"),
+            "animation_color_theme": readme_settings_async(
+                "roll_call_settings", "animation_color_theme"
+            ),
+            "display_format": readme_settings_async(
+                "roll_call_settings", "display_format"
+            ),
+            "student_image": readme_settings_async(
+                "roll_call_settings", "student_image"
+            ),
             # 浮动窗口设置
-            "animation": readme_settings_async("roll_call_notification_settings", "animation"),
-            "transparency": readme_settings_async("roll_call_notification_settings", "floating_window_transparency"),
-            "auto_close_time": readme_settings_async("roll_call_notification_settings", "floating_window_auto_close_time"),
-            "enabled_monitor": readme_settings_async("roll_call_notification_settings", "floating_window_enabled_monitor"),
-            "window_position": readme_settings_async("roll_call_notification_settings", "floating_window_position"),
-            "horizontal_offset": readme_settings_async("roll_call_notification_settings", "floating_window_horizontal_offset"),
-            "vertical_offset": readme_settings_async("roll_call_notification_settings", "floating_window_vertical_offset"),
+            "animation": readme_settings_async(
+                "roll_call_notification_settings", "animation"
+            ),
+            "transparency": readme_settings_async(
+                "roll_call_notification_settings", "floating_window_transparency"
+            ),
+            "auto_close_time": readme_settings_async(
+                "roll_call_notification_settings", "floating_window_auto_close_time"
+            ),
+            "enabled_monitor": readme_settings_async(
+                "roll_call_notification_settings", "floating_window_enabled_monitor"
+            ),
+            "window_position": readme_settings_async(
+                "roll_call_notification_settings", "floating_window_position"
+            ),
+            "horizontal_offset": readme_settings_async(
+                "roll_call_notification_settings", "floating_window_horizontal_offset"
+            ),
+            "vertical_offset": readme_settings_async(
+                "roll_call_notification_settings", "floating_window_vertical_offset"
+            ),
         }
-        
+
         return settings
 
     @staticmethod
     def reset_drawn_records(window, class_name, gender_filter, group_filter):
         """
         重置已抽取记录
-        
+
         Args:
             window: 窗口对象（用于传递self参数）
             class_name: 班级名称
@@ -358,7 +368,7 @@ class RollCallUtils:
     def update_start_button_state(button, total_count):
         """
         根据总人数更新开始按钮的状态
-        
+
         Args:
             button: 开始按钮对象
             total_count: 总人数

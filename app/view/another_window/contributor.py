@@ -144,7 +144,7 @@ class contributor_page(QWidget):
                 "avatar": str(
                     get_resources_path("assets/contribution", "contributor9.png")
                 ),
-            }
+            },
         ]
 
         # 标准化职责文本长度

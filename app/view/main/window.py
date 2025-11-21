@@ -122,8 +122,14 @@ class MainWindow(MSFluentWindow):
         """初始化导航系统
         根据用户设置构建个性化菜单导航"""
         # 获取点名侧边栏位置设置
-        roll_call_sidebar_pos = readme_settings_async("sidebar_management_window", "roll_call_sidebar_position")
-        roll_call_position = NavigationItemPosition.TOP if (roll_call_sidebar_pos is None or roll_call_sidebar_pos != 1) else NavigationItemPosition.BOTTOM
+        roll_call_sidebar_pos = readme_settings_async(
+            "sidebar_management_window", "roll_call_sidebar_position"
+        )
+        roll_call_position = (
+            NavigationItemPosition.TOP
+            if (roll_call_sidebar_pos is None or roll_call_sidebar_pos != 1)
+            else NavigationItemPosition.BOTTOM
+        )
 
         self.addSubInterface(
             self.roll_call_page,
@@ -133,8 +139,14 @@ class MainWindow(MSFluentWindow):
         )
 
         # 获取设置图标位置设置
-        settings_icon_pos = readme_settings_async("sidebar_management_window", "settings_icon")
-        settings_position = NavigationItemPosition.BOTTOM if (settings_icon_pos == 1) else NavigationItemPosition.TOP
+        settings_icon_pos = readme_settings_async(
+            "sidebar_management_window", "settings_icon"
+        )
+        settings_position = (
+            NavigationItemPosition.BOTTOM
+            if (settings_icon_pos == 1)
+            else NavigationItemPosition.TOP
+        )
 
         settings_item = self.addSubInterface(
             self.settingsInterface,
