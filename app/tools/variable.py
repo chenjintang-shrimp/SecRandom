@@ -96,6 +96,9 @@ GRID_ITEM_MARGIN = 40  # 网格项目边距
 GRID_ITEM_SPACING = 20  # 网格项目间距
 DEFAULT_AVAILABLE_WIDTH = 800  # 默认可用宽度
 
+# 窗口位置相关
+WINDOW_BOTTOM_POSITION_FACTOR = 1.65  # 窗口底部位置调整因子
+
 # 颜色生成相关
 DEFAULT_MIN_SATURATION = 0.7  # 默认最小饱和度
 DEFAULT_MAX_SATURATION = 1.0  # 默认最大饱和度

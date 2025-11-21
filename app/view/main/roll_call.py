@@ -20,13 +20,11 @@ from app.tools.list import *
 from app.tools.history import *
 from app.tools.result_display import *
 from app.tools.config import *
+from app.tools.roll_call_utils import RollCallUtils
 
 from app.page_building.another_window import *
 
 from random import SystemRandom
-
-# Add import for notification service
-
 system_random = SystemRandom()
 
 
@@ -262,37 +260,18 @@ class roll_call(QWidget):
                     gender_options[:1]
                 )  # 只添加"抽取全部性别"
 
-            # 根据当前选择的范围计算实际的总人数
-            group_index = self.range_combobox.currentIndex()
-            group_filter = self.range_combobox.currentText()
-
             # 使用统一的方法更新剩余人数显示
             self.update_many_count_label()
 
-            # 获取当前选择的小组/性别
-            group_index = self.range_combobox.currentIndex()
-
-            # 根据范围计算实际人数
-            if group_index == 0:  # 全班
-                total_count = len(get_student_list(self.list_combobox.currentText()))
-            elif group_index == 1:  # 小组模式 - 计算小组数量
-                total_count = len(get_group_list(self.list_combobox.currentText()))
-            else:  # 特定小组 - 计算该小组的学生数量
-                group_filter = self.range_combobox.currentText()
-                students = get_student_list(self.list_combobox.currentText())
-                total_count = len([s for s in students if s["group"] == group_filter])
+            # 根据当前选择的范围计算实际的总人数
+            total_count = RollCallUtils.get_total_count(
+                self.list_combobox.currentText(),
+                self.range_combobox.currentIndex(),
+                self.range_combobox.currentText()
+            )
 
             # 根据总人数是否为0，启用或禁用开始按钮
-            if total_count == 0:
-                self.start_button.setEnabled(False)
-            else:
-                self.start_button.setEnabled(True)
-
-            # 根据总人数是否为0，启用或禁用开始按钮
-            if total_count == 0:
-                self.start_button.setEnabled(False)
-            else:
-                self.start_button.setEnabled(True)
+            RollCallUtils.update_start_button_state(self.start_button, total_count)
 
             # 更新剩余名单窗口
             if (
@@ -312,24 +291,15 @@ class roll_call(QWidget):
             # 使用统一的方法更新剩余人数显示
             self.update_many_count_label()
 
-            # 获取当前选择的小组/性别
-            group_index = self.range_combobox.currentIndex()
-
-            # 根据范围计算实际人数
-            if group_index == 0:  # 全班
-                total_count = len(get_student_list(self.list_combobox.currentText()))
-            elif group_index == 1:  # 小组模式 - 计算小组数量
-                total_count = len(get_group_list(self.list_combobox.currentText()))
-            else:  # 特定小组 - 计算该小组的学生数量
-                group_filter = self.range_combobox.currentText()
-                students = get_student_list(self.list_combobox.currentText())
-                total_count = len([s for s in students if s["group"] == group_filter])
+            # 根据当前选择的范围计算实际的总人数
+            total_count = RollCallUtils.get_total_count(
+                self.list_combobox.currentText(),
+                self.range_combobox.currentIndex(),
+                self.range_combobox.currentText()
+            )
 
             # 根据总人数是否为0，启用或禁用开始按钮
-            if total_count == 0:
-                self.start_button.setEnabled(False)
-            else:
-                self.start_button.setEnabled(True)
+            RollCallUtils.update_start_button_state(self.start_button, total_count)
 
             if (
                 hasattr(self, "remaining_list_page")
@@ -425,12 +395,12 @@ class roll_call(QWidget):
             )
             self.start_button.clicked.connect(lambda: self.start_draw())
         elif animation == 2:
-            if hasattr(self, "final_selected_students") and hasattr(
+            if hasattr(self, "final_selected_students_dict") and hasattr(
                 self, "final_class_name"
             ):
                 save_roll_call_history(
                     class_name=self.final_class_name,
-                    selected_students=self.final_selected_students,
+                    selected_students=self.final_selected_students_dict,
                     group_filter=self.final_group_filter,
                     gender_filter=self.final_gender_filter,
                 )
@@ -489,40 +459,8 @@ class roll_call(QWidget):
                 "roll_call_notification_settings", "call_notification_service"
             )
             if call_notification_service:
-                # 获取通知模式
-                notification_mode = readme_settings_async("roll_call_notification_settings", "notification_mode")
-                
-                # 读取所有相关设置并传递给通知服务
-                settings = {
-                    # 点名设置
-                    "font_size": readme_settings_async("roll_call_settings", "font_size"),
-                    "animation_color_theme": readme_settings_async("roll_call_settings", "animation_color_theme"),
-                    "display_format": readme_settings_async("roll_call_settings", "display_format"),
-                    "student_image": readme_settings_async("roll_call_settings", "student_image"),
-                    
-                    # 通知设置 - 根据通知模式选择适当的设置
-                    "notification_mode": notification_mode,
-                }
-                
-                # 根据通知模式选择适当的设置项
-                if notification_mode == 1:  # 浮动窗口模式
-                    settings.update({
-                        "transparency": readme_settings_async("roll_call_notification_settings", "floating_window_transparency"),
-                        "auto_close_time": readme_settings_async("roll_call_notification_settings", "floating_window_auto_close_time"),
-                        "enabled_monitor": readme_settings_async("roll_call_notification_settings", "floating_window_enabled_monitor"),
-                        "window_position": readme_settings_async("roll_call_notification_settings", "floating_window_position"),
-                        "horizontal_offset": readme_settings_async("roll_call_notification_settings", "floating_window_horizontal_offset"),
-                        "vertical_offset": readme_settings_async("roll_call_notification_settings", "floating_window_vertical_offset"),
-                    })
-                else:  # 窗口模式（默认）
-                    settings.update({
-                        "transparency": readme_settings_async("roll_call_notification_settings", "transparency"),
-                        "auto_close_time": readme_settings_async("roll_call_notification_settings", "auto_close_time"),
-                        "enabled_monitor": readme_settings_async("roll_call_notification_settings", "enabled_monitor"),
-                        "window_position": readme_settings_async("roll_call_notification_settings", "window_position"),
-                        "horizontal_offset": readme_settings_async("roll_call_notification_settings", "horizontal_offset"),
-                        "vertical_offset": readme_settings_async("roll_call_notification_settings", "vertical_offset"),
-                    })
+                # 准备通知设置
+                settings = RollCallUtils.prepare_notification_settings()
                 
                 # 使用ResultDisplayUtils显示通知
                 ResultDisplayUtils.show_notification_if_enabled(
@@ -544,246 +482,35 @@ class roll_call(QWidget):
         gender_index = self.gender_combobox.currentIndex()
         gender_filter = self.gender_combobox.currentText()
 
-        student_file = get_resources_path("list/roll_call_list", f"{class_name}.json")
-        with open_file(student_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        students_data = filter_students_data(
-            data, group_index, group_filter, gender_index, gender_filter
+        half_repeat = readme_settings_async("roll_call_settings", "half_repeat")
+        
+        # 使用工具类抽取随机学生
+        result = RollCallUtils.draw_random_students(
+            class_name, group_index, group_filter, 
+            gender_index, gender_filter, self.current_count, half_repeat
         )
-        if group_index == 1:
-            # 小组模式下，按小组名称排序
-            students_data = sorted(students_data, key=lambda x: x[3])  # x[3]是小组名称
-
-        # 首先将学生数据转换为字典列表
-        students_dict_list = []
-        for student_tuple in students_data:
-            student_dict = {
-                "id": student_tuple[0],
-                "name": student_tuple[1],
-                "gender": student_tuple[2],
-                "group": student_tuple[3],
-                "exist": student_tuple[4],
-            }
-            students_dict_list.append(student_dict)
-
-        # 获取抽取类型
-        draw_type = readme_settings_async("roll_call_settings", "draw_type")
-
-        # 处理小组模式下的特殊逻辑
-        if group_index == 1:
-            # 小组模式下，students_data已经只包含小组信息
-            # 直接使用小组数据进行抽取
-            draw_count = min(self.current_count, len(students_dict_list))
-
-            selected_groups = []
-            if draw_type == 1:
-                # 权重抽取模式下，所有小组权重相同
-                weights = [1.0] * len(students_dict_list)
-
-                # 根据权重抽取小组
-                for _ in range(draw_count):
-                    if not students_dict_list:
-                        break
-                    total_weight = sum(weights)
-                    if total_weight <= 0:
-                        random_index = system_random.randint(
-                            0, len(students_dict_list) - 1
-                        )
-                    else:
-                        rand_value = system_random.uniform(0, total_weight)
-                        cumulative_weight = 0
-                        random_index = 0
-                        for i, weight in enumerate(weights):
-                            cumulative_weight += weight
-                            if rand_value <= cumulative_weight:
-                                random_index = i
-                                break
-
-                    selected_group = students_dict_list[random_index]
-                    selected_groups.append(
-                        (None, selected_group["name"], True)
-                    )  # (id, name, exist)
-
-                    students_dict_list.pop(random_index)
-                    weights.pop(random_index)
-            else:
-                # 随机抽取模式
-                for _ in range(draw_count):
-                    if not students_dict_list:
-                        break
-                    random_index = system_random.randint(0, len(students_dict_list) - 1)
-                    selected_group = students_dict_list[random_index]
-                    selected_groups.append(
-                        (None, selected_group["name"], True)
-                    )  # (id, name, exist)
-
-                    students_dict_list.pop(random_index)
-
-            self.final_selected_students = selected_groups
-            self.final_class_name = class_name
-            self.final_selected_students_dict = []  # 小组模式下不存储学生字典
-            self.final_group_filter = group_filter
-            self.final_gender_filter = gender_filter
-
-            self.display_result(selected_groups, class_name)
-            
-            # 检查是否启用了通知服务
-            call_notification_service = readme_settings_async(
-                "roll_call_notification_settings", "call_notification_service"
-            )
-            if call_notification_service:
-                # 获取通知模式
-                notification_mode = readme_settings_async("roll_call_notification_settings", "notification_mode")
-                
-                # 读取所有相关设置并传递给通知服务
-                settings = {
-                    # 点名设置
-                    "font_size": readme_settings_async("roll_call_settings", "font_size"),
-                    "animation_color_theme": readme_settings_async("roll_call_settings", "animation_color_theme"),
-                    "display_format": readme_settings_async("roll_call_settings", "display_format"),
-                    "student_image": readme_settings_async("roll_call_settings", "student_image"),
-                    
-                    # 通知设置 - 根据通知模式选择适当的设置
-                    "notification_mode": notification_mode,
-                }
-                
-                # 根据通知模式选择适当的设置项
-                if notification_mode == 1:  # 浮动窗口模式
-                    settings.update({
-                        "transparency": readme_settings_async("roll_call_notification_settings", "floating_window_transparency"),
-                        "auto_close_time": readme_settings_async("roll_call_notification_settings", "floating_window_auto_close_time"),
-                        "enabled_monitor": readme_settings_async("roll_call_notification_settings", "floating_window_enabled_monitor"),
-                        "window_position": readme_settings_async("roll_call_notification_settings", "floating_window_position"),
-                        "horizontal_offset": readme_settings_async("roll_call_notification_settings", "floating_window_horizontal_offset"),
-                        "vertical_offset": readme_settings_async("roll_call_notification_settings", "floating_window_vertical_offset"),
-                    })
-                else:  # 窗口模式（默认）
-                    settings.update({
-                        "transparency": readme_settings_async("roll_call_notification_settings", "transparency"),
-                        "auto_close_time": readme_settings_async("roll_call_notification_settings", "auto_close_time"),
-                        "enabled_monitor": readme_settings_async("roll_call_notification_settings", "enabled_monitor"),
-                        "window_position": readme_settings_async("roll_call_notification_settings", "window_position"),
-                        "horizontal_offset": readme_settings_async("roll_call_notification_settings", "horizontal_offset"),
-                        "vertical_offset": readme_settings_async("roll_call_notification_settings", "vertical_offset"),
-                    })
-                
-                # 使用ResultDisplayUtils显示通知
-                ResultDisplayUtils.show_notification_if_enabled(
-                    self.final_class_name,
-                    self.final_selected_students,
-                    self.current_count,
-                    settings
-                )
+        
+        # 处理需要重置的情况
+        if "reset_required" in result and result["reset_required"]:
+            RollCallUtils.reset_drawn_records(
+                    self, class_name, gender_filter, group_filter)
             return
 
-        half_repeat = readme_settings_async("roll_call_settings", "half_repeat")
-        if half_repeat > 0:
-            drawn_records = read_drawn_record(class_name, gender_filter, group_filter)
-            drawn_counts = {name: count for name, count in drawn_records}
+        self.final_selected_students = result["selected_students"]
+        self.final_class_name = result["class_name"]
+        self.final_selected_students_dict = result["selected_students_dict"]
+        self.final_group_filter = result["group_filter"]
+        self.final_gender_filter = result["gender_filter"]
 
-            filtered_students = []
-            for student in students_dict_list:
-                student_name = student["name"]
-                if (
-                    student_name not in drawn_counts
-                    or drawn_counts[student_name] < half_repeat
-                ):
-                    filtered_students.append(student)
-
-            students_dict_list = filtered_students
-
-        if not students_dict_list:
-            reset_drawn_record(self, class_name, gender_filter, group_filter)
-
-        draw_type = readme_settings_async("roll_call_settings", "draw_type")
-        if draw_type == 1:
-            students_with_weight = calculate_weight(students_dict_list, class_name)
-            weights = []
-            for student in students_with_weight:
-                weights.append(student.get("weight", 1.0))
-        else:
-            students_with_weight = students_dict_list
-            weights = [1.0] * len(students_dict_list)
-
-        draw_count = self.current_count
-        draw_count = min(draw_count, len(students_with_weight))
-
-        selected_students = []
-        selected_students_dict = []
-        for _ in range(draw_count):
-            if not students_with_weight:
-                break
-            total_weight = sum(weights)
-            if total_weight <= 0:
-                random_index = system_random.randint(0, len(students_with_weight) - 1)
-            else:
-                rand_value = system_random.uniform(0, total_weight)
-                cumulative_weight = 0
-                random_index = 0
-                for i, weight in enumerate(weights):
-                    cumulative_weight += weight
-                    if rand_value <= cumulative_weight:
-                        random_index = i
-                        break
-
-            selected_student = students_with_weight[random_index]
-            id = selected_student.get("id", "")
-            random_name = selected_student.get("name", "")
-            exist = selected_student.get("exist", True)
-            selected_students.append((id, random_name, exist))
-            selected_students_dict.append(selected_student)
-
-            students_with_weight.pop(random_index)
-            weights.pop(random_index)
-
-        self.final_selected_students = selected_students
-        self.final_class_name = class_name
-        self.final_selected_students_dict = selected_students_dict
-        self.final_group_filter = group_filter
-        self.final_gender_filter = gender_filter
-
-        self.display_result(selected_students, class_name)
+        self.display_result(result["selected_students"], result["class_name"])
         
         # 检查是否启用了通知服务
         call_notification_service = readme_settings_async(
             "roll_call_notification_settings", "call_notification_service"
         )
         if call_notification_service:
-            # 获取通知模式
-            notification_mode = readme_settings_async("roll_call_notification_settings", "notification_mode")
-            
-            # 读取所有相关设置并传递给通知服务
-            settings = {
-                # 点名设置
-                "font_size": readme_settings_async("roll_call_settings", "font_size"),
-                "animation_color_theme": readme_settings_async("roll_call_settings", "animation_color_theme"),
-                "display_format": readme_settings_async("roll_call_settings", "display_format"),
-                "student_image": readme_settings_async("roll_call_settings", "student_image"),
-                
-                # 通知设置 - 根据通知模式选择适当的设置
-                "notification_mode": notification_mode,
-            }
-            
-            # 根据通知模式选择适当的设置项
-            if notification_mode == 1:  # 浮动窗口模式
-                settings.update({
-                    "transparency": readme_settings_async("roll_call_notification_settings", "floating_window_transparency"),
-                    "auto_close_time": readme_settings_async("roll_call_notification_settings", "floating_window_auto_close_time"),
-                    "enabled_monitor": readme_settings_async("roll_call_notification_settings", "floating_window_enabled_monitor"),
-                    "window_position": readme_settings_async("roll_call_notification_settings", "floating_window_position"),
-                    "horizontal_offset": readme_settings_async("roll_call_notification_settings", "floating_window_horizontal_offset"),
-                    "vertical_offset": readme_settings_async("roll_call_notification_settings", "floating_window_vertical_offset"),
-                })
-            else:  # 窗口模式（默认）
-                settings.update({
-                    "transparency": readme_settings_async("roll_call_notification_settings", "transparency"),
-                    "auto_close_time": readme_settings_async("roll_call_notification_settings", "auto_close_time"),
-                    "enabled_monitor": readme_settings_async("roll_call_notification_settings", "enabled_monitor"),
-                    "window_position": readme_settings_async("roll_call_notification_settings", "window_position"),
-                    "horizontal_offset": readme_settings_async("roll_call_notification_settings", "horizontal_offset"),
-                    "vertical_offset": readme_settings_async("roll_call_notification_settings", "vertical_offset"),
-                })
+            # 准备通知设置
+            settings = RollCallUtils.prepare_notification_settings()
             
             # 使用ResultDisplayUtils显示通知
             ResultDisplayUtils.show_notification_if_enabled(
@@ -824,7 +551,7 @@ class roll_call(QWidget):
         class_name = self.list_combobox.currentText()
         gender = self.gender_combobox.currentText()
         group = self.range_combobox.currentText()
-        reset_drawn_record(self, class_name, gender, group)
+        RollCallUtils.reset_drawn_records(self, class_name, gender, group)
         self.clear_result()
         self.update_many_count_label()
 
@@ -853,7 +580,11 @@ class roll_call(QWidget):
             change (int): 变化量，正数表示增加，负数表示减少
         """
         try:
-            self.total_count = self.get_total_count()
+            self.total_count = RollCallUtils.get_total_count(
+                self.list_combobox.currentText(),
+                self.range_combobox.currentIndex(),
+                self.range_combobox.currentText()
+            )
             self.current_count = max(1, int(self.count_label.text()) + change)
             self.count_label.setText(str(self.current_count))
             self.minus_button.setEnabled(self.current_count > 1)
@@ -865,66 +596,27 @@ class roll_call(QWidget):
 
     def get_total_count(self):
         """获取总人数"""
-        # 获取当前选择的范围和性别
-        group_index = self.range_combobox.currentIndex()
-        group_filter = self.range_combobox.currentText()
-
-        # 根据范围计算实际人数
-        if group_index == 0:  # 全班
-            total_count = len(get_student_list(self.list_combobox.currentText()))
-        elif group_index == 1:  # 小组模式 - 计算小组数量
-            total_count = len(get_group_list(self.list_combobox.currentText()))
-        else:  # 特定小组 - 计算该小组的学生数量
-            students = get_student_list(self.list_combobox.currentText())
-            total_count = len([s for s in students if s["group"] == group_filter])
-        return total_count
+        return RollCallUtils.get_total_count(
+            self.list_combobox.currentText(),
+            self.range_combobox.currentIndex(),
+            self.range_combobox.currentText()
+        )
 
     def update_many_count_label(self):
         """更新多数量显示标签"""
-        # 获取当前选择的小组/性别
-        group_index = self.range_combobox.currentIndex()
-        group_filter = self.range_combobox.currentText()
-        gender_filter = self.gender_combobox.currentText()
-
-        # 根据范围计算实际人数
-        if group_index == 0:  # 全班
-            total_count = len(get_student_list(self.list_combobox.currentText()))
-        elif group_index == 1:  # 小组模式 - 计算小组数量
-            total_count = len(get_group_list(self.list_combobox.currentText()))
-        else:  # 特定小组 - 计算该小组的学生数量
-            students = get_student_list(self.list_combobox.currentText())
-            total_count = len([s for s in students if s["group"] == group_filter])
-
-        self.remaining_count = calculate_remaining_count(
-            half_repeat=readme_settings_async("roll_call_settings", "half_repeat"),
-            class_name=self.list_combobox.currentText(),
-            gender_filter=gender_filter,
-            group_index=group_index,
-            group_filter=group_filter,
-            total_count=total_count,
+        total_count, remaining_count, formatted_text = RollCallUtils.update_many_count_label_text(
+            self.list_combobox.currentText(),
+            self.range_combobox.currentIndex(),
+            self.range_combobox.currentText(),
+            self.gender_combobox.currentText(),
+            readme_settings_async("roll_call_settings", "half_repeat")
         )
-        if self.remaining_count == 0:
-            self.remaining_count = total_count
-
-        # 根据是否为小组模式选择不同的文本模板
-        if group_index == 1:  # 小组模式
-            text_template = get_any_position_value(
-                "roll_call", "many_count_label", "text_3"
-            )
-        else:  # 学生模式
-            text_template = get_any_position_value(
-                "roll_call", "many_count_label", "text_0"
-            )
-        formatted_text = text_template.format(
-            total_count=total_count, remaining_count=self.remaining_count
-        )
+        
+        self.remaining_count = remaining_count
         self.many_count_label.setText(formatted_text)
 
         # 根据总人数是否为0，启用或禁用开始按钮
-        if total_count == 0:
-            self.start_button.setEnabled(False)
-        else:
-            self.start_button.setEnabled(True)
+        RollCallUtils.update_start_button_state(self.start_button, total_count)
 
     def update_remaining_list_window(self):
         """更新剩余名单窗口的内容"""
@@ -1101,48 +793,20 @@ class roll_call(QWidget):
             )
             self.gender_combobox.blockSignals(False)
 
-            # 根据当前选择的范围计算实际的总人数
-            group_index = self.range_combobox.currentIndex()
-            group_filter = self.range_combobox.currentText()
-            gender_filter = self.gender_combobox.currentText()
-
-            # 根据范围计算实际人数
-            if group_index == 0:  # 全班
-                total_count = len(get_student_list(self.list_combobox.currentText()))
-            elif group_index == 1:  # 小组模式 - 计算小组数量
-                total_count = len(get_group_list(self.list_combobox.currentText()))
-            else:  # 特定小组 - 计算该小组的学生数量
-                students = get_student_list(self.list_combobox.currentText())
-                total_count = len([s for s in students if s["group"] == group_filter])
-
-            self.remaining_count = calculate_remaining_count(
-                half_repeat=readme_settings("roll_call_settings", "half_repeat"),
-                class_name=self.list_combobox.currentText(),
-                gender_filter=gender_filter,
-                group_index=group_index,
-                group_filter=group_filter,
-                total_count=total_count,
+            # 使用工具函数更新标签文本
+            total_count, remaining_count, formatted_text = RollCallUtils.update_many_count_label_text(
+                self.list_combobox.currentText(),
+                self.range_combobox.currentIndex(),
+                self.range_combobox.currentText(),
+                self.gender_combobox.currentText(),
+                readme_settings("roll_call_settings", "half_repeat")
             )
-
-            # 根据是否为小组模式选择不同的文本模板
-            if group_index == 1:  # 小组模式
-                text_template = get_any_position_value(
-                    "roll_call", "many_count_label", "text_3"
-                )
-            else:  # 学生模式
-                text_template = get_any_position_value(
-                    "roll_call", "many_count_label", "text_0"
-                )
-            formatted_text = text_template.format(
-                total_count=total_count, remaining_count=self.remaining_count
-            )
+            
+            self.remaining_count = remaining_count
             self.many_count_label.setText(formatted_text)
 
             # 根据总人数是否为0，启用或禁用开始按钮
-            if total_count == 0:
-                self.start_button.setEnabled(False)
-            else:
-                self.start_button.setEnabled(True)
+            RollCallUtils.update_start_button_state(self.start_button, total_count)
 
         except Exception as e:
             logger.error(f"延迟填充列表失败: {e}")

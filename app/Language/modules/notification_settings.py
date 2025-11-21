@@ -28,11 +28,6 @@ roll_call_notification_settings = {
             "description": "启用后将调用系统通知服务发送点名结果",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
         },
-        "notification_mode": {
-            "name": "通知模式",
-            "description": "设置通知显示模式，可选择普通窗口或浮动窗口",
-            "combo_items": ["窗口", "浮动窗口"],
-        },
         "animation": {
             "name": "动画效果",
             "description": "控制点名通知窗口是否显示动画效果",
@@ -81,6 +76,7 @@ roll_call_notification_settings = {
             "name": "浮动窗口位置",
             "description": "设置点名通知浮动窗口在屏幕上的显示位置",
             "combo_items": [
+                "中心",
                 "顶部",
                 "底部",
                 "左侧",
@@ -128,11 +124,6 @@ quick_draw_notification_settings = {
         "floating_window_mode": {
             "name": "浮动窗口模式",
             "description": "设置闪抽通知浮动窗口的行为模式",
-        },
-        "notification_mode": {
-            "name": "通知模式",
-            "description": "设置闪抽通知的显示模式，可选择普通窗口或浮动窗口",
-            "combo_items": ["窗口", "浮动窗口"],
         },
         "animation": {
             "name": "动画",
@@ -182,6 +173,7 @@ quick_draw_notification_settings = {
             "name": "浮动窗口位置",
             "description": "设置闪抽通知浮动窗口在屏幕上的显示位置",
             "combo_items": [
+                "中心",
                 "顶部",
                 "底部",
                 "左侧",
@@ -229,11 +221,6 @@ instant_draw_notification_settings = {
         "floating_window_mode": {
             "name": "浮动窗口模式",
             "description": "设置即抽通知浮动窗口的行为模式",
-        },
-        "notification_mode": {
-            "name": "通知模式",
-            "description": "设置通知显示模式，可选择普通窗口或浮动窗口",
-            "combo_items": ["窗口", "浮动窗口"],
         },
         "animation": {
             "name": "动画",
@@ -283,6 +270,7 @@ instant_draw_notification_settings = {
             "name": "浮动窗口位置",
             "description": "设置即抽通知浮动窗口在屏幕上的显示位置",
             "combo_items": [
+                "中心",
                 "顶部",
                 "底部",
                 "左侧",
@@ -329,11 +317,6 @@ custom_draw_notification_settings = {
             "name": "调用通知服务",
             "description": "是否调用系统通知服务发送自定义抽取结果通知",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
-        },
-        "notification_mode": {
-            "name": "通知模式",
-            "description": "设置通知显示模式，可选择普通窗口或浮动窗口",
-            "combo_items": ["窗口", "浮动窗口"],
         },
         "animation": {
             "name": "动画",
@@ -383,6 +366,7 @@ custom_draw_notification_settings = {
             "name": "浮动窗口位置",
             "description": "设置自定义抽取通知浮动窗口在屏幕上的显示位置",
             "combo_items": [
+                "中心",
                 "顶部",
                 "底部",
                 "左侧",
@@ -436,11 +420,6 @@ lottery_notification_settings = {
             "description": "是否调用系统通知服务发送抽奖结果通知",
             "switchbutton_name": {"enable": "启用", "disable": "禁用"},
         },
-        "notification_mode": {
-            "name": "通知模式",
-            "description": "设置通知显示模式，可选择普通窗口或浮动窗口",
-            "combo_items": ["窗口", "浮动窗口"],
-        },
         "animation": {
             "name": "动画",
             "description": "设置抽奖通知窗口的显示动画效果",
@@ -489,6 +468,7 @@ lottery_notification_settings = {
             "name": "浮动窗口位置",
             "description": "设置抽奖通知浮动窗口在屏幕上的显示位置",
             "combo_items": [
+                "中心",
                 "顶部",
                 "底部",
                 "左侧",
