@@ -557,7 +557,13 @@ class FloatingNotificationWindow(CardWidget):
 
         # 确保窗口保持在最前面
         self.raise_()
-        self.activateWindow()
+        # 仅在窗口允许接受焦点时调用激活，避免 QWindow::requestActivate 警告
+        try:
+            if not (self.windowFlags() & Qt.WindowDoesNotAcceptFocus):
+                self.activateWindow()
+        except Exception:
+            # 保险兜底：如果出现问题则不激活窗口
+            pass
 
         # 更新倒计时显示
         self.update_countdown_display()
