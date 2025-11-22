@@ -57,8 +57,10 @@ class sidebar_tray_management(QWidget):
         try:
             for i, name in enumerate(list(self._deferred_factories.keys())):
                 QTimer.singleShot(120 * i, lambda n=name: self._create_deferred(n))
-        except Exception:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error reading tray management settings: {}", e)
 
     def _create_deferred(self, name: str):
         factories = getattr(self, "_deferred_factories", {})
@@ -77,8 +79,10 @@ class sidebar_tray_management(QWidget):
         if placeholder is None:
             try:
                 self.vBoxLayout.addWidget(real_widget)
-            except Exception:
-                pass
+            except Exception as e:
+                from loguru import logger
+
+                logger.exception("Error handling tray action: {}", e)
             setattr(self, name, real_widget)
             return
 
@@ -110,20 +114,27 @@ class sidebar_tray_management(QWidget):
             except Exception:
                 try:
                     self.vBoxLayout.addWidget(real_widget)
-                except Exception:
-                    pass
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception("Error in tray sub-action: {}", e)
             setattr(self, name, real_widget)
             return
 
         try:
             layout.addWidget(real_widget)
             setattr(self, name, real_widget)
-        except Exception:
+        except Exception as e:
             try:
                 self.vBoxLayout.addWidget(real_widget)
                 setattr(self, name, real_widget)
-            except Exception:
-                pass
+            except Exception as inner_e:
+                from loguru import logger
+
+                logger.exception(
+                    "Error adding real_widget as fallback in sidebar_tray_management: {}",
+                    inner_e,
+                )
 
 
 class sidebar_management_window(GroupHeaderCardWidget):

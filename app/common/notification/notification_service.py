@@ -61,8 +61,10 @@ class NotificationContentWidget(QWidget):
             for w in self.content_widgets:
                 try:
                     apply_fg_to(w)
-                except Exception:
-                    pass
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception("Error applying fg to content widget: {}", e)
         except Exception:
             # 忽略主题检测错误，保持原样
             pass
@@ -105,8 +107,10 @@ class FloatingNotificationWindow(CardWidget):
             from qfluentwidgets import qconfig
 
             qconfig.themeChanged.connect(self._on_theme_changed)
-        except Exception:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error connecting themeChanged signal (ignored): {}", e)
 
         # 设置窗口圆角
         self.setBorderRadius(15)
@@ -237,7 +241,10 @@ class FloatingNotificationWindow(CardWidget):
             )
             self.update_drag_line_style()
             self.update_drag_line_container_style()
-        except:
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error updating background style (fallback used): {}", e)
             # 如果无法获取主题信息，默认使用白色背景和深色拖动线
             background_color = "#ffffff"
             self.background_widget.setStyleSheet(
@@ -266,7 +273,12 @@ class FloatingNotificationWindow(CardWidget):
                 self.drag_line_container.setStyleSheet(
                     f"background-color: {background_color}; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;"
                 )
-            except:
+            except Exception as e:
+                from loguru import logger
+
+                logger.exception(
+                    "Error updating drag line container style (fallback used): {}", e
+                )
                 # 如果无法获取主题信息，默认使用白色背景
                 self.drag_line_container.setStyleSheet(
                     "background-color: #ffffff; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;"
@@ -306,8 +318,10 @@ class FloatingNotificationWindow(CardWidget):
             existing = self.countdown_label.styleSheet() or ""
             if "color:" not in existing:
                 self.countdown_label.setStyleSheet(existing + f" color: {fg};")
-        except Exception:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error setting countdown label color: {}", e)
 
         # 根据设置定位窗口
         self.position_window(settings)
@@ -357,7 +371,12 @@ class FloatingNotificationWindow(CardWidget):
                     ]
                     parts.append(f"color: {fg} !important")
                     lbl.setStyleSheet("; ".join(parts) + ";")
-                except Exception:
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception(
+                        "Error applying color to label child (continuing): {}", e
+                    )
                     continue
 
             # 更新倒计时标签颜色
@@ -370,7 +389,12 @@ class FloatingNotificationWindow(CardWidget):
                 ]
                 parts.append(f"color: {fg} !important")
                 self.countdown_label.setStyleSheet("; ".join(parts) + ";")
-            except Exception:
+            except Exception as e:
+                from loguru import logger
+
+                logger.exception(
+                    "Error applying countdown label color (ignored): {}", e
+                )
                 pass
 
             # 更新背景与拖动线样式
@@ -378,9 +402,17 @@ class FloatingNotificationWindow(CardWidget):
                 self.update_background_style()
                 self.update_drag_line_style()
                 self.update_drag_line_container_style()
-            except Exception:
+            except Exception as e:
+                from loguru import logger
+
+                logger.exception(
+                    "Error updating background/drag line styles (ignored): {}", e
+                )
                 pass
-        except Exception:
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error in _on_theme_changed (ignored): {}", e)
             pass
 
     def _get_screen_from_settings(self, settings):
@@ -639,8 +671,10 @@ class FloatingNotificationWindow(CardWidget):
         # 确保颜色与当前主题同步
         try:
             self._on_theme_changed()
-        except Exception:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error syncing theme on show (ignored): {}", e)
 
     def on_animation_finished(self):
         """动画完成后的处理"""
@@ -662,9 +696,10 @@ class FloatingNotificationWindow(CardWidget):
         try:
             if not (self.windowFlags() & Qt.WindowDoesNotAcceptFocus):
                 self.activateWindow()
-        except Exception:
-            # 保险兜底：如果出现问题则不激活窗口
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error activating window (ignored): {}", e)
 
         # 更新倒计时显示
         self.update_countdown_display()
@@ -720,8 +755,10 @@ class FloatingNotificationWindow(CardWidget):
         # 确保颜色与当前主题同步
         try:
             self._on_theme_changed()
-        except Exception:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error syncing theme on update_content (ignored): {}", e)
 
         # 调整窗口大小以适应内容
         self.adjustSize()
@@ -780,7 +817,10 @@ class FloatingNotificationManager:
             return get_content_name_async(
                 "notification_settings", "notification_result"
             )
-        except:
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error getting notification title (fallback used): {}", e)
             # 如果无法获取多语言文本，则使用默认文本
             return "通知结果"
 
