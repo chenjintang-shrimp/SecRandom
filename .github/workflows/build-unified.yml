@@ -25,15 +25,6 @@ on:
           - all
           - windows
           - linux
-      packager:
-        description: '打包工具 (pyinstaller/nuitka/both)'
-        required: false
-        default: 'pyinstaller'
-        type: choice
-        options:
-          - pyinstaller
-          - nuitka
-          - both
       release:
         description: '是否发布版本'
         required: false
@@ -62,8 +53,6 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       contains(github.event.head_commit.message, '打包') ||
       contains(github.event.head_commit.message, 'pi') ||
-      contains(github.event.head_commit.message, 'nk') ||
-      contains(github.event.head_commit.message, 'both') ||
       contains(github.event.head_commit.message, 'all') ||
       contains(github.event.head_commit.message, 'win') ||
       contains(github.event.head_commit.message, 'linux') ||
@@ -84,13 +73,7 @@ jobs:
             pack_mode: dir
             packager: pyinstaller
             platform: windows
-          # Windows Nuitka 构建
-          - os: windows-2022
-            arch: x64
-            pack_mode: dir
-            packager: nuitka
-            platform: windows
-          # Linux 构建
+          # Linux PyInstaller 构建
           - os: ubuntu-22.04
             arch: x64
             pack_mode: dir
@@ -113,6 +96,7 @@ jobs:
           echo "- 平台: ${{ matrix.platform }}"
           echo "- 架构: ${{ matrix.arch }}"
           echo "- 打包工具: ${{ matrix.packager }}"
+          echo "- 打包模式: ${{ matrix.pack_mode }}"
           echo "- 事件类型: ${{ github.event_name }}"
           echo "- Ref: ${{ github.ref }}"
           echo "- Commit: ${{ github.sha }}"
@@ -186,15 +170,12 @@ jobs:
       # Windows PyInstaller 构建
       - name: 运行 Windows PyInstaller 构建
         if: |
-          matrix.platform == 'windows' &&
-          matrix.packager == 'pyinstaller' &&
-          (github.event_name != 'workflow_dispatch' ||
-          (inputs.build_target == 'all' || inputs.build_target == 'windows') &&
-          (inputs.packager == 'pyinstaller' || inputs.packager == 'both')) &&
-          (github.event_name == 'workflow_dispatch' ||
+          matrix.platform == 'windows' && 
+          (github.event_name != 'workflow_dispatch' || 
+          (inputs.build_target == 'all' || inputs.build_target == 'windows')) &&
+          (github.event_name == 'workflow_dispatch' || 
           (contains(github.event.head_commit.message, '打包') ||
            contains(github.event.head_commit.message, 'pi') ||
-           contains(github.event.head_commit.message, 'both') ||
            contains(github.event.head_commit.message, 'all') ||
            contains(github.event.head_commit.message, 'win'))) &&
           (github.event_name != 'push' ||
@@ -207,49 +188,43 @@ jobs:
           echo "依赖同步完成，开始打包..."
           uv run build_pyinstaller.py
 
-      # Windows Nuitka 构建
-      - name: 运行 Windows Nuitka 构建
+      # Windows PyInstaller 构建
+      - name: 运行 Windows PyInstaller 构建
         if: |
-          matrix.platform == 'windows' &&
-          matrix.packager == 'nuitka' &&
-          (github.event_name != 'workflow_dispatch' ||
-          (inputs.build_target == 'all' || inputs.build_target == 'windows') &&
-          (inputs.packager == 'nuitka' || inputs.packager == 'both')) &&
-          (github.event_name == 'workflow_dispatch' ||
+          matrix.platform == 'windows' && 
+          (github.event_name != 'workflow_dispatch' || 
+          (inputs.build_target == 'all' || inputs.build_target == 'windows')) &&
+          (github.event_name == 'workflow_dispatch' || 
           (contains(github.event.head_commit.message, '打包') ||
-           contains(github.event.head_commit.message, 'nk') ||
-           contains(github.event.head_commit.message, 'both') ||
+           contains(github.event.head_commit.message, 'pi') ||
            contains(github.event.head_commit.message, 'all') ||
            contains(github.event.head_commit.message, 'win'))) &&
           (github.event_name != 'push' ||
           !startsWith(github.ref, 'refs/tags/v') ||
           (startsWith(github.ref_name, 'v') && contains(github.ref_name, '.') && !contains(github.ref_name, '-')))
         run: |
-          echo "开始 Windows Nuitka 构建流程..."
+          echo "开始 Windows PyInstaller 构建流程..."
           echo "使用uv进行依赖同步..."
           uv sync --frozen
           echo "依赖同步完成，开始打包..."
-          uv run build_nuitka.py
+          uv run build_pyinstaller.py
 
-      # Linux 构建
-      - name: 运行 Linux 构建
+      # Linux PyInstaller 构建
+      - name: 运行 Linux PyInstaller 构建
         if: |
-          matrix.platform == 'linux' &&
-          matrix.packager == 'pyinstaller' &&
-          (github.event_name != 'workflow_dispatch' ||
-          (inputs.build_target == 'all' || inputs.build_target == 'linux') &&
-          (inputs.packager == 'pyinstaller' || inputs.packager == 'both')) &&
-          (github.event_name == 'workflow_dispatch' ||
+          matrix.platform == 'linux' && 
+          (github.event_name != 'workflow_dispatch' || 
+          (inputs.build_target == 'all' || inputs.build_target == 'linux')) &&
+          (github.event_name == 'workflow_dispatch' || 
           (contains(github.event.head_commit.message, '打包') ||
            contains(github.event.head_commit.message, 'pi') ||
-           contains(github.event.head_commit.message, 'both') ||
            contains(github.event.head_commit.message, 'all') ||
            contains(github.event.head_commit.message, 'linux'))) &&
           (github.event_name != 'push' ||
           !startsWith(github.ref, 'refs/tags/v') ||
           (startsWith(github.ref_name, 'v') && contains(github.ref_name, '.') && !contains(github.ref_name, '-')))
         run: |
-          echo "开始 Linux 构建流程..."
+          echo "开始 Linux PyInstaller 构建流程..."
           echo "使用uv进行依赖同步..."
           uv sync --frozen
           echo "依赖同步完成，开始打包..."
@@ -264,7 +239,7 @@ jobs:
           echo "开始 Windows 打包操作..."
 
           # 检查构建是否成功
-          if (!(Test-Path "dist/SecRandom")) {
+          if (!(Test-Path "dist/SecRandom" -PathType Container)) {
             echo "错误：dist/SecRandom 目录不存在，构建可能失败了"
             echo "可用的dist目录内容："
             if (Test-Path "dist") {
@@ -278,7 +253,7 @@ jobs:
           # 创建zip_dist/SecRandom目录
           mkdir -p zip_dist/SecRandom
 
-          # 复制dist/SecRandom目录下的所有文件到zip_dist/SecRandom目录下
+          # 复制dist/SecRandom目录内容
           Copy-Item -Recurse -Force dist/SecRandom/* zip_dist/SecRandom/
 
           # 创建app目录
@@ -292,11 +267,7 @@ jobs:
 
           # 使用 zip 压缩文件
           mkdir zip -Force
-          if ("${{ matrix.packager }}" -eq "nuitka") {
-            $outputZip = "zip/SecRandom-Windows-Nuitka-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip"
-          } else {
-            $outputZip = "zip/SecRandom-Windows-PyInstaller-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip"
-          }
+          $outputZip = "zip/SecRandom-Windows-${{ github.ref_name }}-${{ matrix.arch }}-dir.zip"
           Compress-Archive -Path zip_dist/SecRandom/* -DestinationPath $outputZip -Force
           echo "目录模式打包完成: $outputZip"
 
@@ -323,7 +294,7 @@ jobs:
           # 创建zip_dist/SecRandom目录
           mkdir -p zip_dist/SecRandom
 
-          # 复制dist/SecRandom目录下的所有文件到zip_dist/SecRandom目录下
+          # 复制dist/SecRandom目录内容
           cp -r dist/SecRandom/* zip_dist/SecRandom/
 
           # 创建app目录
@@ -348,7 +319,7 @@ jobs:
           (github.event_name != 'workflow_dispatch' || inputs.package == 'true')
         uses: actions/upload-artifact@v4.4.2
         with:
-          name: ${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.pack_mode }}-${{ matrix.packager }}
+          name: ${{ matrix.platform }}-${{ matrix.arch }}-${{ matrix.pack_mode }}
           path: ./zip
           retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
 
@@ -407,8 +378,6 @@ jobs:
           # Windows 构建产物
           mv artifacts/windows-2022-x64-dir-pyinstaller/* release/ 2>/dev/null || echo "未找到 Windows x64 PyInstaller 构建产物"
           mv artifacts/windows-2022-x86-dir-pyinstaller/* release/ 2>/dev/null || echo "未找到 Windows x86 PyInstaller 构建产物"
-          mv artifacts/windows-2022-x64-dir-nuitka/* release/ 2>/dev/null || echo "未找到 Windows x64 Nuitka 构建产物"
-          mv artifacts/windows-2022-x86-dir-nuitka/* release/ 2>/dev/null || echo "未找到 Windows x86 Nuitka 构建产物"
           # Linux 构建产物
           mv artifacts/ubuntu-22.04-x64-dir-pyinstaller/* release/ 2>/dev/null || echo "未找到 Linux x64 构建产物"
           echo "构建产物整理完成"
@@ -456,18 +425,14 @@ jobs:
           echo "| Linux | x64 | [下载](https://www.123684.com/s/9529jv-U4Fxh) |" >> ../CHANGELOG.md
           echo "" >> ../CHANGELOG.md
           echo "**Github 镜像 下载链接**" >> ../CHANGELOG.md
-          echo "| 镜像源 | 平台/打包方式 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
+          echo "| 镜像源 | 平台 | 支持架构 | 完整版 |" >> ../CHANGELOG.md
           echo "| --- | --- | --- | --- |" >> ../CHANGELOG.md
-          echo "| ghfast.top | Windows 目录模式 (PyInstaller) | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-PyInstaller-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
-          echo "| ghfast.top | Windows 目录模式 (PyInstaller) | x86 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-PyInstaller-${{ github.ref_name }}-x86-dir.zip) |" >> ../CHANGELOG.md
-          echo "| ghfast.top | Windows 目录模式 (Nuitka) | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-Nuitka-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
-          echo "| ghfast.top | Windows 目录模式 (Nuitka) | x86 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-Nuitka-${{ github.ref_name }}-x86-dir.zip) |" >> ../CHANGELOG.md
-          echo "| ghfast.top | Linux 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Linux-${{ github.ref_name }}-x64-dir.tar.gz) |" >> ../CHANGELOG.md
-          echo "| gh-proxy.com | Windows 目录模式 (PyInstaller) | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-PyInstaller-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
-          echo "| gh-proxy.com | Windows 目录模式 (PyInstaller) | x86 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-PyInstaller-${{ github.ref_name }}-x86-dir.zip) |" >> ../CHANGELOG.md
-          echo "| gh-proxy.com | Windows 目录模式 (Nuitka) | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-Nuitka-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
-          echo "| gh-proxy.com | Windows 目录模式 (Nuitka) | x86 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-Nuitka-${{ github.ref_name }}-x86-dir.zip) |" >> ../CHANGELOG.md
-          echo "| gh-proxy.com | Linux 目录模式 | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Linux-${{ github.ref_name }}-x64-dir.tar.gz) |" >> ../CHANGELOG.md
+          echo "| ghfast.top | Windows | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
+          echo "| ghfast.top | Windows | x86 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x86-dir.zip) |" >> ../CHANGELOG.md
+          echo "| ghfast.top | Linux | x64 | [下载 ${{ github.ref_name }}](https://ghfast.top/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Linux-${{ github.ref_name }}-x64-dir.tar.gz) |" >> ../CHANGELOG.md
+          echo "| gh-proxy.com | Windows | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x64-dir.zip) |" >> ../CHANGELOG.md
+          echo "| gh-proxy.com | Windows | x86 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Windows-${{ github.ref_name }}-x86-dir.zip) |" >> ../CHANGELOG.md
+          echo "| gh-proxy.com | Linux | x64 | [下载 ${{ github.ref_name }}](https://gh-proxy.com/https://github.com/SECTL/SecRandom/releases/download/${{ github.ref_name }}/SecRandom-Linux-${{ github.ref_name }}-x64-dir.tar.gz) |" >> ../CHANGELOG.md
           echo "" >> ../CHANGELOG.md
           echo "**SHA256 校验值-请核对下载的文件的SHA256值是否正确**" >> ../CHANGELOG.md
           echo "| 文件名 | SHA256 值 |" >> ../CHANGELOG.md
