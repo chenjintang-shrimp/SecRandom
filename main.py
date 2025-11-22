@@ -58,22 +58,33 @@ def configure_logging():
 # 显示调节
 # ==================================================
 """根据设置自动调整DPI缩放模式"""
-
-
 def configure_dpi_scale():
-    """配置DPI缩放模式"""
-    dpiScale = readme_settings("basic_settings", "dpiScale")
-    if dpiScale == get_content_combo_name_async("basic_settings", "dpiScale")[-1]:
+    """在创建QApplication之前配置DPI缩放模式"""
+    # 先设置环境变量，这些必须在QApplication创建之前设置
+    try:
+        from app.tools.settings_access import readme_settings
+        from app.Language.obtain_language import get_content_combo_name_async
+        
+        dpiScale = readme_settings("basic_settings", "dpiScale")
+        if dpiScale == get_content_combo_name_async("basic_settings", "dpiScale")[-1]:
+            # 自动模式 - 使用PassThrough策略
+            QApplication.setHighDpiScaleFactorRoundingPolicy(
+                Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+            )
+            os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
+            logger.debug("DPI缩放已设置为自动模式")
+        else:
+            # 手动模式 - 禁用自动缩放，使用固定缩放因子
+            os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
+            os.environ["QT_SCALE_FACTOR"] = str(dpiScale)
+            logger.debug(f"DPI缩放已设置为{dpiScale}倍")
+    except Exception as e:
+        # 如果读取设置失败，使用默认的自动缩放
+        logger.warning(f"读取DPI设置失败，使用默认设置: {e}")
         QApplication.setHighDpiScaleFactorRoundingPolicy(
             Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
         )
         os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
-        logger.debug("DPI缩放已设置为自动模式")
-    else:
-        os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
-        os.environ["QT_SCALE_FACTOR"] = str(dpiScale)
-        logger.debug(f"DPI缩放已设置为{dpiScale}倍")
-
 
 # ==================================================
 # 单实例检查相关函数
@@ -291,9 +302,6 @@ def initialize_app():
     # 管理设置文件，确保其存在且完整
     manage_settings_file()
 
-    # 配置DPI缩放模式
-    configure_dpi_scale()
-
     # 加载主题
     QTimer.singleShot(
         APP_INIT_DELAY,
@@ -359,6 +367,9 @@ if __name__ == "__main__":
         shared_memory.detach()
         sys.exit(1)
 
+    # 在创建QApplication之前配置DPI缩放
+    configure_dpi_scale()
+
     app = QApplication(sys.argv)
 
     import gc
@@ -390,11 +401,7 @@ if __name__ == "__main__":
 
         sys.exit()
     except Exception as e:
-        print(f"应用程序启动失败: {e}")
-        try:
-            logger.error(f"应用程序启动失败: {e}", exc_info=True)
-        except:
-            pass
+        logger.critical(f"应用程序启动失败: {e}", exc_info=True)
         # 程序异常退出时释放共享内存
         try:
             shared_memory.detach()
