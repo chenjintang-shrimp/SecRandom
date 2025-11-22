@@ -99,6 +99,14 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
+      - name: 安装 uv (Windows)
+        if: matrix.platform == 'windows'
+        uses: astral-sh/setup-uv@v4
+
+      - name: 安装 uv (Linux)
+        if: matrix.platform == 'linux'
+        uses: astral-sh/setup-uv@v4
+
       - name: 验证uv.lock文件
         run: |
           echo "验证uv.lock文件完整性..."
@@ -131,19 +139,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.arch }}-${{ env.CACHE_VERSION }}-
             ${{ runner.os }}-${{ matrix.arch }}-
-
-      # Windows 环境设置
-      - name: 安装 Python (Windows)
-        if: matrix.platform == 'windows'
-        uses: actions/setup-python@v5.3.0
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          architecture: ${{ matrix.arch }}
-
-      # Linux 环境设置
-      - name: 安装 uv (Linux)
-        if: matrix.platform == 'linux'
-        uses: astral-sh/setup-uv@v4
 
       - name: 安装系统依赖 (Linux)
         if: matrix.platform == 'linux'
