@@ -6,6 +6,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+# 设置Windows控制台编码为UTF-8
+if sys.platform == "win32":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
 from packaging_utils import (
     ADDITIONAL_HIDDEN_IMPORTS,
     ICON_FILE,
