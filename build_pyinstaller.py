@@ -52,9 +52,9 @@ def main():
 
     # 使用uv run执行PyInstaller命令
     cmd = [
-        "uv", "run", "-m", "PyInstaller", 
+        "uv", "run", "-m", "PyInstaller",
         "Secrandom.spec",
-        "--clean", 
+        "--clean",
         "--noconfirm"
     ]
 
