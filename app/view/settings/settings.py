@@ -8,16 +8,6 @@ from PySide6.QtGui import QIcon
 from PySide6.QtCore import QTimer, QEvent, Signal
 from qfluentwidgets import MSFluentWindow, NavigationItemPosition
 
-from app.tools.variable import (
-    MINIMUM_WINDOW_SIZE,
-    APP_INIT_DELAY,
-    SETTINGS_WARMUP_INTERVAL_MS,
-    SETTINGS_WARMUP_MAX_PRELOAD,
-)
-from app.tools.path_utils import get_resources_path
-from app.tools.personalised import get_theme_icon
-from app.Language.obtain_language import get_content_name_async, readme_settings_async
-
 from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.personalised import *
@@ -79,6 +69,7 @@ class SettingsWindow(MSFluentWindow):
             "basicSettingsInterface",
             "listManagementInterface",
             "extractionSettingsInterface",
+            "floatingWindowManagementInterface",
             "notificationSettingsInterface",
             "safetySettingsInterface",
             "customSettingsInterface",
@@ -162,6 +153,9 @@ class SettingsWindow(MSFluentWindow):
             "draw_settings": readme_settings_async(
                 "sidebar_management_settings", "draw_settings"
             ),
+            "floating_window_management": readme_settings_async(
+                "sidebar_management_settings", "floating_window_management"
+            ),
             "notification_service": readme_settings_async(
                 "sidebar_management_settings", "notification_service"
             ),
@@ -185,7 +179,11 @@ class SettingsWindow(MSFluentWindow):
         # 定义页面配置
         page_configs = [
             ("home", "homeInterface", "home_page", False),
-            ("base_settings", "basicSettingsInterface", "basic_settings_page", False),
+            (   "base_settings",
+                "basicSettingsInterface", 
+                "basic_settings_page",
+                False
+            ),
             (
                 "name_management",
                 "listManagementInterface",
@@ -196,6 +194,12 @@ class SettingsWindow(MSFluentWindow):
                 "draw_settings",
                 "extractionSettingsInterface",
                 "extraction_settings_page",
+                True,
+            ),
+            (
+                "floating_window_management",
+                "floatingWindowManagementInterface",
+                "floating_window_management_page",
                 True,
             ),
             (
@@ -216,9 +220,25 @@ class SettingsWindow(MSFluentWindow):
                 "custom_settings_page",
                 True,
             ),
-            ("voice_settings", "voiceSettingsInterface", "voice_settings_page", True),
-            ("settings_history", "historyInterface", "history_page", True),
-            ("more_settings", "moreSettingsInterface", "more_settings_page", True),
+            (  
+                "voice_settings",
+                "voiceSettingsInterface",
+                "voice_settings_page",
+                True,
+            ),
+
+            (
+                "settings_history",
+                "historyInterface",
+                "history_page",
+                True
+            ),
+            (
+                "more_settings",
+                "moreSettingsInterface",
+                "more_settings_page",
+                True,
+            ),
         ]
 
         # 根据设置创建对应的界面
@@ -384,6 +404,7 @@ class SettingsWindow(MSFluentWindow):
                 "basicSettingsInterface",
                 "listManagementInterface",
                 "extractionSettingsInterface",
+                "floatingWindowManagementInterface",
                 "notificationSettingsInterface",
                 "safetySettingsInterface",
                 "customSettingsInterface",
@@ -494,6 +515,14 @@ class SettingsWindow(MSFluentWindow):
                 "extraction_settings_item",
                 "ic_fluent_archive_20_filled",
                 "extraction_settings",
+                "title",
+            ),
+            (
+                "floating_window_management",
+                "floatingWindowManagementInterface",
+                "floating_window_management_item",
+                "ic_fluent_window_apps_20_filled",
+                "floating_window_management",
                 "title",
             ),
             (

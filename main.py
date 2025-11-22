@@ -43,16 +43,29 @@ def configure_logging():
     log_dir = get_path(LOG_DIR)
     log_dir.mkdir(exist_ok=True)
 
-    # 配置日志格式
+    # 获取日志等级设置，默认为INFO
+    log_level = readme_settings("basic_settings", "log_level") if readme_settings("basic_settings", "log_level") else "INFO"
+
+    # 配置日志格式 - 文件输出（包含详细的调试信息）
     logger.add(
         log_dir / LOG_FILENAME_FORMAT,
         rotation=LOG_ROTATION_SIZE,
         retention=LOG_RETENTION_DAYS,
-        compression=LOG_COMPRESSION,  # 启用压缩
-        backtrace=True,  # 启用回溯信息
-        diagnose=True,  # 启用诊断信息
-        catch=True,  # 捕获未处理的异常
+        compression=LOG_COMPRESSION,
+        backtrace=True,
+        diagnose=True,
+        level=log_level,
     )
+    
+    # 配置日志格式 - 终端输出
+    logger.add(
+        sys.stdout,
+        format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+        level=log_level,
+        colorize=True,
+    )
+    
+    logger.debug(f"日志系统已配置，当前日志等级: {log_level}")
 
 
 # ==================================================
@@ -67,7 +80,7 @@ def configure_dpi_scale():
         from app.Language.obtain_language import get_content_combo_name_async
 
         dpiScale = readme_settings("basic_settings", "dpiScale")
-        if dpiScale == get_content_combo_name_async("basic_settings", "dpiScale")[-1]:
+        if dpiScale == "Auto":
             # 自动模式 - 使用PassThrough策略
             QApplication.setHighDpiScaleFactorRoundingPolicy(
                 Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
@@ -355,6 +368,11 @@ def main_async():
 
 
 if __name__ == "__main__":
+    # 初始化日志记录器
+    logger.remove()
+    # 首先配置日志系统
+    configure_logging()
+
     # 记录应用启动时间，用于诊断各阶段耗时
     app_start_time = time.perf_counter()
 
@@ -388,8 +406,6 @@ if __name__ == "__main__":
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
 
     try:
-        # 首先配置日志系统
-        configure_logging()
 
         # 初始化应用程序
         main_async()

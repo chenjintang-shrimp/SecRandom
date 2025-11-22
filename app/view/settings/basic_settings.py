@@ -26,6 +26,7 @@ from app.Language.obtain_language import (
     get_content_pushbutton_name_async,
     get_content_switchbutton_name_async,
 )
+from app.tools.config import export_diagnostic_data, export_settings, import_settings, export_all_data, import_all_data
 
 
 # ==================================================
@@ -77,68 +78,12 @@ class basic_settings_function(GroupHeaderCardWidget):
             )
         )
 
-        # 自动检查更新设置
-        self.check_update_switch = SwitchButton()
-        self.check_update_switch.setOffText(
-            get_content_switchbutton_name_async(
-                "basic_settings", "check_update", "disable"
-            )
-        )
-        self.check_update_switch.setOnText(
-            get_content_switchbutton_name_async(
-                "basic_settings", "check_update", "enable"
-            )
-        )
-        self.check_update_switch.setChecked(
-            readme_settings_async("basic_settings", "check_update")
-        )
-        self.check_update_switch.checkedChanged.connect(
-            lambda: update_settings(
-                "basic_settings", "check_update", self.check_update_switch.isChecked()
-            )
-        )
-
-        # 显示启动窗口设置
-        self.show_startup_window_switch = SwitchButton()
-        self.show_startup_window_switch.setOffText(
-            get_content_switchbutton_name_async(
-                "basic_settings", "show_startup_window", "disable"
-            )
-        )
-        self.show_startup_window_switch.setOnText(
-            get_content_switchbutton_name_async(
-                "basic_settings", "show_startup_window", "enable"
-            )
-        )
-        self.show_startup_window_switch.setChecked(
-            readme_settings_async("basic_settings", "show_startup_window")
-        )
-        self.show_startup_window_switch.checkedChanged.connect(
-            lambda: update_settings(
-                "basic_settings",
-                "show_startup_window",
-                self.show_startup_window_switch.isChecked(),
-            )
-        )
-
         # 添加设置项到分组
         self.addGroup(
             get_theme_icon("ic_fluent_arrow_sync_20_filled"),
             get_content_name_async("basic_settings", "autostart"),
             get_content_description_async("basic_settings", "autostart"),
             self.autostart_switch,
-        )
-        self.addGroup(
-            get_theme_icon("ic_fluent_cloud_sync_20_filled"),
-            get_content_name_async("basic_settings", "check_update"),
-            get_content_description_async("basic_settings", "check_update"),
-            self.check_update_switch,
-        )
-        self.addGroup(
-            get_theme_icon("ic_fluent_window_play_20_filled"),
-            get_content_name_async("basic_settings", "show_startup_window"),
-            get_content_description_async("basic_settings", "show_startup_window"),
-            self.show_startup_window_switch,
         )
 
 
@@ -199,14 +144,27 @@ class basic_settings_personalised(GroupHeaderCardWidget):
 
         # 界面缩放设置卡片
         self.dpiScale = ComboBox()
-        self.dpiScale.addItems(
-            get_content_combo_name_async("basic_settings", "dpiScale")
-        )
-        self.dpiScale.setCurrentText(
-            readme_settings_async("basic_settings", "dpiScale")
-        )
+        dpi_scale_items = get_content_combo_name_async("basic_settings", "dpiScale")
+        self.dpiScale.addItems(dpi_scale_items)
+        # 如果设置值是"Auto"，则显示最后一个选项；否则显示对应的值
+        current_dpi_scale = readme_settings_async("basic_settings", "dpiScale")
+        if current_dpi_scale == "Auto":
+            self.dpiScale.setCurrentText(dpi_scale_items[-1])  # "自动"是最后一个选项
+        else:
+            self.dpiScale.setCurrentText(current_dpi_scale)
         self.dpiScale.currentTextChanged.connect(
-            lambda scale: update_settings("basic_settings", "dpiScale", scale)
+            lambda scale: self.update_dpi_scale_setting(scale, dpi_scale_items)
+        )
+
+        # 日志等级设置卡片
+        self.logLevel = ComboBox()
+        log_level_items = get_content_combo_name_async("basic_settings", "log_level")
+        self.logLevel.addItems(log_level_items)
+        current_log_level = readme_settings_async("basic_settings", "log_level")
+        if current_log_level in log_level_items:
+            self.logLevel.setCurrentText(current_log_level)
+        self.logLevel.currentTextChanged.connect(
+            lambda level: update_settings("basic_settings", "log_level", level)
         )
 
         # 主题色设置卡片
@@ -242,13 +200,28 @@ class basic_settings_personalised(GroupHeaderCardWidget):
             get_content_description_async("basic_settings", "dpiScale"),
             self.dpiScale,
         )
+        self.addGroup(
+            get_theme_icon("ic_fluent_bug_20_filled"),
+            get_content_name_async("basic_settings", "log_level"),
+            get_content_description_async("basic_settings", "log_level"),
+            self.logLevel,
+        )
         # 添加卡片到布局
         self.vBoxLayout.addWidget(self.themeColorCard)
+
+    def update_dpi_scale_setting(self, scale, dpi_scale_items):
+        """更新DPI缩放设置"""
+        # 如果选择的是最后一个选项("自动")，则保存为"Auto"
+        if scale == dpi_scale_items[-1]:
+            update_settings("basic_settings", "dpiScale", "Auto")
+        else:
+            update_settings("basic_settings", "dpiScale", scale)
 
 
 class basic_settings_data_management(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.setTitle(get_content_name_async("basic_settings", "data_management"))
         self.setBorderRadius(8)
 
@@ -259,32 +232,32 @@ class basic_settings_data_management(GroupHeaderCardWidget):
             )
         )
         self.export_diagnostic_data_button.clicked.connect(
-            lambda: self.export_diagnostic_data()
+            lambda: export_diagnostic_data(self.window())
         )
 
         # 导出设置按钮
         self.export_settings_button = PushButton(
             get_content_pushbutton_name_async("basic_settings", "export_settings")
         )
-        self.export_settings_button.clicked.connect(lambda: self.export_settings())
+        self.export_settings_button.clicked.connect(lambda: export_settings(self.window()))
 
         # 导入设置按钮
         self.import_settings_button = PushButton(
             get_content_pushbutton_name_async("basic_settings", "import_settings")
         )
-        self.import_settings_button.clicked.connect(lambda: self.import_settings())
+        self.import_settings_button.clicked.connect(lambda: import_settings(self.window()))
 
         # 导出软件所有数据按钮
         self.export_all_data_button = PushButton(
             get_content_pushbutton_name_async("basic_settings", "export_all_data")
         )
-        self.export_all_data_button.clicked.connect(lambda: self.export_all_data())
+        self.export_all_data_button.clicked.connect(lambda: export_all_data(self.window()))
 
         # 导入软件所有数据按钮
         self.import_all_data_button = PushButton(
             get_content_pushbutton_name_async("basic_settings", "import_all_data")
         )
-        self.import_all_data_button.clicked.connect(lambda: self.import_all_data())
+        self.import_all_data_button.clicked.connect(lambda: import_all_data(self.window()))
 
         # 添加设置项到分组
         self.addGroup(
