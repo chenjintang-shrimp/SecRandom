@@ -76,6 +76,7 @@ class SettingsWindow(MSFluentWindow):
             "voiceSettingsInterface",
             "historyInterface",
             "moreSettingsInterface",
+            "updateInterface",
             "aboutInterface",
         ]
 
@@ -258,6 +259,15 @@ class SettingsWindow(MSFluentWindow):
                 self._deferred_factories[interface_attr] = make_factory()
                 self._deferred_factories_meta[interface_attr] = {"is_pivot": is_pivot}
 
+        # 单独处理更新页面和关于页面
+        self.updateInterface = make_placeholder("updateInterface")
+        
+        def make_update_factory(iface=self.updateInterface):
+            return lambda parent=iface: settings_window_page.update_page(parent)
+            
+        self._deferred_factories["updateInterface"] = make_update_factory()
+        self._deferred_factories_meta["updateInterface"] = {"is_pivot": False}
+        
         self.aboutInterface = make_placeholder("aboutInterface")
 
         def make_about_factory(iface=self.aboutInterface):
@@ -411,6 +421,7 @@ class SettingsWindow(MSFluentWindow):
                 "voiceSettingsInterface",
                 "historyInterface",
                 "moreSettingsInterface",
+                "updateInterface",
                 "aboutInterface",
             ]
 
@@ -605,6 +616,13 @@ class SettingsWindow(MSFluentWindow):
                     setattr(self, item_attr, nav_item)
 
         # 关于页面始终显示在底部
+        self.update_item = self.addSubInterface(
+            self.updateInterface,
+            get_theme_icon("ic_fluent_arrow_sync_20_filled"),
+            get_content_name_async("update", "title"),
+            position=NavigationItemPosition.BOTTOM,
+        )
+        
         self.about_item = self.addSubInterface(
             self.aboutInterface,
             get_theme_icon("ic_fluent_info_20_filled"),

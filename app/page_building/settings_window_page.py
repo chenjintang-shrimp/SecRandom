@@ -10,6 +10,7 @@ from app.page_building.page_template import PageTemplate, PivotPageTemplate
 HOME_PATH = "app.view.settings.home:home"
 BASIC_SETTINGS_PATH = "app.view.settings.basic_settings:basic_settings"
 FLOATING_WINDOW_MANAGEMENT_PATH = "app.view.settings.floating_window_management:floating_window_management"
+UPDATE_PATH = "app.view.settings.update:update"
 ABOUT_PATH = "app.view.settings.about:about"
 
 # 导入默认设置
@@ -168,8 +169,13 @@ class more_settings_page(PivotPageTemplate):
         self.set_base_path("app.view.settings.more_settings")
 
 
+class update_page(PageTemplate):
+    """创建更新页面"""
+    def __init__(self, parent: QFrame = None):
+        super().__init__(content_widget_class=UPDATE_PATH, parent=parent)
+
+
 class about_page(PageTemplate):
     """创建关于页面"""
-
     def __init__(self, parent: QFrame = None):
         super().__init__(content_widget_class=ABOUT_PATH, parent=parent)

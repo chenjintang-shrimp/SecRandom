@@ -471,7 +471,14 @@ DEFAULT_SETTINGS = {
         "min_weight": {"default_value": 0.50},
         "max_weight": {"default_value": 5.00},
     },
-    "debug": {"title": {"default_value": None}},
+    "debug": {"title": {"default_value": None}
+    },
+    "update": {
+        "title": {"default_value": None},
+        "update_method": {"default_value": 4},
+        "update_channel": {"default_value": 0},
+        "update_source": {"default_value": 0},
+    },
     "about": {
         "title": {"default_value": None},
         "github": {"default_value": None},
