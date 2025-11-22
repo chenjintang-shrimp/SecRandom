@@ -169,7 +169,9 @@ class floating_window_settings(GroupHeaderCardWidget):
         self.floating_window_auto_close_time_spinbox.setRange(0, 300)
         self.floating_window_auto_close_time_spinbox.setSuffix("秒")
         self.floating_window_auto_close_time_spinbox.setValue(
-            readme_settings_async("quick_draw_notification_settings", "floating_window_auto_close_time")
+            readme_settings_async(
+                "quick_draw_notification_settings", "floating_window_auto_close_time"
+            )
         )
         self.floating_window_auto_close_time_spinbox.valueChanged.connect(
             lambda: update_settings(
@@ -258,7 +260,9 @@ class floating_window_settings(GroupHeaderCardWidget):
         )
         self.addGroup(
             get_theme_icon("ic_fluent_time_picker_20_filled"),
-            get_content_name_async("quick_draw_notification_settings", "floating_window_auto_close_time"),
+            get_content_name_async(
+                "quick_draw_notification_settings", "floating_window_auto_close_time"
+            ),
             get_content_description_async(
                 "quick_draw_notification_settings", "floating_window_auto_close_time"
             ),
@@ -281,7 +285,7 @@ class floating_window_settings(GroupHeaderCardWidget):
         current_text = self.enabled_monitor_combo_box.currentText()
         self.enabled_monitor_combo_box.clear()
         self.enabled_monitor_combo_box.addItems(self.get_monitor_list())
-        
+
         # 尝试保持之前选中的显示器
         index = self.enabled_monitor_combo_box.findText(current_text)
         if index >= 0:

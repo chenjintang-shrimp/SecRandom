@@ -1,7 +1,6 @@
 # ==================================================
 # 导入库
 # ==================================================
-import json
 
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
@@ -25,6 +24,7 @@ from app.tools.roll_call_utils import RollCallUtils
 from app.page_building.another_window import *
 
 from random import SystemRandom
+
 system_random = SystemRandom()
 
 
@@ -34,12 +34,12 @@ system_random = SystemRandom()
 class roll_call(QWidget):
     # 添加一个信号，当设置发生变化时发出
     settingsChanged = Signal()
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.file_watcher = QFileSystemWatcher()
         self.setup_file_watcher()
-        
+
         # 长按功能相关变量
         self.press_timer = QTimer()
         self.press_timer.timeout.connect(self.handle_long_press)
@@ -195,69 +195,54 @@ class roll_call(QWidget):
         control_layout = QVBoxLayout(control_widget)
         control_layout.setContentsMargins(0, 0, 0, 0)
         control_layout.addStretch()
-        
+
         # 根据页面管理设置决定是否添加控件
         self.add_control_widget_if_enabled(
-            control_layout, 
-            self.reset_button, 
-            "page_management", 
-            "reset_roll_call"
-        )
-        
-        self.add_control_widget_if_enabled(
-            control_layout, 
-            count_widget, 
-            "page_management", 
-            "roll_call_quantity_control"
-        )
-        
-        self.add_control_widget_if_enabled(
-            control_layout, 
-            self.start_button, 
-            "page_management", 
-            "roll_call_start_button"
-        )
-        
-        self.add_control_widget_if_enabled(
-            control_layout, 
-            self.list_combobox, 
-            "page_management", 
-            "roll_call_list"
-        )
-        
-        self.add_control_widget_if_enabled(
-            control_layout, 
-            self.range_combobox, 
-            "page_management", 
-            "roll_call_range"
-        )
-        
-        self.add_control_widget_if_enabled(
-            control_layout, 
-            self.gender_combobox, 
-            "page_management", 
-            "roll_call_gender"
-        )
-        
-        self.add_control_widget_if_enabled(
-            control_layout, 
-            self.remaining_button, 
-            "page_management", 
-            "show_name"
+            control_layout, self.reset_button, "page_management", "reset_roll_call"
         )
 
         self.add_control_widget_if_enabled(
-            control_layout, 
-            self.remaining_button, 
-            "page_management", 
-            "roll_call_remaining_button"
+            control_layout,
+            count_widget,
+            "page_management",
+            "roll_call_quantity_control",
         )
-        
+
         self.add_control_widget_if_enabled(
-            control_layout, 
-            self.many_count_label, 
-            "page_management", 
-            "roll_call_quantity_label"
+            control_layout,
+            self.start_button,
+            "page_management",
+            "roll_call_start_button",
+        )
+
+        self.add_control_widget_if_enabled(
+            control_layout, self.list_combobox, "page_management", "roll_call_list"
+        )
+
+        self.add_control_widget_if_enabled(
+            control_layout, self.range_combobox, "page_management", "roll_call_range"
+        )
+
+        self.add_control_widget_if_enabled(
+            control_layout, self.gender_combobox, "page_management", "roll_call_gender"
+        )
+
+        self.add_control_widget_if_enabled(
+            control_layout, self.remaining_button, "page_management", "show_name"
+        )
+
+        self.add_control_widget_if_enabled(
+            control_layout,
+            self.remaining_button,
+            "page_management",
+            "roll_call_remaining_button",
+        )
+
+        self.add_control_widget_if_enabled(
+            control_layout,
+            self.many_count_label,
+            "page_management",
+            "roll_call_quantity_label",
         )
 
         scroll = SmoothScrollArea()
@@ -266,10 +251,10 @@ class roll_call(QWidget):
 
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        
+
         # 根据页面管理设置决定控制面板位置
         roll_call_method = readme_settings_async("page_management", "roll_call_method")
-        
+
         if roll_call_method == 0:  # 左侧
             main_layout.addWidget(control_widget)
             main_layout.addWidget(scroll, 1)
@@ -280,7 +265,9 @@ class roll_call(QWidget):
         # 在事件循环中延迟填充下拉框和初始统计，减少启动阻塞
         QTimer.singleShot(0, self.populate_lists)
 
-    def add_control_widget_if_enabled(self, layout, widget, settings_group, setting_name):
+    def add_control_widget_if_enabled(
+        self, layout, widget, settings_group, setting_name
+    ):
         """根据设置决定是否添加控件到布局"""
         try:
             is_enabled = readme_settings_async(settings_group, setting_name)
@@ -332,7 +319,7 @@ class roll_call(QWidget):
             total_count = RollCallUtils.get_total_count(
                 self.list_combobox.currentText(),
                 self.range_combobox.currentIndex(),
-                self.range_combobox.currentText()
+                self.range_combobox.currentText(),
             )
 
             # 根据总人数是否为0，启用或禁用开始按钮
@@ -360,7 +347,7 @@ class roll_call(QWidget):
             total_count = RollCallUtils.get_total_count(
                 self.list_combobox.currentText(),
                 self.range_combobox.currentIndex(),
-                self.range_combobox.currentText()
+                self.range_combobox.currentText(),
             )
 
             # 根据总人数是否为0，启用或禁用开始按钮
@@ -518,7 +505,7 @@ class roll_call(QWidget):
 
         if hasattr(self, "final_selected_students"):
             self.display_result(self.final_selected_students, self.final_class_name)
-            
+
             # 检查是否启用了通知服务
             call_notification_service = readme_settings_async(
                 "roll_call_notification_settings", "call_notification_service"
@@ -526,13 +513,13 @@ class roll_call(QWidget):
             if call_notification_service:
                 # 准备通知设置
                 settings = RollCallUtils.prepare_notification_settings()
-                
+
                 # 使用ResultDisplayUtils显示通知
                 ResultDisplayUtils.show_notification_if_enabled(
                     self.final_class_name,
                     self.final_selected_students,
                     self.current_count,
-                    settings
+                    settings,
                 )
 
     def animate_result(self):
@@ -548,17 +535,23 @@ class roll_call(QWidget):
         gender_filter = self.gender_combobox.currentText()
 
         half_repeat = readme_settings_async("roll_call_settings", "half_repeat")
-        
+
         # 使用工具类抽取随机学生
         result = RollCallUtils.draw_random_students(
-            class_name, group_index, group_filter, 
-            gender_index, gender_filter, self.current_count, half_repeat
+            class_name,
+            group_index,
+            group_filter,
+            gender_index,
+            gender_filter,
+            self.current_count,
+            half_repeat,
         )
-        
+
         # 处理需要重置的情况
         if "reset_required" in result and result["reset_required"]:
             RollCallUtils.reset_drawn_records(
-                    self, class_name, gender_filter, group_filter)
+                self, class_name, gender_filter, group_filter
+            )
             return
 
         self.final_selected_students = result["selected_students"]
@@ -568,7 +561,7 @@ class roll_call(QWidget):
         self.final_gender_filter = result["gender_filter"]
 
         self.display_result(result["selected_students"], result["class_name"])
-        
+
         # 检查是否启用了通知服务
         call_notification_service = readme_settings_async(
             "roll_call_notification_settings", "call_notification_service"
@@ -576,13 +569,13 @@ class roll_call(QWidget):
         if call_notification_service:
             # 准备通知设置
             settings = RollCallUtils.prepare_notification_settings()
-            
+
             # 使用ResultDisplayUtils显示通知
             ResultDisplayUtils.show_notification_if_enabled(
                 self.final_class_name,
                 self.final_selected_students,
                 self.current_count,
-                settings
+                settings,
             )
 
     def display_result(self, selected_students, class_name):
@@ -648,7 +641,7 @@ class roll_call(QWidget):
             self.total_count = RollCallUtils.get_total_count(
                 self.list_combobox.currentText(),
                 self.range_combobox.currentIndex(),
-                self.range_combobox.currentText()
+                self.range_combobox.currentText(),
             )
             self.current_count = max(1, int(self.count_label.text()) + change)
             self.count_label.setText(str(self.current_count))
@@ -664,19 +657,21 @@ class roll_call(QWidget):
         return RollCallUtils.get_total_count(
             self.list_combobox.currentText(),
             self.range_combobox.currentIndex(),
-            self.range_combobox.currentText()
+            self.range_combobox.currentText(),
         )
 
     def update_many_count_label(self):
         """更新多数量显示标签"""
-        total_count, remaining_count, formatted_text = RollCallUtils.update_many_count_label_text(
-            self.list_combobox.currentText(),
-            self.range_combobox.currentIndex(),
-            self.range_combobox.currentText(),
-            self.gender_combobox.currentText(),
-            readme_settings_async("roll_call_settings", "half_repeat")
+        total_count, remaining_count, formatted_text = (
+            RollCallUtils.update_many_count_label_text(
+                self.list_combobox.currentText(),
+                self.range_combobox.currentIndex(),
+                self.range_combobox.currentText(),
+                self.gender_combobox.currentText(),
+                readme_settings_async("roll_call_settings", "half_repeat"),
+            )
         )
-        
+
         self.remaining_count = remaining_count
         self.many_count_label.setText(formatted_text)
 
@@ -859,14 +854,16 @@ class roll_call(QWidget):
             self.gender_combobox.blockSignals(False)
 
             # 使用工具函数更新标签文本
-            total_count, remaining_count, formatted_text = RollCallUtils.update_many_count_label_text(
-                self.list_combobox.currentText(),
-                self.range_combobox.currentIndex(),
-                self.range_combobox.currentText(),
-                self.gender_combobox.currentText(),
-                readme_settings("roll_call_settings", "half_repeat")
+            total_count, remaining_count, formatted_text = (
+                RollCallUtils.update_many_count_label_text(
+                    self.list_combobox.currentText(),
+                    self.range_combobox.currentIndex(),
+                    self.range_combobox.currentText(),
+                    self.gender_combobox.currentText(),
+                    readme_settings("roll_call_settings", "half_repeat"),
+                )
             )
-            
+
             self.remaining_count = remaining_count
             self.many_count_label.setText(formatted_text)
 
@@ -879,12 +876,15 @@ class roll_call(QWidget):
     def setupSettingsListener(self):
         """设置设置监听器，监听页面管理设置变化"""
         from app.tools.settings_access import get_settings_signals
+
         settings_signals = get_settings_signals()
         settings_signals.settingChanged.connect(self.onSettingsChanged)
 
     def onSettingsChanged(self, first_level_key, second_level_key, value):
         """当设置发生变化时的处理函数"""
         # 只处理页面管理相关的设置变化
-        if first_level_key == "page_management" and second_level_key.startswith("roll_call"):
+        if first_level_key == "page_management" and second_level_key.startswith(
+            "roll_call"
+        ):
             # 发出信号让父组件处理
             self.settingsChanged.emit()

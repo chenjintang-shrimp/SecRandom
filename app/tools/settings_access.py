@@ -188,15 +188,21 @@ def readme_settings_async(first_level_key: str, second_level_key: str, timeout=1
 
 class SettingsSignals(QObject):
     """设置变化信号类"""
-    settingChanged = Signal(str, str, object)  # (first_level_key, second_level_key, value)
+
+    settingChanged = Signal(
+        str, str, object
+    )  # (first_level_key, second_level_key, value)
+
 
 # 创建全局信号实例
 _settings_signals = SettingsSignals()
+
 
 def get_settings_signals():
     """获取设置信号实例"""
     global _settings_signals
     return _settings_signals
+
 
 def update_settings(first_level_key: str, second_level_key: str, value: Any):
     """更新设置
@@ -234,9 +240,11 @@ def update_settings(first_level_key: str, second_level_key: str, value: Any):
             json.dump(settings_data, f, ensure_ascii=False, indent=4)
 
         logger.debug(f"设置更新成功: {first_level_key}.{second_level_key} = {value}")
-        
+
         # 发送设置变化信号
-        get_settings_signals().settingChanged.emit(first_level_key, second_level_key, value)
+        get_settings_signals().settingChanged.emit(
+            first_level_key, second_level_key, value
+        )
     except Exception as e:
         logger.error(f"设置更新失败: {e}")
 

@@ -413,10 +413,12 @@ class ResultDisplayUtils:
                 item.widget().deleteLater()
 
     @staticmethod
-    def show_notification_if_enabled(class_name, selected_students, draw_count=1, settings=None):
+    def show_notification_if_enabled(
+        class_name, selected_students, draw_count=1, settings=None
+    ):
         """
         如果启用了通知服务，则显示抽取结果通知
-        
+
         参数:
             class_name: 班级名称
             selected_students: 选中的学生列表
@@ -424,6 +426,8 @@ class ResultDisplayUtils:
             settings: 通知设置参数
         """
         # 检查是否启用了通知服务（这个检查应该由调用方完成）
-        from app.common.notification.notification_service import show_roll_call_notification
-        
+        from app.common.notification.notification_service import (
+            show_roll_call_notification,
+        )
+
         show_roll_call_notification(class_name, selected_students, draw_count, settings)
