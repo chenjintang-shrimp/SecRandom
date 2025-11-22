@@ -85,8 +85,10 @@ class floating_window_management(QWidget):
         if placeholder is None:
             try:
                 self.vBoxLayout.addWidget(real_widget)
-            except Exception:
-                pass
+            except Exception as e:
+                from loguru import logger
+
+                logger.exception("Error handling floating window action: {}", e)
             setattr(self, name, real_widget)
             return
 
@@ -119,8 +121,10 @@ class floating_window_management(QWidget):
             except Exception:
                 try:
                     self.vBoxLayout.addWidget(real_widget)
-                except Exception:
-                    pass
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception("Error in floating window sub-action: {}", e)
             setattr(self, name, real_widget)
             return
 
@@ -131,8 +135,10 @@ class floating_window_management(QWidget):
             try:
                 self.vBoxLayout.addWidget(real_widget)
                 setattr(self, name, real_widget)
-            except Exception:
-                pass
+            except Exception as e:
+                from loguru import logger
+
+                logger.exception("Error reading floating window settings: {}", e)
 
 
 # ==================================================

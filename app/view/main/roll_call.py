@@ -414,8 +414,12 @@ class roll_call(QWidget):
         self.start_button.setEnabled(True)
         try:
             self.start_button.clicked.disconnect()
-        except:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception(
+                "Error disconnecting start_button clicked (ignored): {}", e
+            )
         self.draw_random()
         animation = readme_settings_async("roll_call_settings", "animation")
         autoplay_count = readme_settings_async("roll_call_settings", "autoplay_count")
@@ -468,8 +472,13 @@ class roll_call(QWidget):
         self.is_animating = False
         try:
             self.start_button.clicked.disconnect()
-        except:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception(
+                "Error disconnecting start_button clicked during stop_animation (ignored): {}",
+                e,
+            )
         self.start_button.clicked.connect(lambda: self.start_draw())
 
         half_repeat = readme_settings_async("roll_call_settings", "half_repeat")
