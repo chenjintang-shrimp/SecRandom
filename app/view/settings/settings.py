@@ -253,24 +253,18 @@ class SettingsWindow(MSFluentWindow):
         try:
             QTimer.singleShot(300, lambda: self._background_warmup_non_pivot())
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error during settings warmup: {}", e)
 
         # 连接堆叠窗口切换信号，在首次切换到占位时创建真实页面
         try:
             self.stackedWidget.currentChanged.connect(self._on_stacked_widget_changed)
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error creating deferred page: {}", e)
 
         # 在窗口显示后启动后台预热，分批创建其余页面，避免一次性阻塞
         try:
             QTimer.singleShot(300, lambda: self._background_warmup_pages())
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error scheduling background warmup pages: {}", e)
 
     def _on_stacked_widget_changed(self, index: int):
@@ -302,8 +296,6 @@ class SettingsWindow(MSFluentWindow):
                                 50, lambda rp=real_page: rp.load_all_pages()
                             )
                     except Exception as e:
-                        from loguru import logger
-
                         logger.exception("Error in deferred page creation step: {}", e)
                     logger.debug(f"设置页面已按需创建: {name}")
                 except Exception as e:
@@ -335,8 +327,6 @@ class SettingsWindow(MSFluentWindow):
                 pivot = [n for n in names if meta.get(n, {}).get("is_pivot", False)]
                 ordered = non_pivot + pivot
             except Exception as e:
-                from loguru import logger
-
                 logger.exception(
                     "Error ordering deferred factories (fallback to original order): {}",
                     e,

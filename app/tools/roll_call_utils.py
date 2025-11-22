@@ -12,7 +12,7 @@ from app.tools.config import (
     reset_drawn_record,
 )
 from app.tools.path_utils import get_resources_path, open_file
-from app.tools.settings_access import readme_settings_async
+from app.tools.settings_access import readme_settings_async, get_safe_font_size
 
 from app.Language.obtain_language import get_any_position_value
 
@@ -315,7 +315,7 @@ class RollCallUtils:
         # 读取所有相关设置并传递给通知服务
         settings = {
             # 点名设置
-            "font_size": readme_settings_async("roll_call_settings", "font_size"),
+            "font_size": get_safe_font_size("roll_call_settings", "font_size"),
             "animation_color_theme": readme_settings_async(
                 "roll_call_settings", "animation_color_theme"
             ),

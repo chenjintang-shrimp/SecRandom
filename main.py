@@ -59,8 +59,6 @@ def configure_logging():
 # 显示调节
 # ==================================================
 """根据设置自动调整DPI缩放模式"""
-
-
 def configure_dpi_scale():
     """在创建QApplication之前配置DPI缩放模式"""
     # 先设置环境变量，这些必须在QApplication创建之前设置

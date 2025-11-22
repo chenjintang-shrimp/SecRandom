@@ -16,6 +16,7 @@ from app.tools.settings_access import *
 from app.Language.obtain_language import *
 from loguru import logger
 import time
+import weakref
 
 
 # ==================================================
@@ -34,6 +35,8 @@ class page_management(QWidget):
 
         # 延迟创建子组件：先插入占位容器并注册创建工厂，避免一次性阻塞
         self._deferred_factories = {}
+        # 使用弱引用来跟踪自身，避免循环引用
+        self._self_ref = weakref.ref(self)
 
         def make_placeholder(attr_name: str):
             w = QWidget()
@@ -62,9 +65,35 @@ class page_management(QWidget):
         # 分批异步创建真实子组件，间隔以减少主线程瞬时负载
         try:
             for i, name in enumerate(list(self._deferred_factories.keys())):
-                QTimer.singleShot(150 * i, lambda n=name: self._create_deferred(n))
+                # 使用QTimer.singleShot创建定时器
+                QTimer.singleShot(150 * i, lambda n=name: self._safe_create_deferred(n))
         except Exception as e:
             logger.error(f"调度延迟创建子组件失败: {e}")
+
+    def _safe_create_deferred(self, name: str):
+        """安全地创建延迟注册的子组件，使用弱引用避免访问已销毁的对象"""
+        try:
+            # 使用弱引用检查对象是否仍然有效
+            self_ref = getattr(self, '_self_ref', None)
+            if self_ref is None or self_ref() is None:
+                logger.debug(f"对象已销毁，取消创建子组件 {name}")
+                return
+            
+            # 检查布局是否存在
+            if not hasattr(self, 'vBoxLayout') or not self.vBoxLayout:
+                return
+
+            self._create_deferred(name)
+        except RuntimeError as e:
+            if "already deleted" in str(e):
+                logger.debug(f"对象已销毁，取消创建子组件 {name}")
+                return
+            else:
+                logger.error(f"创建子组件 {name} 时发生运行时错误: {e}")
+                return
+        except Exception as e:
+            logger.error(f"创建子组件 {name} 时发生未知错误: {e}")
+            return
 
     def _create_deferred(self, name: str):
         """按需创建延迟注册的子组件并替换占位容器"""
@@ -72,6 +101,7 @@ class page_management(QWidget):
         factories = getattr(self, "_deferred_factories", {})
         if name not in factories:
             return
+            
         # 尝试从 factories 中弹出 factory，若并发已移除则安全返回
         try:
             factory = factories.pop(name)
@@ -79,82 +109,91 @@ class page_management(QWidget):
             return
 
         # 快速检查当前窗口对象是否还存在（避免在被销毁时创建）
-        if self is None or not hasattr(self, "vBoxLayout"):
+        self_ref = getattr(self, '_self_ref', None)
+        if self_ref is None or self_ref() is None:
             return
-
+            
         # 创建真实 widget 的过程可能在这段时间父对象被销毁，保护 factory 调用
         try:
             start = time.perf_counter()
             real_widget = factory()
             elapsed = time.perf_counter() - start
-        except RuntimeError as e:
-            logger.error(f"创建子组件 {name} 失败（父对象可能已销毁）: {e}")
-            return
         except Exception as e:
-            logger.error(f"创建子组件 {name} 未知错误: {e}")
+            logger.error(f"创建子组件 {name} 失败: {e}")
             return
 
-        # 找到占位容器
+        # 再次检查对象是否仍然有效
+        if self_ref is None or self_ref() is None:
+            # 如果对象已经销毁，则立即清理新创建的组件
+            if 'real_widget' in locals():
+                real_widget.deleteLater()
+            return
+
+        # 获取占位容器
         placeholder = getattr(self, name, None)
-        # 如果占位不存在或已被替换，则尝试安全插入到主 layout
+        
+        # 如果没有占位符，直接添加到主布局
         if placeholder is None:
             try:
+                # 检查self是否仍然有效
+                if self_ref is None or self_ref() is None:
+                    if 'real_widget' in locals():
+                        real_widget.deleteLater()
+                    return
                 self.vBoxLayout.addWidget(real_widget)
+                setattr(self, name, real_widget)
+                logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
             except RuntimeError as e:
-                logger.error(f"将子组件 {name} 插入主布局失败（父控件已销毁）: {e}")
-                return
-            setattr(self, name, real_widget)
-            logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
+                logger.error(f"将子组件 {name} 插入主布局失败: {e}")
             return
 
-        # 如果占位还存在，优先尝试将真实 widget 添加到占位的 layout 中
+        # 尝试获取占位符的布局
         layout = None
         try:
             layout = placeholder.layout()
         except Exception:
-            layout = None
+            pass
 
-        if layout is None:
+        # 如果有布局，添加到布局中
+        if layout is not None:
             try:
-                # 占位已经无 layout，尝试直接在主布局中替换位置
-                # 找到占位在主布局中的索引并替换
+                # 检查widget是否仍然有效
+                if self_ref is None or self_ref() is None:
+                    if 'real_widget' in locals():
+                        real_widget.deleteLater()
+                    return
+                layout.addWidget(real_widget)
+                setattr(self, name, real_widget)
+                logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
+            except RuntimeError as e:
+                logger.error(f"绑定子组件 {name} 到占位容器失败: {e}")
+        else:
+            # 没有布局，尝试替换占位符
+            try:
                 index = -1
                 for i in range(self.vBoxLayout.count()):
                     item = self.vBoxLayout.itemAt(i)
                     if item and item.widget() is placeholder:
                         index = i
                         break
+                        
                 if index >= 0:
-                    try:
-                        # 移除占位并在同位置插入真实 widget
-                        item = self.vBoxLayout.takeAt(index)
-                        widget = item.widget() if item else None
-                        if widget is not None:
-                            widget.deleteLater()
-                        self.vBoxLayout.insertWidget(index, real_widget)
-                    except RuntimeError as e:
-                        logger.error(f"替换占位 {name} 失败（父控件已销毁）: {e}")
-                        return
+                    # 移除占位并在同位置插入真实 widget
+                    item = self.vBoxLayout.takeAt(index)
+                    widget = item.widget() if item else None
+                    if widget is not None:
+                        widget.deleteLater()
+                    self.vBoxLayout.insertWidget(index, real_widget)
+                    setattr(self, name, real_widget)
+                    logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
                 else:
                     # 未找到占位，回退到追加
                     self.vBoxLayout.addWidget(real_widget)
+                    setattr(self, name, real_widget)
+                    logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
             except RuntimeError as e:
-                logger.error(f"将子组件 {name} 插入主布局失败（父控件已销毁）: {e}")
-                return
-            setattr(self, name, real_widget)
-            logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
-            return
-
-        # 正常情况下，使用占位的 layout 添加 widget
-        try:
-            layout.addWidget(real_widget)
-            setattr(self, name, real_widget)
-            logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
-        except RuntimeError as e:
-            logger.error(f"绑定子组件 {name} 到占位容器失败：父控件已销毁: {e}")
-            return
-
-
+                logger.error(f"替换占位 {name} 失败: {e}")
+                
 class page_management_roll_call(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -178,47 +217,26 @@ class page_management_roll_call(GroupHeaderCardWidget):
             )
         )
 
-        # 姓名设置按钮是否显示开关
-        self.show_name_button_switch = SwitchButton()
-        self.show_name_button_switch.setOffText(
-            get_content_switchbutton_name_async(
-                "page_management", "show_name", "disable"
-            )
-        )
-        self.show_name_button_switch.setOnText(
-            get_content_switchbutton_name_async(
-                "page_management", "show_name", "enable"
-            )
-        )
-        self.show_name_button_switch.setChecked(
-            readme_settings_async("page_management", "show_name")
-        )
-        self.show_name_button_switch.checkedChanged.connect(
-            lambda: self._update_settings_and_notify(
-                "page_management", "show_name", self.show_name_button_switch.isChecked()
-            )
-        )
-
         # 重置已抽取名单按钮是否显示开关
-        self.reset_roll_call_button_switch = SwitchButton()
-        self.reset_roll_call_button_switch.setOffText(
+        self.roll_call_reset_button_switch = SwitchButton()
+        self.roll_call_reset_button_switch.setOffText(
             get_content_switchbutton_name_async(
-                "page_management", "reset_roll_call", "disable"
+                "page_management", "roll_call_reset_button", "disable"
             )
         )
-        self.reset_roll_call_button_switch.setOnText(
+        self.roll_call_reset_button_switch.setOnText(
             get_content_switchbutton_name_async(
-                "page_management", "reset_roll_call", "enable"
+                "page_management", "roll_call_reset_button", "enable"
             )
         )
-        self.reset_roll_call_button_switch.setChecked(
-            readme_settings_async("page_management", "reset_roll_call")
+        self.roll_call_reset_button_switch.setChecked(
+            readme_settings_async("page_management", "roll_call_reset_button")
         )
-        self.reset_roll_call_button_switch.checkedChanged.connect(
+        self.roll_call_reset_button_switch.checkedChanged.connect(
             lambda: self._update_settings_and_notify(
                 "page_management",
-                "reset_roll_call",
-                self.reset_roll_call_button_switch.isChecked(),
+                "roll_call_reset_button",
+                self.roll_call_reset_button_switch.isChecked(),
             )
         )
 
@@ -391,23 +409,15 @@ class page_management_roll_call(GroupHeaderCardWidget):
             self.roll_call_method_combo,
         )
         self.addGroup(
-            get_theme_icon("ic_fluent_slide_text_edit_20_filled"),
-            get_content_name_async("page_management", "show_name"),
-            get_content_description_async("page_management", "show_name"),
-            self.show_name_button_switch,
-        )
-        self.addGroup(
             get_theme_icon("ic_fluent_arrow_reset_20_filled"),
-            get_content_name_async("page_management", "reset_roll_call"),
-            get_content_description_async("page_management", "reset_roll_call"),
-            self.reset_roll_call_button_switch,
+            get_content_name_async("page_management", "roll_call_reset_button"),
+            get_content_description_async("page_management", "roll_call_reset_button"),
+            self.roll_call_reset_button_switch,
         )
         self.addGroup(
             get_theme_icon("ic_fluent_arrow_autofit_content_20_filled"),
             get_content_name_async("page_management", "roll_call_quantity_control"),
-            get_content_description_async(
-                "page_management", "roll_call_quantity_control"
-            ),
+            get_content_description_async("page_management", "roll_call_quantity_control"),
             self.roll_call_quantity_control_switch,
         )
         self.addGroup(
@@ -435,20 +445,20 @@ class page_management_roll_call(GroupHeaderCardWidget):
             self.roll_call_gender_combo_switch,
         )
         self.addGroup(
-            get_theme_icon("ic_fluent_slide_text_person_20_filled"),
-            get_content_name_async("page_management", "roll_call_quantity_label"),
-            get_content_description_async(
-                "page_management", "roll_call_quantity_label"
-            ),
-            self.roll_call_quantity_label_switch,
-        )
-        self.addGroup(
             get_theme_icon("ic_fluent_people_list_20_filled"),
             get_content_name_async("page_management", "roll_call_remaining_button"),
             get_content_description_async(
                 "page_management", "roll_call_remaining_button"
             ),
             self.roll_call_remaining_button_switch,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_slide_text_person_20_filled"),
+            get_content_name_async("page_management", "roll_call_quantity_label"),
+            get_content_description_async(
+                "page_management", "roll_call_quantity_label"
+            ),
+            self.roll_call_quantity_label_switch,
         )
 
     def _update_settings_and_notify(self, group, key, value):
@@ -481,49 +491,26 @@ class page_management_lottery(GroupHeaderCardWidget):
             )
         )
 
-        # 奖品名称设置按钮是否显示开关
-        self.show_lottery_name_button_switch = SwitchButton()
-        self.show_lottery_name_button_switch.setOffText(
-            get_content_switchbutton_name_async(
-                "page_management", "show_lottery_name", "disable"
-            )
-        )
-        self.show_lottery_name_button_switch.setOnText(
-            get_content_switchbutton_name_async(
-                "page_management", "show_lottery_name", "enable"
-            )
-        )
-        self.show_lottery_name_button_switch.setChecked(
-            readme_settings_async("page_management", "show_lottery_name")
-        )
-        self.show_lottery_name_button_switch.checkedChanged.connect(
-            lambda: self._update_settings_and_notify(
-                "page_management",
-                "show_lottery_name",
-                self.show_lottery_name_button_switch.isChecked(),
-            )
-        )
-
         # 重置已抽取名单按钮是否显示开关
-        self.reset_lottery_button_switch = SwitchButton()
-        self.reset_lottery_button_switch.setOffText(
+        self.lottery_reset_button_button_switch = SwitchButton()
+        self.lottery_reset_button_button_switch.setOffText(
             get_content_switchbutton_name_async(
-                "page_management", "reset_lottery", "disable"
+                "page_management", "lottery_reset_button", "disable"
             )
         )
-        self.reset_lottery_button_switch.setOnText(
+        self.lottery_reset_button_button_switch.setOnText(
             get_content_switchbutton_name_async(
-                "page_management", "reset_lottery", "enable"
+                "page_management", "lottery_reset_button", "enable"
             )
         )
-        self.reset_lottery_button_switch.setChecked(
-            readme_settings_async("page_management", "reset_lottery")
+        self.lottery_reset_button_button_switch.setChecked(
+            readme_settings_async("page_management", "lottery_reset_button")
         )
-        self.reset_lottery_button_switch.checkedChanged.connect(
+        self.lottery_reset_button_button_switch.checkedChanged.connect(
             lambda: self._update_settings_and_notify(
                 "page_management",
-                "reset_lottery",
-                self.reset_lottery_button_switch.isChecked(),
+                "lottery_reset_button",
+                self.lottery_reset_button_button_switch.isChecked(),
             )
         )
 
@@ -650,16 +637,10 @@ class page_management_lottery(GroupHeaderCardWidget):
             self.lottery_method_combo,
         )
         self.addGroup(
-            get_theme_icon("ic_fluent_slide_text_edit_20_filled"),
-            get_content_name_async("page_management", "show_lottery_name"),
-            get_content_description_async("page_management", "show_lottery_name"),
-            self.show_lottery_name_button_switch,
-        )
-        self.addGroup(
             get_theme_icon("ic_fluent_arrow_reset_20_filled"),
-            get_content_name_async("page_management", "reset_lottery"),
-            get_content_description_async("page_management", "reset_lottery"),
-            self.reset_lottery_button_switch,
+            get_content_name_async("page_management", "lottery_reset_button"),
+            get_content_description_async("page_management", "lottery_reset_button"),
+            self.lottery_reset_button_button_switch,
         )
         self.addGroup(
             get_theme_icon("ic_fluent_arrow_autofit_content_20_filled"),
@@ -727,25 +708,25 @@ class page_management_custom(GroupHeaderCardWidget):
         )
 
         # 重置已抽取名单按钮是否显示开关
-        self.reset_custom_button_switch = SwitchButton()
-        self.reset_custom_button_switch.setOffText(
+        self.custom_reset_button_button_switch = SwitchButton()
+        self.custom_reset_button_button_switch.setOffText(
             get_content_switchbutton_name_async(
-                "page_management", "reset_custom", "disable"
+                "page_management", "custom_reset_button", "disable"
             )
         )
-        self.reset_custom_button_switch.setOnText(
+        self.custom_reset_button_button_switch.setOnText(
             get_content_switchbutton_name_async(
-                "page_management", "reset_custom", "enable"
+                "page_management", "custom_reset_button", "enable"
             )
         )
-        self.reset_custom_button_switch.setChecked(
-            readme_settings_async("page_management", "reset_roll_call")
+        self.custom_reset_button_button_switch.setChecked(
+            readme_settings_async("page_management", "custom_reset_button")
         )
-        self.reset_custom_button_switch.checkedChanged.connect(
+        self.custom_reset_button_button_switch.checkedChanged.connect(
             lambda: self._update_settings_and_notify(
                 "page_management",
-                "reset_custom",
-                self.reset_custom_button_switch.isChecked(),
+                "custom_reset_button",
+                self.custom_reset_button_button_switch.isChecked(),
             )
         )
 
@@ -942,9 +923,9 @@ class page_management_custom(GroupHeaderCardWidget):
         )
         self.addGroup(
             get_theme_icon("ic_fluent_arrow_reset_20_filled"),
-            get_content_name_async("page_management", "reset_custom"),
-            get_content_description_async("page_management", "reset_custom"),
-            self.reset_custom_button_switch,
+            get_content_name_async("page_management", "custom_reset_button"),
+            get_content_description_async("page_management", "custom_reset_button"),
+            self.custom_reset_button_button_switch,
         )
         self.addGroup(
             get_theme_icon("ic_fluent_arrow_autofit_content_20_filled"),

@@ -686,7 +686,25 @@ def create_table_item(
     item = QTableWidgetItem(display_value)
     from app.tools.personalised import load_custom_font
 
-    item.setFont(QFont(load_custom_font(), font_size))
+    try:
+        # 确保font_size是有效的整数
+        if not isinstance(font_size, (int, float)):
+            font_size = int(font_size) if str(font_size).isdigit() else 12
+        
+        font_size = int(font_size)
+        if font_size <= 0 or font_size > 200:  # 设置合理的上限
+            font_size = 12  # 使用默认字体大小
+            
+        custom_font = load_custom_font()
+        if custom_font:
+            item.setFont(QFont(custom_font, font_size))
+    except (ValueError, TypeError) as e:
+        logger.warning(f"设置表格项字体大小失败，使用默认值: {e}")
+        # 使用默认字体大小
+        custom_font = load_custom_font()
+        if custom_font:
+            item.setFont(QFont(custom_font, 12))
+            
     if is_centered:
         item.setTextAlignment(
             Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter

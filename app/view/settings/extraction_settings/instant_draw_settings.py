@@ -15,6 +15,7 @@ from app.tools.path_utils import *
 from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
+from app.tools.settings_access import get_safe_font_size
 from app.Language.obtain_language import *
 
 
@@ -273,7 +274,7 @@ class instant_draw_display_settings(GroupHeaderCardWidget):
         self.font_size_spin.setRange(10, 1000)
         self.font_size_spin.setSuffix("px")
         self.font_size_spin.setValue(
-            readme_settings_async("instant_draw_settings", "font_size")
+            get_safe_font_size("instant_draw_settings", "font_size")
         )
         self.font_size_spin.valueChanged.connect(
             lambda: update_settings(

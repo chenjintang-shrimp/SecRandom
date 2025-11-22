@@ -106,12 +106,12 @@ class roll_call(QWidget):
         self.reset_button = PushButton(
             get_content_pushbutton_name_async("roll_call", "reset_button")
         )
-        self.reset_button.setFont(QFont(load_custom_font(), 15))
+        self._set_widget_font(self.reset_button, 15)
         self.reset_button.setFixedSize(165, 45)
         self.reset_button.clicked.connect(lambda: self.reset_count())
 
         self.minus_button = PushButton("-")
-        self.minus_button.setFont(QFont(load_custom_font(), 20))
+        self._set_widget_font(self.minus_button, 20)
         self.minus_button.setFixedSize(45, 45)
         self.minus_button.clicked.connect(lambda: self.update_count(-1))
 
@@ -121,12 +121,12 @@ class roll_call(QWidget):
 
         self.count_label = BodyLabel("1")
         self.count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.count_label.setFont(QFont(load_custom_font(), 20))
+        self._set_widget_font(self.count_label, 20)
         self.count_label.setFixedSize(65, 45)
         self.current_count = 1
 
         self.plus_button = PushButton("+")
-        self.plus_button.setFont(QFont(load_custom_font(), 20))
+        self._set_widget_font(self.plus_button, 20)
         self.plus_button.setFixedSize(45, 45)
         self.plus_button.clicked.connect(lambda: self.update_count(1))
 
@@ -137,35 +137,35 @@ class roll_call(QWidget):
         self.minus_button.setEnabled(False)
         self.plus_button.setEnabled(True)
 
-        count_widget = QWidget()
+        self.count_widget = QWidget()
         horizontal_layout = QHBoxLayout()
         horizontal_layout.setContentsMargins(0, 0, 0, 0)
         horizontal_layout.addWidget(self.minus_button, 0, Qt.AlignmentFlag.AlignLeft)
         horizontal_layout.addWidget(self.count_label, 0, Qt.AlignmentFlag.AlignLeft)
         horizontal_layout.addWidget(self.plus_button, 0, Qt.AlignmentFlag.AlignLeft)
-        count_widget.setLayout(horizontal_layout)
+        self.count_widget.setLayout(horizontal_layout)
 
         self.start_button = PrimaryPushButton(
             get_content_pushbutton_name_async("roll_call", "start_button")
         )
-        self.start_button.setFont(QFont(load_custom_font(), 15))
+        self._set_widget_font(self.start_button, 15)
         self.start_button.setFixedSize(165, 45)
         self.start_button.clicked.connect(lambda: self.start_draw())
 
         self.list_combobox = ComboBox()
-        self.list_combobox.setFont(QFont(load_custom_font(), 12))
+        self._set_widget_font(self.list_combobox, 12)
         self.list_combobox.setFixedSize(165, 45)
         # 延迟填充班级列表，避免启动时进行文件IO
         self.list_combobox.currentTextChanged.connect(self.on_class_changed)
 
         self.range_combobox = ComboBox()
-        self.range_combobox.setFont(QFont(load_custom_font(), 12))
+        self._set_widget_font(self.range_combobox, 12)
         self.range_combobox.setFixedSize(165, 45)
         # 延迟填充范围选项
         self.range_combobox.currentTextChanged.connect(self.on_filter_changed)
 
         self.gender_combobox = ComboBox()
-        self.gender_combobox.setFont(QFont(load_custom_font(), 12))
+        self._set_widget_font(self.gender_combobox, 12)
         self.gender_combobox.setFixedSize(165, 45)
         # 延迟填充性别选项
         self.gender_combobox.currentTextChanged.connect(self.on_filter_changed)
@@ -173,7 +173,7 @@ class roll_call(QWidget):
         self.remaining_button = PushButton(
             get_content_pushbutton_name_async("roll_call", "remaining_button")
         )
-        self.remaining_button.setFont(QFont(load_custom_font(), 12))
+        self._set_widget_font(self.remaining_button, 12)
         self.remaining_button.setFixedSize(165, 45)
         self.remaining_button.clicked.connect(lambda: self.show_remaining_list())
 
@@ -188,58 +188,66 @@ class roll_call(QWidget):
         formatted_text = text_template.format(total_count=0, remaining_count=0)
         self.many_count_label = BodyLabel(formatted_text)
         self.many_count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.many_count_label.setFont(QFont(load_custom_font(), 10))
+        self._set_widget_font(self.many_count_label, 10)
         self.many_count_label.setFixedWidth(165)
 
-        control_widget = QWidget()
-        control_layout = QVBoxLayout(control_widget)
-        control_layout.setContentsMargins(0, 0, 0, 0)
-        control_layout.addStretch()
+        self.control_widget = QWidget()
+        self.control_layout = QVBoxLayout(self.control_widget)
+        self.control_layout.setContentsMargins(0, 0, 0, 0)
+        self.control_layout.addStretch()
 
         # 根据页面管理设置决定是否添加控件
         self.add_control_widget_if_enabled(
-            control_layout, self.reset_button, "page_management", "reset_roll_call"
+            self.control_layout,
+            self.reset_button,
+            "page_management",
+            "roll_call_reset_button"
         )
 
         self.add_control_widget_if_enabled(
-            control_layout,
-            count_widget,
+            self.control_layout,
+            self.count_widget,
             "page_management",
             "roll_call_quantity_control",
         )
 
         self.add_control_widget_if_enabled(
-            control_layout,
+            self.control_layout,
             self.start_button,
             "page_management",
             "roll_call_start_button",
         )
 
         self.add_control_widget_if_enabled(
-            control_layout, self.list_combobox, "page_management", "roll_call_list"
+            self.control_layout,
+            self.list_combobox,
+            "page_management",
+            "roll_call_list"
         )
 
         self.add_control_widget_if_enabled(
-            control_layout, self.range_combobox, "page_management", "roll_call_range"
+            self.control_layout,
+            self.range_combobox,
+            "page_management",
+            "roll_call_range"
         )
 
         self.add_control_widget_if_enabled(
-            control_layout, self.gender_combobox, "page_management", "roll_call_gender"
+            self.control_layout,
+            self.gender_combobox,
+            "page_management",
+            "roll_call_gender"
         )
 
         self.add_control_widget_if_enabled(
-            control_layout, self.remaining_button, "page_management", "show_name"
-        )
-
-        self.add_control_widget_if_enabled(
-            control_layout,
+            self.control_layout,
             self.remaining_button,
             "page_management",
             "roll_call_remaining_button",
         )
 
         self.add_control_widget_if_enabled(
-            control_layout,
+            self.control_layout,
             self.many_count_label,
             "page_management",
             "roll_call_quantity_label",
@@ -256,11 +264,11 @@ class roll_call(QWidget):
         roll_call_method = readme_settings_async("page_management", "roll_call_method")
 
         if roll_call_method == 0:  # 左侧
-            main_layout.addWidget(control_widget)
+            main_layout.addWidget(self.control_widget)
             main_layout.addWidget(scroll, 1)
         else:  # 右侧
             main_layout.addWidget(scroll, 1)
-            main_layout.addWidget(control_widget)
+            main_layout.addWidget(self.control_widget)
 
         # 在事件循环中延迟填充下拉框和初始统计，减少启动阻塞
         QTimer.singleShot(0, self.populate_lists)
@@ -594,7 +602,7 @@ class roll_call(QWidget):
             class_name=class_name,
             selected_students=selected_students,
             draw_count=self.current_count,
-            font_size=readme_settings_async("roll_call_settings", "font_size"),
+            font_size=get_safe_font_size("roll_call_settings", "font_size"),
             animation_color=readme_settings_async(
                 "roll_call_settings", "animation_color_theme"
             ),
@@ -895,5 +903,98 @@ class roll_call(QWidget):
         if first_level_key == "page_management" and second_level_key.startswith(
             "roll_call"
         ):
+            # 直接更新UI
+            self.updateUI()
             # 发出信号让父组件处理
             self.settingsChanged.emit()
+
+    def updateUI(self):
+        """更新UI控件的可见性"""
+        # 清除现有布局中的控件
+        self.clearLayout(self.control_layout)
+        
+        # 根据页面管理设置决定是否添加控件
+        self.add_control_widget_if_enabled(
+            self.control_layout,
+            self.reset_button,
+            "page_management",
+            "roll_call_reset_button"
+        )
+
+        self.add_control_widget_if_enabled(
+            self.control_layout,
+            self.count_widget,
+            "page_management",
+            "roll_call_quantity_control",
+        )
+
+        self.add_control_widget_if_enabled(
+            self.control_layout,
+            self.start_button,
+            "page_management",
+            "roll_call_start_button",
+        )
+
+        self.add_control_widget_if_enabled(
+            self.control_layout,
+            self.list_combobox,
+            "page_management",
+            "roll_call_list"
+        )
+
+        self.add_control_widget_if_enabled(
+            self.control_layout,
+            self.range_combobox,
+            "page_management",
+            "roll_call_range"
+        )
+
+        self.add_control_widget_if_enabled(
+            self.control_layout,
+            self.gender_combobox,
+            "page_management",
+            "roll_call_gender"
+        )
+        
+        self.add_control_widget_if_enabled(
+            self.control_layout,
+            self.remaining_button,
+            "page_management",
+            "roll_call_remaining_button",
+        )
+
+        self.add_control_widget_if_enabled(
+            self.control_layout,
+            self.many_count_label,
+            "page_management",
+            "roll_call_quantity_label",
+        )
+
+    def clearLayout(self, layout):
+        """清除布局中的所有控件"""
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().setParent(None)
+
+    def _set_widget_font(self, widget, font_size):
+        """为控件设置字体"""
+        # 确保字体大小有效
+        try:
+            # 确保font_size是有效的整数
+            if not isinstance(font_size, (int, float)):
+                font_size = int(font_size) if str(font_size).isdigit() else 12
+            
+            font_size = int(font_size)
+            if font_size <= 0:
+                font_size = 12  # 使用默认字体大小
+                
+            custom_font = load_custom_font()
+            if custom_font:
+                widget.setFont(QFont(custom_font, font_size))
+        except (ValueError, TypeError) as e:
+            logger.warning(f"设置字体大小失败，使用默认值: {e}")
+            # 使用默认字体大小
+            custom_font = load_custom_font()
+            if custom_font:
+                widget.setFont(QFont(custom_font, 12))

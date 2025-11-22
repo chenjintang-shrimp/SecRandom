@@ -841,7 +841,9 @@ class RemainingListPage(QWidget):
 
             # 小组名称
             name_label = BodyLabel(student["name"])
-            name_label.setFont(QFont(load_custom_font(), 16, QFont.Weight.Bold))
+            custom_font = load_custom_font()
+            if custom_font:
+                name_label.setFont(QFont(custom_font, 16, QFont.Weight.Bold))
             name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             name_label.setWordWrap(True)  # 启用自动换行
             layout.addWidget(name_label)
@@ -849,7 +851,9 @@ class RemainingListPage(QWidget):
             # 小组成员数量
             members = student.get("members", [])
             count_label = BodyLabel(f"成员数量: {len(members)}")
-            count_label.setFont(QFont(load_custom_font(), 10))
+            custom_font = load_custom_font()
+            if custom_font:
+                count_label.setFont(QFont(custom_font, 10))
             count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(count_label)
 
@@ -863,7 +867,9 @@ class RemainingListPage(QWidget):
                     members_text += f" 等{len(members) - 5}名成员"
 
             members_label = BodyLabel(members_text)
-            members_label.setFont(QFont(load_custom_font(), 9))
+            custom_font = load_custom_font()
+            if custom_font:
+                members_label.setFont(QFont(custom_font, 9))
             members_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
             members_label.setWordWrap(True)  # 启用自动换行
             layout.addWidget(members_label)
