@@ -124,13 +124,14 @@ jobs:
       - name: 验证并更新uv.lock文件
         run: |
           echo "验证uv.lock文件完整性..."
-          if (uv lock --check); then
+          uv lock --check
+          if ($LASTEXITCODE -eq 0) {
             echo "uv.lock文件验证通过"
-          else
+          } else {
             echo "uv.lock文件需要更新，正在更新..."
             uv lock
             echo "uv.lock文件已更新"
-          fi
+          }
 
       # 依赖缓存
       - name: 缓存依赖
