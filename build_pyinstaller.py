@@ -10,8 +10,9 @@ from pathlib import Path
 # 设置Windows控制台编码为UTF-8
 if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 from packaging_utils import (
     ADDITIONAL_HIDDEN_IMPORTS,
@@ -57,12 +58,7 @@ def main():
     _print_packaging_summary()
 
     # 使用uv run执行PyInstaller命令
-    cmd = [
-        "uv", "run", "-m", "PyInstaller",
-        "Secrandom.spec",
-        "--clean",
-        "--noconfirm"
-    ]
+    cmd = ["uv", "run", "-m", "PyInstaller", "Secrandom.spec", "--clean", "--noconfirm"]
 
     # 打印命令
     print("\n执行命令:")
@@ -71,7 +67,14 @@ def main():
 
     # 执行打包
     try:
-        result = subprocess.run(cmd, check=True, cwd=PROJECT_ROOT, capture_output=True, text=True, encoding='utf-8')
+        result = subprocess.run(
+            cmd,
+            check=True,
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+        )
         print("\n" + "=" * 60)
         print("打包成功！")
         print("可执行文件位于: dist/SecRandom.exe")
