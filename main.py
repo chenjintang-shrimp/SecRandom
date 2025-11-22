@@ -62,18 +62,32 @@ def configure_logging():
 
 
 def configure_dpi_scale():
-    """配置DPI缩放模式"""
-    dpiScale = readme_settings("basic_settings", "dpiScale")
-    if dpiScale == get_content_combo_name_async("basic_settings", "dpiScale")[-1]:
+    """在创建QApplication之前配置DPI缩放模式"""
+    # 先设置环境变量，这些必须在QApplication创建之前设置
+    try:
+        from app.tools.settings_access import readme_settings
+        from app.Language.obtain_language import get_content_combo_name_async
+
+        dpiScale = readme_settings("basic_settings", "dpiScale")
+        if dpiScale == get_content_combo_name_async("basic_settings", "dpiScale")[-1]:
+            # 自动模式 - 使用PassThrough策略
+            QApplication.setHighDpiScaleFactorRoundingPolicy(
+                Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+            )
+            os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
+            logger.debug("DPI缩放已设置为自动模式")
+        else:
+            # 手动模式 - 禁用自动缩放，使用固定缩放因子
+            os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
+            os.environ["QT_SCALE_FACTOR"] = str(dpiScale)
+            logger.debug(f"DPI缩放已设置为{dpiScale}倍")
+    except Exception as e:
+        # 如果读取设置失败，使用默认的自动缩放
+        logger.warning(f"读取DPI设置失败，使用默认设置: {e}")
         QApplication.setHighDpiScaleFactorRoundingPolicy(
             Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
         )
         os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
-        logger.debug("DPI缩放已设置为自动模式")
-    else:
-        os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "0"
-        os.environ["QT_SCALE_FACTOR"] = str(dpiScale)
-        logger.debug(f"DPI缩放已设置为{dpiScale}倍")
 
 
 # ==================================================
@@ -296,9 +310,6 @@ def initialize_app():
     # 管理设置文件，确保其存在且完整
     manage_settings_file()
 
-    # 配置DPI缩放模式
-    configure_dpi_scale()
-
     # 加载主题
     QTimer.singleShot(
         APP_INIT_DELAY,
@@ -363,6 +374,9 @@ if __name__ == "__main__":
         logger.error("无法启动本地服务器，程序将退出")
         shared_memory.detach()
         sys.exit(1)
+
+    # 在创建QApplication之前配置DPI缩放
+    configure_dpi_scale()
 
     app = QApplication(sys.argv)
 
