@@ -191,9 +191,21 @@ class ResultDisplayUtils:
                         style_sheet = f"font-size: {font_size}pt; "
 
                         if animation_color == 1:
-                            style_sheet += f"color: {ResultDisplayUtils._generate_vibrant_color()};"
+                            style_sheet += f"color: {ResultDisplayUtils._generate_vibrant_color()} !important;"
                         elif animation_color == 2:
-                            style_sheet += f"color: {fixed_color};"
+                            style_sheet += f"color: {fixed_color} !important;"
+                        else:
+                            try:
+                                from app.tools.personalised import is_dark_theme
+                                from qfluentwidgets import qconfig
+
+                                default_color = (
+                                    "#ffffff" if is_dark_theme(qconfig) else "#000000"
+                                )
+                                style_sheet += f"color: {default_color} !important;"
+                            except Exception:
+                                # 兜底使用黑色
+                                style_sheet += "color: #000000 !important;"
 
                         widget.setStyleSheet(style_sheet)
         else:
@@ -203,9 +215,20 @@ class ResultDisplayUtils:
                 "roll_call_settings", "animation_fixed_color"
             )
             if animation_color == 1:
-                style_sheet += f"color: {ResultDisplayUtils._generate_vibrant_color()};"
+                style_sheet += (
+                    f"color: {ResultDisplayUtils._generate_vibrant_color()} !important;"
+                )
             elif animation_color == 2:
-                style_sheet += f"color: {fixed_color};"
+                style_sheet += f"color: {fixed_color} !important;"
+            else:
+                try:
+                    from app.tools.personalised import is_dark_theme
+                    from qfluentwidgets import qconfig
+
+                    default_color = "#ffffff" if is_dark_theme(qconfig) else "#000000"
+                    style_sheet += f"color: {default_color} !important;"
+                except Exception:
+                    style_sheet += "color: #000000 !important;"
 
             label.setStyleSheet(style_sheet)
 
