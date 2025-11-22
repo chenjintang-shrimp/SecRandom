@@ -186,18 +186,18 @@ jobs:
       # Windows PyInstaller 构建
       - name: 运行 Windows PyInstaller 构建
         if: |
-          matrix.platform == 'windows' && 
-          matrix.packager == 'pyinstaller' && 
-          (github.event_name != 'workflow_dispatch' || 
+          matrix.platform == 'windows' &&
+          matrix.packager == 'pyinstaller' &&
+          (github.event_name != 'workflow_dispatch' ||
           (inputs.build_target == 'all' || inputs.build_target == 'windows') &&
           (inputs.packager == 'pyinstaller' || inputs.packager == 'both')) &&
-          (github.event_name == 'workflow_dispatch' || 
+          (github.event_name == 'workflow_dispatch' ||
           (contains(github.event.head_commit.message, '打包') ||
            contains(github.event.head_commit.message, 'pi') ||
            contains(github.event.head_commit.message, 'both') ||
            contains(github.event.head_commit.message, 'all') ||
            contains(github.event.head_commit.message, 'win'))) &&
-          (github.event_name != 'push' || 
+          (github.event_name != 'push' ||
           !startsWith(github.ref, 'refs/tags/v') ||
           (startsWith(github.ref_name, 'v') && contains(github.ref_name, '.') && !contains(github.ref_name, '-')))
         run: |
@@ -210,18 +210,18 @@ jobs:
       # Windows Nuitka 构建
       - name: 运行 Windows Nuitka 构建
         if: |
-          matrix.platform == 'windows' && 
-          matrix.packager == 'nuitka' && 
-          (github.event_name != 'workflow_dispatch' || 
+          matrix.platform == 'windows' &&
+          matrix.packager == 'nuitka' &&
+          (github.event_name != 'workflow_dispatch' ||
           (inputs.build_target == 'all' || inputs.build_target == 'windows') &&
           (inputs.packager == 'nuitka' || inputs.packager == 'both')) &&
-          (github.event_name == 'workflow_dispatch' || 
+          (github.event_name == 'workflow_dispatch' ||
           (contains(github.event.head_commit.message, '打包') ||
            contains(github.event.head_commit.message, 'nk') ||
            contains(github.event.head_commit.message, 'both') ||
            contains(github.event.head_commit.message, 'all') ||
            contains(github.event.head_commit.message, 'win'))) &&
-          (github.event_name != 'push' || 
+          (github.event_name != 'push' ||
           !startsWith(github.ref, 'refs/tags/v') ||
           (startsWith(github.ref_name, 'v') && contains(github.ref_name, '.') && !contains(github.ref_name, '-')))
         run: |
@@ -234,18 +234,18 @@ jobs:
       # Linux 构建
       - name: 运行 Linux 构建
         if: |
-          matrix.platform == 'linux' && 
-          matrix.packager == 'pyinstaller' && 
-          (github.event_name != 'workflow_dispatch' || 
+          matrix.platform == 'linux' &&
+          matrix.packager == 'pyinstaller' &&
+          (github.event_name != 'workflow_dispatch' ||
           (inputs.build_target == 'all' || inputs.build_target == 'linux') &&
           (inputs.packager == 'pyinstaller' || inputs.packager == 'both')) &&
-          (github.event_name == 'workflow_dispatch' || 
+          (github.event_name == 'workflow_dispatch' ||
           (contains(github.event.head_commit.message, '打包') ||
            contains(github.event.head_commit.message, 'pi') ||
            contains(github.event.head_commit.message, 'both') ||
            contains(github.event.head_commit.message, 'all') ||
            contains(github.event.head_commit.message, 'linux'))) &&
-          (github.event_name != 'push' || 
+          (github.event_name != 'push' ||
           !startsWith(github.ref, 'refs/tags/v') ||
           (startsWith(github.ref_name, 'v') && contains(github.ref_name, '.') && !contains(github.ref_name, '-')))
         run: |
@@ -258,7 +258,7 @@ jobs:
       # Windows 打包操作
       - name: Windows 打包操作
         if: |
-          matrix.platform == 'windows' && 
+          matrix.platform == 'windows' &&
           (github.event_name != 'workflow_dispatch' || inputs.package == 'true')
         run: |
           echo "开始 Windows 打包操作..."
@@ -303,7 +303,7 @@ jobs:
       # Linux 打包操作
       - name: Linux 打包操作
         if: |
-          matrix.platform == 'linux' && 
+          matrix.platform == 'linux' &&
           (github.event_name != 'workflow_dispatch' || inputs.package == 'true')
         run: |
           echo "开始 Linux 打包操作..."
@@ -344,7 +344,7 @@ jobs:
 
       - name: 上传应用程序
         if: |
-          github.event_name != 'pull_request' && 
+          github.event_name != 'pull_request' &&
           (github.event_name != 'workflow_dispatch' || inputs.package == 'true')
         uses: actions/upload-artifact@v4.4.2
         with:
@@ -355,9 +355,9 @@ jobs:
   release:
     needs: [builder_matrix]
     if: |
-      (startsWith(github.ref, 'refs/tags/v') && 
+      (startsWith(github.ref, 'refs/tags/v') &&
       contains(github.ref_name, '.') && !contains(github.ref_name, '-') &&
-      (github.event_name != 'workflow_dispatch' || inputs.release == 'true')) || 
+      (github.event_name != 'workflow_dispatch' || inputs.release == 'true')) ||
       (github.event_name == 'workflow_dispatch' && inputs.release == 'true')
     runs-on: ubuntu-latest
     permissions:

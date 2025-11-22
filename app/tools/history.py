@@ -450,7 +450,12 @@ def calculate_weight(students_data: list, class_name: str) -> list:
                 current_time = datetime.now()
                 days_diff = (current_time - last_time).days
                 time_factor = min(1.0, days_diff / 30.0) * 0.5
-            except:
+            except Exception as e:
+                from loguru import logger
+
+                logger.exception(
+                    "Error calculating time factor for student weights: {}", e
+                )
                 time_factor = 0.0
         else:
             time_factor = 0.0

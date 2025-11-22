@@ -169,7 +169,13 @@ class SimpleWindowTemplate(FramelessWindow):
                         self.default_page.setStyleSheet(
                             "background-color: transparent;"
                         )
-                except:
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception(
+                        "Error detecting dark mode with darkdetect (fallback to light): {}",
+                        e,
+                    )
                     # 如果检测失败，使用浅色主题
                     self.setStyleSheet("background-color: #ffffff;")
                     self.default_page.setStyleSheet("background-color: transparent;")

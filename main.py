@@ -9,6 +9,7 @@ from PySide6.QtGui import *
 from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 from PySide6.QtNetwork import *
+import loguru
 from qfluentwidgets import *
 from loguru import logger
 
@@ -58,13 +59,15 @@ def configure_logging():
 # 显示调节
 # ==================================================
 """根据设置自动调整DPI缩放模式"""
+
+
 def configure_dpi_scale():
     """在创建QApplication之前配置DPI缩放模式"""
     # 先设置环境变量，这些必须在QApplication创建之前设置
     try:
         from app.tools.settings_access import readme_settings
         from app.Language.obtain_language import get_content_combo_name_async
-        
+
         dpiScale = readme_settings("basic_settings", "dpiScale")
         if dpiScale == get_content_combo_name_async("basic_settings", "dpiScale")[-1]:
             # 自动模式 - 使用PassThrough策略
@@ -85,6 +88,7 @@ def configure_dpi_scale():
             Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
         )
         os.environ["QT_ENABLE_HIGHDPI_SCALING"] = "1"
+
 
 # ==================================================
 # 单实例检查相关函数
@@ -225,7 +229,9 @@ def update_widget_fonts(widget, font, font_family):
                         updated = True
         return updated
     except Exception as e:
-        logger.error(f"更新控件字体时发生异常: {e}")
+        from loguru import logger
+
+        logger.exception("更新控件字体时发生异常: {}", e)
         return False
 
 
@@ -244,9 +250,11 @@ def start_main_window():
         main_window.show()
         try:
             elapsed = time.perf_counter() - app_start_time
-            logger.debug(f"主窗口创建并显示完成，启动耗时: {elapsed:.3f}s")
-        except Exception:
-            pass
+            loguru.logger.debug(f"主窗口创建并显示完成，启动耗时: {elapsed:.3f}s")
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error calculating elapsed startup time (ignored): {}", e)
     except Exception as e:
         logger.error(f"创建主窗口失败: {e}", exc_info=True)
 
@@ -401,16 +409,73 @@ if __name__ == "__main__":
 
         sys.exit()
     except Exception as e:
-        logger.critical(f"应用程序启动失败: {e}", exc_info=True)
+        print(f"应用程序启动失败: {e}")
+        try:
+            logger.error(f"应用程序启动失败: {e}", exc_info=True)
+        except Exception as log_e:
+            try:
+                from loguru import logger as _logger
+
+                _logger.exception("Failed to log startup error: {}", log_e)
+            except Exception as inner_log_e:
+                try:
+                    from loguru import logger
+
+                    logger.exception("Failed to log logging failure: {}", inner_log_e)
+                except Exception as final_e:
+                    try:
+                        import sys
+
+                        print(
+                            f"Failed to log logging failure: {final_e}", file=sys.stderr
+                        )
+                    except Exception as e:
+                        try:
+                            import sys
+
+                            print(
+                                f"Failed to print logging failure: {e}", file=sys.stderr
+                            )
+                        except Exception as final_e:
+                            try:
+                                import sys
+
+                                print(
+                                    f"Final logging fallback failed: {final_e}",
+                                    file=sys.stderr,
+                                )
+                            except Exception as e:
+                                try:
+                                    import sys
+
+                                    print(
+                                        f"Final logging fallback failed to print: {e}",
+                                        file=sys.stderr,
+                                    )
+                                except Exception as eee:
+                                    try:
+                                        import sys
+
+                                        sys.stderr.write(
+                                            f"Final logging fallback failed to print: {eee}\n"
+                                        )
+                                    except Exception:
+                                        _ = None
         # 程序异常退出时释放共享内存
         try:
             shared_memory.detach()
-        except:
-            pass
+        except Exception as detach_e:
+            from loguru import logger
+
+            logger.exception(
+                "Error detaching shared memory during shutdown: {}", detach_e
+            )
         # 关闭本地服务器
         try:
             if local_server:
                 local_server.close()
-        except:
-            pass
+        except Exception as close_e:
+            from loguru import logger
+
+            logger.exception("Error closing local server during shutdown: {}", close_e)
         sys.exit(1)
