@@ -67,7 +67,7 @@
 - ✅ **多名单管理**：支持导入/导出名单，轻松管理不同班级/团队
 
 ### 💻 系统兼容性
-- ✅ **全平台支持**：完美兼容 Windows 7/10/11 系统，Linux 系统支持正在开发中
+- ✅ **全平台支持**：完美兼容 Windows 7/10/11 系统和 Linux 系统
 - ✅ **多架构适配**：原生支持 x64、x86 架构
 - ✅ **开机自启**：支持开机自动启动，随时可用（Windows）
 
@@ -133,5 +133,157 @@
   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark">
   <img alt="Star History" src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date">
 </picture>
+
+## 📖 GitHub 提交与贡献教程
+
+### 🚀 快速开始
+
+在向 SecRandom 项目贡献代码之前，请确保您已完成以下准备工作：
+
+1. **Fork 项目**
+   - 访问 [SecRandom GitHub 仓库](https://github.com/SECTL/SecRandom)
+   - 点击右上角的 "Fork" 按钮创建您自己的仓库副本
+
+2. **克隆仓库**
+   ```bash
+   git clone https://github.com/您的用户名/SecRandom.git
+   cd SecRandom
+   ```
+
+3. **添加上游仓库**
+   ```bash
+   git remote add upstream https://github.com/SECTL/SecRandom.git
+   ```
+
+### 📤 提交您的贡献
+
+1. **创建功能分支**
+   ```bash
+   git checkout -b feature/您的功能名称
+   ```
+
+2. **进行修改**
+   - 编写您的代码
+   - 添加必要的注释（请使用中文）
+   - 确保遵循项目代码规范
+
+3. **提交更改**
+   ```bash
+   git add .
+   git commit -m "描述您的更改内容"
+   ```
+
+4. **同步上游更改**
+   ```bash
+   git fetch upstream
+   git rebase upstream/master
+   ```
+
+5. **推送并创建 Pull Request**
+   ```bash
+   git push origin feature/您的功能名称
+   ```
+   - 访问您的 GitHub 仓库
+   - 点击 "Compare & pull request" 按钮
+   - 填写 PR 描述并提交
+
+### 📋 贡献指南
+
+#### 代码规范
+- 使用中文编写代码注释
+- 遵循项目现有的代码风格
+- 确保导入所有使用的 Qt 类
+- 验证第三方 UI 组件是否存在
+
+#### 提交信息规范
+- 使用清晰、简洁的提交信息
+- 以动词开头（如：添加、修复、更新等）
+- 避免过于简单的描述（如："修复bug"）
+
+#### Pull Request 要求
+- PR 标题应简洁明了地描述更改内容
+- 提供详细的更改说明
+- 确保所有测试通过
+- 关联相关的 Issue（如有）
+
+## 📖 使用教程
+
+### 🚀 GitHub Actions 统一构建工作流使用指南
+
+SecRandom 项目使用统一的 GitHub Actions 工作流进行构建和发布，文件位于 `.github/workflows/build-unified.yml`。该工作流支持多种触发方式和配置选项。
+
+#### 通过提交消息触发特定构建
+
+您可以通过在 git commit 消息中包含特定关键词来触发不同的构建行为：
+
+1. **触发打包构建**
+   - 在 commit 消息中包含 `打包` 关键词
+   - 例如：`git commit -m "新增功能 打包"`
+
+2. **指定打包工具**
+   - `pi` - PyInstaller 简称
+   - `nk` - Nuitka 简称
+   - `both` - 两种打包工具同时使用
+   - 例如：`git commit -m "优化性能 打包 pi"`
+
+3. **指定构建平台**
+   - `win` - Windows 平台
+   - `linux` - Linux 平台
+   - `all` - 所有平台
+   - 例如：`git commit -m "修复bug 打包 linux"`
+
+4. **触发所有平台构建**
+   - 创建符合版本号规范的 tag（格式：`v数字.数字.数字.数字`）
+   - 例如：`git tag v1.2.3.4 && git push origin v1.2.3.4`
+
+#### 构建参数关键词说明
+
+提交消息中可以包含以下关键词来控制构建行为：
+
+| 关键词 | 含义 | 示例 |
+|--------|------|------|
+| `打包` | 通用打包触发 | `git commit -m "新增功能 打包"` |
+| `pi` | PyInstaller 打包 | `git commit -m "优化性能 打包 pi"` |
+| `nk` | Nuitka 打包 | `git commit -m "修复bug 打包 nk"` |
+| `both` | 两种工具同时打包 | `git commit -m "新功能 打包 both"` |
+| `win` | Windows 平台 | `git commit -m "修复UI 打包 win"` |
+| `linux` | Linux 平台 | `git commit -m "优化性能 打包 linux"` |
+| `all` | 所有平台 | `git commit -m "大更新 打包 all"` |
+
+**组合使用示例：**
+- `git commit -m "优化性能 打包 pi win"` - 使用 PyInstaller 构建 Windows 平台
+- `git commit -m "修复bug 打包 pi linux"` - 使用 PyInstaller 构建 Linux 平台（Linux 暂不支持 Nuitka）
+- `git commit -m "新功能 打包 both all"` - 同时使用两种工具构建所有平台（Windows 用两种工具，Linux 仅用 PyInstaller）
+
+#### 自动触发工作流
+
+- **Push 到主分支**：推送到 `master` 分支会自动触发构建
+- **创建 Tag**：创建符合 `v*.*.*.*` 格式的 tag 会自动触发构建和发布流程
+- **Pull Request**：向主分支发起 PR 时会自动触发构建验证
+- **注意**：Linux 平台目前仅支持 PyInstaller 打包，如需 Nuitka 支持请提交 Issue
+
+#### 版本号规范
+
+发布版本必须严格符合以下格式：
+- **格式**：`v主版本号.次版本号.修订号.构建号`（四个数字段，每段1位或多位数字）
+- **正则验证**：`^v\d+\.\d+\.\d+\.\d+$`
+- **示例**：`v1.2.3.4`、`v2.0.0.1`、`v10.20.30.40`
+- **要求**：
+  - 必须以字母 `v` 开头
+  - 使用点号 `.` 分隔四个数字段
+  - 每个数字段可以包含一个或多个数字（0-9）
+  - 不允许有前导零（如 `v01.2.3.4` 不符合规范）
+- **不符合规范的 tag 不会触发发布流程**，请严格按照格式创建版本标签
+
+#### 工作流特性
+
+- **跨平台构建**：支持 Windows (x86/x64) 和 Linux (x64)
+- **双打包工具**：Windows 支持 PyInstaller 和 Nuitka 两种打包方式，Linux 目前仅支持 PyInstaller
+- **正则验证**：使用正则表达式 `^v\d+\.\d+\.\d+\.\d+$` 严格验证版本号格式
+- **灵活配置**：可通过参数控制构建目标、打包工具和发布行为
+- **自动发布**：支持自动发布到 GitHub Releases 并生成 CHANGELOG
+- **产物归档**：构建产物会自动上传为 Artifacts 供下载
+- **依赖管理**：使用 uv 工具进行高效的依赖管理和打包
+- **缓存优化**：智能缓存依赖，加快构建速度
 
 **Copyright © 2025 SECTL**

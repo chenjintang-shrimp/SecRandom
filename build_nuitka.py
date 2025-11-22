@@ -93,9 +93,7 @@ def get_nuitka_command():
     module_flags, package_flags = _gather_module_and_package_flags()
 
     cmd = [
-        sys.executable,
-        "-m",
-        "nuitka",
+        "uv", "run", "-m", "nuitka",
         "--standalone",
         "--onefile",
         "--enable-plugin=pyside6",
@@ -175,7 +173,7 @@ def check_mingw64():
 def main():
     """执行打包"""
     print("=" * 60)
-    print("开始使用 Nuitka + MinGW64 打包 SecRandom")
+    print("开始使用 Nuitka + MinGW64 + uv 打包 SecRandom")
     print("=" * 60)
 
     # 检查 MinGW64

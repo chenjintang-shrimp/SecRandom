@@ -41,7 +41,7 @@ def _print_packaging_summary() -> None:
 def main():
     """执行 PyInstaller 打包"""
     print("=" * 60)
-    print("开始使用 PyInstaller 打包 SecRandom")
+    print("开始使用 PyInstaller + uv 打包 SecRandom")
     print("=" * 60)
 
     if not SPEC_FILE.exists():
@@ -50,13 +50,12 @@ def main():
 
     _print_packaging_summary()
 
+    # 使用uv run执行PyInstaller命令
     cmd = [
-        sys.executable,
-        "-m",
-        "PyInstaller",
+        "uv", "run", "-m", "PyInstaller", 
         "Secrandom.spec",
-        "--clean",
-        "--noconfirm",
+        "--clean", 
+        "--noconfirm"
     ]
 
     # 打印命令
