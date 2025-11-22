@@ -263,6 +263,18 @@ jobs:
         run: |
           echo "开始 Windows 打包操作..."
 
+          # 检查构建是否成功
+          if (!(Test-Path "dist/SecRandom")) {
+            echo "错误：dist/SecRandom 目录不存在，构建可能失败了"
+            echo "可用的dist目录内容："
+            if (Test-Path "dist") {
+              Get-ChildItem -Path "dist" -Recurse
+            } else {
+              echo "dist 目录不存在"
+            }
+            exit 1
+          }
+
           # 创建zip_dist/SecRandom目录
           mkdir -p zip_dist/SecRandom
 
@@ -295,6 +307,18 @@ jobs:
           (github.event_name != 'workflow_dispatch' || inputs.package == 'true')
         run: |
           echo "开始 Linux 打包操作..."
+
+          # 检查构建是否成功
+          if [ ! -d "dist/SecRandom" ]; then
+            echo "错误：dist/SecRandom 目录不存在，构建可能失败了"
+            echo "可用的dist目录内容："
+            if [ -d "dist" ]; then
+              ls -la dist/
+            else
+              echo "dist 目录不存在"
+            fi
+            exit 1
+          fi
 
           # 创建zip_dist/SecRandom目录
           mkdir -p zip_dist/SecRandom
