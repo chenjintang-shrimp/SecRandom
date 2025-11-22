@@ -199,13 +199,18 @@ def main():
 
     # 执行打包
     try:
-        subprocess.run(cmd, check=True, cwd=PROJECT_ROOT)
+        result = subprocess.run(cmd, check=True, cwd=PROJECT_ROOT, capture_output=True, text=True, encoding='utf-8')
         print("\n" + "=" * 60)
         print("打包成功！")
         print("=" * 60)
     except subprocess.CalledProcessError as e:
         print("\n" + "=" * 60)
         print(f"打包失败: {e}")
+        print(f"返回码: {e.returncode}")
+        if e.stdout:
+            print(f"标准输出:\n{e.stdout}")
+        if e.stderr:
+            print(f"错误输出:\n{e.stderr}")
         print("=" * 60)
         sys.exit(1)
 
