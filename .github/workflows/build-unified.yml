@@ -67,7 +67,7 @@ jobs:
       contains(github.event.head_commit.message, 'all') ||
       contains(github.event.head_commit.message, 'win') ||
       contains(github.event.head_commit.message, 'linux') ||
-      (startsWith(github.ref, 'refs/tags/v') && matches(github.ref_name, '^v\d+\.\d+\.\d+\.\d+$')) ||
+      (startsWith(github.ref, 'refs/tags/v') && contains(github.ref_name, '.') && !contains(github.ref_name, '-')) ||
       (github.event_name == 'pull_request' && contains(github.event.pull_request.title, '打包'))
     strategy:
       fail-fast: false
@@ -176,7 +176,7 @@ jobs:
         run: mkdir zip
 
       - name: 更新 version_info.txt
-        if: startsWith(github.ref_name, 'v') && matches(github.ref_name, '^v\d+\.\d+\.\d+\.\d+$') && (github.event_name != 'workflow_dispatch' || inputs.package == 'true')
+        if: startsWith(github.ref_name, 'v') && contains(github.ref_name, '.') && !contains(github.ref_name, '-') && (github.event_name != 'workflow_dispatch' || inputs.package == 'true')
         run: |
           python update_version.py
         env:
@@ -198,7 +198,7 @@ jobs:
            contains(github.event.head_commit.message, 'win'))) &&
           (github.event_name != 'push' || 
           !startsWith(github.ref, 'refs/tags/v') ||
-          (startsWith(github.ref_name, 'v') && matches(github.ref_name, '^v\d+\.\d+\.\d+\.\d+$')))
+          (startsWith(github.ref_name, 'v') && contains(github.ref_name, '.') && !contains(github.ref_name, '-'))) &&
         run: |
           echo "开始 Windows PyInstaller 构建流程..."
           echo "使用uv进行依赖同步..."
@@ -222,7 +222,7 @@ jobs:
            contains(github.event.head_commit.message, 'win'))) &&
           (github.event_name != 'push' || 
           !startsWith(github.ref, 'refs/tags/v') ||
-          (startsWith(github.ref_name, 'v') && matches(github.ref_name, '^v\d+\.\d+\.\d+\.\d+$')))
+          (startsWith(github.ref_name, 'v') && contains(github.ref_name, '.') && !contains(github.ref_name, '-'))) &&
         run: |
           echo "开始 Windows Nuitka 构建流程..."
           echo "使用uv进行依赖同步..."
@@ -246,7 +246,7 @@ jobs:
            contains(github.event.head_commit.message, 'linux'))) &&
           (github.event_name != 'push' || 
           !startsWith(github.ref, 'refs/tags/v') ||
-          (startsWith(github.ref_name, 'v') && matches(github.ref_name, '^v\d+\.\d+\.\d+\.\d+$')))
+          (startsWith(github.ref_name, 'v') && contains(github.ref_name, '.') && !contains(github.ref_name, '-'))) &&
         run: |
           echo "开始 Linux 构建流程..."
           echo "使用uv进行依赖同步..."
@@ -331,7 +331,7 @@ jobs:
     needs: [builder_matrix]
     if: |
       (startsWith(github.ref, 'refs/tags/v') && 
-      matches(github.ref_name, '^v\d+\.\d+\.\d+\.\d+$') &&
+      contains(github.ref_name, '.') && !contains(github.ref_name, '-') &&
       (github.event_name != 'workflow_dispatch' || inputs.release == 'true')) || 
       (github.event_name == 'workflow_dispatch' && inputs.release == 'true')
     runs-on: ubuntu-latest
