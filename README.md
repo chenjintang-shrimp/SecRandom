@@ -16,6 +16,8 @@
 [![bilibili](https://img.shields.io/badge/-UP%E4%B8%BB%EF%BD%9C黎泽懿-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://opensource.org/licenses/GPL-3.0)
 
+**语言选择** [ **✔简体中文** | [English](resources/README_EN.md) | [繁體中文](resources/README_ZH_TW.md) ]
+
 </div>
 
 <div align="center">
@@ -29,8 +31,15 @@
 > SecRandom 本体将基于GNU GPLv3协议开源
 >
 > GNU GPLv3具有Copyleft特性，也就是说，您可以修改SecRandom的源代码，但是**必须将修改版本同样以GNU GPLv3协议开源**
+--------
+> [!NOTE]
+>
+> **SecRandom v2** 将会在 2025/12/14 (GMT +8:00 中国标准时间) 附近发布!
+>
+> 敬请关注我们的 BiliBili / QQ频道，获取最新动态！
 
 ## 📖 目录
+
 - [🎯 为什么选择公平抽取](#-为什么选择公平抽取)
 - [🌟 核心亮点](#-核心亮点)
 - [📥 下载](#-下载)
@@ -52,21 +61,25 @@
 ## 🌟 核心亮点
 
 ### 🎯 智能公平抽取系统
+
 - ✅ **动态权重算法**：基于抽取次数、小组、性别等多维度计算，确保真正的公平性
 - ✅ **冷启动保护**：防止新成员权重过低，保证每个人都有平等机会
 - ✅ **概率可视化**：直观展示每个成员被抽中的概率，让抽取过程透明化
 
 ### 🎨 现代化用户体验
+
 - ✅ **优雅UI设计**：基于 Fluent Design 的现代化界面，支持浅色/深色主题
 - ✅ **悬浮窗模式**：可随时进行抽取，不影响其他工作
 - ✅ **语音播报**：抽取结果自动语音播报，支持自定义语音引擎
 
 ### 🚀 强大功能集
+
 - ✅ **多种抽取模式**：单人/多人/小组/性别抽取，满足不同场景需求
 - ✅ **智能历史记录**：带时间戳的详细记录，支持自动清理
 - ✅ **多名单管理**：支持导入/导出名单，轻松管理不同班级/团队
 
 ### 💻 系统兼容性
+
 - ✅ **全平台支持**：完美兼容 Windows 7/10/11 系统和 Linux 系统
 - ✅ **多架构适配**：原生支持 x64、x86 架构
 - ✅ **开机自启**：支持开机自动启动，随时可用（Windows）
@@ -74,16 +87,18 @@
 ## 📥 下载
 
 ### 🌐 官方下载页面
+
 - 📥 **[官方下载页面](https://secrandom.netlify.app/download)** - 获取最新稳定版本和测试版本
 
-## 📸 软件截图(v1.1.0.1)
+## 📸 软件截图
+
 <details>
 <summary>📸 软件截图展示 ✨</summary>
 
-![点名界面](ScreenSots/主界面_抽人_浅色.png)
-![抽奖界面](ScreenSots/主界面_抽奖_浅色.png)
-![历史记录](ScreenSots/主界面_抽人历史记录_浅色.png)
-![设置界面](ScreenSots/设置_抽人设置_浅色.png)
+![点名界面](./resources/ScreenShots/主界面_抽人_浅色.png)
+![抽奖界面](./resources/ScreenShots/主界面_抽奖_浅色.png)
+![历史记录](./resources/ScreenShots/主界面_抽人历史记录_浅色.png)
+![设置界面](./resources/ScreenShots/设置_抽人设置_浅色.png)
 
 </details>
 
@@ -108,19 +123,26 @@
   </tbody>
 </table>
 
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
 ## 💝 捐献支持
 
 如果您觉得 SecRandom 对您有帮助，欢迎支持我们的开发工作！
 
 ### 爱发电支持
+
 - 🌟 **[爱发电支持链接](https://afdian.com/a/lzy0983)** - 通过爱发电平台支持开发者
 
 ## 📞 联系方式
 
-* 📧 [邮箱](mailto:lzy.12@foxmail.com)
-* 👥 [QQ群 833875216](https://qm.qq.com/q/iWcfaPHn7W)
-* 🎥 [B站主页](https://space.bilibili.com/520571577)
-* 🐛 [问题反馈](https://github.com/SECTL/SecRandom/issues)
+- 📧 [邮箱](mailto:lzy.12@foxmail.com)
+- 👥 [QQ群 833875216](https://qm.qq.com/q/iWcfaPHn7W)
+- 💬 [QQ 频道](https://pd.qq.com/s/4x5dafd34?b=9)
+- 🎥 [B站主页](https://space.bilibili.com/520571577)
+- 🐛 [问题反馈](https://github.com/SECTL/SecRandom/issues)
 
 ## 📄 官方文档
 
@@ -133,83 +155,6 @@
   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark">
   <img alt="Star History" src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date">
 </picture>
-
-## 📖 GitHub 提交与贡献教程
-
-<details>
-<summary>点击查看详情</summary>
-
-### 🚀 快速开始
-
-在向 SecRandom 项目贡献代码之前，请确保您已完成以下准备工作：
-
-1. **Fork 项目**
-   - 访问 [SecRandom GitHub 仓库](https://github.com/SECTL/SecRandom)
-   - 点击右上角的 "Fork" 按钮创建您自己的仓库副本
-
-2. **克隆仓库**
-   ```bash
-   git clone https://github.com/您的用户名/SecRandom.git
-   cd SecRandom
-   ```
-
-3. **添加上游仓库**
-   ```bash
-   git remote add upstream https://github.com/SECTL/SecRandom.git
-   ```
-
-### 📤 提交您的贡献
-
-1. **创建功能分支**
-   ```bash
-   git checkout -b feature/您的功能名称
-   ```
-
-2. **进行修改**
-   - 编写您的代码
-   - 添加必要的注释（请使用中文）
-   - 确保遵循项目代码规范
-
-3. **提交更改**
-   ```bash
-   git add .
-   git commit -m "描述您的更改内容"
-   ```
-
-4. **同步上游更改**
-   ```bash
-   git fetch upstream
-   git rebase upstream/master
-   ```
-
-5. **推送并创建 Pull Request**
-   ```bash
-   git push origin feature/您的功能名称
-   ```
-   - 访问您的 GitHub 仓库
-   - 点击 "Compare & pull request" 按钮
-   - 填写 PR 描述并提交
-
-### 📋 贡献指南
-
-#### 代码规范
-- 使用中文编写代码注释
-- 遵循项目现有的代码风格
-- 确保导入所有使用的 Qt 类
-- 验证第三方 UI 组件是否存在
-
-#### 提交信息规范
-- 使用清晰、简洁的提交信息
-- 以动词开头（如：添加、修复、更新等）
-- 避免过于简单的描述（如："修复bug"）
-
-#### Pull Request 要求
-- PR 标题应简洁明了地描述更改内容
-- 提供详细的更改说明
-- 确保所有测试通过
-- 关联相关的 Issue（如有）
-
-</details>
 
 ## 📖 使用教程
 
@@ -250,6 +195,7 @@ SecRandom 项目使用统一的 GitHub Actions 工作流进行构建和发布，
 | `all` | 所有平台 | `git commit -m "大更新 打包 all"` |
 
 **组合使用示例：**
+
 - `git commit -m "优化性能 打包 pi"` - 使用 PyInstaller 构建 Windows 平台
 - `git commit -m "修复bug 打包 pi"` - 使用 PyInstaller 构建 Linux 平台
 

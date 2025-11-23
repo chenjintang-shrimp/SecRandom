@@ -178,3 +178,6 @@ cython_debug/
 /app/resources/history
 /TEMP
 /app/resources/TEMP
+
+# VSCode
+.vscode/settings.json
