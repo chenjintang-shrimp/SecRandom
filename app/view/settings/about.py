@@ -69,24 +69,6 @@ class about(GroupHeaderCardWidget):
         )
         self.donation_button.clicked.connect(self.open_donation_url)
 
-        # 检查更新按钮
-        self.check_update_button = PushButton(
-            get_content_name_async("about", "check_update")
-        )
-        self.check_update_button.setIcon(
-            get_theme_icon("ic_fluent_arrow_sync_20_filled")
-        )
-        self.check_update_button.clicked.connect(self.check_updates)
-
-        # 添加更新通道选择
-        self.channel_combo = ComboBox()
-        self.channel_combo.addItems(get_content_combo_name_async("about", "channel"))
-        self.channel_combo.setCurrentIndex(readme_settings_async("about", "channel"))
-        self.channel_combo.currentIndexChanged.connect(
-            lambda: update_settings(
-                "about", "channel", self.channel_combo.currentIndex()
-            )
-        )
 
         self.addGroup(
             get_theme_icon("ic_fluent_branch_fork_link_20_filled"),
@@ -130,18 +112,6 @@ class about(GroupHeaderCardWidget):
             get_content_description_async("about", "version"),
             self.about_version_label,
         )
-        self.addGroup(
-            get_theme_icon("ic_fluent_arrow_sync_20_filled"),
-            get_content_name_async("about", "channel"),
-            get_content_description_async("about", "channel"),
-            self.channel_combo,
-        )
-        self.addGroup(
-            get_theme_icon("ic_fluent_arrow_sync_20_filled"),
-            get_content_name_async("about", "check_update"),
-            get_content_description_async("about", "check_update"),
-            self.check_update_button,
-        )
 
     def show_contributors(self):
         """显示贡献人员"""
@@ -150,7 +120,3 @@ class about(GroupHeaderCardWidget):
     def open_donation_url(self):
         """打开捐赠链接"""
         QDesktopServices.openUrl(QUrl(DONATION_URL))
-
-    def check_updates(self):
-        """检查更新"""
-        logger.debug("检查更新")

@@ -3,6 +3,15 @@ list_management = {
     "ZH_CN": {"title": {"name": "名单管理", "description": "管理点名和抽奖的名单"}}
 }
 
+# 名单管理语言配置
+list_management = {
+    "ZH_CN": {
+        "title": {"name": "名单管理", "description": "管理点名和抽奖的名单"},
+        "roll_call_list": {"name": "点名名单", "description": "管理点名用的学生名单"},
+        "lottery_list": {"name": "抽奖名单", "description": "管理抽奖用的奖品名单"},
+    }
+}
+
 # 点名名单语言配置
 roll_call_list = {
     "ZH_CN": {

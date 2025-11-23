@@ -1,7 +1,7 @@
 # 更新页面语言配置
 update = {
     "ZH_CN": {
-        "title": {"name": "检查更新", "description": "检查并安装软件更新"},
+        "title": {"name": "更新", "description": "检查并安装软件更新"},
         "secrandom_update_text": {"name": "SecRandom 更新"},
         "check_update": {"name": "检查更新"},
         "latest_version": {"name": "已是最新版本"},

@@ -24,7 +24,6 @@ DEFAULT_SETTINGS = {
         "x": {"default_value": 100},
         "y": {"default_value": 100},
     },
-    "home": {"title": {"default_value": None}},
     "basic_settings": {
         "title": {"default_value": None},
         "basic_function": {"default_value": None},
@@ -404,7 +403,6 @@ DEFAULT_SETTINGS = {
     },
     "sidebar_management_settings": {
         "title": {"default_value": None},
-        "home": {"default_value": 0},
         "base_settings": {"default_value": 0},
         "name_management": {"default_value": 0},
         "draw_settings": {"default_value": 0},
@@ -488,9 +486,7 @@ DEFAULT_SETTINGS = {
         "bilibili": {"default_value": None},
         "contributor": {"default_value": None},
         "donation": {"default_value": None},
-        "check_update": {"default_value": None},
         "website": {"default_value": None},
-        "channel": {"default_value": 0},
         "copyright": {"default_value": None},
         "version": {"default_value": None},
     },

@@ -290,20 +290,6 @@ class sidebar_management_settings(GroupHeaderCardWidget):
         self.setTitle(get_content_name_async("sidebar_management_settings", "title"))
         self.setBorderRadius(8)
 
-        # 主页下拉框
-        self.home_comboBox = ComboBox(self)
-        self.home_comboBox.addItems(
-            get_content_combo_name_async("sidebar_management_settings", "home")
-        )
-        self.home_comboBox.setCurrentIndex(
-            readme_settings_async("sidebar_management_settings", "home")
-        )
-        self.home_comboBox.currentIndexChanged.connect(
-            lambda: update_settings(
-                "sidebar_management_settings", "home", self.home_comboBox.currentIndex()
-            )
-        )
-
         # 基础设置下拉框
         self.base_settings_comboBox = ComboBox(self)
         self.base_settings_comboBox.addItems(
@@ -461,12 +447,6 @@ class sidebar_management_settings(GroupHeaderCardWidget):
         )
 
         # 添加设置项到分组
-        self.addGroup(
-            get_theme_icon("ic_fluent_home_20_filled"),
-            get_content_name_async("sidebar_management_settings", "home"),
-            get_content_description_async("sidebar_management_settings", "home"),
-            self.home_comboBox,
-        )
         self.addGroup(
             get_theme_icon("ic_fluent_wrench_settings_20_filled"),
             get_content_name_async("sidebar_management_settings", "base_settings"),

@@ -19,7 +19,7 @@ from app.Language.obtain_language import *
 # ==================================================
 # 安全设置
 # ==================================================
-class basic_safety_settings(QWidget):
+class safety_settings(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         # 创建垂直布局

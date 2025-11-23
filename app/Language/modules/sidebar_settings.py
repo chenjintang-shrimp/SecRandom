@@ -5,11 +5,6 @@ sidebar_management_settings = {
             "name": "设置窗口侧边栏",
             "description": "配置设置窗口的侧边栏",
         },
-        "home": {
-            "name": "首页位置",
-            "description": "设置首页在侧边栏中的位置",
-            "combo_items": ["顶部", "底部", "不显示"],
-        },
         "base_settings": {
             "name": "基础设置",
             "description": "设置基础设置项在侧边栏中的位置",

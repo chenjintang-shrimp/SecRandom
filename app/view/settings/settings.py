@@ -65,7 +65,6 @@ class SettingsWindow(MSFluentWindow):
     def _init_interface_variables(self):
         """初始化界面变量"""
         interface_names = [
-            "homeInterface",
             "basicSettingsInterface",
             "listManagementInterface",
             "extractionSettingsInterface",
@@ -144,7 +143,6 @@ class SettingsWindow(MSFluentWindow):
 
         # 获取所有设置值
         settings = {
-            "home": readme_settings_async("sidebar_management_settings", "home"),
             "base_settings": readme_settings_async(
                 "sidebar_management_settings", "base_settings"
             ),
@@ -163,9 +161,6 @@ class SettingsWindow(MSFluentWindow):
             "security_settings": readme_settings_async(
                 "sidebar_management_settings", "security_settings"
             ),
-            "personal_settings": readme_settings_async(
-                "sidebar_management_settings", "personal_settings"
-            ),
             "voice_settings": readme_settings_async(
                 "sidebar_management_settings", "voice_settings"
             ),
@@ -179,7 +174,6 @@ class SettingsWindow(MSFluentWindow):
 
         # 定义页面配置
         page_configs = [
-            ("home", "homeInterface", "home_page", False),
             (   "base_settings",
                 "basicSettingsInterface", 
                 "basic_settings_page",
@@ -213,12 +207,6 @@ class SettingsWindow(MSFluentWindow):
                 "security_settings",
                 "safetySettingsInterface",
                 "safety_settings_page",
-                True,
-            ),
-            (
-                "personal_settings",
-                "customSettingsInterface",
-                "custom_settings_page",
                 True,
             ),
             (  
@@ -410,7 +398,6 @@ class SettingsWindow(MSFluentWindow):
             # 查找对应的容器
             container = None
             container_attrs = [
-                "homeInterface",
                 "basicSettingsInterface",
                 "listManagementInterface",
                 "extractionSettingsInterface",
@@ -464,7 +451,6 @@ class SettingsWindow(MSFluentWindow):
         根据用户设置构建个性化菜单导航"""
         # 获取所有设置值
         settings = {
-            "home": readme_settings_async("sidebar_management_settings", "home"),
             "base_settings": readme_settings_async(
                 "sidebar_management_settings", "base_settings"
             ),
@@ -480,9 +466,6 @@ class SettingsWindow(MSFluentWindow):
             "security_settings": readme_settings_async(
                 "sidebar_management_settings", "security_settings"
             ),
-            "personal_settings": readme_settings_async(
-                "sidebar_management_settings", "personal_settings"
-            ),
             "voice_settings": readme_settings_async(
                 "sidebar_management_settings", "voice_settings"
             ),
@@ -496,14 +479,6 @@ class SettingsWindow(MSFluentWindow):
 
         # 定义导航项配置
         nav_configs = [
-            (
-                "home",
-                "homeInterface",
-                "home_item",
-                "ic_fluent_home_20_filled",
-                "home",
-                "title",
-            ),
             (
                 "base_settings",
                 "basicSettingsInterface",
@@ -550,14 +525,6 @@ class SettingsWindow(MSFluentWindow):
                 "safety_settings_item",
                 "ic_fluent_shield_20_filled",
                 "safety_settings",
-                "title",
-            ),
-            (
-                "personal_settings",
-                "customSettingsInterface",
-                "custom_settings_item",
-                "ic_fluent_person_edit_20_filled",
-                "custom_settings",
                 "title",
             ),
             (
