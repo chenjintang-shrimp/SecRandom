@@ -74,7 +74,9 @@ class floating_window_basic_settings(GroupHeaderCardWidget):
             )
         )
         self.startup_display_floating_window_switch.checkedChanged.connect(
-            self.startup_display_floating_window_switch_changed
+            lambda checked: update_settings(
+                "floating_window_management", "startup_display_floating_window", checked
+            )
         )
 
         # 浮窗透明度
@@ -89,7 +91,9 @@ class floating_window_basic_settings(GroupHeaderCardWidget):
             * 100
         )
         self.floating_window_opacity_spinbox.valueChanged.connect(
-            self.floating_window_opacity_spinbox_changed
+            lambda value: update_settings(
+                "floating_window_management", "floating_window_opacity", value / 100
+            )
         )
 
         # 重置浮窗位置按钮
@@ -105,6 +109,23 @@ class floating_window_basic_settings(GroupHeaderCardWidget):
         )
         self.reset_floating_window_position_button.clicked.connect(
             self.reset_floating_window_position_button_clicked
+        )
+
+        # 浮窗长按拖动时间
+        self.floating_window_long_press_duration_spinbox = SpinBox()
+        self.floating_window_long_press_duration_spinbox.setFixedWidth(WIDTH_SPINBOX)
+        self.floating_window_long_press_duration_spinbox.setRange(50, 3000)
+        self.floating_window_long_press_duration_spinbox.setSingleStep(100)
+        self.floating_window_long_press_duration_spinbox.setSuffix("ms")
+        self.floating_window_long_press_duration_spinbox.setValue(
+            readme_settings_async(
+                "floating_window_management", "floating_window_long_press_duration"
+            )
+        )
+        self.floating_window_long_press_duration_spinbox.valueChanged.connect(
+            lambda value: update_settings(
+                "floating_window_management", "floating_window_long_press_duration", value
+            )
         )
 
         # 添加设置项到分组
@@ -129,6 +150,16 @@ class floating_window_basic_settings(GroupHeaderCardWidget):
             self.floating_window_opacity_spinbox,
         )
         self.addGroup(
+            get_theme_icon("ic_fluent_gesture_20_filled"),
+            get_content_name_async(
+                "floating_window_management", "floating_window_long_press_duration"
+            ),
+            get_content_description_async(
+                "floating_window_management", "floating_window_long_press_duration"
+            ),
+            self.floating_window_long_press_duration_spinbox,
+        )
+        self.addGroup(
             get_theme_icon("ic_fluent_arrow_reset_20_filled"),
             get_content_name_async(
                 "floating_window_management", "reset_floating_window_position_button"
@@ -139,20 +170,11 @@ class floating_window_basic_settings(GroupHeaderCardWidget):
             self.reset_floating_window_position_button,
         )
 
-    def startup_display_floating_window_switch_changed(self, checked):
-        update_settings(
-            "floating_window_management", "startup_display_floating_window", checked
-        )
-
-    def floating_window_opacity_spinbox_changed(self, value):
-        update_settings(
-            "floating_window_management", "floating_window_opacity", value / 100
-        )
-
     def reset_floating_window_position_button_clicked(self):
-        # 这里应该实现重置浮窗位置的逻辑
-        logger.debug("重置浮窗位置按钮被点击")
-
+        """重置浮窗位置按钮点击处理"""
+        # 更新设置为默认位置
+        update_settings("float_position", "x", 100)
+        update_settings("float_position", "y", 100)
 
 # ==================================================
 # 浮动窗口管理 - 外观设置
