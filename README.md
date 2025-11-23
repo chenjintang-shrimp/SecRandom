@@ -136,6 +136,9 @@
 
 ## 📖 GitHub 提交与贡献教程
 
+<details>
+<summary>点击查看详情</summary>
+
 ### 🚀 快速开始
 
 在向 SecRandom 项目贡献代码之前，请确保您已完成以下准备工作：
@@ -206,11 +209,16 @@
 - 确保所有测试通过
 - 关联相关的 Issue（如有）
 
+</details>
+
 ## 📖 使用教程
 
 ### 🚀 GitHub Actions 统一构建工作流使用指南
 
 SecRandom 项目使用统一的 GitHub Actions 工作流进行构建和发布，文件位于 `.github/workflows/build-unified.yml`。该工作流支持多种触发方式和配置选项。
+
+<details>
+<summary>查看更多信息</summary>
 
 #### 通过提交消息触发特定构建
 
@@ -244,5 +252,7 @@ SecRandom 项目使用统一的 GitHub Actions 工作流进行构建和发布，
 **组合使用示例：**
 - `git commit -m "优化性能 打包 pi"` - 使用 PyInstaller 构建 Windows 平台
 - `git commit -m "修复bug 打包 pi"` - 使用 PyInstaller 构建 Linux 平台
+
+</details>
 
 **Copyright © 2025 SECTL**
