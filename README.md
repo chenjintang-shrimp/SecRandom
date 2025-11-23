@@ -108,6 +108,11 @@
   </tbody>
 </table>
 
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
 ## 💝 捐献支持
 
 如果您觉得 SecRandom 对您有帮助，欢迎支持我们的开发工作！
