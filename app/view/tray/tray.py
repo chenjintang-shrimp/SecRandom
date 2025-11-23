@@ -5,7 +5,7 @@
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 from PySide6.QtGui import QIcon, QCursor
 from PySide6.QtCore import QTimer, QEvent, QPoint, Signal
-from qfluentwidgets import RoundMenu, Action
+from qfluentwidgets import RoundMenu, Action, SystemTrayMenu
 
 from app.tools.variable import MENU_AUTO_CLOSE_TIMEOUT
 from app.tools.path_utils import get_resources_path
@@ -87,7 +87,7 @@ class Tray(QSystemTrayIcon):
             self.tray_menu.deleteLater()
 
         # 创建新菜单
-        self.tray_menu = RoundMenu(parent=self.main_window)
+        self.tray_menu = SystemTrayMenu(parent=self.main_window)
 
         # 关于SecRandom
         self.about_action = Action(
