@@ -24,6 +24,7 @@ class Tray(QSystemTrayIcon):
 
     showSettingsRequested = Signal()
     showSettingsRequestedAbout = Signal()
+    showFloatWindowRequested = Signal()
 
     def __init__(self, parent=None):
         """初始化系统托盘图标
@@ -103,19 +104,19 @@ class Tray(QSystemTrayIcon):
         show_hide_main_window = readme_settings_async(
             "tray_management", "show_hide_main_window"
         )
-        if show_hide_main_window is not False:  # None or True
+        if show_hide_main_window is not False:
             toggle_main_window_action = Action(
                 get_content_name_async("tray_management", "show_hide_main_window"),
-                triggered=self.main_window.toggle_window,
+                triggered=self.main_window.toggle_window
             )
             menu_items.append(toggle_main_window_action)
 
         # 设置界面
         open_settings = readme_settings_async("tray_management", "open_settings")
-        if open_settings is not False:  # None or True
+        if open_settings is not False:
             open_settings_action = Action(
                 get_content_name_async("tray_management", "open_settings"),
-                triggered=self.showSettingsRequested.emit,
+                triggered=self.showSettingsRequested.emit
             )
             menu_items.append(open_settings_action)
 
@@ -123,14 +124,12 @@ class Tray(QSystemTrayIcon):
         show_hide_float_window = readme_settings_async(
             "tray_management", "show_hide_float_window"
         )
-        if show_hide_float_window is not False:  # None or True
-            # 注意：暂时注释掉这个功能，因为主窗口缺少对应的方法
-            # show_hide_float_window_action = Action(
-            #     get_content_name_async("tray_management", "show_hide_float_window"),
-            #     triggered=self.main_window.toggle_floating_window
-            # )
-            # menu_items.append(show_hide_float_window_action)
-            pass
+        if show_hide_float_window is not False:
+            show_hide_float_window_action = Action(
+                get_content_name_async("tray_management", "show_hide_float_window"),
+                triggered=self.showFloatWindowRequested.emit
+            )
+            menu_items.append(show_hide_float_window_action)
 
         if (
             show_hide_main_window or open_settings or show_hide_float_window
@@ -140,7 +139,7 @@ class Tray(QSystemTrayIcon):
 
         # 重启
         restart = readme_settings_async("tray_management", "restart")
-        if restart is not False:  # None or True
+        if restart is not False:
             restart_action = Action(
                 get_content_name_async("tray_management", "restart"),
                 triggered=self.main_window.restart_app,
@@ -149,7 +148,7 @@ class Tray(QSystemTrayIcon):
 
         # 退出
         exit_setting = readme_settings_async("tray_management", "exit")
-        if exit_setting is not False:  # None or True
+        if exit_setting is not False:
             exit_action = Action(
                 get_content_name_async("tray_management", "exit"),
                 triggered=self.main_window.close_window_secrandom,

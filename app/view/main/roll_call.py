@@ -20,6 +20,7 @@ from app.tools.history import *
 from app.tools.result_display import *
 from app.tools.config import *
 from app.tools.roll_call_utils import RollCallUtils
+from app.tools.variable import *
 
 from app.page_building.another_window import *
 
@@ -338,7 +339,7 @@ class roll_call(QWidget):
                 hasattr(self, "remaining_list_page")
                 and self.remaining_list_page is not None
             ):
-                QTimer.singleShot(100, self._update_remaining_list_delayed)
+                QTimer.singleShot(APP_INIT_DELAY, self._update_remaining_list_delayed)
         except Exception as e:
             logger.error(f"切换班级时发生错误: {e}")
         finally:
@@ -365,7 +366,7 @@ class roll_call(QWidget):
                 hasattr(self, "remaining_list_page")
                 and self.remaining_list_page is not None
             ):
-                QTimer.singleShot(100, self._update_remaining_list_delayed)
+                QTimer.singleShot(APP_INIT_DELAY, self._update_remaining_list_delayed)
         except Exception as e:
             logger.error(f"切换筛选条件时发生错误: {e}")
 
@@ -504,7 +505,7 @@ class roll_call(QWidget):
                 self.remaining_list_page.count_changed.emit(self.remaining_count)
 
             # 更新剩余名单窗口
-            QTimer.singleShot(100, self._update_remaining_list_delayed)
+            QTimer.singleShot(APP_INIT_DELAY, self._update_remaining_list_delayed)
 
         if hasattr(self, "final_selected_students") and hasattr(
             self, "final_class_name"
@@ -631,7 +632,7 @@ class roll_call(QWidget):
             hasattr(self, "remaining_list_page")
             and self.remaining_list_page is not None
         ):
-            QTimer.singleShot(100, self._update_remaining_list_delayed)
+            QTimer.singleShot(APP_INIT_DELAY, self._update_remaining_list_delayed)
 
         if (
             hasattr(self, "remaining_list_page")

@@ -24,6 +24,7 @@ from app.tools.config import *
 # 全局窗口引用（延迟创建）
 main_window = None
 settings_window = None
+float_window = None
 
 # 全局变量，用于存储本地服务器实例
 local_server = None
@@ -45,7 +46,7 @@ def configure_logging():
     log_dir.mkdir(exist_ok=True)
 
     # 获取日志等级设置，默认为INFO
-    log_level = readme_settings("basic_settings", "log_level") if readme_settings("basic_settings", "log_level") else "INFO"
+    log_level = readme_settings_async("basic_settings", "log_level") if readme_settings_async("basic_settings", "log_level") else "INFO"
 
     # 配置日志格式 - 文件输出（包含详细的调试信息）
     logger.add(
@@ -77,10 +78,10 @@ def configure_dpi_scale():
     """在创建QApplication之前配置DPI缩放模式"""
     # 先设置环境变量，这些必须在QApplication创建之前设置
     try:
-        from app.tools.settings_access import readme_settings
+        from app.tools.settings_access import readme_settings_async
         from app.Language.obtain_language import get_content_combo_name_async
 
-        dpiScale = readme_settings("basic_settings", "dpiScale")
+        dpiScale = readme_settings_async("basic_settings", "dpiScale")
         if dpiScale == "Auto":
             # 自动模式 - 使用PassThrough策略
             QApplication.setHighDpiScaleFactorRoundingPolicy(
@@ -175,7 +176,7 @@ def setup_local_server():
 # ==================================================
 def apply_font_settings():
     """应用字体设置 - 优化版本，使用字体管理器异步加载"""
-    font_family = readme_settings("basic_settings", "font")
+    font_family = readme_settings_async("basic_settings", "font")
 
     setFontFamilies([font_family])
     QTimer.singleShot(FONT_APPLY_DELAY, lambda: apply_font_to_application(font_family))
@@ -249,20 +250,34 @@ def start_main_window():
     """创建主窗口实例"""
     global main_window
     try:
-        # 延迟导入主窗口类，避免在模块导入阶段加载大量UI代码
         from app.view.main.window import MainWindow
 
         main_window = MainWindow()
-        main_window.showSettingsRequested.connect(lambda: show_settings_window())
+        main_window.showSettingsRequested.connect(
+            lambda: show_settings_window()
+        )
         main_window.showSettingsRequestedAbout.connect(
             lambda: show_settings_window_about
         )
+        main_window.showFloatWindowRequested.connect(
+            show_float_window
+        )
         main_window.show()
+        
+        # 根据设置决定是否启动时显示浮窗
+        startup_display_float = readme_settings_async(
+            "floating_window_management", 
+            "startup_display_floating_window"
+        )
+        if startup_display_float:
+            show_float_window()
+            
         try:
             elapsed = time.perf_counter() - app_start_time
             logger.debug(f"主窗口创建并显示完成，启动耗时: {elapsed:.3f}s")
         except Exception as e:
-            logger.exception("Error calculating elapsed startup time (ignored): {}", e)
+
+            logger.exception("计算启动耗时出错（已忽略）: {}", e)
     except Exception as e:
         logger.error(f"创建主窗口失败: {e}", exc_info=True)
 
@@ -301,15 +316,28 @@ def show_settings_window_about():
     except Exception as e:
         logger.error(f"显示关于窗口失败: {e}", exc_info=True)
 
+
 def create_float_window():
     """创建浮动窗口实例"""
     global float_window
     try:
-        from app.view.floating_window.levitation import Levitation
+        from app.view.floating_window.levitation import LevitationWindow
 
-        float_window = Levitation()
+        float_window = LevitationWindow()
     except Exception as e:
         logger.error(f"创建浮动窗口失败: {e}", exc_info=True)
+
+
+def show_float_window():
+    """显示浮动窗口"""
+    try:
+        global float_window
+        if float_window is None:
+            create_float_window()
+        if float_window is not None:
+            float_window.show()
+    except Exception as e:
+        logger.error(f"显示浮动窗口失败: {e}", exc_info=True)
 
 # ==================================================
 # 应用程序初始化相关函数
@@ -334,10 +362,10 @@ def initialize_app():
             (
                 lambda: (
                     setTheme(Theme.DARK)
-                    if readme_settings("basic_settings", "theme") == "DARK"
+                    if readme_settings_async("basic_settings", "theme") == "DARK"
                     else (
                         setTheme(Theme.AUTO)
-                        if readme_settings("basic_settings", "theme") == "AUTO"
+                        if readme_settings_async("basic_settings", "theme") == "AUTO"
                         else setTheme(Theme.LIGHT)
                     )
                 )
@@ -348,7 +376,7 @@ def initialize_app():
     # 加载主题颜色
     QTimer.singleShot(
         APP_INIT_DELAY,
-        lambda: (setThemeColor(readme_settings("basic_settings", "theme_color"))),
+        lambda: (setThemeColor(readme_settings_async("basic_settings", "theme_color"))),
     )
 
     # 清除重启记录

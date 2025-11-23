@@ -14,6 +14,7 @@ from app.tools.personalised import *
 from app.tools.settings_default import *
 from app.tools.settings_access import *
 from app.Language.obtain_language import *
+from app.tools.variable import *
 
 
 # ==================================================
@@ -34,7 +35,7 @@ class contributor_page(QWidget):
         self._init_data()
 
         # 延迟添加贡献者卡片
-        QTimer.singleShot(100, self.create_contributor_cards)
+        QTimer.singleShot(APP_INIT_DELAY, self.create_contributor_cards)
 
     def _init_ui(self):
         """初始化UI组件"""

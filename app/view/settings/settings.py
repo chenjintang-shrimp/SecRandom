@@ -96,7 +96,7 @@ class SettingsWindow(MSFluentWindow):
             )
             self.resize(pre_maximized_width, pre_maximized_height)
             self._center_window()
-            QTimer.singleShot(100, self.showMaximized)
+            QTimer.singleShot(APP_INIT_DELAY, self.showMaximized)
         else:
             setting_window_width = readme_settings_async("settings", "width")
             setting_window_height = readme_settings_async("settings", "height")

@@ -21,6 +21,8 @@ DEFAULT_SETTINGS = {
     "float_position": {
         "height": {"default_value": "screen_height_half"},
         "width": {"default_value": "screen_width_half"},
+        "x": {"default_value": 100},
+        "y": {"default_value": 100},
     },
     "home": {"title": {"default_value": None}},
     "basic_settings": {
@@ -388,6 +390,7 @@ DEFAULT_SETTINGS = {
         "floating_window_display_style": {"default_value": 0},
         "floating_window_stick_to_edge": {"default_value": True},
         "floating_window_stick_to_edge_recover_seconds": {"default_value": 5},
+        "floating_window_long_press_duration": {"default_value": 500},
         "floating_window_stick_to_edge_display_style": {"default_value": 1},
     },
     "sidebar_tray_management": {"title": {"default_value": None}},

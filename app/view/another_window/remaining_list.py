@@ -33,6 +33,7 @@ from app.Language.obtain_language import (
     get_any_position_value_async,
 )
 from app.tools.config import read_drawn_record
+from app.tools.variable import APP_INIT_DELAY
 
 
 # 后台加载学生数据的线程
@@ -232,7 +233,7 @@ class RemainingListPage(QWidget):
         self.init_ui()
 
         # 延迟加载学生数据
-        QTimer.singleShot(100, self.load_student_data)
+        QTimer.singleShot(APP_INIT_DELAY, self.load_student_data)
 
     def init_ui(self):
         """初始化UI"""

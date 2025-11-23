@@ -63,6 +63,10 @@ floating_window_management = {
             "name": "贴边收纳时间",
             "description": "设置浮动窗口贴边后自动收纳的时间（秒）",
         },
+        "floating_window_long_press_duration": {
+            "name": "长按时间",
+            "description": "设置浮动窗口长按时间（毫秒）",
+        },
         "floating_window_stick_to_edge_display_style": {
             "name": "贴边显示样式",
             "description": "设置浮动窗口贴边时的显示样式",

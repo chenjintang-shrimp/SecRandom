@@ -30,6 +30,7 @@ class MainWindow(MSFluentWindow):
 
     showSettingsRequested = Signal()
     showSettingsRequestedAbout = Signal()
+    showFloatWindowRequested = Signal()
 
     def __init__(self):
         super().__init__()
@@ -60,9 +61,14 @@ class MainWindow(MSFluentWindow):
 
         # 导入并创建托盘图标
         self.tray_icon = Tray(self)
-        self.tray_icon.showSettingsRequested.connect(self.showSettingsRequested.emit)
+        self.tray_icon.showSettingsRequested.connect(
+            self.showSettingsRequested.emit
+        )
         self.tray_icon.showSettingsRequestedAbout.connect(
             self.showSettingsRequestedAbout.emit
+        )
+        self.tray_icon.showFloatWindowRequested.connect(
+            self.showFloatWindowRequested.emit
         )
         self.tray_icon.show_tray_icon()
 
@@ -79,7 +85,7 @@ class MainWindow(MSFluentWindow):
             )
             self.resize(pre_maximized_width, pre_maximized_height)
             self._center_window()
-            QTimer.singleShot(100, self.showMaximized)
+            QTimer.singleShot(APP_INIT_DELAY, self.showMaximized)
         else:
             window_width = readme_settings_async("window", "width")
             window_height = readme_settings_async("window", "height")
@@ -284,8 +290,3 @@ class MainWindow(MSFluentWindow):
         # 完全退出当前应用程序
         QApplication.quit()
         sys.exit(0)
-
-    def show_about_tab(self):
-        """显示关于页面
-        打开设置窗口并导航到关于页面"""
-        self.showSettingsRequestedAbout.emit()

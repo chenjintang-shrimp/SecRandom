@@ -10,6 +10,7 @@ from app.view.another_window.gender_setting import GenderSettingWindow
 from app.view.another_window.group_setting import GroupSettingWindow
 from app.view.another_window.remaining_list import RemainingListPage
 from app.Language.obtain_language import *
+from app.tools.variable import *
 
 # 全局变量，用于保持窗口引用，防止被垃圾回收
 _window_instances = {}
@@ -247,7 +248,7 @@ def create_remaining_list_window(
                         )
 
             # 使用延迟调用确保内容控件已创建
-            QTimer.singleShot(100, setup_page)
+            QTimer.singleShot(APP_INIT_DELAY, setup_page)
 
             # 创建一个回调函数，用于在页面设置完成后获取页面实例
             def get_page_callback(callback):
@@ -290,7 +291,7 @@ def create_remaining_list_window(
                 )
 
     # 使用延迟调用确保内容控件已创建
-    QTimer.singleShot(100, setup_page)
+    QTimer.singleShot(APP_INIT_DELAY, setup_page)
 
     _window_instances["remaining_list"] = window
     window.windowClosed.connect(lambda: _window_instances.pop("remaining_list", None))
