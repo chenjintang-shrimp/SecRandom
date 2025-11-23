@@ -423,8 +423,6 @@ class roll_call(QWidget):
         try:
             self.start_button.clicked.disconnect()
         except Exception as e:
-            from loguru import logger
-
             logger.exception(
                 "Error disconnecting start_button clicked (ignored): {}", e
             )
@@ -481,8 +479,6 @@ class roll_call(QWidget):
         try:
             self.start_button.clicked.disconnect()
         except Exception as e:
-            from loguru import logger
-
             logger.exception(
                 "Error disconnecting start_button clicked during stop_animation (ignored): {}",
                 e,

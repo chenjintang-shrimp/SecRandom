@@ -1,8 +1,4 @@
-"""
-通知服务模块
-
-该模块提供在独立浮动通知窗口中显示抽取结果的功能。
-"""
+from loguru import logger
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QApplication
 from PySide6.QtCore import Qt, QPoint, QTimer, QPropertyAnimation, QEasingCurve, QRect
@@ -62,8 +58,6 @@ class NotificationContentWidget(QWidget):
                 try:
                     apply_fg_to(w)
                 except Exception as e:
-                    from loguru import logger
-
                     logger.exception("Error applying fg to content widget: {}", e)
         except Exception:
             # 忽略主题检测错误，保持原样
@@ -108,8 +102,6 @@ class FloatingNotificationWindow(CardWidget):
 
             qconfig.themeChanged.connect(self._on_theme_changed)
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error connecting themeChanged signal (ignored): {}", e)
 
         # 设置窗口圆角
@@ -242,8 +234,6 @@ class FloatingNotificationWindow(CardWidget):
             self.update_drag_line_style()
             self.update_drag_line_container_style()
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error updating background style (fallback used): {}", e)
             # 如果无法获取主题信息，默认使用白色背景和深色拖动线
             background_color = "#ffffff"
@@ -274,8 +264,6 @@ class FloatingNotificationWindow(CardWidget):
                     f"background-color: {background_color}; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;"
                 )
             except Exception as e:
-                from loguru import logger
-
                 logger.exception(
                     "Error updating drag line container style (fallback used): {}", e
                 )
@@ -319,8 +307,6 @@ class FloatingNotificationWindow(CardWidget):
             if "color:" not in existing:
                 self.countdown_label.setStyleSheet(existing + f" color: {fg};")
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error setting countdown label color: {}", e)
 
         # 根据设置定位窗口
@@ -372,8 +358,6 @@ class FloatingNotificationWindow(CardWidget):
                     parts.append(f"color: {fg} !important")
                     lbl.setStyleSheet("; ".join(parts) + ";")
                 except Exception as e:
-                    from loguru import logger
-
                     logger.exception(
                         "Error applying color to label child (continuing): {}", e
                     )
@@ -390,10 +374,8 @@ class FloatingNotificationWindow(CardWidget):
                 parts.append(f"color: {fg} !important")
                 self.countdown_label.setStyleSheet("; ".join(parts) + ";")
             except Exception as e:
-                from loguru import logger
-
                 logger.exception(
-                    "Error applying countdown label color (ignored): {}", e
+                    "应用倒计时标签颜色时出错（已忽略）：{}", e
                 )
                 pass
 
@@ -403,15 +385,11 @@ class FloatingNotificationWindow(CardWidget):
                 self.update_drag_line_style()
                 self.update_drag_line_container_style()
             except Exception as e:
-                from loguru import logger
-
                 logger.exception(
                     "Error updating background/drag line styles (ignored): {}", e
                 )
                 pass
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error in _on_theme_changed (ignored): {}", e)
             pass
 
@@ -426,6 +404,7 @@ class FloatingNotificationWindow(CardWidget):
                 for s in QApplication.screens():
                     if s.name() == enabled_monitor_name:
                         screen = s
+                        logger.debug("使用显示器：{}", enabled_monitor_name)
                         break
 
         if screen is None:
@@ -593,6 +572,25 @@ class FloatingNotificationWindow(CardWidget):
         """开始显示动画"""
         # 重置动画完成标志
         if not self.is_animation_enabled:
+            # 即使没有动画也要确保在正确的屏幕显示
+            screen = self._get_screen_from_settings(settings)
+            screen_geometry = screen.geometry()
+            
+            if settings:
+                position_index = settings.get("window_position", 0)
+                horizontal_offset = settings.get("horizontal_offset", 0)
+                vertical_offset = settings.get("vertical_offset", 0)
+            else:
+                position_index = 0
+                horizontal_offset = 0
+                vertical_offset = 0
+
+            # 计算最终位置
+            window_rect = self._calculate_window_position(
+                screen_geometry, position_index, horizontal_offset, vertical_offset
+            )
+            self.move(window_rect.x(), window_rect.y())
+            
             self.show()
             self.update_countdown_display()
             return
@@ -672,8 +670,6 @@ class FloatingNotificationWindow(CardWidget):
         try:
             self._on_theme_changed()
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error syncing theme on show (ignored): {}", e)
 
     def on_animation_finished(self):
@@ -697,8 +693,6 @@ class FloatingNotificationWindow(CardWidget):
             if not (self.windowFlags() & Qt.WindowDoesNotAcceptFocus):
                 self.activateWindow()
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error activating window (ignored): {}", e)
 
         # 更新倒计时显示
@@ -756,8 +750,6 @@ class FloatingNotificationWindow(CardWidget):
         try:
             self._on_theme_changed()
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error syncing theme on update_content (ignored): {}", e)
 
         # 调整窗口大小以适应内容
@@ -818,8 +810,6 @@ class FloatingNotificationManager:
                 "notification_settings", "notification_result"
             )
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error getting notification title (fallback used): {}", e)
             # 如果无法获取多语言文本，则使用默认文本
             return "通知结果"
