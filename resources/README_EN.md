@@ -6,7 +6,6 @@
 
 🎯 **Truly Fair Random Selection Algorithm** | 🚀 **Modern Educational Tools** | 🎨 **Elegant Interactive Experience**
 
-[简体中文](../README_ZH.md) | **✔English** | [繁體中文](./README_ZH_TW.md)
 > The Readme you are currently reading is **translated by AI** and reviewed by our developers. If you find any errors, please report it.
 </div>
 
@@ -18,21 +17,27 @@
 [![Latest Beta](https://img.shields.io/github/v/release/SECTL/SecRandom?include_prereleases&style=for-the-badge&label=Beta)](https://github.com/SECTL/SecRandom/releases/)
 [![Last Update](https://img.shields.io/github/last-commit/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=Last%20Update)](https://github.com/SECTL/SecRandom/commits/master)
 [![Downloads](https://img.shields.io/github/downloads/SECTL/SecRandom/total?style=for-the-badge&color=00b4ab&label=Total%20Downloads)](https://github.com/SECTL/SecRandom/releases)
+
 [![QQ Group](https://img.shields.io/badge/-QQ%20Group%7C833875216-blue?style=for-the-badge&logo=QQ)](https://qm.qq.com/q/iWcfaPHn7W)
 [![bilibili](https://img.shields.io/badge/-Bilibili%7C%E9%BB%8E%E6%B3%BD%E6%87%BF-%23FB7299?style=for-the-badge&logo=bilibili)](https://space.bilibili.com/520571577)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=for-the-badge)](https://opensource.org/licenses/GPL-3.0)
+
+[简体中文](../README.md) | **✔English** | [繁體中文](./README_ZH_TW.md)
+</div>
+
+<div align="center">
 
 ![Code Contribution Statistics](https://repobeats.axiom.co/api/embed/7d42538bcd781370672c00b6b6ecd5282802ee3d.svg "Code Contribution Statistics Chart")
 
 </div>
 
-> [!note]
+> [!NOTE]
 >
 > SecRandom will be open source under the GNU GPLv3 license
 >
 > GNU GPLv3 has Copyleft characteristics, which means you can modify the source code of SecRandom, but **must also open source the modified version under the GNU GPLv3 license**
 ---------
-> [!note]
+> [!NOTE]
 >
 > **SecRandom v2** will be released around 2025/12/14 (GMT +8:00 China Standard Time)!
 >
@@ -40,56 +45,53 @@
 
 ## 📖 Table of Contents
 
-- [SecRandom - Fair Random Selection System](#secrandom---fair-random-selection-system)
-  - [📖 Table of Contents](#-table-of-contents)
-  - [🌟 Core Features](#-core-features)
-    - [🎯 **Intelligent Fair Selection System**](#-intelligent-fair-selection-system)
-    - [🎨 **Modern User Experience**](#-modern-user-experience)
-    - [🚀 **Powerful Feature Set**](#-powerful-feature-set)
-    - [💻 **System Compatibility**](#-system-compatibility)
-  - [📥 Download](#-download)
-    - [🌐 Official Download Page](#-official-download-page)
-    - [📦 Download Sources](#-download-sources)
-      - [Official Channels](#official-channels)
-      - [Accelerated Mirrors in Mainland China](#accelerated-mirrors-in-mainland-china)
-  - [📸 Software Screenshots](#-software-screenshots)
-  - [📖 Fair Selection](#-fair-selection)
-    - [Introduction](#introduction)
-    - [Dynamic Weight System](#dynamic-weight-system)
-  - [Build and Package](#build-and-package)
-    - [Trigger Build](#trigger-build)
-  - [🙏 Contributors and Special Thanks](#-contributors-and-special-thanks)
-  - [💝 Support Us](#-support-us)
-    - [Afdian Support](#afdian-support)
-  - [📞 Contact](#-contact)
-  - [📄 Official Documentation](#-official-documentation)
-  - [✨ Star History](#-star-history)
+- [🎯 Why Choose Fair Selection](#-why-choose-fair-selection)
+- [🌟 Core Features](#-core-features)
+- [📥 Download](#-download)
+- [📸 Software Screenshots](#-software-screenshots)
+- [🙏 Contributors and Special Thanks](#-contributors-and-special-thanks)
+- [💝 Support Us](#-support-us)
+- [📞 Contact](#-contact)
+- [📄 Official Documentation](#-official-documentation)
+- [✨ Star History](#-star-history)
+- [📖 GitHub Contribution Tutorial](#-github-contribution-tutorial)
+- [📖 Usage Tutorial](#-usage-tutorial)
+
+## 🎯 Why Choose Fair Selection
+
+Traditional random selection often has the problem of "repeatedly selecting certain people while others are rarely selected". SecRandom uses an **intelligent dynamic weight algorithm** to ensure every member gets a fair chance of being selected:
+
+- **Avoid Repeated Selection**: The more times someone is selected, the lower their probability of being selected again
+- **Balance Group Opportunities**: Ensure members from different groups have equal selection opportunities
+- **Gender Balance Consideration**: Balance selection frequency of different genders during the selection process
+- **Cold Start Protection**: New members or those who haven't been selected for a long time won't lose opportunities due to low weight
+- **Probability Visualization**: Real-time display of each member's selection probability, making the process transparent and trustworthy
 
 ## 🌟 Core Features
 
-### 🎯 **Intelligent Fair Selection System**
+### 🎯 Intelligent Fair Selection System
 
 - ✅ **Dynamic Weighting Algorithm**: Calculates based on multiple dimensions including selection count, group, and gender to ensure true fairness
 - ✅ **Cold Start Protection**: Prevents new members from having too low weight, ensuring everyone has equal opportunities
 - ✅ **Probability Visualization**: Intuitively displays each member's probability of being selected, making the selection process transparent
 
-### 🎨 **Modern User Experience**
+### 🎨 Modern User Experience
 
 - ✅ **Elegant UI Design**: Modern interface based on Fluent Design, supporting light/dark themes
 - ✅ **Floating Window Mode**: Perform selections anytime without affecting other work
 - ✅ **Voice Announcements**: Automatic voice announcement of selection results, supporting custom voice engines
 
-### 🚀 **Powerful Feature Set**
+### 🚀 Powerful Feature Set
 
 - ✅ **Multiple Selection Modes**: Individual/multiple/group/gender selection to meet different scenario needs
 - ✅ **Smart History Records**: Detailed records with timestamps, supporting automatic cleanup
 - ✅ **Multi-list Management**: Support for importing/exporting lists, easily managing different classes/teams
 
-### 💻 **System Compatibility**
+### 💻 System Compatibility
 
-- ✅ **Full Platform Support**: Perfectly compatible with Windows 7/10/11 systems
+- ✅ **Full Platform Support**: Perfectly compatible with Windows 7/10/11 systems and Linux systems
 - ✅ **Multi-architecture Support**: Native support for x64 and x86 architectures
-- ✅ **Startup on Boot**: Supports automatic startup on boot, always available
+- ✅ **Startup on Boot**: Supports automatic startup on boot, always available (Windows)
 
 ## 📥 Download
 
@@ -97,27 +99,7 @@
 
 - 📥 **[Official Download Page](https://secrandom.netlify.app/download)** - Get the latest stable version and beta versions
 
-### 📦 Download Sources
-
-#### Official Channels
-
-- **GitHub Official Source** - Official release channel, faster access outside mainland China, recommended
-- **123 Cloud Drive Source** - Cloud drive download, no speed limit, faster access in mainland China, suitable for large file downloads
-
-#### Accelerated Mirrors in Mainland China
-
-> [!note]
->
-> These mirrors are mainly provided for users in mainland China.
-
-- **GitHub Mirror (ghfast.top)** - Accelerated mirror, fast and stable
-- **GitHub Mirror (gh-proxy.com)** - Accelerated mirror, suitable for users with special network environments
-
 ## 📸 Software Screenshots
-
-> [!warning]
->
-> The screenshots shown below are in **Chinese Simplified** language.
 
 <details>
 <summary>📸 Software Screenshots Display ✨</summary>
@@ -126,33 +108,6 @@
 ![Lottery Interface](./ScreenShots/主界面_抽奖_浅色.png)
 ![History Records](./ScreenShots/主界面_抽人历史记录_浅色.png)
 ![Settings Interface](./ScreenShots/设置_抽人设置_浅色.png)
-
-</details>
-
-## 📖 Fair Selection
-
-### Introduction
-
-Fair selection is a random selection method that ensures each member's selection weight is determined by the system, thus avoiding unfair results.
-This method is suitable for scenarios that require random and fair selection of students to answer questions or other situations requiring fair distribution.
-SecRandom's fair selection implementation is based on a dynamic weight system, calculated through multiple aspects.
-
-### Dynamic Weight System
-
-Dynamic weight is the core mechanism of SecRandom's fair selection.
-It calculates each member's weight through the following aspects:
-
-1. **Total Selection Count**: More selections lead to lower weight, avoiding repeated selections
-2. **Group Selection Count**: Balances selection opportunities across different groups
-3. **Gender Selection Count**: Ensures gender balance
-4. **Base Weight**: Customizable initial weight settings
-5. **Cold Start Protection**: Prevents new members from having too low weight, ensuring fairness
-
-## Build and Package
-
-### Trigger Build
-
-Include `进行打包` in the commit message to trigger the automatic build process.
 
 </details>
 
@@ -207,5 +162,126 @@ If you find SecRandom helpful, you're welcome to support our development work!
   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date&theme=dark">
   <img alt="Star History" src="https://api.star-history.com/svg?repos=SECTL/SecRandom&type=Date">
 </picture>
+
+## 📖 GitHub Contribution Tutorial
+
+<details>
+<summary>Click to view details</summary>
+
+### 🚀 Quick Start
+
+Before contributing code to the SecRandom project, please ensure you have completed the following preparations:
+
+1. **Fork the Project**
+   - Visit [SecRandom GitHub Repository](https://github.com/SECTL/SecRandom)
+   - Click the "Fork" button in the upper right corner to create your own repository copy
+
+2. **Clone the Repository**
+   ```bash
+   git clone https://github.com/YourUsername/SecRandom.git
+   cd SecRandom
+   ```
+
+3. **Add Upstream Repository**
+   ```bash
+   git remote add upstream https://github.com/SECTL/SecRandom.git
+   ```
+
+### 📤 Submit Your Contribution
+
+1. **Create a Feature Branch**
+   ```bash
+   git checkout -b feature/YourFeatureName
+   ```
+
+2. **Make Changes**
+   - Write your code
+   - Add necessary comments (please use Chinese)
+   - Ensure following the project's code standards
+
+3. **Commit Changes**
+   ```bash
+   git add .
+   git commit -m "Describe your changes"
+   ```
+
+4. **Sync Upstream Changes**
+   ```bash
+   git fetch upstream
+   git rebase upstream/master
+   ```
+
+5. **Push and Create Pull Request**
+   ```bash
+   git push origin feature/YourFeatureName
+   ```
+   - Visit your GitHub repository
+   - Click the "Compare & pull request" button
+   - Fill in the PR description and submit
+
+### 📋 Contribution Guidelines
+
+#### Code Standards
+- Use Chinese for code comments
+- Follow the project's existing code style
+- Ensure all used Qt classes are imported
+- Verify third-party UI components exist
+
+#### Commit Message Standards
+- Use clear, concise commit messages
+- Start with a verb (e.g., Add, Fix, Update, etc.)
+- Avoid overly simple descriptions (e.g., "fix bug")
+
+#### Pull Request Requirements
+- PR title should clearly and concisely describe the changes
+- Provide detailed change descriptions
+- Ensure all tests pass
+- Link related Issues (if any)
+
+</details>
+
+## 📖 Usage Tutorial
+
+### 🚀 GitHub Actions Unified Build Workflow Usage Guide
+
+The SecRandom project uses a unified GitHub Actions workflow for building and publishing, located at `.github/workflows/build-unified.yml`. This workflow supports multiple trigger methods and configuration options.
+
+<details>
+<summary>View more information</summary>
+
+#### Triggering Specific Builds Through Commit Messages
+
+You can trigger different build behaviors by including specific keywords in your git commit message:
+
+1. **Trigger Package Build**
+   - Include the `打包` (package) keyword in the commit message
+   - For example: `git commit -m "New feature 打包"`
+
+2. **Specify Build Platform**
+   - `win` - Windows platform
+   - `linux` - Linux platform
+   - `all` - All platforms
+   - For example: `git commit -m "Fix bug 打包 linux"`
+
+3. **Trigger All Platform Builds**
+   - Create a tag that follows version number format (format: `v数字.数字.数字.数字`)
+   - For example: `git tag v1.2.3.4 && git push origin v1.2.3.4`
+
+#### Build Parameter Keyword Description
+
+The commit message can contain the following keywords to control build behavior:
+
+| Keyword | Meaning | Example |
+|---------|--------|--------|
+| `打包` | General package trigger | `git commit -m "New feature 打包"` |
+| `win` | Windows platform | `git commit -m "Fix UI 打包 win"` |
+| `linux` | Linux platform | `git commit -m "Optimize performance 打包 linux"` |
+| `all` | All platforms | `git commit -m "Major update 打包 all"` |
+
+**Combination Usage Examples:**
+- `git commit -m "Optimize performance 打包 pi"` - Use PyInstaller to build Windows platform
+- `git commit -m "Fix bug 打包 pi"` - Use PyInstaller to build Linux platform
+
+</details>
 
 **Copyright © 2025 SECTL**
