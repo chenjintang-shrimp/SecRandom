@@ -177,7 +177,7 @@ class StudentLoader(QThread):
         except Exception as e:
             from loguru import logger
 
-            logger.exception("Error loading students in StudentLoader.run: {}", e)
+            logger.exception("在 StudentLoader.run 中加载学生时出错: {}", e)
             # 出错时返回空列表
             try:
                 self.finished.emit([])
@@ -307,7 +307,7 @@ class RemainingListPage(QWidget):
         except Exception as e:
             from loguru import logger
 
-            logger.exception("Error loading remaining list data: {}", e)
+            logger.exception("加载剩余名单数据时出错: {}", e)
 
         students_file = self.get_students_file()
         # 使用 StudentLoader 在后台处理 I/O 和筛选

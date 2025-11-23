@@ -447,7 +447,7 @@ class PivotPageTemplate(QFrame):
         except Exception as e:
             from loguru import logger
 
-            logger.exception("Error scheduling batch page loads (ignored): {}", e)
+            logger.exception("调度批量页面加载时出错（已忽略）: {}", e)
 
     def on_current_index_changed(self, index: int):
         """堆叠窗口索引改变时的处理"""

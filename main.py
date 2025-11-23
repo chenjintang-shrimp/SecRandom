@@ -9,9 +9,10 @@ from PySide6.QtGui import *
 from PySide6.QtCore import *
 from PySide6.QtWidgets import *
 from PySide6.QtNetwork import *
-import loguru
 from qfluentwidgets import *
+
 from loguru import logger
+from loguru import logger as _logger
 
 from app.tools.variable import *
 from app.tools.path_utils import *
@@ -240,8 +241,6 @@ def update_widget_fonts(widget, font, font_family):
                         updated = True
         return updated
     except Exception as e:
-        from loguru import logger
-
         logger.exception("更新控件字体时发生异常: {}", e)
         return False
 
@@ -261,10 +260,8 @@ def start_main_window():
         main_window.show()
         try:
             elapsed = time.perf_counter() - app_start_time
-            loguru.logger.debug(f"主窗口创建并显示完成，启动耗时: {elapsed:.3f}s")
+            logger.debug(f"主窗口创建并显示完成，启动耗时: {elapsed:.3f}s")
         except Exception as e:
-            from loguru import logger
-
             logger.exception("Error calculating elapsed startup time (ignored): {}", e)
     except Exception as e:
         logger.error(f"创建主窗口失败: {e}", exc_info=True)
@@ -304,12 +301,21 @@ def show_settings_window_about():
     except Exception as e:
         logger.error(f"显示关于窗口失败: {e}", exc_info=True)
 
+def create_float_window():
+    """创建浮动窗口实例"""
+    global float_window
+    try:
+        from app.view.floating_window.levitation import Levitation
+
+        float_window = Levitation()
+    except Exception as e:
+        logger.error(f"创建浮动窗口失败: {e}", exc_info=True)
 
 # ==================================================
 # 应用程序初始化相关函数
 # ==================================================
 def initialize_app():
-    """初始化应用程序，使用QTimer避免阻塞主线程，实现并行加载"""
+    """初始化应用程序"""
     program_dir = str(get_app_root())
 
     # 更改当前工作目录
@@ -317,7 +323,6 @@ def initialize_app():
         os.chdir(program_dir)
         logger.debug(f"工作目录已设置为: {program_dir}")
 
-    # 并行加载资源
     # 管理设置文件，确保其存在且完整
     manage_settings_file()
 
@@ -355,7 +360,7 @@ def initialize_app():
     # 应用字体设置
     QTimer.singleShot(APP_INIT_DELAY, lambda: (apply_font_settings()))
 
-    # 记录初始化完成时间（辅助诊断）
+    # 记录初始化完成时间
     logger.debug("应用初始化调度已启动，主窗口将在延迟后创建")
 
 
@@ -397,19 +402,17 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     import gc
+    gc.enable() # 开启垃圾回收器
 
-    gc.enable()
-
+    # 设置应用程序退出时关闭所有窗口
     app.setQuitOnLastWindowClosed(APP_QUIT_ON_LAST_WINDOW_CLOSED)
 
     # 解决Dialog和FluentWindow共存时的窗口拉伸问题
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)
 
     try:
-
         # 初始化应用程序
         main_async()
-
         app.exec()
 
         # 程序退出时释放共享内存
@@ -423,73 +426,19 @@ if __name__ == "__main__":
 
         sys.exit()
     except Exception as e:
-        print(f"应用程序启动失败: {e}")
-        try:
-            logger.error(f"应用程序启动失败: {e}", exc_info=True)
-        except Exception as log_e:
-            try:
-                from loguru import logger as _logger
+        logger.error(f"应用程序启动失败: {e}")
 
-                _logger.exception("Failed to log startup error: {}", log_e)
-            except Exception as inner_log_e:
-                try:
-                    from loguru import logger
-
-                    logger.exception("Failed to log logging failure: {}", inner_log_e)
-                except Exception as final_e:
-                    try:
-                        import sys
-
-                        print(
-                            f"Failed to log logging failure: {final_e}", file=sys.stderr
-                        )
-                    except Exception as e:
-                        try:
-                            import sys
-
-                            print(
-                                f"Failed to print logging failure: {e}", file=sys.stderr
-                            )
-                        except Exception as final_e:
-                            try:
-                                import sys
-
-                                print(
-                                    f"Final logging fallback failed: {final_e}",
-                                    file=sys.stderr,
-                                )
-                            except Exception as e:
-                                try:
-                                    import sys
-
-                                    print(
-                                        f"Final logging fallback failed to print: {e}",
-                                        file=sys.stderr,
-                                    )
-                                except Exception as eee:
-                                    try:
-                                        import sys
-
-                                        sys.stderr.write(
-                                            f"Final logging fallback failed to print: {eee}\n"
-                                        )
-                                    except Exception:
-                                        _ = None
         # 程序异常退出时释放共享内存
         try:
             shared_memory.detach()
         except Exception as detach_e:
-            from loguru import logger
-
             logger.exception(
-                "Error detaching shared memory during shutdown: {}", detach_e
+                "程序退出时分离共享内存失败: {}", detach_e
             )
         # 关闭本地服务器
         try:
             if local_server:
                 local_server.close()
         except Exception as close_e:
-            from loguru import logger
-
-            logger.exception("Error closing local server during shutdown: {}", close_e)
+            logger.exception("程序退出时关闭本地服务器失败: {}", close_e)
         sys.exit(1)
