@@ -202,7 +202,9 @@ class floating_window_settings(GroupHeaderCardWidget):
             )
         )
         self.enabled_monitor_combo_box.currentTextChanged.connect(
-            lambda: self.on_floating_first_monitor_changed(
+            lambda: update_settings(
+                "quick_draw_notification_settings",
+                "floating_window_enabled_monitor",
                 self.enabled_monitor_combo_box.currentText()
             )
         )
