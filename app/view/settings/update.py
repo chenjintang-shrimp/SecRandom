@@ -144,7 +144,7 @@ class update(QWidget):
         )
         
         self.update_settings_card.addGroup(
-            get_theme_icon("ic_fluent_cloud_download_20_filled"),
+            get_theme_icon("ic_fluent_cloud_arrow_down_20_filled"),
             get_content_name_async("update", "update_source"),
             get_content_description_async("update", "update_source"),
             self.update_source_combo,
