@@ -8,16 +8,6 @@ from PySide6.QtGui import QIcon
 from PySide6.QtCore import QTimer, QEvent, Signal
 from qfluentwidgets import MSFluentWindow, NavigationItemPosition
 
-from app.tools.variable import (
-    MINIMUM_WINDOW_SIZE,
-    APP_INIT_DELAY,
-    SETTINGS_WARMUP_INTERVAL_MS,
-    SETTINGS_WARMUP_MAX_PRELOAD,
-)
-from app.tools.path_utils import get_resources_path
-from app.tools.personalised import get_theme_icon
-from app.Language.obtain_language import get_content_name_async, readme_settings_async
-
 from app.tools.variable import *
 from app.tools.path_utils import *
 from app.tools.personalised import *
@@ -79,12 +69,14 @@ class SettingsWindow(MSFluentWindow):
             "basicSettingsInterface",
             "listManagementInterface",
             "extractionSettingsInterface",
+            "floatingWindowManagementInterface",
             "notificationSettingsInterface",
             "safetySettingsInterface",
             "customSettingsInterface",
             "voiceSettingsInterface",
             "historyInterface",
             "moreSettingsInterface",
+            "updateInterface",
             "aboutInterface",
         ]
 
@@ -162,6 +154,9 @@ class SettingsWindow(MSFluentWindow):
             "draw_settings": readme_settings_async(
                 "sidebar_management_settings", "draw_settings"
             ),
+            "floating_window_management": readme_settings_async(
+                "sidebar_management_settings", "floating_window_management"
+            ),
             "notification_service": readme_settings_async(
                 "sidebar_management_settings", "notification_service"
             ),
@@ -185,7 +180,11 @@ class SettingsWindow(MSFluentWindow):
         # 定义页面配置
         page_configs = [
             ("home", "homeInterface", "home_page", False),
-            ("base_settings", "basicSettingsInterface", "basic_settings_page", False),
+            (   "base_settings",
+                "basicSettingsInterface", 
+                "basic_settings_page",
+                False
+            ),
             (
                 "name_management",
                 "listManagementInterface",
@@ -196,6 +195,12 @@ class SettingsWindow(MSFluentWindow):
                 "draw_settings",
                 "extractionSettingsInterface",
                 "extraction_settings_page",
+                True,
+            ),
+            (
+                "floating_window_management",
+                "floatingWindowManagementInterface",
+                "floating_window_management_page",
                 True,
             ),
             (
@@ -216,9 +221,25 @@ class SettingsWindow(MSFluentWindow):
                 "custom_settings_page",
                 True,
             ),
-            ("voice_settings", "voiceSettingsInterface", "voice_settings_page", True),
-            ("settings_history", "historyInterface", "history_page", True),
-            ("more_settings", "moreSettingsInterface", "more_settings_page", True),
+            (  
+                "voice_settings",
+                "voiceSettingsInterface",
+                "voice_settings_page",
+                True,
+            ),
+
+            (
+                "settings_history",
+                "historyInterface",
+                "history_page",
+                True
+            ),
+            (
+                "more_settings",
+                "moreSettingsInterface",
+                "more_settings_page",
+                True,
+            ),
         ]
 
         # 根据设置创建对应的界面
@@ -238,6 +259,15 @@ class SettingsWindow(MSFluentWindow):
                 self._deferred_factories[interface_attr] = make_factory()
                 self._deferred_factories_meta[interface_attr] = {"is_pivot": is_pivot}
 
+        # 单独处理更新页面和关于页面
+        self.updateInterface = make_placeholder("updateInterface")
+        
+        def make_update_factory(iface=self.updateInterface):
+            return lambda parent=iface: settings_window_page.update_page(parent)
+            
+        self._deferred_factories["updateInterface"] = make_update_factory()
+        self._deferred_factories_meta["updateInterface"] = {"is_pivot": False}
+        
         self.aboutInterface = make_placeholder("aboutInterface")
 
         def make_about_factory(iface=self.aboutInterface):
@@ -252,20 +282,20 @@ class SettingsWindow(MSFluentWindow):
         # 在窗口显示后启动针对非 pivot 页面的后台预热（分批创建）
         try:
             QTimer.singleShot(300, lambda: self._background_warmup_non_pivot())
-        except Exception:
-            pass
+        except Exception as e:
+            logger.exception("Error during settings warmup: {}", e)
 
         # 连接堆叠窗口切换信号，在首次切换到占位时创建真实页面
         try:
             self.stackedWidget.currentChanged.connect(self._on_stacked_widget_changed)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.exception("Error creating deferred page: {}", e)
 
         # 在窗口显示后启动后台预热，分批创建其余页面，避免一次性阻塞
         try:
             QTimer.singleShot(300, lambda: self._background_warmup_pages())
-        except Exception:
-            pass
+        except Exception as e:
+            logger.exception("Error scheduling background warmup pages: {}", e)
 
     def _on_stacked_widget_changed(self, index: int):
         """当导航切换到某个占位页时，按需创建真实页面内容"""
@@ -295,8 +325,8 @@ class SettingsWindow(MSFluentWindow):
                             QTimer.singleShot(
                                 50, lambda rp=real_page: rp.load_all_pages()
                             )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.exception("Error in deferred page creation step: {}", e)
                     logger.debug(f"设置页面已按需创建: {name}")
                 except Exception as e:
                     logger.error(f"延迟创建设置页面 {name} 失败: {e}")
@@ -326,7 +356,11 @@ class SettingsWindow(MSFluentWindow):
                 ]
                 pivot = [n for n in names if meta.get(n, {}).get("is_pivot", False)]
                 ordered = non_pivot + pivot
-            except Exception:
+            except Exception as e:
+                logger.exception(
+                    "Error ordering deferred factories (fallback to original order): {}",
+                    e,
+                )
                 ordered = names
 
             # 仅预热有限数量的页面，避免一次性占用主线程
@@ -380,12 +414,14 @@ class SettingsWindow(MSFluentWindow):
                 "basicSettingsInterface",
                 "listManagementInterface",
                 "extractionSettingsInterface",
+                "floatingWindowManagementInterface",
                 "notificationSettingsInterface",
                 "safetySettingsInterface",
                 "customSettingsInterface",
                 "voiceSettingsInterface",
                 "historyInterface",
                 "moreSettingsInterface",
+                "updateInterface",
                 "aboutInterface",
             ]
 
@@ -493,6 +529,14 @@ class SettingsWindow(MSFluentWindow):
                 "title",
             ),
             (
+                "floating_window_management",
+                "floatingWindowManagementInterface",
+                "floating_window_management_item",
+                "ic_fluent_window_apps_20_filled",
+                "floating_window_management",
+                "title",
+            ),
+            (
                 "notification_service",
                 "notificationSettingsInterface",
                 "notification_settings_item",
@@ -572,6 +616,13 @@ class SettingsWindow(MSFluentWindow):
                     setattr(self, item_attr, nav_item)
 
         # 关于页面始终显示在底部
+        self.update_item = self.addSubInterface(
+            self.updateInterface,
+            get_theme_icon("ic_fluent_arrow_sync_20_filled"),
+            get_content_name_async("update", "title"),
+            position=NavigationItemPosition.BOTTOM,
+        )
+        
         self.about_item = self.addSubInterface(
             self.aboutInterface,
             get_theme_icon("ic_fluent_info_20_filled"),

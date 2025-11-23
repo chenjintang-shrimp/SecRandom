@@ -273,3 +273,50 @@ def _get_default_setting(first_level_key: str, second_level_key: str):
             return setting_info
 
     return None
+
+
+def get_safe_font_size(first_level_key: str, second_level_key: str, default_size: int = 12) -> int:
+    """安全地获取字体大小设置值
+    
+    Args:
+        first_level_key: 第一层的键
+        second_level_key: 第二层的键
+        default_size: 默认字体大小
+        
+    Returns:
+        int: 有效的字体大小值（1-200）
+    """
+    try:
+        # 获取设置值
+        font_size = readme_settings(first_level_key, second_level_key)
+        
+        # 验证设置值的有效性
+        if font_size is None:
+            return default_size
+            
+        # 尝试转换为整数
+        if isinstance(font_size, str):
+            if font_size.isdigit():
+                font_size = int(font_size)
+            else:
+                logger.warning(f"字体大小设置值无效（非数字字符串）: {first_level_key}.{second_level_key} = {font_size}")
+                return default_size
+        elif isinstance(font_size, (int, float)):
+            font_size = int(font_size)
+        else:
+            logger.warning(f"字体大小设置值类型无效: {first_level_key}.{second_level_key} = {font_size} (类型: {type(font_size)})")
+            return default_size
+            
+        # 验证范围
+        if font_size <= 0 or font_size > 200:
+            logger.warning(f"字体大小设置值超出有效范围: {first_level_key}.{second_level_key} = {font_size}")
+            return default_size
+            
+        return font_size
+        
+    except (ValueError, TypeError) as e:
+        logger.error(f"获取字体大小设置失败: {e}")
+        return default_size
+    except Exception as e:
+        logger.error(f"获取字体大小设置时发生未知错误: {e}")
+        return default_size

@@ -117,8 +117,10 @@ class SimpleWindowTemplate(FramelessWindow):
         self.titleBar.setAttribute(Qt.WidgetAttribute.WA_StyledBackground)
         # 设置标题栏字体
         custom_font = load_custom_font()
-        title_font = QFont(custom_font, 9)
-        self.titleBar.setFont(title_font)
+        if custom_font:
+            title_font = QFont(custom_font, 9)
+            self.titleBar.setFont(title_font)
+            self.setFont(title_font)
 
         # 确保在设置标题栏后应用当前主题和自定义字体
         self._apply_current_theme()
@@ -169,7 +171,13 @@ class SimpleWindowTemplate(FramelessWindow):
                         self.default_page.setStyleSheet(
                             "background-color: transparent;"
                         )
-                except:
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception(
+                        "Error detecting dark mode with darkdetect (fallback to light): {}",
+                        e,
+                    )
                     # 如果检测失败，使用浅色主题
                     self.setStyleSheet("background-color: #ffffff;")
                     self.default_page.setStyleSheet("background-color: transparent;")

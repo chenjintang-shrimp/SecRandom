@@ -174,12 +174,17 @@ class StudentLoader(QThread):
 
             # 发送结果回主线程
             self.finished.emit(filtered_students)
-        except Exception:
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error loading students in StudentLoader.run: {}", e)
             # 出错时返回空列表
             try:
                 self.finished.emit([])
-            except Exception:
-                pass
+            except Exception as inner_e:
+                logger.exception(
+                    "Error emitting finished signal with empty list: {}", inner_e
+                )
 
 
 class RemainingListPage(QWidget):
@@ -209,7 +214,10 @@ class RemainingListPage(QWidget):
         # 减少每次创建卡片时的重复开销
         try:
             self._font_family = load_custom_font()
-        except Exception:
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Failed to load custom font: {}", e)
             self._font_family = None
         # 预先设置为空；init_ui 中会尝试异步预取模板文本
         self._student_info_text = None
@@ -296,8 +304,10 @@ class RemainingListPage(QWidget):
                 and self._loading_thread.isRunning()
             ):
                 return
-        except Exception:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error loading remaining list data: {}", e)
 
         students_file = self.get_students_file()
         # 使用 StudentLoader 在后台处理 I/O 和筛选
@@ -327,8 +337,10 @@ class RemainingListPage(QWidget):
                 # 清理线程引用
                 if hasattr(self, "_loading_thread"):
                     self._loading_thread = None
-            except Exception:
-                pass
+            except Exception as e:
+                from loguru import logger
+
+                logger.exception("Error handling student group processing: {}", e)
 
     def update_ui(self):
         """更新UI显示"""
@@ -434,18 +446,28 @@ class RemainingListPage(QWidget):
             # 恢复更新
             try:
                 self.setUpdatesEnabled(True)
-            except Exception:
-                pass
+            except Exception as e:
+                from loguru import logger
+
+                logger.exception("Error processing student in StudentLoader: {}", e)
             try:
                 if top_win is not None:
                     top_win.setUpdatesEnabled(True)
-            except Exception:
-                pass
+            except Exception as e:
+                from loguru import logger
+
+                logger.exception(
+                    "Error re-enabling updates on top window (ignored): {}", e
+                )
             try:
                 # 触发一次完整刷新
                 self.update()
-            except Exception:
-                pass
+            except Exception as e:
+                from loguru import logger
+
+                logger.exception(
+                    "Error calling update() after layout update (ignored): {}", e
+                )
 
     def _calculate_columns(self, width: int) -> int:
         """根据窗口宽度和卡片尺寸动态计算列数"""
@@ -462,7 +484,10 @@ class RemainingListPage(QWidget):
 
             # 至少显示1列，且不超过一个合理上限
             return max(1, min(int(max_cols), 6))
-        except Exception:
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error calculating columns (fallback to 1): {}", e)
             return 1
 
     def _start_incremental_render(self):
@@ -505,8 +530,12 @@ class RemainingListPage(QWidget):
                         try:
                             if getattr(self.reporter, "cancel_requested", False):
                                 break
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            from loguru import logger
+
+                            logger.exception(
+                                "Error checking reporter cancel flag (ignored): {}", e
+                            )
                         batch = []
                         for _ in range(self.batch_size):
                             if not self.students:
@@ -539,31 +568,56 @@ class RemainingListPage(QWidget):
                         try:
                             if getattr(self.reporter, "cancel_requested", False):
                                 break
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            from loguru import logger
+
+                            logger.exception(
+                                "Error checking reporter cancel flag before emit (ignored): {}",
+                                e,
+                            )
                         try:
                             self.reporter.batch_ready.emit(batch)
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            from loguru import logger
+
+                            logger.exception(
+                                "Error emitting batch_ready (ignored): {}", e
+                            )
                     try:
                         self.reporter.finished.emit()
-                    except Exception:
-                        pass
-                except Exception:
+                    except Exception as e:
+                        from loguru import logger
+
+                        logger.exception("Error emitting finished (ignored): {}", e)
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception("Unhandled error in StudentRenderTask.run: {}", e)
                     try:
                         self.reporter.finished.emit()
-                    except Exception:
-                        pass
+                    except Exception as inner_e:
+                        from loguru import logger
+
+                        logger.exception(
+                            "Error emitting finished after exception: {}", inner_e
+                        )
 
         # 请求取消之前正在运行的渲染任务（如果存在）
         try:
             if self._rendering and self._render_reporter is not None:
                 try:
                     self._render_reporter.cancel_requested = True
-                except Exception:
-                    pass
-        except Exception:
-            pass
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception(
+                        "Error requesting cancel on previous render reporter (ignored): {}",
+                        e,
+                    )
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error in RemainingListPage initialization: {}", e)
 
         self._render_reporter = reporter
         task = StudentRenderTask(
@@ -587,8 +641,13 @@ class RemainingListPage(QWidget):
         try:
             if getattr(reporter, "cancel_requested", False):
                 return
-        except Exception:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception(
+                "Error checking reporter cancel_requested flag in _on_batch_ready (ignored): {}",
+                e,
+            )
 
         if not batch:
             return
@@ -611,8 +670,10 @@ class RemainingListPage(QWidget):
                 try:
                     if card.parent() is not None and card.parent() is not self:
                         card.setParent(None)
-                except Exception:
-                    pass
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception("Error resetting card parent (ignored): {}", e)
 
                 self.cards.append(card)
                 self._cards_set.add(key)
@@ -628,8 +689,12 @@ class RemainingListPage(QWidget):
                 try:
                     if self.grid_layout.indexOf(card) != -1:
                         continue
-                except Exception:
-                    pass
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception(
+                        "Error checking grid_layout.indexOf (ignored): {}", e
+                    )
 
                 row = i // columns
                 col = i % columns
@@ -642,14 +707,27 @@ class RemainingListPage(QWidget):
                         if existing_widget is not None and existing_widget is not card:
                             try:
                                 self.grid_layout.removeWidget(existing_widget)
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                from loguru import logger
+
+                                logger.exception(
+                                    "Error removing existing widget from grid (ignored): {}",
+                                    e,
+                                )
                             try:
                                 existing_widget.hide()
-                            except Exception:
-                                pass
-                except Exception:
-                    pass
+                            except Exception as e:
+                                from loguru import logger
+
+                                logger.exception(
+                                    "Error hiding existing widget (ignored): {}", e
+                                )
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception(
+                        "Error handling existing widget in grid (ignored): {}", e
+                    )
 
                 try:
                     self.grid_layout.addWidget(card, row, col)
@@ -660,16 +738,23 @@ class RemainingListPage(QWidget):
 
             for col in range(columns):
                 self.grid_layout.setColumnStretch(col, 1)
-        except Exception:
-            logger.exception("增量渲染时布局更新失败")
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("增量渲染时布局更新失败: {}", e)
 
     def _on_render_finished(self, reporter):
         """后台渲染完成后的槽，接收 reporter 用于忽略过期任务"""
         try:
             if getattr(reporter, "cancel_requested", False):
                 return
-        except Exception:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception(
+                "Error checking reporter cancel_requested in _on_render_finished (ignored): {}",
+                e,
+            )
 
         self._rendering = False
         self._pending_students = []
@@ -683,8 +768,12 @@ class RemainingListPage(QWidget):
             if self._render_timer is not None:
                 self._render_timer.stop()
                 self._render_timer = None
-        except Exception:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception(
+                "Error stopping render timer in _finalize_render (ignored): {}", e
+            )
 
         self._rendering = False
 
@@ -705,14 +794,20 @@ class RemainingListPage(QWidget):
             if widget:
                 try:
                     self.grid_layout.removeWidget(widget)
-                except Exception:
-                    pass
+                except Exception as e:
+                    from loguru import logger
+
+                    logger.exception(
+                        "Error removing widget from grid during clear (ignored): {}", e
+                    )
                 widget.hide()
         # 清空已记录的已添加卡片集合
         try:
             self._cards_set.clear()
-        except Exception:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error clearing cards set (ignored): {}", e)
 
     def create_student_card(self, student: Dict[str, Any]) -> CardWidget:
         """创建学生卡片
@@ -746,7 +841,9 @@ class RemainingListPage(QWidget):
 
             # 小组名称
             name_label = BodyLabel(student["name"])
-            name_label.setFont(QFont(load_custom_font(), 16, QFont.Weight.Bold))
+            custom_font = load_custom_font()
+            if custom_font:
+                name_label.setFont(QFont(custom_font, 16, QFont.Weight.Bold))
             name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             name_label.setWordWrap(True)  # 启用自动换行
             layout.addWidget(name_label)
@@ -754,7 +851,9 @@ class RemainingListPage(QWidget):
             # 小组成员数量
             members = student.get("members", [])
             count_label = BodyLabel(f"成员数量: {len(members)}")
-            count_label.setFont(QFont(load_custom_font(), 10))
+            custom_font = load_custom_font()
+            if custom_font:
+                count_label.setFont(QFont(custom_font, 10))
             count_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(count_label)
 
@@ -768,7 +867,9 @@ class RemainingListPage(QWidget):
                     members_text += f" 等{len(members) - 5}名成员"
 
             members_label = BodyLabel(members_text)
-            members_label.setFont(QFont(load_custom_font(), 9))
+            custom_font = load_custom_font()
+            if custom_font:
+                members_label.setFont(QFont(custom_font, 9))
             members_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
             members_label.setWordWrap(True)  # 启用自动换行
             layout.addWidget(members_label)

@@ -239,8 +239,10 @@ class floating_window_settings(GroupHeaderCardWidget):
             )
         )
         self.enabled_monitor_combo_box.currentTextChanged.connect(
-            lambda: self.on_floating_first_monitor_changed(
-                self.enabled_monitor_combo_box.currentText()
+            lambda: update_settings(
+                "roll_call_notification_settings",
+                "floating_window_enabled_monitor",
+                self.enabled_monitor_combo_box.currentText(),
             )
         )
 

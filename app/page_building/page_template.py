@@ -10,6 +10,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 from PySide6.QtNetwork import *
+import loguru
 from qfluentwidgets import *
 
 from app.tools.variable import *
@@ -108,10 +109,12 @@ class PageTemplate(QFrame):
             self.content_created = True
 
             elapsed = time.perf_counter() - start
-            logger.debug(f"创建内容组件 {content_name} 耗时: {elapsed:.3f}s")
+            loguru.logger.debug(f"创建内容组件 {content_name} 耗时: {elapsed:.3f}s")
         except Exception as e:
             elapsed = time.perf_counter() - start
-            logger.error(f"创建内容组件失败 ({elapsed:.3f}s): {e}")
+            from loguru import logger
+
+            logger.exception(f"创建内容组件失败 ({elapsed:.3f}s): {e}")
 
     def create_empty_content(self, message="该页面正在开发中，敬请期待！"):
         """创建空页面内容"""
@@ -129,7 +132,9 @@ class PageTemplate(QFrame):
         if message:
             custom_label = BodyLabel(message)
             custom_label.setAlignment(Qt.AlignCenter)
-            custom_label.setFont(QFont(load_custom_font(), 12))
+            custom_font = load_custom_font()
+            if custom_font:
+                custom_label.setFont(QFont(custom_font, 12))
             center_layout.addWidget(custom_label)
 
         empty_layout.addWidget(center_container)
@@ -372,7 +377,9 @@ class PivotPageTemplate(QFrame):
 
             error_title = BodyLabel("页面加载失败")
             error_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            error_title.setFont(QFont(load_custom_font(), 16))
+            custom_font = load_custom_font()
+            if custom_font:
+                error_title.setFont(QFont(custom_font, 16))
 
             error_content = BodyLabel(f"无法加载页面 {page_name}: {str(e)}")
             error_content.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -437,8 +444,10 @@ class PivotPageTemplate(QFrame):
                         ]
                     ),
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            from loguru import logger
+
+            logger.exception("Error scheduling batch page loads (ignored): {}", e)
 
     def on_current_index_changed(self, index: int):
         """堆叠窗口索引改变时的处理"""

@@ -14,12 +14,7 @@ page_management = {
             "description": "设置点名控制面板的位置",
             "combo_items": ["左侧", "右侧"],
         },
-        "show_name": {
-            "name": "名称设置按钮",
-            "description": "开启后软件将显示名称设置按钮",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
-        },
-        "reset_roll_call": {
+        "roll_call_reset_button": {
             "name": "重置点名按钮",
             "description": "开启后将显示重置点名按钮",
             "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
@@ -64,12 +59,7 @@ page_management = {
             "description": "设置抽奖控制面板的位置",
             "combo_items": ["左侧", "右侧"],
         },
-        "show_lottery_name": {
-            "name": "名称设置按钮",
-            "description": "控制是否显示奖品名称设置按钮",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
-        },
-        "reset_lottery": {
+        "lottery_reset_button": {
             "name": "重置抽奖按钮",
             "description": "控制是否显示重置抽奖按钮",
             "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
@@ -104,7 +94,7 @@ page_management = {
             "description": "设置自定义抽控制面板的位置",
             "combo_items": ["左侧", "右侧"],
         },
-        "reset_custom": {
+        "custom_reset_button": {
             "name": "重置自定义抽按钮",
             "description": "控制是否显示重置自定义抽取按钮",
             "switchbutton_name": {"enable": "显示", "disable": "隐藏"},

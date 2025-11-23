@@ -1,8 +1,4 @@
-"""
-通知服务模块
-
-该模块提供在独立浮动通知窗口中显示抽取结果的功能。
-"""
+from loguru import logger
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QApplication
 from PySide6.QtCore import Qt, QPoint, QTimer, QPropertyAnimation, QEasingCurve, QRect
@@ -36,6 +32,37 @@ class NotificationContentWidget(QWidget):
             self.layout.addWidget(widget)
             self.content_widgets.append(widget)
 
+        # 确保新添加的 BodyLabel 可见：根据主题强制设置前景色
+        try:
+            from app.tools.personalised import is_dark_theme
+            from qfluentwidgets import qconfig
+            from qfluentwidgets import BodyLabel as QFBodyLabel
+
+            fg = "#ffffff" if is_dark_theme(qconfig) else "#000000"
+
+            def apply_fg_to(w):
+                # 如果是直接的 BodyLabel，设置样式
+                if isinstance(w, QFBodyLabel):
+                    existing = w.styleSheet() or ""
+                    if "color:" not in existing:
+                        # 保留已有样式，追加颜色
+                        w.setStyleSheet(existing + f" color: {fg};")
+                else:
+                    # 遍历子控件查找 BodyLabel
+                    for child in w.findChildren(QFBodyLabel):
+                        existing = child.styleSheet() or ""
+                        if "color:" not in existing:
+                            child.setStyleSheet(existing + f" color: {fg};")
+
+            for w in self.content_widgets:
+                try:
+                    apply_fg_to(w)
+                except Exception as e:
+                    logger.exception("Error applying fg to content widget: {}", e)
+        except Exception:
+            # 忽略主题检测错误，保持原样
+            pass
+
 
 class NotificationWindowTemplate(PageTemplate):
     """通知窗口页面模板"""
@@ -68,6 +95,14 @@ class FloatingNotificationWindow(CardWidget):
 
         # 设置UI
         self.setup_ui()
+
+        # 订阅主题变化，确保切换主题时更新文字颜色
+        try:
+            from qfluentwidgets import qconfig
+
+            qconfig.themeChanged.connect(self._on_theme_changed)
+        except Exception as e:
+            logger.exception("Error connecting themeChanged signal (ignored): {}", e)
 
         # 设置窗口圆角
         self.setBorderRadius(15)
@@ -198,7 +233,8 @@ class FloatingNotificationWindow(CardWidget):
             )
             self.update_drag_line_style()
             self.update_drag_line_container_style()
-        except:
+        except Exception as e:
+            logger.exception("Error updating background style (fallback used): {}", e)
             # 如果无法获取主题信息，默认使用白色背景和深色拖动线
             background_color = "#ffffff"
             self.background_widget.setStyleSheet(
@@ -227,7 +263,10 @@ class FloatingNotificationWindow(CardWidget):
                 self.drag_line_container.setStyleSheet(
                     f"background-color: {background_color}; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;"
                 )
-            except:
+            except Exception as e:
+                logger.exception(
+                    "Error updating drag line container style (fallback used): {}", e
+                )
                 # 如果无法获取主题信息，默认使用白色背景
                 self.drag_line_container.setStyleSheet(
                     "background-color: #ffffff; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;"
@@ -258,6 +297,18 @@ class FloatingNotificationWindow(CardWidget):
         # 设置透明度（背景和字体透明度统一）
         self.setWindowOpacity(transparency)
 
+        # 设置倒计时标签颜色，确保与背景对比
+        try:
+            from app.tools.personalised import is_dark_theme
+            from qfluentwidgets import qconfig
+
+            fg = "#ffffff" if is_dark_theme(qconfig) else "#000000"
+            existing = self.countdown_label.styleSheet() or ""
+            if "color:" not in existing:
+                self.countdown_label.setStyleSheet(existing + f" color: {fg};")
+        except Exception as e:
+            logger.exception("Error setting countdown label color: {}", e)
+
         # 根据设置定位窗口
         self.position_window(settings)
 
@@ -287,6 +338,61 @@ class FloatingNotificationWindow(CardWidget):
             self.countdown_timer.stop()
             self.countdown_label.setText("连续点击3次关闭窗口")
 
+    def _on_theme_changed(self):
+        """主题切换时更新浮窗内文字和背景颜色"""
+        try:
+            from app.tools.personalised import is_dark_theme
+            from qfluentwidgets import qconfig
+
+            fg = "#ffffff" if is_dark_theme(qconfig) else "#000000"
+
+            # 更新所有 BodyLabel 子控件颜色
+            for lbl in self.findChildren(BodyLabel):
+                try:
+                    existing = lbl.styleSheet() or ""
+                    parts = [
+                        p.strip()
+                        for p in existing.split(";")
+                        if p.strip() and not p.strip().startswith("color:")
+                    ]
+                    parts.append(f"color: {fg} !important")
+                    lbl.setStyleSheet("; ".join(parts) + ";")
+                except Exception as e:
+                    logger.exception(
+                        "Error applying color to label child (continuing): {}", e
+                    )
+                    continue
+
+            # 更新倒计时标签颜色
+            try:
+                existing = self.countdown_label.styleSheet() or ""
+                parts = [
+                    p.strip()
+                    for p in existing.split(";")
+                    if p.strip() and not p.strip().startswith("color:")
+                ]
+                parts.append(f"color: {fg} !important")
+                self.countdown_label.setStyleSheet("; ".join(parts) + ";")
+            except Exception as e:
+                logger.exception(
+                    "应用倒计时标签颜色时出错（已忽略）：{}", e
+                )
+                pass
+
+            # 更新背景与拖动线样式
+            try:
+                self.update_background_style()
+                self.update_drag_line_style()
+                self.update_drag_line_container_style()
+            except Exception as e:
+                logger.exception(
+                    "Error updating background/drag line styles (ignored): {}", e
+                )
+                pass
+        except Exception as e:
+            logger.exception("Error in _on_theme_changed (ignored): {}", e)
+            pass
+
     def _get_screen_from_settings(self, settings):
         """根据设置获取屏幕"""
         screen = QApplication.primaryScreen()
@@ -298,6 +404,7 @@ class FloatingNotificationWindow(CardWidget):
                 for s in QApplication.screens():
                     if s.name() == enabled_monitor_name:
                         screen = s
+                        logger.debug("使用显示器：{}", enabled_monitor_name)
                         break
 
         if screen is None:
@@ -465,6 +572,25 @@ class FloatingNotificationWindow(CardWidget):
         """开始显示动画"""
         # 重置动画完成标志
         if not self.is_animation_enabled:
+            # 即使没有动画也要确保在正确的屏幕显示
+            screen = self._get_screen_from_settings(settings)
+            screen_geometry = screen.geometry()
+            
+            if settings:
+                position_index = settings.get("window_position", 0)
+                horizontal_offset = settings.get("horizontal_offset", 0)
+                vertical_offset = settings.get("vertical_offset", 0)
+            else:
+                position_index = 0
+                horizontal_offset = 0
+                vertical_offset = 0
+
+            # 计算最终位置
+            window_rect = self._calculate_window_position(
+                screen_geometry, position_index, horizontal_offset, vertical_offset
+            )
+            self.move(window_rect.x(), window_rect.y())
+            
             self.show()
             self.update_countdown_display()
             return
@@ -540,6 +666,11 @@ class FloatingNotificationWindow(CardWidget):
 
         # 立即更新倒计时显示（显示"正在抽取中"）
         self.update_countdown_display()
+        # 确保颜色与当前主题同步
+        try:
+            self._on_theme_changed()
+        except Exception as e:
+            logger.exception("Error syncing theme on show (ignored): {}", e)
 
     def on_animation_finished(self):
         """动画完成后的处理"""
@@ -561,9 +692,8 @@ class FloatingNotificationWindow(CardWidget):
         try:
             if not (self.windowFlags() & Qt.WindowDoesNotAcceptFocus):
                 self.activateWindow()
-        except Exception:
-            # 保险兜底：如果出现问题则不激活窗口
-            pass
+        except Exception as e:
+            logger.exception("Error activating window (ignored): {}", e)
 
         # 更新倒计时显示
         self.update_countdown_display()
@@ -615,6 +745,12 @@ class FloatingNotificationWindow(CardWidget):
         if student_labels:
             for label in student_labels:
                 self.content_layout.addWidget(label)
+
+        # 确保颜色与当前主题同步
+        try:
+            self._on_theme_changed()
+        except Exception as e:
+            logger.exception("Error syncing theme on update_content (ignored): {}", e)
 
         # 调整窗口大小以适应内容
         self.adjustSize()
@@ -673,7 +809,8 @@ class FloatingNotificationManager:
             return get_content_name_async(
                 "notification_settings", "notification_result"
             )
-        except:
+        except Exception as e:
+            logger.exception("Error getting notification title (fallback used): {}", e)
             # 如果无法获取多语言文本，则使用默认文本
             return "通知结果"
 

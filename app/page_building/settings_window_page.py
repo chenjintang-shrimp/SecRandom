@@ -9,6 +9,8 @@ from app.page_building.page_template import PageTemplate, PivotPageTemplate
 # content path format: 'module.submodule:ClassName' 或 'module.submodule.ClassName'
 HOME_PATH = "app.view.settings.home:home"
 BASIC_SETTINGS_PATH = "app.view.settings.basic_settings:basic_settings"
+FLOATING_WINDOW_MANAGEMENT_PATH = "app.view.settings.floating_window_management:floating_window_management"
+UPDATE_PATH = "app.view.settings.update:update"
 ABOUT_PATH = "app.view.settings.about:about"
 
 # 导入默认设置
@@ -18,14 +20,12 @@ from app.Language.obtain_language import *
 
 class home_page(PageTemplate):
     """创建主页页面"""
-
     def __init__(self, parent: QFrame = None):
         super().__init__(content_widget_class=HOME_PATH, parent=parent)
 
 
 class basic_settings_page(PageTemplate):
     """创建基础设置页面"""
-
     def __init__(self, parent: QFrame = None):
         super().__init__(content_widget_class=BASIC_SETTINGS_PATH, parent=parent)
 
@@ -63,6 +63,12 @@ class extraction_settings_page(PivotPageTemplate):
         }
         super().__init__(page_config, parent)
         self.set_base_path("app.view.settings.extraction_settings")
+
+
+class floating_window_management_page(PageTemplate):
+    """创建悬浮窗管理页面"""
+    def __init__(self, parent: QFrame = None):
+        super().__init__(content_widget_class=FLOATING_WINDOW_MANAGEMENT_PATH, parent=parent)
 
 
 class notification_settings_page(PivotPageTemplate):
@@ -111,9 +117,6 @@ class custom_settings_page(PivotPageTemplate):
     def __init__(self, parent: QFrame = None):
         page_config = {
             "page_management": get_content_name_async("page_management", "title"),
-            "floating_window_management": get_content_name_async(
-                "floating_window_management", "title"
-            ),
             "sidebar_tray_management": get_content_name_async(
                 "sidebar_tray_management", "title"
             ),
@@ -166,8 +169,13 @@ class more_settings_page(PivotPageTemplate):
         self.set_base_path("app.view.settings.more_settings")
 
 
+class update_page(PageTemplate):
+    """创建更新页面"""
+    def __init__(self, parent: QFrame = None):
+        super().__init__(content_widget_class=UPDATE_PATH, parent=parent)
+
+
 class about_page(PageTemplate):
     """创建关于页面"""
-
     def __init__(self, parent: QFrame = None):
         super().__init__(content_widget_class=ABOUT_PATH, parent=parent)
