@@ -4,11 +4,12 @@
 import json
 from random import SystemRandom
 
-from app.tools.list import get_group_list, get_student_list, filter_students_data
-from app.tools.history import calculate_weight
+from app.tools.list import get_group_list, get_student_list, filter_students_data, get_pool_list
+from app.tools.history import calculate_weight, load_history_data
 from app.tools.config import (
     calculate_remaining_count,
     read_drawn_record,
+    read_drawn_record_simple,
     reset_drawn_record,
 )
 from app.tools.path_utils import get_resources_path, open_file
@@ -68,7 +69,7 @@ class LotteryUtils:
             tuple: (总人数, 剩余人数, 格式化文本)
         """
         # 根据范围计算实际人数
-        total_count = RollCallUtils.get_total_count(
+        total_count = LotteryUtils.get_total_count(
             list_combobox_text, range_combobox_index, range_combobox_text
         )
 
@@ -242,6 +243,121 @@ class LotteryUtils:
             "group_filter": group_filter,
             "gender_filter": gender_filter,
         }
+
+    @staticmethod
+    def get_prize_total_count(pool_name: str) -> int:
+        """获取奖池奖品总数"""
+        try:
+            from app.tools.list import get_pool_list
+            return len(get_pool_list(pool_name))
+        except Exception:
+            return 0
+
+    @staticmethod
+    def update_prize_many_count_label_text(pool_name: str):
+        """生成奖品总数/剩余显示文本"""
+        total_count = LotteryUtils.get_prize_total_count(pool_name)
+        remaining_count = LotteryUtils.calculate_prize_remaining_count(pool_name)
+        if remaining_count == 0:
+            remaining_count = total_count
+        text_template = get_any_position_value("lottery", "many_count_label", "text_0")
+        formatted_text = text_template.format(total_count=total_count, remaining_count=remaining_count)
+        return total_count, remaining_count, formatted_text
+
+    @staticmethod
+    def draw_random_prizes(pool_name: str, current_count: int):
+        """按权重抽取奖品"""
+        try:
+            from app.tools.config import read_drawn_record
+            items = get_pool_list(pool_name)
+            if not items:
+                return {"selected_prizes": [], "pool_name": pool_name, "selected_prizes_dict": []}
+            # 非重复/半重复处理：根据 TEMP 记录过滤已达阈值的奖品（与 roll_call 一致）
+            threshold = LotteryUtils._get_prize_draw_threshold()
+            if threshold is not None:
+                drawn_records = read_drawn_record_simple(pool_name)
+                drawn_counts = {name: cnt for name, cnt in drawn_records}
+                available = []
+                for i in items:
+                    name = i.get("name", "")
+                    cnt = int(drawn_counts.get(name, 0))
+                    if cnt < threshold:
+                        available.append(i)
+                items = available
+                if not items:
+                    return {"reset_required": True}
+            # 准备权重
+            weights = [float(i.get("weight", 1)) for i in items]
+            draw = min(current_count, len(items))
+            selected = []
+            selected_dict = []
+            for _ in range(draw):
+                if not items:
+                    break
+                total_weight = sum(weights)
+                if total_weight <= 0:
+                    idx = system_random.randint(0, len(items) - 1)
+                else:
+                    rv = system_random.uniform(0, total_weight)
+                    cum = 0
+                    idx = 0
+                    for i, w in enumerate(weights):
+                        cum += w
+                        if rv <= cum:
+                            idx = i
+                            break
+                chosen = items[idx]
+                selected.append((chosen.get("id"), chosen.get("name"), chosen.get("exist", True)))
+                selected_dict.append(chosen)
+                items.pop(idx)
+                weights.pop(idx)
+            return {
+                "selected_prizes": selected,
+                "pool_name": pool_name,
+                "selected_prizes_dict": selected_dict,
+            }
+        except Exception:
+            return {"selected_prizes": [], "pool_name": pool_name, "selected_prizes_dict": []}
+
+    @staticmethod
+    def _get_prize_draw_threshold():
+        """获取奖品抽取阈值：None 表示可重复；1 表示不重复；半重复返回次数阈值"""
+        try:
+            mode = readme_settings_async("lottery_settings", "draw_mode")
+            if mode == 1:
+                return 1
+            elif mode == 2:
+                hr = readme_settings_async("lottery_settings", "half_repeat")
+                try:
+                    return int(hr) if hr else 1
+                except Exception:
+                    return 1
+            else:
+                return None
+        except Exception:
+            return None
+
+    @staticmethod
+    def calculate_prize_remaining_count(pool_name: str) -> int:
+        """计算剩余可抽奖品数量，考虑不重复/半重复设置"""
+        try:
+            from app.tools.list import get_pool_list
+            from app.tools.config import read_drawn_record
+            threshold = LotteryUtils._get_prize_draw_threshold()
+            total = len(get_pool_list(pool_name))
+            if threshold is None:
+                return total
+            drawn_records = read_drawn_record_simple(pool_name)
+            drawn_counts = {name: cnt for name, cnt in drawn_records}
+            remain = 0
+            for i in get_pool_list(pool_name):
+                name = i.get("name", "")
+                cnt = int(drawn_counts.get(name, 0))
+                if cnt < threshold:
+                    remain += 1
+            return remain
+        except Exception:
+            return 0
 
     @staticmethod
     def draw_random_groups(students_dict_list, current_count, draw_type):

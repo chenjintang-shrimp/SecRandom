@@ -32,7 +32,7 @@ from app.Language.obtain_language import (
     get_content_name_async,
     get_any_position_value_async,
 )
-from app.tools.config import read_drawn_record
+from app.tools.config import read_drawn_record, read_drawn_record_simple
 from app.tools.variable import APP_INIT_DELAY
 
 
@@ -136,9 +136,13 @@ class StudentLoader(QThread):
 
             # half_repeat 过滤
             if self.half_repeat > 0:
-                drawn_records = read_drawn_record(
-                    self.class_name, self.gender_filter, self.group_filter
-                )
+                # 根据数据来源选择读取记录方法
+                if "lottery_list" in str(self.students_file):
+                    drawn_records = read_drawn_record_simple(self.class_name)
+                else:
+                    drawn_records = read_drawn_record(
+                        self.class_name, self.gender_filter, self.group_filter
+                    )
                 drawn_counts = {name: count for name, count in drawn_records}
                 remaining_students = []
                 if self.group_index == 1:
@@ -235,6 +239,31 @@ class RemainingListPage(QWidget):
         # 延迟加载学生数据
         QTimer.singleShot(APP_INIT_DELAY, self.load_student_data)
 
+    def stop_loader(self):
+        try:
+            if hasattr(self, "_loading_thread") and self._loading_thread is not None:
+                try:
+                    if self._loading_thread.isRunning():
+                        try:
+                            self._loading_thread.terminate()
+                        except Exception:
+                            pass
+                        try:
+                            self._loading_thread.wait(1000)
+                        except Exception:
+                            pass
+                finally:
+                    self._loading_thread = None
+        except Exception:
+            pass
+
+    def closeEvent(self, event):
+        try:
+            self.stop_loader()
+        except Exception:
+            pass
+        super().closeEvent(event)
+
     def init_ui(self):
         """初始化UI"""
         # 主布局
@@ -289,11 +318,14 @@ class RemainingListPage(QWidget):
             self._student_info_text = "{id} {gender} {group}"
 
     def get_students_file(self):
-        """获取学生数据文件路径"""
-        # 获取班级名单文件路径
+        """获取学生或奖池数据文件路径"""
         roll_call_list_dir = get_path("app/resources/list/roll_call_list")
-        students_file = roll_call_list_dir / f"{self.class_name}.json"
-        return students_file
+        lottery_list_dir = get_path("app/resources/list/lottery_list")
+        roll_file = roll_call_list_dir / f"{self.class_name}.json"
+        lottery_file = lottery_list_dir / f"{self.class_name}.json"
+        if roll_file.exists():
+            return roll_file
+        return lottery_file
 
     def load_student_data(self):
         """开始后台加载学生数据（非阻塞）"""
@@ -304,7 +336,14 @@ class RemainingListPage(QWidget):
                 and self._loading_thread is not None
                 and self._loading_thread.isRunning()
             ):
-                return
+                try:
+                    self._loading_thread.terminate()
+                except Exception:
+                    pass
+                try:
+                    self._loading_thread.wait(500)
+                except Exception:
+                    pass
         except Exception as e:
             from loguru import logger
 
@@ -1037,10 +1076,14 @@ class RemainingListPage(QWidget):
 
             # 根据half_repeat设置获取未抽取的学生
             if self.half_repeat > 0:
-                # 读取已抽取记录
-                drawn_records = read_drawn_record(
-                    self.class_name, self.gender_filter, self.group_filter
-                )
+                # 读取已抽取记录（支持奖池）
+                students_file = self.get_students_file()
+                if "lottery_list" in str(students_file):
+                    drawn_records = read_drawn_record_simple(self.class_name)
+                else:
+                    drawn_records = read_drawn_record(
+                        self.class_name, self.gender_filter, self.group_filter
+                    )
                 drawn_counts = {name: count for name, count in drawn_records}
 
                 # 过滤掉已抽取次数达到或超过设置值的学生

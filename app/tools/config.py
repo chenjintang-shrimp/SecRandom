@@ -1453,3 +1453,60 @@ def calculate_remaining_count(
     else:
         # 如果half_repeat为0，则不排除任何学生或小组
         return total_count
+
+
+# ======= 奖池抽取记录 =======
+def record_drawn_prize(pool_name: str, prize_names):
+    file_path = get_resources_path("TEMP", f"draw_until_prize_{pool_name}.json")
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    drawn_records = _load_drawn_records(file_path)
+    names = _extract_student_names(prize_names)
+    for name in names:
+        if name in drawn_records:
+            drawn_records[name] += 1
+        else:
+            drawn_records[name] = 1
+    _save_drawn_records(file_path, drawn_records)
+
+
+def read_drawn_record_simple(pool_name: str):
+    file_path = get_resources_path("TEMP", f"draw_until_prize_{pool_name}.json")
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                data = json.load(file)
+            if isinstance(data, dict):
+                return [(name, count) for name, count in data.items()]
+            if isinstance(data, list):
+                res = []
+                for item in data:
+                    if isinstance(item, str):
+                        res.append((item, 1))
+                    elif isinstance(item, dict) and "name" in item:
+                        res.append((item["name"], int(item.get("count", 1))))
+                return res
+        except Exception as e:
+            logger.error(f"读取奖池已抽取记录失败: {e}")
+            return []
+    return []
+
+
+def reset_drawn_prize_record(self, pool_name: str):
+    try:
+        pattern = os.path.join("app", "resources", "TEMP", f"draw_*_prize_{pool_name}.json")
+        for fp in glob.glob(pattern):
+            try:
+                os.remove(fp)
+            except OSError as e:
+                logger.error(f"删除文件{fp}失败: {e}")
+        show_notification(
+            NotificationType.INFO,
+            NotificationConfig(
+                title="提示",
+                content=f"已重置{pool_name}奖池抽取记录",
+                icon=FluentIcon.INFO,
+            ),
+            parent=self,
+        )
+    except Exception as e:
+        logger.error(f"重置奖池抽取记录失败: {e}")

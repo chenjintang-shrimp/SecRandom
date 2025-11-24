@@ -583,6 +583,75 @@ class page_management_lottery(GroupHeaderCardWidget):
             )
         )
 
+        # 名单切换下拉框是否显示开关
+        self.lottery_roll_call_list_combo_switch = SwitchButton()
+        self.lottery_roll_call_list_combo_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "page_management", "lottery_roll_call_list", "disable"
+            )
+        )
+        self.lottery_roll_call_list_combo_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "page_management", "lottery_roll_call_list", "enable"
+            )
+        )
+        self.lottery_roll_call_list_combo_switch.setChecked(
+            readme_settings_async("page_management", "lottery_roll_call_list")
+        )
+        self.lottery_roll_call_list_combo_switch.checkedChanged.connect(
+            lambda: self._update_settings_and_notify(
+                "page_management",
+                "lottery_roll_call_list",
+                self.lottery_roll_call_list_combo_switch.isChecked(),
+            )
+        )
+
+        # 抽取范围下拉框是否显示开关
+        self.lottery_roll_call_range_combo_switch = SwitchButton()
+        self.lottery_roll_call_range_combo_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "page_management", "lottery_roll_call_range", "disable"
+            )
+        )
+        self.lottery_roll_call_range_combo_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "page_management", "lottery_roll_call_range", "enable"
+            )
+        )
+        self.lottery_roll_call_range_combo_switch.setChecked(
+            readme_settings_async("page_management", "lottery_roll_call_range")
+        )
+        self.lottery_roll_call_range_combo_switch.checkedChanged.connect(
+            lambda: self._update_settings_and_notify(
+                "page_management",
+                "lottery_roll_call_range",
+                self.lottery_roll_call_range_combo_switch.isChecked(),
+            )
+        )
+
+        # 抽取性别下拉框是否显示开关
+        self.lottery_roll_call_gender_combo_switch = SwitchButton()
+        self.lottery_roll_call_gender_combo_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "page_management", "lottery_roll_call_gender", "disable"
+            )
+        )
+        self.lottery_roll_call_gender_combo_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "page_management", "lottery_roll_call_gender", "enable"
+            )
+        )
+        self.lottery_roll_call_gender_combo_switch.setChecked(
+            readme_settings_async("page_management", "lottery_roll_call_gender")
+        )
+        self.lottery_roll_call_gender_combo_switch.checkedChanged.connect(
+            lambda: self._update_settings_and_notify(
+                "page_management",
+                "lottery_roll_call_gender",
+                self.lottery_roll_call_gender_combo_switch.isChecked(),
+            )
+        )
+
         # 班级人数/组数标签是否显示开关
         self.lottery_quantity_label_switch = SwitchButton()
         self.lottery_quantity_label_switch.setOffText(
@@ -661,6 +730,24 @@ class page_management_lottery(GroupHeaderCardWidget):
             get_content_name_async("page_management", "lottery_list"),
             get_content_description_async("page_management", "lottery_list"),
             self.lottery_list_combo_switch,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_notepad_person_20_filled"),
+            get_content_name_async("page_management", "roll_call_list"),
+            get_content_description_async("page_management", "roll_call_list"),
+            self.lottery_roll_call_list_combo_switch,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_convert_range_20_filled"),
+            get_content_name_async("page_management", "roll_call_range"),
+            get_content_description_async("page_management", "roll_call_range"),
+            self.lottery_roll_call_range_combo_switch,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_video_person_sparkle_20_filled"),
+            get_content_name_async("page_management", "roll_call_gender"),
+            get_content_description_async("page_management", "roll_call_gender"),
+            self.lottery_roll_call_gender_combo_switch,
         )
         self.addGroup(
             get_theme_icon("ic_fluent_slide_text_person_20_filled"),

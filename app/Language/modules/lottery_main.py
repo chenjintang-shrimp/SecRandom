@@ -17,6 +17,11 @@ lottery = {
             "description": "停止抽奖",
             "pushbutton_name": "停止",
         },
+        "list_combobox": {
+            "name": "班级",
+            "description": "选择班级",
+            "combo_items": ["不抽取学生"],
+        },
         "range_combobox": {
             "name": "范围",
             "description": "选择抽取范围",

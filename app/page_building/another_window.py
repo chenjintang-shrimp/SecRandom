@@ -409,6 +409,10 @@ def create_remaining_list_window(
                     group_index,
                     gender_index,
                 )
+            try:
+                window.windowClosed.connect(lambda: getattr(page, "stop_loader", lambda: None)())
+            except Exception:
+                pass
 
     # 使用延迟调用确保内容控件已创建
     QTimer.singleShot(APP_INIT_DELAY, setup_page)

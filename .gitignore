@@ -181,3 +181,4 @@ cython_debug/
 
 # VSCode
 .vscode/settings.json
+/.trae

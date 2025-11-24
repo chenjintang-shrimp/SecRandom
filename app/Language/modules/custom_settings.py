@@ -79,6 +79,21 @@ page_management = {
             "description": "控制是否显示抽奖名单切换框",
             "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
         },
+        "lottery_roll_call_list": {
+            "name": "抽奖中的学生名单切换下拉框",
+            "description": "控制是否显示抽奖中的学生名单切换框",
+            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+        },
+        "lottery_roll_call_range": {
+            "name": "抽奖中的学生点名范围下拉框",
+            "description": "控制是否显示抽奖中的学生点名范围选择框",
+            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+        },
+        "lottery_roll_call_gender": {
+            "name": "抽奖中的学生点名性别范围下拉框",
+            "description": "控制是否显示抽奖中的学生点名性别范围选择框",
+            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+        },
         "lottery_quantity_label": {
             "name": "数量标签",
             "description": "控制是否显示中奖数量标签",

@@ -298,7 +298,7 @@ lottery_settings = {
             "name": "颜色主题设置",
             "description": "设置抽奖结果颜色主题",
         },
-        "student_image_settings": {
+        "lottery_image_settings": {
             "name": "奖品图片设置",
             "description": "设置抽奖结果中奖品图片显示",
         },

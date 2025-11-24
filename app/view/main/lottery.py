@@ -157,7 +157,7 @@ class Lottery(QWidget):
         self._set_widget_font(self.pool_list_combobox, 12)
         self.pool_list_combobox.setFixedSize(165, 45)
         # 延迟填充奖池列表，避免启动时进行文件IO
-        self.list_combobox.currentTextChanged.connect(self.on_pool_changed)
+        self.pool_list_combobox.currentTextChanged.connect(self.on_pool_changed)
 
         self.list_combobox = ComboBox()
         self._set_widget_font(self.list_combobox, 12)
@@ -236,21 +236,21 @@ class Lottery(QWidget):
             self.control_layout,
             self.list_combobox,
             "page_management",
-            "class_list"
+            "lottery_roll_call_list"
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.range_combobox,
             "page_management",
-            "class_range"
+            "lottery_roll_call_range"
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.gender_combobox,
             "page_management",
-            "class_gender"
+            "lottery_roll_call_gender"
         )
 
         self.add_control_widget_if_enabled(
@@ -303,17 +303,10 @@ class Lottery(QWidget):
     def on_pool_changed(self):
         """当奖池选择改变时，更新奖数显示"""
         try:
-            # 使用统一的方法更新剩余奖数显示
             self.update_many_count_label()
-
-            # 根据当前选择的范围计算实际的总奖数
-            total_count = LotteryUtils.get_total_count(
-                self.list_combobox.currentText(),
-                self.range_combobox.currentIndex(),
-                self.range_combobox.currentText(),
+            total_count = LotteryUtils.get_prize_total_count(
+                self.pool_list_combobox.currentText()
             )
-
-            # 根据总奖数是否为0，启用或禁用开始按钮
             LotteryUtils.update_start_button_state(self.start_button, total_count)
 
             # 更新剩余名单窗口
@@ -333,32 +326,32 @@ class Lottery(QWidget):
 
         try:
             self.range_combobox.clear()
-            # 范围
-            base_options = get_content_combo_name_async("roll_call", "range_combobox")
-            group_list = get_group_list(self.list_combobox.currentText())
-            # 如果有小组，才添加"抽取全部小组"选项
-            if group_list and group_list != [""]:
-                # 添加基础选项和小组列表
-                self.range_combobox.addItems(base_options + group_list)
+            list_base_options = get_content_combo_name_async("lottery", "list_combobox")
+            selected_text = self.list_combobox.currentText()
+            if selected_text in (list_base_options or []):
+                self.range_combobox.addItems(get_content_combo_name_async("roll_call", "range_combobox")[:1])
+                self.gender_combobox.clear()
+                self.gender_combobox.addItems(get_content_combo_name_async("roll_call", "gender_combobox")[:1])
+                self.range_combobox.setEnabled(False)
+                self.gender_combobox.setEnabled(False)
             else:
-                # 只添加基础选项，跳过"抽取全部小组"
-                self.range_combobox.addItems(base_options[:1])  # 只添加"抽取全部学生"
+                base_options = get_content_combo_name_async("roll_call", "range_combobox")
+                group_list = get_group_list(selected_text)
+                if group_list and group_list != [""]:
+                    self.range_combobox.addItems(base_options + group_list)
+                else:
+                    self.range_combobox.addItems(base_options[:1])
 
-            # 性别
-            self.gender_combobox.clear()
-            gender_options = get_content_combo_name_async(
-                "roll_call", "gender_combobox"
-            )
-            gender_list = get_gender_list(self.list_combobox.currentText())
-            # 如果有性别，才添加"抽取全部性别"选项
-            if gender_list and gender_list != [""]:
-                # 添加基础选项和性别列表
-                self.gender_combobox.addItems(gender_options + gender_list)
-            else:
-                # 只添加基础选项，跳过"抽取全部性别"
-                self.gender_combobox.addItems(
-                    gender_options[:1]
-                )  # 只添加"抽取全部性别"
+                # 性别
+                self.gender_combobox.clear()
+                gender_options = get_content_combo_name_async("roll_call", "gender_combobox")
+                gender_list = get_gender_list(selected_text)
+                if gender_list and gender_list != [""]:
+                    self.gender_combobox.addItems(gender_options + gender_list)
+                else:
+                    self.gender_combobox.addItems(gender_options[:1])
+                self.range_combobox.setEnabled(True)
+                self.gender_combobox.setEnabled(True)
         except Exception as e:
             logger.error(f"切换班级时发生错误: {e}")
         finally:
@@ -368,17 +361,10 @@ class Lottery(QWidget):
     def on_filter_changed(self):
         """当范围或性别选择改变时，更新奖数显示"""
         try:
-            # 使用统一的方法更新剩余奖数显示
             self.update_many_count_label()
-
-            # 根据当前选择的范围计算实际的总奖数
-            total_count = LotteryUtils.get_total_count(
-                self.list_combobox.currentText(),
-                self.range_combobox.currentIndex(),
-                self.range_combobox.currentText(),
+            total_count = LotteryUtils.get_prize_total_count(
+                self.pool_list_combobox.currentText()
             )
-
-            # 根据总奖数是否为0，启用或禁用开始按钮
             LotteryUtils.update_start_button_state(self.start_button, total_count)
 
             if (
@@ -396,7 +382,7 @@ class Lottery(QWidget):
                 hasattr(self, "remaining_list_page")
                 and self.remaining_list_page is not None
             ):
-                pool_name = self.list_combobox.currentText()
+                pool_name = self.pool_list_combobox.currentText()
                 group_filter = self.range_combobox.currentText()
                 gender_filter = self.gender_combobox.currentText()
                 group_index = self.range_combobox.currentIndex()
@@ -507,11 +493,9 @@ class Lottery(QWidget):
 
         half_repeat = readme_settings_async("lottery_settings", "half_repeat")
         if half_repeat > 0:
-            record_drawn_student(
+            record_drawn_prize(
                 pool_name=self.final_pool_name,
-                gender=self.final_gender_filter,
-                group=self.final_group_filter,
-                student_name=self.final_selected_students,
+                prize_names=self.final_selected_students,
             )
 
             self.update_many_count_label()
@@ -561,7 +545,7 @@ class Lottery(QWidget):
 
     def draw_random(self):
         """抽取随机结果"""
-        pool_name = self.list_combobox.currentText()
+        pool_name = self.pool_list_combobox.currentText()
         group_index = self.range_combobox.currentIndex()
         group_filter = self.range_combobox.currentText()
         gender_index = self.gender_combobox.currentIndex()
@@ -569,31 +553,52 @@ class Lottery(QWidget):
 
         half_repeat = readme_settings_async("lottery_settings", "half_repeat")
 
-        # 使用工具类抽取随机奖品
-        result = LotteryUtils.draw_random_students(
+        result = LotteryUtils.draw_random_prizes(
             pool_name,
-            group_index,
-            group_filter,
-            gender_index,
-            gender_filter,
             self.current_count,
-            half_repeat,
         )
 
         # 处理需要重置的情况
         if "reset_required" in result and result["reset_required"]:
-            LotteryUtils.reset_drawn_records(
-                self, pool_name, gender_filter, group_filter
-            )
+            reset_drawn_prize_record(self, pool_name)
             return
 
-        self.final_selected_students = result["selected_students"]
+        self.final_selected_students = result.get("selected_prizes") or result.get("selected_students")
         self.final_pool_name = result["pool_name"]
-        self.final_selected_students_dict = result["selected_students_dict"]
-        self.final_group_filter = result["group_filter"]
-        self.final_gender_filter = result["gender_filter"]
+        self.final_selected_students_dict = result.get("selected_prizes_dict") or result.get("selected_students_dict")
+        self.final_group_filter = group_filter
+        self.final_gender_filter = gender_filter
 
-        self.display_result(result["selected_students"], result["pool_name"])
+        # 根据“跟随学生”模式拼接显示
+        try:
+            list_base_options = get_content_combo_name_async("lottery", "list_combobox")
+        except Exception:
+            list_base_options = []
+        selected_text = self.list_combobox.currentText()
+        if list_base_options and selected_text not in list_base_options:
+            try:
+                # 抽取与奖品数量相同的学生（不重复规则由学生设置决定，此处不启用半重复）
+                student_result = LotteryUtils.draw_random_students(
+                    selected_text,
+                    0,
+                    "",
+                    0,
+                    "",
+                    len(self.final_selected_students or []),
+                    0,
+                )
+                student_names = [s[1] for s in (student_result.get("selected_students") or [])]
+                paired = []
+                for i, item in enumerate(self.final_selected_students or []):
+                    pid, pname, pexist = item
+                    sname = student_names[i] if i < len(student_names) else ""
+                    display_name = f"{pname} {sname}" if sname else pname
+                    paired.append((pid, display_name, pexist))
+                self.final_selected_students = paired
+            except Exception as e:
+                logger.error(f"奖池跟随学生拼接失败: {e}")
+
+        self.display_result(self.final_selected_students, self.final_pool_name)
 
         # 检查是否启用了通知服务
         call_notification_service = readme_settings_async(
@@ -613,9 +618,8 @@ class Lottery(QWidget):
 
     def display_result(self, selected_students, pool_name):
         """显示抽取结果"""
-        group_index = self.range_combobox.currentIndex()
         student_labels = ResultDisplayUtils.create_student_label(
-            pool_name=pool_name,
+            pool_name,
             selected_students=selected_students,
             draw_count=self.current_count,
             font_size=get_safe_font_size("lottery_settings", "font_size"),
@@ -628,7 +632,7 @@ class Lottery(QWidget):
             show_student_image=readme_settings_async(
                 "lottery_settings", "student_image"
             ),
-            group_index=group_index,
+            group_index=0,
             show_random=readme_settings_async("lottery_settings", "show_random"),
         )
         ResultDisplayUtils.display_results_in_grid(self.result_grid, student_labels)
@@ -639,10 +643,8 @@ class Lottery(QWidget):
         self.count_label.setText("1")
         self.minus_button.setEnabled(False)
         self.plus_button.setEnabled(True)
-        pool_name = self.list_combobox.currentText()
-        gender = self.gender_combobox.currentText()
-        group = self.range_combobox.currentText()
-        LotteryUtils.reset_drawn_records(self, pool_name, gender, group)
+        pool_name = self.pool_list_combobox.currentText()
+        reset_drawn_prize_record(self, pool_name)
         self.clear_result()
         self.update_many_count_label()
 
@@ -671,10 +673,8 @@ class Lottery(QWidget):
             change (int): 变化量，正数表示增加，负数表示减少
         """
         try:
-            self.total_count = LotteryUtils.get_total_count(
-                self.list_combobox.currentText(),
-                self.range_combobox.currentIndex(),
-                self.range_combobox.currentText(),
+            self.total_count = LotteryUtils.get_prize_total_count(
+                self.pool_list_combobox.currentText()
             )
             self.current_count = max(1, int(self.count_label.text()) + change)
             self.count_label.setText(str(self.current_count))
@@ -687,21 +687,15 @@ class Lottery(QWidget):
 
     def get_total_count(self):
         """获取总奖数"""
-        return LotteryUtils.get_total_count(
-            self.list_combobox.currentText(),
-            self.range_combobox.currentIndex(),
-            self.range_combobox.currentText(),
+        return LotteryUtils.get_prize_total_count(
+            self.pool_list_combobox.currentText()
         )
 
     def update_many_count_label(self):
         """更新多数量显示标签"""
         total_count, remaining_count, formatted_text = (
-            LotteryUtils.update_many_count_label_text(
-                self.list_combobox.currentText(),
-                self.range_combobox.currentIndex(),
-                self.range_combobox.currentText(),
-                self.gender_combobox.currentText(),
-                readme_settings_async("lottery_settings", "half_repeat"),
+            LotteryUtils.update_prize_many_count_label_text(
+                self.pool_list_combobox.currentText()
             )
         )
 
@@ -718,7 +712,7 @@ class Lottery(QWidget):
             and self.remaining_list_page is not None
         ):
             try:
-                pool_name = self.list_combobox.currentText()
+                pool_name = self.pool_list_combobox.currentText()
                 group_filter = self.range_combobox.currentText()
                 gender_filter = self.gender_combobox.currentText()
                 group_index = self.range_combobox.currentIndex()
@@ -761,7 +755,7 @@ class Lottery(QWidget):
                 # 如果激活失败，继续创建新窗口
 
         # 创建新窗口
-        pool_name = self.list_combobox.currentText()
+        pool_name = self.pool_list_combobox.currentText()
         group_filter = self.range_combobox.currentText()
         gender_filter = self.gender_combobox.currentText()
         group_index = self.range_combobox.currentIndex()
@@ -800,6 +794,9 @@ class Lottery(QWidget):
 
             self.file_watcher.addPath(str(list_dir))
 
+            # 初始同步当前文件到监控器，确保文件内容变动也能触发刷新
+            self._sync_watcher_files()
+
             self.file_watcher.directoryChanged.connect(self.on_directory_changed)
             self.file_watcher.fileChanged.connect(self.on_file_changed)
 
@@ -809,6 +806,8 @@ class Lottery(QWidget):
     def on_directory_changed(self, path):
         """当文件夹内容发生变化时触发"""
         try:
+            # 目录变更后重新同步监控的文件列表
+            self._sync_watcher_files()
             QTimer.singleShot(500, self.refresh_pool_list)
         except Exception as e:
             logger.error(f"处理文件夹变化事件失败: {e}")
@@ -816,30 +815,53 @@ class Lottery(QWidget):
     def on_file_changed(self, path):
         """当文件内容发生变化时触发"""
         try:
+            # 文件内容变化同样刷新下拉框
             QTimer.singleShot(500, self.refresh_pool_list)
         except Exception as e:
             logger.error(f"处理文件变化事件失败: {e}")
 
+    def _sync_watcher_files(self):
+        """同步奖池目录下的文件到文件监控器"""
+        try:
+            # 先移除已监控的文件，避免重复
+            files = list(self.file_watcher.files()) if hasattr(self.file_watcher, "files") else []
+            if files:
+                try:
+                    self.file_watcher.removePaths(files)
+                except Exception:
+                    pass
+
+            # 重新添加当前目录中的所有JSON文件
+            lot_dir = get_path("app/resources/list/lottery_list")
+            if lot_dir.exists():
+                for fp in lot_dir.glob("*.json"):
+                    try:
+                        self.file_watcher.addPath(str(fp))
+                    except Exception:
+                        pass
+        except Exception as e:
+            logger.error(f"同步奖池文件监控失败: {e}")
+
     def refresh_pool_list(self):
         """刷新奖池列表下拉框"""
         try:
-            current_pool = self.list_combobox.currentText()
+            current_pool = self.pool_list_combobox.currentText()
 
             new_pool_list = get_pool_name_list()
 
-            self.list_combobox.blockSignals(True)
+            self.pool_list_combobox.blockSignals(True)
 
-            self.list_combobox.clear()
-            self.list_combobox.addItems(new_pool_list)
+            self.pool_list_combobox.clear()
+            self.pool_list_combobox.addItems(new_pool_list)
 
             if current_pool in new_pool_list:
-                index = self.list_combobox.findText(current_pool)
+                index = self.pool_list_combobox.findText(current_pool)
                 if index >= 0:
-                    self.list_combobox.setCurrentIndex(index)
+                    self.pool_list_combobox.setCurrentIndex(index)
             elif new_pool_list:
-                self.list_combobox.setCurrentIndex(0)
+                self.pool_list_combobox.setCurrentIndex(0)
 
-            self.list_combobox.blockSignals(False)
+            self.pool_list_combobox.blockSignals(False)
 
             self.on_class_changed()
 
@@ -851,56 +873,76 @@ class Lottery(QWidget):
         try:
             # 填充奖池列表
             pool_list = get_pool_name_list()
+            self.pool_list_combobox.blockSignals(True)
+            self.pool_list_combobox.clear()
+            if pool_list:
+                self.pool_list_combobox.addItems(pool_list)
+                self.pool_list_combobox.setCurrentIndex(0)
+            self.pool_list_combobox.blockSignals(False)
+
+            # 填充班级列表，避免空字符串导致读取学生列表警告
+            list_base_options = get_content_combo_name_async("lottery", "list_combobox")
+            class_list = get_class_name_list()
             self.list_combobox.blockSignals(True)
             self.list_combobox.clear()
-            if pool_list:
-                self.list_combobox.addItems(pool_list)
+            if class_list is not None:
+                try:
+                    combo_items = (list_base_options or []) + (class_list or [])
+                except Exception:
+                    combo_items = class_list or []
+                self.list_combobox.addItems(combo_items)
                 self.list_combobox.setCurrentIndex(0)
+                try:
+                    first_text = self.list_combobox.currentText()
+                    if first_text in (list_base_options or []):
+                        self.range_combobox.setEnabled(False)
+                        self.gender_combobox.setEnabled(False)
+                    else:
+                        self.range_combobox.setEnabled(True)
+                        self.gender_combobox.setEnabled(True)
+                except Exception:
+                    pass
             self.list_combobox.blockSignals(False)
 
             # 填充范围和性别选项
             self.range_combobox.blockSignals(True)
             self.range_combobox.clear()
 
-            # 获取基础选项
             base_options = get_content_combo_name_async("lottery", "range_combobox")
-
-            # 获取小组列表
-            group_list = get_group_list(self.list_combobox.currentText())
-
-            # 如果有小组，才添加"抽取全部小组"选项
-            if group_list:
-                # 添加基础选项和小组列表
-                self.range_combobox.addItems(base_options + group_list)
+            list_base_options = get_content_combo_name_async("lottery", "list_combobox")
+            selected_text = self.list_combobox.currentText()
+            if selected_text in (list_base_options or []):
+                self.range_combobox.addItems(base_options[:1])
+                self.gender_combobox.blockSignals(True)
+                self.gender_combobox.clear()
+                self.gender_combobox.addItems(get_content_combo_name_async("lottery", "gender_combobox")[:1])
+                self.gender_combobox.blockSignals(False)
             else:
-                # 只添加基础选项，跳过"抽取全部小组"
-                self.range_combobox.addItems(base_options[:1])  # 只添加"抽取全部奖品"
+                group_list = get_group_list(selected_text)
+                if group_list:
+                    self.range_combobox.addItems(base_options + group_list)
+                else:
+                    self.range_combobox.addItems(base_options[:1])
 
-            self.range_combobox.blockSignals(False)
+                self.range_combobox.blockSignals(False)
 
-            self.gender_combobox.blockSignals(True)
-            self.gender_combobox.clear()
-            self.gender_combobox.addItems(
-                get_content_combo_name_async("lottery", "gender_combobox")
-                + get_gender_list(self.list_combobox.currentText())
-            )
-            self.gender_combobox.blockSignals(False)
+                self.gender_combobox.blockSignals(True)
+                self.gender_combobox.clear()
+                self.gender_combobox.addItems(
+                    get_content_combo_name_async("lottery", "gender_combobox")
+                    + get_gender_list(selected_text)
+                )
+                self.gender_combobox.blockSignals(False)
 
-            # 使用工具函数更新标签文本
             total_count, remaining_count, formatted_text = (
-                LotteryUtils.update_many_count_label_text(
-                    self.list_combobox.currentText(),
-                    self.range_combobox.currentIndex(),
-                    self.range_combobox.currentText(),
-                    self.gender_combobox.currentText(),
-                    readme_settings("lottery_settings", "half_repeat"),
+                LotteryUtils.update_prize_many_count_label_text(
+                    self.pool_list_combobox.currentText()
                 )
             )
 
             self.remaining_count = remaining_count
             self.many_count_label.setText(formatted_text)
 
-            # 根据总奖数是否为0，启用或禁用开始按钮
             LotteryUtils.update_start_button_state(self.start_button, total_count)
 
         except Exception as e:
@@ -962,21 +1004,21 @@ class Lottery(QWidget):
             self.control_layout,
             self.list_combobox,
             "page_management",
-            "class_list"
+            "lottery_roll_call_list"
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.range_combobox,
             "page_management",
-            "class_range"
+            "lottery_roll_call_range"
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.gender_combobox,
             "page_management",
-            "class_gender"
+            "lottery_roll_call_gender"
         )
         
         self.add_control_widget_if_enabled(
