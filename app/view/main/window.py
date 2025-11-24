@@ -17,7 +17,7 @@ from app.tools.path_utils import get_app_root
 from app.tools.personalised import get_theme_icon
 from app.Language.obtain_language import get_content_name_async
 from app.Language.obtain_language import readme_settings_async, update_settings
-from app.page_building.main_window_page import roll_call_page
+from app.page_building.main_window_page import roll_call_page, lottery_page
 from app.view.tray.tray import Tray
 
 
@@ -119,6 +119,9 @@ class MainWindow(MSFluentWindow):
         self.roll_call_page = roll_call_page(self)
         self.roll_call_page.setObjectName("roll_call_page")
 
+        self.lottery_page = lottery_page(self)
+        self.lottery_page.setObjectName("lottery_page")
+
         self.settingsInterface = QWidget(self)
         self.settingsInterface.setObjectName("settingsInterface")
 
@@ -142,6 +145,23 @@ class MainWindow(MSFluentWindow):
             get_theme_icon("ic_fluent_people_20_filled"),
             get_content_name_async("roll_call", "title"),
             position=roll_call_position,
+        )
+
+        # 获取奖池侧边栏位置设置
+        lottery_sidebar_pos = readme_settings_async(
+            "sidebar_management_window", "lottery_sidebar_position"
+        )
+        lottery_position = (
+            NavigationItemPosition.TOP
+            if (lottery_sidebar_pos is None or lottery_sidebar_pos != 1)
+            else NavigationItemPosition.BOTTOM
+        )
+
+        self.addSubInterface(
+            self.lottery_page,
+            get_theme_icon("ic_fluent_gift_20_filled"),
+            get_content_name_async("lottery", "title"),
+            position=lottery_position,
         )
 
         # 获取设置图标位置设置

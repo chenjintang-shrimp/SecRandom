@@ -259,7 +259,7 @@ class sidebar_management_window(GroupHeaderCardWidget):
             self.custom_roll_call_sidebar_position_comboBox,
         )
         self.addGroup(
-            get_theme_icon("ic_fluent_reward_20_filled"),
+            get_theme_icon("ic_fluent_gift_20_filled"),
             get_content_name_async(
                 "sidebar_management_window", "lottery_sidebar_position"
             ),
