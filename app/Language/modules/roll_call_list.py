@@ -3,7 +3,7 @@ set_class_name = {
     "ZH_CN": {
         "title": {"name": "班级名称设置", "description": "设置班级名称窗口标题"},
         "description": {
-            "name": "在此窗口中，您可以设置班级名称信息\n每行输入将对应一个班级的名称，存储在班级名单文件中\n\n请每行输入一个班级名称，例如：\n高一1班\n高一2班\n高一3班",
+            "name": "在此窗口中，您可以设置班级名称\n每行输入一个班级名称，系统会将其存储到班级名单文件中\n\n请每行只输入一个班级名称，例如：\n高一1班\n高一2班\n高一3班",
             "description": "班级名称设置窗口描述",
         },
         "input_title": {"name": "班级名称列表", "description": "班级名称输入区域标题"},
@@ -21,7 +21,7 @@ set_class_name = {
             "description": "未输入班级名称时的错误提示",
         },
         "invalid_names_error": {
-            "name": "以下班级名称包含非法字符或是保留字: {names}",
+            "name": "以下班级名称包含非法字符或为保留字: {names}",
             "description": "班级名称验证失败时的错误提示",
         },
         "save_error": {
@@ -33,7 +33,7 @@ set_class_name = {
             "description": "成功创建班级时的提示消息",
         },
         "no_new_classes_message": {
-            "name": "所有班级名称都已存在，没有创建新班级",
+            "name": "所有班级名称均已存在，未创建新的班级",
             "description": "没有创建新班级时的提示消息",
         },
         "unsaved_changes_title": {
@@ -51,7 +51,7 @@ set_class_name = {
         },
         "delete_class_title": {"name": "删除班级", "description": "删除班级对话框标题"},
         "delete_class_message": {
-            "name": "确定要删除班级 '{class_name}' 吗？此操作将删除该班级的所有学生数据，且无法恢复",
+            "name": "确定要删除班级 '{class_name}' 吗？此操作将删除该班级的所有学生数据，且不可恢复",
             "description": "删除班级确认对话框内容",
         },
         "delete_class_button": {"name": "删除班级", "description": "删除班级按钮文本"},
@@ -60,7 +60,7 @@ set_class_name = {
             "description": "删除多个班级对话框标题",
         },
         "delete_multiple_classes_message": {
-            "name": "确定要删除以下 {count} 个班级吗？此操作将删除这些班级的所有学生数据，且无法恢复\n\n{class_names}",
+            "name": "确定要删除以下 {count} 个班级吗？此操作将删除这些班级的所有学生数据，且不可恢复\n\n{class_names}",
             "description": "删除多个班级确认对话框内容",
         },
         "delete_success_title": {"name": "删除成功", "description": "删除成功通知标题"},
@@ -98,11 +98,11 @@ set_class_name = {
             "description": "班级消失提示标题",
         },
         "class_disappeared_message": {
-            "name": "检测到班级 '{class_name}' 已从输入框中消失，请保存更改以永久删除",
+            "name": "检测到班级 '{class_name}' 已从输入框中移除，请保存更改以永久删除",
             "description": "单个班级消失提示内容",
         },
         "multiple_classes_disappeared_message": {
-            "name": "检测到以下 {count} 个班级已从输入框中消失，请保存更改以永久删除：\n{class_names}",
+            "name": "检测到以下 {count} 个班级已从输入框中移除，请保存更改以永久删除：\n{class_names}",
             "description": "多个班级消失提示内容",
         },
     },
@@ -249,7 +249,7 @@ name_setting = {
     "ZH_CN": {
         "title": {"name": "姓名设置", "description": "设置姓名窗口标题"},
         "description": {
-            "name": "在此窗口中，您可以设置姓名信息\n每行输入将对应一个学生的姓名，存储在班级名单文件中\n\n请每行输入一个姓名，例如：\n张三\n李四\n王五",
+            "name": "在此窗口中，您可以设置学生姓名\n每行输入一个学生姓名，系统会将其存储到班级名单文件中\n\n请每行只输入一个姓名，例如：\n张三\n李四\n王五",
             "description": "姓名设置窗口描述",
         },
         "input_title": {"name": "姓名列表", "description": "姓名输入区域标题"},
@@ -267,7 +267,7 @@ name_setting = {
             "description": "未输入姓名时的错误提示",
         },
         "invalid_names_error": {
-            "name": "以下姓名包含非法字符或是保留字: {names}",
+            "name": "以下姓名包含非法字符或为保留字: {names}",
             "description": "姓名验证失败时的错误提示",
         },
         "save_error": {"name": "保存姓名失败", "description": "保存姓名时的错误提示"},
@@ -276,7 +276,7 @@ name_setting = {
             "description": "成功创建姓名时的提示消息",
         },
         "no_new_names_message": {
-            "name": "所有姓名都已存在，没有创建新姓名",
+            "name": "所有姓名均已存在，未创建新的姓名",
             "description": "没有创建新姓名时的提示消息",
         },
         "unsaved_changes_title": {
@@ -295,7 +295,7 @@ name_setting = {
         "delete_button": {"name": "删除", "description": "删除按钮文本"},
         "delete_name_title": {"name": "删除姓名", "description": "删除姓名对话框标题"},
         "delete_name_message": {
-            "name": "确定要删除姓名 '{name}' 吗？此操作将删除该姓名的所有信息，且无法恢复",
+            "name": "确定要删除姓名 '{name}' 吗？此操作将删除该姓名的所有信息，且不可恢复",
             "description": "删除姓名确认对话框内容",
         },
         "delete_multiple_names_title": {
@@ -303,7 +303,7 @@ name_setting = {
             "description": "删除多个姓名对话框标题",
         },
         "delete_multiple_names_message": {
-            "name": "确定要删除以下 {count} 个姓名吗？此操作将删除这些姓名的所有信息，且无法恢复\n\n{names}",
+            "name": "确定要删除以下 {count} 个姓名吗？此操作将删除这些姓名的所有信息，且不可恢复\n\n{names}",
             "description": "删除多个姓名确认对话框内容",
         },
         "delete_name_success_title": {
@@ -344,7 +344,7 @@ name_setting = {
         },
         "name_deleted_title": {"name": "姓名已删除", "description": "删除姓名提示标题"},
         "name_deleted_message": {
-            "name": "姓名 '{name}' 已从输入框中删除，请保存更改以永久删除",
+            "name": "姓名 '{name}' 已从输入框中移除，请保存更改以永久删除",
             "description": "删除姓名提示内容",
         },
     },
@@ -355,7 +355,7 @@ gender_setting = {
     "ZH_CN": {
         "title": {"name": "性别设置", "description": "设置性别窗口标题"},
         "description": {
-            "name": "在此窗口中，您可以设置学生性别信息\n每行输入将对应一个学生的性别，存储在班级名单文件中\n\n请每行输入一个性别，例如：\n男\n女\n其他",
+            "name": "在此窗口中，您可以设置学生性别\n每行输入一个性别，系统会将其存储到班级名单文件中\n\n请每行只输入一个性别，例如：\n男\n女\n其他",
             "description": "性别设置窗口描述",
         },
         "input_title": {"name": "性别列表", "description": "性别输入区域标题"},
@@ -373,7 +373,7 @@ gender_setting = {
             "description": "未输入性别时的错误提示",
         },
         "invalid_genders_error": {
-            "name": "以下性别包含非法字符或是保留字: {genders}",
+            "name": "以下性别包含非法字符或为保留字: {genders}",
             "description": "性别验证失败时的错误提示",
         },
         "save_error": {
@@ -385,7 +385,7 @@ gender_setting = {
             "description": "成功创建性别选项时的提示消息",
         },
         "no_new_genders_message": {
-            "name": "所有性别选项都已存在，没有创建新性别选项",
+            "name": "所有性别选项均已存在，未创建新的性别选项",
             "description": "没有创建新性别选项时的提示消息",
         },
         "unsaved_changes_title": {
@@ -407,7 +407,7 @@ gender_setting = {
             "description": "删除性别选项对话框标题",
         },
         "delete_gender_message": {
-            "name": "确定要删除性别选项 '{gender}' 吗？此操作将删除该性别选项的所有信息，且无法恢复",
+            "name": "确定要删除性别选项 '{gender}' 吗？此操作将删除该性别选项的所有信息，且不可恢复",
             "description": "删除性别选项确认对话框内容",
         },
         "delete_multiple_genders_title": {
@@ -415,7 +415,7 @@ gender_setting = {
             "description": "删除多个性别选项对话框标题",
         },
         "delete_multiple_genders_message": {
-            "name": "确定要删除以下 {count} 个性别选项吗？此操作将删除这些性别选项的所有信息，且无法恢复\n\n{genders}",
+            "name": "确定要删除以下 {count} 个性别选项吗？此操作将删除这些性别选项的所有信息，且不可恢复\n\n{genders}",
             "description": "删除多个性别选项确认对话框内容",
         },
         "delete_gender_success_title": {
@@ -459,7 +459,7 @@ gender_setting = {
             "description": "删除性别选项提示标题",
         },
         "gender_deleted_message": {
-            "name": "性别选项 '{gender}' 已从输入框中删除，请保存更改以永久删除",
+            "name": "性别选项 '{gender}' 已从输入框中移除，请保存更改以永久删除",
             "description": "删除性别选项提示内容",
         },
     },
@@ -470,7 +470,7 @@ group_setting = {
     "ZH_CN": {
         "title": {"name": "小组设置", "description": "设置小组窗口标题"},
         "description": {
-            "name": "在此窗口中，您可以设置学生小组信息\n每行输入将对应一个学生的小组，存储在班级名单文件中\n\n请每行输入一个小组，例如：\nA组\nB组\nC组",
+            "name": "在此窗口中，您可以设置学生小组\n每行输入一个小组，系统会将其存储到班级名单文件中\n\n请每行只输入一个小组，例如：\nA组\nB组\nC组",
             "description": "小组设置窗口描述",
         },
         "input_title": {"name": "小组列表", "description": "小组输入区域标题"},
@@ -488,7 +488,7 @@ group_setting = {
             "description": "未输入小组时的错误提示",
         },
         "invalid_groups_error": {
-            "name": "以下小组包含非法字符或是保留字: {groups}",
+            "name": "以下小组包含非法字符或为保留字: {groups}",
             "description": "小组验证失败时的错误提示",
         },
         "save_error": {
@@ -500,7 +500,7 @@ group_setting = {
             "description": "成功创建小组选项时的提示消息",
         },
         "no_new_groups_message": {
-            "name": "所有小组选项都已存在，没有创建新小组选项",
+            "name": "所有小组选项均已存在，未创建新的小组选项",
             "description": "没有创建新小组选项时的提示消息",
         },
         "unsaved_changes_title": {
@@ -522,7 +522,7 @@ group_setting = {
             "description": "删除小组选项对话框标题",
         },
         "delete_group_message": {
-            "name": "确定要删除小组选项 '{group}' 吗？此操作将删除该小组选项的所有信息，且无法恢复",
+            "name": "确定要删除小组选项 '{group}' 吗？此操作将删除该小组选项的所有信息，且不可恢复",
             "description": "删除小组选项确认对话框内容",
         },
         "delete_multiple_groups_title": {
@@ -530,7 +530,7 @@ group_setting = {
             "description": "删除多个小组选项对话框标题",
         },
         "delete_multiple_groups_message": {
-            "name": "确定要删除以下 {count} 个小组选项吗？此操作将删除这些小组选项的所有信息，且无法恢复\n\n{groups}",
+            "name": "确定要删除以下 {count} 个小组选项吗？此操作将删除这些小组选项的所有信息，且不可恢复\n\n{groups}",
             "description": "删除多个小组选项确认对话框内容",
         },
         "delete_group_success_title": {
@@ -574,7 +574,7 @@ group_setting = {
             "description": "删除小组选项提示标题",
         },
         "group_deleted_message": {
-            "name": "小组选项 '{group}' 已从输入框中删除，请保存更改以永久删除",
+            "name": "小组选项 '{group}' 已从输入框中移除，请保存更改以永久删除",
             "description": "删除小组选项提示内容",
         },
     },

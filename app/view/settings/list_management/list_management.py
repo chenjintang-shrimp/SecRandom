@@ -230,7 +230,7 @@ class roll_call_list(GroupHeaderCardWidget):
         elif export_type == "txt" and not file_path.endswith(".txt"):
             file_path += ".txt"
 
-        success, message = export_student_data(class_name, file_path, export_type)
+        success, message = export_prize_data(pool_name, file_path, export_type)
 
         if success:
             config = NotificationConfig(
@@ -316,9 +316,15 @@ class lottery_list(GroupHeaderCardWidget):
         # 选择奖池下拉框
         self.pool_name_combo = ComboBox()
         self.refresh_pool_list()  # 初始化奖池列表
-        self.pool_name_combo.setCurrentIndex(
-            readme_settings_async("lottery_list", "select_pool_name")
-        )
+        saved_pool = readme_settings_async("lottery_list", "select_pool_name")
+        try:
+            if isinstance(saved_pool, int):
+                if 0 <= saved_pool < self.pool_name_combo.count():
+                    self.pool_name_combo.setCurrentIndex(saved_pool)
+            elif isinstance(saved_pool, str) and saved_pool:
+                self.pool_name_combo.setCurrentText(saved_pool)
+        except Exception:
+            pass
         if not get_pool_name_list():
             self.pool_name_combo.setCurrentIndex(-1)
             self.pool_name_combo.setPlaceholderText(
@@ -326,7 +332,7 @@ class lottery_list(GroupHeaderCardWidget):
             )
         self.pool_name_combo.currentIndexChanged.connect(
             lambda: update_settings(
-                "lottery_list", "select_pool_name", self.pool_name_combo.currentIndex()
+                "lottery_list", "select_pool_name", self.pool_name_combo.currentText()
             )
         )
 
@@ -396,6 +402,94 @@ class lottery_list(GroupHeaderCardWidget):
 
         # 设置文件系统监视器
         self.setup_file_watcher()
+
+    # 奖池名称设置
+    def set_pool_name(self):
+        create_set_pool_name_window()
+        # 显示通知
+        config = NotificationConfig(
+            title="奖池名称设置", content="已打开奖池名称设置窗口", duration=3000
+        )
+        show_notification(NotificationType.INFO, config, parent=self)
+
+    # 奖品名单导入功能
+    def import_prize_name(self):
+        create_import_prize_name_window()
+        # 显示通知
+        config = NotificationConfig(
+            title="奖品名单导入", content="已打开奖品名单导入窗口", duration=3000
+        )
+        show_notification(NotificationType.INFO, config, parent=self)
+
+    # 奖品设置
+    def prize_setting(self):
+        create_prize_setting_window()
+        # 显示通知
+        config = NotificationConfig(
+            title="奖品设置", content="已打开奖品设置窗口", duration=3000
+        )
+        show_notification(NotificationType.INFO, config, parent=self)
+
+    # 奖品权重设置
+    def prize_weight_setting(self):
+        create_prize_weight_setting_window()
+        # 显示通知
+        config = NotificationConfig(
+            title="奖品权重设置", content="已打开奖品权重设置窗口", duration=3000
+        )
+        show_notification(NotificationType.INFO, config, parent=self)
+
+    # 奖品名单导出功能
+    def export_prize_name(self):
+        pool_name = self.pool_name_combo.currentText()
+        if not pool_name:
+            config = NotificationConfig(
+                title="导出失败", content="请先选择要导出的奖池", duration=3000
+            )
+            show_notification(NotificationType.WARNING, config, parent=self)
+            return
+
+        file_path, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            "保存奖品名单",
+            f"{pool_name}_奖品名单-SecRandom",
+            "Excel 文件 (*.xlsx);;CSV 文件 (*.csv);;TXT 文件（仅奖品名） (*.txt)",
+        )
+
+        if not file_path:
+            return
+
+        export_type = (
+            "excel"
+            if "Excel 文件 (*.xlsx)" in selected_filter
+            else "csv"
+            if "CSV 文件 (*.csv)" in selected_filter
+            else "txt"
+        )
+
+        if export_type == "excel" and not file_path.endswith(".xlsx"):
+            file_path += ".xlsx"
+        elif export_type == "csv" and not file_path.endswith(".csv"):
+            file_path += ".csv"
+        elif export_type == "txt" and not file_path.endswith(".txt"):
+            file_path += ".txt"
+
+        success, message = export_student_data(class_name, file_path, export_type)
+
+        if success:
+            config = NotificationConfig(
+                title="导出成功",
+                content=f"奖品名单已导出到: {file_path}",
+                duration=3000,
+            )
+            show_notification(NotificationType.SUCCESS, config, parent=self)
+            logger.info(f"奖品名单导出成功: {file_path}")
+        else:
+            config = NotificationConfig(
+                title="导出失败", content=message, duration=3000
+            )
+            show_notification(NotificationType.ERROR, config, parent=self)
+            logger.error(f"奖品名单导出失败: {message}")
 
     def setup_file_watcher(self):
         """设置文件系统监视器，监控奖池名单文件夹的变化"""

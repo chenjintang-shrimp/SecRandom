@@ -8,6 +8,10 @@ from app.view.another_window.set_class_name import SetClassNameWindow
 from app.view.another_window.name_setting import NameSettingWindow
 from app.view.another_window.gender_setting import GenderSettingWindow
 from app.view.another_window.group_setting import GroupSettingWindow
+from app.view.another_window.import_prize_name import ImportPrizeNameWindow
+from app.view.another_window.set_pool_name import SetPoolNameWindow
+from app.view.another_window.prize_name_setting import PrizeNameSettingWindow
+from app.view.another_window.prize_weight_setting import PrizeWeightSettingWindow
 from app.view.another_window.remaining_list import RemainingListPage
 from app.Language.obtain_language import *
 from app.tools.variable import *
@@ -156,6 +160,122 @@ def create_group_setting_window():
     window.switch_to_page("group_setting")
     _window_instances["group_setting"] = window
     window.windowClosed.connect(lambda: _window_instances.pop("group_setting", None))
+    window.show()
+    return
+
+
+
+# ==================================================
+# 奖池名称设置窗口
+# ==================================================
+class set_pool_name_window_template(PageTemplate):
+    """奖池名称设置窗口类
+    使用PageTemplate创建奖池名称设置页面"""
+    def __init__(self, parent=None):
+        super().__init__(content_widget_class=SetPoolNameWindow, parent=parent)
+
+
+def create_set_pool_name_window():
+    """
+    创建奖池名称设置窗口
+
+    Returns:
+        创建的窗口实例
+    """
+    title = get_content_name_async("set_pool_name", "title")
+    window = SimpleWindowTemplate(title, width=800, height=600)
+    window.add_page_from_template("set_pool_name", set_pool_name_window_template)
+    window.switch_to_page("set_pool_name")
+    _window_instances["set_pool_name"] = window
+    window.windowClosed.connect(lambda: _window_instances.pop("set_pool_name", None))
+    window.show()
+    return
+
+
+# ==================================================
+# 导入奖品名单导入窗口
+# ==================================================
+class import_prize_name_window_template(PageTemplate):
+    """奖品名单导入窗口类
+    使用PageTemplate创建奖品名单导入页面"""
+
+    def __init__(self, parent=None):
+        super().__init__(content_widget_class=ImportPrizeNameWindow, parent=parent)
+
+
+def create_import_prize_name_window():
+    """
+    创建奖品名单导入窗口
+
+    Returns:
+        创建的窗口实例
+    """
+    title = get_content_name_async("import_prize_name", "title")
+    window = SimpleWindowTemplate(title, width=800, height=600)
+    window.add_page_from_template(
+        "import_prize_name", import_prize_name_window_template
+    )
+    window.switch_to_page("import_prize_name")
+    _window_instances["import_prize_name"] = window 
+    window.windowClosed.connect(
+        lambda: _window_instances.pop("import_prize_name", None)
+    )
+    window.show()
+    return
+
+
+# ==================================================
+# 奖品名称设置窗口
+# ==================================================
+class prize_name_setting_window_template(PageTemplate):
+    """奖品名称设置窗口类
+    使用PageTemplate创建奖品名称设置页面"""
+
+    def __init__(self, parent=None):
+        super().__init__(content_widget_class=PrizeNameSettingWindow, parent=parent)
+
+
+def create_prize_setting_window():
+    """
+    创建奖品名称设置窗口
+
+    Returns:
+        创建的窗口实例
+    """
+    title = get_content_name_async("prize_name_setting", "title")
+    window = SimpleWindowTemplate(title, width=800, height=600)
+    window.add_page_from_template("prize_name_setting", prize_name_setting_window_template)
+    window.switch_to_page("prize_name_setting")
+    _window_instances["prize_name_setting"] = window
+    window.windowClosed.connect(lambda: _window_instances.pop("prize_name_setting", None))
+    window.show()
+    return
+
+
+# ==================================================
+# 权重设置窗口
+# ==================================================
+class prize_weight_setting_window_template(PageTemplate):
+    """奖品权重设置窗口类
+    使用PageTemplate创建奖品权重设置页面"""
+
+    def __init__(self, parent=None):
+        super().__init__(content_widget_class=PrizeWeightSettingWindow, parent=parent)
+
+
+def create_prize_weight_setting_window():
+    """
+    创建奖品权重设置窗口
+
+    Returns:
+        创建的窗口实例
+    """
+    title = get_content_name_async("prize_weight_setting", "title")
+    window = SimpleWindowTemplate(title, width=800, height=600)
+    window.add_page_from_template("prize_weight_setting", prize_weight_setting_window_template)
+    window.switch_to_page("prize_weight_setting")
+    _window_instances["prize_weight_setting"] = window
+    window.windowClosed.connect(lambda: _window_instances.pop("prize_weight_setting", None))
     window.show()
     return
 

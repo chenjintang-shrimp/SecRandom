@@ -172,8 +172,6 @@ class SimpleWindowTemplate(FramelessWindow):
                             "background-color: transparent;"
                         )
                 except Exception as e:
-                    from loguru import logger
-
                     logger.exception(
                         "Error detecting dark mode with darkdetect (fallback to light): {}",
                         e,
