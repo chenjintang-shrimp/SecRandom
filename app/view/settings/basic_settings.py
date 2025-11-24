@@ -26,7 +26,7 @@ from app.Language.obtain_language import (
     get_content_pushbutton_name_async,
     get_content_switchbutton_name_async,
 )
-from app.tools.config import export_diagnostic_data, export_settings, import_settings, export_all_data, import_all_data, configure_logging, set_autostart
+from app.tools.config import export_diagnostic_data, export_settings, import_settings, export_all_data, import_all_data, configure_logging, set_autostart, show_notification, NotificationType, NotificationConfig
 
 
 # ==================================================
@@ -72,12 +72,7 @@ class basic_settings_function(GroupHeaderCardWidget):
         self.autostart_switch.setChecked(
             readme_settings_async("basic_settings", "autostart")
         )
-        self.autostart_switch.checkedChanged.connect(
-            lambda: (
-                update_settings("basic_settings", "autostart", self.autostart_switch.isChecked()),
-                set_autostart(self.autostart_switch.isChecked())
-            )
-        )
+        self.autostart_switch.checkedChanged.connect(self.__on_autostart_changed)
 
         # 添加设置项到分组
         self.addGroup(
@@ -86,6 +81,38 @@ class basic_settings_function(GroupHeaderCardWidget):
             get_content_description_async("basic_settings", "autostart"),
             self.autostart_switch,
         )
+
+    def __on_autostart_changed(self, checked):
+        update_settings("basic_settings", "autostart", checked)
+        ok = set_autostart(checked)
+        if ok:
+            if checked:
+                show_notification(
+                    NotificationType.SUCCESS,
+                    NotificationConfig(
+                        title=get_content_name_async("basic_settings", "autostart"),
+                        content="已开启开机自启",
+                    ),
+                    parent=self.window(),
+                )
+            else:
+                show_notification(
+                    NotificationType.INFO,
+                    NotificationConfig(
+                        title=get_content_name_async("basic_settings", "autostart"),
+                        content="已关闭开机自启",
+                    ),
+                    parent=self.window(),
+                )
+        else:
+            show_notification(
+                NotificationType.ERROR,
+                NotificationConfig(
+                    title=get_content_name_async("basic_settings", "autostart"),
+                    content="设置开机自启失败",
+                ),
+                parent=self.window(),
+            )
 
 
 class basic_settings_personalised(GroupHeaderCardWidget):
