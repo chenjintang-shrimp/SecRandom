@@ -60,8 +60,8 @@ basic_safety_settings = {
         "remove_password_confirm_content": {"name": "移除密码后将禁用安全开关，是否继续？"},
         "remove_password_success": {"name": "已移除密码并关闭安全开关"},
         "error_title": {"name": "错误"},
-        "dialog_yes_text": {"name": "来啦老弟"},
-        "dialog_cancel_text": {"name": "但是我拒绝"},
+        "dialog_yes_text": {"name": "确定"},
+        "dialog_cancel_text": {"name": "取消"},
         "totp_switch": {
             "name": "TOTP验证",
             "description": "启用后可在安全操作中使用TOTP动态口令",
