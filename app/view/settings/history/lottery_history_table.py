@@ -21,8 +21,6 @@ from app.tools.history import *
 # ==================================================
 # 点名历史记录表格
 # ==================================================
-
-
 class lottery_history_table(GroupHeaderCardWidget):
     """点名历史记录表格卡片"""
 

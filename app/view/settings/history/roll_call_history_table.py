@@ -21,8 +21,6 @@ from app.tools.history import *
 # ==================================================
 # 点名历史记录表格
 # ==================================================
-
-
 class roll_call_history_table(GroupHeaderCardWidget):
     """点名历史记录表格卡片"""
 
@@ -100,30 +98,6 @@ class roll_call_history_table(GroupHeaderCardWidget):
         self.mode_comboBox.setCurrentIndex(0)
         self.mode_comboBox.currentIndexChanged.connect(self.refresh_data)
 
-        # 选择是否查看权重
-        self.weight_switch = SwitchButton()
-        self.weight_switch.setOffText(
-            get_content_switchbutton_name_async(
-                "roll_call_history_table", "select_weight", "disable"
-            )
-        )
-        self.weight_switch.setOnText(
-            get_content_switchbutton_name_async(
-                "roll_call_history_table", "select_weight", "enable"
-            )
-        )
-        self.weight_switch.setChecked(
-            readme_settings_async("roll_call_history_table", "select_weight")
-        )
-        self.weight_switch.checkedChanged.connect(
-            lambda: update_settings(
-                "roll_call_history_table",
-                "select_weight",
-                self.weight_switch.isChecked(),
-            )
-        )
-        self.weight_switch.checkedChanged.connect(self.refresh_data)
-
         self.addGroup(
             get_theme_icon("ic_fluent_class_20_filled"),
             get_content_name_async("roll_call_history_table", "select_class_name"),
@@ -137,12 +111,6 @@ class roll_call_history_table(GroupHeaderCardWidget):
             get_content_name_async("roll_call_history_table", "select_mode"),
             get_content_description_async("roll_call_history_table", "select_mode"),
             self.mode_comboBox,
-        )
-        self.addGroup(
-            get_theme_icon("ic_fluent_box_multiple_search_20_filled"),
-            get_content_name_async("roll_call_history_table", "select_weight"),
-            get_content_description_async("roll_call_history_table", "select_weight"),
-            self.weight_switch,
         )
 
     def create_table(self):
@@ -999,7 +967,7 @@ class roll_call_history_table(GroupHeaderCardWidget):
             self.current_mode = 0
 
         if self.current_mode == 0:
-            if readme_settings_async("roll_call_history_table", "select_weight"):
+            if readme_settings_async("history_management", "select_weight"):
                 headers = get_content_name_async(
                     "roll_call_history_table", "HeaderLabels_all_weight"
                 )
@@ -1010,7 +978,7 @@ class roll_call_history_table(GroupHeaderCardWidget):
             self.table.setColumnCount(len(headers))
             self.table.setHorizontalHeaderLabels(headers)
         elif self.current_mode == 1:
-            if readme_settings_async("roll_call_history_table", "select_weight"):
+            if readme_settings_async("history_management", "select_weight"):
                 headers = get_content_name_async(
                     "roll_call_history_table", "HeaderLabels_time_weight"
                 )
@@ -1021,7 +989,7 @@ class roll_call_history_table(GroupHeaderCardWidget):
             self.table.setColumnCount(len(headers))
             self.table.setHorizontalHeaderLabels(headers)
         else:
-            if readme_settings_async("roll_call_history_table", "select_weight"):
+            if readme_settings_async("history_management", "select_weight"):
                 headers = get_content_name_async(
                     "roll_call_history_table", "HeaderLabels_Individual_weight"
                 )
