@@ -37,40 +37,6 @@ if project_root not in sys.path:
 
 
 # ==================================================
-# 日志配置相关函数
-# ==================================================
-def configure_logging():
-    """配置日志系统"""
-    # 确保日志目录存在
-    log_dir = get_path(LOG_DIR)
-    log_dir.mkdir(exist_ok=True)
-
-    # 获取日志等级设置，默认为INFO
-    log_level = readme_settings_async("basic_settings", "log_level") if readme_settings_async("basic_settings", "log_level") else "INFO"
-
-    # 配置日志格式 - 文件输出（包含详细的调试信息）
-    logger.add(
-        log_dir / LOG_FILENAME_FORMAT,
-        rotation=LOG_ROTATION_SIZE,
-        retention=LOG_RETENTION_DAYS,
-        compression=LOG_COMPRESSION,
-        backtrace=True,
-        diagnose=True,
-        level=log_level,
-    )
-    
-    # 配置日志格式 - 终端输出
-    logger.add(
-        sys.stdout,
-        format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
-        level=log_level,
-        colorize=True,
-    )
-    
-    logger.debug(f"日志系统已配置，当前日志等级: {log_level}")
-
-
-# ==================================================
 # 显示调节
 # ==================================================
 """根据设置自动调整DPI缩放模式"""

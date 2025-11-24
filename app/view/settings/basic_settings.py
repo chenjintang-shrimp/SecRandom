@@ -26,7 +26,7 @@ from app.Language.obtain_language import (
     get_content_pushbutton_name_async,
     get_content_switchbutton_name_async,
 )
-from app.tools.config import export_diagnostic_data, export_settings, import_settings, export_all_data, import_all_data
+from app.tools.config import export_diagnostic_data, export_settings, import_settings, export_all_data, import_all_data, configure_logging
 
 
 # ==================================================
@@ -166,6 +166,7 @@ class basic_settings_personalised(GroupHeaderCardWidget):
         self.logLevel.currentTextChanged.connect(
             lambda level: update_settings("basic_settings", "log_level", level)
         )
+        self.logLevel.currentTextChanged.connect(lambda: configure_logging())
 
         # 主题色设置卡片
         self.themeColorCard = ColorSettingCard(

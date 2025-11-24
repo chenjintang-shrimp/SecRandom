@@ -15,12 +15,44 @@ from PySide6.QtCore import Qt
 from qfluentwidgets import InfoBar, InfoBarPosition, FluentIcon, InfoBarIcon, MessageBox
 
 
-from app.tools.path_utils import get_app_root, get_resources_path, get_settings_path
+from app.tools.path_utils import get_app_root, get_resources_path, get_settings_path, get_path
 from app.tools.personalised import get_theme_icon
 from app.tools.settings_access import readme_settings_async
 from app.tools.list import get_student_list, get_group_list
-from app.tools.variable import VERSION, NEXT_VERSION
+from app.tools.variable import VERSION, NEXT_VERSION, LOG_DIR, LOG_FILENAME_FORMAT, LOG_ROTATION_SIZE, LOG_RETENTION_DAYS, LOG_COMPRESSION
 from app.Language.obtain_language import get_content_name_async, get_content_pushbutton_name_async, get_any_position_value_async
+
+
+# ======= 日志配置函数 =======
+def configure_logging():
+    """配置日志系统"""
+    # 确保日志目录存在
+    log_dir = get_path(LOG_DIR)
+    log_dir.mkdir(exist_ok=True)
+
+    # 获取日志等级设置，默认为INFO
+    log_level = readme_settings_async("basic_settings", "log_level") if readme_settings_async("basic_settings", "log_level") else "INFO"
+
+    # 配置日志格式 - 文件输出（包含详细的调试信息）
+    logger.add(
+        log_dir / LOG_FILENAME_FORMAT,
+        rotation=LOG_ROTATION_SIZE,
+        retention=LOG_RETENTION_DAYS,
+        compression=LOG_COMPRESSION,
+        backtrace=True,
+        diagnose=True,
+        level=log_level,
+    )
+    
+    # 配置日志格式 - 终端输出
+    logger.add(
+        sys.stdout,
+        format="<green>{time:YYYY-MM-DD}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+        level=log_level,
+        colorize=True,
+    )
+    
+    logger.debug(f"日志系统已配置，当前日志等级: {log_level}")
 
 
 # ======= 通知工具函数 =======
