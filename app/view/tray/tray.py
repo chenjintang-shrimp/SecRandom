@@ -8,6 +8,7 @@ from PySide6.QtCore import QTimer, QEvent, QPoint, Signal
 from qfluentwidgets import RoundMenu, Action, SystemTrayMenu
 
 from app.tools.variable import MENU_AUTO_CLOSE_TIMEOUT
+from app.common.safety.verify_ops import require_and_run
 from app.tools.path_utils import get_resources_path
 from app.Language.obtain_language import readme_settings_async, get_content_name_async
 
@@ -127,7 +128,7 @@ class Tray(QSystemTrayIcon):
         if show_hide_float_window is not False:
             show_hide_float_window_action = Action(
                 get_content_name_async("tray_management", "show_hide_float_window"),
-                triggered=self.showFloatWindowRequested.emit
+                triggered=lambda: require_and_run("show_hide_floating_window", self.main_window, self.showFloatWindowRequested.emit)
             )
             menu_items.append(show_hide_float_window_action)
 
@@ -142,7 +143,7 @@ class Tray(QSystemTrayIcon):
         if restart is not False:
             restart_action = Action(
                 get_content_name_async("tray_management", "restart"),
-                triggered=self.main_window.restart_app,
+                triggered=lambda: require_and_run("restart", self.main_window, self.main_window.restart_app),
             )
             menu_items.append(restart_action)
 
@@ -151,7 +152,7 @@ class Tray(QSystemTrayIcon):
         if exit_setting is not False:
             exit_action = Action(
                 get_content_name_async("tray_management", "exit"),
-                triggered=self.main_window.close_window_secrandom,
+                triggered=lambda: require_and_run("exit", self.main_window, self.main_window.close_window_secrandom),
             )
             menu_items.append(exit_action)
 

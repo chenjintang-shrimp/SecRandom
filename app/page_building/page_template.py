@@ -33,8 +33,7 @@ class PageTemplate(QFrame):
         self.content_widget_class = content_widget_class
 
         self.__connectSignalToSlot()
-
-        QTimer.singleShot(0, self.create_ui_components)
+        self.create_ui_components()
 
     def __connectSignalToSlot(self):
         qconfig.themeChanged.connect(setTheme)
@@ -75,7 +74,7 @@ class PageTemplate(QFrame):
         self.ui_created = True
 
         if self.content_widget_class:
-            QTimer.singleShot(0, self.create_content)
+            self.create_content()
 
     def create_content(self):
         """后台创建内容组件，避免堵塞进程"""
