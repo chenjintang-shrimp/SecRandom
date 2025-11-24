@@ -26,7 +26,7 @@ from app.Language.obtain_language import (
     get_content_pushbutton_name_async,
     get_content_switchbutton_name_async,
 )
-from app.tools.config import export_diagnostic_data, export_settings, import_settings, export_all_data, import_all_data, configure_logging
+from app.tools.config import export_diagnostic_data, export_settings, import_settings, export_all_data, import_all_data, configure_logging, set_autostart
 
 
 # ==================================================
@@ -73,8 +73,9 @@ class basic_settings_function(GroupHeaderCardWidget):
             readme_settings_async("basic_settings", "autostart")
         )
         self.autostart_switch.checkedChanged.connect(
-            lambda: update_settings(
-                "basic_settings", "autostart", self.autostart_switch.isChecked()
+            lambda: (
+                update_settings("basic_settings", "autostart", self.autostart_switch.isChecked()),
+                set_autostart(self.autostart_switch.isChecked())
             )
         )
 

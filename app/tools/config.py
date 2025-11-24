@@ -1510,3 +1510,51 @@ def reset_drawn_prize_record(self, pool_name: str):
         )
     except Exception as e:
         logger.error(f"重置奖池抽取记录失败: {e}")
+
+def set_autostart(enabled: bool) -> bool:
+    try:
+        if sys.platform == "win32":
+            import winreg
+            key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+            try:
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+            except FileNotFoundError:
+                key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
+            name = "SecRandom"
+            if enabled:
+                if getattr(sys, "frozen", False):
+                    cmd = f'"{sys.executable}"'
+                else:
+                    root = Path(__file__).resolve().parents[2]
+                    main_py = root / "main.py"
+                    cmd = f'"{sys.executable}" "{str(main_py)}"'
+                winreg.SetValueEx(key, name, 0, winreg.REG_SZ, cmd)
+            else:
+                try:
+                    winreg.DeleteValue(key, name)
+                except FileNotFoundError:
+                    pass
+            winreg.CloseKey(key)
+            return True
+        elif sys.platform.startswith("linux"):
+            autostart_dir = Path.home() / ".config" / "autostart"
+            autostart_dir.mkdir(parents=True, exist_ok=True)
+            desktop = autostart_dir / "secrandom.desktop"
+            if enabled:
+                if getattr(sys, "frozen", False):
+                    exec_cmd = f'"{sys.executable}"'
+                else:
+                    root = Path(__file__).resolve().parents[2]
+                    main_py = root / "main.py"
+                    exec_cmd = f'{sys.executable} "{str(main_py)}"'
+                content = f"[Desktop Entry]\nType=Application\nName=SecRandom\nExec={exec_cmd}\nX-GNOME-Autostart-enabled=true\n"
+                desktop.write_text(content, encoding="utf-8")
+            else:
+                if desktop.exists():
+                    desktop.unlink()
+            return True
+        else:
+            return False
+    except Exception as e:
+        logger.error(f"设置开机自启动失败: {e}")
+        return False
