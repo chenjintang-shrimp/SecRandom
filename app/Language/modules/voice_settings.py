@@ -11,7 +11,7 @@ basic_voice_settings = {
             "name": "语音引擎",
             "description": "选择语音合成引擎类型",
         },
-        "volume_group": {"name": "音量设置", "description": "调整语音播报的音量大小"},
+        "volume_group": {"name": "音量设置", "description": "调整语音播报音量大小"},
         "system_volume_group": {
             "name": "系统音量控制",
             "description": "选择要控制的系统音量类型",
@@ -34,11 +34,11 @@ basic_voice_settings = {
         },
         "voice_playback": {
             "name": "语音播放设备",
-            "description": "选择语音播报的播放设备",
+            "description": "选择语音播报播放设备",
             "combo_items": ["系统默认", "扬声器", "耳机", "蓝牙设备"],
         },
-        "volume_size": {"name": "播报音量", "description": "调整语音播报的音量大小"},
-        "speech_rate": {"name": "语速调节", "description": "调整语音播报的语速"},
+        "volume_size": {"name": "播报音量", "description": "调整语音播报音量大小"},
+        "speech_rate": {"name": "语速调节", "description": "调整语音播报语速"},
         "system_volume_control": {
             "name": "系统音量控制",
             "description": "选择要控制的系统音量类型",
@@ -46,7 +46,7 @@ basic_voice_settings = {
         },
         "system_volume_size": {
             "name": "系统音量大小",
-            "description": "调整系统音量的大小",
+            "description": "调整系统音量大小",
         },
     }
 }

@@ -1,10 +1,10 @@
 # 点名页面语言配置
 roll_call = {
     "ZH_CN": {
-        "title": {"name": "点名", "description": "点名"},
+        "title": {"name": "点名", "description": "点名功能"},
         "reset_button": {
             "name": "重置",
-            "description": "重置人数",
+            "description": "重置点名人数",
             "pushbutton_name": "重置",
         },
         "start_button": {
@@ -29,7 +29,7 @@ roll_call = {
         },
         "remaining_button": {
             "name": "查看剩余名单",
-            "description": "显示剩余名窗口单",
+            "description": "显示剩余名单窗口",
             "pushbutton_name": "查看剩余名单",
         },
         "many_count_label": {

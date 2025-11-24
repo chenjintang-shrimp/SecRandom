@@ -1,25 +1,20 @@
 # 名单管理语言配置
 list_management = {
-    "ZH_CN": {"title": {"name": "名单管理", "description": "管理点名和抽奖的名单"}}
-}
-
-# 名单管理语言配置
-list_management = {
     "ZH_CN": {
-        "title": {"name": "名单管理", "description": "管理点名和抽奖的名单"},
-        "roll_call_list": {"name": "点名名单", "description": "管理点名用的学生名单"},
-        "lottery_list": {"name": "抽奖名单", "description": "管理抽奖用的奖品名单"},
+        "title": {"name": "名单管理", "description": "管理点名、抽奖的名单"},
+        "roll_call_list": {"name": "点名名单", "description": "管理点名用学生名单"},
+        "lottery_list": {"name": "抽奖名单", "description": "管理抽奖用奖品名单"},
     }
 }
 
 # 点名名单语言配置
 roll_call_list = {
     "ZH_CN": {
-        "title": {"name": "点名名单", "description": "管理点名用的学生名单"},
-        "set_class_name": {"name": "设置班级名称", "description": "设置当前班级的名称"},
+        "title": {"name": "点名名单", "description": "管理点名用学生名单"},
+        "set_class_name": {"name": "设置班级名称", "description": "设置当前班级名称"},
         "select_class_name": {
             "name": "选择班级",
-            "description": "从已有班级中选择一个",
+            "description": "从已有班级中选择一个班级",
         },
         "import_student_name": {
             "name": "导入学生名单",
@@ -38,7 +33,7 @@ roll_call_list = {
 # 点名表格语言配置
 roll_call_table = {
     "ZH_CN": {
-        "title": {"name": "点名表格", "description": "展示和管理点名名单的表格"},
+        "title": {"name": "点名表格", "description": "展示和管理点名名单"},
         "select_class_name": {
             "name": "选择班级",
             "description": "选择要显示的点名班级",
@@ -53,9 +48,9 @@ roll_call_table = {
 # 抽奖名单语言配置
 lottery_list = {
     "ZH_CN": {
-        "title": {"name": "抽奖名单", "description": "管理抽奖用的奖品名单"},
-        "set_pool_name": {"name": "设置奖池名称", "description": "设置当前奖池的名称"},
-        "select_pool_name": {"name": "选择奖池", "description": "从已有奖池中选择一个"},
+        "title": {"name": "抽奖名单", "description": "管理抽奖用奖品名单"},
+        "set_pool_name": {"name": "设置奖池名称", "description": "设置当前奖池名称"},
+        "select_pool_name": {"name": "选择奖池", "description": "从已有奖池中选择一个奖池"},
         "import_prize_name": {
             "name": "导入奖品名单",
             "description": "从文件导入奖品名单",
@@ -72,7 +67,7 @@ lottery_list = {
 # 抽奖表格语言配置
 lottery_table = {
     "ZH_CN": {
-        "title": {"name": "抽奖表格", "description": "展示和管理抽奖名单的表格"},
+        "title": {"name": "抽奖表格", "description": "展示和管理抽奖名单"},
         "select_pool_name": {
             "name": "选择奖池",
             "description": "选择要显示的抽奖奖池",
