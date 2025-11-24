@@ -344,9 +344,10 @@ class PivotPageTemplate(QFrame):
             # 添加实际内容到内部布局
             inner_layout.addWidget(widget)
 
-            # 标记为已加载
+            # 标记为已加载并保存组件引用
             if page_name in self.page_infos:
                 self.page_infos[page_name]["loaded"] = True
+                self.page_infos[page_name]["widget"] = widget
 
             elapsed = time.perf_counter() - start
             logger.debug(f"加载页面组件 {page_name} 耗时: {elapsed:.3f}s")
