@@ -163,22 +163,13 @@ quick_draw_settings = {
             "description": "设置闪抽动画自动播放次数",
         },
         "animation_color_theme": {
-            "name": "动画颜色主题",
-            "description": "设置闪抽动画颜色主题",
-            "combo_items": ["关闭", "随机颜色", "固定颜色"],
-        },
-        "result_color_theme": {
-            "name": "结果颜色主题",
-            "description": "设置闪抽结果显示颜色主题",
+            "name": "动画/结果颜色主题",
+            "description": "设置闪抽动画/结果颜色主题",
             "combo_items": ["关闭", "随机颜色", "固定颜色"],
         },
         "animation_fixed_color": {
-            "name": "动画固定颜色",
-            "description": "设置闪抽动画固定颜色",
-        },
-        "result_fixed_color": {
-            "name": "结果固定颜色",
-            "description": "设置闪抽结果显示固定颜色",
+            "name": "动画/结果固定颜色",
+            "description": "设置闪抽动画/结果固定颜色",
         },
         "student_image": {
             "name": "显示学生图片",
@@ -262,22 +253,13 @@ instant_draw_settings = {
             "description": "设置即抽动画自动播放次数",
         },
         "animation_color_theme": {
-            "name": "动画颜色主题",
-            "description": "设置即抽动画颜色主题",
-            "combo_items": ["关闭", "随机颜色", "固定颜色"],
-        },
-        "result_color_theme": {
-            "name": "结果颜色主题",
-            "description": "设置即抽结果显示颜色主题",
+            "name": "动画/结果颜色主题",
+            "description": "设置即抽动画/结果颜色主题",
             "combo_items": ["关闭", "随机颜色", "固定颜色"],
         },
         "animation_fixed_color": {
-            "name": "动画固定颜色",
-            "description": "设置即抽动画固定颜色",
-        },
-        "result_fixed_color": {
-            "name": "结果固定颜色",
-            "description": "设置即抽结果显示固定颜色",
+            "name": "动画/结果固定颜色",
+            "description": "设置即抽动画/结果固定颜色",
         },
         "student_image": {
             "name": "显示学生图片",
@@ -361,22 +343,13 @@ lottery_settings = {
             "description": "设置抽奖动画自动播放次数",
         },
         "animation_color_theme": {
-            "name": "动画颜色主题",
-            "description": "设置抽奖动画颜色主题",
-            "combo_items": ["关闭", "随机颜色", "固定颜色"],
-        },
-        "result_color_theme": {
-            "name": "结果颜色主题",
-            "description": "设置抽奖结果显示颜色主题",
+            "name": "动画/结果颜色主题",
+            "description": "设置抽奖动画/结果颜色主题",
             "combo_items": ["关闭", "随机颜色", "固定颜色"],
         },
         "animation_fixed_color": {
-            "name": "动画固定颜色",
-            "description": "设置抽奖动画固定颜色",
-        },
-        "result_fixed_color": {
-            "name": "结果固定颜色",
-            "description": "设置抽奖结果显示固定颜色",
+            "name": "动画/结果固定颜色",
+            "description": "设置抽奖动画/结果固定颜色",
         },
         "lottery_image": {
             "name": "显示奖品图片",

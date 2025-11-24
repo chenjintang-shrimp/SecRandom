@@ -404,7 +404,7 @@ class lottery_color_theme_settings(GroupHeaderCardWidget):
         )
         self.setBorderRadius(8)
 
-        # 动画颜色主题下拉框
+        # 合并动画/结果颜色主题下拉框
         self.animation_color_theme_combo = ComboBox()
         self.animation_color_theme_combo.addItems(
             get_content_combo_name_async("lottery_settings", "animation_color_theme")
@@ -420,23 +420,7 @@ class lottery_color_theme_settings(GroupHeaderCardWidget):
             )
         )
 
-        # 结果颜色主题下拉框
-        self.result_color_theme_combo = ComboBox()
-        self.result_color_theme_combo.addItems(
-            get_content_combo_name_async("lottery_settings", "result_color_theme")
-        )
-        self.result_color_theme_combo.setCurrentIndex(
-            readme_settings_async("lottery_settings", "result_color_theme")
-        )
-        self.result_color_theme_combo.currentIndexChanged.connect(
-            lambda: update_settings(
-                "lottery_settings",
-                "result_color_theme",
-                self.result_color_theme_combo.currentIndex(),
-            )
-        )
-
-        # 动画固定颜色
+        # 合并动画/结果固定颜色
         self.animation_fixed_color_button = ColorConfigItem(
             "Theme",
             "Color",
@@ -448,30 +432,12 @@ class lottery_color_theme_settings(GroupHeaderCardWidget):
             )
         )
 
-        # 结果固定颜色
-        self.result_fixed_color_button = ColorConfigItem(
-            "Theme",
-            "Color",
-            readme_settings_async("lottery_settings", "result_fixed_color"),
-        )
-        self.result_fixed_color_button.valueChanged.connect(
-            lambda color: update_settings(
-                "lottery_settings", "result_fixed_color", color.name()
-            )
-        )
-
         # 添加设置项到分组
         self.addGroup(
             get_theme_icon("ic_fluent_color_20_filled"),
             get_content_name_async("lottery_settings", "animation_color_theme"),
             get_content_description_async("lottery_settings", "animation_color_theme"),
             self.animation_color_theme_combo,
-        )
-        self.addGroup(
-            get_theme_icon("ic_fluent_color_20_filled"),
-            get_content_name_async("lottery_settings", "result_color_theme"),
-            get_content_description_async("lottery_settings", "result_color_theme"),
-            self.result_color_theme_combo,
         )
 
         self.animationColorCard = ColorSettingCard(
@@ -487,18 +453,8 @@ class lottery_color_theme_settings(GroupHeaderCardWidget):
             ),
             self,
         )
-        self.resultColorCard = ColorSettingCard(
-            self.result_fixed_color_button,
-            get_theme_icon("ic_fluent_text_color_20_filled"),
-            self.tr(get_content_name_async("lottery_settings", "result_fixed_color")),
-            self.tr(
-                get_content_description_async("lottery_settings", "result_fixed_color")
-            ),
-            self,
-        )
 
         self.vBoxLayout.addWidget(self.animationColorCard)
-        self.vBoxLayout.addWidget(self.resultColorCard)
 
 
 class lottery_lottery_image_settings(GroupHeaderCardWidget):
