@@ -444,6 +444,7 @@ DEFAULT_SETTINGS = {
         "lottery_history": {"default_value": None},
         "show_roll_call_history": {"default_value": True},
         "select_class_name": {"default_value": 0},
+        "select_weight": {"default_value": False},
         "clear_roll_call_history": {"default_value": None},
         "show_lottery_history": {"default_value": True},
         "select_pool_name": {"default_value": 0},
@@ -457,7 +458,14 @@ DEFAULT_SETTINGS = {
         "HeaderLabels_all_weight": {"default_value": None},
         "HeaderLabels_time": {"default_value": None},
         "HeaderLabels_Individual": {"default_value": None},
-        "select_weight": {"default_value": False},
+    },
+    "lottery_history_table": {
+        "title": {"default_value": None},
+        "select_pool_name": {"default_value": 0},
+        "select_mode": {"default_value": None},
+        "HeaderLabels_all_weight": {"default_value": None},
+        "HeaderLabels_time": {"default_value": None},
+        "HeaderLabels_Individual": {"default_value": None},
     },
     "more_settings": {
         "title": {"default_value": None},
