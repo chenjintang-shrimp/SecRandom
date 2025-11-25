@@ -398,8 +398,12 @@ if __name__ == "__main__":
     import gc
     gc.enable() # 开启垃圾回收器
 
-    # 设置应用程序退出时关闭所有窗口
-    app.setQuitOnLastWindowClosed(APP_QUIT_ON_LAST_WINDOW_CLOSED)
+    try:
+        resident = readme_settings_async("basic_settings", "background_resident")
+        resident = True if resident is None else resident
+        app.setQuitOnLastWindowClosed(not resident)
+    except Exception:
+        app.setQuitOnLastWindowClosed(APP_QUIT_ON_LAST_WINDOW_CLOSED)
 
     # 解决Dialog和FluentWindow共存时的窗口拉伸问题
     app.setAttribute(Qt.ApplicationAttribute.AA_DontCreateNativeWidgetSiblings)

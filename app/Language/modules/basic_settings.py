@@ -11,7 +11,12 @@ basic_settings = {
         "autostart": {
             "name": "开机自启",
             "description": "设置软件是否随系统启动自动运行",
-            "switchbutton_name": {"enable": "开启", "disable": "关闭"},
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "background_resident": {
+            "name": "后台驻留",
+            "description": "关闭所有窗口后是否仍在后台常驻",
+            "switchbutton_name": {"enable": "", "disable": ""}
         },
         "export_diagnostic_data": {
             "name": "导出诊断数据",

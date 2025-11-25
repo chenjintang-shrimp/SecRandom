@@ -185,17 +185,22 @@ class MainWindow(MSFluentWindow):
 
     def closeEvent(self, event):
         """窗口关闭事件处理
-        拦截窗口关闭事件，隐藏窗口并保存窗口大小"""
-        self.hide()
-        event.ignore()
+        根据“后台驻留”设置决定是否真正关闭窗口"""
+        resident = readme_settings_async("basic_settings", "background_resident")
+        resident = True if resident is None else resident
+        if resident:
+            self.hide()
+            event.ignore()
 
-        # 保存当前窗口状态
-        is_maximized = self.isMaximized()
-        update_settings("window", "is_maximized", is_maximized)
-        if is_maximized:
-            pass
+            # 保存当前窗口状态
+            is_maximized = self.isMaximized()
+            update_settings("window", "is_maximized", is_maximized)
+            if is_maximized:
+                pass
+            else:
+                self.save_window_size(self.width(), self.height())
         else:
-            self.save_window_size(self.width(), self.height())
+            event.accept()
 
     def resizeEvent(self, event):
         """窗口大小变化事件处理
