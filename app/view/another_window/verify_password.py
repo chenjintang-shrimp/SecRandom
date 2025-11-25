@@ -48,8 +48,8 @@ class VerifyPasswordWindow(QWidget):
 
         btns = QHBoxLayout()
         btns.addStretch(1)
-        self.ok_button = PrimaryPushButton(get_content_name_async("basic_safety_settings", "save_button"))
-        self.cancel_button = PushButton(get_content_name_async("basic_safety_settings", "cancel_button"))
+        self.ok_button = PrimaryPushButton(get_content_name_async("basic_safety_settings", "dialog_yes_text"))
+        self.cancel_button = PushButton(get_content_name_async("basic_safety_settings", "dialog_cancel_text"))
         btns.addWidget(self.ok_button)
         btns.addWidget(self.cancel_button)
         self.main_layout.addLayout(btns)

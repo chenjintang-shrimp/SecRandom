@@ -124,8 +124,15 @@ def create_verify_password_window(on_verified=None):
     window = SimpleWindowTemplate(title, width=480, height=240)
     page = window.add_page_from_template("verify_password", verify_password_window_template)
     window.switch_to_page("verify_password")
-    if on_verified and hasattr(page, "verified"):
-        page.verified.connect(on_verified)
+    if on_verified:
+        try:
+            content = getattr(page, "contentWidget", None)
+            if content is not None and hasattr(content, "verified"):
+                content.verified.connect(on_verified)
+            elif hasattr(page, "verified"):
+                page.verified.connect(on_verified)
+        except Exception:
+            pass
     _security_window_instances["verify_password"] = window
     window.windowClosed.connect(lambda: _security_window_instances.pop("verify_password", None))
     window.show()
