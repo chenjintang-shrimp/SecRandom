@@ -218,7 +218,8 @@ def start_main_window():
     try:
         from app.view.main.window import MainWindow
 
-        main_window = MainWindow()
+        create_float_window()  # Ensure the global float window is created
+        main_window = MainWindow(float_window=float_window)
         main_window.showSettingsRequested.connect(
             lambda: show_settings_window()
         )

@@ -20,6 +20,7 @@ from app.Language.obtain_language import readme_settings_async, update_settings
 from app.common.safety.verify_ops import require_and_run
 from app.page_building.main_window_page import roll_call_page, lottery_page
 from app.view.tray.tray import Tray
+from app.view.floating_window.levitation import LevitationWindow
 
 
 # ==================================================
@@ -33,7 +34,7 @@ class MainWindow(MSFluentWindow):
     showSettingsRequestedAbout = Signal()
     showFloatWindowRequested = Signal()
 
-    def __init__(self):
+    def __init__(self, float_window: LevitationWindow):
         super().__init__()
         # 设置窗口对象名称，方便其他组件查找
         self.setObjectName("MainWindow")
@@ -72,6 +73,11 @@ class MainWindow(MSFluentWindow):
             self.showFloatWindowRequested.emit
         )
         self.tray_icon.show_tray_icon()
+
+        self.float_window = float_window
+        self.showFloatWindowRequested.connect(self._toggle_float_window)
+        self.float_window.rollCallRequested.connect(lambda: self._show_and_switch_to(self.roll_call_page))
+        self.float_window.lotteryRequested.connect(lambda: self._show_and_switch_to(self.lottery_page))
 
         QTimer.singleShot(APP_INIT_DELAY, lambda: (self.createSubInterface()))
 
@@ -183,6 +189,20 @@ class MainWindow(MSFluentWindow):
         )
         settings_item.clicked.connect(lambda: require_and_run("open_settings", self, self.showSettingsRequested.emit))
         settings_item.clicked.connect(lambda: self.switchTo(self.roll_call_page))
+
+    def _toggle_float_window(self):
+        if self.float_window.isVisible():
+            self.float_window.hide()
+        else:
+            self.float_window.show()
+
+    def _show_and_switch_to(self, page):
+        if self.isMinimized():
+            self.showNormal()
+        self.show()
+        self.activateWindow()
+        self.raise_()
+        self.switchTo(page)
 
     def closeEvent(self, event):
         """窗口关闭事件处理
