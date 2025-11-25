@@ -13,6 +13,7 @@ import psutil
 from PySide6.QtWidgets import QWidget, QFileDialog, QTextEdit
 from PySide6.QtCore import Qt
 from qfluentwidgets import InfoBar, InfoBarPosition, FluentIcon, InfoBarIcon, MessageBox
+from app.common.safety.verify_ops import require_and_run
 
 
 from app.tools.path_utils import get_app_root, get_resources_path, get_settings_path, get_path
@@ -47,7 +48,7 @@ def configure_logging():
     # 配置日志格式 - 终端输出
     logger.add(
         sys.stdout,
-        format="<green>{time:YYYY-MM-DD}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
         level=log_level,
         colorize=True,
     )
@@ -475,38 +476,21 @@ def export_diagnostic_data(parent: Optional[QWidget] = None) -> None:
         parent: 父窗口组件，用于对话框的模态显示
     """
     try:
-        # 先显示导出警告对话框
-        warning_dialog = MessageBox(
-            get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_warning_title", "name"),
-            get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_warning_content", "name"),
-            parent
-        )
-        warning_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_confirm_button", "name"))
-        warning_dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_cancel_button", "name"))
-        
-        if not warning_dialog.exec():
-            return  # 用户取消操作
-            
-        # 获取软件安装路径
-        app_dir = get_app_root()
-        
-        # 获取版本信息
-        version_text = VERSION if VERSION != "v0.0.0.0" else f"Dev Version-{NEXT_VERSION}"
-        
-        # 打开文件保存对话框
-        file_path, _ = QFileDialog.getSaveFileName(
-            parent,
-            get_content_pushbutton_name_async("basic_settings", "export_diagnostic_data"),
-            f"SecRandom_{version_text}_diagnostic_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
-            "ZIP Files (*.zip);;All Files (*)"
-        )
-        
-        if file_path:
-            import zipfile
-            
-            # 确保文件路径以.zip结尾
-            if not file_path.endswith('.zip'):
-                file_path += '.zip'
+        cancelled = False
+        def _apply_diag_warning():
+            nonlocal cancelled
+            warning_dialog = MessageBox(
+                get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_warning_title", "name"),
+                get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_warning_content", "name"),
+                parent
+            )
+            warning_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_confirm_button", "name"))
+            warning_dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_cancel_button", "name"))
+            if not warning_dialog.exec():
+                cancelled = True
+        require_and_run("diagnostic_export", parent, _apply_diag_warning)
+        if cancelled:
+            return
             
             # 创建需要导出的目录列表
             export_folders = [
@@ -803,88 +787,63 @@ def export_all_data(parent: Optional[QWidget] = None) -> None:
         parent: 父窗口组件，用于对话框的模态显示
     """
     try:
-        # 先显示导出警告对话框
-        warning_dialog = MessageBox(
-            get_any_position_value_async("basic_settings", "data_import_export", "export_warning_title", "name"),
-            get_any_position_value_async("basic_settings", "data_import_export", "export_warning_content", "name"),
-            parent
-        )
-        warning_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_confirm_button", "name"))
-        warning_dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_cancel_button", "name"))
-        
-        # 修改内容文本的颜色，使警告部分更突出
-        from PySide6.QtGui import QTextCharFormat, QColor
-        from PySide6.QtCore import Qt
-        
-        # 获取内容文本并设置格式
-        content_format = QTextCharFormat()
-        content_format.setForeground(QColor("#FF0000"))  # 红色
-        content_format.setFontWeight(700)  # 加粗
-        
-        # 应用格式到特定文本（注意：这需要根据实际文本内容进行调整）
-        if hasattr(warning_dialog, 'contentLabel') and warning_dialog.contentLabel:
-            text = warning_dialog.contentLabel.text()
-            # 在这里可以添加逻辑来高亮特定关键词
-            # 例如，高亮"敏感信息"、"注意"等关键词
-            
-        if not warning_dialog.exec():
-            return  # 用户取消操作
-            
-        # 打开文件保存对话框
+        cancelled = False
+        def _apply_export_all_warning():
+            nonlocal cancelled
+            warning_dialog = MessageBox(
+                get_any_position_value_async("basic_settings", "data_import_export", "export_warning_title", "name"),
+                get_any_position_value_async("basic_settings", "data_import_export", "export_warning_content", "name"),
+                parent
+            )
+            warning_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_confirm_button", "name"))
+            warning_dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_cancel_button", "name"))
+            if not warning_dialog.exec():
+                cancelled = True
+        require_and_run("data_export", parent, _apply_export_all_warning)
+        if cancelled:
+            return
+
         file_path, _ = QFileDialog.getSaveFileName(
             parent,
             get_content_pushbutton_name_async("basic_settings", "export_all_data"),
             f"SecRandom_{VERSION if VERSION != "v0.0.0.0" else f"Dev Version-{NEXT_VERSION}"}_all_data.zip",
             "ZIP Files (*.zip);;All Files (*)"
         )
-        
-        if file_path:
-            import zipfile
-            
-            # 确保文件路径以.zip结尾
-            if not file_path.endswith('.zip'):
-                file_path += '.zip'
-            
-            # 创建需要备份的目录列表
-            dirs_to_backup = [
-                ("config", Path("config")),
-                ("list", Path("app") / "resources" / "list"),
-                ("Language", Path("app") / "resources" / "Language"),
-                ("history", Path("app") / "resources" / "history"),
-                ("logs", Path("logs"))
-            ]
-            
-            # 创建zip文件
-            with zipfile.ZipFile(file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                # 先写入版本信息文件
-                version_info = {
-                    "software_name": "SecRandom",
-                    "version": VERSION if VERSION != "v0.0.0.0" else f"Dev Version-{NEXT_VERSION}"
-                }
-                zipf.writestr("version.json", json.dumps(version_info, ensure_ascii=False, indent=2))
-                
-                for dir_name, dir_path in dirs_to_backup:
-                    if dir_path.exists():
-                        for file_path_obj in dir_path.rglob('*'):
-                            if file_path_obj.is_file():
-                                # 计算在zip中的路径
-                                arc_path = str(Path(dir_name) / file_path_obj.relative_to(dir_path))
-                                zipf.write(str(file_path_obj), arc_path)
-            
-            # 显示成功消息
-            dialog = MessageBox(
-                get_any_position_value_async("basic_settings", "data_import_export", "export_success_title", "name"),
-                get_any_position_value_async("basic_settings", "data_import_export", "export_success_content", "name").format(path=file_path),
-                parent
-            )
-            dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_success_button", "name"))
-            dialog.cancelButton.hide()
-            dialog.buttonLayout.insertStretch(1)
-            dialog.exec()
-            
+        if not file_path:
+            return
+        import zipfile
+        if not file_path.endswith('.zip'):
+            file_path += '.zip'
+        dirs_to_backup = [
+            ("config", Path("config")),
+            ("list", Path("app") / "resources" / "list"),
+            ("Language", Path("app") / "resources" / "Language"),
+            ("history", Path("app") / "resources" / "history"),
+            ("logs", Path("logs"))
+        ]
+        with zipfile.ZipFile(file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            version_info = {
+                "software_name": "SecRandom",
+                "version": VERSION if VERSION != "v0.0.0.0" else f"Dev Version-{NEXT_VERSION}"
+            }
+            zipf.writestr("version.json", json.dumps(version_info, ensure_ascii=False, indent=2))
+            for dir_name, dir_path in dirs_to_backup:
+                if dir_path.exists():
+                    for file_path_obj in dir_path.rglob('*'):
+                        if file_path_obj.is_file():
+                            arc_path = str(Path(dir_name) / file_path_obj.relative_to(dir_path))
+                            zipf.write(str(file_path_obj), arc_path)
+        dialog = MessageBox(
+            get_any_position_value_async("basic_settings", "data_import_export", "export_success_title", "name"),
+            get_any_position_value_async("basic_settings", "data_import_export", "export_success_content", "name").format(path=file_path),
+            parent
+        )
+        dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_success_button", "name"))
+        dialog.cancelButton.hide()
+        dialog.buttonLayout.insertStretch(1)
+        dialog.exec()
     except Exception as e:
         logger.error(f"导出所有数据失败: {e}")
-        # 显示错误消息
         dialog = MessageBox(
             get_any_position_value_async("basic_settings", "data_import_export", "export_failure_title", "name"),
             get_any_position_value_async("basic_settings", "data_import_export", "export_failure_content", "name").format(error=str(e)),
@@ -928,25 +887,27 @@ def import_all_data(parent: Optional[QWidget] = None) -> None:
             if version_info:
                 software_name = version_info.get("software_name", "")
                 version = version_info.get("version", "")
-                
                 current_version = VERSION if VERSION != "v0.0.0.0" else f"Dev Version-{NEXT_VERSION}"
-                
                 if software_name != "SecRandom" or version != current_version:
-                    # 显示版本不匹配警告
-                    warning_dialog = MessageBox(
-                        get_any_position_value_async("basic_settings", "data_import_export", "version_mismatch_title", "name"),
-                        get_any_position_value_async("basic_settings", "data_import_export", "version_mismatch_content", "name").format(
-                            software_name=software_name, 
-                            version=version,
-                            current_version=current_version
-                        ),
-                        parent
-                    )
-                    warning_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_confirm_button", "name"))
-                    warning_dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_cancel_button", "name"))
-                    
-                    if not warning_dialog.exec():
-                        return  # 用户取消操作
+                    _mismatch_cancelled = False
+                    def _apply_version_mismatch():
+                        nonlocal _mismatch_cancelled
+                        warning_dialog = MessageBox(
+                            get_any_position_value_async("basic_settings", "data_import_export", "version_mismatch_title", "name"),
+                            get_any_position_value_async("basic_settings", "data_import_export", "version_mismatch_content", "name").format(
+                                software_name=software_name, 
+                                version=version,
+                                current_version=current_version
+                            ),
+                            parent
+                        )
+                        warning_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_confirm_button", "name"))
+                        warning_dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_cancel_button", "name"))
+                        if not warning_dialog.exec():
+                            _mismatch_cancelled = True
+                    require_and_run("import_version_mismatch", parent, _apply_version_mismatch)
+                    if _mismatch_cancelled:
+                        return
             
             # 检查zip文件中的内容
             existing_files = []
@@ -978,21 +939,24 @@ def import_all_data(parent: Optional[QWidget] = None) -> None:
             
             # 如果有已存在的文件，询问用户是否覆盖
             if existing_files:
-                files_list = "\n".join(existing_files[:10])  # 只显示前10个文件
-                if len(existing_files) > 10:
-                    files_list += get_any_position_value_async("basic_settings", "data_import_export", "existing_files_count", "name").format(len=len(existing_files) - 10)
-                
-                # 显示确认对话框
-                dialog = MessageBox(
-                    get_any_position_value_async("basic_settings", "data_import_export", "existing_files_title", "name"),
-                    get_any_position_value_async("basic_settings", "data_import_export", "existing_files_content", "name").format(files=files_list),
-                    parent
-                )
-                dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_confirm_button", "name"))
-                dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_cancel_button", "name"))
-                
-                if not dialog.exec():
-                    return  # 用户取消操作
+                _overwrite_cancelled = False
+                def _apply_overwrite():
+                    nonlocal _overwrite_cancelled
+                    files_list = "\n".join(existing_files[:10])
+                    if len(existing_files) > 10:
+                        files_list += get_any_position_value_async("basic_settings", "data_import_export", "existing_files_count", "name").format(len=len(existing_files) - 10)
+                    dialog = MessageBox(
+                        get_any_position_value_async("basic_settings", "data_import_export", "existing_files_title", "name"),
+                        get_any_position_value_async("basic_settings", "data_import_export", "existing_files_content", "name").format(files=files_list),
+                        parent
+                    )
+                    dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_confirm_button", "name"))
+                    dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_cancel_button", "name"))
+                    if not dialog.exec():
+                        _overwrite_cancelled = True
+                require_and_run("import_overwrite", parent, _apply_overwrite)
+                if _overwrite_cancelled:
+                    return
             
             # 显示导入确认对话框
             confirm_dialog = MessageBox(

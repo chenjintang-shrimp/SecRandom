@@ -2,11 +2,11 @@ from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 from qfluentwidgets import *
+from loguru import logger
 
-from app.tools.config import *
 from app.Language.obtain_language import *
 from app.tools.personalised import *
-from app.common.safety.usb import list_removable_drives, get_volume_serial, bind
+from app.common.safety.usb import list_removable_drives, list_usb_drive_letters_wmi, get_volume_serial, get_volume_label, bind_with_options, remove_key_file
 
 
 class BindUsbWindow(QWidget):
@@ -34,10 +34,12 @@ class BindUsbWindow(QWidget):
 
         self.drive_combo = ComboBox()
         self.refresh_button = PushButton(get_content_name_async("basic_safety_settings","usb_refresh"))
+        self.require_key_checkbox = CheckBox(get_content_name_async("basic_safety_settings","usb_require_key_file"))
         self.bind_button = PrimaryPushButton(get_content_name_async("basic_safety_settings","usb_bind"))
 
         layout.addWidget(self.drive_combo)
         layout.addWidget(self.refresh_button)
+        layout.addWidget(self.require_key_checkbox)
         layout.addWidget(self.bind_button)
 
         self.main_layout.addWidget(card)
@@ -49,44 +51,115 @@ class BindUsbWindow(QWidget):
         self.main_layout.addLayout(btns)
         self.main_layout.addStretch(1)
 
-        self.__refresh()
+        QTimer.singleShot(0, self.__refresh)
 
     def __connect_signals(self):
         self.refresh_button.clicked.connect(self.__refresh)
         self.bind_button.clicked.connect(self.__bind)
         self.close_button.clicked.connect(self.__cancel)
 
+    def _notify_error(self, text: str, duration: int = 3000):
+        try:
+            InfoBar.error(
+                title=get_content_name_async("basic_safety_settings","title"),
+                content=text,
+                position=InfoBarPosition.TOP,
+                duration=duration,
+                parent=self,
+            )
+        except Exception:
+            pass
+
+    def _notify_success(self, text: str, duration: int = 3000):
+        try:
+            InfoBar.success(
+                title=get_content_name_async("basic_safety_settings","title"),
+                content=text,
+                position=InfoBarPosition.TOP,
+                duration=duration,
+                parent=self,
+            )
+        except Exception:
+            pass
+
     def __refresh(self):
         self.drive_combo.clear()
         try:
-            letters = list_removable_drives()
+            # 优先使用WMI获取USB设备的逻辑盘符（可覆盖固定盘类型的外置硬盘）
+            letters = list_usb_drive_letters_wmi()
+            if not letters:
+                # 回退到驱动类型为可移动盘的枚举
+                letters = list_removable_drives()
+            logger.debug(f"刷新可绑定盘符，数量：{len(letters)}")
             for lt in letters:
-                self.drive_combo.addItem(f"{lt}:")
+                name = get_volume_label(lt)
+                text = f"{name} ({lt}:)" if name else f"({lt}:)"
+                self.drive_combo.addItem(text, lt)
             if not letters:
                 self.drive_combo.setCurrentIndex(-1)
-                self.drive_combo.setPlaceholderText(
-                    get_content_name_async("basic_safety_settings", "usb_no_removable")
-                )
+                # 使占位文本可见
+                try:
+                    self.drive_combo.setEditable(True)
+                    self.drive_combo.lineEdit().setReadOnly(True)
+                    self.drive_combo.lineEdit().setPlaceholderText(
+                        get_content_name_async("basic_safety_settings", "usb_no_removable")
+                    )
+                    self.bind_button.setEnabled(False)
+                except Exception:
+                    self.bind_button.setEnabled(False)
+            else:
+                try:
+                    self.drive_combo.setEditable(False)
+                except Exception:
+                    pass
+                self.bind_button.setEnabled(True)
         except Exception as e:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=str(e), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(str(e))
 
     def __bind(self):
         idx = self.drive_combo.currentIndex()
         if idx < 0:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","usb_no_removable"), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(get_content_name_async("basic_safety_settings","usb_no_removable"))
             return
         text = self.drive_combo.currentText()
-        letter = text[:1]
+        letter = self.drive_combo.currentData()
+        if not isinstance(letter, str) or len(letter) != 1:
+            try:
+                import re
+                m = re.search(r"\(([A-Za-z]):\)", text)
+                if m:
+                    letter = m.group(1).upper()
+            except Exception:
+                pass
+        if not isinstance(letter, str) or len(letter) != 1:
+            self._notify_error(get_content_name_async("basic_safety_settings","usb_no_removable"))
+            return
         try:
+            # 允许来自USB设备的逻辑盘（包括部分显示为固定盘的外置硬盘）
             serial = get_volume_serial(letter)
-            bind(serial)
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=f"{get_content_name_async('basic_safety_settings','usb_bind_success')}: {text}", duration=3000)
-            show_notification(NotificationType.SUCCESS, config, parent=self)
+            if not serial or serial == "00000000":
+                raise RuntimeError(get_content_name_async("basic_safety_settings","usb_no_removable"))
+            require_key = bool(self.require_key_checkbox.isChecked())
+            key_value = None
+            if require_key:
+                try:
+                    from app.common.safety.usb import write_key_file
+                    try:
+                        remove_key_file(letter)
+                    except Exception:
+                        pass
+                    key_value = os.urandom(16).hex()
+                    ok = write_key_file(letter, key_value)
+                    if not ok:
+                        raise RuntimeError(get_content_name_async("basic_safety_settings","usb_no_removable"))
+                except Exception as e:
+                    raise RuntimeError(str(e))
+            display_name = get_volume_label(letter)
+            bind_with_options(serial, require_key_file=require_key, key_value=key_value, name=display_name)
+            logger.debug(f"绑定设备成功：{letter}:")
+            self._notify_success(f"{get_content_name_async('basic_safety_settings','usb_bind_success')}: {text}")
         except Exception as e:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=str(e), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(str(e))
 
 
     def __cancel(self):

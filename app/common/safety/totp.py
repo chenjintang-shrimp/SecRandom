@@ -1,7 +1,22 @@
 import json
 import pyotp
+from loguru import logger
 
 from app.tools.path_utils import get_config_path, get_settings_path, ensure_dir, open_file, file_exists
+from app.tools.secure_store import read_secrets, write_secrets
+import hashlib
+import base64
+import zlib
+import platform
+import ctypes
+import uuid
+try:
+    from Cryptodome.Cipher import AES
+except Exception:
+    try:
+        from Crypto.Cipher import AES
+    except Exception:
+        AES = None
 
 def _secrets_path():
     return get_settings_path("secrets.json")
@@ -10,25 +25,17 @@ def _legacy_path():
     return get_config_path("security", "secrets.json")
 
 def _read():
-    p = _secrets_path()
-    if file_exists(p):
-        with open_file(p, "r", encoding="utf-8") as f:
-            return json.load(f)
-    lp = _legacy_path()
-    if file_exists(lp):
-        with open_file(lp, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+    return read_secrets()
 
 def _write(d):
-    ensure_dir(_secrets_path().parent)
-    with open_file(_secrets_path(), "w", encoding="utf-8") as f:
-        json.dump(d, f, ensure_ascii=False, indent=4)
+    write_secrets(d)
 
 def is_configured():
     d = _read()
     rec = d.get("totp")
-    return isinstance(rec, dict) and bool(rec.get("secret"))
+    ok = isinstance(rec, dict) and bool(rec.get("secret"))
+    logger.debug(f"TOTP已配置：{ok}")
+    return ok
 
 def generate_secret():
     return pyotp.random_base32()
@@ -40,6 +47,7 @@ def set_totp(secret: str | None, issuer: str = "SecRandom", account: str = "user
     d["totp"] = {"secret": secret, "issuer": issuer, "account": account}
     _write(d)
     totp = pyotp.TOTP(secret)
+    logger.debug("TOTP设置已保存")
     return totp.provisioning_uri(name=account, issuer_name=issuer)
 
 def verify(code: str, window: int = 1) -> bool:
@@ -52,6 +60,11 @@ def verify(code: str, window: int = 1) -> bool:
         return False
     totp = pyotp.TOTP(secret)
     try:
-        return bool(totp.verify(code, valid_window=window))
+        ok = bool(totp.verify(code, valid_window=window))
+        logger.debug(f"TOTP验证结果：{ok}")
+        return ok
     except Exception:
+        logger.warning("TOTP验证异常")
         return False
+
+# 使用 secure_store 统一读写

@@ -7,6 +7,8 @@
 """
 
 import json
+import platform
+import ctypes
 from loguru import logger
 
 from app.tools.variable import *
@@ -58,6 +60,13 @@ def manage_settings_file():
     try:
         settings_file = get_settings_path()
         ensure_dir(settings_file.parent)
+        try:
+            if platform.system() == "Windows":
+                FILE_ATTRIBUTE_HIDDEN = 0x2
+                FILE_ATTRIBUTE_SYSTEM = 0x4
+                ctypes.windll.kernel32.SetFileAttributesW(str(settings_file.parent), FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)
+        except Exception:
+            pass
 
         default_settings = get_default_settings()
 

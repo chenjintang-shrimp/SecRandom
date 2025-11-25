@@ -29,12 +29,12 @@ roll_call_notification_settings = {
         "call_notification_service": {
             "name": "调用通知服务",
             "description": "启用后调用系统通知服务发送点名结果",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "animation": {
             "name": "动画效果",
             "description": "控制点名通知窗口动画效果显示",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "floating_window_enabled_monitor": {
             "name": "显示器选择",
@@ -96,7 +96,7 @@ quick_draw_notification_settings = {
         "animation": {
             "name": "动画",
             "description": "设置闪抽通知窗口显示动画效果",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "floating_window_enabled_monitor": {
             "name": "选择闪抽通知显示的显示器",
@@ -158,7 +158,7 @@ instant_draw_notification_settings = {
         "animation": {
             "name": "动画",
             "description": "设置即抽通知窗口显示动画效果",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "floating_window_enabled_monitor": {
             "name": "选择即抽通知显示的显示器",
@@ -214,12 +214,12 @@ custom_draw_notification_settings = {
         "call_notification_service": {
             "name": "调用通知服务",
             "description": "是否调用系统通知服务发送自定义抽取结果",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "animation": {
             "name": "动画",
             "description": "设置自定义抽取通知窗口显示动画效果",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "floating_window_enabled_monitor": {
             "name": "选择自定义抽取通知显示的显示器",
@@ -281,12 +281,12 @@ lottery_notification_settings = {
         "call_notification_service": {
             "name": "调用通知服务",
             "description": "是否调用系统通知服务发送抽奖结果",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "animation": {
             "name": "动画",
             "description": "设置抽奖通知窗口显示动画效果",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "floating_window_enabled_monitor": {
             "name": "选择抽奖通知显示的显示器",

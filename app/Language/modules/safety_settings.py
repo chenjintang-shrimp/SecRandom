@@ -32,7 +32,7 @@ basic_safety_settings = {
         "safety_switch": {
             "name": "安全开关",
             "description": "启用后所有安全操作都需要验证密码",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "set_password": {
             "name": "设置/修改密码",
@@ -43,6 +43,7 @@ basic_safety_settings = {
             "description": "长度≥8，且至少包含字母、数字、特殊字符中的任意两类（推荐三类）",
         },
         "current_password": {"name": "当前密码"},
+        "password_input_placeholder": {"name": "输入密码进行校验"},
         "new_password": {"name": "新密码"},
         "confirm_password": {"name": "确认新密码"},
         "password_strength_title": {"name": "密码强度"},
@@ -65,7 +66,7 @@ basic_safety_settings = {
         "totp_switch": {
             "name": "TOTP验证",
             "description": "启用后可在安全操作中使用TOTP动态口令",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "set_totp": {"name": "设置TOTP", "description": "配置TOTP动态口令验证"},
         "generate_totp_secret": {"name": "生成密钥"},
@@ -83,7 +84,7 @@ basic_safety_settings = {
         "usb_switch": {
             "name": "U盘验证",
             "description": "启用后可在安全操作中使用U盘验证",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "bind_usb": {"name": "绑定U盘", "description": "绑定用于验证的U盘设备"},
         "unbind_usb": {"name": "解绑U盘", "description": "解除U盘设备绑定"},
@@ -93,9 +94,13 @@ basic_safety_settings = {
         "usb_no_removable": {"name": "未检测到可移动盘"},
         "usb_bind_success": {"name": "已绑定 U盘"},
         "usb_unbind_all_success": {"name": "已解绑全部 U盘"},
+        "usb_require_key_file": {"name": "需要 .key 文件验证"},
+        "totp_secret_generated": {"name": "已生成密钥，请完成验证后再保存"},
         "error_set_password_first": {"name": "请先设置密码"},
         "error_set_totp_first": {"name": "请先设置TOTP"},
         "error_bind_usb_first": {"name": "请先绑定U盘"},
+        "verify_in_progress": {"name": "正在验证，请稍候"},
+        "verify_failed_generic": {"name": "验证未通过，请检查输入"},
         "usb_unbind_selected": {"name": "解绑选中"},
         "usb_unbind_selected_success": {"name": "已解绑选中 U盘"},
         "usb_select_bound_hint": {"name": "请选择一个已绑定设备"},
@@ -105,17 +110,42 @@ basic_safety_settings = {
         "show_hide_floating_window_switch": {
             "name": "显示/隐藏浮窗验证",
             "description": "启用后显示或隐藏浮窗时需要安全验证",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "restart_switch": {
             "name": "重启验证",
             "description": "启用后重启软件时需要安全验证",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "exit_switch": {
             "name": "退出验证",
             "description": "启用后退出软件时需要安全验证",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "open_settings_switch": {
+            "name": "打开设置验证",
+            "description": "启用后打开设置窗口时需要安全验证",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "diagnostic_export_switch": {
+            "name": "诊断数据导出验证",
+            "description": "启用后导出诊断数据前需要安全验证",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "data_export_switch": {
+            "name": "数据导出验证",
+            "description": "启用后导出所有数据前需要安全验证",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "import_overwrite_switch": {
+            "name": "导入覆盖验证",
+            "description": "启用后导入时覆盖已存在文件需验证",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "import_version_mismatch_switch": {
+            "name": "版本不匹配导入验证",
+            "description": "启用后导入版本不匹配时需验证",
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
     }
 }

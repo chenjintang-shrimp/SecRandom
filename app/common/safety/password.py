@@ -3,8 +3,23 @@ import os
 import base64
 import hmac
 import hashlib
+from loguru import logger
 
 from app.tools.path_utils import get_config_path, get_settings_path, ensure_dir, open_file, file_exists
+from app.tools.secure_store import read_secrets, write_secrets
+import hashlib
+import base64
+import zlib
+import platform
+import ctypes
+import uuid
+try:
+    from Cryptodome.Cipher import AES
+except Exception:
+    try:
+        from Crypto.Cipher import AES
+    except Exception:
+        AES = None
 
 def _secrets_path():
     return get_settings_path("secrets.json")
@@ -13,25 +28,17 @@ def _legacy_path():
     return get_config_path("security", "secrets.json")
 
 def _read():
-    p = _secrets_path()
-    if file_exists(p):
-        with open_file(p, "r", encoding="utf-8") as f:
-            return json.load(f)
-    lp = _legacy_path()
-    if file_exists(lp):
-        with open_file(lp, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
+    return read_secrets()
 
 def _write(d):
-    ensure_dir(_secrets_path().parent)
-    with open_file(_secrets_path(), "w", encoding="utf-8") as f:
-        json.dump(d, f, ensure_ascii=False, indent=4)
+    write_secrets(d)
 
 def is_configured():
     d = _read()
     rec = d.get("password")
-    return isinstance(rec, dict) and bool(rec.get("hash")) and bool(rec.get("salt"))
+    ok = isinstance(rec, dict) and bool(rec.get("hash")) and bool(rec.get("salt"))
+    logger.debug(f"密码已配置：{ok}")
+    return ok
 
 def set_password(plain: str):
     salt = os.urandom(16)
@@ -46,6 +53,7 @@ def set_password(plain: str):
     d = _read()
     d["password"] = rec
     _write(d)
+    logger.debug("密码设置已保存")
 
 def verify_password(plain: str) -> bool:
     d = _read()
@@ -59,10 +67,15 @@ def verify_password(plain: str) -> bool:
     except Exception:
         return False
     dk = hashlib.pbkdf2_hmac("sha256", plain.encode("utf-8"), salt, iterations)
-    return hmac.compare_digest(dk, expected)
+    ok = hmac.compare_digest(dk, expected)
+    logger.debug(f"密码验证结果：{ok}")
+    return ok
 
 def clear_password():
     d = _read()
     if "password" in d:
         del d["password"]
     _write(d)
+    logger.debug("已清除密码配置")
+
+# 使用 secure_store 统一读写

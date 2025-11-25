@@ -2,11 +2,12 @@ from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 from qfluentwidgets import *
+from loguru import logger
 
-from app.tools.config import *
+from app.tools.settings_access import update_settings
 from app.Language.obtain_language import *
 from app.tools.personalised import *
-from app.common.safety.usb import get_bound_serials, is_serial_connected, unbind
+from app.common.safety.usb import get_bound_serials, is_serial_connected, unbind, get_bindings, get_serial_volume_label, remove_key_file_for_serial
 
 
 class UnbindUsbWindow(QWidget):
@@ -62,46 +63,120 @@ class UnbindUsbWindow(QWidget):
         self.unbind_selected_button.clicked.connect(self.__unbind_selected)
         self.unbind_all_button.clicked.connect(self.__unbind_all)
         self.close_button.clicked.connect(self.__cancel)
+    def _notify_error(self, text: str, duration: int = 3000):
+        try:
+            InfoBar.error(
+                title=get_content_name_async("basic_safety_settings","title"),
+                content=text,
+                position=InfoBarPosition.TOP,
+                duration=duration,
+                parent=self,
+            )
+        except Exception:
+            pass
+    def _notify_success(self, text: str, duration: int = 3000):
+        try:
+            InfoBar.success(
+                title=get_content_name_async("basic_safety_settings","title"),
+                content=text,
+                position=InfoBarPosition.TOP,
+                duration=duration,
+                parent=self,
+            )
+        except Exception:
+            pass
 
     def __refresh(self):
         self.bound_list.clear()
         try:
-            serials = get_bound_serials()
-            for s in serials:
-                connected = is_serial_connected(s)
-                suffix = " (Connected)" if connected else " (Disconnected)"
-                item = QListWidgetItem(f"{s}{suffix}")
-                self.bound_list.addItem(item)
+            bindings = get_bindings()
+            if bindings:
+                for b in bindings:
+                    s = b.get("serial", "")
+                    connected = is_serial_connected(s)
+                    name = b.get("name") or get_serial_volume_label(s) or ""
+                    suffix = " (Connected)" if connected else " (Disconnected)"
+                    item = QListWidgetItem(f"{name} {s}{suffix}")
+                    try:
+                        item.setData(Qt.UserRole, s)
+                    except Exception:
+                        pass
+                    self.bound_list.addItem(item)
+                logger.debug(f"已加载绑定设备数量：{len(bindings)}")
+            else:
+                serials = get_bound_serials()
+                for s in serials:
+                    connected = is_serial_connected(s)
+                    name = get_serial_volume_label(s) or ""
+                    suffix = " (Connected)" if connected else " (Disconnected)"
+                    item = QListWidgetItem(f"{name} {s}{suffix}")
+                    try:
+                        item.setData(Qt.UserRole, s)
+                    except Exception:
+                        pass
+                    self.bound_list.addItem(item)
+                logger.debug(f"已加载旧绑定序列数量：{len(serials)}")
         except Exception as e:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=str(e), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(str(e))
 
     def __unbind_selected(self):
         item = self.bound_list.currentItem()
         if item is None:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","usb_select_bound_hint"), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(get_content_name_async("basic_safety_settings","usb_select_bound_hint"))
             return
         text = item.text()
-        serial = text.split(" ")[0]
+        try:
+            serial = item.data(Qt.UserRole)
+        except Exception:
+            serial = None
+        if not serial:
+            # 回退解析：取最后一个非状态片段，去掉括号内容
+            try:
+                import re
+                m = re.search(r"\s([A-Z0-9\-\{\}\\?]+)(?:\s\(|$)", text)
+                serial = m.group(1) if m else None
+            except Exception:
+                serial = None
+        if not serial:
+            self._notify_error(get_content_name_async("basic_safety_settings","usb_select_bound_hint"))
+            return
         try:
             unbind(serial)
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","usb_unbind_selected_success"), duration=3000)
-            show_notification(NotificationType.SUCCESS, config, parent=self)
+            try:
+                remove_key_file_for_serial(serial)
+            except Exception:
+                pass
+            logger.debug("解绑选中设备成功")
+            self._notify_success(get_content_name_async("basic_safety_settings","usb_unbind_selected_success"))
+            try:
+                # 若所有绑定已清空，自动关闭开关
+                if not get_bindings() and not get_bound_serials():
+                    update_settings("basic_safety_settings", "usb_switch", False)
+            except Exception:
+                pass
             self.__refresh()
         except Exception as e:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=str(e), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(str(e))
 
     def __unbind_all(self):
         try:
+            # 删除所有绑定并清理所有匹配的.key
+            serials = get_bound_serials()
             unbind(None)
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","usb_unbind_all_success"), duration=3000)
-            show_notification(NotificationType.SUCCESS, config, parent=self)
+            try:
+                for s in serials:
+                    remove_key_file_for_serial(s)
+            except Exception:
+                pass
+            logger.debug("解绑全部设备成功")
+            self._notify_success(get_content_name_async("basic_safety_settings","usb_unbind_all_success"))
+            try:
+                update_settings("basic_safety_settings", "usb_switch", False)
+            except Exception:
+                pass
             self.__refresh()
         except Exception as e:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=str(e), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(str(e))
 
     def __cancel(self):
         parent = self.parent()
@@ -113,4 +188,3 @@ class UnbindUsbWindow(QWidget):
 
     def closeEvent(self, event):
         event.accept()
-

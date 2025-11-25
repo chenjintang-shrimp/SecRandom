@@ -2,8 +2,8 @@ from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 from qfluentwidgets import *
+from loguru import logger
 
-from app.tools.config import *
 from app.Language.obtain_language import *
 from app.tools.personalised import *
 from app.common.safety.totp import is_configured, generate_secret, set_totp
@@ -73,6 +73,30 @@ class SetTotpWindow(QWidget):
         self.save_button.clicked.connect(self.__save)
         self.cancel_button.clicked.connect(self.__cancel)
 
+    def _notify_error(self, text: str, duration: int = 3000):
+        try:
+            InfoBar.error(
+                title=get_content_name_async("basic_safety_settings","title"),
+                content=text,
+                position=InfoBarPosition.TOP,
+                duration=duration,
+                parent=self,
+            )
+        except Exception:
+            pass
+
+    def _notify_success(self, text: str, duration: int = 3000):
+        try:
+            InfoBar.success(
+                title=get_content_name_async("basic_safety_settings","title"),
+                content=text,
+                position=InfoBarPosition.TOP,
+                duration=duration,
+                parent=self,
+            )
+        except Exception:
+            pass
+
     def __generate(self):
         try:
             sec = generate_secret()
@@ -95,45 +119,40 @@ class SetTotpWindow(QWidget):
                 self.qr_label.setPixmap(scaled)
             except Exception:
                 self.qr_label.setText(get_content_name_async("basic_safety_settings","totp_qr_unavailable"))
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","totp_generated_saved"), duration=3000)
-            show_notification(NotificationType.SUCCESS, config, parent=self)
+            logger.debug("已生成TOTP密钥与二维码")
+            self._notify_success(get_content_name_async("basic_safety_settings","totp_secret_generated"))
         except Exception as e:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","totp_generated_error") + f": {str(e)}", duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(get_content_name_async("basic_safety_settings","totp_generated_error") + f": {str(e)}")
 
     def __verify(self):
         code = self.code_edit.text() or ""
         if not code:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","totp_code_invalid"), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(get_content_name_async("basic_safety_settings","totp_code_invalid"))
             return
         try:
             import pyotp
             ok = pyotp.TOTP(self.secret).verify(code, valid_window=1)
         except Exception:
             ok = False
+        logger.debug(f"TOTP输入验证结果：{ok}")
         if ok:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","totp_code_valid"), duration=3000)
-            show_notification(NotificationType.SUCCESS, config, parent=self)
+            self._notify_success(get_content_name_async("basic_safety_settings","totp_code_valid"))
             self._verified = True
         else:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","totp_code_invalid"), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(get_content_name_async("basic_safety_settings","totp_code_invalid"))
 
     def __save(self):
         if not self._verified:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","totp_verify_before_save"), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(get_content_name_async("basic_safety_settings","totp_verify_before_save"))
             return
         try:
             set_totp(self.secret)
             self.saved = True
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","totp_save_success"), duration=2000)
-            show_notification(NotificationType.SUCCESS, config, parent=self)
+            logger.debug("已保存TOTP配置（验证通过）")
+            self._notify_success(get_content_name_async("basic_safety_settings","totp_save_success"), duration=2000)
             self.__cancel()
         except Exception as e:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=str(e), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(str(e))
 
     def __cancel(self):
         parent = self.parent()

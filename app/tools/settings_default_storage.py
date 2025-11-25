@@ -1,3 +1,4 @@
+from turtle import Turtle
 from app.tools.variable import *
 
 # ==================================================
@@ -334,6 +335,11 @@ DEFAULT_SETTINGS = {
         "show_hide_floating_window_switch": {"default_value": False},
         "restart_switch": {"default_value": False},
         "exit_switch": {"default_value": False},
+        "open_settings_switch": {"default_value": True},
+        "diagnostic_export_switch": {"default_value": True},
+        "data_export_switch": {"default_value": True},
+        "import_overwrite_switch": {"default_value": True},
+        "import_version_mismatch_switch": {"default_value": False},
     },
     "advanced_safety_settings": {
         "title": {"default_value": None},

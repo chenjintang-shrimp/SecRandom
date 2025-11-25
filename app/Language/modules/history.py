@@ -20,7 +20,7 @@ history_management = {
         "show_roll_call_history": {
             "name": "启用点名历史记录",
             "description": "控制是否启用点名历史记录功能",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "select_class_name": {
             "name": "选择班级",
@@ -34,7 +34,7 @@ history_management = {
         "show_lottery_history": {
             "name": "启用抽奖历史记录",
             "description": "控制是否启用抽奖历史记录功能",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "select_pool_name": {
             "name": "选择奖池",

@@ -3,7 +3,6 @@ from PySide6.QtGui import *
 from PySide6.QtCore import *
 from qfluentwidgets import *
 
-from app.tools.config import *
 from app.Language.obtain_language import *
 from app.tools.personalised import *
 from app.common.safety.password import is_configured, set_password, verify_password, clear_password
@@ -84,6 +83,30 @@ class SetPasswordWindow(QWidget):
         self.new_edit.textChanged.connect(self.__update_strength)
         self.remove_button.clicked.connect(self.__remove_password)
 
+    def _notify_error(self, text: str, duration: int = 3000):
+        try:
+            InfoBar.error(
+                title=get_content_name_async("basic_safety_settings","title"),
+                content=text,
+                position=InfoBarPosition.TOP,
+                duration=duration,
+                parent=self,
+            )
+        except Exception:
+            pass
+
+    def _notify_success(self, text: str, duration: int = 3000):
+        try:
+            InfoBar.success(
+                title=get_content_name_async("basic_safety_settings","title"),
+                content=text,
+                position=InfoBarPosition.TOP,
+                duration=duration,
+                parent=self,
+            )
+        except Exception:
+            pass
+
     def __update_strength(self):
         t = self.new_edit.text() or ""
         score = 0
@@ -111,42 +134,35 @@ class SetPasswordWindow(QWidget):
             if configured:
                 cur = self.current_edit.text() or ""
                 if not cur or not verify_password(cur):
-                    config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","error_current_password"), duration=3000)
-                    show_notification(NotificationType.ERROR, config, parent=self)
+                    self._notify_error(get_content_name_async("basic_safety_settings","error_current_password"))
                     return
             newp = self.new_edit.text() or ""
             conf = self.confirm_edit.text() or ""
             if not newp or not conf or newp != conf:
-                config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","error_mismatch"), duration=3000)
-                show_notification(NotificationType.ERROR, config, parent=self)
+                self._notify_error(get_content_name_async("basic_safety_settings","error_mismatch"))
                 return
             c1 = len(newp) >= 8
             c2 = any(c.isdigit() for c in newp)
             c3 = any(c.isalpha() for c in newp)
             c4 = any(c in "!@#$%^&*()-_=+[]{};:'\",.<>/?|`~" for c in newp)
             if sum([c1, c2, c3, c4]) < 3:
-                config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","error_strength_insufficient"), duration=3000)
-                show_notification(NotificationType.ERROR, config, parent=self)
+                self._notify_error(get_content_name_async("basic_safety_settings","error_strength_insufficient"))
                 return
             set_password(newp)
             self.saved = True
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","success_updated"), duration=3000)
-            show_notification(NotificationType.SUCCESS, config, parent=self)
+            self._notify_success(get_content_name_async("basic_safety_settings","success_updated"))
             self.__cancel()
         except Exception as e:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","error_title"), content=str(e), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(str(e))
 
     def __remove_password(self):
         try:
             if not is_configured():
-                config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","error_current_password"), duration=3000)
-                show_notification(NotificationType.ERROR, config, parent=self)
+                self._notify_error(get_content_name_async("basic_safety_settings","error_current_password"))
                 return
             cur = self.current_edit.text() or ""
             if not cur or not verify_password(cur):
-                config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","error_current_password"), duration=3000)
-                show_notification(NotificationType.ERROR, config, parent=self)
+                self._notify_error(get_content_name_async("basic_safety_settings","error_current_password"))
                 return
             dialog = MessageBox(
                 get_content_name_async("basic_safety_settings","remove_password_confirm_title"),
@@ -163,8 +179,7 @@ class SetPasswordWindow(QWidget):
                 update_settings("basic_safety_settings","show_hide_floating_window_switch", False)
                 update_settings("basic_safety_settings","restart_switch", False)
                 update_settings("basic_safety_settings","exit_switch", False)
-                config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=get_content_name_async("basic_safety_settings","remove_password_success"), duration=3000)
-                show_notification(NotificationType.SUCCESS, config, parent=self)
+                self._notify_success(get_content_name_async("basic_safety_settings","remove_password_success"))
                 self.current_label.setVisible(False)
                 self.current_edit.setVisible(False)
                 self.new_edit.clear()
@@ -172,8 +187,7 @@ class SetPasswordWindow(QWidget):
                 self.remove_button.setVisible(False)
                 self.__cancel()
         except Exception as e:
-            config = NotificationConfig(title=get_content_name_async("basic_safety_settings","title"), content=str(e), duration=3000)
-            show_notification(NotificationType.ERROR, config, parent=self)
+            self._notify_error(str(e))
 
     def __cancel(self):
         parent = self.parent()

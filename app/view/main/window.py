@@ -17,6 +17,7 @@ from app.tools.path_utils import get_app_root
 from app.tools.personalised import get_theme_icon
 from app.Language.obtain_language import get_content_name_async
 from app.Language.obtain_language import readme_settings_async, update_settings
+from app.common.safety.verify_ops import require_and_run
 from app.page_building.main_window_page import roll_call_page, lottery_page
 from app.view.tray.tray import Tray
 
@@ -180,7 +181,7 @@ class MainWindow(MSFluentWindow):
             "设置",
             position=settings_position,
         )
-        settings_item.clicked.connect(lambda: self.showSettingsRequested.emit())
+        settings_item.clicked.connect(lambda: require_and_run("open_settings", self, self.showSettingsRequested.emit))
         settings_item.clicked.connect(lambda: self.switchTo(self.roll_call_page))
 
     def closeEvent(self, event):

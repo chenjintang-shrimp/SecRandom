@@ -57,7 +57,7 @@ floating_window_management = {
         "floating_window_stick_to_edge": {
             "name": "贴边功能",
             "description": "控制浮动窗口是否自动贴边",
-            "switchbutton_name": {"enable": "启用", "disable": "禁用"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "floating_window_stick_to_edge_recover_seconds": {
             "name": "贴边收纳时间",

@@ -55,7 +55,7 @@ DEFAULT_FILE_ENCODING = "utf-8"  # 默认文件编码
 # ==================== 路径相关常量 ====================
 # 日志路径
 LOG_DIR = "logs"  # 日志目录名
-LOG_FILENAME_FORMAT = "SecRandom_{time:YYYY-MM-DD-HH-mm-ss}.log"  # 日志文件名格式
+LOG_FILENAME_FORMAT = "SecRandom_{time:YYYY-MM-DD}.log"  # 日志文件名格式
 
 # 资源文件夹路径
 STUDENT_IMAGE_FOLDER = "images/student_images"  # 学生图片文件夹名
