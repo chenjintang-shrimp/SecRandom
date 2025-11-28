@@ -167,6 +167,168 @@ class advanced_fair_draw(GroupHeaderCardWidget):
             )
         )
 
+        # 启用抽取后屏蔽
+        self.shield_enabled_switch = SwitchButton()
+        self.shield_enabled_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "advanced_settings", "shield_enabled", "disable"
+            )
+        )
+        self.shield_enabled_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "advanced_settings", "shield_enabled", "enable"
+            )
+        )
+        self.shield_enabled_switch.setChecked(
+            readme_settings_async("advanced_settings", "shield_enabled")
+        )
+        self.shield_enabled_switch.checkedChanged.connect(
+            lambda: update_settings(
+                "advanced_settings",
+                "shield_enabled",
+                self.shield_enabled_switch.isChecked(),
+            )
+        )
+
+        # 屏蔽时间
+        self.shield_time_spinbox = DoubleSpinBox()
+        self.shield_time_spinbox.setFixedWidth(WIDTH_SPINBOX)
+        self.shield_time_spinbox.setRange(0.1, 60.00)
+        self.shield_time_spinbox.setValue(
+            readme_settings_async("advanced_settings", "shield_time")
+        )
+        self.shield_time_spinbox.valueChanged.connect(
+            lambda: update_settings(
+                "advanced_settings", "shield_time", self.shield_time_spinbox.value()
+            )
+        )
+
+        # 屏蔽时间单位
+        self.shield_time_unit_combobox = ComboBox()
+        self.shield_time_unit_combobox.setFixedWidth(WIDTH_SPINBOX)
+        self.shield_time_unit_combobox.addItems(
+            get_content_combo_name_async("advanced_settings", "shield_time_unit")
+        )
+        self.shield_time_unit_combobox.setCurrentIndex(
+            readme_settings_async("advanced_settings", "shield_time_unit")
+        )
+        self.shield_time_unit_combobox.currentIndexChanged.connect(
+            lambda: update_settings(
+                "advanced_settings",
+                "shield_time_unit",
+                self.shield_time_unit_combobox.currentIndex(),
+            )
+        )
+
+        # 频率惩罚函数类型
+        self.frequency_function_combobox = ComboBox()
+        self.frequency_function_combobox.setFixedWidth(WIDTH_SPINBOX)
+        self.frequency_function_combobox.addItems(
+            get_content_combo_name_async("advanced_settings", "frequency_function")
+        )
+        self.frequency_function_combobox.setCurrentIndex(
+            readme_settings_async("advanced_settings", "frequency_function")
+        )
+        self.frequency_function_combobox.currentIndexChanged.connect(
+            lambda: update_settings(
+                "advanced_settings",
+                "frequency_function",
+                self.frequency_function_combobox.currentIndex(),
+            )
+        )
+
+        # 频率惩罚权重
+        self.frequency_weight_spinbox = DoubleSpinBox()
+        self.frequency_weight_spinbox.setFixedWidth(WIDTH_SPINBOX)
+        self.frequency_weight_spinbox.setRange(0.01, 5.00)
+        self.frequency_weight_spinbox.setValue(
+            readme_settings_async("advanced_settings", "frequency_weight")
+        )
+        self.frequency_weight_spinbox.valueChanged.connect(
+            lambda: update_settings(
+                "advanced_settings",
+                "frequency_weight",
+                self.frequency_weight_spinbox.value(),
+            )
+        )
+
+        # 小组平衡权重
+        self.group_weight_spinbox = DoubleSpinBox()
+        self.group_weight_spinbox.setFixedWidth(WIDTH_SPINBOX)
+        self.group_weight_spinbox.setRange(0.01, 5.00)
+        self.group_weight_spinbox.setValue(
+            readme_settings_async("advanced_settings", "group_weight")
+        )
+        self.group_weight_spinbox.valueChanged.connect(
+            lambda: update_settings(
+                "advanced_settings", "group_weight", self.group_weight_spinbox.value()
+            )
+        )
+
+        # 性别平衡权重
+        self.gender_weight_spinbox = DoubleSpinBox()
+        self.gender_weight_spinbox.setFixedWidth(WIDTH_SPINBOX)
+        self.gender_weight_spinbox.setRange(0.01, 5.00)
+        self.gender_weight_spinbox.setValue(
+            readme_settings_async("advanced_settings", "gender_weight")
+        )
+        self.gender_weight_spinbox.valueChanged.connect(
+            lambda: update_settings(
+                "advanced_settings", "gender_weight", self.gender_weight_spinbox.value()
+            )
+        )
+
+        # 时间因子权重
+        self.time_weight_spinbox = DoubleSpinBox()
+        self.time_weight_spinbox.setFixedWidth(WIDTH_SPINBOX)
+        self.time_weight_spinbox.setRange(0.01, 5.00)
+        self.time_weight_spinbox.setValue(
+            readme_settings_async("advanced_settings", "time_weight")
+        )
+        self.time_weight_spinbox.valueChanged.connect(
+            lambda: update_settings(
+                "advanced_settings", "time_weight", self.time_weight_spinbox.value()
+            )
+        )
+
+        # 冷启动模式开关
+        self.cold_start_enabled_switch = SwitchButton()
+        self.cold_start_enabled_switch.setOffText(
+            get_content_switchbutton_name_async(
+                "advanced_settings", "cold_start_enabled", "disable"
+            )
+        )
+        self.cold_start_enabled_switch.setOnText(
+            get_content_switchbutton_name_async(
+                "advanced_settings", "cold_start_enabled", "enable"
+            )
+        )
+        self.cold_start_enabled_switch.setChecked(
+            readme_settings_async("advanced_settings", "cold_start_enabled")
+        )
+        self.cold_start_enabled_switch.checkedChanged.connect(
+            lambda: update_settings(
+                "advanced_settings",
+                "cold_start_enabled",
+                self.cold_start_enabled_switch.isChecked(),
+            )
+        )
+
+        # 冷启动轮次
+        self.cold_start_rounds_spinbox = SpinBox()
+        self.cold_start_rounds_spinbox.setFixedWidth(WIDTH_SPINBOX)
+        self.cold_start_rounds_spinbox.setRange(1, 100)
+        self.cold_start_rounds_spinbox.setValue(
+            readme_settings_async("advanced_settings", "cold_start_rounds")
+        )
+        self.cold_start_rounds_spinbox.valueChanged.connect(
+            lambda: update_settings(
+                "advanced_settings",
+                "cold_start_rounds",
+                self.cold_start_rounds_spinbox.value(),
+            )
+        )
+
         # 添加设置项到分组
         self.addGroup(
             get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"),
@@ -209,4 +371,64 @@ class advanced_fair_draw(GroupHeaderCardWidget):
             get_content_name_async("advanced_settings", "max_weight"),
             get_content_description_async("advanced_settings", "max_weight"),
             self.max_weight_spinbox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"),
+            get_content_name_async("advanced_settings", "shield_enabled"),
+            get_content_description_async("advanced_settings", "shield_enabled"),
+            self.shield_enabled_switch,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"),
+            get_content_name_async("advanced_settings", "shield_time"),
+            get_content_description_async("advanced_settings", "shield_time"),
+            self.shield_time_spinbox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"),
+            get_content_name_async("advanced_settings", "shield_time_unit"),
+            get_content_description_async("advanced_settings", "shield_time_unit"),
+            self.shield_time_unit_combobox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"),
+            get_content_name_async("advanced_settings", "frequency_function"),
+            get_content_description_async("advanced_settings", "frequency_function"),
+            self.frequency_function_combobox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"),
+            get_content_name_async("advanced_settings", "frequency_weight"),
+            get_content_description_async("advanced_settings", "frequency_weight"),
+            self.frequency_weight_spinbox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"),
+            get_content_name_async("advanced_settings", "group_weight"),
+            get_content_description_async("advanced_settings", "group_weight"),
+            self.group_weight_spinbox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"),
+            get_content_name_async("advanced_settings", "gender_weight"),
+            get_content_description_async("advanced_settings", "gender_weight"),
+            self.gender_weight_spinbox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"),
+            get_content_name_async("advanced_settings", "time_weight"),
+            get_content_description_async("advanced_settings", "time_weight"),
+            self.time_weight_spinbox,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"),
+            get_content_name_async("advanced_settings", "cold_start_enabled"),
+            get_content_description_async("advanced_settings", "cold_start_enabled"),
+            self.cold_start_enabled_switch,
+        )
+        self.addGroup(
+            get_theme_icon("ic_fluent_document_bullet_list_clock_20_filled"),
+            get_content_name_async("advanced_settings", "cold_start_rounds"),
+            get_content_description_async("advanced_settings", "cold_start_rounds"),
+            self.cold_start_rounds_spinbox,
         )

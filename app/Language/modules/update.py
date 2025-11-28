@@ -28,12 +28,12 @@ update = {
         "update_channel": {
             "name": "更新通道选择",
             "description": "选择软件更新发布通道",
-            "combo_items": ["正式版", "测试版"],
+            "combo_items": ["稳定通道", "测试通道", "发布预览通道"],
         },
         "update_source": {
             "name": "更新源选择",
             "description": "选择软件更新下载来源",
-            "combo_items": ["GitHub"],
+            "combo_items": ["gitHub", "ghfast", "gh-proxy"],
         },
     }
 }

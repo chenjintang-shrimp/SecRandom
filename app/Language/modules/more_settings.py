@@ -42,6 +42,50 @@ advanced_settings = {
             "name": "权重范围最大值",
             "description": "设置每个选项权重最大值",
         },
+        "frequency_function": {
+            "name": "频率惩罚函数",
+            "description": "选择频率惩罚的计算函数类型",
+            "combo_items": ["线性", "平方根", "指数"],
+        },
+        "frequency_weight": {
+            "name": "频率惩罚权重",
+            "description": "调整频率惩罚在总权重中的占比",
+        },
+        "group_weight": {
+            "name": "小组平衡权重",
+            "description": "调整小组平衡在总权重中的占比",
+        },
+        "gender_weight": {
+            "name": "性别平衡权重",
+            "description": "调整性别平衡在总权重中的占比",
+        },
+        "time_weight": {
+            "name": "时间因子权重",
+            "description": "调整时间因子在总权重中的占比",
+        },
+        "cold_start_enabled": {
+            "name": "启用冷启动模式",
+            "description": "新班级或初始阶段使用冷启动模式",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "cold_start_rounds": {
+            "name": "冷启动轮次",
+            "description": "设置冷启动模式的轮次数量",
+        },
+        "shield_enabled": {
+            "name": "启用抽取后屏蔽",
+            "description": "启用后，抽取的学生在指定时间内不会被重复抽取",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "shield_time": {
+            "name": "屏蔽时间",
+            "description": "设置抽取后屏蔽的时间长度",
+        },
+        "shield_time_unit": {
+            "name": "屏蔽时间单位",
+            "description": "选择屏蔽时间的时间单位",
+            "combo_items": ["秒", "分钟", "小时"],
+        },
     }
 }
 

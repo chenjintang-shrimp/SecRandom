@@ -17,6 +17,7 @@ dependencies = [
     "loguru==0.7.3",
     "colorama==0.4.6",
     "packaging==25.0",
+    "pyyaml>=6.0.1",
     # === 数据处理 / 图像 / 文件 ===
     "numpy>=2.0.0",
     "pandas>2.0.3",
