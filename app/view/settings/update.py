@@ -106,10 +106,10 @@ class update(QWidget):
         # 自动下载更新开关
         self.auto_download_switch = SwitchButton()
         self.auto_download_switch.setOffText(
-            get_content_name_async("update", "auto_download", "disable")
+            get_content_switchbutton_name_async("update", "auto_download", "disable")
         )
         self.auto_download_switch.setOnText(
-            get_content_name_async("update", "auto_download", "enable")
+            get_content_switchbutton_name_async("update", "auto_download", "enable")
         )
         auto_download = readme_settings("update", "auto_download")
         self.auto_download_switch.setChecked(auto_download)
@@ -122,10 +122,10 @@ class update(QWidget):
         # 自动安装更新开关
         self.auto_update_switch = SwitchButton()
         self.auto_update_switch.setOffText(
-            get_content_name_async("update", "auto_update", "disable")
+            get_content_switchbutton_name_async("update", "auto_update", "disable")
         )
         self.auto_update_switch.setOnText(
-            get_content_name_async("update", "auto_update", "enable")
+            get_content_switchbutton_name_async("update", "auto_update", "enable")
         )
         auto_update = readme_settings("update", "auto_update")
         self.auto_update_switch.setChecked(auto_update)
@@ -138,10 +138,12 @@ class update(QWidget):
         # 更新通知开关
         self.need_notification_switch = SwitchButton()
         self.need_notification_switch.setOffText(
-            get_content_name_async("update", "need_notification", "disable")
+            get_content_switchbutton_name_async(
+                "update", "need_notification", "disable"
+            )
         )
         self.need_notification_switch.setOnText(
-            get_content_name_async("update", "need_notification", "enable")
+            get_content_switchbutton_name_async("update", "need_notification", "enable")
         )
         need_notification = readme_settings("update", "need_notification")
         self.need_notification_switch.setChecked(need_notification)
