@@ -200,10 +200,16 @@ def get_individual_statistics(
         return 0
     return len(student_history)
 
+
 # ==================================================
 # 保存抽奖历史函数
 # ==================================================
-def save_lottery_history(pool_name: str, selected_students: List[Dict[str, Any]], group_filter: str, gender_filter: str) -> bool:
+def save_lottery_history(
+    pool_name: str,
+    selected_students: List[Dict[str, Any]],
+    group_filter: str,
+    gender_filter: str,
+) -> bool:
     """保存抽奖历史（基于奖池名称）
 
     Args:
@@ -230,21 +236,36 @@ def save_lottery_history(pool_name: str, selected_students: List[Dict[str, Any]]
                 continue
             entry = lotterys.get(name)
             if not isinstance(entry, dict):
-                entry = {"total_count": 0, "rounds_missed": 0, "last_drawn_time": "", "history": []}
+                entry = {
+                    "total_count": 0,
+                    "rounds_missed": 0,
+                    "last_drawn_time": "",
+                    "history": [],
+                }
             entry["total_count"] = int(entry.get("total_count", 0)) + 1
             entry["last_drawn_time"] = now_str
             hist = entry.get("history", [])
             if not isinstance(hist, list):
                 hist = []
-            hist.append({"draw_time": now_str, "draw_group": group_filter, "draw_gender": gender_filter})
+            hist.append(
+                {
+                    "draw_time": now_str,
+                    "draw_group": group_filter,
+                    "draw_gender": gender_filter,
+                }
+            )
             entry["history"] = hist
             lotterys[name] = entry
 
         # 更新统计
         if group_filter:
-            group_stats[group_filter] = int(group_stats.get(group_filter, 0)) + len(selected_students or [])
+            group_stats[group_filter] = int(group_stats.get(group_filter, 0)) + len(
+                selected_students or []
+            )
         if gender_filter:
-            gender_stats[gender_filter] = int(gender_stats.get(gender_filter, 0)) + len(selected_students or [])
+            gender_stats[gender_filter] = int(gender_stats.get(gender_filter, 0)) + len(
+                selected_students or []
+            )
         total_stats = int(total_stats) + len(selected_students or [])
 
         history_data["lotterys"] = lotterys
@@ -747,11 +768,11 @@ def create_table_item(
         # 确保font_size是有效的整数
         if not isinstance(font_size, (int, float)):
             font_size = int(font_size) if str(font_size).isdigit() else 12
-        
+
         font_size = int(font_size)
         if font_size <= 0 or font_size > 200:  # 设置合理的上限
             font_size = 12  # 使用默认字体大小
-            
+
         custom_font = load_custom_font()
         if custom_font:
             item.setFont(QFont(custom_font, font_size))
@@ -761,7 +782,7 @@ def create_table_item(
         custom_font = load_custom_font()
         if custom_font:
             item.setFont(QFont(custom_font, 12))
-            
+
     if is_centered:
         item.setTextAlignment(
             Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignVCenter

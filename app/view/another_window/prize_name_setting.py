@@ -48,7 +48,9 @@ class PrizeNameSettingWindow(QWidget):
         self.main_layout.setSpacing(15)
 
         # 创建标题
-        self.title_label = TitleLabel(get_content_name_async("lottery_name_setting", "title"))
+        self.title_label = TitleLabel(
+            get_content_name_async("lottery_name_setting", "title")
+        )
         self.main_layout.addWidget(self.title_label)
 
         # 创建说明标签
@@ -176,7 +178,9 @@ class PrizeNameSettingWindow(QWidget):
             for name in deleted_prize_names:
                 # 显示删除提示
                 config = NotificationConfig(
-                    title=get_content_name_async("lottery_name_setting", "name_deleted_title"),
+                    title=get_content_name_async(
+                        "lottery_name_setting", "name_deleted_title"
+                    ),
                     content=get_content_name_async(
                         "lottery_name_setting", "name_deleted_message"
                     ).format(name=name),
@@ -196,14 +200,18 @@ class PrizeNameSettingWindow(QWidget):
                 # 显示错误消息
                 config = NotificationConfig(
                     title=get_content_name_async("lottery_name_setting", "error_title"),
-                    content=get_content_name_async("lottery_name_setting", "no_names_error"),
+                    content=get_content_name_async(
+                        "lottery_name_setting", "no_names_error"
+                    ),
                     duration=3000,
                 )
                 show_notification(NotificationType.ERROR, config, parent=self)
                 return
 
             # 分割奖品名称
-            prize_names = [name.strip() for name in prize_names_text.split("\n") if name.strip()]
+            prize_names = [
+                name.strip() for name in prize_names_text.split("\n") if name.strip()
+            ]
 
             # 验证奖品名称
             invalid_prize_names = []
@@ -310,7 +318,9 @@ class PrizeNameSettingWindow(QWidget):
             # 创建确认对话框
             dialog = Dialog(
                 get_content_name_async("lottery_name_setting", "unsaved_changes_title"),
-                get_content_name_async("lottery_name_setting", "unsaved_changes_message"),
+                get_content_name_async(
+                    "lottery_name_setting", "unsaved_changes_message"
+                ),
                 self,
             )
 
@@ -318,7 +328,9 @@ class PrizeNameSettingWindow(QWidget):
                 get_content_name_async("lottery_name_setting", "discard_button")
             )
             dialog.cancelButton.setText(
-                get_content_name_async("lottery_name_setting", "continue_editing_button")
+                get_content_name_async(
+                    "lottery_name_setting", "continue_editing_button"
+                )
             )
 
             # 显示对话框并获取用户选择

@@ -1,15 +1,12 @@
-import json
 import pyotp
 from loguru import logger
 
-from app.tools.path_utils import get_config_path, get_settings_path, ensure_dir, open_file, file_exists
+from app.tools.path_utils import (
+    get_config_path,
+    get_settings_path,
+)
 from app.tools.secure_store import read_secrets, write_secrets
-import hashlib
-import base64
-import zlib
-import platform
-import ctypes
-import uuid
+
 try:
     from Cryptodome.Cipher import AES
 except Exception:
@@ -18,17 +15,22 @@ except Exception:
     except Exception:
         AES = None
 
+
 def _secrets_path():
     return get_settings_path("secrets.json")
+
 
 def _legacy_path():
     return get_config_path("security", "secrets.json")
 
+
 def _read():
     return read_secrets()
 
+
 def _write(d):
     write_secrets(d)
+
 
 def is_configured():
     d = _read()
@@ -37,10 +39,14 @@ def is_configured():
     logger.debug(f"TOTP已配置：{ok}")
     return ok
 
+
 def generate_secret():
     return pyotp.random_base32()
 
-def set_totp(secret: str | None, issuer: str = "SecRandom", account: str = "user") -> str:
+
+def set_totp(
+    secret: str | None, issuer: str = "SecRandom", account: str = "user"
+) -> str:
     if not secret:
         secret = generate_secret()
     d = _read()
@@ -49,6 +55,7 @@ def set_totp(secret: str | None, issuer: str = "SecRandom", account: str = "user
     totp = pyotp.TOTP(secret)
     logger.debug("TOTP设置已保存")
     return totp.provisioning_uri(name=account, issuer_name=issuer)
+
 
 def verify(code: str, window: int = 1) -> bool:
     d = _read()
@@ -66,5 +73,6 @@ def verify(code: str, window: int = 1) -> bool:
     except Exception:
         logger.warning("TOTP验证异常")
         return False
+
 
 # 使用 secure_store 统一读写

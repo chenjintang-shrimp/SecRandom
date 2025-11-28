@@ -43,7 +43,7 @@ history_management = {
         "select_weight": {
             "name": "显示权重",
             "description": "是否在表格中显示权重信息",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "clear_lottery_history": {
             "name": "清除抽奖历史记录",

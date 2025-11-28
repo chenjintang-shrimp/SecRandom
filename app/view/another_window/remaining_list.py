@@ -258,10 +258,16 @@ class RemainingListPage(QWidget):
             pass
 
     def closeEvent(self, event):
+        """窗口关闭事件"""
+        # 停止加载器
         try:
             self.stop_loader()
         except Exception:
             pass
+        # 清理定时器
+        if hasattr(self, "_resize_timer") and self._resize_timer is not None:
+            self._resize_timer.stop()
+            self._resize_timer = None
         super().closeEvent(event)
 
     def init_ui(self):
@@ -1263,12 +1269,3 @@ class RemainingListPage(QWidget):
                         )
         except RuntimeError as e:
             logger.error(f"延迟布局更新错误: {e}")
-
-    def closeEvent(self, event):
-        """窗口关闭事件"""
-        # 清理定时器
-        if self._resize_timer is not None:
-            self._resize_timer.stop()
-            self._resize_timer = None
-
-        super().closeEvent(event)

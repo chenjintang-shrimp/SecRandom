@@ -12,6 +12,7 @@ from app.view.main.lottery import Lottery
 
 class roll_call_page(PageTemplate):
     """创建班级点名页面"""
+
     def __init__(self, parent: QFrame = None):
         super().__init__(content_widget_class=roll_call, parent=parent)
         self.roll_call_widget = None
@@ -49,6 +50,7 @@ class roll_call_page(PageTemplate):
 
 class lottery_page(PageTemplate):
     """创建班级点名页面"""
+
     def __init__(self, parent: QFrame = None):
         super().__init__(content_widget_class=Lottery, parent=parent)
         self.lottery_widget = None

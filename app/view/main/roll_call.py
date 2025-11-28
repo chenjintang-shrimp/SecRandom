@@ -202,7 +202,7 @@ class roll_call(QWidget):
             self.control_layout,
             self.reset_button,
             "page_management",
-            "roll_call_reset_button"
+            "roll_call_reset_button",
         )
 
         self.add_control_widget_if_enabled(
@@ -220,24 +220,21 @@ class roll_call(QWidget):
         )
 
         self.add_control_widget_if_enabled(
-            self.control_layout,
-            self.list_combobox,
-            "page_management",
-            "roll_call_list"
+            self.control_layout, self.list_combobox, "page_management", "roll_call_list"
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.range_combobox,
             "page_management",
-            "roll_call_range"
+            "roll_call_range",
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.gender_combobox,
             "page_management",
-            "roll_call_gender"
+            "roll_call_gender",
         )
 
         self.add_control_widget_if_enabled(
@@ -909,13 +906,13 @@ class roll_call(QWidget):
         """更新UI控件的可见性"""
         # 清除现有布局中的控件
         self.clearLayout(self.control_layout)
-        
+
         # 根据页面管理设置决定是否添加控件
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.reset_button,
             "page_management",
-            "roll_call_reset_button"
+            "roll_call_reset_button",
         )
 
         self.add_control_widget_if_enabled(
@@ -933,26 +930,23 @@ class roll_call(QWidget):
         )
 
         self.add_control_widget_if_enabled(
-            self.control_layout,
-            self.list_combobox,
-            "page_management",
-            "roll_call_list"
+            self.control_layout, self.list_combobox, "page_management", "roll_call_list"
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.range_combobox,
             "page_management",
-            "roll_call_range"
+            "roll_call_range",
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.gender_combobox,
             "page_management",
-            "roll_call_gender"
+            "roll_call_gender",
         )
-        
+
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.remaining_button,
@@ -981,11 +975,11 @@ class roll_call(QWidget):
             # 确保font_size是有效的整数
             if not isinstance(font_size, (int, float)):
                 font_size = int(font_size) if str(font_size).isdigit() else 12
-            
+
             font_size = int(font_size)
             if font_size <= 0:
                 font_size = 12  # 使用默认字体大小
-                
+
             custom_font = load_custom_font()
             if custom_font:
                 widget.setFont(QFont(custom_font, font_size))

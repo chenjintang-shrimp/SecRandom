@@ -1,18 +1,18 @@
-import json
-import string
 import ctypes
-from pathlib import Path
 import os
 import platform
 import warnings
 from loguru import logger
 
-from app.tools.path_utils import get_config_path, get_settings_path, ensure_dir, open_file, file_exists
+from app.tools.path_utils import (
+    get_config_path,
+    get_settings_path,
+)
 from app.tools.secure_store import read_secrets, write_secrets
 import hashlib
 import base64
-import zlib
 import uuid
+
 try:
     from Cryptodome.Cipher import AES  # pycryptodome
 except Exception:
@@ -21,17 +21,22 @@ except Exception:
     except Exception:
         AES = None
 
+
 def _secrets_path():
     return get_settings_path("secrets.json")
+
 
 def _legacy_path():
     return get_config_path("security", "secrets.json")
 
+
 def _read():
     return read_secrets()
 
+
 def _write(d):
     write_secrets(d)
+
 
 def _get_logical_drive_strings() -> list:
     if platform.system() == "Windows":
@@ -50,6 +55,7 @@ def _get_logical_drive_strings() -> list:
     else:  # Linux
         try:
             import glob
+
             # 在 Linux 上，可移动设备通常挂载在 /media 或 /run/media 下
             drives = []
             for mount_point in ["/media/*", "/run/media/*/*"]:
@@ -57,6 +63,7 @@ def _get_logical_drive_strings() -> list:
             return drives
         except Exception:
             return []
+
 
 def _candidate_letters() -> list:
     if platform.system() == "Windows":
@@ -77,7 +84,9 @@ def _candidate_letters() -> list:
                     letters.append(root[0])
         except Exception:
             pass
-        out = sorted(list(set([ch for ch in letters if isinstance(ch, str) and len(ch) == 1])))
+        out = sorted(
+            list({ch for ch in letters if isinstance(ch, str) and len(ch) == 1})
+        )
         logger.debug(f"候选盘符数量：{len(out)}")
         return out
     else:  # Linux
@@ -88,6 +97,7 @@ def _candidate_letters() -> list:
             return drives
         except Exception:
             return []
+
 
 def list_removable_drives():
     if platform.system() == "Windows":
@@ -116,6 +126,7 @@ def list_removable_drives():
         try:
             import glob
             import os
+
             removable_drives = []
             # 在 Linux 上，可移动设备通常挂载在 /media 或 /run/media 下
             for mount_pattern in ["/media/*", "/run/media/*/*"]:
@@ -126,6 +137,7 @@ def list_removable_drives():
             return removable_drives
         except Exception:
             return []
+
 
 def list_usb_drive_letters_wmi() -> list:
     if platform.system() != "Windows":
@@ -178,6 +190,7 @@ def is_drive_removable(letter_or_path: str) -> bool:
     else:  # Linux
         try:
             import os
+
             # 在 Linux 上，检查是否为挂载点且是可移动设备
             if os.path.ismount(letter_or_path):
                 # 检查设备是否为 USB 设备
@@ -187,10 +200,16 @@ def is_drive_removable(letter_or_path: str) -> bool:
                         if len(parts) >= 2 and parts[1] == letter_or_path:
                             # 检查设备路径是否包含 "usb" 或 "sd[a-z]"
                             device = parts[0]
-                            return "usb" in device or ("sd" in device and len(device) > 3 and device[3].isalpha() and not device[4:].isdigit())
+                            return "usb" in device or (
+                                "sd" in device
+                                and len(device) > 3
+                                and device[3].isalpha()
+                                and not device[4:].isdigit()
+                            )
             return False
         except Exception:
             return False
+
 
 def get_volume_serial(letter_or_path: str) -> str:
     if platform.system() == "Windows":
@@ -214,7 +233,9 @@ def get_volume_serial(letter_or_path: str) -> str:
         # 尝试获取卷GUID作为备用唯一标识
         try:
             buf = ctypes.create_unicode_buffer(64)
-            ok = ctypes.windll.kernel32.GetVolumeNameForVolumeMountPointW(f"{letter_or_path}:\\", buf, ctypes.sizeof(buf))
+            ok = ctypes.windll.kernel32.GetVolumeNameForVolumeMountPointW(
+                f"{letter_or_path}:\\", buf, ctypes.sizeof(buf)
+            )
             if ok:
                 guid = buf.value  # 形如 "\\\\?\Volume{GUID}\""
                 return guid.strip().upper()
@@ -227,7 +248,11 @@ def get_volume_serial(letter_or_path: str) -> str:
             ok = ctypes.windll.kernel32.QueryDosDeviceW(f"{letter_or_path}:", buf, size)
             if ok:
                 path = buf.value
-                h = hashlib.sha256(path.encode("utf-8", errors="ignore")).hexdigest().upper()
+                h = (
+                    hashlib.sha256(path.encode("utf-8", errors="ignore"))
+                    .hexdigest()
+                    .upper()
+                )
                 return f"DEV-{h}"
         except Exception:
             pass
@@ -235,6 +260,7 @@ def get_volume_serial(letter_or_path: str) -> str:
     else:  # Linux
         try:
             import os
+
             # 在 Linux 上，获取设备的唯一标识符
             with open("/proc/mounts", "r") as f:
                 for line in f:
@@ -260,6 +286,7 @@ def get_volume_serial(letter_or_path: str) -> str:
             h = hashlib.sha256(letter_or_path.encode("utf-8")).hexdigest().upper()
             return f"DEV-{h}"
 
+
 def get_volume_label(letter_or_path: str) -> str:
     if platform.system() == "Windows":
         buf_name = ctypes.create_unicode_buffer(256)
@@ -284,12 +311,14 @@ def get_volume_label(letter_or_path: str) -> str:
     else:  # Linux
         try:
             import os
+
             # 在 Linux 上，卷标通常存储在 /media 或 /run/media 下的目录名
             if os.path.ismount(letter_or_path):
                 return os.path.basename(letter_or_path)
             return ""
         except Exception:
             return ""
+
 
 def bind(volume_serial: str):
     d = _read()
@@ -302,7 +331,13 @@ def bind(volume_serial: str):
     _write(d)
     logger.debug("绑定序列号成功")
 
-def bind_with_options(volume_serial: str, require_key_file: bool = False, key_value: str | None = None, name: str | None = None):
+
+def bind_with_options(
+    volume_serial: str,
+    require_key_file: bool = False,
+    key_value: str | None = None,
+    name: str | None = None,
+):
     d = _read()
     rec = d.get("usb") or {}
     # 兼容旧字段
@@ -321,21 +356,25 @@ def bind_with_options(volume_serial: str, require_key_file: bool = False, key_va
                 b["key_value"] = key_value or b.get("key_value")
             break
     if not exists:
-        bindings.append({
-            "serial": volume_serial,
-            "require_key_file": bool(require_key_file),
-            "key_value": key_value if require_key_file else None,
-            "name": name,
-        })
+        bindings.append(
+            {
+                "serial": volume_serial,
+                "require_key_file": bool(require_key_file),
+                "key_value": key_value if require_key_file else None,
+                "name": name,
+            }
+        )
     rec["bindings"] = bindings
     d["usb"] = rec
     _write(d)
     logger.debug("绑定设备记录已更新")
 
+
 def get_bindings() -> list:
     d = _read()
     rec = d.get("usb") or {}
     return rec.get("bindings") or []
+
 
 def has_binding() -> bool:
     try:
@@ -355,6 +394,7 @@ def has_binding() -> bool:
         logger.warning("读取绑定信息失败")
         return False
 
+
 def get_serial_volume_label(serial: str) -> str | None:
     try:
         for root in _get_logical_drive_strings():
@@ -369,6 +409,7 @@ def get_serial_volume_label(serial: str) -> str | None:
     except Exception:
         return None
 
+
 def _read_key_file(letter_or_path: str) -> str | None:
     try:
         if platform.system() == "Windows":
@@ -376,7 +417,7 @@ def _read_key_file(letter_or_path: str) -> str | None:
         else:  # Linux
             # 在 Linux 上，letter_or_path 是挂载点路径
             p = os.path.join(letter_or_path, "SecRandom_safety.key")
-        
+
         if not os.path.exists(p):
             return None
         with open(p, "rb") as f:
@@ -407,6 +448,7 @@ def _read_key_file(letter_or_path: str) -> str | None:
     except Exception:
         return None
 
+
 def write_key_file(letter_or_path: str, token: str) -> bool:
     try:
         if platform.system() == "Windows":
@@ -418,7 +460,7 @@ def write_key_file(letter_or_path: str, token: str) -> bool:
             p = os.path.join(letter_or_path, "SecRandom_safety.key")
             old = os.path.join(letter_or_path, ".key")
             drive_letter = letter_or_path
-        
+
         try:
             if os.path.exists(p):
                 os.remove(p)
@@ -427,7 +469,7 @@ def write_key_file(letter_or_path: str, token: str) -> bool:
                 os.remove(old)
         except Exception:
             pass
-        
+
         key = _derive_key_for_keyfile(letter_or_path)
         payload = None
         if AES:
@@ -440,16 +482,17 @@ def write_key_file(letter_or_path: str, token: str) -> bool:
             raw = token.encode("utf-8")
             obf = bytes(b ^ stream[i % len(stream)] for i, b in enumerate(raw))
             payload = b"SK0" + base64.b64encode(obf)
-        
+
         with open(p, "wb") as f:
             f.write(payload)
-        
+
         _set_hidden(p)
         logger.debug(f"写入U盘密钥文件成功：{drive_letter}")
         return True
     except Exception:
         logger.warning(f"写入U盘密钥文件失败：{letter_or_path}")
         return False
+
 
 def unbind(volume_serial: str | None = None):
     d = _read()
@@ -470,6 +513,7 @@ def unbind(volume_serial: str | None = None):
     _write(d)
     logger.debug("解绑操作已执行")
 
+
 def remove_key_file(letter_or_path: str) -> bool:
     try:
         if platform.system() == "Windows":
@@ -481,7 +525,7 @@ def remove_key_file(letter_or_path: str) -> bool:
             p = os.path.join(letter_or_path, "SecRandom_safety.key")
             old = os.path.join(letter_or_path, ".key")
             drive_letter = letter_or_path
-        
+
         if os.path.exists(p):
             os.remove(p)
             logger.debug(f"删除U盘密钥文件：{drive_letter}")
@@ -494,6 +538,7 @@ def remove_key_file(letter_or_path: str) -> bool:
     except Exception:
         pass
     return False
+
 
 def remove_key_file_for_serial(serial: str) -> bool:
     removed = False
@@ -523,6 +568,7 @@ def remove_key_file_for_serial(serial: str) -> bool:
     if removed:
         logger.debug("按序列号删除密钥文件成功")
     return removed
+
 
 def is_bound_connected() -> bool:
     d = _read()
@@ -571,6 +617,7 @@ def is_bound_connected() -> bool:
             return True
     return False
 
+
 def is_bound_present() -> bool:
     d = _read()
     rec = d.get("usb") or {}
@@ -602,11 +649,13 @@ def is_bound_present() -> bool:
             return True
     return False
 
+
 def get_bound_serials() -> list:
     d = _read()
     rec = d.get("usb") or {}
     arr = rec.get("volume_serials") or []
     return list(arr)
+
 
 def is_serial_connected(serial: str) -> bool:
     if platform.system() == "Windows":
@@ -644,6 +693,7 @@ def is_serial_connected(serial: str) -> bool:
     except Exception:
         return False
 
+
 def _linux_usb_ids() -> set:
     ids = set()
     base = "/dev/disk/by-id"
@@ -656,40 +706,48 @@ def _linux_usb_ids() -> set:
         pass
     return ids
 
+
 def _set_hidden(path: str) -> None:
     try:
         if platform.system() == "Windows":
             # Windows 平台：设置文件属性为隐藏和系统文件
             FILE_ATTRIBUTE_HIDDEN = 0x2
             FILE_ATTRIBUTE_SYSTEM = 0x4
-            ctypes.windll.kernel32.SetFileAttributesW(path, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)
+            ctypes.windll.kernel32.SetFileAttributesW(
+                path, FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM
+            )
         else:  # Linux 平台：使用点前缀隐藏文件
             import os
+
             dirname = os.path.dirname(path)
             basename = os.path.basename(path)
-            
+
             # 如果文件名已经以点开头，则不需要处理
             if basename.startswith("."):
                 return
-            
+
             # 将文件重命名为以点开头的文件名
             hidden_path = os.path.join(dirname, f".{basename}")
-            
+
             # 如果隐藏文件已存在，先删除它
             if os.path.exists(hidden_path):
                 os.remove(hidden_path)
-            
+
             # 重命名原文件为隐藏文件
             os.rename(path, hidden_path)
     except Exception as e:
         logger.warning(f"隐藏文件失败: {e}")
         pass
 
+
 def _get_machine_guid() -> str:
     if platform.system() == "Windows":
         try:
             import winreg
-            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography")
+
+            key = winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography"
+            )
             val, _ = winreg.QueryValueEx(key, "MachineGuid")
             winreg.CloseKey(key)
             return str(val)
@@ -700,9 +758,11 @@ def _get_machine_guid() -> str:
     except Exception:
         return "SecRandom"
 
+
 def _platform_key() -> bytes:
     base = _get_machine_guid() + str(get_settings_path(""))
     return hashlib.sha256(base.encode("utf-8")).digest()[:16]
+
 
 def _encrypt_payload(data: bytes, key: bytes) -> bytes:
     if AES:
@@ -714,6 +774,7 @@ def _encrypt_payload(data: bytes, key: bytes) -> bytes:
     obf = bytes(b ^ stream[i % len(stream)] for i, b in enumerate(data))
     return base64.b64encode(obf)
 
+
 def _decrypt_payload(payload: bytes, key: bytes) -> bytes:
     if AES:
         nonce = payload[:16]
@@ -724,6 +785,7 @@ def _decrypt_payload(payload: bytes, key: bytes) -> bytes:
     stream = hashlib.sha256(key).digest()
     data = bytes(b ^ stream[i % len(stream)] for i, b in enumerate(raw))
     return data
+
 
 def _derive_key_for_keyfile(letter: str) -> bytes:
     serial = get_volume_serial(letter) or ""

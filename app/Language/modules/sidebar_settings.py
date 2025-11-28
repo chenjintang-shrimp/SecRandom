@@ -60,27 +60,27 @@ tray_management = {
         "show_hide_main_window": {
             "name": "暂时显示/隐藏主界面",
             "description": "控制主界面显示和隐藏",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "open_settings": {
             "name": "打开设置窗口",
             "description": "控制是否在托盘菜单中显示设置窗口选项",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "show_hide_float_window": {
             "name": "暂时显示/隐藏浮窗",
             "description": "控制浮动窗口显示和隐藏",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "restart": {
             "name": "重启应用",
             "description": "控制是否在托盘菜单中显示重启选项",
-            "switchbutton_name": {"enable": "重启", "disable": "不重启"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "exit": {
             "name": "退出应用",
             "description": "控制是否在托盘菜单中显示退出选项",
-            "switchbutton_name": {"enable": "退出", "disable": "不退出"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
     }
 }

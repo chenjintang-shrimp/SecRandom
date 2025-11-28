@@ -10,21 +10,21 @@ URL和IPC混合体模块 - 跨平台通用实现
 
 快速开始：
     from app.common.IPC_URL import URLIPCHandler
-    
+
     # 创建处理器
     handler = URLIPCHandler("MyApp", "myapp")
-    
+
     # 注册协议
     handler.register_url_protocol()
-    
+
     # 启动IPC服务器
     handler.start_ipc_server()
-    
+
     # 注册消息处理器
     def handle_url(payload):
         print(f"收到URL: {payload.get('url', '')}")
         return {"status": "success"}
-    
+
     handler.register_message_handler('url', handle_url)
 
 详细文档请参考：
@@ -36,12 +36,26 @@ URL和IPC混合体模块 - 跨平台通用实现
 from .url_ipc_handler import URLIPCHandler
 from .protocol_manager import ProtocolManager
 from .url_command_handler import URLCommandHandler
-from .security_verifier import SecurityVerifier, SimplePasswordVerifier, DynamicPasswordVerifier, CompositeVerifier
+from .security_verifier import (
+    SecurityVerifier,
+    SimplePasswordVerifier,
+    DynamicPasswordVerifier,
+    CompositeVerifier,
+)
 
 __version__ = "1.0.0"
 __author__ = "SecRandom Team"
 __description__ = "跨平台URL协议注册和IPC通信处理器"
 
-__all__ = ['URLIPCHandler', 'ProtocolManager', 'URLCommandHandler', 
-           'SecurityVerifier', 'SimplePasswordVerifier', 'DynamicPasswordVerifier', 'CompositeVerifier',
-           '__version__', '__author__', '__description__']
+__all__ = [
+    "URLIPCHandler",
+    "ProtocolManager",
+    "URLCommandHandler",
+    "SecurityVerifier",
+    "SimplePasswordVerifier",
+    "DynamicPasswordVerifier",
+    "CompositeVerifier",
+    "__version__",
+    "__author__",
+    "__description__",
+]

@@ -74,13 +74,13 @@ class page_management(QWidget):
         """安全地创建延迟注册的子组件，使用弱引用避免访问已销毁的对象"""
         try:
             # 使用弱引用检查对象是否仍然有效
-            self_ref = getattr(self, '_self_ref', None)
+            self_ref = getattr(self, "_self_ref", None)
             if self_ref is None or self_ref() is None:
                 logger.debug(f"对象已销毁，取消创建子组件 {name}")
                 return
-            
+
             # 检查布局是否存在
-            if not hasattr(self, 'vBoxLayout') or not self.vBoxLayout:
+            if not hasattr(self, "vBoxLayout") or not self.vBoxLayout:
                 return
 
             self._create_deferred(name)
@@ -101,7 +101,7 @@ class page_management(QWidget):
         factories = getattr(self, "_deferred_factories", {})
         if name not in factories:
             return
-            
+
         # 尝试从 factories 中弹出 factory，若并发已移除则安全返回
         try:
             factory = factories.pop(name)
@@ -109,10 +109,10 @@ class page_management(QWidget):
             return
 
         # 快速检查当前窗口对象是否还存在（避免在被销毁时创建）
-        self_ref = getattr(self, '_self_ref', None)
+        self_ref = getattr(self, "_self_ref", None)
         if self_ref is None or self_ref() is None:
             return
-            
+
         # 创建真实 widget 的过程可能在这段时间父对象被销毁，保护 factory 调用
         try:
             start = time.perf_counter()
@@ -125,19 +125,19 @@ class page_management(QWidget):
         # 再次检查对象是否仍然有效
         if self_ref is None or self_ref() is None:
             # 如果对象已经销毁，则立即清理新创建的组件
-            if 'real_widget' in locals():
+            if "real_widget" in locals():
                 real_widget.deleteLater()
             return
 
         # 获取占位容器
         placeholder = getattr(self, name, None)
-        
+
         # 如果没有占位符，直接添加到主布局
         if placeholder is None:
             try:
                 # 检查self是否仍然有效
                 if self_ref is None or self_ref() is None:
-                    if 'real_widget' in locals():
+                    if "real_widget" in locals():
                         real_widget.deleteLater()
                     return
                 self.vBoxLayout.addWidget(real_widget)
@@ -159,7 +159,7 @@ class page_management(QWidget):
             try:
                 # 检查widget是否仍然有效
                 if self_ref is None or self_ref() is None:
-                    if 'real_widget' in locals():
+                    if "real_widget" in locals():
                         real_widget.deleteLater()
                     return
                 layout.addWidget(real_widget)
@@ -176,7 +176,7 @@ class page_management(QWidget):
                     if item and item.widget() is placeholder:
                         index = i
                         break
-                        
+
                 if index >= 0:
                     # 移除占位并在同位置插入真实 widget
                     item = self.vBoxLayout.takeAt(index)
@@ -193,7 +193,8 @@ class page_management(QWidget):
                     logger.debug(f"延迟创建子组件 {name} 耗时: {elapsed:.3f}s")
             except RuntimeError as e:
                 logger.error(f"替换占位 {name} 失败: {e}")
-                
+
+
 class page_management_roll_call(GroupHeaderCardWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -417,7 +418,9 @@ class page_management_roll_call(GroupHeaderCardWidget):
         self.addGroup(
             get_theme_icon("ic_fluent_arrow_autofit_content_20_filled"),
             get_content_name_async("page_management", "roll_call_quantity_control"),
-            get_content_description_async("page_management", "roll_call_quantity_control"),
+            get_content_description_async(
+                "page_management", "roll_call_quantity_control"
+            ),
             self.roll_call_quantity_control_switch,
         )
         self.addGroup(

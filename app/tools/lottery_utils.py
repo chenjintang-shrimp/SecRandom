@@ -4,8 +4,14 @@
 import json
 from random import SystemRandom
 
-from app.tools.list import get_group_list, get_student_list, filter_students_data, get_pool_list
-from app.tools.history import calculate_weight, load_history_data
+from app.tools.list import (
+    get_group_list,
+    get_student_list,
+    filter_students_data,
+    get_pool_list,
+)
+from app.tools.roll_call_utils import RollCallUtils
+from app.tools.history import calculate_weight
 from app.tools.config import (
     calculate_remaining_count,
     read_drawn_record,
@@ -249,6 +255,7 @@ class LotteryUtils:
         """获取奖池奖品总数"""
         try:
             from app.tools.list import get_pool_list
+
             return len(get_pool_list(pool_name))
         except Exception:
             return 0
@@ -261,17 +268,22 @@ class LotteryUtils:
         if remaining_count == 0:
             remaining_count = total_count
         text_template = get_any_position_value("lottery", "many_count_label", "text_0")
-        formatted_text = text_template.format(total_count=total_count, remaining_count=remaining_count)
+        formatted_text = text_template.format(
+            total_count=total_count, remaining_count=remaining_count
+        )
         return total_count, remaining_count, formatted_text
 
     @staticmethod
     def draw_random_prizes(pool_name: str, current_count: int):
         """按权重抽取奖品"""
         try:
-            from app.tools.config import read_drawn_record
             items = get_pool_list(pool_name)
             if not items:
-                return {"selected_prizes": [], "pool_name": pool_name, "selected_prizes_dict": []}
+                return {
+                    "selected_prizes": [],
+                    "pool_name": pool_name,
+                    "selected_prizes_dict": [],
+                }
             # 非重复/半重复处理：根据 TEMP 记录过滤已达阈值的奖品（与 roll_call 一致）
             threshold = LotteryUtils._get_prize_draw_threshold()
             if threshold is not None:
@@ -307,7 +319,9 @@ class LotteryUtils:
                             idx = i
                             break
                 chosen = items[idx]
-                selected.append((chosen.get("id"), chosen.get("name"), chosen.get("exist", True)))
+                selected.append(
+                    (chosen.get("id"), chosen.get("name"), chosen.get("exist", True))
+                )
                 selected_dict.append(chosen)
                 items.pop(idx)
                 weights.pop(idx)
@@ -317,7 +331,11 @@ class LotteryUtils:
                 "selected_prizes_dict": selected_dict,
             }
         except Exception:
-            return {"selected_prizes": [], "pool_name": pool_name, "selected_prizes_dict": []}
+            return {
+                "selected_prizes": [],
+                "pool_name": pool_name,
+                "selected_prizes_dict": [],
+            }
 
     @staticmethod
     def _get_prize_draw_threshold():
@@ -342,7 +360,7 @@ class LotteryUtils:
         """计算剩余可抽奖品数量，考虑不重复/半重复设置"""
         try:
             from app.tools.list import get_pool_list
-            from app.tools.config import read_drawn_record
+
             threshold = LotteryUtils._get_prize_draw_threshold()
             total = len(get_pool_list(pool_name))
             if threshold is None:

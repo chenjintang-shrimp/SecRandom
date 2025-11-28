@@ -8,7 +8,9 @@ from app.page_building.page_template import PageTemplate, PivotPageTemplate
 # 为了延迟导入，传入字符串路径，实际类将在 PageTemplate.create_content 动态导入
 # content path format: 'module.submodule:ClassName' 或 'module.submodule.ClassName'
 BASIC_SETTINGS_PATH = "app.view.settings.basic_settings:basic_settings"
-FLOATING_WINDOW_MANAGEMENT_PATH = "app.view.settings.floating_window_management:floating_window_management"
+FLOATING_WINDOW_MANAGEMENT_PATH = (
+    "app.view.settings.floating_window_management:floating_window_management"
+)
 SAFETY_SETTINGS_PATH = "app.view.settings.safety_settings:safety_settings"
 UPDATE_PATH = "app.view.settings.update:update"
 ABOUT_PATH = "app.view.settings.about:about"
@@ -20,12 +22,14 @@ from app.Language.obtain_language import *
 
 class basic_settings_page(PageTemplate):
     """创建基础设置页面"""
+
     def __init__(self, parent: QFrame = None):
         super().__init__(content_widget_class=BASIC_SETTINGS_PATH, parent=parent)
 
 
 class list_management_page(PivotPageTemplate):
     """创建名单管理页面"""
+
     def __init__(self, parent: QFrame = None):
         page_config = {
             "list_management": get_content_name_async("list_management", "title"),
@@ -38,6 +42,7 @@ class list_management_page(PivotPageTemplate):
 
 class extraction_settings_page(PivotPageTemplate):
     """创建抽取设置页面"""
+
     def __init__(self, parent: QFrame = None):
         page_config = {
             "roll_call_settings": get_content_name_async("roll_call_settings", "title"),
@@ -58,12 +63,16 @@ class extraction_settings_page(PivotPageTemplate):
 
 class floating_window_management_page(PageTemplate):
     """创建悬浮窗管理页面"""
+
     def __init__(self, parent: QFrame = None):
-        super().__init__(content_widget_class=FLOATING_WINDOW_MANAGEMENT_PATH, parent=parent)
+        super().__init__(
+            content_widget_class=FLOATING_WINDOW_MANAGEMENT_PATH, parent=parent
+        )
 
 
 class notification_settings_page(PivotPageTemplate):
     """创建通知服务页面"""
+
     def __init__(self, parent: QFrame = None):
         page_config = {
             "roll_call_notification_settings": get_content_name_async(
@@ -89,8 +98,9 @@ class notification_settings_page(PivotPageTemplate):
 
 class safety_settings_page(PageTemplate):
     """创建安全设置页面"""
+
     def __init__(self, parent: QFrame = None):
-         super().__init__(content_widget_class=SAFETY_SETTINGS_PATH, parent=parent)
+        super().__init__(content_widget_class=SAFETY_SETTINGS_PATH, parent=parent)
 
 
 class voice_settings_page(PivotPageTemplate):
@@ -130,7 +140,9 @@ class more_settings_page(PivotPageTemplate):
     def __init__(self, parent: QFrame = None):
         page_config = {
             "page_management": get_content_name_async("page_management", "title"),
-            "sidebar_tray_management": get_content_name_async("sidebar_tray_management", "title"),
+            "sidebar_tray_management": get_content_name_async(
+                "sidebar_tray_management", "title"
+            ),
             "advanced_settings": get_content_name_async("advanced_settings", "title"),
             # "debug": get_content_name_async("debug", "title"),
         }
@@ -140,11 +152,13 @@ class more_settings_page(PivotPageTemplate):
 
 class update_page(PageTemplate):
     """创建更新页面"""
+
     def __init__(self, parent: QFrame = None):
         super().__init__(content_widget_class=UPDATE_PATH, parent=parent)
 
 
 class about_page(PageTemplate):
     """创建关于页面"""
+
     def __init__(self, parent: QFrame = None):
         super().__init__(content_widget_class=ABOUT_PATH, parent=parent)

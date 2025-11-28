@@ -64,7 +64,10 @@ def manage_settings_file():
             if platform.system() == "Windows":
                 FILE_ATTRIBUTE_HIDDEN = 0x2
                 FILE_ATTRIBUTE_SYSTEM = 0x4
-                ctypes.windll.kernel32.SetFileAttributesW(str(settings_file.parent), FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)
+                ctypes.windll.kernel32.SetFileAttributesW(
+                    str(settings_file.parent),
+                    FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM,
+                )
         except Exception:
             pass
 

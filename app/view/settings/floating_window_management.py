@@ -2,7 +2,6 @@
 # 导入库
 # ==================================================
 
-from loguru import logger
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
@@ -47,7 +46,9 @@ class floating_window_management(QWidget):
         """设置浮窗实例引用"""
         self.levitation_window = window
         # 连接外观设置变化信号到浮窗重建方法
-        self.appearance_settings.appearance_settings_changed.connect(self._on_appearance_settings_changed)
+        self.appearance_settings.appearance_settings_changed.connect(
+            self._on_appearance_settings_changed
+        )
 
     def _on_appearance_settings_changed(self):
         """处理外观设置变更"""
@@ -138,7 +139,9 @@ class floating_window_basic_settings(GroupHeaderCardWidget):
         )
         self.floating_window_long_press_duration_spinbox.valueChanged.connect(
             lambda value: update_settings(
-                "floating_window_management", "floating_window_long_press_duration", value
+                "floating_window_management",
+                "floating_window_long_press_duration",
+                value,
             )
         )
 
@@ -190,11 +193,13 @@ class floating_window_basic_settings(GroupHeaderCardWidget):
         update_settings("float_position", "x", 100)
         update_settings("float_position", "y", 100)
 
+
 # ==================================================
 # 浮动窗口管理 - 外观设置
 # ==================================================
 class floating_window_appearance_settings(GroupHeaderCardWidget):
     appearance_settings_changed = Signal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setTitle(

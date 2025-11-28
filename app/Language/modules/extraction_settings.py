@@ -84,7 +84,7 @@ roll_call_settings = {
         "student_image": {
             "name": "显示学生图片",
             "description": "设置是否显示学生图片",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "open_student_image_folder": {
             "name": "学生图片文件夹",
@@ -174,7 +174,7 @@ quick_draw_settings = {
         "student_image": {
             "name": "显示学生图片",
             "description": "设置是否显示学生图片",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "open_student_image_folder": {
             "name": "学生图片文件夹",
@@ -264,7 +264,7 @@ instant_draw_settings = {
         "student_image": {
             "name": "显示学生图片",
             "description": "设置是否显示学生图片",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "open_student_image_folder": {
             "name": "学生图片文件夹",
@@ -354,7 +354,7 @@ lottery_settings = {
         "lottery_image": {
             "name": "显示奖品图片",
             "description": "设置是否显示奖品图片",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "open_lottery_image_folder": {
             "name": "奖品图片文件夹",

@@ -58,7 +58,9 @@ basic_safety_settings = {
         "success_updated": {"name": "密码已更新"},
         "remove_password": {"name": "移除密码", "description": "取消当前安全验证密码"},
         "remove_password_confirm_title": {"name": "确认移除密码"},
-        "remove_password_confirm_content": {"name": "移除密码后将禁用安全开关，是否继续？"},
+        "remove_password_confirm_content": {
+            "name": "移除密码后将禁用安全开关，是否继续？"
+        },
         "remove_password_success": {"name": "已移除密码并关闭安全开关"},
         "error_title": {"name": "错误"},
         "dialog_yes_text": {"name": "确定"},

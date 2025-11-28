@@ -7,7 +7,11 @@ from qfluentwidgets import *
 from loguru import logger
 
 from app.tools.personalised import load_custom_font, get_theme_icon, is_dark_theme
-from app.tools.settings_access import readme_settings_async, update_settings, get_settings_signals
+from app.tools.settings_access import (
+    readme_settings_async,
+    update_settings,
+    get_settings_signals,
+)
 from app.tools.path_utils import *
 from app.Language.obtain_language import get_content_combo_name_async
 
@@ -24,7 +28,12 @@ class LevitationWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool | Qt.NoDropShadowWindowHint)
+        self.setWindowFlags(
+            Qt.FramelessWindowHint
+            | Qt.WindowStaysOnTopHint
+            | Qt.Tool
+            | Qt.NoDropShadowWindowHint
+        )
         self._shadow = None
         self._drag_timer = QTimer(self)
         self._drag_timer.setSingleShot(True)
@@ -70,22 +79,22 @@ class LevitationWindow(QWidget):
         """
         # 清除现有按钮
         self._clear_buttons()
-        
+
         # 重新创建容器布局
         container_layout = self._create_container_layout()
-        
+
         # 设置新的布局
         old_layout = self._container.layout()
         if old_layout:
             QWidget().setLayout(old_layout)  # 从容器中移除旧布局
-            
+
         self._container.setLayout(container_layout)
-        
+
         # 重新添加按钮
         for i, spec in enumerate(self._buttons_spec):
             btn = self._create_button(spec)
             self._add_button(btn, i, len(self._buttons_spec))
-            
+
         self._container.adjustSize()
         self.adjustSize()
         self._install_drag_filters()
@@ -93,22 +102,22 @@ class LevitationWindow(QWidget):
     def _clear_buttons(self):
         """清除所有按钮"""
         # 清除顶层和底层的按钮
-        if hasattr(self, '_top') and self._top and self._top.layout():
+        if hasattr(self, "_top") and self._top and self._top.layout():
             top_layout = self._top.layout()
             while top_layout.count():
                 item = top_layout.takeAt(0)
                 widget = item.widget()
                 if widget:
                     widget.deleteLater()
-                    
-        if hasattr(self, '_bottom') and self._bottom and self._bottom.layout():
+
+        if hasattr(self, "_bottom") and self._bottom and self._bottom.layout():
             bottom_layout = self._bottom.layout()
             while bottom_layout.count():
                 item = bottom_layout.takeAt(0)
                 widget = item.widget()
                 if widget:
                     widget.deleteLater()
-                    
+
         # 清除容器直接包含的按钮
         container_layout = self._container.layout()
         if container_layout:
@@ -117,7 +126,7 @@ class LevitationWindow(QWidget):
                 widget = item.widget()
                 if widget:
                     widget.deleteLater()
-                    
+
     def _font(self, size):
         s = int(size) if size and int(size) > 0 else 8
         if s <= 0:
@@ -132,9 +141,13 @@ class LevitationWindow(QWidget):
         dark = is_dark_theme(qconfig)
         self._container.setAttribute(Qt.WA_StyledBackground, True)
         if dark:
-            self._container.setStyleSheet("background-color: rgba(32,32,32,180); border-radius: 12px; border: 1px solid rgba(255,255,255,20);")
+            self._container.setStyleSheet(
+                "background-color: rgba(32,32,32,180); border-radius: 12px; border: 1px solid rgba(255,255,255,20);"
+            )
         else:
-            self._container.setStyleSheet("background-color: rgba(255,255,255,220); border-radius: 12px; border: 1px solid rgba(0,0,0,12);")
+            self._container.setStyleSheet(
+                "background-color: rgba(255,255,255,220); border-radius: 12px; border: 1px solid rgba(0,0,0,12);"
+            )
 
     def _icon_pixmap(self, icon):
         if hasattr(icon, "icon"):
@@ -146,15 +159,60 @@ class LevitationWindow(QWidget):
         return qicon.pixmap(self._icon_size)
 
     def _init_settings(self):
-        self._visible_on_start = bool(readme_settings_async("floating_window_management", "startup_display_floating_window"))
-        self._opacity = float(readme_settings_async("floating_window_management", "floating_window_opacity") or 0.8)
-        self._placement = int(readme_settings_async("floating_window_management", "floating_window_placement") or 0)
-        self._display_style = int(readme_settings_async("floating_window_management", "floating_window_display_style") or 0)
-        self._stick_to_edge = bool(readme_settings_async("floating_window_management", "floating_window_stick_to_edge"))
-        self._retract_seconds = int(readme_settings_async("floating_window_management", "floating_window_stick_to_edge_recover_seconds") or 0)
-        self._long_press_ms = int(readme_settings_async("floating_window_management", "floating_window_long_press_duration") or 500)
-        self._stick_indicator_style = int(readme_settings_async("floating_window_management", "floating_window_stick_to_edge_display_style") or 0)
-        idx = int(readme_settings_async("floating_window_management", "floating_window_button_control") or 0)
+        self._visible_on_start = bool(
+            readme_settings_async(
+                "floating_window_management", "startup_display_floating_window"
+            )
+        )
+        self._opacity = float(
+            readme_settings_async(
+                "floating_window_management", "floating_window_opacity"
+            )
+            or 0.8
+        )
+        self._placement = int(
+            readme_settings_async(
+                "floating_window_management", "floating_window_placement"
+            )
+            or 0
+        )
+        self._display_style = int(
+            readme_settings_async(
+                "floating_window_management", "floating_window_display_style"
+            )
+            or 0
+        )
+        self._stick_to_edge = bool(
+            readme_settings_async(
+                "floating_window_management", "floating_window_stick_to_edge"
+            )
+        )
+        self._retract_seconds = int(
+            readme_settings_async(
+                "floating_window_management",
+                "floating_window_stick_to_edge_recover_seconds",
+            )
+            or 0
+        )
+        self._long_press_ms = int(
+            readme_settings_async(
+                "floating_window_management", "floating_window_long_press_duration"
+            )
+            or 500
+        )
+        self._stick_indicator_style = int(
+            readme_settings_async(
+                "floating_window_management",
+                "floating_window_stick_to_edge_display_style",
+            )
+            or 0
+        )
+        idx = int(
+            readme_settings_async(
+                "floating_window_management", "floating_window_button_control"
+            )
+            or 0
+        )
         self._buttons_spec = self._map_button_control(idx)
 
     def _build_ui(self):
@@ -170,10 +228,14 @@ class LevitationWindow(QWidget):
             lay.deleteLater()
         if not self._layout:
             self._layout = QHBoxLayout(self)
-            self._layout.setContentsMargins(self._margins, self._margins, self._margins, self._margins)
+            self._layout.setContentsMargins(
+                self._margins, self._margins, self._margins, self._margins
+            )
             self._layout.addWidget(self._container)
         else:
-            self._layout.setContentsMargins(self._margins, self._margins, self._margins, self._margins)
+            self._layout.setContentsMargins(
+                self._margins, self._margins, self._margins, self._margins
+            )
         self._container_layout = self._create_container_layout()
         self._container.setLayout(self._container_layout)
         self._container_layout.setAlignment(Qt.AlignCenter)
@@ -206,24 +268,30 @@ class LevitationWindow(QWidget):
         return cx, cy
 
     def _create_container_layout(self):
-        if hasattr(self, '_top') and self._top:
+        if hasattr(self, "_top") and self._top:
             self._top.deleteLater()
             self._top = None
-        if hasattr(self, '_bottom') and self._bottom:
+        if hasattr(self, "_bottom") and self._bottom:
             self._bottom.deleteLater()
             self._bottom = None
         if self._placement == 1:
             lay = QVBoxLayout()
-            lay.setContentsMargins(self._margins, self._margins, self._margins, self._margins)
+            lay.setContentsMargins(
+                self._margins, self._margins, self._margins, self._margins
+            )
             lay.setSpacing(self._spacing)
             return lay
         if self._placement == 2:
             lay = QHBoxLayout()
-            lay.setContentsMargins(self._margins, self._margins, self._margins, self._margins)
+            lay.setContentsMargins(
+                self._margins, self._margins, self._margins, self._margins
+            )
             lay.setSpacing(self._spacing)
             return lay
         lay = QVBoxLayout()
-        lay.setContentsMargins(self._margins, self._margins, self._margins, self._margins)
+        lay.setContentsMargins(
+            self._margins, self._margins, self._margins, self._margins
+        )
         lay.setSpacing(self._spacing)
         self._top = QWidget()
         self._bottom = QWidget()
@@ -240,7 +308,9 @@ class LevitationWindow(QWidget):
         return lay
 
     def _create_button(self, spec):
-        text_map = get_content_combo_name_async("floating_window_management", "floating_window_button_control")
+        text_map = get_content_combo_name_async(
+            "floating_window_management", "floating_window_button_control"
+        )
         names = [text_map[0], text_map[1], text_map[2], text_map[3], text_map[4]]
         if spec == "roll_call":
             icon = get_theme_icon("ic_fluent_people_20_filled")
@@ -262,7 +332,7 @@ class LevitationWindow(QWidget):
             icon = get_theme_icon("ic_fluent_gift_20_filled")
             text = names[4]
             sig = self.lotteryRequested
-        
+
         if self._display_style == 1:
             btn = TransparentToolButton()
             btn.setIcon(icon)

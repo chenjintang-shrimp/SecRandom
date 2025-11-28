@@ -265,7 +265,10 @@ lottery_name_setting = {
             "name": "以下奖品名称包含非法字符或为保留字: {names}",
             "description": "奖品名称验证失败时的错误提示",
         },
-        "save_error": {"name": "保存奖品名称失败", "description": "保存奖品名称时的错误提示"},
+        "save_error": {
+            "name": "保存奖品名称失败",
+            "description": "保存奖品名称时的错误提示",
+        },
         "success_message": {
             "name": "成功创建 {count} 个新奖品名称",
             "description": "成功创建奖品名称时的提示消息",
@@ -288,7 +291,10 @@ lottery_name_setting = {
             "description": "继续编辑按钮文本",
         },
         "delete_button": {"name": "删除", "description": "删除按钮文本"},
-        "delete_name_title": {"name": "删除奖品名称", "description": "删除奖品名称对话框标题"},
+        "delete_name_title": {
+            "name": "删除奖品名称",
+            "description": "删除奖品名称对话框标题",
+        },
         "delete_name_message": {
             "name": "确定要删除名称 '{name}' 吗？此操作将删除该名称的所有信息，且不可恢复",
             "description": "删除奖品名称确认对话框内容",
@@ -337,7 +343,10 @@ lottery_name_setting = {
             "name": "删除奖品名称失败: {error}",
             "description": "删除奖品名称失败错误信息",
         },
-        "name_deleted_title": {"name": "奖品名称已删除", "description": "删除奖品名称提示标题"},
+        "name_deleted_title": {
+            "name": "奖品名称已删除",
+            "description": "删除奖品名称提示标题",
+        },
         "name_deleted_message": {
             "name": "奖品名称 '{name}' 已从输入框中删除，请保存更改以永久删除",
             "description": "删除奖品名称提示内容",
@@ -380,7 +389,7 @@ weight_setting = {
             "description": "成功创建权重选项时的提示消息",
         },
         "no_new_weights_message": {
-            "name": "所有权重选项均已存在，未创建新的权重选项", 
+            "name": "所有权重选项均已存在，未创建新的权重选项",
             "description": "没有创建新权重选项时的提示消息",
         },
         "unsaved_changes_title": {
@@ -410,7 +419,7 @@ weight_setting = {
             "description": "删除多个权重选项对话框标题",
         },
         "delete_multiple_weights_message": {
-            "name": "确定要删除以下 {count} 个权重选项吗？此操作将删除这些权重选项的所有信息，且不可恢复\n\n{weights}", 
+            "name": "确定要删除以下 {count} 个权重选项吗？此操作将删除这些权重选项的所有信息，且不可恢复\n\n{weights}",
             "description": "删除多个权重选项确认对话框内容",
         },
         "delete_weight_success_title": {
@@ -423,7 +432,7 @@ weight_setting = {
         },
         "delete_weight_cancel_button": {
             "name": "取消删除",
-            "description": "取消删除权重选项按钮文本",  
+            "description": "取消删除权重选项按钮文本",
         },
         "no_deletable_weights": {
             "name": "没有可删除的权重选项",

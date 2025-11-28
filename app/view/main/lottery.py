@@ -188,9 +188,7 @@ class Lottery(QWidget):
         self.total_count = 0
         self.remaining_count = 0
 
-        text_template = get_any_position_value(
-            "lottery", "many_count_label", "text_0"
-        )
+        text_template = get_any_position_value("lottery", "many_count_label", "text_0")
         # 使用占位值，实际文本将在 populate_lists 中更新
         formatted_text = text_template.format(total_count=0, remaining_count=0)
         self.many_count_label = BodyLabel(formatted_text)
@@ -208,7 +206,7 @@ class Lottery(QWidget):
             self.control_layout,
             self.reset_button,
             "page_management",
-            "lottery_reset_button"
+            "lottery_reset_button",
         )
 
         self.add_control_widget_if_enabled(
@@ -229,28 +227,28 @@ class Lottery(QWidget):
             self.control_layout,
             self.pool_list_combobox,
             "page_management",
-            "lottery_list"
+            "lottery_list",
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.list_combobox,
             "page_management",
-            "lottery_roll_call_list"
+            "lottery_roll_call_list",
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.range_combobox,
             "page_management",
-            "lottery_roll_call_range"
+            "lottery_roll_call_range",
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.gender_combobox,
             "page_management",
-            "lottery_roll_call_gender"
+            "lottery_roll_call_gender",
         )
 
         self.add_control_widget_if_enabled(
@@ -318,7 +316,6 @@ class Lottery(QWidget):
         except Exception as e:
             logger.error(f"切换奖池时发生错误: {e}")
 
-
     def on_class_changed(self):
         """当班级选择改变时，更新范围选择、性别选择"""
         self.range_combobox.blockSignals(True)
@@ -329,13 +326,19 @@ class Lottery(QWidget):
             list_base_options = get_content_combo_name_async("lottery", "list_combobox")
             selected_text = self.list_combobox.currentText()
             if selected_text in (list_base_options or []):
-                self.range_combobox.addItems(get_content_combo_name_async("roll_call", "range_combobox")[:1])
+                self.range_combobox.addItems(
+                    get_content_combo_name_async("roll_call", "range_combobox")[:1]
+                )
                 self.gender_combobox.clear()
-                self.gender_combobox.addItems(get_content_combo_name_async("roll_call", "gender_combobox")[:1])
+                self.gender_combobox.addItems(
+                    get_content_combo_name_async("roll_call", "gender_combobox")[:1]
+                )
                 self.range_combobox.setEnabled(False)
                 self.gender_combobox.setEnabled(False)
             else:
-                base_options = get_content_combo_name_async("roll_call", "range_combobox")
+                base_options = get_content_combo_name_async(
+                    "roll_call", "range_combobox"
+                )
                 group_list = get_group_list(selected_text)
                 if group_list and group_list != [""]:
                     self.range_combobox.addItems(base_options + group_list)
@@ -344,7 +347,9 @@ class Lottery(QWidget):
 
                 # 性别
                 self.gender_combobox.clear()
-                gender_options = get_content_combo_name_async("roll_call", "gender_combobox")
+                gender_options = get_content_combo_name_async(
+                    "roll_call", "gender_combobox"
+                )
                 gender_list = get_gender_list(selected_text)
                 if gender_list and gender_list != [""]:
                     self.gender_combobox.addItems(gender_options + gender_list)
@@ -563,9 +568,13 @@ class Lottery(QWidget):
             reset_drawn_prize_record(self, pool_name)
             return
 
-        self.final_selected_students = result.get("selected_prizes") or result.get("selected_students")
+        self.final_selected_students = result.get("selected_prizes") or result.get(
+            "selected_students"
+        )
         self.final_pool_name = result["pool_name"]
-        self.final_selected_students_dict = result.get("selected_prizes_dict") or result.get("selected_students_dict")
+        self.final_selected_students_dict = result.get(
+            "selected_prizes_dict"
+        ) or result.get("selected_students_dict")
         self.final_group_filter = group_filter
         self.final_gender_filter = gender_filter
 
@@ -587,7 +596,9 @@ class Lottery(QWidget):
                     len(self.final_selected_students or []),
                     0,
                 )
-                student_names = [s[1] for s in (student_result.get("selected_students") or [])]
+                student_names = [
+                    s[1] for s in (student_result.get("selected_students") or [])
+                ]
                 paired = []
                 for i, item in enumerate(self.final_selected_students or []):
                     pid, pname, pexist = item
@@ -626,9 +637,7 @@ class Lottery(QWidget):
             animation_color=readme_settings_async(
                 "lottery_settings", "animation_color_theme"
             ),
-            display_format=readme_settings_async(
-                "lottery_settings", "display_format"
-            ),
+            display_format=readme_settings_async("lottery_settings", "display_format"),
             show_student_image=readme_settings_async(
                 "lottery_settings", "student_image"
             ),
@@ -687,9 +696,7 @@ class Lottery(QWidget):
 
     def get_total_count(self):
         """获取总奖数"""
-        return LotteryUtils.get_prize_total_count(
-            self.pool_list_combobox.currentText()
-        )
+        return LotteryUtils.get_prize_total_count(self.pool_list_combobox.currentText())
 
     def update_many_count_label(self):
         """更新多数量显示标签"""
@@ -824,7 +831,11 @@ class Lottery(QWidget):
         """同步奖池目录下的文件到文件监控器"""
         try:
             # 先移除已监控的文件，避免重复
-            files = list(self.file_watcher.files()) if hasattr(self.file_watcher, "files") else []
+            files = (
+                list(self.file_watcher.files())
+                if hasattr(self.file_watcher, "files")
+                else []
+            )
             if files:
                 try:
                     self.file_watcher.removePaths(files)
@@ -915,7 +926,9 @@ class Lottery(QWidget):
                 self.range_combobox.addItems(base_options[:1])
                 self.gender_combobox.blockSignals(True)
                 self.gender_combobox.clear()
-                self.gender_combobox.addItems(get_content_combo_name_async("lottery", "gender_combobox")[:1])
+                self.gender_combobox.addItems(
+                    get_content_combo_name_async("lottery", "gender_combobox")[:1]
+                )
                 self.gender_combobox.blockSignals(False)
             else:
                 group_list = get_group_list(selected_text)
@@ -970,13 +983,13 @@ class Lottery(QWidget):
         """更新UI控件的可见性"""
         # 清除现有布局中的控件
         self.clearLayout(self.control_layout)
-        
+
         # 根据页面管理设置决定是否添加控件
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.reset_button,
             "page_management",
-            "lottery_reset_button"
+            "lottery_reset_button",
         )
 
         self.add_control_widget_if_enabled(
@@ -997,30 +1010,30 @@ class Lottery(QWidget):
             self.control_layout,
             self.pool_list_combobox,
             "page_management",
-            "lottery_list"
+            "lottery_list",
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.list_combobox,
             "page_management",
-            "lottery_roll_call_list"
+            "lottery_roll_call_list",
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.range_combobox,
             "page_management",
-            "lottery_roll_call_range"
+            "lottery_roll_call_range",
         )
 
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.gender_combobox,
             "page_management",
-            "lottery_roll_call_gender"
+            "lottery_roll_call_gender",
         )
-        
+
         self.add_control_widget_if_enabled(
             self.control_layout,
             self.remaining_button,
@@ -1049,11 +1062,11 @@ class Lottery(QWidget):
             # 确保font_size是有效的整数
             if not isinstance(font_size, (int, float)):
                 font_size = int(font_size) if str(font_size).isdigit() else 12
-            
+
             font_size = int(font_size)
             if font_size <= 0:
                 font_size = 12  # 使用默认字体大小
-                
+
             custom_font = load_custom_font()
             if custom_font:
                 widget.setFont(QFont(custom_font, font_size))

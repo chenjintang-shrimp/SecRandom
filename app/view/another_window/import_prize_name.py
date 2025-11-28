@@ -65,7 +65,8 @@ class ImportPrizeNameWindow(QWidget):
         else:
             current_pool = str(saved) if saved else ""
         self.prize_name_label = SubtitleLabel(
-            get_content_name_async("import_prize_name", "initial_subtitle") + current_pool
+            get_content_name_async("import_prize_name", "initial_subtitle")
+            + current_pool
         )
         self.main_layout.addWidget(self.prize_name_label)
 
@@ -155,7 +156,9 @@ class ImportPrizeNameWindow(QWidget):
             get_content_name_async("import_prize_name", "column_mapping_id_column")
         )
         self.id_column_combo = ComboBox()
-        self.id_column_combo.currentIndexChanged.connect(self.__on_column_mapping_changed)
+        self.id_column_combo.currentIndexChanged.connect(
+            self.__on_column_mapping_changed
+        )
         id_row.addWidget(id_label)
         id_row.addWidget(self.id_column_combo, 1)
         mapping_form.addLayout(id_row)
@@ -176,9 +179,7 @@ class ImportPrizeNameWindow(QWidget):
         # 权重列选择（可选，第三个）
         weight_row = QHBoxLayout()
         weight_label = BodyLabel(
-            get_content_name_async(
-                "import_prize_name", "column_mapping_weight_column"
-            )
+            get_content_name_async("import_prize_name", "column_mapping_weight_column")
         )
         self.weight_column_combo = ComboBox()
         self.weight_column_combo.currentIndexChanged.connect(
@@ -569,7 +570,9 @@ class ImportPrizeNameWindow(QWidget):
                 row_data = {
                     "id": str(row[id_column]).strip(),
                     "name": str(row[name_column]).strip(),
-                    "weight": float(str(row[weight_column]).strip()) if weight_column else 0,
+                    "weight": float(str(row[weight_column]).strip())
+                    if weight_column
+                    else 0,
                     "exist": True,
                 }
 
@@ -673,8 +676,6 @@ class ImportPrizeNameWindow(QWidget):
             json.dump(all_items, f, ensure_ascii=False, indent=4)
 
         if action == "overwrite":
-            logger.info(
-                f"已覆盖奖池 '{pool_name}' 的数据，共 {len(all_items)} 项"
-            )
+            logger.info(f"已覆盖奖池 '{pool_name}' 的数据，共 {len(all_items)} 项")
         else:
             logger.info(f"已保存 {len(all_items)} 项到奖池 '{pool_name}'")

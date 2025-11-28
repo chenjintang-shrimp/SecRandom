@@ -50,7 +50,10 @@ lottery_list = {
     "ZH_CN": {
         "title": {"name": "抽奖名单", "description": "管理抽奖用奖品名单"},
         "set_pool_name": {"name": "设置奖池名称", "description": "设置当前奖池名称"},
-        "select_pool_name": {"name": "选择奖池", "description": "从已有奖池中选择一个奖池"},
+        "select_pool_name": {
+            "name": "选择奖池",
+            "description": "从已有奖池中选择一个奖池",
+        },
         "import_prize_name": {
             "name": "导入奖品名单",
             "description": "从文件导入奖品名单",

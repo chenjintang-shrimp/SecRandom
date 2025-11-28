@@ -246,7 +246,7 @@ class floating_window_settings(GroupHeaderCardWidget):
             lambda: update_settings(
                 "custom_draw_notification_settings",
                 "floating_window_enabled_monitor",
-                self.enabled_monitor_combo_box.currentText()
+                self.enabled_monitor_combo_box.currentText(),
             )
         )
 

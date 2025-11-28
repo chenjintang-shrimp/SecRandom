@@ -7,7 +7,14 @@ from loguru import logger
 from app.tools.settings_access import update_settings
 from app.Language.obtain_language import *
 from app.tools.personalised import *
-from app.common.safety.usb import get_bound_serials, is_serial_connected, unbind, get_bindings, get_serial_volume_label, remove_key_file_for_serial
+from app.common.safety.usb import (
+    get_bound_serials,
+    is_serial_connected,
+    unbind,
+    get_bindings,
+    get_serial_volume_label,
+    remove_key_file_for_serial,
+)
 
 
 class UnbindUsbWindow(QWidget):
@@ -17,31 +24,45 @@ class UnbindUsbWindow(QWidget):
         self.__connect_signals()
 
     def init_ui(self):
-        self.setWindowTitle(get_content_name_async("basic_safety_settings", "unbind_usb"))
+        self.setWindowTitle(
+            get_content_name_async("basic_safety_settings", "unbind_usb")
+        )
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(20, 20, 20, 20)
         self.main_layout.setSpacing(15)
 
-        self.title_label = TitleLabel(get_content_name_async("basic_safety_settings", "unbind_usb"))
+        self.title_label = TitleLabel(
+            get_content_name_async("basic_safety_settings", "unbind_usb")
+        )
         self.main_layout.addWidget(self.title_label)
 
-        self.description_label = BodyLabel(get_content_description_async("basic_safety_settings", "unbind_usb"))
+        self.description_label = BodyLabel(
+            get_content_description_async("basic_safety_settings", "unbind_usb")
+        )
         self.description_label.setWordWrap(True)
         self.main_layout.addWidget(self.description_label)
 
         card = CardWidget()
         layout = QVBoxLayout(card)
 
-        list_title = SubtitleLabel(get_content_name_async("basic_safety_settings", "usb_bound_devices"))
+        list_title = SubtitleLabel(
+            get_content_name_async("basic_safety_settings", "usb_bound_devices")
+        )
         layout.addWidget(list_title)
 
         self.bound_list = ListWidget()
         layout.addWidget(self.bound_list)
 
         btns = QHBoxLayout()
-        self.refresh_button = PushButton(get_content_name_async("basic_safety_settings", "usb_refresh"))
-        self.unbind_selected_button = PrimaryPushButton(get_content_name_async("basic_safety_settings", "usb_unbind_selected"))
-        self.unbind_all_button = PushButton(get_content_name_async("basic_safety_settings", "usb_unbind_all"))
+        self.refresh_button = PushButton(
+            get_content_name_async("basic_safety_settings", "usb_refresh")
+        )
+        self.unbind_selected_button = PrimaryPushButton(
+            get_content_name_async("basic_safety_settings", "usb_unbind_selected")
+        )
+        self.unbind_all_button = PushButton(
+            get_content_name_async("basic_safety_settings", "usb_unbind_all")
+        )
         btns.addWidget(self.refresh_button)
         btns.addWidget(self.unbind_selected_button)
         btns.addWidget(self.unbind_all_button)
@@ -51,7 +72,9 @@ class UnbindUsbWindow(QWidget):
 
         footer = QHBoxLayout()
         footer.addStretch(1)
-        self.close_button = PushButton(get_content_name_async("basic_safety_settings", "cancel_button"))
+        self.close_button = PushButton(
+            get_content_name_async("basic_safety_settings", "cancel_button")
+        )
         footer.addWidget(self.close_button)
         self.main_layout.addLayout(footer)
         self.main_layout.addStretch(1)
@@ -63,10 +86,11 @@ class UnbindUsbWindow(QWidget):
         self.unbind_selected_button.clicked.connect(self.__unbind_selected)
         self.unbind_all_button.clicked.connect(self.__unbind_all)
         self.close_button.clicked.connect(self.__cancel)
+
     def _notify_error(self, text: str, duration: int = 3000):
         try:
             InfoBar.error(
-                title=get_content_name_async("basic_safety_settings","title"),
+                title=get_content_name_async("basic_safety_settings", "title"),
                 content=text,
                 position=InfoBarPosition.TOP,
                 duration=duration,
@@ -74,10 +98,11 @@ class UnbindUsbWindow(QWidget):
             )
         except Exception:
             pass
+
     def _notify_success(self, text: str, duration: int = 3000):
         try:
             InfoBar.success(
-                title=get_content_name_async("basic_safety_settings","title"),
+                title=get_content_name_async("basic_safety_settings", "title"),
                 content=text,
                 position=InfoBarPosition.TOP,
                 duration=duration,
@@ -122,7 +147,9 @@ class UnbindUsbWindow(QWidget):
     def __unbind_selected(self):
         item = self.bound_list.currentItem()
         if item is None:
-            self._notify_error(get_content_name_async("basic_safety_settings","usb_select_bound_hint"))
+            self._notify_error(
+                get_content_name_async("basic_safety_settings", "usb_select_bound_hint")
+            )
             return
         text = item.text()
         try:
@@ -133,12 +160,15 @@ class UnbindUsbWindow(QWidget):
             # 回退解析：取最后一个非状态片段，去掉括号内容
             try:
                 import re
+
                 m = re.search(r"\s([A-Z0-9\-\{\}\\?]+)(?:\s\(|$)", text)
                 serial = m.group(1) if m else None
             except Exception:
                 serial = None
         if not serial:
-            self._notify_error(get_content_name_async("basic_safety_settings","usb_select_bound_hint"))
+            self._notify_error(
+                get_content_name_async("basic_safety_settings", "usb_select_bound_hint")
+            )
             return
         try:
             unbind(serial)
@@ -147,7 +177,11 @@ class UnbindUsbWindow(QWidget):
             except Exception:
                 pass
             logger.debug("解绑选中设备成功")
-            self._notify_success(get_content_name_async("basic_safety_settings","usb_unbind_selected_success"))
+            self._notify_success(
+                get_content_name_async(
+                    "basic_safety_settings", "usb_unbind_selected_success"
+                )
+            )
             try:
                 # 若所有绑定已清空，自动关闭开关
                 if not get_bindings() and not get_bound_serials():
@@ -169,7 +203,11 @@ class UnbindUsbWindow(QWidget):
             except Exception:
                 pass
             logger.debug("解绑全部设备成功")
-            self._notify_success(get_content_name_async("basic_safety_settings","usb_unbind_all_success"))
+            self._notify_success(
+                get_content_name_async(
+                    "basic_safety_settings", "usb_unbind_all_success"
+                )
+            )
             try:
                 update_settings("basic_safety_settings", "usb_switch", False)
             except Exception:

@@ -27,7 +27,18 @@ from app.Language.obtain_language import (
     get_content_pushbutton_name_async,
     get_content_switchbutton_name_async,
 )
-from app.tools.config import export_diagnostic_data, export_settings, import_settings, export_all_data, import_all_data, configure_logging, set_autostart, show_notification, NotificationType, NotificationConfig
+from app.tools.config import (
+    export_diagnostic_data,
+    export_settings,
+    import_settings,
+    export_all_data,
+    import_all_data,
+    configure_logging,
+    set_autostart,
+    show_notification,
+    NotificationType,
+    NotificationConfig,
+)
 from app.common.IPC_URL import URLIPCHandler
 
 
@@ -104,10 +115,10 @@ class basic_settings_function(GroupHeaderCardWidget):
                 "basic_settings", "url_protocol", "enable"
             )
         )
-        
+
         # 初始化URL IPC处理器
         self.url_ipc_handler = URLIPCHandler("SecRandom", "secrandom")
-        
+
         # 检查协议是否已注册
         is_protocol_registered = self.url_ipc_handler.is_protocol_registered()
         self.url_protocol_switch.setChecked(is_protocol_registered)
@@ -177,7 +188,9 @@ class basic_settings_function(GroupHeaderCardWidget):
             show_notification(
                 NotificationType.SUCCESS,
                 NotificationConfig(
-                    title=get_content_name_async("basic_settings", "background_resident"),
+                    title=get_content_name_async(
+                        "basic_settings", "background_resident"
+                    ),
                     content="已开启后台驻留",
                 ),
                 parent=self.window(),
@@ -186,7 +199,9 @@ class basic_settings_function(GroupHeaderCardWidget):
             show_notification(
                 NotificationType.INFO,
                 NotificationConfig(
-                    title=get_content_name_async("basic_settings", "background_resident"),
+                    title=get_content_name_async(
+                        "basic_settings", "background_resident"
+                    ),
                     content="已关闭后台驻留",
                 ),
                 parent=self.window(),
@@ -195,8 +210,10 @@ class basic_settings_function(GroupHeaderCardWidget):
     def __on_url_protocol_changed(self, checked):
         """URL协议开关变化处理"""
         # 临时断开信号连接，避免递归
-        self.url_protocol_switch.checkedChanged.disconnect(self.__on_url_protocol_changed)
-        
+        self.url_protocol_switch.checkedChanged.disconnect(
+            self.__on_url_protocol_changed
+        )
+
         try:
             if checked:
                 # 注册URL协议
@@ -206,7 +223,9 @@ class basic_settings_function(GroupHeaderCardWidget):
                     show_notification(
                         NotificationType.SUCCESS,
                         NotificationConfig(
-                            title=get_content_name_async("basic_settings", "url_protocol"),
+                            title=get_content_name_async(
+                                "basic_settings", "url_protocol"
+                            ),
                             content="已开启URL协议注册",
                         ),
                         parent=self.window(),
@@ -219,7 +238,9 @@ class basic_settings_function(GroupHeaderCardWidget):
                     show_notification(
                         NotificationType.WARNING,
                         NotificationConfig(
-                            title=get_content_name_async("basic_settings", "url_protocol"),
+                            title=get_content_name_async(
+                                "basic_settings", "url_protocol"
+                            ),
                             content="URL协议注册失败，需要管理员权限",
                         ),
                         parent=self.window(),
@@ -232,7 +253,9 @@ class basic_settings_function(GroupHeaderCardWidget):
                     show_notification(
                         NotificationType.INFO,
                         NotificationConfig(
-                            title=get_content_name_async("basic_settings", "url_protocol"),
+                            title=get_content_name_async(
+                                "basic_settings", "url_protocol"
+                            ),
                             content="已关闭URL协议注册",
                         ),
                         parent=self.window(),
@@ -245,7 +268,9 @@ class basic_settings_function(GroupHeaderCardWidget):
                     show_notification(
                         NotificationType.WARNING,
                         NotificationConfig(
-                            title=get_content_name_async("basic_settings", "url_protocol"),
+                            title=get_content_name_async(
+                                "basic_settings", "url_protocol"
+                            ),
                             content="URL协议注销失败，可能需要管理员权限",
                         ),
                         parent=self.window(),
@@ -259,7 +284,7 @@ class basic_settings_function(GroupHeaderCardWidget):
                 content = "权限不足，URL协议注册/注销失败"
             else:
                 content = f"URL协议设置错误: {error_msg}"
-            
+
             show_notification(
                 NotificationType.ERROR,
                 NotificationConfig(
@@ -270,7 +295,10 @@ class basic_settings_function(GroupHeaderCardWidget):
             )
         finally:
             # 重新连接信号
-            self.url_protocol_switch.checkedChanged.connect(self.__on_url_protocol_changed)
+            self.url_protocol_switch.checkedChanged.connect(
+                self.__on_url_protocol_changed
+            )
+
 
 class basic_settings_personalised(GroupHeaderCardWidget):
     def __init__(self, parent=None):
@@ -425,25 +453,33 @@ class basic_settings_data_management(GroupHeaderCardWidget):
         self.export_settings_button = PushButton(
             get_content_pushbutton_name_async("basic_settings", "export_settings")
         )
-        self.export_settings_button.clicked.connect(lambda: export_settings(self.window()))
+        self.export_settings_button.clicked.connect(
+            lambda: export_settings(self.window())
+        )
 
         # 导入设置按钮
         self.import_settings_button = PushButton(
             get_content_pushbutton_name_async("basic_settings", "import_settings")
         )
-        self.import_settings_button.clicked.connect(lambda: import_settings(self.window()))
+        self.import_settings_button.clicked.connect(
+            lambda: import_settings(self.window())
+        )
 
         # 导出软件所有数据按钮
         self.export_all_data_button = PushButton(
             get_content_pushbutton_name_async("basic_settings", "export_all_data")
         )
-        self.export_all_data_button.clicked.connect(lambda: export_all_data(self.window()))
+        self.export_all_data_button.clicked.connect(
+            lambda: export_all_data(self.window())
+        )
 
         # 导入软件所有数据按钮
         self.import_all_data_button = PushButton(
             get_content_pushbutton_name_async("basic_settings", "import_all_data")
         )
-        self.import_all_data_button.clicked.connect(lambda: import_all_data(self.window()))
+        self.import_all_data_button.clicked.connect(
+            lambda: import_all_data(self.window())
+        )
 
         # 添加设置项到分组
         self.addGroup(

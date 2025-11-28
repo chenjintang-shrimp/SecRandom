@@ -9,6 +9,7 @@ from app.Language.obtain_language import *
 
 _security_window_instances = {}
 
+
 class set_password_window_template(PageTemplate):
     def __init__(self, parent=None):
         super().__init__(content_widget_class=SetPasswordWindow, parent=parent)
@@ -29,9 +30,12 @@ def create_set_password_window():
     window.add_page_from_template("set_password", set_password_window_template)
     window.switch_to_page("set_password")
     _security_window_instances["set_password"] = window
-    window.windowClosed.connect(lambda: _security_window_instances.pop("set_password", None))
+    window.windowClosed.connect(
+        lambda: _security_window_instances.pop("set_password", None)
+    )
     window.show()
     return window
+
 
 class set_totp_window_template(PageTemplate):
     def __init__(self, parent=None):
@@ -53,9 +57,12 @@ def create_set_totp_window():
     window.add_page_from_template("set_totp", set_totp_window_template)
     window.switch_to_page("set_totp")
     _security_window_instances["set_totp"] = window
-    window.windowClosed.connect(lambda: _security_window_instances.pop("set_totp", None))
+    window.windowClosed.connect(
+        lambda: _security_window_instances.pop("set_totp", None)
+    )
     window.show()
     return window
+
 
 class bind_usb_window_template(PageTemplate):
     def __init__(self, parent=None):
@@ -77,9 +84,12 @@ def create_bind_usb_window():
     window.add_page_from_template("bind_usb", bind_usb_window_template)
     window.switch_to_page("bind_usb")
     _security_window_instances["bind_usb"] = window
-    window.windowClosed.connect(lambda: _security_window_instances.pop("bind_usb", None))
+    window.windowClosed.connect(
+        lambda: _security_window_instances.pop("bind_usb", None)
+    )
     window.show()
     return window
+
 
 class unbind_usb_window_template(PageTemplate):
     def __init__(self, parent=None):
@@ -101,9 +111,12 @@ def create_unbind_usb_window():
     window.add_page_from_template("unbind_usb", unbind_usb_window_template)
     window.switch_to_page("unbind_usb")
     _security_window_instances["unbind_usb"] = window
-    window.windowClosed.connect(lambda: _security_window_instances.pop("unbind_usb", None))
+    window.windowClosed.connect(
+        lambda: _security_window_instances.pop("unbind_usb", None)
+    )
     window.show()
     return window
+
 
 class verify_password_window_template(PageTemplate):
     def __init__(self, parent=None):
@@ -122,7 +135,9 @@ def create_verify_password_window(on_verified=None):
         except Exception:
             _security_window_instances.pop("verify_password", None)
     window = SimpleWindowTemplate(title, width=480, height=240)
-    page = window.add_page_from_template("verify_password", verify_password_window_template)
+    page = window.add_page_from_template(
+        "verify_password", verify_password_window_template
+    )
     window.switch_to_page("verify_password")
     if on_verified:
         try:
@@ -134,6 +149,8 @@ def create_verify_password_window(on_verified=None):
         except Exception:
             pass
     _security_window_instances["verify_password"] = window
-    window.windowClosed.connect(lambda: _security_window_instances.pop("verify_password", None))
+    window.windowClosed.connect(
+        lambda: _security_window_instances.pop("verify_password", None)
+    )
     window.show()
     return window

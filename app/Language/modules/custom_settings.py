@@ -1,6 +1,8 @@
 # 个性设置页面的语言文件
 
-custom_settings = {"ZH_CN": {"title": {"name": "个性设置", "description": "个性化设置选项"}}}
+custom_settings = {
+    "ZH_CN": {"title": {"name": "个性设置", "description": "个性化设置选项"}}
+}
 
 # 页面管理语言配置
 page_management = {
@@ -17,42 +19,42 @@ page_management = {
         "roll_call_reset_button": {
             "name": "重置点名按钮",
             "description": "开启后显示重置点名按钮",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "roll_call_quantity_control": {
             "name": "抽取数量控制条",
             "description": "控制是否显示抽取数量调整控件",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "roll_call_start_button": {
             "name": "开始按钮",
             "description": "控制是否显示点名开始按钮",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "roll_call_list": {
             "name": "点名名单切换下拉框",
             "description": "控制是否显示点名名单切换框",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "roll_call_range": {
             "name": "点名范围下拉框",
             "description": "控制是否显示点名范围选择框",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "roll_call_gender": {
             "name": "点名性别范围下拉框",
             "description": "控制是否显示点名性别范围选择框",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "roll_call_quantity_label": {
             "name": "数量标签",
             "description": "控制是否显示抽取人数/组数的标签",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "roll_call_remaining_button": {
             "name": "查看剩余名单按钮",
             "description": "控制是否显示查看剩余名单按钮",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "lottery_method": {
             "name": "抽奖控制面板位置",
@@ -62,47 +64,47 @@ page_management = {
         "lottery_reset_button": {
             "name": "重置抽奖按钮",
             "description": "控制是否显示抽奖重置按钮",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "lottery_quantity_control": {
             "name": "抽取数量控制条",
             "description": "控制是否显示抽奖数量调整控件",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "lottery_start_button": {
             "name": "开始按钮",
             "description": "控制是否显示抽奖开始按钮",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "lottery_list": {
             "name": "抽奖名单切换下拉框",
             "description": "控制是否显示抽奖名单切换框",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "lottery_roll_call_list": {
             "name": "抽奖中的学生名单切换下拉框",
             "description": "控制是否显示抽奖中的学生名单切换框",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "lottery_roll_call_range": {
             "name": "抽奖中的学生点名范围下拉框",
             "description": "控制是否显示抽奖中的学生点名范围选择框",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "lottery_roll_call_gender": {
             "name": "抽奖中的学生点名性别范围下拉框",
             "description": "控制是否显示抽奖中的学生点名性别范围选择框",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "lottery_quantity_label": {
             "name": "数量标签",
             "description": "控制是否显示中奖数量标签",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "lottery_remaining_button": {
             "name": "查看剩余名单按钮",
             "description": "控制是否显示查看剩余名单按钮",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "custom_method": {
             "name": "自定义抽控制面板位置",
@@ -112,47 +114,47 @@ page_management = {
         "custom_reset_button": {
             "name": "重置自定义抽按钮",
             "description": "控制是否显示自定义抽取重置按钮",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "custom_quantity_control": {
             "name": "抽取数量控制条",
             "description": "控制是否显示自定义抽取数量调整控件",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "custom_start_button": {
             "name": "开始按钮",
             "description": "控制是否显示自定义抽取开始按钮",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "custom_list": {
             "name": "自定义抽名单切换下拉框",
             "description": "控制是否显示自定义抽取名单切换框",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "custom_range_start": {
             "name": "自定义抽范围下拉框",
             "description": "控制是否显示自定义抽取范围选择框",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "custom_range_end": {
             "name": "自定义抽性别范围下拉框",
             "description": "控制是否显示自定义抽取性别范围选择框",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "draw_custom_method": {
             "name": "自定义抽控制面板位置",
             "description": "控制是否显示自定义抽取控制面板位置",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "custom_quantity_label": {
             "name": "数量标签",
             "description": "控制是否显示自定义抽取人数/组数的标签",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "custom_remaining_button": {
             "name": "查看剩余名单按钮",
             "description": "控制是否显示查看剩余名单按钮",
-            "switchbutton_name": {"enable": "显示", "disable": "隐藏"},
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
     }
 }

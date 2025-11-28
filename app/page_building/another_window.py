@@ -164,13 +164,13 @@ def create_group_setting_window():
     return
 
 
-
 # ==================================================
 # 奖池名称设置窗口
 # ==================================================
 class set_pool_name_window_template(PageTemplate):
     """奖池名称设置窗口类
     使用PageTemplate创建奖池名称设置页面"""
+
     def __init__(self, parent=None):
         super().__init__(content_widget_class=SetPoolNameWindow, parent=parent)
 
@@ -216,7 +216,7 @@ def create_import_prize_name_window():
         "import_prize_name", import_prize_name_window_template
     )
     window.switch_to_page("import_prize_name")
-    _window_instances["import_prize_name"] = window 
+    _window_instances["import_prize_name"] = window
     window.windowClosed.connect(
         lambda: _window_instances.pop("import_prize_name", None)
     )
@@ -244,10 +244,14 @@ def create_prize_setting_window():
     """
     title = get_content_name_async("prize_name_setting", "title")
     window = SimpleWindowTemplate(title, width=800, height=600)
-    window.add_page_from_template("prize_name_setting", prize_name_setting_window_template)
+    window.add_page_from_template(
+        "prize_name_setting", prize_name_setting_window_template
+    )
     window.switch_to_page("prize_name_setting")
     _window_instances["prize_name_setting"] = window
-    window.windowClosed.connect(lambda: _window_instances.pop("prize_name_setting", None))
+    window.windowClosed.connect(
+        lambda: _window_instances.pop("prize_name_setting", None)
+    )
     window.show()
     return
 
@@ -272,10 +276,14 @@ def create_prize_weight_setting_window():
     """
     title = get_content_name_async("prize_weight_setting", "title")
     window = SimpleWindowTemplate(title, width=800, height=600)
-    window.add_page_from_template("prize_weight_setting", prize_weight_setting_window_template)
+    window.add_page_from_template(
+        "prize_weight_setting", prize_weight_setting_window_template
+    )
     window.switch_to_page("prize_weight_setting")
     _window_instances["prize_weight_setting"] = window
-    window.windowClosed.connect(lambda: _window_instances.pop("prize_weight_setting", None))
+    window.windowClosed.connect(
+        lambda: _window_instances.pop("prize_weight_setting", None)
+    )
     window.show()
     return
 
@@ -410,7 +418,9 @@ def create_remaining_list_window(
                     gender_index,
                 )
             try:
-                window.windowClosed.connect(lambda: getattr(page, "stop_loader", lambda: None)())
+                window.windowClosed.connect(
+                    lambda: getattr(page, "stop_loader", lambda: None)()
+                )
             except Exception:
                 pass
 

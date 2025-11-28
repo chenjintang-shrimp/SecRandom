@@ -7,14 +7,21 @@ from loguru import logger
 
 from app.Language.obtain_language import *
 from app.tools.personalised import *
-from app.common.safety.password import verify_password, is_configured as password_is_configured
-from app.common.safety.totp import is_configured as totp_is_configured, verify as verify_totp
-from app.common.safety.usb import is_bound_connected, is_bound_present, has_binding
+from app.common.safety.password import (
+    verify_password,
+    is_configured as password_is_configured,
+)
+from app.common.safety.totp import (
+    is_configured as totp_is_configured,
+    verify as verify_totp,
+)
+from app.common.safety.usb import is_bound_connected, is_bound_present
 from app.tools.settings_access import readme_settings_async
 
 
 class UsbStatusThread(QThread):
     statusReady = Signal(bool, bool)
+
     def run(self):
         try:
             p = bool(is_bound_present())
@@ -23,14 +30,17 @@ class UsbStatusThread(QThread):
         except Exception:
             self.statusReady.emit(False, False)
 
+
 class VerifyWorker(QThread):
     resultReady = Signal(bool, bool)
+
     def __init__(self, plain: str, code: str, do_pwd: bool, do_totp: bool):
         super().__init__()
         self._plain = plain
         self._code = code
         self._do_pwd = do_pwd
         self._do_totp = do_totp
+
     def run(self):
         try:
             ok_pwd = False
@@ -43,6 +53,7 @@ class VerifyWorker(QThread):
         except Exception:
             self.resultReady.emit(False, False)
 
+
 class VerifyPasswordWindow(QWidget):
     verified = Signal()
 
@@ -52,26 +63,40 @@ class VerifyPasswordWindow(QWidget):
         self.__connect_signals()
 
     def init_ui(self):
-        self.setWindowTitle(get_content_name_async("basic_safety_settings", "safety_switch"))
+        self.setWindowTitle(
+            get_content_name_async("basic_safety_settings", "safety_switch")
+        )
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(20, 20, 20, 20)
         self.main_layout.setSpacing(15)
 
-        self.title_label = TitleLabel(get_content_name_async("basic_safety_settings", "safety_switch"))
+        self.title_label = TitleLabel(
+            get_content_name_async("basic_safety_settings", "safety_switch")
+        )
         self.main_layout.addWidget(self.title_label)
 
         card = CardWidget()
         layout = QVBoxLayout(card)
 
-        self.password_label = BodyLabel(get_content_name_async("basic_safety_settings", "current_password"))
+        self.password_label = BodyLabel(
+            get_content_name_async("basic_safety_settings", "current_password")
+        )
         self.password_edit = PasswordLineEdit()
         try:
-            self.password_edit.setPlaceholderText(get_content_name_async("basic_safety_settings", "password_input_placeholder"))
+            self.password_edit.setPlaceholderText(
+                get_content_name_async(
+                    "basic_safety_settings", "password_input_placeholder"
+                )
+            )
         except Exception:
             pass
-        self.totp_label = BodyLabel(get_content_name_async("basic_safety_settings", "verify_totp_code"))
+        self.totp_label = BodyLabel(
+            get_content_name_async("basic_safety_settings", "verify_totp_code")
+        )
         self.totp_edit = LineEdit()
-        self.totp_edit.setPlaceholderText(get_content_name_async("basic_safety_settings", "totp_input_placeholder"))
+        self.totp_edit.setPlaceholderText(
+            get_content_name_async("basic_safety_settings", "totp_input_placeholder")
+        )
         self.usb_status_label = BodyLabel("")
         self.usb_refresh_button = TransparentToolButton()
         try:
@@ -98,8 +123,12 @@ class VerifyPasswordWindow(QWidget):
         self.progress_ring.setFixedSize(24, 24)
         self.progress_ring.setStrokeWidth(3)
         self.progress_ring.setFormat("0/0")
-        self.ok_button = PrimaryPushButton(get_content_name_async("basic_safety_settings", "dialog_yes_text"))
-        self.cancel_button = PushButton(get_content_name_async("basic_safety_settings", "dialog_cancel_text"))
+        self.ok_button = PrimaryPushButton(
+            get_content_name_async("basic_safety_settings", "dialog_yes_text")
+        )
+        self.cancel_button = PushButton(
+            get_content_name_async("basic_safety_settings", "dialog_cancel_text")
+        )
         btns.addWidget(self.progress_ring)
         btns.addWidget(self.ok_button)
         btns.addWidget(self.cancel_button)
@@ -149,8 +178,13 @@ class VerifyPasswordWindow(QWidget):
             pass
 
     def _configure_methods(self):
-        mode = int(readme_settings_async("basic_safety_settings", "verification_process") or 0)
-        totp_enabled = bool(readme_settings_async("basic_safety_settings", "totp_switch")) and totp_is_configured()
+        mode = int(
+            readme_settings_async("basic_safety_settings", "verification_process") or 0
+        )
+        totp_enabled = (
+            bool(readme_settings_async("basic_safety_settings", "totp_switch"))
+            and totp_is_configured()
+        )
         usb_enabled = bool(readme_settings_async("basic_safety_settings", "usb_switch"))
         pwd_enabled = password_is_configured()
 
@@ -185,11 +219,18 @@ class VerifyPasswordWindow(QWidget):
             self._required = list(dict.fromkeys(r))
             self._any_one = False
         elif mode == 6:
-            r = ["totp" if totp_enabled else "password", "usb" if usb_enabled else "password"]
+            r = [
+                "totp" if totp_enabled else "password",
+                "usb" if usb_enabled else "password",
+            ]
             self._required = list(dict.fromkeys(r))
             self._any_one = False
         else:
-            r = ["password", "totp" if totp_enabled else "password", "usb" if usb_enabled else "password"]
+            r = [
+                "password",
+                "totp" if totp_enabled else "password",
+                "usb" if usb_enabled else "password",
+            ]
             self._required = list(dict.fromkeys(r))
             self._any_one = False
 
@@ -205,7 +246,9 @@ class VerifyPasswordWindow(QWidget):
         self.usb_status_label.setText(
             get_content_name_async("basic_safety_settings", "usb_status_connected")
             if present
-            else get_content_name_async("basic_safety_settings", "usb_status_disconnected")
+            else get_content_name_async(
+                "basic_safety_settings", "usb_status_disconnected"
+            )
         )
 
         # 初始化或更新当前验证状态
@@ -245,8 +288,12 @@ class VerifyPasswordWindow(QWidget):
         if getattr(self, "_verify_running", False):
             try:
                 InfoBar.warning(
-                    title=get_content_name_async("basic_safety_settings","error_title"),
-                    content=get_content_name_async("basic_safety_settings","verify_in_progress"),
+                    title=get_content_name_async(
+                        "basic_safety_settings", "error_title"
+                    ),
+                    content=get_content_name_async(
+                        "basic_safety_settings", "verify_in_progress"
+                    ),
                     duration=2000,
                     position=InfoBarPosition.TOP,
                     parent=self,
@@ -264,7 +311,9 @@ class VerifyPasswordWindow(QWidget):
         do_pwd = "password" in self._required
         do_totp = "totp" in self._required
         try:
-            if hasattr(self, "_verify_thread") and isinstance(self._verify_thread, QThread):
+            if hasattr(self, "_verify_thread") and isinstance(
+                self._verify_thread, QThread
+            ):
                 try:
                     if self._verify_thread.isRunning():
                         self._verify_thread.quit()
@@ -274,6 +323,7 @@ class VerifyPasswordWindow(QWidget):
         except Exception:
             pass
         self._verify_thread = VerifyWorker(plain, code, do_pwd, do_totp)
+
         def _done(ok_pwd: bool, ok_totp: bool):
             try:
                 results = {}
@@ -303,8 +353,12 @@ class VerifyPasswordWindow(QWidget):
                 logger.debug(f"验证结果：任意一种={self._any_one}, 通过={passed}")
                 if not passed:
                     InfoBar.error(
-                        title=get_content_name_async("basic_safety_settings","error_title"),
-                        content=get_content_name_async("basic_safety_settings","verify_failed_generic"),
+                        title=get_content_name_async(
+                            "basic_safety_settings", "error_title"
+                        ),
+                        content=get_content_name_async(
+                            "basic_safety_settings", "verify_failed_generic"
+                        ),
                         duration=3000,
                         position=InfoBarPosition.TOP,
                         parent=self,
@@ -318,8 +372,11 @@ class VerifyPasswordWindow(QWidget):
                     self.ok_button.setEnabled(True)
                 except Exception:
                     pass
+
         self._verify_thread.resultReady.connect(_done)
-        self._verify_thread.finished.connect(lambda: setattr(self, "_verify_running", False))
+        self._verify_thread.finished.connect(
+            lambda: setattr(self, "_verify_running", False)
+        )
         self._verify_thread.start()
 
     def __refresh_usb(self):
@@ -338,20 +395,28 @@ class VerifyPasswordWindow(QWidget):
         try:
             changed = True
             try:
-                changed = (present != getattr(self, "_last_usb_present", None))
+                changed = present != getattr(self, "_last_usb_present", None)
             except Exception:
                 pass
             if changed:
                 self._last_usb_present = present
                 self.usb_status_label.setText(
-                    get_content_name_async("basic_safety_settings", "usb_status_connected") if present else get_content_name_async("basic_safety_settings", "usb_status_disconnected")
+                    get_content_name_async(
+                        "basic_safety_settings", "usb_status_connected"
+                    )
+                    if present
+                    else get_content_name_async(
+                        "basic_safety_settings", "usb_status_disconnected"
+                    )
                 )
                 logger.debug(f"USB状态已刷新：已连接={present}")
                 if "usb" in getattr(self, "_required", []):
                     self._states["usb"] = bool(present)
                     if self.progress_ring:
                         total = int(len(self._required))
-                        done = int(sum(1 for k in self._required if self._states.get(k)))
+                        done = int(
+                            sum(1 for k in self._required if self._states.get(k))
+                        )
                         self.progress_ring.setRange(0, total)
                         self.progress_ring.setValue(done)
                         self.progress_ring.setFormat(f"{done}/{total}")
@@ -417,7 +482,9 @@ class VerifyPasswordWindow(QWidget):
             code = self.totp_edit.text() or ""
             need_pwd = ("password" in self._required) and bool(plain)
             need_totp = ("totp" in self._required) and bool(len(code) >= 6)
-            need_usb = ("usb" in self._required) and bool(self._states.get("usb", False))
+            need_usb = ("usb" in self._required) and bool(
+                self._states.get("usb", False)
+            )
             should_run = False
             if self._any_one:
                 should_run = bool(need_pwd or need_totp or need_usb)

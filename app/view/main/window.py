@@ -66,15 +66,19 @@ class MainWindow(MSFluentWindow):
 
         # 初始化URL命令处理器
         self.url_command_handler = URLCommandHandler(self)
-        self.url_command_handler.showMainPageRequested.connect(self._handle_main_page_requested)
-        self.url_command_handler.showSettingsRequested.connect(self.showSettingsRequested.emit)
-        self.url_command_handler.showTrayActionRequested.connect(self._handle_tray_action_requested)
+        self.url_command_handler.showMainPageRequested.connect(
+            self._handle_main_page_requested
+        )
+        self.url_command_handler.showSettingsRequested.connect(
+            self.showSettingsRequested.emit
+        )
+        self.url_command_handler.showTrayActionRequested.connect(
+            self._handle_tray_action_requested
+        )
 
         # 导入并创建托盘图标
         self.tray_icon = Tray(self)
-        self.tray_icon.showSettingsRequested.connect(
-            self.showSettingsRequested.emit
-        )
+        self.tray_icon.showSettingsRequested.connect(self.showSettingsRequested.emit)
         self.tray_icon.showSettingsRequestedAbout.connect(
             self.showSettingsRequestedAbout.emit
         )
@@ -90,8 +94,12 @@ class MainWindow(MSFluentWindow):
         self.showFloatWindowRequested.connect(self._toggle_float_window)
         self.showMainPageRequested.connect(self._handle_main_page_requested)
         self.showTrayActionRequested.connect(self._handle_tray_action_requested)
-        self.float_window.rollCallRequested.connect(lambda: self._show_and_switch_to(self.roll_call_page))
-        self.float_window.lotteryRequested.connect(lambda: self._show_and_switch_to(self.lottery_page))
+        self.float_window.rollCallRequested.connect(
+            lambda: self._show_and_switch_to(self.roll_call_page)
+        )
+        self.float_window.lotteryRequested.connect(
+            lambda: self._show_and_switch_to(self.lottery_page)
+        )
 
         QTimer.singleShot(APP_INIT_DELAY, lambda: (self.createSubInterface()))
 
@@ -201,7 +209,13 @@ class MainWindow(MSFluentWindow):
             "设置",
             position=settings_position,
         )
-        settings_item.clicked.connect(lambda: require_and_run("open_settings", self, lambda: self.showSettingsRequested.emit('basicSettingsInterface')))
+        settings_item.clicked.connect(
+            lambda: require_and_run(
+                "open_settings",
+                self,
+                lambda: self.showSettingsRequested.emit("basicSettingsInterface"),
+            )
+        )
         settings_item.clicked.connect(lambda: self.switchTo(self.roll_call_page))
 
     def _toggle_float_window(self):
@@ -212,39 +226,51 @@ class MainWindow(MSFluentWindow):
 
     def _handle_main_page_requested(self, page_name: str):
         """处理主页面请求
-        
+
         Args:
             page_name: 页面名称 ('roll_call_page', 'lottery_page' 或 'main_window')
         """
-        logger.info(f"MainWindow._handle_main_page_requested: 收到主页面请求: {page_name}")
-        if page_name == 'main_window':
+        logger.info(
+            f"MainWindow._handle_main_page_requested: 收到主页面请求: {page_name}"
+        )
+        if page_name == "main_window":
             # 如果请求的是主窗口，直接显示主窗口
-            logger.debug(f"MainWindow._handle_main_page_requested: 显示主窗口")
+            logger.debug("MainWindow._handle_main_page_requested: 显示主窗口")
             self.show()
             self.raise_()
             self.activateWindow()
-        elif hasattr(self, f'{page_name}') and getattr(self, f'{page_name}') is not None:
-            logger.debug(f"MainWindow._handle_main_page_requested: 切换到页面: {page_name}")
+        elif (
+            hasattr(self, f"{page_name}") and getattr(self, f"{page_name}") is not None
+        ):
+            logger.debug(
+                f"MainWindow._handle_main_page_requested: 切换到页面: {page_name}"
+            )
             self._show_and_switch_to(getattr(self, page_name))
         else:
-            logger.warning(f"MainWindow._handle_main_page_requested: 请求的页面不存在: {page_name}")
+            logger.warning(
+                f"MainWindow._handle_main_page_requested: 请求的页面不存在: {page_name}"
+            )
 
     def _handle_tray_action_requested(self, action: str):
         """处理托盘操作请求
-        
+
         Args:
             action: 托盘操作类型 ('toggle_main_window', 'settings', 'float', 'restart', 'exit')
         """
         logger.debug(f"收到托盘操作请求: {action}")
-        if action == 'toggle_main_window':
+        if action == "toggle_main_window":
             self.toggle_window()
-        elif action == 'settings':
-            require_and_run("open_settings", self, lambda: self.showSettingsRequested.emit('basicSettingsInterface'))
-        elif action == 'float':
+        elif action == "settings":
+            require_and_run(
+                "open_settings",
+                self,
+                lambda: self.showSettingsRequested.emit("basicSettingsInterface"),
+            )
+        elif action == "float":
             self._toggle_float_window()
-        elif action == 'restart':
+        elif action == "restart":
             require_and_run("restart", self, self.restart_app)
-        elif action == 'exit':
+        elif action == "exit":
             require_and_run("exit", self, self.close_window_secrandom)
         else:
             logger.warning(f"未知的托盘操作: {action}")

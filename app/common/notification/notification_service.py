@@ -264,9 +264,7 @@ class FloatingNotificationWindow(CardWidget):
                     f"background-color: {background_color}; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;"
                 )
             except Exception as e:
-                logger.exception(
-                    "更新拖拽线容器样式时出错（使用备用方案）: {}", e
-                )
+                logger.exception("更新拖拽线容器样式时出错（使用备用方案）: {}", e)
                 # 如果无法获取主题信息，默认使用白色背景
                 self.drag_line_container.setStyleSheet(
                     "background-color: #ffffff; border-top-left-radius: 15px; border-top-right-radius: 15px; border-bottom-left-radius: 0px; border-bottom-right-radius: 0px;"
@@ -358,9 +356,7 @@ class FloatingNotificationWindow(CardWidget):
                     parts.append(f"color: {fg} !important")
                     lbl.setStyleSheet("; ".join(parts) + ";")
                 except Exception as e:
-                    logger.exception(
-                        "应用颜色到标签子元素时出错（继续执行）: {}", e
-                    )
+                    logger.exception("应用颜色到标签子元素时出错（继续执行）: {}", e)
                     continue
 
             # 更新倒计时标签颜色
@@ -374,9 +370,7 @@ class FloatingNotificationWindow(CardWidget):
                 parts.append(f"color: {fg} !important")
                 self.countdown_label.setStyleSheet("; ".join(parts) + ";")
             except Exception as e:
-                logger.exception(
-                    "应用倒计时标签颜色时出错（已忽略）：{}", e
-                )
+                logger.exception("应用倒计时标签颜色时出错（已忽略）：{}", e)
                 pass
 
             # 更新背景与拖动线样式
@@ -385,9 +379,7 @@ class FloatingNotificationWindow(CardWidget):
                 self.update_drag_line_style()
                 self.update_drag_line_container_style()
             except Exception as e:
-                logger.exception(
-                    "更新背景/拖拽线样式时出错（已忽略）: {}", e
-                )
+                logger.exception("更新背景/拖拽线样式时出错（已忽略）: {}", e)
                 pass
         except Exception as e:
             logger.exception("处理 _on_theme_changed 时出错（已忽略）: {}", e)
@@ -575,7 +567,7 @@ class FloatingNotificationWindow(CardWidget):
             # 即使没有动画也要确保在正确的屏幕显示
             screen = self._get_screen_from_settings(settings)
             screen_geometry = screen.geometry()
-            
+
             if settings:
                 position_index = settings.get("window_position", 0)
                 horizontal_offset = settings.get("horizontal_offset", 0)
@@ -590,7 +582,7 @@ class FloatingNotificationWindow(CardWidget):
                 screen_geometry, position_index, horizontal_offset, vertical_offset
             )
             self.move(window_rect.x(), window_rect.y())
-            
+
             self.show()
             self.update_countdown_display()
             return

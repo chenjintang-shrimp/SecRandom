@@ -16,12 +16,12 @@ basic_settings = {
         "background_resident": {
             "name": "后台驻留",
             "description": "关闭所有窗口后是否仍在后台常驻",
-            "switchbutton_name": {"enable": "", "disable": ""}
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "url_protocol": {
             "name": "URL协议注册",
             "description": "注册自定义URL协议(secrandom://)，支持通过链接启动应用",
-            "switchbutton_name": {"enable": "", "disable": ""}
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "export_diagnostic_data": {
             "name": "导出诊断数据",
@@ -78,11 +78,15 @@ basic_settings = {
             "export_failure_title": {"name": "导出设置"},
             "export_failure_content": {"name": "导出设置失败:\n{error}"},
             "import_confirm_title": {"name": "导入设置"},
-            "import_confirm_content": {"name": "确定要导入这些设置吗？这将覆盖当前设置"},
+            "import_confirm_content": {
+                "name": "确定要导入这些设置吗？这将覆盖当前设置"
+            },
             "import_confirm_button": {"name": "确认导入"},
             "import_cancel_button": {"name": "取消导入"},
             "import_success_title": {"name": "导入设置"},
-            "import_success_content": {"name": "设置已成功导入\n重启应用程序以使更改生效"},
+            "import_success_content": {
+                "name": "设置已成功导入\n重启应用程序以使更改生效"
+            },
             "import_success_button": {"name": "我知道了"},
             "export_success_button": {"name": "我知道了"},
             "import_failure_title": {"name": "导入设置"},
@@ -94,21 +98,31 @@ basic_settings = {
             "export_failure_title": {"name": "导出所有数据"},
             "export_failure_content": {"name": "导出所有数据失败:\n{error}"},
             "import_confirm_title": {"name": "导入所有数据"},
-            "import_confirm_content": {"name": "确定要导入这些数据吗？这将覆盖当前数据"},
+            "import_confirm_content": {
+                "name": "确定要导入这些数据吗？这将覆盖当前数据"
+            },
             "import_confirm_button": {"name": "确认导入"},
             "import_cancel_button": {"name": "取消导入"},
             "import_success_title": {"name": "导入所有数据"},
-            "import_success_content": {"name": "数据已成功导入\n重启应用程序以使更改生效"},
+            "import_success_content": {
+                "name": "数据已成功导入\n重启应用程序以使更改生效"
+            },
             "import_success_button": {"name": "我知道了"},
             "import_failure_title": {"name": "导入所有数据"},
             "import_failure_content": {"name": "导入所有数据失败:\n{error}"},
             "existing_files_count": {"name": "\n... 还有 {len} 个文件"},
             "existing_files_title": {"name": "文件已存在"},
-            "existing_files_content": {"name": "以下文件已存在:\n{files}\n\n是否覆盖这些文件？"},
+            "existing_files_content": {
+                "name": "以下文件已存在:\n{files}\n\n是否覆盖这些文件？"
+            },
             "version_mismatch_title": {"name": "版本不匹配"},
-            "version_mismatch_content": {"name": "导出数据的软件版本与当前版本不一致:\n\n导出数据的软件: {software_name} {version}\n当前软件: SecRandom {current_version}\n\n是否继续导入？"},
+            "version_mismatch_content": {
+                "name": "导出数据的软件版本与当前版本不一致:\n\n导出数据的软件: {software_name} {version}\n当前软件: SecRandom {current_version}\n\n是否继续导入？"
+            },
             "export_warning_title": {"name": "导出所有数据"},
-            "export_warning_content": {"name": "即将导出所有数据，包括:\n\n软件版本、设置配置\n点名名单、抽奖名单\n历史记录、日志文件\n\n注意: 导出的数据可能包含敏感信息，请妥善保管。\n\n是否继续导出?"},
+            "export_warning_content": {
+                "name": "即将导出所有数据，包括:\n\n软件版本、设置配置\n点名名单、抽奖名单\n历史记录、日志文件\n\n注意: 导出的数据可能包含敏感信息，请妥善保管。\n\n是否继续导出?"
+            },
         },
         "diagnostic_data_export": {
             "export_confirm_button": {"name": "确认导出"},
@@ -118,7 +132,9 @@ basic_settings = {
             "export_failure_title": {"name": "导出诊断数据"},
             "export_failure_content": {"name": "导出诊断数据失败:\n{error}"},
             "export_warning_title": {"name": "导出诊断数据"},
-            "export_warning_content": {"name": "即将导出诊断数据，包括:\n\n软件信息、设置配置\n点名名单、抽奖名单\n历史记录、日志文件\n\n注意: 导出的数据可能包含敏感信息，请妥善保管。\n\n是否继续导出?"},
+            "export_warning_content": {
+                "name": "即将导出诊断数据，包括:\n\n软件信息、设置配置\n点名名单、抽奖名单\n历史记录、日志文件\n\n注意: 导出的数据可能包含敏感信息，请妥善保管。\n\n是否继续导出?"
+            },
         },
     }
 }

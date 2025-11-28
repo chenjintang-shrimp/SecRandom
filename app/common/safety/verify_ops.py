@@ -8,12 +8,12 @@ def should_require_password(op: str) -> bool:
     if not password_is_configured():
         logger.debug(f"操作无需验证（未配置密码）：{op}")
         return False
-    
+
     # 特殊处理：切换安全总开关本身需要验证
     if op == "toggle_safety":
         logger.debug(f"操作需验证（切换安全总开关）：{op}")
         return True
-    
+
     if not readme_settings_async("basic_safety_settings", "safety_switch"):
         logger.debug(f"操作无需验证（安全总开关关闭）：{op}")
         return False

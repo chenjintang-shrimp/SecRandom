@@ -18,6 +18,7 @@ from app.tools.settings_access import *
 from app.Language.obtain_language import *
 from app.tools.history import *
 
+
 # ==================================================
 # 点名历史记录表格
 # ==================================================

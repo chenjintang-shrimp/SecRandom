@@ -252,7 +252,9 @@ class PivotPageTemplate(QFrame):
         """
         if not self.ui_created:
             # 如果UI尚未创建，延迟添加
-            QTimer.singleShot(APP_INIT_DELAY, lambda: self.add_page(page_name, display_name))
+            QTimer.singleShot(
+                APP_INIT_DELAY, lambda: self.add_page(page_name, display_name)
+            )
             return
 
         # 创建滑动区域

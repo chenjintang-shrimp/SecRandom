@@ -71,7 +71,10 @@ class roll_call_history(GroupHeaderCardWidget):
         self.class_name_combo = ComboBox()
         self.refresh_class_list()  # 初始化班级列表
         saved_index = readme_settings_async("history_management", "select_class_name")
-        if isinstance(saved_index, int) and 0 <= saved_index < self.class_name_combo.count():
+        if (
+            isinstance(saved_index, int)
+            and 0 <= saved_index < self.class_name_combo.count()
+        ):
             self.class_name_combo.setCurrentIndex(saved_index)
         elif self.class_name_combo.count() > 0:
             self.class_name_combo.setCurrentIndex(0)
@@ -96,13 +99,17 @@ class roll_call_history(GroupHeaderCardWidget):
                 "history_management", "clear_roll_call_history"
             )
         )
-        self.clear_roll_call_history_button.clicked.connect(self.clear_roll_call_history)
+        self.clear_roll_call_history_button.clicked.connect(
+            self.clear_roll_call_history
+        )
 
         # 添加设置项到分组
         self.addGroup(
             get_theme_icon("ic_fluent_history_20_filled"),
             get_content_name_async("history_management", "show_roll_call_history"),
-            get_content_description_async("history_management", "show_roll_call_history"),
+            get_content_description_async(
+                "history_management", "show_roll_call_history"
+            ),
             self.show_roll_call_history_button_switch,
         )
         self.addGroup(
@@ -114,7 +121,9 @@ class roll_call_history(GroupHeaderCardWidget):
         self.addGroup(
             get_theme_icon("ic_fluent_people_community_20_filled"),
             get_content_name_async("history_management", "clear_roll_call_history"),
-            get_content_description_async("history_management", "clear_roll_call_history"),
+            get_content_description_async(
+                "history_management", "clear_roll_call_history"
+            ),
             self.clear_roll_call_history_button,
         )
 
@@ -213,7 +222,10 @@ class lottery_history(GroupHeaderCardWidget):
         self.pool_name_combo = ComboBox()
         self.refresh_pool_list()  # 初始化奖池列表
         saved_index = readme_settings_async("history_management", "select_pool_name")
-        if isinstance(saved_index, int) and 0 <= saved_index < self.pool_name_combo.count():
+        if (
+            isinstance(saved_index, int)
+            and 0 <= saved_index < self.pool_name_combo.count()
+        ):
             self.pool_name_combo.setCurrentIndex(saved_index)
         elif self.pool_name_combo.count() > 0:
             self.pool_name_combo.setCurrentIndex(0)

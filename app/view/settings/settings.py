@@ -55,7 +55,9 @@ class SettingsWindow(MSFluentWindow):
 
         # 初始化URL命令处理器
         self.url_command_handler = URLCommandHandler(self)
-        self.url_command_handler.showSettingsRequested.connect(self._handle_settings_page_request)
+        self.url_command_handler.showSettingsRequested.connect(
+            self._handle_settings_page_request
+        )
 
         # 窗口定位
         self._position_window()
@@ -130,81 +132,105 @@ class SettingsWindow(MSFluentWindow):
 
     def _handle_main_page_requested(self, page_name: str):
         """处理主页面请求
-        
+
         Args:
             page_name: 页面名称
         """
         logger.debug(f"设置窗口收到主页面请求: {page_name}")
-        
+
         # 处理设置页面特定的页面请求
-        if page_name.startswith('settings_'):
+        if page_name.startswith("settings_"):
             self._handle_settings_page_request(page_name)
         else:
             # 设置窗口通常不需要处理主页面请求，可以转发给父窗口或记录日志
             logger.debug(f"设置窗口转发主页面请求: {page_name}")
             # 如果有父窗口，可以转发信号
-            if hasattr(self, 'parent') and self.parent:
+            if hasattr(self, "parent") and self.parent:
                 self.showMainPageRequested.emit(page_name)
 
     def _handle_settings_page_request(self, page_name: str):
         """处理设置页面请求
-        
+
         Args:
             page_name: 设置页面名称 (如 'settings_basic', 'settings_about' 或 'basicSettingsInterface' 等)
         """
         logger.debug(f"处理设置页面请求: {page_name}")
-        
+
         # 映射设置页面名称到对应的界面属性
         page_mapping = {
-            'settings_basic': ('basicSettingsInterface', 'basic_settings_item'),
-            'settings_list': ('listManagementInterface', 'list_management_item'),
-            'settings_extraction': ('extractionSettingsInterface', 'extraction_settings_item'),
-            'settings_floating': ('floatingWindowManagementInterface', 'floating_window_management_item'),
-            'settings_notification': ('notificationSettingsInterface', 'notification_settings_item'),
-            'settings_safety': ('safetySettingsInterface', 'safety_settings_item'),
-            'settings_voice': ('voiceSettingsInterface', 'voice_settings_item'),
-            'settings_history': ('historyInterface', 'history_item'),
-            'settings_more': ('moreSettingsInterface', 'more_settings_item'),
-            'settings_update': ('updateInterface', 'update_item'),
-            'settings_about': ('aboutInterface', 'about_item'),
+            "settings_basic": ("basicSettingsInterface", "basic_settings_item"),
+            "settings_list": ("listManagementInterface", "list_management_item"),
+            "settings_extraction": (
+                "extractionSettingsInterface",
+                "extraction_settings_item",
+            ),
+            "settings_floating": (
+                "floatingWindowManagementInterface",
+                "floating_window_management_item",
+            ),
+            "settings_notification": (
+                "notificationSettingsInterface",
+                "notification_settings_item",
+            ),
+            "settings_safety": ("safetySettingsInterface", "safety_settings_item"),
+            "settings_voice": ("voiceSettingsInterface", "voice_settings_item"),
+            "settings_history": ("historyInterface", "history_item"),
+            "settings_more": ("moreSettingsInterface", "more_settings_item"),
+            "settings_update": ("updateInterface", "update_item"),
+            "settings_about": ("aboutInterface", "about_item"),
         }
-        
+
         # 直接映射，从界面名称到对应的界面属性和导航项属性
         direct_interface_mapping = {
-            'basicSettingsInterface': ('basicSettingsInterface', 'basic_settings_item'),
-            'listManagementInterface': ('listManagementInterface', 'list_management_item'),
-            'extractionSettingsInterface': ('extractionSettingsInterface', 'extraction_settings_item'),
-            'floatingWindowManagementInterface': ('floatingWindowManagementInterface', 'floating_window_management_item'),
-            'notificationSettingsInterface': ('notificationSettingsInterface', 'notification_settings_item'),
-            'safetySettingsInterface': ('safetySettingsInterface', 'safety_settings_item'),
-            'voiceSettingsInterface': ('voiceSettingsInterface', 'voice_settings_item'),
-            'historyInterface': ('historyInterface', 'history_item'),
-            'moreSettingsInterface': ('moreSettingsInterface', 'more_settings_item'),
-            'updateInterface': ('updateInterface', 'update_item'),
-            'aboutInterface': ('aboutInterface', 'about_item'),
+            "basicSettingsInterface": ("basicSettingsInterface", "basic_settings_item"),
+            "listManagementInterface": (
+                "listManagementInterface",
+                "list_management_item",
+            ),
+            "extractionSettingsInterface": (
+                "extractionSettingsInterface",
+                "extraction_settings_item",
+            ),
+            "floatingWindowManagementInterface": (
+                "floatingWindowManagementInterface",
+                "floating_window_management_item",
+            ),
+            "notificationSettingsInterface": (
+                "notificationSettingsInterface",
+                "notification_settings_item",
+            ),
+            "safetySettingsInterface": (
+                "safetySettingsInterface",
+                "safety_settings_item",
+            ),
+            "voiceSettingsInterface": ("voiceSettingsInterface", "voice_settings_item"),
+            "historyInterface": ("historyInterface", "history_item"),
+            "moreSettingsInterface": ("moreSettingsInterface", "more_settings_item"),
+            "updateInterface": ("updateInterface", "update_item"),
+            "aboutInterface": ("aboutInterface", "about_item"),
         }
-        
+
         # 反向映射，从界面名称到页面名称
         interface_to_page = {
-            'basicSettingsInterface': 'settings_basic',
-            'listManagementInterface': 'settings_list',
-            'extractionSettingsInterface': 'settings_extraction',
-            'floatingWindowManagementInterface': 'settings_floating',
-            'notificationSettingsInterface': 'settings_notification',
-            'safetySettingsInterface': 'settings_safety',
-            'voiceSettingsInterface': 'settings_voice',
-            'historyInterface': 'settings_history',
-            'moreSettingsInterface': 'settings_more',
-            'updateInterface': 'settings_update',
-            'aboutInterface': 'settings_about',
+            "basicSettingsInterface": "settings_basic",
+            "listManagementInterface": "settings_list",
+            "extractionSettingsInterface": "settings_extraction",
+            "floatingWindowManagementInterface": "settings_floating",
+            "notificationSettingsInterface": "settings_notification",
+            "safetySettingsInterface": "settings_safety",
+            "voiceSettingsInterface": "settings_voice",
+            "historyInterface": "settings_history",
+            "moreSettingsInterface": "settings_more",
+            "updateInterface": "settings_update",
+            "aboutInterface": "settings_about",
         }
-        
+
         # 检查 page_name 是否是直接的界面名称
         if page_name in direct_interface_mapping:
             interface_attr, item_attr = direct_interface_mapping[page_name]
             interface = getattr(self, interface_attr, None)
             nav_item = getattr(self, item_attr, None)
-            
+
             if interface and nav_item:
                 logger.debug(f"切换到设置页面: {page_name}")
                 self.switchTo(interface)
@@ -217,7 +243,7 @@ class SettingsWindow(MSFluentWindow):
             interface_attr, item_attr = page_mapping[page_name]
             interface = getattr(self, interface_attr, None)
             nav_item = getattr(self, item_attr, None)
-            
+
             if interface and nav_item:
                 logger.debug(f"切换到设置页面: {page_name}")
                 self.switchTo(interface)
@@ -233,7 +259,7 @@ class SettingsWindow(MSFluentWindow):
                 if mapped_page == page_name:
                     interface_name = iface_name
                     break
-            
+
             if interface_name and hasattr(self, interface_name):
                 interface = getattr(self, interface_name)
                 logger.debug(f"切换到设置界面: {interface_name}")
@@ -298,11 +324,7 @@ class SettingsWindow(MSFluentWindow):
 
         # 定义页面配置
         page_configs = [
-            (   "base_settings",
-                "basicSettingsInterface", 
-                "basic_settings_page",
-                False
-            ),
+            ("base_settings", "basicSettingsInterface", "basic_settings_page", False),
             (
                 "name_management",
                 "listManagementInterface",
@@ -333,19 +355,13 @@ class SettingsWindow(MSFluentWindow):
                 "safety_settings_page",
                 True,
             ),
-            (  
+            (
                 "voice_settings",
                 "voiceSettingsInterface",
                 "voice_settings_page",
                 True,
             ),
-
-            (
-                "settings_history",
-                "historyInterface",
-                "history_page",
-                True
-            ),
+            ("settings_history", "historyInterface", "history_page", True),
             (
                 "more_settings",
                 "moreSettingsInterface",
@@ -373,13 +389,13 @@ class SettingsWindow(MSFluentWindow):
 
         # 单独处理更新页面和关于页面
         self.updateInterface = make_placeholder("updateInterface")
-        
+
         def make_update_factory(iface=self.updateInterface):
             return lambda parent=iface: settings_window_page.update_page(parent)
-            
+
         self._deferred_factories["updateInterface"] = make_update_factory()
         self._deferred_factories_meta["updateInterface"] = {"is_pivot": False}
-        
+
         self.aboutInterface = make_placeholder("aboutInterface")
 
         def make_about_factory(iface=self.aboutInterface):
@@ -713,7 +729,7 @@ class SettingsWindow(MSFluentWindow):
             get_content_name_async("update", "title"),
             position=NavigationItemPosition.BOTTOM,
         )
-        
+
         self.about_item = self.addSubInterface(
             self.aboutInterface,
             get_theme_icon("ic_fluent_info_20_filled"),
