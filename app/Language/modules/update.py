@@ -10,32 +10,30 @@ update = {
         "current_version": {"name": "当前版本"},
         "latest_version_label": {"name": "最新版本"},
         "checking_update": {"name": "正在检查更新..."},
-        "update_method": {
-            "name": "更新方式",
-            "description": "配置软件自动更新行为",
-            "combo_items": [
-                "禁用自动更新",
-                "仅显示更新通知",
-                "自动下载更新包，需用户确认后安装",
-                "自动下载并通知用户，需手动触发更新",
-                "自动下载并通知用户，下次启动应用时更新",
-                "自动下载更新包，下次启动应用时静默安装"
-            ]
+        "auto_download": {
+            "name": "自动下载更新",
+            "description": "是否自动下载更新包",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "auto_update": {
+            "name": "自动安装更新",
+            "description": "是否在下载完成后自动安装更新",
+            "switchbutton_name": {"enable": "", "disable": ""},
+        },
+        "need_notification": {
+            "name": "更新通知",
+            "description": "是否在发现新版本时显示通知",
+            "switchbutton_name": {"enable": "", "disable": ""},
         },
         "update_channel": {
             "name": "更新通道选择",
             "description": "选择软件更新发布通道",
-            "combo_items": [
-                "正式版",
-                "测试版"
-            ]
+            "combo_items": ["正式版", "测试版"],
         },
         "update_source": {
             "name": "更新源选择",
             "description": "选择软件更新下载来源",
-            "combo_items": [
-                "GitHub"
-            ]
-        }
+            "combo_items": ["GitHub"],
+        },
     }
 }

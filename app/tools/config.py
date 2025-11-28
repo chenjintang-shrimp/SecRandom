@@ -11,18 +11,35 @@ import platform
 import sys
 import psutil
 
-from PySide6.QtWidgets import QWidget, QFileDialog, QTextEdit
+from PySide6.QtWidgets import QWidget, QFileDialog
 from PySide6.QtCore import Qt
 from qfluentwidgets import InfoBar, InfoBarPosition, FluentIcon, InfoBarIcon, MessageBox
 from app.common.safety.verify_ops import require_and_run
 
 
-from app.tools.path_utils import get_app_root, get_resources_path, get_settings_path, get_path
+from app.tools.path_utils import (
+    get_app_root,
+    get_resources_path,
+    get_settings_path,
+    get_path,
+)
 from app.tools.personalised import get_theme_icon
 from app.tools.settings_access import readme_settings_async
 from app.tools.list import get_student_list, get_group_list
-from app.tools.variable import VERSION, NEXT_VERSION, LOG_DIR, LOG_FILENAME_FORMAT, LOG_ROTATION_SIZE, LOG_RETENTION_DAYS, LOG_COMPRESSION
-from app.Language.obtain_language import get_content_name_async, get_content_pushbutton_name_async, get_any_position_value_async
+from app.tools.variable import (
+    VERSION,
+    NEXT_VERSION,
+    CODENAME,
+    LOG_DIR,
+    LOG_FILENAME_FORMAT,
+    LOG_ROTATION_SIZE,
+    LOG_RETENTION_DAYS,
+    LOG_COMPRESSION,
+)
+from app.Language.obtain_language import (
+    get_content_pushbutton_name_async,
+    get_any_position_value_async,
+)
 
 
 # ======= 日志配置函数 =======
@@ -33,7 +50,11 @@ def configure_logging():
     log_dir.mkdir(exist_ok=True)
 
     # 获取日志等级设置，默认为INFO
-    log_level = readme_settings_async("basic_settings", "log_level") if readme_settings_async("basic_settings", "log_level") else "INFO"
+    log_level = (
+        readme_settings_async("basic_settings", "log_level")
+        if readme_settings_async("basic_settings", "log_level")
+        else "INFO"
+    )
 
     # 配置日志格式 - 文件输出（包含详细的调试信息）
     logger.add(
@@ -45,7 +66,7 @@ def configure_logging():
         diagnose=True,
         level=log_level,
     )
-    
+
     # 配置日志格式 - 终端输出
     logger.add(
         sys.stdout,
@@ -53,7 +74,7 @@ def configure_logging():
         level=log_level,
         colorize=True,
     )
-    
+
     logger.debug(f"日志系统已配置，当前日志等级: {log_level}")
 
 
@@ -360,49 +381,82 @@ def show_notification(
 # ======= 设置导入/导出功能 =======
 def export_settings(parent: Optional[QWidget] = None) -> None:
     """导出设置到文件
-    
+
     Args:
         parent: 父窗口组件，用于对话框的模态显示
     """
     try:
         # 获取设置文件路径
         settings_path = get_settings_path()
-        
+
         # 打开文件保存对话框
         file_path, _ = QFileDialog.getSaveFileName(
             parent,
             get_content_pushbutton_name_async("basic_settings", "export_settings"),
             "settings.json",
-            "JSON Files (*.json);;All Files (*)"
+            "JSON Files (*.json);;All Files (*)",
         )
-        
+
         if file_path:
             # 复制设置文件到用户选择的位置
             Path(file_path).write_text(
-                Path(settings_path).read_text(encoding="utf-8"),
-                encoding="utf-8"
+                Path(settings_path).read_text(encoding="utf-8"), encoding="utf-8"
             )
-            
+
             # 显示成功消息
             dialog = MessageBox(
-                get_any_position_value_async("basic_settings", "settings_import_export", "export_success_title", "name"),
-                get_any_position_value_async("basic_settings", "settings_import_export", "export_success_content", "name").format(path=file_path),
-                parent
+                get_any_position_value_async(
+                    "basic_settings",
+                    "settings_import_export",
+                    "export_success_title",
+                    "name",
+                ),
+                get_any_position_value_async(
+                    "basic_settings",
+                    "settings_import_export",
+                    "export_success_content",
+                    "name",
+                ).format(path=file_path),
+                parent,
             )
-            dialog.yesButton.setText(get_any_position_value_async("basic_settings", "settings_import_export", "export_success_button", "name"))
+            dialog.yesButton.setText(
+                get_any_position_value_async(
+                    "basic_settings",
+                    "settings_import_export",
+                    "export_success_button",
+                    "name",
+                )
+            )
             dialog.cancelButton.hide()
             dialog.buttonLayout.insertStretch(1)
             dialog.exec()
-            
+
     except Exception as e:
         logger.error(f"导出设置失败: {e}")
         # 显示错误消息
         dialog = MessageBox(
-            get_any_position_value_async("basic_settings", "settings_import_export", "export_failure_title", "name"),
-            get_any_position_value_async("basic_settings", "settings_import_export", "export_failure_content", "name").format(error=str(e)),
-            parent
+            get_any_position_value_async(
+                "basic_settings",
+                "settings_import_export",
+                "export_failure_title",
+                "name",
+            ),
+            get_any_position_value_async(
+                "basic_settings",
+                "settings_import_export",
+                "export_failure_content",
+                "name",
+            ).format(error=str(e)),
+            parent,
         )
-        dialog.yesButton.setText(get_any_position_value_async("basic_settings", "settings_import_export", "export_success_button", "name"))
+        dialog.yesButton.setText(
+            get_any_position_value_async(
+                "basic_settings",
+                "settings_import_export",
+                "export_success_button",
+                "name",
+            )
+        )
         dialog.cancelButton.hide()
         dialog.buttonLayout.insertStretch(1)
         dialog.exec()
@@ -410,7 +464,7 @@ def export_settings(parent: Optional[QWidget] = None) -> None:
 
 def import_settings(parent: Optional[QWidget] = None) -> None:
     """从文件导入设置
-    
+
     Args:
         parent: 父窗口组件，用于对话框的模态显示
     """
@@ -420,51 +474,109 @@ def import_settings(parent: Optional[QWidget] = None) -> None:
             parent,
             get_content_pushbutton_name_async("basic_settings", "import_settings"),
             "",
-            "JSON Files (*.json);;All Files (*)"
+            "JSON Files (*.json);;All Files (*)",
         )
-        
+
         if file_path:
             # 读取选定的设置文件
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 imported_settings = json.load(f)
-            
+
             # 显示确认对话框
             dialog = MessageBox(
-                get_any_position_value_async("basic_settings", "settings_import_export", "import_confirm_title", "name"),
-                get_any_position_value_async("basic_settings", "settings_import_export", "import_confirm_content", "name"),
-                parent
+                get_any_position_value_async(
+                    "basic_settings",
+                    "settings_import_export",
+                    "import_confirm_title",
+                    "name",
+                ),
+                get_any_position_value_async(
+                    "basic_settings",
+                    "settings_import_export",
+                    "import_confirm_content",
+                    "name",
+                ),
+                parent,
             )
-            dialog.yesButton.setText(get_any_position_value_async("basic_settings", "settings_import_export", "import_confirm_button", "name"))
-            dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "settings_import_export", "import_cancel_button", "name"))
-            
+            dialog.yesButton.setText(
+                get_any_position_value_async(
+                    "basic_settings",
+                    "settings_import_export",
+                    "import_confirm_button",
+                    "name",
+                )
+            )
+            dialog.cancelButton.setText(
+                get_any_position_value_async(
+                    "basic_settings",
+                    "settings_import_export",
+                    "import_cancel_button",
+                    "name",
+                )
+            )
+
             if dialog.exec():
                 # 获取当前设置文件路径
                 settings_path = get_settings_path()
-                
+
                 # 写入新设置
-                with open(settings_path, 'w', encoding='utf-8') as f:
+                with open(settings_path, "w", encoding="utf-8") as f:
                     json.dump(imported_settings, f, ensure_ascii=False, indent=4)
-                
+
                 # 显示成功消息
                 success_dialog = MessageBox(
-                    get_any_position_value_async("basic_settings", "settings_import_export", "import_success_title", "name"),
-                    get_any_position_value_async("basic_settings", "settings_import_export", "import_success_content", "name"),
-                    parent
+                    get_any_position_value_async(
+                        "basic_settings",
+                        "settings_import_export",
+                        "import_success_title",
+                        "name",
+                    ),
+                    get_any_position_value_async(
+                        "basic_settings",
+                        "settings_import_export",
+                        "import_success_content",
+                        "name",
+                    ),
+                    parent,
                 )
-                success_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "settings_import_export", "import_success_button", "name"))
+                success_dialog.yesButton.setText(
+                    get_any_position_value_async(
+                        "basic_settings",
+                        "settings_import_export",
+                        "import_success_button",
+                        "name",
+                    )
+                )
                 success_dialog.cancelButton.hide()
                 success_dialog.buttonLayout.insertStretch(1)
                 success_dialog.exec()
-            
+
     except Exception as e:
         logger.error(f"导入设置失败: {e}")
         # 显示错误消息
         dialog = MessageBox(
-            get_any_position_value_async("basic_settings", "settings_import_export", "import_failure_title", "name"),
-            get_any_position_value_async("basic_settings", "settings_import_export", "import_failure_content", "name").format(error=str(e)),
-            parent
+            get_any_position_value_async(
+                "basic_settings",
+                "settings_import_export",
+                "import_failure_title",
+                "name",
+            ),
+            get_any_position_value_async(
+                "basic_settings",
+                "settings_import_export",
+                "import_failure_content",
+                "name",
+            ).format(error=str(e)),
+            parent,
         )
-        dialog.yesButton.setText(get_any_position_value_async("basic_settings", "settings_import_export", "import_success_button", "name"))
+        dialog.yesButton.setText(
+            get_any_position_value_async(
+                "basic_settings",
+                "settings_import_export",
+                "import_success_button",
+                "name",
+            )
+        )
         dialog.cancelButton.hide()
         dialog.buttonLayout.insertStretch(1)
         dialog.exec()
@@ -472,175 +584,222 @@ def import_settings(parent: Optional[QWidget] = None) -> None:
 
 def export_diagnostic_data(parent: Optional[QWidget] = None) -> None:
     """导出诊断数据
-    
+
     Args:
         parent: 父窗口组件，用于对话框的模态显示
     """
     try:
         # 先显示导出警告对话框
         warning_dialog = MessageBox(
-            get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_warning_title", "name"),
-            get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_warning_content", "name"),
-            parent
+            get_any_position_value_async(
+                "basic_settings",
+                "diagnostic_data_export",
+                "export_warning_title",
+                "name",
+            ),
+            get_any_position_value_async(
+                "basic_settings",
+                "diagnostic_data_export",
+                "export_warning_content",
+                "name",
+            ),
+            parent,
         )
-        warning_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_confirm_button", "name"))
-        warning_dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_cancel_button", "name"))
-        
+        warning_dialog.yesButton.setText(
+            get_any_position_value_async(
+                "basic_settings",
+                "diagnostic_data_export",
+                "export_confirm_button",
+                "name",
+            )
+        )
+        warning_dialog.cancelButton.setText(
+            get_any_position_value_async(
+                "basic_settings",
+                "diagnostic_data_export",
+                "export_cancel_button",
+                "name",
+            )
+        )
+
         if not warning_dialog.exec():
             return  # 用户取消操作
-            
+
         # 获取软件安装路径
         app_dir = get_app_root()
-        
+
         # 获取版本信息
-        version_text = VERSION if VERSION != "v0.0.0.0" else f"Dev Version-{NEXT_VERSION}"
-        
+        version_text = (
+            VERSION if VERSION != "v0.0.0" else f"{NEXT_VERSION}-dev-{CODENAME}"
+        )
+
         # 打开文件保存对话框
         file_path, _ = QFileDialog.getSaveFileName(
             parent,
-            get_content_pushbutton_name_async("basic_settings", "export_diagnostic_data"),
+            get_content_pushbutton_name_async(
+                "basic_settings", "export_diagnostic_data"
+            ),
             f"SecRandom_{version_text}_diagnostic_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
-            "ZIP Files (*.zip);;All Files (*)"
+            "ZIP Files (*.zip);;All Files (*)",
         )
-        
+
         if file_path:
             # 确保文件路径以.zip结尾
-            if not file_path.endswith('.zip'):
-                file_path += '.zip'
-            
+            if not file_path.endswith(".zip"):
+                file_path += ".zip"
+
             # 创建需要导出的目录列表
             export_folders = [
                 Path("config"),
                 Path("app") / "resources" / "list",
                 Path("app") / "resources" / "Language",
                 Path("app") / "resources" / "history",
-                Path("logs")
+                Path("logs"),
             ]
-            
+
             # 统计导出的文件数量
             exported_count = 0
 
-            with zipfile.ZipFile(file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            with zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
                 # 添加各个文件夹中的文件
                 for folder_path in export_folders:
                     if folder_path.exists():
-                        for file_path_obj in folder_path.rglob('*'):
+                        for file_path_obj in folder_path.rglob("*"):
                             if file_path_obj.is_file():
                                 # 计算在zip中的路径
                                 try:
-                                    arc_path = str(file_path_obj.relative_to(folder_path.parent))
+                                    arc_path = str(
+                                        file_path_obj.relative_to(folder_path.parent)
+                                    )
                                     zipf.write(str(file_path_obj), arc_path)
                                 except Exception as e:
-                                    logger.warning(f"添加文件到ZIP失败 {file_path_obj}: {e}")
+                                    logger.warning(
+                                        f"添加文件到ZIP失败 {file_path_obj}: {e}"
+                                    )
                                     continue
                                 exported_count += 1
-                
+
                 # 写入诊断信息JSON文件（在所有文件添加完后写入，避免重复）
                 # 获取磁盘使用情况
                 disk_usage = psutil.disk_usage(str(app_dir))
-                
+
                 # 获取内存信息
                 memory_info = psutil.virtual_memory()
                 swap_info = psutil.swap_memory()
-                
+
                 # 获取CPU信息
                 cpu_count_logical = psutil.cpu_count(logical=True)
                 cpu_count_physical = psutil.cpu_count(logical=False)
                 cpu_percent = psutil.cpu_percent(interval=1, percpu=True)
                 cpu_freq = psutil.cpu_freq()
-                
+
                 system_info = {
                     # 【导出元数据】基础信息记录
                     "export_metadata": {
-                        "software": "SecRandom",                                                # 软件名称
-                        "export_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),            # 人类可读时间
-                        "export_timestamp": datetime.now().isoformat(),                         # ISO标准时间戳
-                        "version": version_text,                                                     # 当前软件版本
-                        "export_type": "diagnostic",                                            # 导出类型（诊断数据）
+                        "software": "SecRandom",  # 软件名称
+                        "export_time": datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"
+                        ),  # 人类可读时间
+                        "export_timestamp": datetime.now().isoformat(),  # ISO标准时间戳
+                        "version": version_text,  # 当前软件版本
+                        "export_type": "diagnostic",  # 导出类型（诊断数据）
                     },
-                    
                     # 【系统环境信息】详细的运行环境数据
                     "system_info": {
-                        "software_path": str(app_dir),                                           # 软件安装路径
-                        "operating_system": _get_operating_system(),                       # 操作系统版本（正确识别Win11）
-                        "platform_details": {                                                   # 平台详细信息
-                            "system": platform.system(),                                        # 系统类型 (Windows/Linux/Darwin)
-                            "release": _get_platform_release(),                          # 系统发行版本（正确识别Win11）
-                            "version": _get_platform_version(),                          # 完整系统版本（正确识别Win11）
-                            "machine": platform.machine(),                                      # 机器架构 (AMD64/x86_64)
-                            "processor": platform.processor()                                   # 处理器信息
+                        "software_path": str(app_dir),  # 软件安装路径
+                        "operating_system": _get_operating_system(),  # 操作系统版本（正确识别Win11）
+                        "platform_details": {  # 平台详细信息
+                            "system": platform.system(),  # 系统类型 (Windows/Linux/Darwin)
+                            "release": _get_platform_release(),  # 系统发行版本（正确识别Win11）
+                            "version": _get_platform_version(),  # 完整系统版本（正确识别Win11）
+                            "machine": platform.machine(),  # 机器架构 (AMD64/x86_64)
+                            "processor": platform.processor(),  # 处理器信息
                         },
-                        "python_version": sys.version,                                          # Python完整版本信息
-                        "python_executable": sys.executable,                                    # Python可执行文件路径
-                        "current_working_directory": os.getcwd(),                               # 当前工作目录
-                        "environment_variables": dict(os.environ),                              # 环境变量
+                        "python_version": sys.version,  # Python完整版本信息
+                        "python_executable": sys.executable,  # Python可执行文件路径
+                        "current_working_directory": os.getcwd(),  # 当前工作目录
+                        "environment_variables": dict(os.environ),  # 环境变量
                     },
-                    
                     # 【硬件信息】系统硬件资源信息
                     "hardware_info": {
                         "cpu": {
-                            "logical_count": cpu_count_logical,                                    # 逻辑CPU核心数
-                            "physical_count": cpu_count_physical,                                  # 物理CPU核心数
-                            "usage_per_core": cpu_percent,                                         # 每个核心的使用率
+                            "logical_count": cpu_count_logical,  # 逻辑CPU核心数
+                            "physical_count": cpu_count_physical,  # 物理CPU核心数
+                            "usage_per_core": cpu_percent,  # 每个核心的使用率
                             "frequency": {
-                                "current": cpu_freq.current if cpu_freq else None,                    # 当前频率
-                                "min": cpu_freq.min if cpu_freq else None,                            # 最小频率
-                                "max": cpu_freq.max if cpu_freq else None                             # 最大频率
-                            } if cpu_freq else None
+                                "current": cpu_freq.current
+                                if cpu_freq
+                                else None,  # 当前频率
+                                "min": cpu_freq.min if cpu_freq else None,  # 最小频率
+                                "max": cpu_freq.max if cpu_freq else None,  # 最大频率
+                            }
+                            if cpu_freq
+                            else None,
                         },
                         "memory": {
                             "virtual_memory": {
-                                "total": memory_info.total,                                            # 总内存
-                                "available": memory_info.available,                                    # 可用内存
-                                "used": memory_info.used,                                              # 已使用内存
-                                "free": memory_info.free,                                              # 空闲内存
-                                "percentage": memory_info.percent,                                     # 内存使用百分比
-                                "buffers": getattr(memory_info, 'buffers', None),                      # 缓冲区内存
-                                "cached": getattr(memory_info, 'cached', None),                        # 缓存内存
-                                "shared": getattr(memory_info, 'shared', None),                        # 共享内存
+                                "total": memory_info.total,  # 总内存
+                                "available": memory_info.available,  # 可用内存
+                                "used": memory_info.used,  # 已使用内存
+                                "free": memory_info.free,  # 空闲内存
+                                "percentage": memory_info.percent,  # 内存使用百分比
+                                "buffers": getattr(
+                                    memory_info, "buffers", None
+                                ),  # 缓冲区内存
+                                "cached": getattr(
+                                    memory_info, "cached", None
+                                ),  # 缓存内存
+                                "shared": getattr(
+                                    memory_info, "shared", None
+                                ),  # 共享内存
                             },
                             "swap_memory": {
-                                "total": swap_info.total,                                              # 交换区内存总量
-                                "used": swap_info.used,                                                # 交换区已使用
-                                "free": swap_info.free,                                                # 交换区剩余
-                                "percentage": swap_info.percent,                                       # 交换区使用百分比
-                                "sin": getattr(swap_info, 'sin', None),                                # 从磁盘交换进来的内存
-                                "sout": getattr(swap_info, 'sout', None)                               # 交换到磁盘的内存
-                            } if swap_info else None
+                                "total": swap_info.total,  # 交换区内存总量
+                                "used": swap_info.used,  # 交换区已使用
+                                "free": swap_info.free,  # 交换区剩余
+                                "percentage": swap_info.percent,  # 交换区使用百分比
+                                "sin": getattr(
+                                    swap_info, "sin", None
+                                ),  # 从磁盘交换进来的内存
+                                "sout": getattr(
+                                    swap_info, "sout", None
+                                ),  # 交换到磁盘的内存
+                            }
+                            if swap_info
+                            else None,
                         },
                         "disk": {
                             "usage": {
-                                "total": disk_usage.total,                                             # 磁盘总空间
-                                "used": disk_usage.used,                                               # 磁盘已使用空间
-                                "free": disk_usage.free,                                               # 磁盘剩余空间
-                                "percentage": disk_usage.percent,                                      # 磁盘使用百分比
+                                "total": disk_usage.total,  # 磁盘总空间
+                                "used": disk_usage.used,  # 磁盘已使用空间
+                                "free": disk_usage.free,  # 磁盘剩余空间
+                                "percentage": disk_usage.percent,  # 磁盘使用百分比
                             },
-                            "partitions": []                                                         # 磁盘分区信息
-                        }
+                            "partitions": [],  # 磁盘分区信息
+                        },
                     },
-                    
                     # 【网络信息】网络配置信息
                     "network_info": {
-                        "interfaces": {},                                                       # 网络接口信息
-                        "connections": len(psutil.net_connections()),                          # 当前网络连接数
-                        "io_counters": {},                                                     # 网络IO统计
+                        "interfaces": {},  # 网络接口信息
+                        "connections": len(psutil.net_connections()),  # 当前网络连接数
+                        "io_counters": {},  # 网络IO统计
                     },
-                    
                     # 【进程信息】当前进程相关信息
                     "process_info": {
-                        "pid": os.getpid(),                                                     # 当前进程ID
-                        "process_count": len(psutil.pids()),                                    # 系统进程总数
-                        "current_process": {},                                                  # 当前进程详细信息
+                        "pid": os.getpid(),  # 当前进程ID
+                        "process_count": len(psutil.pids()),  # 系统进程总数
+                        "current_process": {},  # 当前进程详细信息
                     },
-                    
                     # 【导出摘要】统计信息和导出详情
                     "export_summary": {
-                        "total_files_exported": exported_count,                                 # 成功导出的文件总数
-                        "export_folders": [str(folder) for folder in export_folders],         # 导出的文件夹列表（转换为字符串）
-                        "export_location": str(file_path)                                         # 导出压缩包的完整路径
-                    }
+                        "total_files_exported": exported_count,  # 成功导出的文件总数
+                        "export_folders": [
+                            str(folder) for folder in export_folders
+                        ],  # 导出的文件夹列表（转换为字符串）
+                        "export_location": str(file_path),  # 导出压缩包的完整路径
+                    },
                 }
-                
+
                 # 添加磁盘分区信息
                 try:
                     disk_partitions = psutil.disk_partitions()
@@ -649,9 +808,9 @@ def export_diagnostic_data(parent: Optional[QWidget] = None) -> None:
                             "device": partition.device,
                             "mountpoint": partition.mountpoint,
                             "file_system_type": partition.fstype,
-                            "options": partition.opts
+                            "options": partition.opts,
                         }
-                        
+
                         # 获取分区使用情况
                         try:
                             partition_usage = psutil.disk_usage(partition.mountpoint)
@@ -659,32 +818,38 @@ def export_diagnostic_data(parent: Optional[QWidget] = None) -> None:
                                 "total": partition_usage.total,
                                 "used": partition_usage.used,
                                 "free": partition_usage.free,
-                                "percentage": partition_usage.percent
+                                "percentage": partition_usage.percent,
                             }
                         except PermissionError:
                             # 某些分区可能没有访问权限
                             partition_info["usage"] = None
-                            
-                        system_info["hardware_info"]["disk"]["partitions"].append(partition_info)
+
+                        system_info["hardware_info"]["disk"]["partitions"].append(
+                            partition_info
+                        )
                 except Exception as e:
                     logger.warning(f"获取磁盘分区信息失败: {e}")
-                
+
                 # 添加网络接口信息
                 try:
                     net_if_addrs = psutil.net_if_addrs()
                     for interface_name, interface_addresses in net_if_addrs.items():
                         system_info["network_info"]["interfaces"][interface_name] = []
                         for address in interface_addresses:
-                            system_info["network_info"]["interfaces"][interface_name].append({
-                                "family": str(address.family),
-                                "address": address.address,
-                                "netmask": address.netmask,
-                                "broadcast": address.broadcast,
-                                "ptp": address.ptp,
-                            })
+                            system_info["network_info"]["interfaces"][
+                                interface_name
+                            ].append(
+                                {
+                                    "family": str(address.family),
+                                    "address": address.address,
+                                    "netmask": address.netmask,
+                                    "broadcast": address.broadcast,
+                                    "ptp": address.ptp,
+                                }
+                            )
                 except Exception as e:
                     logger.warning(f"获取网络接口信息失败: {e}")
-                
+
                 # 添加网络统计信息
                 try:
                     net_io = psutil.net_io_counters(pernic=True)
@@ -695,14 +860,14 @@ def export_diagnostic_data(parent: Optional[QWidget] = None) -> None:
                             "bytes_recv": stats.bytes_recv,
                             "packets_sent": stats.packets_sent,
                             "packets_recv": stats.packets_recv,
-                            "errin": getattr(stats, 'errin', None),
-                            "errout": getattr(stats, 'errout', None),
-                            "dropin": getattr(stats, 'dropin', None),
-                            "dropout": getattr(stats, 'dropout', None),
+                            "errin": getattr(stats, "errin", None),
+                            "errout": getattr(stats, "errout", None),
+                            "dropin": getattr(stats, "dropin", None),
+                            "dropout": getattr(stats, "dropout", None),
                         }
                 except Exception as e:
                     logger.warning(f"获取网络统计信息失败: {e}")
-                
+
                 # 添加当前进程详细信息
                 try:
                     current_process = psutil.Process(os.getpid())
@@ -719,77 +884,126 @@ def export_diagnostic_data(parent: Optional[QWidget] = None) -> None:
                         "parent_pid": current_process.ppid(),
                         "children": [],
                     }
-                    
+
                     # 获取子进程信息
                     try:
                         children = current_process.children(recursive=True)
                         for child in children:
-                            system_info["process_info"]["current_process"]["children"].append({
-                                "pid": child.pid,
-                                "name": child.name(),
-                                "status": child.status(),
-                            })
+                            system_info["process_info"]["current_process"][
+                                "children"
+                            ].append(
+                                {
+                                    "pid": child.pid,
+                                    "name": child.name(),
+                                    "status": child.status(),
+                                }
+                            )
                     except Exception as e:
                         logger.warning(f"获取子进程信息失败: {e}")
                 except Exception as e:
                     logger.warning(f"获取当前进程信息失败: {e}")
-                
+
                 # 添加开机时间信息
                 try:
                     boot_time = psutil.boot_time()
                     system_info["system_info"]["boot_time"] = boot_time
-                    system_info["system_info"]["uptime"] = datetime.now().timestamp() - boot_time
+                    system_info["system_info"]["uptime"] = (
+                        datetime.now().timestamp() - boot_time
+                    )
                 except Exception as e:
                     logger.warning(f"获取开机时间信息失败: {e}")
-                
+
                 # 添加用户信息
                 try:
                     users = psutil.users()
                     system_info["system_info"]["users"] = []
                     for user in users:
-                        system_info["system_info"]["users"].append({
-                            "name": user.name,
-                            "terminal": user.terminal,
-                            "host": user.host,
-                            "started": user.started,
-                            "pid": getattr(user, 'pid', None),
-                        })
+                        system_info["system_info"]["users"].append(
+                            {
+                                "name": user.name,
+                                "terminal": user.terminal,
+                                "host": user.host,
+                                "started": user.started,
+                                "pid": getattr(user, "pid", None),
+                            }
+                        )
                 except Exception as e:
                     logger.warning(f"获取用户信息失败: {e}")
-                
+
                 # 写入诊断信息文件
                 try:
-                    zipf.writestr("diagnostic.json", json.dumps(system_info, ensure_ascii=False, indent=2))
+                    zipf.writestr(
+                        "diagnostic.json",
+                        json.dumps(system_info, ensure_ascii=False, indent=2),
+                    )
                 except Exception as e:
                     logger.error(f"写入诊断信息文件失败: {e}")
+
                     # 尝试将所有Path对象转换为字符串
                     class PathEncoder(json.JSONEncoder):
                         def default(self, obj):
                             if isinstance(obj, Path):
                                 return str(obj)
                             return super().default(obj)
-                    zipf.writestr("diagnostic.json", json.dumps(system_info, cls=PathEncoder, ensure_ascii=False, indent=2))
-            
+
+                    zipf.writestr(
+                        "diagnostic.json",
+                        json.dumps(
+                            system_info, cls=PathEncoder, ensure_ascii=False, indent=2
+                        ),
+                    )
+
             # 显示成功消息
             dialog = MessageBox(
-                get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_success_title", "name"),
-                get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_success_content", "name").format(path=file_path),
-                parent
+                get_any_position_value_async(
+                    "basic_settings",
+                    "diagnostic_data_export",
+                    "export_success_title",
+                    "name",
+                ),
+                get_any_position_value_async(
+                    "basic_settings",
+                    "diagnostic_data_export",
+                    "export_success_content",
+                    "name",
+                ).format(path=file_path),
+                parent,
             )
-            dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_success_button", "name"))
+            dialog.yesButton.setText(
+                get_any_position_value_async(
+                    "basic_settings",
+                    "data_import_export",
+                    "import_success_button",
+                    "name",
+                )
+            )
             dialog.cancelButton.hide()
             dialog.buttonLayout.insertStretch(1)
             dialog.exec()
-            
+
     except Exception as e:
         logger.error(f"导出诊断数据失败: {e}")
         # 显示错误消息
         dialog = MessageBox(
-            get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_failure_title", "name"),
-            get_any_position_value_async("basic_settings", "diagnostic_data_export", "export_failure_content", "name").format(error=str(e)),
-            parent
+            get_any_position_value_async(
+                "basic_settings",
+                "diagnostic_data_export",
+                "export_failure_title",
+                "name",
+            ),
+            get_any_position_value_async(
+                "basic_settings",
+                "diagnostic_data_export",
+                "export_failure_content",
+                "name",
+            ).format(error=str(e)),
+            parent,
         )
-        dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_success_button", "name"))
+        dialog.yesButton.setText(
+            get_any_position_value_async(
+                "basic_settings", "data_import_export", "import_success_button", "name"
+            )
+        )
         dialog.cancelButton.hide()
         dialog.buttonLayout.insertStretch(1)
         dialog.exec()
@@ -797,23 +1011,49 @@ def export_diagnostic_data(parent: Optional[QWidget] = None) -> None:
 
 def export_all_data(parent: Optional[QWidget] = None) -> None:
     """导出所有数据到文件
-    
+
     Args:
         parent: 父窗口组件，用于对话框的模态显示
     """
     try:
         cancelled = False
+
         def _apply_export_all_warning():
             nonlocal cancelled
             warning_dialog = MessageBox(
-                get_any_position_value_async("basic_settings", "data_import_export", "export_warning_title", "name"),
-                get_any_position_value_async("basic_settings", "data_import_export", "export_warning_content", "name"),
-                parent
+                get_any_position_value_async(
+                    "basic_settings",
+                    "data_import_export",
+                    "export_warning_title",
+                    "name",
+                ),
+                get_any_position_value_async(
+                    "basic_settings",
+                    "data_import_export",
+                    "export_warning_content",
+                    "name",
+                ),
+                parent,
             )
-            warning_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "export_confirm_button", "name"))
-            warning_dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "export_cancel_button", "name"))
+            warning_dialog.yesButton.setText(
+                get_any_position_value_async(
+                    "basic_settings",
+                    "data_import_export",
+                    "export_confirm_button",
+                    "name",
+                )
+            )
+            warning_dialog.cancelButton.setText(
+                get_any_position_value_async(
+                    "basic_settings",
+                    "data_import_export",
+                    "export_cancel_button",
+                    "name",
+                )
+            )
             if not warning_dialog.exec():
                 cancelled = True
+
         _apply_export_all_warning()
         if cancelled:
             return
@@ -821,50 +1061,73 @@ def export_all_data(parent: Optional[QWidget] = None) -> None:
         file_path, _ = QFileDialog.getSaveFileName(
             parent,
             get_content_pushbutton_name_async("basic_settings", "export_all_data"),
-            f"SecRandom_{VERSION if VERSION != "v0.0.0.0" else f"Dev Version-{NEXT_VERSION}"}_all_data.zip",
-            "ZIP Files (*.zip);;All Files (*)"
+            f"SecRandom_{VERSION if VERSION != 'v0.0.0' else f'{NEXT_VERSION}-dev-{CODENAME}'}_all_data.zip",
+            "ZIP Files (*.zip);;All Files (*)",
         )
         if not file_path:
             return
         import zipfile
-        if not file_path.endswith('.zip'):
-            file_path += '.zip'
+
+        if not file_path.endswith(".zip"):
+            file_path += ".zip"
         dirs_to_backup = [
             ("config", Path("config")),
             ("list", Path("app") / "resources" / "list"),
             ("Language", Path("app") / "resources" / "Language"),
             ("history", Path("app") / "resources" / "history"),
-            ("logs", Path("logs"))
+            ("logs", Path("logs")),
         ]
-        with zipfile.ZipFile(file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        with zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             version_info = {
                 "software_name": "SecRandom",
-                "version": VERSION if VERSION != "v0.0.0.0" else f"Dev Version-{NEXT_VERSION}"
+                "version": VERSION
+                if VERSION != "v0.0.0"
+                else f"{NEXT_VERSION}-dev-{CODENAME}",
             }
-            zipf.writestr("version.json", json.dumps(version_info, ensure_ascii=False, indent=2))
+            zipf.writestr(
+                "version.json", json.dumps(version_info, ensure_ascii=False, indent=2)
+            )
             for dir_name, dir_path in dirs_to_backup:
                 if dir_path.exists():
-                    for file_path_obj in dir_path.rglob('*'):
+                    for file_path_obj in dir_path.rglob("*"):
                         if file_path_obj.is_file():
-                            arc_path = str(Path(dir_name) / file_path_obj.relative_to(dir_path))
+                            arc_path = str(
+                                Path(dir_name) / file_path_obj.relative_to(dir_path)
+                            )
                             zipf.write(str(file_path_obj), arc_path)
         dialog = MessageBox(
-            get_any_position_value_async("basic_settings", "data_import_export", "export_success_title", "name"),
-            get_any_position_value_async("basic_settings", "data_import_export", "export_success_content", "name").format(path=file_path),
-            parent
+            get_any_position_value_async(
+                "basic_settings", "data_import_export", "export_success_title", "name"
+            ),
+            get_any_position_value_async(
+                "basic_settings", "data_import_export", "export_success_content", "name"
+            ).format(path=file_path),
+            parent,
         )
-        dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_success_button", "name"))
+        dialog.yesButton.setText(
+            get_any_position_value_async(
+                "basic_settings", "data_import_export", "import_success_button", "name"
+            )
+        )
         dialog.cancelButton.hide()
         dialog.buttonLayout.insertStretch(1)
         dialog.exec()
     except Exception as e:
         logger.error(f"导出所有数据失败: {e}")
         dialog = MessageBox(
-            get_any_position_value_async("basic_settings", "data_import_export", "export_failure_title", "name"),
-            get_any_position_value_async("basic_settings", "data_import_export", "export_failure_content", "name").format(error=str(e)),
-            parent
+            get_any_position_value_async(
+                "basic_settings", "data_import_export", "export_failure_title", "name"
+            ),
+            get_any_position_value_async(
+                "basic_settings", "data_import_export", "export_failure_content", "name"
+            ).format(error=str(e)),
+            parent,
         )
-        dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_success_button", "name"))
+        dialog.yesButton.setText(
+            get_any_position_value_async(
+                "basic_settings", "data_import_export", "import_success_button", "name"
+            )
+        )
         dialog.cancelButton.hide()
         dialog.buttonLayout.insertStretch(1)
         dialog.exec()
@@ -872,7 +1135,7 @@ def export_all_data(parent: Optional[QWidget] = None) -> None:
 
 def import_all_data(parent: Optional[QWidget] = None) -> None:
     """从文件导入所有数据
-    
+
     Args:
         parent: 父窗口组件，用于对话框的模态显示
     """
@@ -882,159 +1145,273 @@ def import_all_data(parent: Optional[QWidget] = None) -> None:
             parent,
             get_content_pushbutton_name_async("basic_settings", "import_all_data"),
             "",
-            "ZIP Files (*.zip);;All Files (*)"
+            "ZIP Files (*.zip);;All Files (*)",
         )
-        
+
         if file_path:
             import zipfile
-            
+
             # 检查版本信息
             version_info = {}
             try:
-                with zipfile.ZipFile(file_path, 'r') as zipf:
-                    if 'version.json' in zipf.namelist():
-                        with zipf.open('version.json') as vf:
+                with zipfile.ZipFile(file_path, "r") as zipf:
+                    if "version.json" in zipf.namelist():
+                        with zipf.open("version.json") as vf:
                             version_info = json.load(vf)
             except Exception as e:
                 logger.warning(f"读取版本信息失败: {e}")
-            
+
             # 检查版本兼容性
             if version_info:
                 software_name = version_info.get("software_name", "")
                 version = version_info.get("version", "")
-                current_version = VERSION if VERSION != "v0.0.0.0" else f"Dev Version-{NEXT_VERSION}"
+                current_version = (
+                    VERSION if VERSION != "v0.0.0" else f"{NEXT_VERSION}-dev-{CODENAME}"
+                )
                 if software_name != "SecRandom" or version != current_version:
                     _mismatch_cancelled = False
+
                     def _apply_version_mismatch():
                         nonlocal _mismatch_cancelled
                         warning_dialog = MessageBox(
-                            get_any_position_value_async("basic_settings", "data_import_export", "version_mismatch_title", "name"),
-                            get_any_position_value_async("basic_settings", "data_import_export", "version_mismatch_content", "name").format(
-                                software_name=software_name, 
-                                version=version,
-                                current_version=current_version
+                            get_any_position_value_async(
+                                "basic_settings",
+                                "data_import_export",
+                                "version_mismatch_title",
+                                "name",
                             ),
-                            parent
+                            get_any_position_value_async(
+                                "basic_settings",
+                                "data_import_export",
+                                "version_mismatch_content",
+                                "name",
+                            ).format(
+                                software_name=software_name,
+                                version=version,
+                                current_version=current_version,
+                            ),
+                            parent,
                         )
-                        warning_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_confirm_button", "name"))
-                        warning_dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_cancel_button", "name"))
+                        warning_dialog.yesButton.setText(
+                            get_any_position_value_async(
+                                "basic_settings",
+                                "data_import_export",
+                                "import_confirm_button",
+                                "name",
+                            )
+                        )
+                        warning_dialog.cancelButton.setText(
+                            get_any_position_value_async(
+                                "basic_settings",
+                                "data_import_export",
+                                "import_cancel_button",
+                                "name",
+                            )
+                        )
                         if not warning_dialog.exec():
                             _mismatch_cancelled = True
-                    require_and_run("import_version_mismatch", parent, _apply_version_mismatch)
+
+                    require_and_run(
+                        "import_version_mismatch", parent, _apply_version_mismatch
+                    )
                     if _mismatch_cancelled:
                         return
-            
+
             # 检查zip文件中的内容
             existing_files = []
-            with zipfile.ZipFile(file_path, 'r') as zipf:
+            with zipfile.ZipFile(file_path, "r") as zipf:
                 for member in zipf.namelist():
                     # 跳过版本信息文件
-                    if member == 'version.json':
+                    if member == "version.json":
                         continue
-                        
+
                     # 解析目录结构
                     parts = Path(member).parts
                     if len(parts) > 1:
                         dir_name = parts[0]
                         relative_path = Path(*parts[1:])
-                        
+
                         # 映射目录到实际路径
                         target_dirs = {
                             "config": Path("config"),
                             "list": Path("app/resources/list"),
                             "Language": Path("app/resources/Language"),
                             "history": Path("app/resources/history"),
-                            "logs": Path("logs")
+                            "logs": Path("logs"),
                         }
-                        
+
                         if dir_name in target_dirs:
                             target_path = target_dirs[dir_name] / relative_path
                             if target_path.exists():
                                 existing_files.append(str(target_path))
-            
+
             # 如果有已存在的文件，询问用户是否覆盖
             if existing_files:
                 _overwrite_cancelled = False
+
                 def _apply_overwrite():
                     nonlocal _overwrite_cancelled
                     files_list = "\n".join(existing_files[:10])
                     if len(existing_files) > 10:
-                        files_list += get_any_position_value_async("basic_settings", "data_import_export", "existing_files_count", "name").format(len=len(existing_files) - 10)
+                        files_list += get_any_position_value_async(
+                            "basic_settings",
+                            "data_import_export",
+                            "existing_files_count",
+                            "name",
+                        ).format(len=len(existing_files) - 10)
                     dialog = MessageBox(
-                        get_any_position_value_async("basic_settings", "data_import_export", "existing_files_title", "name"),
-                        get_any_position_value_async("basic_settings", "data_import_export", "existing_files_content", "name").format(files=files_list),
-                        parent
+                        get_any_position_value_async(
+                            "basic_settings",
+                            "data_import_export",
+                            "existing_files_title",
+                            "name",
+                        ),
+                        get_any_position_value_async(
+                            "basic_settings",
+                            "data_import_export",
+                            "existing_files_content",
+                            "name",
+                        ).format(files=files_list),
+                        parent,
                     )
-                    dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_confirm_button", "name"))
-                    dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_cancel_button", "name"))
+                    dialog.yesButton.setText(
+                        get_any_position_value_async(
+                            "basic_settings",
+                            "data_import_export",
+                            "import_confirm_button",
+                            "name",
+                        )
+                    )
+                    dialog.cancelButton.setText(
+                        get_any_position_value_async(
+                            "basic_settings",
+                            "data_import_export",
+                            "import_cancel_button",
+                            "name",
+                        )
+                    )
                     if not dialog.exec():
                         _overwrite_cancelled = True
+
                 require_and_run("import_overwrite", parent, _apply_overwrite)
                 if _overwrite_cancelled:
                     return
-            
+
             # 显示导入确认对话框
             confirm_dialog = MessageBox(
-                get_any_position_value_async("basic_settings", "data_import_export", "import_confirm_title", "name"),
-                get_any_position_value_async("basic_settings", "data_import_export", "import_confirm_content", "name"),
-                parent
+                get_any_position_value_async(
+                    "basic_settings",
+                    "data_import_export",
+                    "import_confirm_title",
+                    "name",
+                ),
+                get_any_position_value_async(
+                    "basic_settings",
+                    "data_import_export",
+                    "import_confirm_content",
+                    "name",
+                ),
+                parent,
             )
-            confirm_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_confirm_button", "name"))
-            confirm_dialog.cancelButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_cancel_button", "name"))
-            
+            confirm_dialog.yesButton.setText(
+                get_any_position_value_async(
+                    "basic_settings",
+                    "data_import_export",
+                    "import_confirm_button",
+                    "name",
+                )
+            )
+            confirm_dialog.cancelButton.setText(
+                get_any_position_value_async(
+                    "basic_settings",
+                    "data_import_export",
+                    "import_cancel_button",
+                    "name",
+                )
+            )
+
             if confirm_dialog.exec():
                 # 解压文件
-                with zipfile.ZipFile(file_path, 'r') as zipf:
+                with zipfile.ZipFile(file_path, "r") as zipf:
                     # 映射目录到实际路径
                     target_dirs = {
                         "config": Path("config"),
                         "list": Path("app/resources/list"),
                         "Language": Path("app/resources/Language"),
                         "history": Path("app/resources/history"),
-                        "logs": Path("logs")
+                        "logs": Path("logs"),
                     }
-                    
+
                     for member in zipf.namelist():
                         # 跳过版本信息文件
-                        if member == 'version.json':
+                        if member == "version.json":
                             continue
-                            
+
                         parts = Path(member).parts
                         if len(parts) > 1:
                             dir_name = parts[0]
                             relative_path = Path(*parts[1:])
-                            
+
                             if dir_name in target_dirs:
                                 target_path = target_dirs[dir_name] / relative_path
                                 # 确保目标目录存在
                                 target_path.parent.mkdir(parents=True, exist_ok=True)
                                 # 提取文件
-                                with zipf.open(member) as source, open(target_path, "wb") as target:
+                                with (
+                                    zipf.open(member) as source,
+                                    open(target_path, "wb") as target,
+                                ):
                                     shutil.copyfileobj(source, target)
-                
+
                 # 显示成功消息
                 success_dialog = MessageBox(
-                    get_any_position_value_async("basic_settings", "data_import_export", "import_success_title", "name"),
-                    get_any_position_value_async("basic_settings", "data_import_export", "import_success_content", "name"),
-                    parent
+                    get_any_position_value_async(
+                        "basic_settings",
+                        "data_import_export",
+                        "import_success_title",
+                        "name",
+                    ),
+                    get_any_position_value_async(
+                        "basic_settings",
+                        "data_import_export",
+                        "import_success_content",
+                        "name",
+                    ),
+                    parent,
                 )
-                success_dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_success_button", "name"))
+                success_dialog.yesButton.setText(
+                    get_any_position_value_async(
+                        "basic_settings",
+                        "data_import_export",
+                        "import_success_button",
+                        "name",
+                    )
+                )
                 success_dialog.cancelButton.hide()
                 success_dialog.buttonLayout.insertStretch(1)
                 success_dialog.exec()
-            
+
     except Exception as e:
         logger.error(f"导入所有数据失败: {e}")
         # 显示错误消息
         dialog = MessageBox(
-            get_any_position_value_async("basic_settings", "data_import_export", "import_failure_title", "name"),
-            get_any_position_value_async("basic_settings", "data_import_export", "import_failure_content", "name").format(error=str(e)),
-            parent
+            get_any_position_value_async(
+                "basic_settings", "data_import_export", "import_failure_title", "name"
+            ),
+            get_any_position_value_async(
+                "basic_settings", "data_import_export", "import_failure_content", "name"
+            ).format(error=str(e)),
+            parent,
         )
-        dialog.yesButton.setText(get_any_position_value_async("basic_settings", "data_import_export", "import_success_button", "name"))
+        dialog.yesButton.setText(
+            get_any_position_value_async(
+                "basic_settings", "data_import_export", "import_success_button", "name"
+            )
+        )
         dialog.cancelButton.hide()
         dialog.buttonLayout.insertStretch(1)
         dialog.exec()
+
 
 def _get_operating_system() -> str:
     """获取操作系统信息，特别优化Win11识别"""
@@ -1043,13 +1420,13 @@ def _get_operating_system() -> str:
             # 尝试获取更详细的Windows版本信息
             version = platform.version()
             release = platform.release()
-            
+
             # 检查是否为Windows 11 (build 22000及以上)
             if release == "10":  # Windows 10/11都显示为release 10
-                build_number = int(version.split('.')[2])
+                build_number = int(version.split(".")[2])
                 if build_number >= 22000:
                     return f"Windows 11 (Build {build_number})"
-            
+
             return f"Windows {release} (Build {version})"
         except Exception:
             return f"Windows ({platform.system()})"
@@ -1472,7 +1849,9 @@ def read_drawn_record_simple(pool_name: str):
 
 def reset_drawn_prize_record(self, pool_name: str):
     try:
-        pattern = os.path.join("app", "resources", "TEMP", f"draw_*_prize_{pool_name}.json")
+        pattern = os.path.join(
+            "app", "resources", "TEMP", f"draw_*_prize_{pool_name}.json"
+        )
         for fp in glob.glob(pattern):
             try:
                 os.remove(fp)
@@ -1490,13 +1869,17 @@ def reset_drawn_prize_record(self, pool_name: str):
     except Exception as e:
         logger.error(f"重置奖池抽取记录失败: {e}")
 
+
 def set_autostart(enabled: bool) -> bool:
     try:
         if sys.platform == "win32":
             import winreg
+
             key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
             try:
-                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+                key = winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE
+                )
             except FileNotFoundError:
                 key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
             name = "SecRandom"

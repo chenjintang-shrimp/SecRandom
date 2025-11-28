@@ -2,7 +2,6 @@
 # 导入库
 # ==================================================
 
-from loguru import logger
 from PySide6.QtWidgets import *
 from PySide6.QtGui import *
 from PySide6.QtCore import *
@@ -46,7 +45,7 @@ class about(GroupHeaderCardWidget):
 
         # 查看当前软件版本号
         version_text = (
-            VERSION if VERSION != "v0.0.0.0" else f"Dev Version-{NEXT_VERSION}"
+            VERSION if VERSION != "v0.0.0" else f"{NEXT_VERSION}-dev-{CODENAME}"
         )
         self.about_version_label = BodyLabel(version_text)
 
@@ -68,7 +67,6 @@ class about(GroupHeaderCardWidget):
             get_theme_icon("ic_fluent_document_person_20_filled")
         )
         self.donation_button.clicked.connect(self.open_donation_url)
-
 
         self.addGroup(
             get_theme_icon("ic_fluent_branch_fork_link_20_filled"),
